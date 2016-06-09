@@ -4,6 +4,9 @@
 # This configuration overrides the application.yml file.
 # ===================================================================
 
+exerciseapp:
+    instructor-group-name: eist16students_test
+
 # ===================================================================
 # Standard Spring Boot properties.
 # Full reference is available at:

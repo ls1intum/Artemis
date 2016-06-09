@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.security;
 
+import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.service.UserService;
@@ -74,6 +75,8 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
                 userService.activateRegistration(newUser.getActivationKey());
                 return newUser;
             });
+            user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));
+            userRepository.save(user);
             UsernamePasswordAuthenticationToken token;
             Optional<User> matchingUser = userService.getUserWithAuthoritiesByLogin(username);
             if (matchingUser.isPresent()) {
@@ -112,12 +115,16 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
      * group contains configured instructor group name -> instructor role
      * otherwise                                       -> student role
      */
-    private List<GrantedAuthority> buildAuthoritiesFromGroups(List<String> groups) {
-        List<GrantedAuthority> authorities = new ArrayList<>();
+    private Set<Authority> buildAuthoritiesFromGroups(List<String> groups) {
+        Set<Authority> authorities = new HashSet<>();
         if (groups.contains(INSTRUCTOR_GROUP_NAME)) {
-            authorities.add(new SimpleGrantedAuthority("ROLE_INSTRUCTOR"));
+            Authority adminAuthority = new Authority();
+            adminAuthority.setName(AuthoritiesConstants.ADMIN);
+            authorities.add(adminAuthority);
         } else {
-            authorities.add(new SimpleGrantedAuthority("ROLE_STUDENT"));
+            Authority studentAuthority = new Authority();
+            studentAuthority.setName(AuthoritiesConstants.USER);
+            authorities.add(studentAuthority);
         }
         return authorities;
     }
