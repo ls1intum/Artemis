@@ -123,7 +123,7 @@ public class ExerciseResource {
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Exercise>> getAllExercises(@PathVariable Long courseId, Pageable pageable)
+    public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Exercises");
         Page<Exercise> page = exerciseRepository.findByCourseId(courseId, pageable);
