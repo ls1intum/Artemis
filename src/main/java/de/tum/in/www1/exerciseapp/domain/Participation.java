@@ -37,6 +37,9 @@ public class Participation implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Result> results = new HashSet<>();
 
+    @ManyToOne
+    private Exercise exercise;
+
     public Long getId() {
         return id;
     }
@@ -67,6 +70,14 @@ public class Participation implements Serializable {
 
     public void setResults(Set<Result> results) {
         this.results = results;
+    }
+
+    public Exercise getExercise() {
+        return exercise;
+    }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
     }
 
     @Override

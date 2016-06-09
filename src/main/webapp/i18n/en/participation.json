@@ -18,7 +18,8 @@
             },
             "cloneUrl": "Clone Url",
             "student": "Student",
-            "results": "Results"
+            "results": "Results",
+            "exercise": "Exercise"
         }
     }
 }
