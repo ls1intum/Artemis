@@ -1,0 +1,30 @@
+{
+    "exerciseApplicationApp": {
+        "exercise" : {
+            "home": {
+                "title": "Exercises",
+                "createLabel": "Exercise erstellen",
+                "createOrEditLabel": "Exercise erstellen oder bearbeiten",
+                "search": "Suche nach Exercise"
+            },
+            "created": "Exercise erstellt mit ID {{ param }}",
+            "updated": "Exercise aktualisiert mit ID {{ param }}",
+            "deleted": "Exercise gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Exercise {{ id }} wirklich dauerhaft gejöscht werden?"
+            },
+            "detail": {
+                "title": "Exercise"
+            },
+            "title": "Title",
+            "slug": "Slug",
+            "baseProjectKey": "Base Project Key",
+            "baseRepositorySlug": "Base Repository Slug",
+            "baseBuildPlanSlug": "Base Build Plan Slug",
+            "releaseDate": "Release Date",
+            "dueDate": "Due Date",
+            "course": "Course",
+            "participations": "Participations"
+        }
+    }
+}

@@ -1,0 +1,29 @@
+{
+    "relationships": [
+        {
+            "relationshipName": "exercises",
+            "otherEntityName": "exercise",
+            "relationshipType": "one-to-many",
+            "otherEntityRelationshipName": "course"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "title",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "slug",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "studentGroupName",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20160609093907",
+    "dto": "no",
+    "service": "no",
+    "entityTableName": "course",
+    "pagination": "infinite-scroll"
+}

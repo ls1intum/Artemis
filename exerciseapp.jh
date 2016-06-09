@@ -1,0 +1,46 @@
+
+entity Course {
+	id Long
+	courseTitle String
+    courseSlug String
+    studentGroupName String
+}
+
+entity Exercise {
+	id Long
+	exerciseTitle String
+    exerciseSlug String
+    baseProjectKey String
+    baseRepositorySlug String
+    baseBuildPlanSlug String
+    releaseDate ZonedDateTime
+    dueDate ZonedDateTime
+}
+
+entity Participation {
+	id Long
+	cloneUrl String
+}
+
+entity Result {
+	id Long,
+    resultString String
+    completionDate ZonedDateTime
+}
+
+relationship OneToMany {
+	Course{exercise} to Exercise{course},
+	Exercise{participation} to Participation{exercise},
+  	Participation{result} to Result{participation}
+}
+
+relationship OneToOne {
+	Participation{student} to User
+}
+
+paginate Course, Exercise, Participation with infinite-scroll
+
+service Bamboo with serviceClass
+service Bitbucket with serviceClass
+
+	
