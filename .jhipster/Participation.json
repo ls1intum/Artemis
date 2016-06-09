@@ -1,0 +1,27 @@
+{
+    "relationships": [
+        {
+            "relationshipName": "student",
+            "otherEntityName": "user",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "login"
+        },
+        {
+            "relationshipName": "results",
+            "otherEntityName": "result",
+            "relationshipType": "one-to-many",
+            "otherEntityRelationshipName": "participation"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "cloneUrl",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20160609100233",
+    "dto": "no",
+    "service": "serviceClass",
+    "entityTableName": "participation",
+    "pagination": "no"
+}

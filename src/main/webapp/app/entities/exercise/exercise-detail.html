@@ -1,0 +1,46 @@
+
+<div>
+    <h2><span translate="exerciseApplicationApp.exercise.detail.title">Exercise</span> {{vm.exercise.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="dl-horizontal jh-entity-details">
+        <dt><span translate="exerciseApplicationApp.exercise.title">Title</span></dt>
+        <dd>
+            <span>{{vm.exercise.title}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.exercise.slug">Slug</span></dt>
+        <dd>
+            <span>{{vm.exercise.slug}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.exercise.baseProjectKey">Base Project Key</span></dt>
+        <dd>
+            <span>{{vm.exercise.baseProjectKey}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.exercise.baseRepositorySlug">Base Repository Slug</span></dt>
+        <dd>
+            <span>{{vm.exercise.baseRepositorySlug}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.exercise.baseBuildPlanSlug">Base Build Plan Slug</span></dt>
+        <dd>
+            <span>{{vm.exercise.baseBuildPlanSlug}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span></dt>
+        <dd>
+            <span>{{vm.exercise.releaseDate | date:'medium'}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.exercise.dueDate">Due Date</span></dt>
+        <dd>
+            <span>{{vm.exercise.dueDate | date:'medium'}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.exercise.course">Course</span></dt>
+        <dd>
+            <a ui-sref="course-detail({id:vm.exercise.course.id})">{{vm.exercise.course.title}}</a>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            onclick="window.history.back()"
+            class="btn btn-info">
+        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span translate="entity.action.back"> Back</span>
+    </button>
+</div>

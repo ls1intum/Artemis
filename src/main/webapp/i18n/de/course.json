@@ -1,0 +1,25 @@
+{
+    "exerciseApplicationApp": {
+        "course" : {
+            "home": {
+                "title": "Courses",
+                "createLabel": "Course erstellen",
+                "createOrEditLabel": "Course erstellen oder bearbeiten",
+                "search": "Suche nach Course"
+            },
+            "created": "Course erstellt mit ID {{ param }}",
+            "updated": "Course aktualisiert mit ID {{ param }}",
+            "deleted": "Course gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Course {{ id }} wirklich dauerhaft gejöscht werden?"
+            },
+            "detail": {
+                "title": "Course"
+            },
+            "title": "Title",
+            "slug": "Slug",
+            "studentGroupName": "Student Group Name",
+            "exercises": "Exercises"
+        }
+    }
+}

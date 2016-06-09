@@ -1,0 +1,24 @@
+{
+    "exerciseApplicationApp": {
+        "result" : {
+            "home": {
+                "title": "Results",
+                "createLabel": "Create a new Result",
+                "createOrEditLabel": "Create or edit a Result",
+                "search": "Search for Result"
+            },
+            "created": "A new Result is created with identifier {{ param }}",
+            "updated": "A Result is updated with identifier {{ param }}",
+            "deleted": "A Result is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Result {{ id }}?"
+            },
+            "detail": {
+                "title": "Result"
+            },
+            "resultString": "Result String",
+            "buildCompletionDate": "Build Completion Date",
+            "participation": "Participation"
+        }
+    }
+}

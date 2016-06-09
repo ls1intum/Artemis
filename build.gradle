@@ -1,0 +1,222 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        maven { url "http://repo.spring.io/plugins-release" }
+        maven { url "http://repo.spring.io/milestone" }
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath "org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.0.1"
+        classpath "net.ltgt.gradle:gradle-apt-plugin:0.6"
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
+        classpath "org.springframework.build.gradle:propdeps-plugin:0.0.7"
+        classpath "com.moowork.gradle:gradle-node-plugin:0.12"
+        classpath "com.moowork.gradle:gradle-gulp-plugin:0.12"
+        classpath "se.transmode.gradle:gradle-docker:1.2"
+        classpath "io.spring.gradle:dependency-management-plugin:0.5.6.RELEASE"
+        //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
+    }
+}
+
+apply plugin: 'java'
+sourceCompatibility=1.8
+targetCompatibility=1.8
+apply plugin: 'maven'
+apply plugin: 'spring-boot'
+apply plugin: 'war'
+apply plugin: 'propdeps'
+defaultTasks 'bootRun'
+
+bootRepackage {
+   mainClass = 'de.tum.in.www1.exerciseapp.ExerciseApplicationApp'
+}
+
+war {
+    rootSpec.exclude("**/tomcat-*.jar")
+}
+
+springBoot {
+    mainClass = 'de.tum.in.www1.exerciseapp.ExerciseApplicationApp'
+    executable = true
+}
+
+bootRun {
+    addResources = false
+}
+
+test {
+    include '**/*UnitTest*'
+    include '**/*IntTest*'
+
+    ignoreFailures true
+    reports.html.enabled = false
+}
+
+
+task cucumberTest(type: Test) {
+    include '**/CucumberTest*'
+
+    ignoreFailures true
+    reports.html.enabled = false
+}
+
+test.finalizedBy(cucumberTest)
+
+task testReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/tests")
+    reportOn test
+    reportOn cucumberTest
+}
+
+
+cucumberTest.finalizedBy(testReport)
+
+apply from: 'gradle/yeoman.gradle'
+apply from: 'gradle/sonar.gradle'
+
+apply from: 'gradle/liquibase.gradle'
+
+apply from: 'gradle/gatling.gradle'
+apply from: 'gradle/mapstruct.gradle'
+apply from: 'gradle/docker.gradle'
+//jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
+
+if (project.hasProperty('prod')) {
+    apply from: 'gradle/profile_prod.gradle'
+} else {
+    apply from: 'gradle/profile_dev.gradle'
+}
+
+group = 'de.tum.in.www1.exerciseapp'
+version = '0.0.1-SNAPSHOT'
+
+description = ''
+
+configurations {
+    providedRuntime
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+    jcenter()
+    maven { url 'http://repo.spring.io/milestone' }
+    maven { url 'http://repo.spring.io/snapshot' }
+    maven { url 'https://repository.jboss.org/nexus/content/repositories/releases' }
+    maven { url 'https://oss.sonatype.org/content/repositories/releases' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+    maven { url 'http://repo.maven.apache.org/maven2' }
+}
+
+dependencies {
+    compile "io.dropwizard.metrics:metrics-core"
+    compile "io.dropwizard.metrics:metrics-annotation:${dropwizard_metrics_version}"
+    compile "io.dropwizard.metrics:metrics-ehcache:${dropwizard_metrics_version}"
+    compile "io.dropwizard.metrics:metrics-graphite:${dropwizard_metrics_version}"
+    compile "io.dropwizard.metrics:metrics-healthchecks:${dropwizard_metrics_version}"
+    compile "io.dropwizard.metrics:metrics-jvm:${dropwizard_metrics_version}"
+    compile "io.dropwizard.metrics:metrics-servlet:${dropwizard_metrics_version}"
+    compile "io.dropwizard.metrics:metrics-json:${dropwizard_metrics_version}"
+    compile ("io.dropwizard.metrics:metrics-servlets:${dropwizard_metrics_version}") {
+        exclude(module: 'metrics-healthchecks')
+    }
+    compile("net.logstash.logback:logstash-logback-encoder:${logstash_logback_encoder_version}") {
+        exclude(module: 'ch.qos.logback')
+    }
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-json-org:${jackson_version}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-hppc:${jackson_version}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jackson_version}"
+    compile "com.fasterxml.jackson.datatype:jackson-datatype-hibernate4"
+    compile "com.fasterxml.jackson.core:jackson-annotations:${jackson_version}"
+    compile "com.fasterxml.jackson.core:jackson-databind:${jackson_version}"
+    compile ("com.ryantenney.metrics:metrics-spring:${metrics_spring_version}") {
+        exclude(module: 'metrics-core')
+        exclude(module: 'metrics-healthchecks')
+    } 
+    compile "com.hazelcast:hazelcast:${hazelcast_version}"
+    compile "com.hazelcast:hazelcast-wm:${hazelcast_version}"
+    compile("com.zaxxer:HikariCP:${HikariCP_version}") {
+        exclude(module: 'tools')
+    }
+    compile "commons-lang:commons-lang:${commons_lang_version}"
+    compile "commons-io:commons-io:${commons_io_version}"
+    compile "javax.inject:javax.inject:${javax_inject_version}"
+    compile "javax.transaction:javax.transaction-api"
+    compile "org.apache.geronimo.javamail:geronimo-javamail_1.4_mail:${geronimo_javamail_1_4_mail_version}"
+    compile "org.hibernate:hibernate-core:${hibernate_entitymanager_version}"
+    
+    compile ("org.hibernate:hibernate-ehcache") {
+        exclude(module: 'ehcache-core')
+    }
+    compile "org.hibernate:hibernate-envers"
+    compile "org.hibernate:hibernate-validator"
+    compile ("org.liquibase:liquibase-core:${liquibase_core_version}") {
+        exclude(module: 'jetty-servlet')
+    }
+    compile "com.mattbertolini:liquibase-slf4j:${liquibase_slf4j_version}"
+    compile "org.springframework.boot:spring-boot-actuator"
+    compile "org.springframework.boot:spring-boot-autoconfigure"
+    compile "org.springframework.boot:spring-boot-loader-tools"
+    compile "org.springframework.boot:spring-boot-starter-logging"
+    compile "org.springframework.boot:spring-boot-starter-aop"
+    compile "org.springframework.boot:spring-boot-starter-data-jpa"
+    compile "org.springframework.boot:spring-boot-starter-data-elasticsearch"
+    compile "org.springframework.boot:spring-boot-starter-security"
+    compile "org.springframework.boot:spring-boot-starter-web"
+    compile "org.springframework.boot:spring-boot-starter-websocket"
+    compile "org.springframework.boot:spring-boot-starter-thymeleaf"
+    compile "org.springframework.cloud:spring-cloud-cloudfoundry-connector"
+    compile "org.springframework.cloud:spring-cloud-spring-service-connector"
+    compile "org.springframework.cloud:spring-cloud-localconfig-connector"
+    compile ("org.springframework:spring-context-support") {
+        exclude(module: 'quartz')
+    }
+    compile "org.springframework.security:spring-security-config:${spring_security_version}"
+    compile "org.springframework.security:spring-security-data:${spring_security_version}"
+    compile "org.springframework.security:spring-security-web:${spring_security_version}"
+    compile "org.springframework.security:spring-security-messaging:${spring_security_version}" 
+
+    compile("io.springfox:springfox-swagger2:${springfox_version}"){
+        exclude module: 'mapstruct'
+    }
+    
+    compile "mysql:mysql-connector-java"
+    compile "fr.ippon.spark.metrics:metrics-spark-reporter:${metrics_spark_reporter_version}"
+    compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
+    testCompile "com.jayway.awaitility:awaitility:${awaility_version}"
+    testCompile "com.jayway.jsonpath:json-path"
+    testCompile "info.cukes:cucumber-junit:${cucumber_version}"
+    testCompile "info.cukes:cucumber-spring:${cucumber_version}"
+    testCompile "org.springframework.boot:spring-boot-starter-test"
+    testCompile "org.assertj:assertj-core:${assertj_core_version}"
+    testCompile "junit:junit"
+    testCompile "org.mockito:mockito-core"
+    testCompile "com.mattbertolini:liquibase-slf4j:${liquibase_slf4j_version}"
+    testCompile "org.hamcrest:hamcrest-library"
+    
+    testCompile "io.gatling.highcharts:gatling-charts-highcharts:${gatling_version}"
+    
+    testCompile "com.h2database:h2"
+    optional "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
+    //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
+}
+
+clean {
+    delete "target"
+}
+
+task cleanResources(type: Delete) {
+    delete 'build/resources'
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '2.13'
+}
+
+task stage(dependsOn: 'bootRepackage') {
+}
+
+compileJava.dependsOn processResources
+processResources.dependsOn cleanResources
