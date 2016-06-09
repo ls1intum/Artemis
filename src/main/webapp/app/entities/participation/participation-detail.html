@@ -12,6 +12,10 @@
         <dd>
             {{vm.participation.student.login}}
         </dd>
+        <dt><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></dt>
+        <dd>
+            <a ui-sref="exercise-detail({id:vm.participation.exercise.id})">{{vm.participation.exercise.title}}</a>
+        </dd>
     </dl>
 
     <button type="submit"

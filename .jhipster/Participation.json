@@ -11,6 +11,12 @@
             "otherEntityName": "result",
             "relationshipType": "one-to-many",
             "otherEntityRelationshipName": "participation"
+        },
+        {
+            "relationshipName": "exercise",
+            "otherEntityName": "exercise",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "title"
         }
     ],
     "fields": [

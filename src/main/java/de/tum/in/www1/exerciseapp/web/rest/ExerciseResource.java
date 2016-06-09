@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.search.ExerciseSearchRepository;
+import de.tum.in.www1.exerciseapp.web.rest.dto.ExerciseDTO;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -34,13 +36,13 @@ import static org.elasticsearch.index.query.QueryBuilders.*;
 public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
-        
+
     @Inject
     private ExerciseRepository exerciseRepository;
-    
+
     @Inject
     private ExerciseSearchRepository exerciseSearchRepository;
-    
+
     /**
      * POST  /exercises : Create a new exercise.
      *
@@ -103,8 +105,29 @@ public class ExerciseResource {
     public ResponseEntity<List<Exercise>> getAllExercises(Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseRepository.findAll(pageable); 
+        Page<Exercise> page = exerciseRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/exercises");
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET  /courses/:courseId/exercises : get all the exercises.
+     *
+     * @param courseId the course for which to retrieve all exercises
+     * @param pageable the pagination information
+     * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
+     * @throws URISyntaxException if there is an error to generate the pagination HTTP headers
+     */
+    @RequestMapping(value = "/courses/{courseId}/exercises",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    @Transactional(readOnly = true)
+    public ResponseEntity<List<Exercise>> getAllExercises(@PathVariable Long courseId, Pageable pageable)
+        throws URISyntaxException {
+        log.debug("REST request to get a page of Exercises");
+        Page<Exercise> page = exerciseRepository.findByCourseId(courseId, pageable);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 

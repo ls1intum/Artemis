@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .controller('ParticipationDialogController', ParticipationDialogController);
 
-    ParticipationDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'Participation', 'User', 'Result'];
+    ParticipationDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'Participation', 'User', 'Result', 'Exercise'];
 
-    function ParticipationDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, Participation, User, Result) {
+    function ParticipationDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, Participation, User, Result, Exercise) {
         var vm = this;
 
         vm.participation = entity;
@@ -15,6 +15,7 @@
         vm.save = save;
         vm.users = User.query();
         vm.results = Result.query();
+        vm.exercises = Exercise.query();
 
         $timeout(function (){
             angular.element('.form-group:eq(1)>input').focus();

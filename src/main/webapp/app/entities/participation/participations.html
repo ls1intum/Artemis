@@ -38,6 +38,7 @@
                     <th><span translate="global.field.id">ID</span></th>
                     <th><span translate="exerciseApplicationApp.participation.cloneUrl">Clone Url</span></th>
                     <th><span translate="exerciseApplicationApp.participation.student">Student</span></th>
+                    <th><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -47,6 +48,9 @@
                     <td>{{participation.cloneUrl}}</td>
                     <td>
                         {{participation.student.login}}
+                    </td>
+                    <td>
+                        <a ui-sref="exercise-detail({id:participation.exercise.id})">{{participation.exercise.title}}</a>
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
