@@ -24,18 +24,22 @@
             <column name="result_string" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            
-            <column name="completion_date" type="timestamp">
+
+            <column name="build_completion_date" type="timestamp">
                 <constraints nullable="true" />
             </column>
-            
+
+            <column name="build_successful" type="bit">
+                <constraints nullable="true" />
+            </column>
+
             <column name="participation_id" type="bigint">
                 <constraints nullable="true" />
             </column>
 
             <!-- jhipster-needle-liquibase-add-column - Jhipster will add columns here, do not remove-->
         </createTable>
-        <dropDefaultValue tableName="result" columnName="completion_date" columnDataType="datetime"/>
-        
+        <dropDefaultValue tableName="result" columnName="build_completion_date" columnDataType="datetime"/>
+
     </changeSet>
 </databaseChangeLog>

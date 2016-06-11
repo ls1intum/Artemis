@@ -1,0 +1,42 @@
+<p class="text-center text-muted" ng-show="$ctrl.exercises.length === 0">There are no available exercises for this
+    course.</p>
+<table class="table exercise-table" ng-hide="$ctrl.exercises.length === 0">
+    <thead>
+    <tr>
+        <th class="col-xs-3">Exercise</th>
+        <th class="col-xs-2">Due date</th>
+        <th class="col-xs-6">Results</th>
+        <th class="col-xs-1">Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate'">
+        <td>{{exercise.title}}</td>
+        <td>
+            <span am-time-ago="exercise.dueDate" uib-tooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}"
+                  tooltip-placement="right"></span>
+        </td>
+        <td>
+            <span class="text-muted" ng-if="!$ctrl.hasParticipation(exercise)">You have not started this exercise yet.</span>
+        </td>
+        <td class="text-center">
+            <div ng-switch on="$ctrl.hasParticipation(exercise)">
+                <button class="btn btn-primary btn-sm btn-block btn-student-action"
+                        ng-switch-when="false"
+                        ng-click="$ctrl.start(exercise)">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <div ng-switch-when="true">
+                    <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"
+                            popover-placement="{{$ctrl.clonePopover.placement}}"
+                            type="button" class="btn btn-primary btn-sm btn-block"><i
+                        class="fa fa-download fa-fw"></i>&nbsp;Clone
+                        repository
+                    </button>
+                </div>
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>

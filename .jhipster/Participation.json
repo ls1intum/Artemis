@@ -23,6 +23,10 @@
         {
             "fieldName": "cloneUrl",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "repositorySlug",
+            "fieldType": "String"
         }
     ],
     "changelogDate": "20160609100233",

@@ -12,6 +12,10 @@
         <dd>
             <span>{{vm.result.buildCompletionDate | date:'medium'}}</span>
         </dd>
+        <dt><span translate="exerciseApplicationApp.result.buildSuccessful">Build Successful</span></dt>
+        <dd>
+            <span>{{vm.result.buildSuccessful}}</span>
+        </dd>
         <dt><span translate="exerciseApplicationApp.result.participation">Participation</span></dt>
         <dd>
             <a ui-sref="participation-detail({id:vm.result.participation.id})">{{vm.result.participation.id}}</a>

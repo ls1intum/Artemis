@@ -69,14 +69,17 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         if (authenticationResponse != null) {
             Map content = authenticationResponse.getBody();
             User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() -> {
+                // TODO: We don't want all users to be named Johne Doe ;)
                 User newUser = userService.createUserInformation((String) content.get("name"), "",
                     "John", "Doe", (String) content.get("emailAddress"),
                     "en");
-                userService.activateRegistration(newUser.getActivationKey());
                 return newUser;
             });
             user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));
             userRepository.save(user);
+            if (!user.getActivated()) {
+                userService.activateRegistration(user.getActivationKey());
+            }
             UsernamePasswordAuthenticationToken token;
             Optional<User> matchingUser = userService.getUserWithAuthoritiesByLogin(username);
             if (matchingUser.isPresent()) {
@@ -121,11 +124,10 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
             Authority adminAuthority = new Authority();
             adminAuthority.setName(AuthoritiesConstants.ADMIN);
             authorities.add(adminAuthority);
-        } else {
-            Authority studentAuthority = new Authority();
-            studentAuthority.setName(AuthoritiesConstants.USER);
-            authorities.add(studentAuthority);
         }
+        Authority userAuthority = new Authority();
+        userAuthority.setName(AuthoritiesConstants.USER);
+        authorities.add(userAuthority);
         return authorities;
     }
 }

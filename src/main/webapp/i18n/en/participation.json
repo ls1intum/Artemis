@@ -17,6 +17,7 @@
                 "title": "Participation"
             },
             "cloneUrl": "Clone Url",
+            "repositorySlug": "Repository Slug",
             "student": "Student",
             "results": "Results",
             "exercise": "Exercise"

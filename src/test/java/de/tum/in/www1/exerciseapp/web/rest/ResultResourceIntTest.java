@@ -55,6 +55,9 @@ public class ResultResourceIntTest {
     private static final ZonedDateTime UPDATED_BUILD_COMPLETION_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
     private static final String DEFAULT_BUILD_COMPLETION_DATE_STR = dateTimeFormatter.format(DEFAULT_BUILD_COMPLETION_DATE);
 
+    private static final Boolean DEFAULT_BUILD_SUCCESSFUL = false;
+    private static final Boolean UPDATED_BUILD_SUCCESSFUL = true;
+
     @Inject
     private ResultRepository resultRepository;
 
@@ -88,6 +91,7 @@ public class ResultResourceIntTest {
         result = new Result();
         result.setResultString(DEFAULT_RESULT_STRING);
         result.setBuildCompletionDate(DEFAULT_BUILD_COMPLETION_DATE);
+        result.setBuildSuccessful(DEFAULT_BUILD_SUCCESSFUL);
     }
 
     @Test
@@ -108,6 +112,7 @@ public class ResultResourceIntTest {
         Result testResult = results.get(results.size() - 1);
         assertThat(testResult.getResultString()).isEqualTo(DEFAULT_RESULT_STRING);
         assertThat(testResult.getBuildCompletionDate()).isEqualTo(DEFAULT_BUILD_COMPLETION_DATE);
+        assertThat(testResult.isBuildSuccessful()).isEqualTo(DEFAULT_BUILD_SUCCESSFUL);
 
         // Validate the Result in ElasticSearch
         Result resultEs = resultSearchRepository.findOne(testResult.getId());
@@ -126,7 +131,8 @@ public class ResultResourceIntTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(result.getId().intValue())))
                 .andExpect(jsonPath("$.[*].resultString").value(hasItem(DEFAULT_RESULT_STRING.toString())))
-                .andExpect(jsonPath("$.[*].buildCompletionDate").value(hasItem(DEFAULT_BUILD_COMPLETION_DATE_STR)));
+                .andExpect(jsonPath("$.[*].buildCompletionDate").value(hasItem(DEFAULT_BUILD_COMPLETION_DATE_STR)))
+                .andExpect(jsonPath("$.[*].buildSuccessful").value(hasItem(DEFAULT_BUILD_SUCCESSFUL.booleanValue())));
     }
 
     @Test
@@ -141,7 +147,8 @@ public class ResultResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(result.getId().intValue()))
             .andExpect(jsonPath("$.resultString").value(DEFAULT_RESULT_STRING.toString()))
-            .andExpect(jsonPath("$.buildCompletionDate").value(DEFAULT_BUILD_COMPLETION_DATE_STR));
+            .andExpect(jsonPath("$.buildCompletionDate").value(DEFAULT_BUILD_COMPLETION_DATE_STR))
+            .andExpect(jsonPath("$.buildSuccessful").value(DEFAULT_BUILD_SUCCESSFUL.booleanValue()));
     }
 
     @Test
@@ -165,6 +172,7 @@ public class ResultResourceIntTest {
         updatedResult.setId(result.getId());
         updatedResult.setResultString(UPDATED_RESULT_STRING);
         updatedResult.setBuildCompletionDate(UPDATED_BUILD_COMPLETION_DATE);
+        updatedResult.setBuildSuccessful(UPDATED_BUILD_SUCCESSFUL);
 
         restResultMockMvc.perform(put("/api/results")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -177,6 +185,7 @@ public class ResultResourceIntTest {
         Result testResult = results.get(results.size() - 1);
         assertThat(testResult.getResultString()).isEqualTo(UPDATED_RESULT_STRING);
         assertThat(testResult.getBuildCompletionDate()).isEqualTo(UPDATED_BUILD_COMPLETION_DATE);
+        assertThat(testResult.isBuildSuccessful()).isEqualTo(UPDATED_BUILD_SUCCESSFUL);
 
         // Validate the Result in ElasticSearch
         Result resultEs = resultSearchRepository.findOne(testResult.getId());
@@ -218,6 +227,7 @@ public class ResultResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.[*].id").value(hasItem(result.getId().intValue())))
             .andExpect(jsonPath("$.[*].resultString").value(hasItem(DEFAULT_RESULT_STRING.toString())))
-            .andExpect(jsonPath("$.[*].buildCompletionDate").value(hasItem(DEFAULT_BUILD_COMPLETION_DATE_STR)));
+            .andExpect(jsonPath("$.[*].buildCompletionDate").value(hasItem(DEFAULT_BUILD_COMPLETION_DATE_STR)))
+            .andExpect(jsonPath("$.[*].buildSuccessful").value(hasItem(DEFAULT_BUILD_SUCCESSFUL.booleanValue())));
     }
 }

@@ -2,7 +2,9 @@ package de.tum.in.www1.exerciseapp.repository;
 
 import de.tum.in.www1.exerciseapp.domain.Participation;
 
+import de.tum.in.www1.exerciseapp.domain.User;
 import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
@@ -14,5 +16,8 @@ public interface ParticipationRepository extends JpaRepository<Participation,Lon
 
     @Query("select participation from Participation participation where participation.student.login = ?#{principal.username}")
     List<Participation> findByStudentIsCurrentUser();
+
+    @Query("select participation from Participation participation where participation.exercise.id = :exerciseId and participation.student.login = ?#{principal}")
+    Participation findOneByExerciseIdAndStudentIsCurrentUser(@Param("exerciseId") Long exerciseId);
 
 }

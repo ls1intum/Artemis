@@ -18,6 +18,7 @@
             },
             "resultString": "Result String",
             "buildCompletionDate": "Build Completion Date",
+            "buildSuccessful": "Build Successful",
             "participation": "Participation"
         }
     }

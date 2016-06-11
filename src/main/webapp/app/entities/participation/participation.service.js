@@ -2,7 +2,8 @@
     'use strict';
     angular
         .module('exerciseApplicationApp')
-        .factory('Participation', Participation);
+        .factory('Participation', Participation)
+        .factory('ExerciseParticipation', ExerciseParticipation);
 
     Participation.$inject = ['$resource'];
 
@@ -21,6 +22,25 @@
                 }
             },
             'update': { method:'PUT' }
+        });
+    }
+
+    ExerciseParticipation.$inject = ['$resource'];
+
+    function ExerciseParticipation ($resource) {
+        var resourceUrl = 'api/courses/:courseId/exercises/:exerciseId/participation';
+
+        return $resource(resourceUrl, {}, {
+            'query': { method: 'GET' },
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                    }
+                    return data;
+                }
+            }
         });
     }
 })();

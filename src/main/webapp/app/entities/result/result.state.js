@@ -73,6 +73,7 @@
                             return {
                                 resultString: null,
                                 buildCompletionDate: null,
+                                buildSuccessful: null,
                                 id: null
                             };
                         }

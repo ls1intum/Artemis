@@ -1,7 +1,7 @@
 {
     "home": {
-        "title": "Welcome, Java Hipster!",
-        "subtitle": "This is your homepage",
+        "title": "Welcome to the LS1 Exercise Application!",
+        "subtitle": "This application allows you take part in interactive programming exercises.",
         "logged": {
             "message": "You are logged in as user \"{{username}}\"."
         },

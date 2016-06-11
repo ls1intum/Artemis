@@ -4,6 +4,10 @@ body {
     color: #333;
 }
 
+.exercise-table tbody>tr>td {
+    vertical-align: middle;
+}
+
 /* ==========================================================================
 Hide ng-cloak on page load, https://docs.angularjs.org/api/ng/directive/ngCloak
 ========================================================================== */
