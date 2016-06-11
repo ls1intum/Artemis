@@ -6,7 +6,6 @@ import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.AuthorityRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
-import de.tum.in.www1.exerciseapp.repository.search.UserSearchRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.MailService;
 import de.tum.in.www1.exerciseapp.service.UserService;
@@ -31,9 +30,6 @@ import java.net.URISyntaxException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
 
 /**
  * REST controller for managing users.
@@ -77,9 +73,6 @@ public class UserResource {
 
     @Inject
     private UserService userService;
-
-    @Inject
-    private UserSearchRepository userSearchRepository;
 
     /**
      * POST  /users  : Creates a new user.
@@ -227,22 +220,5 @@ public class UserResource {
         log.debug("REST request to delete User: {}", login);
         userService.deleteUserInformation(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert( "userManagement.deleted", login)).build();
-    }
-
-    /**
-     * SEARCH  /_search/users/:query : search for the User corresponding
-     * to the query.
-     *
-     * @param query the query to search
-     * @return the result of the search
-     */
-    @RequestMapping(value = "/_search/users/{query}",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
-    @Timed
-    public List<User> search(@PathVariable String query) {
-        return StreamSupport
-            .stream(userSearchRepository.search(queryStringQuery(query)).spliterator(), false)
-            .collect(Collectors.toList());
     }
 }

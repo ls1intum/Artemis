@@ -11,7 +11,6 @@ import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,10 +24,6 @@ import java.security.Principal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
 
 /**
  * REST controller for managing Participation.
@@ -234,22 +229,6 @@ public class ParticipationResource {
         log.debug("REST request to delete Participation : {}", id);
         participationService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", id.toString())).build();
-    }
-
-    /**
-     * SEARCH  /_search/participations?query=:query : search for the participation corresponding
-     * to the query.
-     *
-     * @param query the query of the participation search
-     * @return the result of the search
-     */
-    @RequestMapping(value = "/_search/participations",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
-    @Timed
-    public List<Participation> searchParticipations(@RequestParam String query) {
-        log.debug("REST request to search Participations for query {}", query);
-        return participationService.search(query);
     }
 
 }

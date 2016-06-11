@@ -3,11 +3,9 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
-import de.tum.in.www1.exerciseapp.repository.search.ResultSearchRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +16,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
 
 /**
  * REST controller for managing Result.
@@ -34,9 +28,6 @@ public class ResultResource {
 
     @Inject
     private ResultRepository resultRepository;
-
-    @Inject
-    private ResultSearchRepository resultSearchRepository;
 
     /**
      * POST  /results : Create a new result.
@@ -55,7 +46,6 @@ public class ResultResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "idexists", "A new result cannot already have an ID")).body(null);
         }
         Result savedResult = resultRepository.save(result);
-        resultSearchRepository.save(savedResult);
         return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("result", savedResult.getId().toString()))
             .body(savedResult);
@@ -80,7 +70,6 @@ public class ResultResource {
             return createResult(result);
         }
         Result savedResult = resultRepository.save(result);
-        resultSearchRepository.save(savedResult);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert("result", savedResult.getId().toString()))
             .body(savedResult);
@@ -134,26 +123,7 @@ public class ResultResource {
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);
         resultRepository.delete(id);
-        resultSearchRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("result", id.toString())).build();
-    }
-
-    /**
-     * SEARCH  /_search/results?query=:query : search for the result corresponding
-     * to the query.
-     *
-     * @param query the query of the result search
-     * @return the result of the search
-     */
-    @RequestMapping(value = "/_search/results",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
-    @Timed
-    public List<Result> searchResults(@RequestParam String query) {
-        log.debug("REST request to search Results for query {}", query);
-        return StreamSupport
-            .stream(resultSearchRepository.search(queryStringQuery(query)).spliterator(), false)
-            .collect(Collectors.toList());
     }
 
 }

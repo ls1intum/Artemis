@@ -2,7 +2,6 @@ package de.tum.in.www1.exerciseapp.domain;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.data.elasticsearch.annotations.Document;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -15,7 +14,6 @@ import java.util.Objects;
 @Entity
 @Table(name = "result")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@Document(indexName = "result")
 public class Result implements Serializable {
 
     private static final long serialVersionUID = 1L;

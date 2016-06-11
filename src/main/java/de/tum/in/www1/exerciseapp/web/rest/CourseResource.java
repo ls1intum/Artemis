@@ -3,7 +3,6 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
-import de.tum.in.www1.exerciseapp.repository.search.CourseSearchRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -21,10 +20,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
-
-import static org.elasticsearch.index.query.QueryBuilders.*;
 
 /**
  * REST controller for managing Course.
@@ -34,13 +29,10 @@ import static org.elasticsearch.index.query.QueryBuilders.*;
 public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
-        
+
     @Inject
     private CourseRepository courseRepository;
-    
-    @Inject
-    private CourseSearchRepository courseSearchRepository;
-    
+
     /**
      * POST  /courses : Create a new course.
      *
@@ -58,7 +50,6 @@ public class CourseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("course", "idexists", "A new course cannot already have an ID")).body(null);
         }
         Course result = courseRepository.save(course);
-        courseSearchRepository.save(result);
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("course", result.getId().toString()))
             .body(result);
@@ -83,7 +74,6 @@ public class CourseResource {
             return createCourse(course);
         }
         Course result = courseRepository.save(course);
-        courseSearchRepository.save(result);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert("course", course.getId().toString()))
             .body(result);
@@ -103,7 +93,7 @@ public class CourseResource {
     public ResponseEntity<List<Course>> getAllCourses(Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Courses");
-        Page<Course> page = courseRepository.findAll(pageable); 
+        Page<Course> page = courseRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -141,27 +131,7 @@ public class CourseResource {
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);
         courseRepository.delete(id);
-        courseSearchRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("course", id.toString())).build();
-    }
-
-    /**
-     * SEARCH  /_search/courses?query=:query : search for the course corresponding
-     * to the query.
-     *
-     * @param query the query of the course search
-     * @return the result of the search
-     */
-    @RequestMapping(value = "/_search/courses",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
-    @Timed
-    public ResponseEntity<List<Course>> searchCourses(@RequestParam String query, Pageable pageable)
-        throws URISyntaxException {
-        log.debug("REST request to search for a page of Courses for query {}", query);
-        Page<Course> page = courseSearchRepository.search(queryStringQuery(query), pageable);
-        HttpHeaders headers = PaginationUtil.generateSearchPaginationHttpHeaders(query, page, "/api/_search/courses");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
 }

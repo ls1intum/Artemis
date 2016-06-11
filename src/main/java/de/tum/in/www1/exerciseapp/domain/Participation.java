@@ -3,13 +3,12 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.data.elasticsearch.annotations.Document;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Set;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A Participation.
@@ -17,7 +16,6 @@ import java.util.Objects;
 @Entity
 @Table(name = "participation")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@Document(indexName = "participation")
 public class Participation implements Serializable {
 
     private static final long serialVersionUID = 1L;

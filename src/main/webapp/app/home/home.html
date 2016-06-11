@@ -8,8 +8,8 @@
             <p class="lead" translate="home.subtitle">This application allows you take part in interactive programming exercises.</p>
 
             <div ng-switch="vm.isAuthenticated()">
-                <div class="alert alert-success" ng-switch-when="true" translate="home.logged.message" translate-values="{username: '{{vm.account.login}}'}">
-                    You are logged in as user "{{vm.account.login}}".
+                <div class="alert alert-success" ng-switch-when="true" translate="home.logged.message" translate-values="{username: '{{vm.account.login}}'}" translate-compile>
+                    You are logged in as user \"{{username}}\". View your <a class="alert-link" ui-sref="courses">courses</a> to get started.
                 </div>
 
                 <div class="lead" ng-switch-when="false" translate="global.messages.info.authenticated" translate-compile>

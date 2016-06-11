@@ -3,7 +3,6 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
-import de.tum.in.www1.exerciseapp.repository.search.ExerciseSearchRepository;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -71,9 +70,6 @@ public class ExerciseResourceIntTest {
     private ExerciseRepository exerciseRepository;
 
     @Inject
-    private ExerciseSearchRepository exerciseSearchRepository;
-
-    @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Inject
@@ -87,7 +83,6 @@ public class ExerciseResourceIntTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         ExerciseResource exerciseResource = new ExerciseResource();
-        ReflectionTestUtils.setField(exerciseResource, "exerciseSearchRepository", exerciseSearchRepository);
         ReflectionTestUtils.setField(exerciseResource, "exerciseRepository", exerciseRepository);
         this.restExerciseMockMvc = MockMvcBuilders.standaloneSetup(exerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
@@ -96,7 +91,6 @@ public class ExerciseResourceIntTest {
 
     @Before
     public void initTest() {
-        exerciseSearchRepository.deleteAll();
         exercise = new Exercise();
         exercise.setTitle(DEFAULT_TITLE);
         exercise.setSlug(DEFAULT_SLUG);
@@ -130,10 +124,6 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.getBaseBuildPlanSlug()).isEqualTo(DEFAULT_BASE_BUILD_PLAN_SLUG);
         assertThat(testExercise.getReleaseDate()).isEqualTo(DEFAULT_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(DEFAULT_DUE_DATE);
-
-        // Validate the Exercise in ElasticSearch
-        Exercise exerciseEs = exerciseSearchRepository.findOne(testExercise.getId());
-        assertThat(exerciseEs).isEqualToComparingFieldByField(testExercise);
     }
 
     @Test
@@ -189,7 +179,6 @@ public class ExerciseResourceIntTest {
     public void updateExercise() throws Exception {
         // Initialize the database
         exerciseRepository.saveAndFlush(exercise);
-        exerciseSearchRepository.save(exercise);
         int databaseSizeBeforeUpdate = exerciseRepository.findAll().size();
 
         // Update the exercise
@@ -219,10 +208,6 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.getBaseBuildPlanSlug()).isEqualTo(UPDATED_BASE_BUILD_PLAN_SLUG);
         assertThat(testExercise.getReleaseDate()).isEqualTo(UPDATED_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(UPDATED_DUE_DATE);
-
-        // Validate the Exercise in ElasticSearch
-        Exercise exerciseEs = exerciseSearchRepository.findOne(testExercise.getId());
-        assertThat(exerciseEs).isEqualToComparingFieldByField(testExercise);
     }
 
     @Test
@@ -230,17 +215,12 @@ public class ExerciseResourceIntTest {
     public void deleteExercise() throws Exception {
         // Initialize the database
         exerciseRepository.saveAndFlush(exercise);
-        exerciseSearchRepository.save(exercise);
         int databaseSizeBeforeDelete = exerciseRepository.findAll().size();
 
         // Get the exercise
         restExerciseMockMvc.perform(delete("/api/exercises/{id}", exercise.getId())
                 .accept(TestUtil.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk());
-
-        // Validate ElasticSearch is empty
-        boolean exerciseExistsInEs = exerciseSearchRepository.exists(exercise.getId());
-        assertThat(exerciseExistsInEs).isFalse();
 
         // Validate the database is empty
         List<Exercise> exercises = exerciseRepository.findAll();
@@ -252,7 +232,6 @@ public class ExerciseResourceIntTest {
     public void searchExercise() throws Exception {
         // Initialize the database
         exerciseRepository.saveAndFlush(exercise);
-        exerciseSearchRepository.save(exercise);
 
         // Search the exercise
         restExerciseMockMvc.perform(get("/api/_search/exercises?query=id:" + exercise.getId()))

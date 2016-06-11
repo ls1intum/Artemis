@@ -3,18 +3,15 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
-import de.tum.in.www1.exerciseapp.repository.search.ResultSearchRepository;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.hamcrest.Matchers.hasItem;
 import org.mockito.MockitoAnnotations;
 import org.springframework.boot.test.IntegrationTest;
 import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -25,12 +22,13 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -62,9 +60,6 @@ public class ResultResourceIntTest {
     private ResultRepository resultRepository;
 
     @Inject
-    private ResultSearchRepository resultSearchRepository;
-
-    @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Inject
@@ -78,7 +73,6 @@ public class ResultResourceIntTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         ResultResource resultResource = new ResultResource();
-        ReflectionTestUtils.setField(resultResource, "resultSearchRepository", resultSearchRepository);
         ReflectionTestUtils.setField(resultResource, "resultRepository", resultRepository);
         this.restResultMockMvc = MockMvcBuilders.standaloneSetup(resultResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
@@ -87,7 +81,6 @@ public class ResultResourceIntTest {
 
     @Before
     public void initTest() {
-        resultSearchRepository.deleteAll();
         result = new Result();
         result.setResultString(DEFAULT_RESULT_STRING);
         result.setBuildCompletionDate(DEFAULT_BUILD_COMPLETION_DATE);
@@ -113,10 +106,6 @@ public class ResultResourceIntTest {
         assertThat(testResult.getResultString()).isEqualTo(DEFAULT_RESULT_STRING);
         assertThat(testResult.getBuildCompletionDate()).isEqualTo(DEFAULT_BUILD_COMPLETION_DATE);
         assertThat(testResult.isBuildSuccessful()).isEqualTo(DEFAULT_BUILD_SUCCESSFUL);
-
-        // Validate the Result in ElasticSearch
-        Result resultEs = resultSearchRepository.findOne(testResult.getId());
-        assertThat(resultEs).isEqualToComparingFieldByField(testResult);
     }
 
     @Test
@@ -164,7 +153,6 @@ public class ResultResourceIntTest {
     public void updateResult() throws Exception {
         // Initialize the database
         resultRepository.saveAndFlush(result);
-        resultSearchRepository.save(result);
         int databaseSizeBeforeUpdate = resultRepository.findAll().size();
 
         // Update the result
@@ -186,10 +174,6 @@ public class ResultResourceIntTest {
         assertThat(testResult.getResultString()).isEqualTo(UPDATED_RESULT_STRING);
         assertThat(testResult.getBuildCompletionDate()).isEqualTo(UPDATED_BUILD_COMPLETION_DATE);
         assertThat(testResult.isBuildSuccessful()).isEqualTo(UPDATED_BUILD_SUCCESSFUL);
-
-        // Validate the Result in ElasticSearch
-        Result resultEs = resultSearchRepository.findOne(testResult.getId());
-        assertThat(resultEs).isEqualToComparingFieldByField(testResult);
     }
 
     @Test
@@ -197,17 +181,12 @@ public class ResultResourceIntTest {
     public void deleteResult() throws Exception {
         // Initialize the database
         resultRepository.saveAndFlush(result);
-        resultSearchRepository.save(result);
         int databaseSizeBeforeDelete = resultRepository.findAll().size();
 
         // Get the result
         restResultMockMvc.perform(delete("/api/results/{id}", result.getId())
                 .accept(TestUtil.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk());
-
-        // Validate ElasticSearch is empty
-        boolean resultExistsInEs = resultSearchRepository.exists(result.getId());
-        assertThat(resultExistsInEs).isFalse();
 
         // Validate the database is empty
         List<Result> results = resultRepository.findAll();
@@ -219,7 +198,6 @@ public class ResultResourceIntTest {
     public void searchResult() throws Exception {
         // Initialize the database
         resultRepository.saveAndFlush(result);
-        resultSearchRepository.save(result);
 
         // Search the result
         restResultMockMvc.perform(get("/api/_search/results?query=id:" + result.getId()))

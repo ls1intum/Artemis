@@ -13,7 +13,6 @@
         "indicator": {
             "diskSpace": "Festplattenspeicher",
             "mail": "Email",
-            "elasticsearch": "Elasticsearch",
             "db": "Datenbank"
         },
         "table": {
