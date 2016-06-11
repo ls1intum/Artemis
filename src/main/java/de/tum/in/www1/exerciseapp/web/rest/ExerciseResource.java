@@ -2,9 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
-import de.tum.in.www1.exerciseapp.repository.search.ExerciseSearchRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -24,8 +22,6 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
 
-import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
-
 /**
  * REST controller for managing Exercise.
  */
@@ -37,9 +33,6 @@ public class ExerciseResource {
 
     @Inject
     private ExerciseRepository exerciseRepository;
-
-    @Inject
-    private ExerciseSearchRepository exerciseSearchRepository;
 
     /**
      * POST  /exercises : Create a new exercise.
@@ -58,7 +51,6 @@ public class ExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "idexists", "A new exercise cannot already have an ID")).body(null);
         }
         Exercise result = exerciseRepository.save(exercise);
-        exerciseSearchRepository.save(result);
         return ResponseEntity.created(new URI("/api/exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("exercise", result.getId().toString()))
             .body(result);
@@ -83,7 +75,6 @@ public class ExerciseResource {
             return createExercise(exercise);
         }
         Exercise result = exerciseRepository.save(exercise);
-        exerciseSearchRepository.save(result);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert("exercise", exercise.getId().toString()))
             .body(result);
@@ -163,27 +154,7 @@ public class ExerciseResource {
     public ResponseEntity<Void> deleteExercise(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
         exerciseRepository.delete(id);
-        exerciseSearchRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("exercise", id.toString())).build();
-    }
-
-    /**
-     * SEARCH  /_search/exercises?query=:query : search for the exercise corresponding
-     * to the query.
-     *
-     * @param query the query of the exercise search
-     * @return the result of the search
-     */
-    @RequestMapping(value = "/_search/exercises",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
-    @Timed
-    public ResponseEntity<List<Exercise>> searchExercises(@RequestParam String query, Pageable pageable)
-        throws URISyntaxException {
-        log.debug("REST request to search for a page of Exercises for query {}", query);
-        Page<Exercise> page = exerciseSearchRepository.search(queryStringQuery(query), pageable);
-        HttpHeaders headers = PaginationUtil.generateSearchPaginationHttpHeaders(query, page, "/api/_search/exercises");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
 }

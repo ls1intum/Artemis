@@ -3,7 +3,6 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
 import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
-import de.tum.in.www1.exerciseapp.repository.search.CourseSearchRepository;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -53,9 +52,6 @@ public class CourseResourceIntTest {
     private CourseRepository courseRepository;
 
     @Inject
-    private CourseSearchRepository courseSearchRepository;
-
-    @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Inject
@@ -69,7 +65,6 @@ public class CourseResourceIntTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         CourseResource courseResource = new CourseResource();
-        ReflectionTestUtils.setField(courseResource, "courseSearchRepository", courseSearchRepository);
         ReflectionTestUtils.setField(courseResource, "courseRepository", courseRepository);
         this.restCourseMockMvc = MockMvcBuilders.standaloneSetup(courseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
@@ -78,7 +73,6 @@ public class CourseResourceIntTest {
 
     @Before
     public void initTest() {
-        courseSearchRepository.deleteAll();
         course = new Course();
         course.setTitle(DEFAULT_TITLE);
         course.setSlug(DEFAULT_SLUG);
@@ -104,10 +98,6 @@ public class CourseResourceIntTest {
         assertThat(testCourse.getTitle()).isEqualTo(DEFAULT_TITLE);
         assertThat(testCourse.getSlug()).isEqualTo(DEFAULT_SLUG);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(DEFAULT_STUDENT_GROUP_NAME);
-
-        // Validate the Course in ElasticSearch
-        Course courseEs = courseSearchRepository.findOne(testCourse.getId());
-        assertThat(courseEs).isEqualToComparingFieldByField(testCourse);
     }
 
     @Test
@@ -155,7 +145,6 @@ public class CourseResourceIntTest {
     public void updateCourse() throws Exception {
         // Initialize the database
         courseRepository.saveAndFlush(course);
-        courseSearchRepository.save(course);
         int databaseSizeBeforeUpdate = courseRepository.findAll().size();
 
         // Update the course
@@ -177,10 +166,6 @@ public class CourseResourceIntTest {
         assertThat(testCourse.getTitle()).isEqualTo(UPDATED_TITLE);
         assertThat(testCourse.getSlug()).isEqualTo(UPDATED_SLUG);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(UPDATED_STUDENT_GROUP_NAME);
-
-        // Validate the Course in ElasticSearch
-        Course courseEs = courseSearchRepository.findOne(testCourse.getId());
-        assertThat(courseEs).isEqualToComparingFieldByField(testCourse);
     }
 
     @Test
@@ -188,17 +173,12 @@ public class CourseResourceIntTest {
     public void deleteCourse() throws Exception {
         // Initialize the database
         courseRepository.saveAndFlush(course);
-        courseSearchRepository.save(course);
         int databaseSizeBeforeDelete = courseRepository.findAll().size();
 
         // Get the course
         restCourseMockMvc.perform(delete("/api/courses/{id}", course.getId())
                 .accept(TestUtil.APPLICATION_JSON_UTF8))
                 .andExpect(status().isOk());
-
-        // Validate ElasticSearch is empty
-        boolean courseExistsInEs = courseSearchRepository.exists(course.getId());
-        assertThat(courseExistsInEs).isFalse();
 
         // Validate the database is empty
         List<Course> courses = courseRepository.findAll();
@@ -210,7 +190,6 @@ public class CourseResourceIntTest {
     public void searchCourse() throws Exception {
         // Initialize the database
         courseRepository.saveAndFlush(course);
-        courseSearchRepository.save(course);
 
         // Search the course
         restCourseMockMvc.perform(get("/api/_search/courses?query=id:" + course.getId()))

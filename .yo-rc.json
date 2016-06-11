@@ -12,7 +12,7 @@
     "databaseType": "sql",
     "devDatabaseType": "mysql",
     "prodDatabaseType": "mysql",
-    "searchEngine": "elasticsearch",
+    "searchEngine": false,
     "buildTool": "gradle",
     "enableSocialSignIn": false,
     "rememberMeKey": "1e8ac98bc31f6bc463c70dace796da10dba1f4f3",
