@@ -25,6 +25,10 @@
                 <constraints nullable="true" />
             </column>
             
+            <column name="repository_slug" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            
             <column name="student_id" type="bigint">
                 <constraints nullable="true" />
             </column>

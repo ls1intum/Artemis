@@ -30,6 +30,9 @@ public class Result implements Serializable {
     @Column(name = "build_completion_date")
     private ZonedDateTime buildCompletionDate;
 
+    @Column(name = "build_successful")
+    private Boolean buildSuccessful;
+
     @ManyToOne
     private Participation participation;
 
@@ -55,6 +58,14 @@ public class Result implements Serializable {
 
     public void setBuildCompletionDate(ZonedDateTime buildCompletionDate) {
         this.buildCompletionDate = buildCompletionDate;
+    }
+
+    public Boolean isBuildSuccessful() {
+        return buildSuccessful;
+    }
+
+    public void setBuildSuccessful(Boolean buildSuccessful) {
+        this.buildSuccessful = buildSuccessful;
     }
 
     public Participation getParticipation() {
@@ -91,6 +102,7 @@ public class Result implements Serializable {
             "id=" + id +
             ", resultString='" + resultString + "'" +
             ", buildCompletionDate='" + buildCompletionDate + "'" +
+            ", buildSuccessful='" + buildSuccessful + "'" +
             '}';
     }
 }

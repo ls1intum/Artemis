@@ -29,6 +29,9 @@ public class Participation implements Serializable {
     @Column(name = "clone_url")
     private String cloneUrl;
 
+    @Column(name = "repository_slug")
+    private String repositorySlug;
+
     @ManyToOne
     private User student;
 
@@ -54,6 +57,14 @@ public class Participation implements Serializable {
 
     public void setCloneUrl(String cloneUrl) {
         this.cloneUrl = cloneUrl;
+    }
+
+    public String getRepositorySlug() {
+        return repositorySlug;
+    }
+
+    public void setRepositorySlug(String repositorySlug) {
+        this.repositorySlug = repositorySlug;
     }
 
     public User getStudent() {
@@ -105,6 +116,7 @@ public class Participation implements Serializable {
         return "Participation{" +
             "id=" + id +
             ", cloneUrl='" + cloneUrl + "'" +
+            ", repositorySlug='" + repositorySlug + "'" +
             '}';
     }
 }

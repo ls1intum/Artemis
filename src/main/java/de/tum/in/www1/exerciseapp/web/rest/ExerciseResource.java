@@ -2,9 +2,9 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
+import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.search.ExerciseSearchRepository;
-import de.tum.in.www1.exerciseapp.web.rest.dto.ExerciseDTO;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -23,10 +23,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
-import static org.elasticsearch.index.query.QueryBuilders.*;
+import static org.elasticsearch.index.query.QueryBuilders.queryStringQuery;
 
 /**
  * REST controller for managing Exercise.
@@ -126,7 +124,8 @@ public class ExerciseResource {
     public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseRepository.findByCourseId(courseId, pageable);
+//        Page<Exercise> page = exerciseRepository.findByCourseId(courseId, pageable);
+        Page<Exercise> page = exerciseRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

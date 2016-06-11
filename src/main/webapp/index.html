@@ -25,13 +25,13 @@
     <page-ribbon></page-ribbon>
     <div ui-view="navbar" ng-cloak></div>
     <div class="container">
-        <div class="well" ui-view="content">
+        <div ui-view="content">
             <!-- Angular views -->
         </div>
 
-        <div class="footer" ng-cloak>
+        <!--<div class="footer" ng-cloak>
             <p translate="footer">This is your footer</p>
-        </div>
+        </div>-->
     </div>
 
     <!-- Google Analytics: uncomment and change UA-XXXXX-X to be your site's ID.
@@ -125,6 +125,10 @@
     <script src="app/entities/course/course.service.js"></script>
     <script src="app/entities/course/course.search.service.js"></script>
     <script src="app/entities/course/course.controller.js"></script>
+    <script src="app/courses/results/result.component.js"></script>
+    <script src="app/courses/exercises/exercise-list.component.js"></script>
+    <script src="app/courses/courses.state.js"></script>
+    <script src="app/courses/courses.controller.js"></script>
     <script src="app/components/util/truncate-words.filter.js"></script>
     <script src="app/components/util/truncate-characters.filter.js"></script>
     <script src="app/components/util/sort-by.directive.js"></script>

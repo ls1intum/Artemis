@@ -72,6 +72,7 @@
                         entity: function () {
                             return {
                                 cloneUrl: null,
+                                repositorySlug: null,
                                 id: null
                             };
                         }

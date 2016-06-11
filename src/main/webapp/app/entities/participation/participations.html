@@ -37,6 +37,7 @@
                 <tr>
                     <th><span translate="global.field.id">ID</span></th>
                     <th><span translate="exerciseApplicationApp.participation.cloneUrl">Clone Url</span></th>
+                    <th><span translate="exerciseApplicationApp.participation.repositorySlug">Repository Slug</span></th>
                     <th><span translate="exerciseApplicationApp.participation.student">Student</span></th>
                     <th><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
                     <th></th>
@@ -46,6 +47,7 @@
                 <tr ng-repeat="participation in vm.participations track by participation.id">
                     <td><a ui-sref="participation-detail({id:participation.id})">{{participation.id}}</a></td>
                     <td>{{participation.cloneUrl}}</td>
+                    <td>{{participation.repositorySlug}}</td>
                     <td>
                         {{participation.student.login}}
                     </td>

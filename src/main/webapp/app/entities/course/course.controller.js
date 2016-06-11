@@ -5,11 +5,11 @@
         .module('exerciseApplicationApp')
         .controller('CourseController', CourseController);
 
-    CourseController.$inject = ['$scope', '$state', 'Course', 'CourseSearch', 'ParseLinks', 'AlertService'];
+    CourseController.$inject = ['$scope', '$state', 'Course', 'CourseExercises', 'CourseSearch', 'ParseLinks', 'AlertService'];
 
-    function CourseController ($scope, $state, Course, CourseSearch, ParseLinks, AlertService) {
+    function CourseController ($scope, $state, Course, CourseExercises, CourseSearch, ParseLinks, AlertService) {
         var vm = this;
-        
+
         vm.courses = [];
         vm.loadPage = loadPage;
         vm.page = 0;

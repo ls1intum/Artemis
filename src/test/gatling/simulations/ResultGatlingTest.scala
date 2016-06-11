@@ -67,7 +67,7 @@ class ResultGatlingTest extends Simulation {
             .exec(http("Create new result")
             .post("/api/results")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "resultString":"SAMPLE_TEXT", "buildCompletionDate":"2020-01-01T00:00:00.000Z"}""")).asJSON
+            .body(StringBody("""{"id":null, "resultString":"SAMPLE_TEXT", "buildCompletionDate":"2020-01-01T00:00:00.000Z", "buildSuccessful":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_result_url"))).exitHereIfFailed
             .pause(10)

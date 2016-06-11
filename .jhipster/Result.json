@@ -15,6 +15,10 @@
         {
             "fieldName": "buildCompletionDate",
             "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "buildSuccessful",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20160609110918",

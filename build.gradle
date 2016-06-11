@@ -111,6 +111,9 @@ repositories {
 }
 
 dependencies {
+
+    compile fileTree(dir: 'libs', include: '*.jar')
+
     compile "io.dropwizard.metrics:metrics-core"
     compile "io.dropwizard.metrics:metrics-annotation:${dropwizard_metrics_version}"
     compile "io.dropwizard.metrics:metrics-ehcache:${dropwizard_metrics_version}"
@@ -134,7 +137,7 @@ dependencies {
     compile ("com.ryantenney.metrics:metrics-spring:${metrics_spring_version}") {
         exclude(module: 'metrics-core')
         exclude(module: 'metrics-healthchecks')
-    } 
+    }
     compile "com.hazelcast:hazelcast:${hazelcast_version}"
     compile "com.hazelcast:hazelcast-wm:${hazelcast_version}"
     compile("com.zaxxer:HikariCP:${HikariCP_version}") {
@@ -146,7 +149,7 @@ dependencies {
     compile "javax.transaction:javax.transaction-api"
     compile "org.apache.geronimo.javamail:geronimo-javamail_1.4_mail:${geronimo_javamail_1_4_mail_version}"
     compile "org.hibernate:hibernate-core:${hibernate_entitymanager_version}"
-    
+
     compile ("org.hibernate:hibernate-ehcache") {
         exclude(module: 'ehcache-core')
     }
@@ -176,12 +179,12 @@ dependencies {
     compile "org.springframework.security:spring-security-config:${spring_security_version}"
     compile "org.springframework.security:spring-security-data:${spring_security_version}"
     compile "org.springframework.security:spring-security-web:${spring_security_version}"
-    compile "org.springframework.security:spring-security-messaging:${spring_security_version}" 
+    compile "org.springframework.security:spring-security-messaging:${spring_security_version}"
 
     compile("io.springfox:springfox-swagger2:${springfox_version}"){
         exclude module: 'mapstruct'
     }
-    
+
     compile "mysql:mysql-connector-java"
     compile "fr.ippon.spark.metrics:metrics-spark-reporter:${metrics_spark_reporter_version}"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
@@ -195,9 +198,9 @@ dependencies {
     testCompile "org.mockito:mockito-core"
     testCompile "com.mattbertolini:liquibase-slf4j:${liquibase_slf4j_version}"
     testCompile "org.hamcrest:hamcrest-library"
-    
+
     testCompile "io.gatling.highcharts:gatling-charts-highcharts:${gatling_version}"
-    
+
     testCompile "com.h2database:h2"
     optional "org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}"
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here

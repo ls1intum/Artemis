@@ -45,6 +45,8 @@ public class ParticipationResourceIntTest {
 
     private static final String DEFAULT_CLONE_URL = "AAAAA";
     private static final String UPDATED_CLONE_URL = "BBBBB";
+    private static final String DEFAULT_REPOSITORY_SLUG = "AAAAA";
+    private static final String UPDATED_REPOSITORY_SLUG = "BBBBB";
 
     @Inject
     private ParticipationRepository participationRepository;
@@ -80,6 +82,7 @@ public class ParticipationResourceIntTest {
         participationSearchRepository.deleteAll();
         participation = new Participation();
         participation.setCloneUrl(DEFAULT_CLONE_URL);
+        participation.setRepositorySlug(DEFAULT_REPOSITORY_SLUG);
     }
 
     @Test
@@ -99,6 +102,7 @@ public class ParticipationResourceIntTest {
         assertThat(participations).hasSize(databaseSizeBeforeCreate + 1);
         Participation testParticipation = participations.get(participations.size() - 1);
         assertThat(testParticipation.getCloneUrl()).isEqualTo(DEFAULT_CLONE_URL);
+        assertThat(testParticipation.getRepositorySlug()).isEqualTo(DEFAULT_REPOSITORY_SLUG);
 
         // Validate the Participation in ElasticSearch
         Participation participationEs = participationSearchRepository.findOne(testParticipation.getId());
@@ -116,7 +120,8 @@ public class ParticipationResourceIntTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(participation.getId().intValue())))
-                .andExpect(jsonPath("$.[*].cloneUrl").value(hasItem(DEFAULT_CLONE_URL.toString())));
+                .andExpect(jsonPath("$.[*].cloneUrl").value(hasItem(DEFAULT_CLONE_URL.toString())))
+                .andExpect(jsonPath("$.[*].repositorySlug").value(hasItem(DEFAULT_REPOSITORY_SLUG.toString())));
     }
 
     @Test
@@ -130,7 +135,8 @@ public class ParticipationResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(participation.getId().intValue()))
-            .andExpect(jsonPath("$.cloneUrl").value(DEFAULT_CLONE_URL.toString()));
+            .andExpect(jsonPath("$.cloneUrl").value(DEFAULT_CLONE_URL.toString()))
+            .andExpect(jsonPath("$.repositorySlug").value(DEFAULT_REPOSITORY_SLUG.toString()));
     }
 
     @Test
@@ -153,6 +159,7 @@ public class ParticipationResourceIntTest {
         Participation updatedParticipation = new Participation();
         updatedParticipation.setId(participation.getId());
         updatedParticipation.setCloneUrl(UPDATED_CLONE_URL);
+        updatedParticipation.setRepositorySlug(UPDATED_REPOSITORY_SLUG);
 
         restParticipationMockMvc.perform(put("/api/participations")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -164,6 +171,7 @@ public class ParticipationResourceIntTest {
         assertThat(participations).hasSize(databaseSizeBeforeUpdate);
         Participation testParticipation = participations.get(participations.size() - 1);
         assertThat(testParticipation.getCloneUrl()).isEqualTo(UPDATED_CLONE_URL);
+        assertThat(testParticipation.getRepositorySlug()).isEqualTo(UPDATED_REPOSITORY_SLUG);
 
         // Validate the Participation in ElasticSearch
         Participation participationEs = participationSearchRepository.findOne(testParticipation.getId());
@@ -203,6 +211,7 @@ public class ParticipationResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.[*].id").value(hasItem(participation.getId().intValue())))
-            .andExpect(jsonPath("$.[*].cloneUrl").value(hasItem(DEFAULT_CLONE_URL.toString())));
+            .andExpect(jsonPath("$.[*].cloneUrl").value(hasItem(DEFAULT_CLONE_URL.toString())))
+            .andExpect(jsonPath("$.[*].repositorySlug").value(hasItem(DEFAULT_REPOSITORY_SLUG.toString())));
     }
 }

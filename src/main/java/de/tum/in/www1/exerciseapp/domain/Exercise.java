@@ -85,7 +85,7 @@ public class Exercise implements Serializable {
     }
 
     public void setBaseProjectKey(String baseProjectKey) {
-        this.baseProjectKey = baseProjectKey;
+        this.baseProjectKey = baseProjectKey.toUpperCase();
     }
 
     public String getBaseRepositorySlug() {
@@ -93,7 +93,7 @@ public class Exercise implements Serializable {
     }
 
     public void setBaseRepositorySlug(String baseRepositorySlug) {
-        this.baseRepositorySlug = baseRepositorySlug;
+        this.baseRepositorySlug = baseRepositorySlug.toUpperCase();
     }
 
     public String getBaseBuildPlanSlug() {
@@ -101,7 +101,7 @@ public class Exercise implements Serializable {
     }
 
     public void setBaseBuildPlanSlug(String baseBuildPlanSlug) {
-        this.baseBuildPlanSlug = baseBuildPlanSlug;
+        this.baseBuildPlanSlug = baseBuildPlanSlug.toUpperCase();
     }
 
     public ZonedDateTime getReleaseDate() {
