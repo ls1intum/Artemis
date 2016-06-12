@@ -14,15 +14,14 @@
             controller: ResultController
         });
 
-    ResultController.$inject = ['$scope', '$q', '$state', 'ParticipationResult'];
+    ResultController.$inject = ['ParticipationResult'];
 
-    function ResultController($scope, $q, $state, ParticipationResult) {
+    function ResultController(ParticipationResult) {
         var vm = this;
 
         vm.$onInit = init;
 
         function init() {
-            console.log(vm.participation);
             vm.results = ParticipationResult.query({
                 courseId: vm.participation.exercise.course.id,
                 exerciseId: vm.participation.exercise.id,
