@@ -17,7 +17,7 @@ public interface ParticipationRepository extends JpaRepository<Participation,Lon
     @Query("select participation from Participation participation where participation.student.login = ?#{principal.username}")
     List<Participation> findByStudentIsCurrentUser();
 
-    @Query("select participation from Participation participation where participation.exercise.id = :exerciseId and participation.student.login = ?#{principal}")
+    @Query("select participation from Participation participation where participation.exercise.id = :exerciseId and participation.student.login = ?#{principal.username}")
     Participation findOneByExerciseIdAndStudentIsCurrentUser(@Param("exerciseId") Long exerciseId);
 
     Participation findOneByExerciseBaseProjectKeyAndStudentLogin(String baseProjectKey, String username);
