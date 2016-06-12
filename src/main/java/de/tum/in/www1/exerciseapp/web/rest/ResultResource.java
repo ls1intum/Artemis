@@ -129,6 +129,23 @@ public class ResultResource {
     }
 
     /**
+     * GET  /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of results in body
+     */
+    @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    public List<Result> getResultsForParticipation(@PathVariable Long courseId,
+                                                   @PathVariable Long exerciseId,
+                                                   @PathVariable Long participationId) {
+        log.debug("REST request to get Results for Participation : {}", participationId);
+        List<Result> results = resultRepository.findByParticipationId(participationId);
+        return results;
+    }
+
+    /**
      * GET  /results/:id : get the "id" result.
      *
      * @param id the id of the result to retrieve

@@ -2,7 +2,8 @@
     'use strict';
     angular
         .module('exerciseApplicationApp')
-        .factory('Result', Result);
+        .factory('Result', Result)
+        .factory('ParticipationResult', ParticipationResult);
 
     Result.$inject = ['$resource', 'DateUtils'];
 
@@ -22,6 +23,25 @@
                 }
             },
             'update': { method:'PUT' }
+        });
+    }
+
+    ParticipationResult.$inject = ['$resource'];
+
+    function ParticipationResult ($resource) {
+        var resourceUrl = 'api/courses/:courseId/exercises/:exerciseId/participations/:participationId/results/:resultId';
+
+        return $resource(resourceUrl, {}, {
+            'query': { method: 'GET', isArray: true },
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                    }
+                    return data;
+                }
+            }
         });
     }
 })();

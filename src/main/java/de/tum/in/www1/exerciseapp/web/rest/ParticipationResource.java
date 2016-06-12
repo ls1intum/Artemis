@@ -69,7 +69,7 @@ public class ParticipationResource {
     }
 
     /**
-     * POST  /courses/:courseId/exercises/:exerciseId/participations : get the "id" exercise.
+     * POST  /courses/:courseId/exercises/:exerciseId/participations : start the "id" exercise for the current user.
      *
      * @param exerciseId the id of the exercise for which to init a participation
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)

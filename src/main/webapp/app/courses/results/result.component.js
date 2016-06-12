@@ -8,24 +8,25 @@
         .module('exerciseApplicationApp')
         .component('result', {
             bindings: {
-                exercise: '<'
+                participation: '<'
             },
-            templateUrl: 'app/courses/exercises/result.html',
+            templateUrl: 'app/courses/results/result.html',
             controller: ResultController
         });
 
-    ResultController.$inject = ['$scope', '$q', '$state', 'CourseExercises'];
+    ResultController.$inject = ['$scope', '$q', '$state', 'ParticipationResult'];
 
-    function ResultController($scope, $q, $state, CourseExercises) {
+    function ResultController($scope, $q, $state, ParticipationResult) {
         var vm = this;
-
-        vm.resu = [];
 
         vm.$onInit = init;
 
         function init() {
-            CourseExercises.query({courseId: vm.course.id}).$promise.then(function (exercises) {
-                vm.exercises = exercises;
+            console.log(vm.participation);
+            vm.results = ParticipationResult.query({
+                courseId: vm.participation.exercise.course.id,
+                exerciseId: vm.participation.exercise.id,
+                participationId: vm.participation.id,
             });
         }
     }
