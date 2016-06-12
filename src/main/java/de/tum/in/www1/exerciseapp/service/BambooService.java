@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -50,10 +51,10 @@ public class BambooService {
     private int RESULT_RETRIEVAL_DELAY = 10000;
 
     @Inject
-    ParticipationService participationService;
+    private ParticipationRepository participationRepository;
 
     @Autowired
-    ResultRepository resultRepository;
+    private ResultRepository resultRepository;
 
     /**
      * Clones an existing Bamboo plan.
@@ -161,7 +162,7 @@ public class BambooService {
         resultRepository.save(result);
         // TODO: This does not have any effect yet, since the results are retrieved from the repository ordered by id
         participation.getResults().add(result);
-        participationService.save(participation);
+        participationRepository.save(participation);
     }
 
     private Map<String, Object> retrieveBuildResults(String planKey) {
