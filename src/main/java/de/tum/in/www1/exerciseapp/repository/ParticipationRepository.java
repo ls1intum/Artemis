@@ -20,4 +20,6 @@ public interface ParticipationRepository extends JpaRepository<Participation,Lon
     @Query("select participation from Participation participation where participation.exercise.id = :exerciseId and participation.student.login = ?#{principal}")
     Participation findOneByExerciseIdAndStudentIsCurrentUser(@Param("exerciseId") Long exerciseId);
 
+    Participation findOneByExerciseBaseProjectKeyAndStudentLogin(String baseProjectKey, String username);
+
 }

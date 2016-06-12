@@ -73,6 +73,20 @@ public class ParticipationService {
     }
 
     /**
+     *  Get one participation by its student and exercise.
+     *
+     *  @param projectKey the project key of the exercise
+     *  @param username the username of the student
+     *  @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneByExerciseProjectKeyAndStudentLogin(String projectKey, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with project key: {}", username, projectKey);
+        Participation participation = participationRepository.findOneByExerciseBaseProjectKeyAndStudentLogin(projectKey, username);
+        return participation;
+    }
+
+    /**
      *  Delete the  participation by id.
      *
      *  @param id the id of the entity

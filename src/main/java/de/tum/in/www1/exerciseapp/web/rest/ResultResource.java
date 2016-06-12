@@ -1,14 +1,18 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
+import de.tum.in.www1.exerciseapp.service.BambooService;
+import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -28,6 +32,12 @@ public class ResultResource {
 
     @Inject
     private ResultRepository resultRepository;
+
+    @Inject
+    private ParticipationService participationService;
+
+    @Inject
+    private BambooService bambooService;
 
     /**
      * POST  /results : Create a new result.
@@ -49,6 +59,34 @@ public class ResultResource {
         return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("result", savedResult.getId().toString()))
             .body(savedResult);
+    }
+
+    /**
+     * POST  /results/:planKey : Notify the application about a new build result.
+     *
+     * @param planKey the plan key of the plan which is notifying about a new result
+     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @RequestMapping(value = "/results/{planKey}",
+        method = RequestMethod.POST,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Transactional
+    public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
+        if (planKey.contains("base")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        // Plan key has format PROJECTKEY-USERNAME, e.g. EIST16W1-ga56hur
+        String projectKey = planKey.split("-")[0];
+        String username = planKey.split("-")[1];
+
+        Participation participation = participationService.findOneByExerciseProjectKeyAndStudentLogin(projectKey, username);
+        if (Optional.ofNullable(participation).isPresent()) {
+            bambooService.retrieveAndSaveBuildResult(projectKey, participation);
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
     }
 
     /**

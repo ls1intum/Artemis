@@ -24,6 +24,7 @@ import java.net.URL;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
@@ -149,7 +150,7 @@ public class BambooService {
 
     @Async
     public void retrieveAndSaveBuildResult(String planKey, Participation participation) {
-        log.info("Waiting "+RESULT_RETRIEVAL_DELAY/1000+"s to retrieve build result...");
+        log.info("Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
         try {
             Thread.sleep(RESULT_RETRIEVAL_DELAY);
         } catch (InterruptedException e) {
@@ -158,9 +159,10 @@ public class BambooService {
         log.info("Retrieving build result...");
         Map buildResults = retrieveBuildResults(planKey);
         Result result = new Result();
-//        result.setBuildSuccessful((boolean) buildResults.get("buildSuccessful"));
+        result.setBuildSuccessful((boolean) buildResults.get("buildSuccessful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
-//        result.setBuildCompletionDate((Date) buildResults.get("buildCompletedDate"));
+        result.setBuildCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
+        result.setParticipation(participation);
         resultRepository.save(result);
         // TODO: This does not have any effect yet, since the results are retrieved from the repository ordered by id
         participation.getResults().add(result);
@@ -187,14 +189,9 @@ public class BambooService {
             result.put("buildSuccessful", buildSuccessful);
             String buildTestSummary = (String) response.getBody().get("buildTestSummary");
             result.put("buildTestSummary", buildTestSummary);
-            try {
-                String dateString = (String) response.getBody().get("buildCompletedDate");
-                DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.ENGLISH);
-                Date buildCompletedDate = dateFormat.parse(dateString);
-                result.put("buildCompletedDate", buildCompletedDate);
-            } catch (ParseException e) {
-                log.error("Could not parse build completed date", e);
-            }
+            String dateString = (String) response.getBody().get("buildCompletedDate");
+            ZonedDateTime buildCompletedDate = ZonedDateTime.parse(dateString);
+            result.put("buildCompletedDate", buildCompletedDate);
             return result;
         }
         return null;
