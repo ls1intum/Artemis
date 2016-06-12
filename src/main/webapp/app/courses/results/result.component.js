@@ -20,6 +20,7 @@
         var vm = this;
 
         vm.$onInit = init;
+        vm.hasResults = hasResults;
 
         function init() {
             vm.results = ParticipationResult.query({
@@ -27,6 +28,10 @@
                 exerciseId: vm.participation.exercise.id,
                 participationId: vm.participation.id,
             });
+        }
+
+        function hasResults() {
+            return !!vm.results && vm.results.length > 0;
         }
     }
 })();
