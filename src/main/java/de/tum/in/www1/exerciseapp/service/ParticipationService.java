@@ -60,7 +60,7 @@ public class ParticipationService {
     }
 
     /**
-     *  Get one participation by its student and exercise.
+     *  Get one participation by the current user and exercise.
      *
      *  @param exerciseId the id of the exercise
      *  @return the entity
