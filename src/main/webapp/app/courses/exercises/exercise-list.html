@@ -10,31 +10,30 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate'">
+    <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate'" ng-switch on="$ctrl.hasParticipation(exercise)">
         <td>{{exercise.title}}</td>
         <td>
             <span am-time-ago="exercise.dueDate" uib-tooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}"
                   tooltip-placement="right"></span>
         </td>
         <td>
-            <span class="text-muted" ng-if="!$ctrl.hasParticipation(exercise)">You have not started this exercise yet.</span>
+            <span class="text-muted" ng-switch-when="false">You have not started this exercise yet.</span>
+            <span ng-switch-when="true"><result participation="exercise.participation"></result></span>
         </td>
         <td class="text-center">
-            <div ng-switch on="$ctrl.hasParticipation(exercise)">
-                <button class="btn btn-primary btn-sm btn-block btn-student-action"
-                        ng-switch-when="false"
-                        ng-click="$ctrl.start(exercise)">
-                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
-                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+            <button class="btn btn-primary btn-sm btn-block btn-student-action"
+                    ng-switch-when="false"
+                    ng-click="$ctrl.start(exercise)">
+                <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
+                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+            </button>
+            <div ng-switch-when="true">
+                <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"
+                        popover-placement="{{$ctrl.clonePopover.placement}}"
+                        type="button" class="btn btn-primary btn-sm btn-block"><i
+                    class="fa fa-download fa-fw"></i>&nbsp;Clone
+                    repository
                 </button>
-                <div ng-switch-when="true">
-                    <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"
-                            popover-placement="{{$ctrl.clonePopover.placement}}"
-                            type="button" class="btn btn-primary btn-sm btn-block"><i
-                        class="fa fa-download fa-fw"></i>&nbsp;Clone
-                        repository
-                    </button>
-                </div>
             </div>
         </td>
     </tr>
