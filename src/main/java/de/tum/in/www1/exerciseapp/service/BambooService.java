@@ -21,13 +21,8 @@ import org.swift.common.cli.CliClient;
 
 import javax.inject.Inject;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 
 @Service
@@ -134,11 +129,11 @@ public class BambooService {
         return exitCode;
     }
 
-    public CliClient.ExitCode deletePlan(String project, String plan) {
+    public CliClient.ExitCode deletePlan(String projectKey, String planKey) {
         final BambooClient client = new BambooClient();
         String[] args = new String[]{
             "--action", "deletePlan",
-            "--plan", project + "-" + plan,
+            "--plan", projectKey + "-" + planKey,
             "-s", BAMBOO_SERVER.toString(),
             "--user", BAMBOO_USER,
             "--password", BAMBOO_PASSWORD

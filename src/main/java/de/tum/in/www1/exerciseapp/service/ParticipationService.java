@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service Implementation for managing Participation.
@@ -21,6 +22,12 @@ public class ParticipationService {
 
     @Inject
     private ParticipationRepository participationRepository;
+
+    @Inject
+    private BambooService bambooService;
+
+    @Inject
+    private BitbucketService bitbucketService;
 
     /**
      * Save a participation.
@@ -87,12 +94,21 @@ public class ParticipationService {
     }
 
     /**
-     *  Delete the  participation by id.
+     *  Delete the participation by id.
      *
      *  @param id the id of the entity
      */
-    public void delete(Long id) {
+    public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         log.debug("Request to delete Participation : {}", id);
+        Participation participation = participationRepository.findOne(id);
+        if (Optional.ofNullable(participation).isPresent()) {
+            if (deleteBuildPlan) {
+                bambooService.deletePlan(participation.getExercise().getBaseProjectKey(), participation.getStudent().getLogin());
+            }
+            if (deleteRepository) {
+                bitbucketService.deleteRepository(participation.getExercise().getBaseProjectKey(), participation.getRepositorySlug());
+            }
+        }
         participationRepository.delete(id);
     }
 

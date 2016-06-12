@@ -135,7 +135,6 @@ public class ParticipationResource {
     }
 
 
-
     /**
      * PUT  /participations : Updates an existing participation.
      *
@@ -197,7 +196,7 @@ public class ParticipationResource {
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for the "id" exercise.
      *
-     * @param courseId only included for API consistency, not actually used.
+     * @param courseId   only included for API consistency, not actually used.
      * @param exerciseId the id of the exercise for which to retrieve the participation
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
@@ -219,15 +218,19 @@ public class ParticipationResource {
      * DELETE  /participations/:id : delete the "id" participation.
      *
      * @param id the id of the participation to delete
+     * @param deleteBuildPlan true if the associated build plan should be deleted
+     * @param deleteRepository true if the associated repository should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
     @RequestMapping(value = "/participations/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteParticipation(@PathVariable Long id) {
-        log.debug("REST request to delete Participation : {}", id);
-        participationService.delete(id);
+    public ResponseEntity<Void> deleteParticipation(@PathVariable Long id,
+                                                    @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
+                                                    @RequestParam(defaultValue = "false") boolean deleteRepository) {
+        log.debug("REST request to delete Participation : {}, deleteBuildPlan: {}, deleteRepository: {}", id, deleteBuildPlan, deleteRepository);
+        participationService.delete(id, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", id.toString())).build();
     }
 
