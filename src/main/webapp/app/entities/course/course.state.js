@@ -72,7 +72,6 @@
                         entity: function () {
                             return {
                                 title: null,
-                                slug: null,
                                 studentGroupName: null,
                                 id: null
                             };

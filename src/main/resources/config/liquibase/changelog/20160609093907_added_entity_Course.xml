@@ -25,10 +25,6 @@
                 <constraints nullable="true" />
             </column>
             
-            <column name="slug" type="varchar(255)">
-                <constraints nullable="true" />
-            </column>
-            
             <column name="student_group_name" type="varchar(255)">
                 <constraints nullable="true" />
             </column>

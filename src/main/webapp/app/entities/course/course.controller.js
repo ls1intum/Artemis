@@ -5,37 +5,26 @@
         .module('exerciseApplicationApp')
         .controller('CourseController', CourseController);
 
-    CourseController.$inject = ['$scope', '$state', 'Course', 'CourseExercises', 'CourseSearch', 'ParseLinks', 'AlertService'];
+    CourseController.$inject = ['$scope', '$state', 'Course', 'ParseLinks', 'AlertService'];
 
-    function CourseController ($scope, $state, Course, CourseExercises, CourseSearch, ParseLinks, AlertService) {
+    function CourseController ($scope, $state, Course, ParseLinks, AlertService) {
         var vm = this;
-
+        
         vm.courses = [];
         vm.loadPage = loadPage;
         vm.page = 0;
         vm.predicate = 'id';
         vm.reset = reset;
         vm.reverse = true;
-        vm.clear = clear;
-        vm.search = search;
 
         loadAll();
 
         function loadAll () {
-            if (vm.currentSearch) {
-                CourseSearch.query({
-                    query: vm.currentSearch,
-                    page: vm.page,
-                    size: 20,
-                    sort: sort()
-                }, onSuccess, onError);
-            } else {
-                Course.query({
-                    page: vm.page,
-                    size: 20,
-                    sort: sort()
-                }, onSuccess, onError);
-            }
+            Course.query({
+                page: vm.page,
+                size: 20,
+                sort: sort()
+            }, onSuccess, onError);
             function sort() {
                 var result = [vm.predicate + ',' + (vm.reverse ? 'asc' : 'desc')];
                 if (vm.predicate !== 'id') {
@@ -64,30 +53,6 @@
         function loadPage(page) {
             vm.page = page;
             loadAll();
-        }
-
-        function clear () {
-            vm.courses = [];
-            vm.links = null;
-            vm.page = 0;
-            vm.predicate = 'id';
-            vm.reverse = true;
-            vm.searchQuery = null;
-            vm.currentSearch = null;
-            vm.loadAll();
-        }
-
-        function search (searchQuery) {
-            if (!searchQuery){
-                return vm.clear();
-            }
-            vm.courses = [];
-            vm.links = null;
-            vm.page = 0;
-            vm.predicate = '_score';
-            vm.reverse = false;
-            vm.currentSearch = searchQuery;
-            vm.loadAll();
         }
     }
 })();

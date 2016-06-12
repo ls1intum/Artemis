@@ -67,7 +67,7 @@ class CourseGatlingTest extends Simulation {
             .exec(http("Create new course")
             .post("/api/courses")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "title":"SAMPLE_TEXT", "slug":"SAMPLE_TEXT", "studentGroupName":"SAMPLE_TEXT"}""")).asJSON
+            .body(StringBody("""{"id":null, "title":"SAMPLE_TEXT", "studentGroupName":"SAMPLE_TEXT"}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_course_url"))).exitHereIfFailed
             .pause(10)

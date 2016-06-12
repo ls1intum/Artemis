@@ -13,10 +13,6 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "slug",
-            "fieldType": "String"
-        },
-        {
             "fieldName": "studentGroupName",
             "fieldType": "String"
         }
