@@ -1,6 +1,6 @@
-<span class="text-muted" ng-if="$ctrl.results.length === 0"><i
+<span class="text-muted" ng-if="!$ctrl.hasResults()"><i
     class="fa fa-circle-o fa-lg fa-fw"></i>No results</span>
-<span ng-if="$ctrl.results.length > 0">
+<span ng-if="$ctrl.hasResults()">
     <span ng-class="{'text-success': $ctrl.results[0].buildSuccessful, 'text-danger': !$ctrl.results[0].buildSuccessful}">
         <i class="fa fa-lg fa-fw"
            ng-class="{'fa-check-circle-o': $ctrl.results[0].buildSuccessful, 'fa-times-circle-o': !$ctrl.results[0].buildSuccessful}"></i>{{$ctrl.results[0].resultString}}
