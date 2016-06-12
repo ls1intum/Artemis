@@ -43,8 +43,6 @@ public class CourseResourceIntTest {
 
     private static final String DEFAULT_TITLE = "AAAAA";
     private static final String UPDATED_TITLE = "BBBBB";
-    private static final String DEFAULT_SLUG = "AAAAA";
-    private static final String UPDATED_SLUG = "BBBBB";
     private static final String DEFAULT_STUDENT_GROUP_NAME = "AAAAA";
     private static final String UPDATED_STUDENT_GROUP_NAME = "BBBBB";
 
@@ -75,7 +73,6 @@ public class CourseResourceIntTest {
     public void initTest() {
         course = new Course();
         course.setTitle(DEFAULT_TITLE);
-        course.setSlug(DEFAULT_SLUG);
         course.setStudentGroupName(DEFAULT_STUDENT_GROUP_NAME);
     }
 
@@ -96,7 +93,6 @@ public class CourseResourceIntTest {
         assertThat(courses).hasSize(databaseSizeBeforeCreate + 1);
         Course testCourse = courses.get(courses.size() - 1);
         assertThat(testCourse.getTitle()).isEqualTo(DEFAULT_TITLE);
-        assertThat(testCourse.getSlug()).isEqualTo(DEFAULT_SLUG);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(DEFAULT_STUDENT_GROUP_NAME);
     }
 
@@ -112,7 +108,6 @@ public class CourseResourceIntTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(course.getId().intValue())))
                 .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
-                .andExpect(jsonPath("$.[*].slug").value(hasItem(DEFAULT_SLUG.toString())))
                 .andExpect(jsonPath("$.[*].studentGroupName").value(hasItem(DEFAULT_STUDENT_GROUP_NAME.toString())));
     }
 
@@ -128,7 +123,6 @@ public class CourseResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(course.getId().intValue()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()))
-            .andExpect(jsonPath("$.slug").value(DEFAULT_SLUG.toString()))
             .andExpect(jsonPath("$.studentGroupName").value(DEFAULT_STUDENT_GROUP_NAME.toString()));
     }
 
@@ -151,7 +145,6 @@ public class CourseResourceIntTest {
         Course updatedCourse = new Course();
         updatedCourse.setId(course.getId());
         updatedCourse.setTitle(UPDATED_TITLE);
-        updatedCourse.setSlug(UPDATED_SLUG);
         updatedCourse.setStudentGroupName(UPDATED_STUDENT_GROUP_NAME);
 
         restCourseMockMvc.perform(put("/api/courses")
@@ -164,7 +157,6 @@ public class CourseResourceIntTest {
         assertThat(courses).hasSize(databaseSizeBeforeUpdate);
         Course testCourse = courses.get(courses.size() - 1);
         assertThat(testCourse.getTitle()).isEqualTo(UPDATED_TITLE);
-        assertThat(testCourse.getSlug()).isEqualTo(UPDATED_SLUG);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(UPDATED_STUDENT_GROUP_NAME);
     }
 
@@ -183,21 +175,5 @@ public class CourseResourceIntTest {
         // Validate the database is empty
         List<Course> courses = courseRepository.findAll();
         assertThat(courses).hasSize(databaseSizeBeforeDelete - 1);
-    }
-
-    @Test
-    @Transactional
-    public void searchCourse() throws Exception {
-        // Initialize the database
-        courseRepository.saveAndFlush(course);
-
-        // Search the course
-        restCourseMockMvc.perform(get("/api/_search/courses?query=id:" + course.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(course.getId().intValue())))
-            .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
-            .andExpect(jsonPath("$.[*].slug").value(hasItem(DEFAULT_SLUG.toString())))
-            .andExpect(jsonPath("$.[*].studentGroupName").value(hasItem(DEFAULT_STUDENT_GROUP_NAME.toString())));
     }
 }
