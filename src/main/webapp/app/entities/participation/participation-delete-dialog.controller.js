@@ -1,9 +1,9 @@
-(function() {
+(function () {
     'use strict';
 
     angular
         .module('exerciseApplicationApp')
-        .controller('ParticipationDeleteController',ParticipationDeleteController);
+        .controller('ParticipationDeleteController', ParticipationDeleteController);
 
     ParticipationDeleteController.$inject = ['$uibModalInstance', 'entity', 'Participation'];
 
@@ -13,13 +13,17 @@
         vm.participation = entity;
         vm.clear = clear;
         vm.confirmDelete = confirmDelete;
-        
-        function clear () {
+
+        function clear() {
             $uibModalInstance.dismiss('cancel');
         }
 
-        function confirmDelete (id) {
-            Participation.delete({id: id},
+        function confirmDelete(id, deleteBuildPlan, deleteRepository) {
+            Participation.delete({
+                    id: id,
+                    deleteBuildPlan: deleteBuildPlan,
+                    deleteRepository: deleteRepository
+                },
                 function () {
                     $uibModalInstance.close(true);
                 });

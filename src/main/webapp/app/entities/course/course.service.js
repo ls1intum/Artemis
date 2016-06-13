@@ -41,9 +41,19 @@
                     return data;
                 }
             },
-            'start': { 
+            'start': {
                 url: resourceUrl + '/participations',
-                method: 'POST'
+                method: 'POST',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                        var exercise = data.exercise;
+                        exercise['participation'] = data;
+                        console.log(exercise);
+                        return exercise;
+                    }
+                    return data;
+                }
             }
         });
     }
