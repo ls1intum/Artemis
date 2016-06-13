@@ -25,7 +25,7 @@ import java.util.Optional;
  * REST controller for managing Course.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping({"/api", "/api_basic"})
 public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);

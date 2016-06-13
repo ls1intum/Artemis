@@ -26,7 +26,7 @@ import java.util.Optional;
  * REST controller for managing Exercise.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping({"/api", "/api_basic"})
 public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);

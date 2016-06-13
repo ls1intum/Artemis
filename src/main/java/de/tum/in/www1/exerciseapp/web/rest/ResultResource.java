@@ -25,7 +25,7 @@ import java.util.Optional;
  * REST controller for managing Result.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping({"/api", "/api_basic"})
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
