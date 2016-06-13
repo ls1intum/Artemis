@@ -62,6 +62,11 @@
             exercise.$start({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
+            }).then(function (returnedExercise) {
+                // console.log(participation);
+                // TODO: maybe exercise.get()?
+                exercise['participation'] = returnedExercise.participation;
+                exercise['participation'].toJSON = exercise.toJSON;
             }).finally(function () {
                 vm.loading[exercise.id.toString()] = false;
             });

@@ -4,10 +4,9 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.User;
-import de.tum.in.www1.exerciseapp.service.BambooService;
-import de.tum.in.www1.exerciseapp.service.BitbucketService;
-import de.tum.in.www1.exerciseapp.service.ExerciseService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
+import de.tum.in.www1.exerciseapp.repository.UserRepository;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +45,12 @@ public class ParticipationResource {
     @Inject
     private BambooService bambooService;
 
+    @Inject
+    private ExerciseRepository exerciseRepository;
+
+    @Inject
+    private UserRepository userRepository;
+
     /**
      * POST  /participations : Create a new participation.
      *
@@ -71,7 +76,9 @@ public class ParticipationResource {
     /**
      * POST  /courses/:courseId/exercises/:exerciseId/participations : start the "id" exercise for the current user.
      *
+     * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to init a participation
+     * @param principal  the current user principal
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations",
@@ -80,6 +87,10 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> initParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to init Exercise : {}", exerciseId);
+//        if (Optional.ofNullable(participationService.findOneByExerciseIdAndCurrentUser(exerciseId)).isPresent()) {
+        if (Optional.ofNullable(participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName())).isPresent()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "participationexists", "This user already has a participation for this exercise")).body(null);
+        }
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (Optional.ofNullable(exercise).isPresent()) {
 
@@ -120,15 +131,16 @@ public class ParticipationResource {
             }
 
             Participation participation = new Participation();
-//            participation.setRepositorySlug((String) forkResult.get("slug"));
+            participation.setRepositorySlug((String) forkResult.get("slug"));
             participation.setCloneUrl((String) forkResult.get("cloneUrl"));
-            participation.setStudent((User) principal);
-            participationService.save(participation);
-//            exercise.getAllParticipations().add(participation);
+            userRepository.findOneByLogin(principal.getName()).ifPresent(u -> participation.setStudent(u));
+            participation.setExercise(exercise);
+            Participation result = participationService.save(participation);
+//            exercise.getParticipations().add(participation);
 //            exerciseRepository.save(exercise);
-            return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert("participation", participation.getId().toString()))
-                .body(participation);
+            return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert("participation", result.getId().toString()))
+                .body(result);
         } else {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -196,7 +208,7 @@ public class ParticipationResource {
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for the "id" exercise.
      *
-     * @param courseId   only included for API consistency, not actually used.
+     * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the participation
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
@@ -204,9 +216,10 @@ public class ParticipationResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId) {
+    public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndCurrentUser(exerciseId);
+//        Participation participation = participationService.findOneByExerciseIdAndCurrentUser(exerciseId);
+        Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(
                 result,
@@ -217,8 +230,8 @@ public class ParticipationResource {
     /**
      * DELETE  /participations/:id : delete the "id" participation.
      *
-     * @param id the id of the participation to delete
-     * @param deleteBuildPlan true if the associated build plan should be deleted
+     * @param id               the id of the participation to delete
+     * @param deleteBuildPlan  true if the associated build plan should be deleted
      * @param deleteRepository true if the associated repository should be deleted
      * @return the ResponseEntity with status 200 (OK)
      */
