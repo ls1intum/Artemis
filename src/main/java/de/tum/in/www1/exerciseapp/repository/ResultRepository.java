@@ -12,5 +12,5 @@ import java.util.List;
 @SuppressWarnings("unused")
 public interface ResultRepository extends JpaRepository<Result,Long> {
 
-    List<Result> findByParticipationId(Long participationId);
+    List<Result> findByParticipationIdOrderByBuildCompletionDateDesc(Long participationId);
 }

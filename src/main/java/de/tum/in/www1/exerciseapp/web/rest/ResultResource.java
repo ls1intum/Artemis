@@ -141,7 +141,7 @@ public class ResultResource {
                                                    @PathVariable Long exerciseId,
                                                    @PathVariable Long participationId) {
         log.debug("REST request to get Results for Participation : {}", participationId);
-        List<Result> results = resultRepository.findByParticipationId(participationId);
+        List<Result> results = resultRepository.findByParticipationIdOrderByBuildCompletionDateDesc(participationId);
         return results;
     }
 
