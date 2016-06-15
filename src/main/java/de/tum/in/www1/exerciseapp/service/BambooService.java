@@ -160,9 +160,6 @@ public class BambooService {
         result.setBuildCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
         result.setParticipation(participation);
         resultRepository.save(result);
-        // TODO: This does not have any effect yet, since the results are retrieved from the repository ordered by id
-        participation.getResults().add(result);
-        participationRepository.save(participation);
     }
 
     private Map<String, Object> retrieveBuildResults(String planKey) {
@@ -172,7 +169,7 @@ public class BambooService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey + "/latest.json?expand=testResults",
+                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "/latest.json?expand=testResults",
                 HttpMethod.GET,
                 entity,
                 Map.class);
