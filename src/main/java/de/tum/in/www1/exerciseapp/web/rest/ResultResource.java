@@ -82,7 +82,7 @@ public class ResultResource {
 
         Participation participation = participationService.findOneByExerciseProjectKeyAndStudentLogin(projectKey, username);
         if (Optional.ofNullable(participation).isPresent()) {
-            bambooService.retrieveAndSaveBuildResult(projectKey, participation);
+            bambooService.retrieveAndSaveBuildResult(projectKey + "-" + username, participation);
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
