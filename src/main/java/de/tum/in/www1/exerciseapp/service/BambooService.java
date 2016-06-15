@@ -24,6 +24,7 @@ import javax.inject.Inject;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -153,7 +154,7 @@ public class BambooService {
             e.printStackTrace();
         }
         log.info("Retrieving build result...");
-        Map buildResults = retrieveBuildResults(planKey);
+        Map buildResults = retrieveLatestBuildResult(planKey);
         Result result = new Result();
         result.setBuildSuccessful((boolean) buildResults.get("buildSuccessful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
@@ -162,7 +163,7 @@ public class BambooService {
         resultRepository.save(result);
     }
 
-    private Map<String, Object> retrieveBuildResults(String planKey) {
+    private Map<String, Object> retrieveLatestBuildResult(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -185,6 +186,30 @@ public class BambooService {
             String dateString = (String) response.getBody().get("buildCompletedDate");
             ZonedDateTime buildCompletedDate = ZonedDateTime.parse(dateString);
             result.put("buildCompletedDate", buildCompletedDate);
+            return result;
+        }
+        return null;
+    }
+
+    public Map<String, Object> retrieveLatestBuildResultDetails(String planKey) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = null;
+        try {
+            // https://bamboobruegge.in.tum.de/rest/api/latest/result/EIST16W1-TESTEXERCISEAPP-JOB1/latest.json?expand=testResults.failedTests.testResult.errors
+            response = restTemplate.exchange(
+                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors",
+                HttpMethod.GET,
+                entity,
+                Map.class);
+        } catch (Exception e) {
+            log.error("HttpError while retrieving results", e);
+        }
+        if (response != null) {
+            Map<String, Object> result = new HashMap<>();
+            List resultDetails = (List)((Map)((Map)response.getBody().get("testResults")).get("failedTests")).get("testResult");
+            result.put("details", resultDetails);
             return result;
         }
         return null;

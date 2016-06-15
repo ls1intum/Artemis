@@ -1,3 +1,5 @@
+@import "vendor.scss";
+
 body {
     background: #fafafa;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -6,6 +8,22 @@ body {
 
 .exercise-table tbody>tr>td {
     vertical-align: middle;
+}
+
+#result-detail-body {
+    min-height: 60px;
+}
+
+#result-detail-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.pre-scrollable-short {
+    @extend .pre-scrollable;
+    max-height: 180px;
 }
 
 /* ==========================================================================
