@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -161,6 +163,28 @@ public class ResultResource {
         return Optional.ofNullable(result)
             .map(foundResult -> new ResponseEntity<>(
                 foundResult,
+                HttpStatus.OK))
+            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    /**
+     * GET  /results/:id/details : get the build result details from Bamboo for the "id" result.
+     *
+     * @param id the id of the result to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
+     */
+    @RequestMapping(value = "/results/{id}/details",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    public ResponseEntity<?> getResultDetails(@PathVariable Long id, Principal principal) {
+        log.debug("REST request to get Result : {}", id);
+        Result result = resultRepository.findOne(id);
+        String planKey = result.getParticipation().getExercise().getBaseProjectKey() + "-" + principal.getName();
+        Map details = bambooService.retrieveLatestBuildResultDetails(planKey);
+        return Optional.ofNullable(details.get("details"))
+            .map(resultDetails -> new ResponseEntity<>(
+                details.get("details"),
                 HttpStatus.OK))
             .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
