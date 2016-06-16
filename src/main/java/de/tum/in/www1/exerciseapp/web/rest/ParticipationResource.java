@@ -89,7 +89,10 @@ public class ParticipationResource {
         log.debug("REST request to init Exercise : {}", exerciseId);
 //        if (Optional.ofNullable(participationService.findOneByExerciseIdAndCurrentUser(exerciseId)).isPresent()) {
         if (Optional.ofNullable(participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName())).isPresent()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "participationexists", "This user already has a participation for this exercise")).body(null);
+            return ResponseEntity
+                .badRequest()
+                .headers(HeaderUtil.createFailureAlert("participation", "participationexists", "This user already has a participation for this exercise"))
+                .body(null);
         }
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (Optional.ofNullable(exercise).isPresent()) {
@@ -108,7 +111,10 @@ public class ParticipationResource {
             CliClient.ExitCode cloneExitCode = bambooService.clonePlan(exercise.getBaseProjectKey(), exercise.getBaseBuildPlanSlug(), principal.getName());
             if (!cloneExitCode.equals(CliClient.ExitCode.SUCCESS)) {
                 log.error("Error while cloning build plan");
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .headers(HeaderUtil.createFailureAlert("participation", "initializationerror", "Could not start exercise"))
+                    .body(null);
             }
 
             // Update build plan's repository
