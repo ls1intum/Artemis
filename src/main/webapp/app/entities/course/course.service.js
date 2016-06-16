@@ -53,7 +53,8 @@
                         return exercise;
                     }
                     return data;
-                }
+                },
+                ignoreLoadingBar: true
             }
         });
     }

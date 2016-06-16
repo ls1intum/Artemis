@@ -14,9 +14,9 @@
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', 'CourseExercises', 'ExerciseParticipation'];
+    ExerciseListController.$inject = ['$sce', 'AlertService', 'CourseExercises', 'ExerciseParticipation'];
 
-    function ExerciseListController($sce, CourseExercises, ExerciseParticipation) {
+    function ExerciseListController($sce, AlertService, CourseExercises, ExerciseParticipation) {
         var vm = this;
 
         vm.clonePopover = {
@@ -67,6 +67,8 @@
                 // TODO: maybe exercise.get()?
                 exercise['participation'] = returnedExercise.participation;
                 exercise['participation'].toJSON = exercise.toJSON;
+            }).catch(function () {
+                AlertService.error('The server might be encountering heavy loads. Please try again in a few seconds.');
             }).finally(function () {
                 vm.loading[exercise.id.toString()] = false;
             });
