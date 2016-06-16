@@ -113,6 +113,7 @@ repositories {
 dependencies {
 
     compile fileTree(dir: 'libs', include: '*.jar')
+    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.3.1.201605051710-r'
 
     compile "io.dropwizard.metrics:metrics-core"
     compile "io.dropwizard.metrics:metrics-annotation:${dropwizard_metrics_version}"
