@@ -8,6 +8,7 @@ import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import org.eclipse.jgit.api.Git;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -44,6 +45,9 @@ public class ParticipationResource {
 
     @Inject
     private BambooService bambooService;
+
+    @Inject
+    private GitService gitService;
 
     @Inject
     private ExerciseRepository exerciseRepository;
@@ -135,6 +139,9 @@ public class ParticipationResource {
                 log.error("Error while enabling build plan");
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
+
+            // Do an empty commit so Bamboo is triggered properly
+            gitService.doEmptyCommit(exercise.getBaseProjectKey(), (String) forkResult.get("cloneUrl"));
 
             Participation participation = new Participation();
             participation.setRepositorySlug((String) forkResult.get("slug"));
