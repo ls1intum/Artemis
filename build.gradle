@@ -223,3 +223,5 @@ task stage(dependsOn: 'bootRepackage') {
 
 compileJava.dependsOn processResources
 processResources.dependsOn cleanResources
+
+bower.dependsOn npmInstall
