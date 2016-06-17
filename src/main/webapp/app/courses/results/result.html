@@ -1,14 +1,17 @@
-<span class="text-muted" ng-if="!$ctrl.hasResults()"><i
-    class="fa fa-circle-o fa-lg fa-fw"></i>No results</span>
+<span ng-if="!$ctrl.hasResults()">
+    <span class="text-muted" ng-if="!($ctrl.queued || $ctrl.building)"><i class="fa fa-circle-o fa-lg fa-fw"></i>&nbsp;No results</span>
+    <span class="text-primary" ng-if="$ctrl.queued"><i class="fa fa-ellipsis-h fa-lg fa-fw faa-flash faa-slow animated"></i>&nbsp;Build is queued</span>
+    <span class="text-primary" ng-if="$ctrl.building"><i class="fa fa-circle-o-notch fa-lg fa-fw fa-spin"></i>&nbsp;Building...</span>
+</span>
 <span ng-if="$ctrl.hasResults()" ng-switch on="$ctrl.results[0].buildSuccessful">
     <span ng-switch-when="true">
         <span class="text-success">
-            <i class="fa fa-lg fa-fw fa-check-circle-o"></i>{{$ctrl.results[0].resultString}}
+            <i class="fa fa-lg fa-fw fa-check-circle-o"></i>&nbsp;{{$ctrl.results[0].resultString}}
         </span> (<span am-time-ago="$ctrl.results[0].buildCompletionDate"></span>)
     </span>
     <span ng-switch-when="false">
         <span class="text-danger">
-            <i class="fa fa-lg fa-fw fa-times-circle-o"></i><a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
+            <i class="fa fa-lg fa-fw fa-times-circle-o"></i><a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">&nbsp;{{$ctrl.results[0].resultString}}</a>
         </span> (<span am-time-ago="$ctrl.results[0].buildCompletionDate"></span>)
     </span>
 </span>

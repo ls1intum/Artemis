@@ -32,7 +32,8 @@
     "stomp-websocket": "2.3.4",
     "swagger-ui": "2.1.4",
     "angular-moment": "^0.10.3",
-    "font-awesome": "fontawesome#^4.6.3"
+    "font-awesome": "fontawesome#^4.6.3",
+    "font-awesome-animation": "^0.0.9"
   },
   "devDependencies": {
     "angular-mocks": "1.5.5"

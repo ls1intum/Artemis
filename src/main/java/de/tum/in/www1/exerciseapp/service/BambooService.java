@@ -215,6 +215,36 @@ public class BambooService {
         return null;
     }
 
+    /**
+     *
+     * @param planKey
+     * @return
+     */
+    public Map<String, Boolean> retrieveBuildStatus(String planKey) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = null;
+        try {
+            response = restTemplate.exchange(
+                BAMBOO_SERVER + "/rest/api/latest/plan/" + planKey.toUpperCase() + ".json",
+                HttpMethod.GET,
+                entity,
+                Map.class);
+        } catch (Exception e) {
+            log.error("HttpError while retrieving build status", e);
+        }
+        if (response != null) {
+            Map<String, Boolean> result = new HashMap<>();
+            boolean isActive = (boolean) response.getBody().get("isActive");
+            boolean isBuilding = (boolean) response.getBody().get("isBuilding");
+            result.put("isActive", isActive);
+            result.put("isBuilding", isBuilding);
+            return result;
+        }
+        return null;
+    }
+
     private String buildSshRepositoryUrl(String project, String slug) {
         final int sshPort = 7999;
         return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
