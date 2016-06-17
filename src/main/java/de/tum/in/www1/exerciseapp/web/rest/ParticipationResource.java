@@ -149,8 +149,6 @@ public class ParticipationResource {
             userRepository.findOneByLogin(principal.getName()).ifPresent(u -> participation.setStudent(u));
             participation.setExercise(exercise);
             Participation result = participationService.save(participation);
-//            exercise.getParticipations().add(participation);
-//            exerciseRepository.save(exercise);
             return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert("participation", result.getId().toString()))
                 .body(result);
@@ -231,13 +229,35 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
-//        Participation participation = participationService.findOneByExerciseIdAndCurrentUser(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(
                 result,
                 HttpStatus.OK))
             .orElse(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+    }
+
+    /**
+     * GET  /courses/:courseId/exercises/:exerciseId/participation/status: get build status of the user's participation for the "id" exercise.
+     *
+     *
+     * @param courseId   only included for API consistency, not actually used
+     * @param exerciseId the id of the exercise for which to retrieve the participation status
+     * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
+     */
+    @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation/status",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    public ResponseEntity<?> getParticipationStatus(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
+        log.debug("REST request to get Participation status for Exercise : {}", exerciseId);
+        Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        Map buildStatus = bambooService.retrieveBuildStatus(participation.getExercise().getBaseProjectKey() + "-" + principal.getName());
+        return Optional.ofNullable(buildStatus)
+            .map(status -> new ResponseEntity<>(
+                status,
+                HttpStatus.OK))
+            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     /**

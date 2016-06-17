@@ -14,9 +14,9 @@
             controller: ResultController
         });
 
-    ResultController.$inject = ['$uibModal', 'ParticipationResult'];
+    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult'];
 
-    function ResultController($uibModal, ParticipationResult) {
+    function ResultController($http, $uibModal, ParticipationResult) {
         var vm = this;
 
         vm.$onInit = init;
@@ -24,10 +24,19 @@
         vm.showDetails = showDetails;
 
         function init() {
-            vm.results = ParticipationResult.query({
-                courseId: vm.participation.exercise.course.id,
-                exerciseId: vm.participation.exercise.id,
-                participationId: vm.participation.id
+            $http.get('api/courses/' + vm.participation.exercise.course.id + '/exercises/' + vm.participation.exercise.id + '/participation/status', {
+                ignoreLoadingBar: true
+            }).then(function (response) {
+                vm.queued = response.data.isActive && !response.data.isBuilding;
+                vm.building = response.data.isActive && response.data.isBuilding;
+            }).finally(function () {
+                if (!vm.queued && !vm.building) {
+                    vm.results = ParticipationResult.query({
+                        courseId: vm.participation.exercise.course.id,
+                        exerciseId: vm.participation.exercise.id,
+                        participationId: vm.participation.id
+                    });
+                }
             });
         }
 
