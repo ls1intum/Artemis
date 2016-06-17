@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.internal.storage.file.FileRepository;
@@ -15,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -34,10 +36,10 @@ public class GitService {
     /**
      * Checks out the repository with the given URL to the file system
      */
-    public Git checkoutRepository(String projectKey, String repoUrl) {
+    public File checkoutRepository(String projectKey, String repoUrl) {
         File repo = new File("/home/muench/exercise-application/repos/" + projectKey);
         if (!Files.exists(repo.toPath())) {
-            System.out.println("Repo doesn't exist, cloning...");
+            log.info("Repository for key {} doesn't exist, cloning...", projectKey);
             try {
                 Git.cloneRepository()
                     .setURI(repoUrl)
@@ -47,24 +49,23 @@ public class GitService {
                 e.printStackTrace();
             }
         } else {
-            System.out.println("Repo exists.");
+            log.info("Repo already cloned.");
         }
-        try {
-            return new Git(new FileRepository(repo.getPath() + "/.git"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return null;
+        return repo;
     }
 
     public void doEmptyCommit(String projectKey, String newRemote) {
-        Git git = checkoutRepository(projectKey, newRemote);
+        File sourceFolder = checkoutRepository(projectKey, newRemote);
         try {
+            File tmpFolder = new File(sourceFolder.getParentFile().getPath() + "/" + UUID.randomUUID());
+            FileUtils.copyDirectory(sourceFolder, tmpFolder);
+            Git git = new Git(new FileRepository(tmpFolder.getPath() + "/.git"));
             StoredConfig config = git.getRepository().getConfig();
             config.setString("remote", "origin", "url", newRemote);
             config.save();
             git.commit().setMessage("Setup").setAllowEmpty(true).call();
             git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(BITBUCKET_USER, BITBUCKET_PASSWORD)).call();
+            FileUtils.deleteDirectory(tmpFolder);
         } catch (IOException e) {
             e.printStackTrace();
         } catch (GitAPIException e) {
