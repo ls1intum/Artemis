@@ -41,6 +41,11 @@
             });
         }
 
+        function buildSourceTreeUrl(cloneUrl) {
+            // sourcetree://cloneRepo?type=stash&cloneUrl=https%3A%2F%2Fga56hur%40repobruegge.in.tum.de%2Fscm%2Fmadm%2Fexercise-application.git
+            return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl);
+        }
+
         var trusted = {};
 
         function getClonePopoverTemplate(exercise) {
@@ -48,6 +53,8 @@
                 '<div>',
                 '<p>Clone your personal repository for this exercise:</p>',
                 '<pre>', exercise.participation.cloneUrl, '</pre>',
+                '<a class="btn btn-primary btn-sm" href="', buildSourceTreeUrl(exercise.participation.cloneUrl),'">Clone in SourceTree</a>',
+                ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git and Mercurial client for Windows or Mac.',
                 '</div>'
             ].join('');
             return trusted[html] || (trusted[html] = $sce.trustAsHtml(html));
