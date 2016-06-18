@@ -1,6 +1,9 @@
 <div>
-    <button class="btn btn-primary btn-sm pull-right" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-lg fa-fw"></i>&nbsp;Refresh</button>
-    <p>Correct submissions: <span class="badge">{{ $ctrl.results.length }}</span></p>
+    <div class="button-toolbar pull-right">
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Download</button>
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh</button>
+    </div>
+    <h4>Correct submissions:&nbsp;<span class="badge">{{ $ctrl.results.length }}</span></h4>
 </div>
 <table class="table">
     <thead>
