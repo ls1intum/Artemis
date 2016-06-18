@@ -11,7 +11,11 @@
     </thead>
     <tbody>
     <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate'" ng-switch on="$ctrl.hasParticipation(exercise)">
-        <td>{{exercise.title}}</td>
+        <td ng-mouseenter="showInfo = true" ng-mouseleave="showInfo = false">
+            <span has-authority="ROLE_USER">{{exercise.title}}</span>
+            <a class="text-primary" has-authority="ROLE_ADMIN"><i class="fa fa-info-circle fa-fw"
+               ui-sref="instructor-dashboard({courseId: exercise.course.id, exerciseId: exercise.id})"></i></a>
+        </td>
         <td>
             <span am-time-ago="exercise.dueDate" uib-tooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}"
                   tooltip-placement="right"></span>
