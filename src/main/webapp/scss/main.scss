@@ -27,6 +27,10 @@ body {
     max-height: 180px;
 }
 
+.popover {
+    max-width: 100%;
+}
+
 /* ==========================================================================
 Hide ng-cloak on page load, https://docs.angularjs.org/api/ng/directive/ngCloak
 ========================================================================== */
