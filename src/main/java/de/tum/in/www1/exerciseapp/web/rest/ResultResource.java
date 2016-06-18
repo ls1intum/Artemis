@@ -131,8 +131,11 @@ public class ResultResource {
     }
 
     /**
-     * GET  /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results.
+     * GET  /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results for "id" participation.
      *
+     * @param courseId        only included for API consistency, not actually used
+     * @param exerciseId      only included for API consistency, not actually used
+     * @param participationId the id of the participation for which to retrieve the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results",
@@ -144,6 +147,24 @@ public class ResultResource {
                                                    @PathVariable Long participationId) {
         log.debug("REST request to get Results for Participation : {}", participationId);
         List<Result> results = resultRepository.findByParticipationIdOrderByBuildCompletionDateDesc(participationId);
+        return results;
+    }
+
+    /**
+     * GET  /courses/:courseId/exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
+     *
+     * @param courseId only included for API consistency, not actually used
+     * @param exerciseId the id of the exercise for which to retrieve the results
+     * @return the ResponseEntity with status 200 (OK) and the list of results in body
+     */
+    @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    public List<Result> getResultsForExercise(@PathVariable Long courseId,
+                                              @PathVariable Long exerciseId) {
+        log.debug("REST request to get Results for Exercise : {}", exerciseId);
+        List<Result> results = resultRepository.findByParticipationExerciseIdAndBuildSuccessfulOrderByBuildCompletionDateAsc(exerciseId, true);
         return results;
     }
 

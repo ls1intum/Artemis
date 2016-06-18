@@ -1,0 +1,18 @@
+<div>
+    <button class="btn btn-primary btn-sm pull-right" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-lg fa-fw"></i>&nbsp;Refresh</button>
+    <p>Correct submissions: <span class="badge">{{ $ctrl.results.length }}</span></p>
+</div>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Student name</th>
+        <th>Build completion date</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr ng-repeat="result in $ctrl.results">
+        <td>{{ result.participation.student.firstName }}</td>
+        <td>{{ result.buildCompletionDate | date:'MMM d, y H:mm:ss' }}</td>
+    </tr>
+    </tbody>
+</table>

@@ -13,4 +13,6 @@ import java.util.List;
 public interface ResultRepository extends JpaRepository<Result,Long> {
 
     List<Result> findByParticipationIdOrderByBuildCompletionDateDesc(Long participationId);
+
+    List<Result> findByParticipationExerciseIdAndBuildSuccessfulOrderByBuildCompletionDateAsc(Long exerciseId, boolean buildSuccessful);
 }
