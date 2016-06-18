@@ -8,7 +8,7 @@
     <div ng-switch-when="false" ng-repeat="detail in $ctrl.details track by $index" ng-init="lastDetail = $last">
         <p>Error in method <code>{{detail.methodName}}</code>:</p>
         <div ng-repeat="error in detail.errors.error">
-            <pre class="pre-scrollable-short" ng-bind="error.message"></pre>
+            <pre ng-bind="error.message.split('\n')[0]"></pre>
         </div>
         <hr ng-if="!lastDetail">
     </div>
