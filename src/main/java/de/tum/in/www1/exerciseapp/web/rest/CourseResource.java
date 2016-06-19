@@ -13,6 +13,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PostFilter;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -26,6 +28,7 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping({"/api", "/api_basic"})
+@PreAuthorize("hasRole('ADMIN')")
 public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
@@ -89,6 +92,7 @@ public class CourseResource {
     @RequestMapping(value = "/courses",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Timed
     public ResponseEntity<List<Course>> getAllCourses(Pageable pageable)
         throws URISyntaxException {
