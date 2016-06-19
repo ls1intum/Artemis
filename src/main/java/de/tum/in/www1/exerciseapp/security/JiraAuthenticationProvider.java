@@ -69,7 +69,6 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         if (authenticationResponse != null) {
             Map content = authenticationResponse.getBody();
             User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() -> {
-                // TODO: We don't want all users to be named Johne Doe ;)
                 User newUser = userService.createUserInformation((String) content.get("name"), "",
                     (String) content.get("displayName"), "", (String) content.get("emailAddress"),
                     "en");
