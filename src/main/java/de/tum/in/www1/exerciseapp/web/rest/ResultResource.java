@@ -29,7 +29,6 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping({"/api", "/api_basic"})
-@PreAuthorize("hasRole('ADMIN')")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
@@ -75,7 +74,6 @@ public class ResultResource {
     @RequestMapping(value = "/results/{planKey}",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("permitAll")
     @Transactional
     public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
         if (planKey.contains("base")) {
