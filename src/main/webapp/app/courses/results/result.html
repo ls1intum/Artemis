@@ -11,7 +11,7 @@
     </span>
     <span ng-switch-when="false">
         <span class="text-danger">
-            <i class="fa fa-lg fa-fw fa-times-circle-o"></i><a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">&nbsp;{{$ctrl.results[0].resultString}}</a>
+            <i class="fa fa-lg fa-fw fa-times-circle-o"></i>&nbsp;<a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
         </span> (<span am-time-ago="$ctrl.results[0].buildCompletionDate"></span>)
     </span>
 </span>
