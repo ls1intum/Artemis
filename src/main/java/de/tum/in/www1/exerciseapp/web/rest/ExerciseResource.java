@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,6 +28,7 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping({"/api", "/api_basic"})
+@PreAuthorize("hasRole('ADMIN')")
 public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
@@ -110,6 +112,7 @@ public class ExerciseResource {
     @RequestMapping(value = "/courses/{courseId}/exercises",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, Pageable pageable)

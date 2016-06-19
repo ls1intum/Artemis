@@ -21,6 +21,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping("/api")
+@PreAuthorize("hasRole('ADMIN')")
 public class UserResource {
 
     private final Logger log = LoggerFactory.getLogger(UserResource.class);

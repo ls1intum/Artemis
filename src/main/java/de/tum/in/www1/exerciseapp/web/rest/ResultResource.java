@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,6 +29,7 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping({"/api", "/api_basic"})
+@PreAuthorize("hasRole('ADMIN')")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
@@ -73,6 +75,7 @@ public class ResultResource {
     @RequestMapping(value = "/results/{planKey}",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("permitAll")
     @Transactional
     public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
         if (planKey.contains("base")) {
@@ -141,6 +144,7 @@ public class ResultResource {
     @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Timed
     public List<Result> getResultsForParticipation(@PathVariable Long courseId,
                                                    @PathVariable Long exerciseId,
@@ -197,6 +201,7 @@ public class ResultResource {
     @RequestMapping(value = "/results/{id}/details",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Timed
     public ResponseEntity<?> getResultDetails(@PathVariable Long id, Principal principal) {
         log.debug("REST request to get Result : {}", id);
