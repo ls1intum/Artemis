@@ -118,8 +118,7 @@ public class ExerciseResource {
     public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Exercises");
-//        Page<Exercise> page = exerciseRepository.findByCourseId(courseId, pageable);
-        Page<Exercise> page = exerciseRepository.findAll(pageable);
+        Page<Exercise> page = exerciseRepository.findByCourseId(courseId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
