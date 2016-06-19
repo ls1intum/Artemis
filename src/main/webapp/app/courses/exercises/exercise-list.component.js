@@ -70,12 +70,19 @@
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
             }).then(function (returnedExercise) {
-                // console.log(participation);
-                // TODO: maybe exercise.get()?
                 exercise['participation'] = returnedExercise.participation;
                 exercise['participation'].toJSON = exercise.toJSON;
+                AlertService.add({
+                    type: 'success',
+                    msg: 'Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!',
+                    timeout: 10000
+                });
             }).catch(function () {
-                AlertService.error('The server might be encountering heavy loads. Please try again in a few seconds.');
+                AlertService.add({
+                    type: 'error',
+                    msg: 'Uh oh! Something went wrong... Please try again in a few seconds.',
+                    timeout: 10000
+                });
             }).finally(function () {
                 vm.loading[exercise.id.toString()] = false;
             });
