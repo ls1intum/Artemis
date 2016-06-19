@@ -124,5 +124,5 @@
         "emailexists": "E-mail is already in use!",
         "idexists": "A new {{ entityName }} cannot already have an ID"
     },
-    "footer": "This is your footer"
+    "footer": "Found a bug or have some feedback? Please <a href=\"mailto:muenchdo@in.tum.de\">let us know</a>!"
 }
