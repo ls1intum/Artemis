@@ -150,7 +150,6 @@ public class ParticipationResource {
             participation.setExercise(exercise);
             Participation result = participationService.save(participation);
             return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert("participation", result.getId().toString()))
                 .body(result);
         } else {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
