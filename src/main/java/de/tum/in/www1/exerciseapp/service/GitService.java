@@ -33,11 +33,14 @@ public class GitService {
     @Value("${exerciseapp.bitbucket.password}")
     private String BITBUCKET_PASSWORD;
 
+    @Value("${exerciseapp.repo-clone-path}")
+    private String REPO_CLONE_PATH;
+
     /**
      * Checks out the repository with the given URL to the file system
      */
     public File checkoutRepository(String projectKey, String repoUrl) {
-        File repo = new File("/home/muench/exercise-application/repos/" + projectKey);
+        File repo = new File(REPO_CLONE_PATH + projectKey);
         if (!Files.exists(repo.toPath())) {
             log.info("Repository for key {} doesn't exist, cloning...", projectKey);
             try {
