@@ -19,10 +19,6 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "slug",
-            "fieldType": "String"
-        },
-        {
             "fieldName": "baseProjectKey",
             "fieldType": "String"
         },

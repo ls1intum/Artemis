@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .controller('ExerciseController', ExerciseController);
 
-    ExerciseController.$inject = ['$scope', '$state', 'Exercise', 'ExerciseSearch', 'ParseLinks', 'AlertService'];
+    ExerciseController.$inject = ['$scope', '$state', 'Exercise', 'ParseLinks', 'AlertService'];
 
-    function ExerciseController ($scope, $state, Exercise, ExerciseSearch, ParseLinks, AlertService) {
+    function ExerciseController ($scope, $state, Exercise, ParseLinks, AlertService) {
         var vm = this;
         
         vm.exercises = [];
@@ -16,26 +16,15 @@
         vm.predicate = 'id';
         vm.reset = reset;
         vm.reverse = true;
-        vm.clear = clear;
-        vm.search = search;
 
         loadAll();
 
         function loadAll () {
-            if (vm.currentSearch) {
-                ExerciseSearch.query({
-                    query: vm.currentSearch,
-                    page: vm.page,
-                    size: 20,
-                    sort: sort()
-                }, onSuccess, onError);
-            } else {
-                Exercise.query({
-                    page: vm.page,
-                    size: 20,
-                    sort: sort()
-                }, onSuccess, onError);
-            }
+            Exercise.query({
+                page: vm.page,
+                size: 20,
+                sort: sort()
+            }, onSuccess, onError);
             function sort() {
                 var result = [vm.predicate + ',' + (vm.reverse ? 'asc' : 'desc')];
                 if (vm.predicate !== 'id') {
@@ -64,30 +53,6 @@
         function loadPage(page) {
             vm.page = page;
             loadAll();
-        }
-
-        function clear () {
-            vm.exercises = [];
-            vm.links = null;
-            vm.page = 0;
-            vm.predicate = 'id';
-            vm.reverse = true;
-            vm.searchQuery = null;
-            vm.currentSearch = null;
-            vm.loadAll();
-        }
-
-        function search (searchQuery) {
-            if (!searchQuery){
-                return vm.clear();
-            }
-            vm.exercises = [];
-            vm.links = null;
-            vm.page = 0;
-            vm.predicate = '_score';
-            vm.reverse = false;
-            vm.currentSearch = searchQuery;
-            vm.loadAll();
         }
     }
 })();

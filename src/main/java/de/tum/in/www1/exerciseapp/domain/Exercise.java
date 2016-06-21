@@ -28,9 +28,6 @@ public class Exercise implements Serializable {
     @Column(name = "title")
     private String title;
 
-    @Column(name = "slug")
-    private String slug;
-
     @Column(name = "base_project_key")
     private String baseProjectKey;
 
@@ -68,14 +65,6 @@ public class Exercise implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getSlug() {
-        return slug;
-    }
-
-    public void setSlug(String slug) {
-        this.slug = slug;
     }
 
     public String getBaseProjectKey() {
@@ -159,7 +148,6 @@ public class Exercise implements Serializable {
         return "Exercise{" +
             "id=" + id +
             ", title='" + title + "'" +
-            ", slug='" + slug + "'" +
             ", baseProjectKey='" + baseProjectKey + "'" +
             ", baseRepositorySlug='" + baseRepositorySlug + "'" +
             ", baseBuildPlanSlug='" + baseBuildPlanSlug + "'" +
