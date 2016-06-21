@@ -8,12 +8,14 @@
 <table class="table">
     <thead>
     <tr>
+        <th></th>
         <th>Student name</th>
         <th>Build completion date</th>
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="result in $ctrl.results">
+    <tr ng-repeat="result in $ctrl.results track by $index">
+        <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }}</td>
         <td>{{ result.buildCompletionDate | date:'MMM d, y HH:mm:ss' }}</td>
     </tr>
