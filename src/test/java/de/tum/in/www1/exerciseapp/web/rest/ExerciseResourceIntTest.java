@@ -49,8 +49,6 @@ public class ExerciseResourceIntTest {
 
     private static final String DEFAULT_TITLE = "AAAAA";
     private static final String UPDATED_TITLE = "BBBBB";
-    private static final String DEFAULT_SLUG = "AAAAA";
-    private static final String UPDATED_SLUG = "BBBBB";
     private static final String DEFAULT_BASE_PROJECT_KEY = "AAAAA";
     private static final String UPDATED_BASE_PROJECT_KEY = "BBBBB";
     private static final String DEFAULT_BASE_REPOSITORY_SLUG = "AAAAA";
@@ -93,7 +91,6 @@ public class ExerciseResourceIntTest {
     public void initTest() {
         exercise = new Exercise();
         exercise.setTitle(DEFAULT_TITLE);
-        exercise.setSlug(DEFAULT_SLUG);
         exercise.setBaseProjectKey(DEFAULT_BASE_PROJECT_KEY);
         exercise.setBaseRepositorySlug(DEFAULT_BASE_REPOSITORY_SLUG);
         exercise.setBaseBuildPlanSlug(DEFAULT_BASE_BUILD_PLAN_SLUG);
@@ -118,7 +115,6 @@ public class ExerciseResourceIntTest {
         assertThat(exercises).hasSize(databaseSizeBeforeCreate + 1);
         Exercise testExercise = exercises.get(exercises.size() - 1);
         assertThat(testExercise.getTitle()).isEqualTo(DEFAULT_TITLE);
-        assertThat(testExercise.getSlug()).isEqualTo(DEFAULT_SLUG);
         assertThat(testExercise.getBaseProjectKey()).isEqualTo(DEFAULT_BASE_PROJECT_KEY);
         assertThat(testExercise.getBaseRepositorySlug()).isEqualTo(DEFAULT_BASE_REPOSITORY_SLUG);
         assertThat(testExercise.getBaseBuildPlanSlug()).isEqualTo(DEFAULT_BASE_BUILD_PLAN_SLUG);
@@ -138,7 +134,6 @@ public class ExerciseResourceIntTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(exercise.getId().intValue())))
                 .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
-                .andExpect(jsonPath("$.[*].slug").value(hasItem(DEFAULT_SLUG.toString())))
                 .andExpect(jsonPath("$.[*].baseProjectKey").value(hasItem(DEFAULT_BASE_PROJECT_KEY.toString())))
                 .andExpect(jsonPath("$.[*].baseRepositorySlug").value(hasItem(DEFAULT_BASE_REPOSITORY_SLUG.toString())))
                 .andExpect(jsonPath("$.[*].baseBuildPlanSlug").value(hasItem(DEFAULT_BASE_BUILD_PLAN_SLUG.toString())))
@@ -158,7 +153,6 @@ public class ExerciseResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(exercise.getId().intValue()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()))
-            .andExpect(jsonPath("$.slug").value(DEFAULT_SLUG.toString()))
             .andExpect(jsonPath("$.baseProjectKey").value(DEFAULT_BASE_PROJECT_KEY.toString()))
             .andExpect(jsonPath("$.baseRepositorySlug").value(DEFAULT_BASE_REPOSITORY_SLUG.toString()))
             .andExpect(jsonPath("$.baseBuildPlanSlug").value(DEFAULT_BASE_BUILD_PLAN_SLUG.toString()))
@@ -185,7 +179,6 @@ public class ExerciseResourceIntTest {
         Exercise updatedExercise = new Exercise();
         updatedExercise.setId(exercise.getId());
         updatedExercise.setTitle(UPDATED_TITLE);
-        updatedExercise.setSlug(UPDATED_SLUG);
         updatedExercise.setBaseProjectKey(UPDATED_BASE_PROJECT_KEY);
         updatedExercise.setBaseRepositorySlug(UPDATED_BASE_REPOSITORY_SLUG);
         updatedExercise.setBaseBuildPlanSlug(UPDATED_BASE_BUILD_PLAN_SLUG);
@@ -202,7 +195,6 @@ public class ExerciseResourceIntTest {
         assertThat(exercises).hasSize(databaseSizeBeforeUpdate);
         Exercise testExercise = exercises.get(exercises.size() - 1);
         assertThat(testExercise.getTitle()).isEqualTo(UPDATED_TITLE);
-        assertThat(testExercise.getSlug()).isEqualTo(UPDATED_SLUG);
         assertThat(testExercise.getBaseProjectKey()).isEqualTo(UPDATED_BASE_PROJECT_KEY);
         assertThat(testExercise.getBaseRepositorySlug()).isEqualTo(UPDATED_BASE_REPOSITORY_SLUG);
         assertThat(testExercise.getBaseBuildPlanSlug()).isEqualTo(UPDATED_BASE_BUILD_PLAN_SLUG);
@@ -225,25 +217,5 @@ public class ExerciseResourceIntTest {
         // Validate the database is empty
         List<Exercise> exercises = exerciseRepository.findAll();
         assertThat(exercises).hasSize(databaseSizeBeforeDelete - 1);
-    }
-
-    @Test
-    @Transactional
-    public void searchExercise() throws Exception {
-        // Initialize the database
-        exerciseRepository.saveAndFlush(exercise);
-
-        // Search the exercise
-        restExerciseMockMvc.perform(get("/api/_search/exercises?query=id:" + exercise.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(exercise.getId().intValue())))
-            .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
-            .andExpect(jsonPath("$.[*].slug").value(hasItem(DEFAULT_SLUG.toString())))
-            .andExpect(jsonPath("$.[*].baseProjectKey").value(hasItem(DEFAULT_BASE_PROJECT_KEY.toString())))
-            .andExpect(jsonPath("$.[*].baseRepositorySlug").value(hasItem(DEFAULT_BASE_REPOSITORY_SLUG.toString())))
-            .andExpect(jsonPath("$.[*].baseBuildPlanSlug").value(hasItem(DEFAULT_BASE_BUILD_PLAN_SLUG.toString())))
-            .andExpect(jsonPath("$.[*].releaseDate").value(hasItem(DEFAULT_RELEASE_DATE_STR)))
-            .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)));
     }
 }

@@ -6,27 +6,10 @@
             <div class="col-xs-4 no-padding-left">
                 <button class="btn btn-primary" ui-sref="exercise.new" >
                     <span class="glyphicon glyphicon-plus"></span>
-                    <span class="hidden-xs"  translate="exerciseApplicationApp.exercise.home.createLabel">
+                    <span  translate="exerciseApplicationApp.exercise.home.createLabel">
                         Create new Exercise
                     </span>
                 </button>
-            </div>
-            <div class="col-xs-8 no-padding-right">
-                <form name="searchForm" class="form-inline">
-                    <div class="input-group pull-right" >
-                        <input type="text" class="form-control" ng-model="vm.searchQuery" id="searchQuery" placeholder="{{ 'exerciseApplicationApp.exercise.home.search' | translate }}">
-                        <span  class="input-group-btn width-min" >
-                            <button class="btn btn-info" ng-click="vm.search(vm.searchQuery)">
-                                <span class="glyphicon glyphicon-search"></span>
-                            </button>
-                        </span>
-                        <span class="input-group-btn width-min" ng-if="vm.currentSearch">
-                            <button class="btn btn-info" ng-click="vm.clear()">
-                                <span class="glyphicon glyphicon-trash"></span>
-                            </button>
-                        </span>
-                    </div>
-                </form>
             </div>
         </div>
     </div>
@@ -37,7 +20,6 @@
                 <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.reset()">
                     <th jh-sort-by="id"><span translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="title"><span translate="exerciseApplicationApp.exercise.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="slug"><span translate="exerciseApplicationApp.exercise.slug">Slug</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="baseProjectKey"><span translate="exerciseApplicationApp.exercise.baseProjectKey">Base Project Key</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="baseRepositorySlug"><span translate="exerciseApplicationApp.exercise.baseRepositorySlug">Base Repository Slug</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="baseBuildPlanSlug"><span translate="exerciseApplicationApp.exercise.baseBuildPlanSlug">Base Build Plan Slug</span> <span class="glyphicon glyphicon-sort"></span></th>
@@ -51,7 +33,6 @@
                 <tr ng-repeat="exercise in vm.exercises track by exercise.id">
                     <td><a ui-sref="exercise-detail({id:exercise.id})">{{exercise.id}}</a></td>
                     <td>{{exercise.title}}</td>
-                    <td>{{exercise.slug}}</td>
                     <td>{{exercise.baseProjectKey}}</td>
                     <td>{{exercise.baseRepositorySlug}}</td>
                     <td>{{exercise.baseBuildPlanSlug}}</td>

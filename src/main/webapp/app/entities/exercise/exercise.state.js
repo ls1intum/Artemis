@@ -72,7 +72,6 @@
                         entity: function () {
                             return {
                                 title: null,
-                                slug: null,
                                 baseProjectKey: null,
                                 baseRepositorySlug: null,
                                 baseBuildPlanSlug: null,

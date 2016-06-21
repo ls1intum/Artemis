@@ -17,7 +17,6 @@
                 "title": "Exercise"
             },
             "title": "Title",
-            "slug": "Slug",
             "baseProjectKey": "Base Project Key",
             "baseRepositorySlug": "Base Repository Slug",
             "baseBuildPlanSlug": "Base Build Plan Slug",
