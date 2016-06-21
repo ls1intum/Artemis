@@ -11,6 +11,7 @@
 /node/**
 /node_tmp/**
 /node_modules/**
+/npm-cache
 
 ######################
 # SASS
