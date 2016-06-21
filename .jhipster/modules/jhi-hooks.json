@@ -1,0 +1,10 @@
+[
+    {
+        "name": "Basic Auth generator",
+        "npmPackageName": "generator-jhipster-basic-auth",
+        "description": "Adds stateless basic authentication support",
+        "hookFor": "entity",
+        "hookType": "post",
+        "generatorCallback": "jhipster-basic-auth:entity"
+    }
+]

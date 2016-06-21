@@ -1,0 +1,29 @@
+{
+    "relationships": [
+        {
+            "relationshipName": "participation",
+            "otherEntityName": "participation",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "resultString",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "buildCompletionDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "buildSuccessful",
+            "fieldType": "Boolean"
+        }
+    ],
+    "changelogDate": "20160609110918",
+    "dto": "no",
+    "service": "no",
+    "entityTableName": "result",
+    "pagination": "no"
+}

@@ -1,0 +1,30 @@
+
+<div>
+    <h2><span translate="exerciseApplicationApp.result.detail.title">Result</span> {{vm.result.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="dl-horizontal jh-entity-details">
+        <dt><span translate="exerciseApplicationApp.result.resultString">Result String</span></dt>
+        <dd>
+            <span>{{vm.result.resultString}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.result.buildCompletionDate">Build Completion Date</span></dt>
+        <dd>
+            <span>{{vm.result.buildCompletionDate | date:'medium'}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.result.buildSuccessful">Build Successful</span></dt>
+        <dd>
+            <span>{{vm.result.buildSuccessful}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.result.participation">Participation</span></dt>
+        <dd>
+            <a ui-sref="participation-detail({id:vm.result.participation.id})">{{vm.result.participation.id}}</a>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            onclick="window.history.back()"
+            class="btn btn-info">
+        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span translate="entity.action.back"> Back</span>
+    </button>
+</div>
