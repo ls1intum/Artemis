@@ -1,0 +1,26 @@
+{
+    "exerciseApplicationApp": {
+        "participation" : {
+            "home": {
+                "title": "Participations",
+                "createLabel": "Participation erstellen",
+                "createOrEditLabel": "Participation erstellen oder bearbeiten",
+                "search": "Suche nach Participation"
+            },
+            "created": "Participation erstellt mit ID {{ param }}",
+            "updated": "Participation aktualisiert mit ID {{ param }}",
+            "deleted": "Participation gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Participation {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Participation"
+            },
+            "cloneUrl": "Clone Url",
+            "repositorySlug": "Repository Slug",
+            "student": "Student",
+            "results": "Results",
+            "exercise": "Exercise"
+        }
+    }
+}
