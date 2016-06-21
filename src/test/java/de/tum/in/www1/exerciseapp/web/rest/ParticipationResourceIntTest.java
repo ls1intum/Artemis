@@ -181,19 +181,4 @@ public class ParticipationResourceIntTest {
         List<Participation> participations = participationRepository.findAll();
         assertThat(participations).hasSize(databaseSizeBeforeDelete - 1);
     }
-
-    @Test
-    @Transactional
-    public void searchParticipation() throws Exception {
-        // Initialize the database
-        participationService.save(participation);
-
-        // Search the participation
-        restParticipationMockMvc.perform(get("/api/_search/participations?query=id:" + participation.getId()))
-            .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(participation.getId().intValue())))
-            .andExpect(jsonPath("$.[*].cloneUrl").value(hasItem(DEFAULT_CLONE_URL.toString())))
-            .andExpect(jsonPath("$.[*].repositorySlug").value(hasItem(DEFAULT_REPOSITORY_SLUG.toString())));
-    }
 }
