@@ -1,87 +1,72 @@
-# ExerciseApplication
+# Exercise Application
 
-This application was generated using JHipster, you can find documentation and help at [https://jhipster.github.io](https://jhipster.github.io).
+## Exercise Setup
+Please follow these instructions carefully to set up a new exercise for the students in course. The instructions demonstrate setting up a Java exercise, however this can be adapted to any programming language supported by the build server.
 
-## Development
+### [Bitbucket Setup](https://repobruegge.in.tum.de)
 
-Before you can build this project, you must install and configure the following dependencies on your machine:
+You will need to create a unique Bitbucket project per exercise.
 
-1. [Node.js][]: We use Node to run a development web server and build the project.
-   Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+1. Choose an appropriate project name and key. E.g. for the exercise "*State Chart*" in the course "*Introduction to Software Engineering (Summer 2016)*" a suitable project key would be `EIST16SC`.
+2. Give the user *exerciseapp* admin permissions on the project.
+3. Inside the project, create two repositories:
+    1. Repository containing the exercise code for the students. Since the repository contains no reference to the Bitbucket project outside of the Bitbucket UI, we recommend to name this repository with the project key. Use the following structure:
 
-After installing Node, you should be able to run the following command to install development tools (like
-[Bower][] and [BrowserSync][]). You will only need to run this command when dependencies change in package.json.
+            ExerciseStateChart/
+                |_ src/
+                    |_ ... (source code in standard Java package structure)
+                |_ .classpath
+                |_ .project
+            .gitignore
 
-    npm install
+    2. Repository containing the testing code. Choose a descriptive name, e.g. "*TEST*". Use the following structure:
 
-We use [Gulp][] as our build system. Install the Gulp command-line tool globally with:
+            test/
+                |_ src/
+                    |_ ... (test code in standard Java package structure)
+            testResources/
+                |_ ... (any resources required for tests, e.g. structure definitions)
+            pom.xml
 
-    npm install -g gulp
+### [Bamboo Setup](https://bamboobruegge.in.tum.de)
 
-Run the following commands in two separate terminals to create a blissful development experience where your browser
-auto-refreshes when files change on your hard drive.
+1. Create a new plan:
+    1. Choose to create it inside a new project make sure the project key is identical (**!!!**) to the Bitbucket project. 
+    2. Give the plan a descriptive key such as "*BASE*". The plan name and description are not important.
+    3. Choose an arbitray linked repository (Will be deleted later on since we do not use linked repositories).
+    4. Click "*Configure plan*".
+    5. Click  "*Create*" (Setup will be completed in next step).
+2. Configure the plan (`Open plan` -> `Actions` -> `Configure plan`):
+    1. Permissions: Remove the *View* permission for logged in and anonymous users. Add admin permissions for the user *exerciseapp*.
+    2. Repositories: 
+        1. Remove the repository which was linked during the initial setup.
+        2. Click "*Add repository*".
+        3. Add the exercise code repository. **Important:** Give it the same name as the actual repository! (In our example: *EIST16SC*).
+        4. Add the test repository. Here, an arbitrary name can be chosen.
+    4. Stages:
+        1. Choose the default job in the default stage.
+        2. Edit the source code checkout task: Add the exercise code repository (make sure it points to the repository and **not** to the default repository) and the test repository (set the checkout directory so it is checked out into the exercise code folder).
+        3. Add a Maven 3.x task with goal `clean test`. Check "*This build will produce test results*". Other settings might depend on your specific code setup.
+        4. Add a script task with the following (inline) content:
 
-    ./gradlew
-    gulp
+                curl -k -X POST https://exercisebruegge.in.tum.de/api/results/${bamboo.planKey}
+        5. Add a requirement "*AgentType equals Amazon*" to the job.
 
-Bower is used to manage CSS and JavaScript dependencies used in this application. You can upgrade dependencies by
-specifying a newer version in `bower.json`. You can also run `bower update` and `bower install` to manage dependencies.
-Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
+### [Exercise Application Setup](https://exercisebruegge.in.tum.de)
 
+Make sure you are in user group *ls1instructor* to have admin permissions inside the exercise application.
 
-## Building for production
+1. If you have not created a course yet, do so now (`Entities` -> `Course` -> `Create a new Course`). The student group name defines in which group users need to be to see this course. 
 
-To optimize the ExerciseApplication client for production, run:
+2. Create a new exercise (`Entities` -> `Course` -> `Create a new Exercise`) with the following parameters:
+    * Title: A descriptive title for the exercise
+    * Base Project Key: The project key you chose for the Bitbucket and Bamboo projects
+    * Base Repository Slug: The slug (available from repository URL) of the exercise code repository
+    * Base Build Plan Slug: The slug (available from build plan URL) of the build plan
+    * Release Date: When the exercise will be visible to students (**Not respected yet**)
+    * Due Date: Cut-off date after which submissions won't be considered for bonus (**Not implemented yet**)
+    * Course: The course with which this exercise should be associated
 
-    ./gradlew -Pprod clean bootRepackage
-
-This will concatenate and minify CSS and JavaScript files. It will also modify `index.html` so it references
-these new files.
-
-To ensure everything worked, run:
-
-    java -jar build/libs/*.war --spring.profiles.active=prod
-
-Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
-
-## Testing
-
-Unit tests are run by [Karma][] and written with [Jasmine][]. They're located in `src/test/javascript/` and can be run with:
-
-    gulp test
-
-UI end-to-end tests are powered by [Protractor][], which is built on top of WebDriverJS. They're located in `src/test/javascript/e2e`
-and can be run by starting Spring Boot in one terminal (`./gradlew bootRun`) and running the tests (`gulp itest`) in a second one.
-
-## Continuous Integration
-
-To setup this project in Jenkins, use the following configuration:
-
-* Project name: `ExerciseApplication`
-* Source Code Management
-    * Git Repository: `git@github.com:xxxx/ExerciseApplication.git`
-    * Branches to build: `*/master`
-    * Additional Behaviours: `Wipe out repository & force clone`
-* Build Triggers
-    * Poll SCM / Schedule: `H/5 * * * *`
-* Build
-    * Invoke Gradle script / Use Gradle Wrapper / Tasks: `-Pprod clean test bootRepackage`
-    * Execute Shell / Command:
-        ````
-        ./gradlew bootRun &
-        bootPid=$!
-        sleep 30s
-        gulp itest
-        kill $bootPid
-        ````
-* Post-build Actions
-    * Publish JUnit test result report / Test Report XMLs: `build/test-results/*.xml,build/reports/e2e/*.xml`
-
-[JHipster]: https://jhipster.github.io/
-[Node.js]: https://nodejs.org/
-[Bower]: http://bower.io/
-[Gulp]: http://gulpjs.com/
-[BrowserSync]: http://www.browsersync.io/
-[Karma]: http://karma-runner.github.io/
-[Jasmine]: http://jasmine.github.io/2.0/introduction.html
-[Protractor]: https://angular.github.io/protractor/
+### Limitations
+* **Usernames**: Plans can only be cloned for users without underscores (*_*) in their usernames. This is due to restrictions on Bamboo's plan keys.
+* **Test results**: Bamboo's REST API only allows access to details on failed tests via each job inside a plan. We currently only retrieve those details for the default job.
