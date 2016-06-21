@@ -25,10 +25,13 @@
                 <constraints nullable="true" />
             </column>
             
+<<<<<<< HEAD
             <column name="slug" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
             
+=======
+>>>>>>> jhipster_upgrade
             <column name="base_project_key" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
