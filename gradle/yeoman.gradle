@@ -6,7 +6,7 @@ task bower(type: Exec) {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         commandLine 'cmd', '/c', 'bower', 'install'
     }else{
-        commandLine 'node_modules/bower/bin/bower', 'install'
+        commandLine 'bower', 'install'
     }
 }
 processResources.dependsOn 'bower'

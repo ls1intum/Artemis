@@ -11,7 +11,7 @@
             "updated": "Participation aktualisiert mit ID {{ param }}",
             "deleted": "Participation gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Participation {{ id }} wirklich dauerhaft gejöscht werden?"
+                "question": "Soll Participation {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Participation"

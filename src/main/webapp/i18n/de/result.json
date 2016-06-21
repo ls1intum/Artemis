@@ -11,7 +11,7 @@
             "updated": "Result aktualisiert mit ID {{ param }}",
             "deleted": "Result gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Result {{ id }} wirklich dauerhaft gejöscht werden?"
+                "question": "Soll Result {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Result"

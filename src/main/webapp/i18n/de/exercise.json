@@ -11,7 +11,7 @@
             "updated": "Exercise aktualisiert mit ID {{ param }}",
             "deleted": "Exercise gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Exercise {{ id }} wirklich dauerhaft gejöscht werden?"
+                "question": "Soll Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Exercise"
