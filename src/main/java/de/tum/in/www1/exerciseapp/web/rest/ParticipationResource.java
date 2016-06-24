@@ -3,9 +3,9 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
-import de.tum.in.www1.exerciseapp.repository.UserRepository;
-import de.tum.in.www1.exerciseapp.service.*;
+import de.tum.in.www1.exerciseapp.service.BambooService;
+import de.tum.in.www1.exerciseapp.service.ExerciseService;
+import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +85,7 @@ public class ParticipationResource {
             return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
                 .body(participation);
         } else {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "exerciseNotFound", "No exercise was found for the given ID")).body(null);
         }
     }
 
