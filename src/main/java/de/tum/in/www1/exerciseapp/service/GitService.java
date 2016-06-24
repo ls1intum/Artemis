@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import de.tum.in.www1.exerciseapp.exception.GitException;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -19,7 +20,6 @@ import java.nio.file.Files;
 import java.util.UUID;
 
 @Service
-@Transactional
 public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
@@ -39,27 +39,23 @@ public class GitService {
     /**
      * Checks out the repository with the given URL to the file system
      */
-    public File checkoutRepository(String projectKey, String repoUrl) {
+    public File checkoutRepository(String projectKey, String repoUrl) throws GitAPIException {
         File repo = new File(REPO_CLONE_PATH + projectKey);
         if (!Files.exists(repo.toPath())) {
             log.info("Repository for key {} doesn't exist, cloning...", projectKey);
-            try {
-                Git.cloneRepository()
-                    .setURI(repoUrl)
-                    .setCredentialsProvider(new UsernamePasswordCredentialsProvider(BITBUCKET_USER, BITBUCKET_PASSWORD))
-                    .setDirectory(repo).call();
-            } catch (GitAPIException e) {
-                e.printStackTrace();
-            }
+            Git.cloneRepository()
+                .setURI(repoUrl)
+                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(BITBUCKET_USER, BITBUCKET_PASSWORD))
+                .setDirectory(repo).call();
         } else {
             log.info("Repo already cloned.");
         }
         return repo;
     }
 
-    public void doEmptyCommit(String projectKey, String newRemote) {
-        File sourceFolder = checkoutRepository(projectKey, newRemote);
+    public void doEmptyCommit(String projectKey, String newRemote) throws GitException {
         try {
+            File sourceFolder = checkoutRepository(projectKey, newRemote);
             File tmpFolder = new File(sourceFolder.getParentFile().getPath() + "/" + UUID.randomUUID());
             FileUtils.copyDirectory(sourceFolder, tmpFolder);
             Git git = new Git(new FileRepository(tmpFolder.getPath() + "/.git"));
@@ -71,8 +67,10 @@ public class GitService {
             FileUtils.deleteDirectory(tmpFolder);
         } catch (IOException e) {
             e.printStackTrace();
+            throw new GitException("IOError while doing empty commit");
         } catch (GitAPIException e) {
             e.printStackTrace();
+            throw new GitException("Git error while doing empty commit");
         }
     }
 }

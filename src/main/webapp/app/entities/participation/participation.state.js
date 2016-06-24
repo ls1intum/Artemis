@@ -26,6 +26,7 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('participation');
+                    $translatePartialLoader.addPart('participationState');
                     $translatePartialLoader.addPart('global');
                     return $translate.refresh();
                 }]
@@ -48,6 +49,7 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('participation');
+                    $translatePartialLoader.addPart('participationState');
                     return $translate.refresh();
                 }],
                 entity: ['$stateParams', 'Participation', function($stateParams, Participation) {
@@ -73,6 +75,7 @@
                             return {
                                 cloneUrl: null,
                                 repositorySlug: null,
+                                initializationState: null,
                                 id: null
                             };
                         }

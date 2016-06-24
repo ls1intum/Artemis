@@ -18,6 +18,7 @@
             },
             "cloneUrl": "Clone Url",
             "repositorySlug": "Repository Slug",
+            "initializationState": "Initialization State",
             "student": "Student",
             "results": "Results",
             "exercise": "Exercise"

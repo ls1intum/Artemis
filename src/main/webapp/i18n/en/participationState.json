@@ -1,0 +1,14 @@
+{
+    "exerciseApplicationApp": {
+        "ParticipationState" : {
+            "null": "",
+            "UNINITIALIZED": "UNINITIALIZED",
+            "REPO_FORKED": "REPO_FORKED",
+            "REPO_PERMISSIONS_SET": "REPO_PERMISSIONS_SET",
+            "PLAN_CLONED": "PLAN_CLONED",
+            "PLAN_REPO_UPDATED": "PLAN_REPO_UPDATED",
+            "PLAN_ENABLED": "PLAN_ENABLED",
+            "INITIALIZED": "INITIALIZED"
+        }
+    }
+}

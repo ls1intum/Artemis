@@ -7,8 +7,10 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
+import java.util.Objects;
+
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 
 /**
  * A Participation.
@@ -29,6 +31,10 @@ public class Participation implements Serializable {
 
     @Column(name = "repository_slug")
     private String repositorySlug;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "initialization_state")
+    private ParticipationState initializationState;
 
     @ManyToOne
     private User student;
@@ -63,6 +69,14 @@ public class Participation implements Serializable {
 
     public void setRepositorySlug(String repositorySlug) {
         this.repositorySlug = repositorySlug;
+    }
+
+    public ParticipationState getInitializationState() {
+        return initializationState;
+    }
+
+    public void setInitializationState(ParticipationState initializationState) {
+        this.initializationState = initializationState;
     }
 
     public User getStudent() {
@@ -115,6 +129,7 @@ public class Participation implements Serializable {
             "id=" + id +
             ", cloneUrl='" + cloneUrl + "'" +
             ", repositorySlug='" + repositorySlug + "'" +
+            ", initializationState='" + initializationState + "'" +
             '}';
     }
 }
