@@ -7,8 +7,11 @@ import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.BitbucketException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
+import de.tum.in.www1.exerciseapp.exception.ParticipationServiceException;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
+import de.tum.in.www1.exerciseapp.web.rest.errors.CustomParameterizedException;
+import de.tum.in.www1.exerciseapp.web.rest.errors.ErrorConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,7 +26,6 @@ import java.util.Optional;
  * Service Implementation for managing Participation.
  */
 @Service
-@Transactional
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
@@ -49,6 +51,7 @@ public class ParticipationService {
      * @param participation the entity to save
      * @return the persisted entity
      */
+    @Transactional
     public Participation save(Participation participation) {
         log.debug("Request to save Participation : {}", participation);
         Participation result = participationRepository.save(participation);
@@ -78,18 +81,14 @@ public class ParticipationService {
             participation = updateBuildPlanRepository(participation);
             participation = enableBuildPlan(participation);
             participation = doEmptyCommit(participation);
-        } catch (BitbucketException e) {
-            log.error("Bitbucket error", e);
-        } catch (BambooException e) {
-            log.error("Bamboo error", e);
-        } catch (GitException e) {
-            log.error("Git error", e);
+        } catch (BitbucketException | BambooException | GitException e) {
+            log.error("Error while initializing participation");
+            throw new CustomParameterizedException(ErrorConstants.ERR_INTERNAL_SERVER_ERROR);
         }
-
         return participation;
     }
 
-    private Participation forkRepository(Participation participation) throws BitbucketException {
+    private Participation forkRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_FORKED)) {
             Map forkResult = bitbucketService.forkRepository(
                 participation.getExercise().getBaseProjectKey(),
@@ -106,7 +105,7 @@ public class ParticipationService {
         }
     }
 
-    private Participation giveWritePermission(Participation participation) throws BitbucketException {
+    private Participation giveWritePermission(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_PERMISSIONS_SET)) {
             bitbucketService.giveWritePermission(
                 participation.getExercise().getBaseProjectKey(),
@@ -120,7 +119,7 @@ public class ParticipationService {
         }
     }
 
-    private Participation cloneBuildPlan(Participation participation) throws BambooException {
+    private Participation cloneBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.PLAN_CLONED)) {
             bambooService.clonePlan(
                 participation.getExercise().getBaseProjectKey(),
@@ -135,7 +134,7 @@ public class ParticipationService {
         }
     }
 
-    private Participation updateBuildPlanRepository(Participation participation) throws BambooException {
+    private Participation updateBuildPlanRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.PLAN_REPO_UPDATED)) {
             bambooService.updatePlanRepository(
                 participation.getExercise().getBaseProjectKey(),
@@ -151,7 +150,7 @@ public class ParticipationService {
         }
     }
 
-    private Participation enableBuildPlan(Participation participation) throws BambooException {
+    private Participation enableBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.PLAN_ENABLED)) {
             bambooService.enablePlan(participation.getExercise().getBaseProjectKey(), participation.getStudent().getLogin());
             participation.setInitializationState(ParticipationState.PLAN_ENABLED);
@@ -161,7 +160,7 @@ public class ParticipationService {
         }
     }
 
-    private Participation doEmptyCommit(Participation participation) throws GitException {
+    private Participation doEmptyCommit(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.INITIALIZED)) {
             gitService.doEmptyCommit(participation.getExercise().getBaseProjectKey(), participation.getCloneUrl());
             participation.setInitializationState(ParticipationState.INITIALIZED);
@@ -206,7 +205,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
-        Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username);
+        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
         return participation;
     }
 
@@ -229,6 +228,7 @@ public class ParticipationService {
      *
      * @param id the id of the entity
      */
+    @Transactional
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         log.debug("Request to delete Participation : {}", id);
         Participation participation = participationRepository.findOne(id);
