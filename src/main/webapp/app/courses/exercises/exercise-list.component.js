@@ -79,7 +79,7 @@
                 });
             }).catch(function () {
                 AlertService.add({
-                    type: 'error',
+                    type: 'danger',
                     msg: 'Uh oh! Something went wrong... Please try again in a few seconds.',
                     timeout: 10000
                 });
