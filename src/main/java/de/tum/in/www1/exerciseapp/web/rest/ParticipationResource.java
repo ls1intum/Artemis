@@ -3,12 +3,10 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
-import org.eclipse.jgit.api.Git;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -16,7 +14,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import org.swift.common.cli.CliClient;
 
 import javax.inject.Inject;
 import java.net.URI;
@@ -43,19 +40,7 @@ public class ParticipationResource {
     private ExerciseService exerciseService;
 
     @Inject
-    private BitbucketService bitbucketService;
-
-    @Inject
     private BambooService bambooService;
-
-    @Inject
-    private GitService gitService;
-
-    @Inject
-    private ExerciseRepository exerciseRepository;
-
-    @Inject
-    private UserRepository userRepository;
 
     /**
      * POST  /participations : Create a new participation.
@@ -94,66 +79,11 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> initParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to init Exercise : {}", exerciseId);
-//        if (Optional.ofNullable(participationService.findOneByExerciseIdAndCurrentUser(exerciseId)).isPresent()) {
-        if (Optional.ofNullable(participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName())).isPresent()) {
-            return ResponseEntity
-                .badRequest()
-                .headers(HeaderUtil.createFailureAlert("participation", "participationexists", "This user already has a participation for this exercise"))
-                .body(null);
-        }
         Exercise exercise = exerciseService.findOne(exerciseId);
         if (Optional.ofNullable(exercise).isPresent()) {
-
-            // Fork repository
-            Map forkResult = bitbucketService.forkRepository(
-                exercise.getBaseProjectKey(),
-                exercise.getBaseRepositorySlug(),
-                principal.getName());
-
-            // Set permissions on forked repo
-            // TODO: Do some kind of error handling
-            bitbucketService.giveWritePermission(exercise.getBaseProjectKey(), (String) forkResult.get("slug"), principal.getName());
-
-            // Clone build plan
-            CliClient.ExitCode cloneExitCode = bambooService.clonePlan(exercise.getBaseProjectKey(), exercise.getBaseBuildPlanSlug(), principal.getName());
-            if (!cloneExitCode.equals(CliClient.ExitCode.SUCCESS)) {
-                log.error("Error while cloning build plan");
-                return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .headers(HeaderUtil.createFailureAlert("participation", "initializationerror", "Could not start exercise"))
-                    .body(null);
-            }
-
-            // Update build plan's repository
-            CliClient.ExitCode updatePlanRepoExitCode = bambooService.updatePlanRepository(
-                exercise.getBaseProjectKey(),
-                principal.getName(),
-                exercise.getBaseRepositorySlug(),
-                exercise.getBaseProjectKey(),
-                (String) forkResult.get("slug"));
-            if (!updatePlanRepoExitCode.equals(CliClient.ExitCode.SUCCESS)) {
-                log.error("Error while updating build plan repository");
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            // Enable build plan
-            CliClient.ExitCode enablePlanRepoExitCode = bambooService.enablePlan(exercise.getBaseProjectKey(), principal.getName());
-            if (!enablePlanRepoExitCode.equals(CliClient.ExitCode.SUCCESS)) {
-                log.error("Error while enabling build plan");
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            // Do an empty commit so Bamboo is triggered properly
-            gitService.doEmptyCommit(exercise.getBaseProjectKey(), (String) forkResult.get("cloneUrl"));
-
-            Participation participation = new Participation();
-            participation.setRepositorySlug((String) forkResult.get("slug"));
-            participation.setCloneUrl((String) forkResult.get("cloneUrl"));
-            userRepository.findOneByLogin(principal.getName()).ifPresent(u -> participation.setStudent(u));
-            participation.setExercise(exercise);
-            Participation result = participationService.save(participation);
-            return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
-                .body(result);
+            Participation participation = participationService.init(exercise, principal.getName());
+            return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
+                .body(participation);
         } else {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -242,7 +172,6 @@ public class ParticipationResource {
 
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation/status: get build status of the user's participation for the "id" exercise.
-     *
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the participation status

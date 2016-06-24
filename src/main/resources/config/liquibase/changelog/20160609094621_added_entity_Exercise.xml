@@ -24,34 +24,29 @@
             <column name="title" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            
-<<<<<<< HEAD
             <column name="slug" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            
-=======
->>>>>>> jhipster_upgrade
             <column name="base_project_key" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            
+
             <column name="base_repository_slug" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            
+
             <column name="base_build_plan_slug" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            
+
             <column name="release_date" type="timestamp">
                 <constraints nullable="true" />
             </column>
-            
+
             <column name="due_date" type="timestamp">
                 <constraints nullable="true" />
             </column>
-            
+
             <column name="course_id" type="bigint">
                 <constraints nullable="true" />
             </column>
@@ -60,6 +55,6 @@
         </createTable>
         <dropDefaultValue tableName="exercise" columnName="release_date" columnDataType="datetime"/>
         <dropDefaultValue tableName="exercise" columnName="due_date" columnDataType="datetime"/>
-        
+
     </changeSet>
 </databaseChangeLog>

@@ -21,6 +21,7 @@
                     <th><span translate="global.field.id">ID</span></th>
                     <th><span translate="exerciseApplicationApp.participation.cloneUrl">Clone Url</span></th>
                     <th><span translate="exerciseApplicationApp.participation.repositorySlug">Repository Slug</span></th>
+                    <th><span translate="exerciseApplicationApp.participation.initializationState">Initialization State</span></th>
                     <th><span translate="exerciseApplicationApp.participation.student">Student</span></th>
                     <th><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
                     <th></th>
@@ -31,6 +32,7 @@
                     <td><a ui-sref="participation-detail({id:participation.id})">{{participation.id}}</a></td>
                     <td>{{participation.cloneUrl}}</td>
                     <td>{{participation.repositorySlug}}</td>
+                    <td translate="{{'exerciseApplicationApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
                     <td>
                         {{participation.student.login}}
                     </td>

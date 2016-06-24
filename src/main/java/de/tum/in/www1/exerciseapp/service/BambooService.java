@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -9,10 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,7 +62,7 @@ public class BambooService {
      * @param basePlan    The plan's name.
      * @param name        The name to give the cloned plan.
      */
-    public CliClient.ExitCode clonePlan(String baseProject, String basePlan, String name) {
+    public CliClient.ExitCode clonePlan(String baseProject, String basePlan, String name) throws BambooException {
         final BambooClient client = new BambooClient();
         String[] args = new String[]{"--action", "clonePlan",
             "--plan", baseProject + "-" + basePlan,
@@ -77,6 +75,10 @@ public class BambooService {
         };
         CliClient.ExitCode exitCode = client.doWork(args);
         log.info("Cloning plan exited with code " + exitCode);
+        if (!exitCode.equals(CliClient.ExitCode.SUCCESS)) {
+            log.error("Error while cloning plan");
+            throw new BambooException("Something went wrong while cloning build plan");
+        }
         return exitCode;
     }
 
@@ -87,7 +89,7 @@ public class BambooService {
      * @param planKey
      * @return
      */
-    public CliClient.ExitCode enablePlan(String projectKey, String planKey) {
+    public CliClient.ExitCode enablePlan(String projectKey, String planKey) throws BambooException {
         final BambooClient client = new BambooClient();
         String[] args = new String[]{"--action", "enablePlan",
             "--plan", projectKey + "-" + planKey,
@@ -96,7 +98,10 @@ public class BambooService {
             "--password", BAMBOO_PASSWORD,
         };
         CliClient.ExitCode exitCode = client.doWork(args);
-        log.info("Enabling plan exited with code " + exitCode);
+        if (!exitCode.equals(CliClient.ExitCode.SUCCESS)) {
+            log.error("Error while enabling plan");
+            throw new BambooException("Something went wrong while enabling build plan");
+        }
         return exitCode;
     }
 
@@ -109,7 +114,7 @@ public class BambooService {
      * @param bitbucketProject     The key for the Bitbucket Server (formerly Stash) project to which we want to update the plan.
      * @param bitbucketRepository  The name/slug for the Bitbucket Server (formerly Stash) repository to which we want to update the plan.
      */
-    public CliClient.ExitCode updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) {
+    public CliClient.ExitCode updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) throws BambooException {
         final BambooClient client = new BambooClient();
         String[] args = new String[]{
             "--action", "updateRepository",
@@ -127,7 +132,10 @@ public class BambooService {
             "--password", BAMBOO_PASSWORD
         };
         CliClient.ExitCode exitCode = client.doWork(args);
-        log.info("Updating plan repository exited with code " + exitCode);
+        if (!exitCode.equals(CliClient.ExitCode.SUCCESS)) {
+            log.error("Error while updating build plan repository");
+            throw new BambooException("Something went wrong while updating build plan repository");
+        }
         return exitCode;
     }
 

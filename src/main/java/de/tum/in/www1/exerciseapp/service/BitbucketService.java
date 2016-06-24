@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import de.tum.in.www1.exerciseapp.exception.BitbucketException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,7 @@ public class BitbucketService {
      * @param username              The user for whom the repository is being forked.
      * @return The slug of the forked repository (i.e. its identifier).
      */
-    public Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) {
+    public Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) throws BitbucketException {
         String forkName = String.format("%s-%s", baseRepositorySlug, username);
         Map<String, Object> body = new HashMap<>();
         body.put("name", forkName);
@@ -61,9 +62,12 @@ public class BitbucketService {
                 result.put("slug", forkName);
                 result.put("cloneUrl", buildCloneUrl(baseProjectKey, forkName, username).toString());
                 return result;
+            } else {
+                throw e;
             }
         } catch (Exception e) {
             log.error("Could not fork base repository", e);
+            throw new BitbucketException("Error while forking repository");
         }
         if (response != null && response.getStatusCode().equals(HttpStatus.CREATED)) {
             String slug = (String) response.getBody().get("slug");
@@ -83,7 +87,7 @@ public class BitbucketService {
      * @param repositorySlug    The repository's slug.
      * @param username          The user whom to give write permissions.
      */
-    public void giveWritePermission(String projectKey, String repositorySlug, String username) {
+    public void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
         String baseUrl = BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";//NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
@@ -95,6 +99,7 @@ public class BitbucketService {
                 entity, Map.class);
         } catch (Exception e) {
             log.error("Could not give write permission", e);
+            throw new BitbucketException("Error while giving repository permissions");
         }
     }
 

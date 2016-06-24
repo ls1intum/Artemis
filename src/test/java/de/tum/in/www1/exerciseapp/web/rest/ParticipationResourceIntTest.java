@@ -30,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 
 /**
  * Test class for the ParticipationResource REST controller.
@@ -46,6 +47,9 @@ public class ParticipationResourceIntTest {
     private static final String UPDATED_CLONE_URL = "BBBBB";
     private static final String DEFAULT_REPOSITORY_SLUG = "AAAAA";
     private static final String UPDATED_REPOSITORY_SLUG = "BBBBB";
+
+    private static final ParticipationState DEFAULT_INITIALIZATION_STATE = ParticipationState.UNINITIALIZED;
+    private static final ParticipationState UPDATED_INITIALIZATION_STATE = ParticipationState.REPO_FORKED;
 
     @Inject
     private ParticipationRepository participationRepository;
@@ -78,6 +82,7 @@ public class ParticipationResourceIntTest {
         participation = new Participation();
         participation.setCloneUrl(DEFAULT_CLONE_URL);
         participation.setRepositorySlug(DEFAULT_REPOSITORY_SLUG);
+        participation.setInitializationState(DEFAULT_INITIALIZATION_STATE);
     }
 
     @Test
@@ -98,6 +103,7 @@ public class ParticipationResourceIntTest {
         Participation testParticipation = participations.get(participations.size() - 1);
         assertThat(testParticipation.getCloneUrl()).isEqualTo(DEFAULT_CLONE_URL);
         assertThat(testParticipation.getRepositorySlug()).isEqualTo(DEFAULT_REPOSITORY_SLUG);
+        assertThat(testParticipation.getInitializationState()).isEqualTo(DEFAULT_INITIALIZATION_STATE);
     }
 
     @Test
@@ -112,7 +118,8 @@ public class ParticipationResourceIntTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(participation.getId().intValue())))
                 .andExpect(jsonPath("$.[*].cloneUrl").value(hasItem(DEFAULT_CLONE_URL.toString())))
-                .andExpect(jsonPath("$.[*].repositorySlug").value(hasItem(DEFAULT_REPOSITORY_SLUG.toString())));
+                .andExpect(jsonPath("$.[*].repositorySlug").value(hasItem(DEFAULT_REPOSITORY_SLUG.toString())))
+                .andExpect(jsonPath("$.[*].initializationState").value(hasItem(DEFAULT_INITIALIZATION_STATE.toString())));
     }
 
     @Test
@@ -127,7 +134,8 @@ public class ParticipationResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(participation.getId().intValue()))
             .andExpect(jsonPath("$.cloneUrl").value(DEFAULT_CLONE_URL.toString()))
-            .andExpect(jsonPath("$.repositorySlug").value(DEFAULT_REPOSITORY_SLUG.toString()));
+            .andExpect(jsonPath("$.repositorySlug").value(DEFAULT_REPOSITORY_SLUG.toString()))
+            .andExpect(jsonPath("$.initializationState").value(DEFAULT_INITIALIZATION_STATE.toString()));
     }
 
     @Test
@@ -151,6 +159,7 @@ public class ParticipationResourceIntTest {
         updatedParticipation.setId(participation.getId());
         updatedParticipation.setCloneUrl(UPDATED_CLONE_URL);
         updatedParticipation.setRepositorySlug(UPDATED_REPOSITORY_SLUG);
+        updatedParticipation.setInitializationState(UPDATED_INITIALIZATION_STATE);
 
         restParticipationMockMvc.perform(put("/api/participations")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -163,6 +172,7 @@ public class ParticipationResourceIntTest {
         Participation testParticipation = participations.get(participations.size() - 1);
         assertThat(testParticipation.getCloneUrl()).isEqualTo(UPDATED_CLONE_URL);
         assertThat(testParticipation.getRepositorySlug()).isEqualTo(UPDATED_REPOSITORY_SLUG);
+        assertThat(testParticipation.getInitializationState()).isEqualTo(UPDATED_INITIALIZATION_STATE);
     }
 
     @Test
