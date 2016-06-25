@@ -64,6 +64,9 @@ public class ExerciseResourceIntTest {
     private static final ZonedDateTime UPDATED_DUE_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
     private static final String DEFAULT_DUE_DATE_STR = dateTimeFormatter.format(DEFAULT_DUE_DATE);
 
+    private static final Boolean DEFAULT_PUBLISH_BUILD_PLAN_URL = false;
+    private static final Boolean UPDATED_PUBLISH_BUILD_PLAN_URL = true;
+
     @Inject
     private ExerciseRepository exerciseRepository;
 
@@ -96,6 +99,7 @@ public class ExerciseResourceIntTest {
         exercise.setBaseBuildPlanSlug(DEFAULT_BASE_BUILD_PLAN_SLUG);
         exercise.setReleaseDate(DEFAULT_RELEASE_DATE);
         exercise.setDueDate(DEFAULT_DUE_DATE);
+        exercise.setPublishBuildPlanUrl(DEFAULT_PUBLISH_BUILD_PLAN_URL);
     }
 
     @Test
@@ -120,6 +124,7 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.getBaseBuildPlanSlug()).isEqualTo(DEFAULT_BASE_BUILD_PLAN_SLUG);
         assertThat(testExercise.getReleaseDate()).isEqualTo(DEFAULT_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(DEFAULT_DUE_DATE);
+        assertThat(testExercise.isPublishBuildPlanUrl()).isEqualTo(DEFAULT_PUBLISH_BUILD_PLAN_URL);
     }
 
     @Test
@@ -138,7 +143,8 @@ public class ExerciseResourceIntTest {
                 .andExpect(jsonPath("$.[*].baseRepositorySlug").value(hasItem(DEFAULT_BASE_REPOSITORY_SLUG.toString())))
                 .andExpect(jsonPath("$.[*].baseBuildPlanSlug").value(hasItem(DEFAULT_BASE_BUILD_PLAN_SLUG.toString())))
                 .andExpect(jsonPath("$.[*].releaseDate").value(hasItem(DEFAULT_RELEASE_DATE_STR)))
-                .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)));
+                .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)))
+                .andExpect(jsonPath("$.[*].publishBuildPlanUrl").value(hasItem(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue())));
     }
 
     @Test
@@ -157,7 +163,8 @@ public class ExerciseResourceIntTest {
             .andExpect(jsonPath("$.baseRepositorySlug").value(DEFAULT_BASE_REPOSITORY_SLUG.toString()))
             .andExpect(jsonPath("$.baseBuildPlanSlug").value(DEFAULT_BASE_BUILD_PLAN_SLUG.toString()))
             .andExpect(jsonPath("$.releaseDate").value(DEFAULT_RELEASE_DATE_STR))
-            .andExpect(jsonPath("$.dueDate").value(DEFAULT_DUE_DATE_STR));
+            .andExpect(jsonPath("$.dueDate").value(DEFAULT_DUE_DATE_STR))
+            .andExpect(jsonPath("$.publishBuildPlanUrl").value(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue()));
     }
 
     @Test
@@ -184,6 +191,7 @@ public class ExerciseResourceIntTest {
         updatedExercise.setBaseBuildPlanSlug(UPDATED_BASE_BUILD_PLAN_SLUG);
         updatedExercise.setReleaseDate(UPDATED_RELEASE_DATE);
         updatedExercise.setDueDate(UPDATED_DUE_DATE);
+        updatedExercise.setPublishBuildPlanUrl(UPDATED_PUBLISH_BUILD_PLAN_URL);
 
         restExerciseMockMvc.perform(put("/api/exercises")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -200,6 +208,7 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.getBaseBuildPlanSlug()).isEqualTo(UPDATED_BASE_BUILD_PLAN_SLUG);
         assertThat(testExercise.getReleaseDate()).isEqualTo(UPDATED_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(UPDATED_DUE_DATE);
+        assertThat(testExercise.isPublishBuildPlanUrl()).isEqualTo(UPDATED_PUBLISH_BUILD_PLAN_URL);
     }
 
     @Test

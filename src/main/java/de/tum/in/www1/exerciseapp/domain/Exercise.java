@@ -43,6 +43,9 @@ public class Exercise implements Serializable {
     @Column(name = "due_date")
     private ZonedDateTime dueDate;
 
+    @Column(name = "publish_build_plan_url")
+    private Boolean publishBuildPlanUrl;
+
     @ManyToOne
     private Course course;
 
@@ -107,6 +110,14 @@ public class Exercise implements Serializable {
         this.dueDate = dueDate;
     }
 
+    public Boolean isPublishBuildPlanUrl() {
+        return publishBuildPlanUrl;
+    }
+
+    public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
+        this.publishBuildPlanUrl = publishBuildPlanUrl;
+    }
+
     public Course getCourse() {
         return course;
     }
@@ -153,6 +164,7 @@ public class Exercise implements Serializable {
             ", baseBuildPlanSlug='" + baseBuildPlanSlug + "'" +
             ", releaseDate='" + releaseDate + "'" +
             ", dueDate='" + dueDate + "'" +
+            ", publishBuildPlanUrl='" + publishBuildPlanUrl + "'" +
             '}';
     }
 }

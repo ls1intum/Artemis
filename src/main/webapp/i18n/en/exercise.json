@@ -22,6 +22,7 @@
             "baseBuildPlanSlug": "Base Build Plan Slug",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
+            "publishBuildPlanUrl": "Publish Build Plan Url",
             "course": "Course",
             "participations": "Participations"
         }
