@@ -7,7 +7,6 @@ import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.BitbucketException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
-import de.tum.in.www1.exerciseapp.exception.ParticipationServiceException;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.CustomParameterizedException;
