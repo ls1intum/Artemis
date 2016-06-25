@@ -17,14 +17,14 @@
     <div class="table-responsive">
         <table class="jh-table table table-striped">
             <thead>
-                <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.reset()">
-                    <th jh-sort-by="id"><span translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="title"><span translate="exerciseApplicationApp.course.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="studentGroupName"><span translate="exerciseApplicationApp.course.studentGroupName">Student Group Name</span> <span class="glyphicon glyphicon-sort"></span></th>
+                <tr>
+                    <th><span translate="global.field.id">ID</span></th>
+                    <th><span translate="exerciseApplicationApp.course.title">Title</span></th>
+                    <th><span translate="exerciseApplicationApp.course.studentGroupName">Student Group Name</span></th>
                     <th></th>
                 </tr>
             </thead>
-            <tbody infinite-scroll="vm.loadPage(vm.page + 1)" infinite-scroll-disabled="vm.page >= vm.links['last']">
+            <tbody>
                 <tr ng-repeat="course in vm.courses track by course.id">
                     <td><a ui-sref="course-detail({id:course.id})">{{course.id}}</a></td>
                     <td>{{course.title}}</td>

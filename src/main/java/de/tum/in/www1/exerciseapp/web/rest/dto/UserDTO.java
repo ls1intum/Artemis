@@ -8,6 +8,7 @@ import de.tum.in.www1.exerciseapp.domain.User;
 import org.hibernate.validator.constraints.Email;
 
 import javax.validation.constraints.*;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 /**
@@ -35,6 +36,8 @@ public class UserDTO {
     @Size(min = 2, max = 5)
     private String langKey;
 
+    private List<String> groups;
+
     private Set<String> authorities;
 
     public UserDTO() {
@@ -42,13 +45,13 @@ public class UserDTO {
 
     public UserDTO(User user) {
         this(user.getLogin(), user.getFirstName(), user.getLastName(),
-            user.getEmail(), user.getActivated(), user.getLangKey(),
+            user.getEmail(), user.getActivated(), user.getLangKey(), user.getGroups(),
             user.getAuthorities().stream().map(Authority::getName)
                 .collect(Collectors.toSet()));
     }
 
     public UserDTO(String login, String firstName, String lastName,
-        String email, boolean activated, String langKey, Set<String> authorities) {
+        String email, boolean activated, String langKey, List<String> groups, Set<String> authorities) {
 
         this.login = login;
         this.firstName = firstName;
@@ -56,6 +59,7 @@ public class UserDTO {
         this.email = email;
         this.activated = activated;
         this.langKey = langKey;
+        this.groups = groups;
         this.authorities = authorities;
     }
 
@@ -81,6 +85,10 @@ public class UserDTO {
 
     public String getLangKey() {
         return langKey;
+    }
+
+    public List<String> getGroups() {
+        return groups;
     }
 
     public Set<String> getAuthorities() {

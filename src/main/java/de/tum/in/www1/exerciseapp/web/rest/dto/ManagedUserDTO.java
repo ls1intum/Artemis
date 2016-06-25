@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest.dto;
 
 import java.time.ZonedDateTime;
 
+import java.util.List;
 import java.util.Set;
 
 import de.tum.in.www1.exerciseapp.domain.User;
@@ -41,8 +42,8 @@ public class ManagedUserDTO extends UserDTO {
     }
 
     public ManagedUserDTO(Long id, String login, String password, String firstName, String lastName,
-                          String email, boolean activated, String langKey, Set<String> authorities , ZonedDateTime createdDate, String lastModifiedBy, ZonedDateTime lastModifiedDate ) {
-        super(login, firstName, lastName, email, activated, langKey, authorities);
+                          String email, boolean activated, String langKey, List<String> groups, Set<String> authorities , ZonedDateTime createdDate, String lastModifiedBy, ZonedDateTime lastModifiedDate ) {
+        super(login, firstName, lastName, email, activated, langKey, groups, authorities);
         this.id = id;
         this.createdDate = createdDate;
         this.lastModifiedBy = lastModifiedBy;

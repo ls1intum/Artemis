@@ -169,6 +169,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneByLogin(login).map(u -> {
+            u.getGroups().size();
             u.getAuthorities().size();
             return u;
         });
@@ -177,6 +178,7 @@ public class UserService {
     @Transactional(readOnly = true)
     public User getUserWithAuthorities(Long id) {
         User user = userRepository.findOne(id);
+        user.getGroups().size(); // eagerly load the association
         user.getAuthorities().size(); // eagerly load the association
         return user;
     }
@@ -184,6 +186,15 @@ public class UserService {
     @Transactional(readOnly = true)
     public User getUserWithAuthorities() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
+        user.getGroups().size(); // eagerly load the association
+        user.getAuthorities().size(); // eagerly load the association
+        return user;
+    }
+
+    @Transactional(readOnly = true)
+    public User getUserWithGroupsAndAuthorities() {
+        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
+        user.getGroups().size(); // eagerly load the association
         user.getAuthorities().size(); // eagerly load the association
         return user;
     }
