@@ -164,9 +164,15 @@ public class ResultResource {
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
     public List<Result> getResultsForExercise(@PathVariable Long courseId,
-                                              @PathVariable Long exerciseId) {
+                                              @PathVariable Long exerciseId,
+                                              @RequestParam(defaultValue = "false") boolean showAllResults) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
-        List<Result> results = resultRepository.findByParticipationExerciseIdAndBuildSuccessfulOrderByBuildCompletionDateAsc(exerciseId, true);
+        List<Result> results;
+        if (showAllResults) {
+            results = resultRepository.findLatestResultsForExercise(exerciseId);
+        } else {
+            results = resultRepository.findLatestSuccessfulResultsForExercise(exerciseId);
+        }
         return results;
     }
 
