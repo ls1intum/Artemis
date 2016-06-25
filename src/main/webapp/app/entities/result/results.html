@@ -23,6 +23,8 @@
                     <th><span translate="exerciseApplicationApp.result.buildCompletionDate">Build Completion Date</span></th>
                     <th><span translate="exerciseApplicationApp.result.buildSuccessful">Build Successful</span></th>
                     <th><span translate="exerciseApplicationApp.result.participation">Participation</span></th>
+                    <th>User</th>
+                    <th>Exercise</th>
                     <th></th>
                 </tr>
             </thead>
@@ -35,6 +37,8 @@
                     <td>
                         <a ui-sref="participation-detail({id:result.participation.id})">{{result.participation.id}}</a>
                     </td>
+                    <td>{{result.participation.student.firstName}}</td>
+                    <td><a ui-sref="exercise-detail({id:result.participation.exercise.id})">{{result.participation.exercise.title}}</a></td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"

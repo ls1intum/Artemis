@@ -1,9 +1,13 @@
 <div>
     <div class="button-toolbar pull-right">
-        <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Download</button>
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Export to CSV</button>
         <button class="btn btn-primary btn-sm" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh</button>
     </div>
-    <h4>Correct submissions:&nbsp;<span class="badge">{{ $ctrl.results.length }}</span></h4>
+    <!--<h4>Correct submissions:&nbsp;<span class="badge">{{ $ctrl.results.length }}</span></h4>-->
+    <div ng-switch on="$ctrl.showAllResults">
+        <button class="btn btn-primary btn-sm" ng-switch-when="true" ng-click="$ctrl.toggleShowAllResults(false)">Show successful</button>
+        <button class="btn btn-primary btn-sm" ng-switch-when="false" ng-click="$ctrl.toggleShowAllResults(true)">Show all</button>
+    </div>
 </div>
 <table class="table">
     <thead>

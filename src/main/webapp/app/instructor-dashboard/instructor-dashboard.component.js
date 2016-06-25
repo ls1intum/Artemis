@@ -12,14 +12,17 @@
             templateUrl: 'app/instructor-dashboard/instructor-dashboard.html'
         });
 
-    InstructorDashboardController.$inject = ['$window', 'ExerciseResults'];
+    InstructorDashboardController.$inject = ['ExerciseResults'];
 
-    function InstructorDashboardController ($window, ExerciseResults) {
+    function InstructorDashboardController (ExerciseResults) {
         var vm = this;
+
+        vm.showAllResults = false;
 
         vm.$onInit = init;
         vm.export = exportData;
         vm.refresh = getResults;
+        vm.toggleShowAllResults = toggleShowAllResults;
 
         function init() {
             getResults();
@@ -45,8 +48,15 @@
         function getResults() {
             vm.results = ExerciseResults.query({
                 courseId: vm.courseId,
-                exerciseId: vm.exerciseId
+                exerciseId: vm.exerciseId,
+                showAllResults: vm.showAllResults
             });
+        }
+
+        function toggleShowAllResults(newValue) {
+            vm.showAllResults = newValue;
+            console.log(vm.showAllResults);
+            getResults();
         }
     }
 })();
