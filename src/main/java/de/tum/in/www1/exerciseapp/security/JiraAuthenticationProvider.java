@@ -74,6 +74,7 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
                     "en");
                 return newUser;
             });
+            user.setGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items")));
             user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));
             userRepository.save(user);
             if (!user.getActivated()) {

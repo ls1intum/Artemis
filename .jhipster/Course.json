@@ -19,7 +19,7 @@
     ],
     "changelogDate": "20160609093907",
     "dto": "no",
-    "service": "no",
+    "service": "serviceClass",
     "entityTableName": "course",
-    "pagination": "infinite-scroll"
+    "pagination": "no"
 }

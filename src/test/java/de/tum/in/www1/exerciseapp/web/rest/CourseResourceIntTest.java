@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
 import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
+import de.tum.in.www1.exerciseapp.service.CourseService;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -50,6 +51,9 @@ public class CourseResourceIntTest {
     private CourseRepository courseRepository;
 
     @Inject
+    private CourseService courseService;
+
+    @Inject
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Inject
@@ -63,7 +67,7 @@ public class CourseResourceIntTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         CourseResource courseResource = new CourseResource();
-        ReflectionTestUtils.setField(courseResource, "courseRepository", courseRepository);
+        ReflectionTestUtils.setField(courseResource, "courseService", courseService);
         this.restCourseMockMvc = MockMvcBuilders.standaloneSetup(courseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setMessageConverters(jacksonMessageConverter).build();
@@ -138,7 +142,8 @@ public class CourseResourceIntTest {
     @Transactional
     public void updateCourse() throws Exception {
         // Initialize the database
-        courseRepository.saveAndFlush(course);
+        courseService.save(course);
+
         int databaseSizeBeforeUpdate = courseRepository.findAll().size();
 
         // Update the course
@@ -164,7 +169,8 @@ public class CourseResourceIntTest {
     @Transactional
     public void deleteCourse() throws Exception {
         // Initialize the database
-        courseRepository.saveAndFlush(course);
+        courseService.save(course);
+
         int databaseSizeBeforeDelete = courseRepository.findAll().size();
 
         // Get the course

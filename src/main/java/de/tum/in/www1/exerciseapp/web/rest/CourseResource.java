@@ -2,13 +2,10 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Course;
-import de.tum.in.www1.exerciseapp.repository.CourseRepository;
+import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
-import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -34,7 +31,7 @@ public class CourseResource {
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
     @Inject
-    private CourseRepository courseRepository;
+    private CourseService courseService;
 
     /**
      * POST  /courses : Create a new course.
@@ -52,7 +49,7 @@ public class CourseResource {
         if (course.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("course", "idexists", "A new course cannot already have an ID")).body(null);
         }
-        Course result = courseRepository.save(course);
+        Course result = courseService.save(course);
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("course", result.getId().toString()))
             .body(result);
@@ -76,7 +73,7 @@ public class CourseResource {
         if (course.getId() == null) {
             return createCourse(course);
         }
-        Course result = courseRepository.save(course);
+        Course result = courseService.save(course);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert("course", course.getId().toString()))
             .body(result);
@@ -85,21 +82,16 @@ public class CourseResource {
     /**
      * GET  /courses : get all the courses.
      *
-     * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of courses in body
-     * @throws URISyntaxException if there is an error to generate the pagination HTTP headers
      */
     @RequestMapping(value = "/courses",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Timed
-    public ResponseEntity<List<Course>> getAllCourses(Pageable pageable)
-        throws URISyntaxException {
-        log.debug("REST request to get a page of Courses");
-        Page<Course> page = courseRepository.findAll(pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    public List<Course> getAllCourses() {
+        log.debug("REST request to get all Courses");
+        return courseService.findAll();
     }
 
     /**
@@ -114,7 +106,7 @@ public class CourseResource {
     @Timed
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
-        Course course = courseRepository.findOne(id);
+        Course course = courseService.findOne(id);
         return Optional.ofNullable(course)
             .map(result -> new ResponseEntity<>(
                 result,
@@ -134,7 +126,7 @@ public class CourseResource {
     @Timed
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);
-        courseRepository.delete(id);
+        courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("course", id.toString())).build();
     }
 
