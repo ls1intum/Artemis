@@ -37,6 +37,10 @@
         {
             "fieldName": "dueDate",
             "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "publishBuildPlanUrl",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20160609094621",

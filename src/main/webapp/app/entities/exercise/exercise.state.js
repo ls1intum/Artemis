@@ -77,6 +77,7 @@
                                 baseBuildPlanSlug: null,
                                 releaseDate: null,
                                 dueDate: null,
+                                publishBuildPlanUrl: null,
                                 id: null
                             };
                         }
