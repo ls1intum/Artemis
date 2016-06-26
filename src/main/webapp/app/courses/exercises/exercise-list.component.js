@@ -14,9 +14,9 @@
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', 'AlertService', 'CourseExercises', 'ExerciseParticipation'];
+    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'ExerciseParticipation'];
 
-    function ExerciseListController($sce, AlertService, CourseExercises, ExerciseParticipation) {
+    function ExerciseListController($sce, $window, AlertService, CourseExercises, ExerciseParticipation) {
         var vm = this;
 
         vm.clonePopover = {
@@ -26,6 +26,7 @@
 
         vm.$onInit = init;
         vm.getClonePopoverTemplate = getClonePopoverTemplate;
+        vm.goToBuildPlan = goToBuildPlan;
         vm.hasParticipation = hasParticipation;
         vm.start = start;
 
@@ -58,6 +59,14 @@
                 '</div>'
             ].join('');
             return trusted[html] || (trusted[html] = $sce.trustAsHtml(html));
+        }
+
+        function goToBuildPlan(exercise) {
+            if (exercise.publishBuildPlanUrl) {
+                console.log(exercise);
+                var buildPlanSlug = exercise.participation.repositorySlug.toUpperCase();
+                $window.open('https://bamboobruegge.in.tum.de/browse/' + buildPlanSlug);
+            }
         }
 
         function hasParticipation(exercise) {
