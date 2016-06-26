@@ -1,12 +1,19 @@
 <div>
     <div class="button-toolbar pull-right">
-        <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Export to CSV</button>
-        <button class="btn btn-primary btn-sm" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh</button>
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Export
+            to CSV
+        </button>
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
+        </button>
     </div>
     <!--<h4>Correct submissions:&nbsp;<span class="badge">{{ $ctrl.results.length }}</span></h4>-->
     <div ng-switch on="$ctrl.showAllResults">
-        <button class="btn btn-primary btn-sm" ng-switch-when="true" ng-click="$ctrl.toggleShowAllResults(false)">Show successful</button>
-        <button class="btn btn-primary btn-sm" ng-switch-when="false" ng-click="$ctrl.toggleShowAllResults(true)">Show all</button>
+        <button class="btn btn-primary btn-sm" ng-switch-when="true" ng-click="$ctrl.toggleShowAllResults(false)">Show
+            successful
+        </button>
+        <button class="btn btn-primary btn-sm" ng-switch-when="false" ng-click="$ctrl.toggleShowAllResults(true)">Show
+            all
+        </button>
     </div>
 </div>
 <table class="table">
@@ -15,6 +22,7 @@
         <th></th>
         <th>Student name</th>
         <th>Build completion date</th>
+        <th>Build result</th>
     </tr>
     </thead>
     <tbody>
@@ -22,6 +30,19 @@
         <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }}</td>
         <td>{{ result.buildCompletionDate | date:'MMM d, y HH:mm:ss' }}</td>
+        <td ng-switch on="result.buildSuccessful">
+        <span ng-switch-when="true">
+        <span class="text-success">
+            <i class="fa fa-lg fa-fw fa-check-circle-o"></i>&nbsp;{{result.resultString}}
+        </span> (<span am-time-ago="result.buildCompletionDate"></span>)
+    </span>
+    <span ng-switch-when="false">
+        <span class="text-danger">
+            <i class="fa fa-lg fa-fw fa-times-circle-o"></i>&nbsp;<a class="text-danger"
+                                                                     ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+        </span> (<span am-time-ago="result.buildCompletionDate"></span>)
+    </span>
+        </td>
     </tr>
     </tbody>
 </table>
