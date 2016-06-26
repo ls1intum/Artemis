@@ -19,6 +19,7 @@
             "cloneUrl": "Clone Url",
             "repositorySlug": "Repository Slug",
             "initializationState": "Initialization State",
+            "initializationDate": "Initialization Date",
             "student": "Student",
             "results": "Results",
             "exercise": "Exercise"

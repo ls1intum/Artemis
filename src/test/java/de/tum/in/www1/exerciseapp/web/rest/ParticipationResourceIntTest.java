@@ -24,6 +24,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
+import java.time.Instant;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.ZoneId;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -43,6 +47,8 @@ import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 @IntegrationTest
 public class ParticipationResourceIntTest {
 
+    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneId.of("Z"));
+
     private static final String DEFAULT_CLONE_URL = "AAAAA";
     private static final String UPDATED_CLONE_URL = "BBBBB";
     private static final String DEFAULT_REPOSITORY_SLUG = "AAAAA";
@@ -50,6 +56,10 @@ public class ParticipationResourceIntTest {
 
     private static final ParticipationState DEFAULT_INITIALIZATION_STATE = ParticipationState.UNINITIALIZED;
     private static final ParticipationState UPDATED_INITIALIZATION_STATE = ParticipationState.REPO_FORKED;
+
+    private static final ZonedDateTime DEFAULT_INITIALIZATION_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.systemDefault());
+    private static final ZonedDateTime UPDATED_INITIALIZATION_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
+    private static final String DEFAULT_INITIALIZATION_DATE_STR = dateTimeFormatter.format(DEFAULT_INITIALIZATION_DATE);
 
     @Inject
     private ParticipationRepository participationRepository;
@@ -83,6 +93,7 @@ public class ParticipationResourceIntTest {
         participation.setCloneUrl(DEFAULT_CLONE_URL);
         participation.setRepositorySlug(DEFAULT_REPOSITORY_SLUG);
         participation.setInitializationState(DEFAULT_INITIALIZATION_STATE);
+        participation.setInitializationDate(DEFAULT_INITIALIZATION_DATE);
     }
 
     @Test
@@ -104,6 +115,7 @@ public class ParticipationResourceIntTest {
         assertThat(testParticipation.getCloneUrl()).isEqualTo(DEFAULT_CLONE_URL);
         assertThat(testParticipation.getRepositorySlug()).isEqualTo(DEFAULT_REPOSITORY_SLUG);
         assertThat(testParticipation.getInitializationState()).isEqualTo(DEFAULT_INITIALIZATION_STATE);
+        assertThat(testParticipation.getInitializationDate()).isEqualTo(DEFAULT_INITIALIZATION_DATE);
     }
 
     @Test
@@ -119,7 +131,8 @@ public class ParticipationResourceIntTest {
                 .andExpect(jsonPath("$.[*].id").value(hasItem(participation.getId().intValue())))
                 .andExpect(jsonPath("$.[*].cloneUrl").value(hasItem(DEFAULT_CLONE_URL.toString())))
                 .andExpect(jsonPath("$.[*].repositorySlug").value(hasItem(DEFAULT_REPOSITORY_SLUG.toString())))
-                .andExpect(jsonPath("$.[*].initializationState").value(hasItem(DEFAULT_INITIALIZATION_STATE.toString())));
+                .andExpect(jsonPath("$.[*].initializationState").value(hasItem(DEFAULT_INITIALIZATION_STATE.toString())))
+                .andExpect(jsonPath("$.[*].initializationDate").value(hasItem(DEFAULT_INITIALIZATION_DATE_STR)));
     }
 
     @Test
@@ -135,7 +148,8 @@ public class ParticipationResourceIntTest {
             .andExpect(jsonPath("$.id").value(participation.getId().intValue()))
             .andExpect(jsonPath("$.cloneUrl").value(DEFAULT_CLONE_URL.toString()))
             .andExpect(jsonPath("$.repositorySlug").value(DEFAULT_REPOSITORY_SLUG.toString()))
-            .andExpect(jsonPath("$.initializationState").value(DEFAULT_INITIALIZATION_STATE.toString()));
+            .andExpect(jsonPath("$.initializationState").value(DEFAULT_INITIALIZATION_STATE.toString()))
+            .andExpect(jsonPath("$.initializationDate").value(DEFAULT_INITIALIZATION_DATE_STR));
     }
 
     @Test
@@ -160,6 +174,7 @@ public class ParticipationResourceIntTest {
         updatedParticipation.setCloneUrl(UPDATED_CLONE_URL);
         updatedParticipation.setRepositorySlug(UPDATED_REPOSITORY_SLUG);
         updatedParticipation.setInitializationState(UPDATED_INITIALIZATION_STATE);
+        updatedParticipation.setInitializationDate(UPDATED_INITIALIZATION_DATE);
 
         restParticipationMockMvc.perform(put("/api/participations")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -173,6 +188,7 @@ public class ParticipationResourceIntTest {
         assertThat(testParticipation.getCloneUrl()).isEqualTo(UPDATED_CLONE_URL);
         assertThat(testParticipation.getRepositorySlug()).isEqualTo(UPDATED_REPOSITORY_SLUG);
         assertThat(testParticipation.getInitializationState()).isEqualTo(UPDATED_INITIALIZATION_STATE);
+        assertThat(testParticipation.getInitializationDate()).isEqualTo(UPDATED_INITIALIZATION_DATE);
     }
 
     @Test

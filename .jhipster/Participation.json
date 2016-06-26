@@ -32,6 +32,10 @@
             "fieldName": "initializationState",
             "fieldType": "ParticipationState",
             "fieldValues": "UNINITIALIZED, REPO_FORKED, REPO_PERMISSIONS_SET, PLAN_CLONED, PLAN_REPO_UPDATED, PLAN_ENABLED, INITIALIZED"
+        },
+        {
+            "fieldName": "initializationDate",
+            "fieldType": "ZonedDateTime"
         }
     ],
     "changelogDate": "20160609100233",

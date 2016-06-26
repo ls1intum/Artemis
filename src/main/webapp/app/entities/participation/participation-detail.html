@@ -16,6 +16,10 @@
         <dd>
             <span translate="{{'exerciseApplicationApp.ParticipationState.' + vm.participation.initializationState}}">{{vm.participation.initializationState}}</span>
         </dd>
+        <dt><span translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span></dt>
+        <dd>
+            <span>{{vm.participation.initializationDate | date:'medium'}}</span>
+        </dd>
         <dt><span translate="exerciseApplicationApp.participation.student">Student</span></dt>
         <dd>
             {{vm.participation.student.login}}

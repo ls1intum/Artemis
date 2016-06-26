@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -162,6 +163,7 @@ public class ParticipationService {
     private Participation doEmptyCommit(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.INITIALIZED)) {
             gitService.doEmptyCommit(participation.getExercise().getBaseProjectKey(), participation.getCloneUrl());
+            participation.setInitializationDate(ZonedDateTime.now());
             participation.setInitializationState(ParticipationState.INITIALIZED);
             return save(participation);
         } else {
