@@ -63,9 +63,8 @@
 
         function goToBuildPlan(exercise) {
             if (exercise.publishBuildPlanUrl) {
-                console.log(exercise);
-                var buildPlanSlug = exercise.participation.repositorySlug.toUpperCase();
-                $window.open('https://bamboobruegge.in.tum.de/browse/' + buildPlanSlug);
+                var buildPlan = exercise.baseProjectKey + '-' + exercise.participation.student.login;
+                $window.open('https://bamboobruegge.in.tum.de/browse/' + buildPlan.toUpperCase());
             }
         }
 
