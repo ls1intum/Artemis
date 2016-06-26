@@ -22,6 +22,7 @@
                     <th><span translate="exerciseApplicationApp.participation.cloneUrl">Clone Url</span></th>
                     <th><span translate="exerciseApplicationApp.participation.repositorySlug">Repository Slug</span></th>
                     <th><span translate="exerciseApplicationApp.participation.initializationState">Initialization State</span></th>
+                    <th><span translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span></th>
                     <th><span translate="exerciseApplicationApp.participation.student">Student</span></th>
                     <th><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
                     <th></th>
@@ -33,6 +34,7 @@
                     <td>{{participation.cloneUrl}}</td>
                     <td>{{participation.repositorySlug}}</td>
                     <td translate="{{'exerciseApplicationApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
+                    <td>{{participation.initializationDate | date:'medium'}}</td>
                     <td>
                         {{participation.student.login}}
                     </td>

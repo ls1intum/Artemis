@@ -6,6 +6,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Objects;
@@ -35,6 +36,9 @@ public class Participation implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
     private ParticipationState initializationState;
+
+    @Column(name = "initialization_date")
+    private ZonedDateTime initializationDate;
 
     @ManyToOne
     private User student;
@@ -77,6 +81,14 @@ public class Participation implements Serializable {
 
     public void setInitializationState(ParticipationState initializationState) {
         this.initializationState = initializationState;
+    }
+
+    public ZonedDateTime getInitializationDate() {
+        return initializationDate;
+    }
+
+    public void setInitializationDate(ZonedDateTime initializationDate) {
+        this.initializationDate = initializationDate;
     }
 
     public User getStudent() {
@@ -130,6 +142,7 @@ public class Participation implements Serializable {
             ", cloneUrl='" + cloneUrl + "'" +
             ", repositorySlug='" + repositorySlug + "'" +
             ", initializationState='" + initializationState + "'" +
+            ", initializationDate='" + initializationDate + "'" +
             '}';
     }
 }

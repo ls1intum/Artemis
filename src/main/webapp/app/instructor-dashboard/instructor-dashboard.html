@@ -23,6 +23,7 @@
         <th>Student name</th>
         <th>Build completion date</th>
         <th>Build result</th>
+        <th>Duration</th>
     </tr>
     </thead>
     <tbody>
@@ -43,6 +44,7 @@
         </span> (<span am-time-ago="result.buildCompletionDate"></span>)
     </span>
         </td>
+        <td>{{result.buildCompletionDate | amDifference : result.participation.initializationDate : 'minutes' }} minutes</td>
     </tr>
     </tbody>
 </table>

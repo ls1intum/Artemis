@@ -76,6 +76,7 @@
                                 cloneUrl: null,
                                 repositorySlug: null,
                                 initializationState: null,
+                                initializationDate: null,
                                 id: null
                             };
                         }

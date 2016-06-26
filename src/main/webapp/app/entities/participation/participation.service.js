@@ -5,9 +5,9 @@
         .factory('Participation', Participation)
         .factory('ExerciseParticipation', ExerciseParticipation);
 
-    Participation.$inject = ['$resource'];
+    Participation.$inject = ['$resource', 'DateUtils'];
 
-    function Participation ($resource) {
+    function Participation ($resource, DateUtils) {
         var resourceUrl =  'api/participations/:id';
 
         return $resource(resourceUrl, {}, {
@@ -17,6 +17,7 @@
                 transformResponse: function (data) {
                     if (data) {
                         data = angular.fromJson(data);
+                        data.initializationDate = DateUtils.convertDateTimeFromServer(data.initializationDate);
                     }
                     return data;
                 }
