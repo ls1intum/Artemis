@@ -207,10 +207,11 @@ public class ResultResource {
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Timed
-    public ResponseEntity<?> getResultDetails(@PathVariable Long id, Principal principal) {
+    public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam String username, Principal principal) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
-        String planKey = result.getParticipation().getExercise().getBaseProjectKey() + "-" + principal.getName();
+        String planSlug = username != null ? username : principal.getName();
+        String planKey = result.getParticipation().getExercise().getBaseProjectKey() + "-" + planSlug;
         Map details = bambooService.retrieveLatestBuildResultDetails(planKey);
         return Optional.ofNullable(details.get("details"))
             .map(resultDetails -> new ResponseEntity<>(

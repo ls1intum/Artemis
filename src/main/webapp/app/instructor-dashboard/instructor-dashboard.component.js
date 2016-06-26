@@ -65,7 +65,11 @@
 
                     function init() {
                         vm.loading = true;
-                        $http.get('api/results/' + result.id + '/details').then(function (response) {
+                        $http.get('api/results/' + result.id + '/details', {
+                            params: {
+                                username: result.participation.student.login
+                            }
+                        }).then(function (response) {
                             vm.details = response.data;
                             console.log(response);
                         }).finally(function () {
