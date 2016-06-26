@@ -12,9 +12,9 @@
             templateUrl: 'app/instructor-dashboard/instructor-dashboard.html'
         });
 
-    InstructorDashboardController.$inject = ['ExerciseResults'];
+    InstructorDashboardController.$inject = ['$uibModal', 'ExerciseResults'];
 
-    function InstructorDashboardController (ExerciseResults) {
+    function InstructorDashboardController ($uibModal, ExerciseResults) {
         var vm = this;
 
         vm.showAllResults = false;
@@ -22,6 +22,7 @@
         vm.$onInit = init;
         vm.export = exportData;
         vm.refresh = getResults;
+        vm.showDetails = showDetails;
         vm.toggleShowAllResults = toggleShowAllResults;
 
         function init() {
@@ -50,6 +51,32 @@
                 courseId: vm.courseId,
                 exerciseId: vm.exerciseId,
                 showAllResults: vm.showAllResults
+            });
+        }
+
+        function showDetails(result) {
+            $uibModal.open({
+                size: 'lg',
+                templateUrl: 'app/courses/results/result-detail.html',
+                controller: ['$http', 'result', function ($http, result) {
+                    var vm = this;
+
+                    vm.$onInit = init;
+
+                    function init() {
+                        vm.loading = true;
+                        $http.get('api/results/' + result.id + '/details').then(function (response) {
+                            vm.details = response.data;
+                            console.log(response);
+                        }).finally(function () {
+                            vm.loading = false;
+                        });
+                    }
+                }],
+                resolve: {
+                    result: result
+                },
+                controllerAs: '$ctrl'
             });
         }
 
