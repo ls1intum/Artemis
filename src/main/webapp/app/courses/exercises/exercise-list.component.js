@@ -44,7 +44,7 @@
 
         function buildSourceTreeUrl(cloneUrl) {
             // sourcetree://cloneRepo?type=stash&cloneUrl=https%3A%2F%2Fga56hur%40repobruegge.in.tum.de%2Fscm%2Fmadm%2Fexercise-application.git
-            return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl);
+            return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
         }
 
         var trusted = {};
