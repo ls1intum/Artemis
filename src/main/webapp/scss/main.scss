@@ -31,6 +31,15 @@ body {
     max-width: 100%;
 }
 
+#btn-student-action {
+    min-width: 129px;
+}
+
+#btn-build-plan {
+    min-width: 129px;
+    margin-top: 5px;
+}
+
 /* ==========================================================================
 Hide ng-cloak on page load, https://docs.angularjs.org/api/ng/directive/ngCloak
 ========================================================================== */

@@ -25,7 +25,7 @@
             <span ng-switch-when="true"><result participation="exercise.participation"></result></span>
         </td>
         <td class="text-center">
-            <button class="btn btn-primary btn-sm btn-block btn-student-action"
+            <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
                     ng-switch-when="false"
                     ng-click="$ctrl.start(exercise)">
                 <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
@@ -38,7 +38,7 @@
                     class="fa fa-download fa-fw"></i>&nbsp;Clone
                     repository
                 </button>
-                <button class="btn btn-primary btn-sm btn-block" ng-if="exercise.publishBuildPlanUrl" ng-click="$ctrl.goToBuildPlan(exercise)"><i class="fa fa-external-link fa-fw"></i>&nbsp;Go to build plan</button>
+                <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan" ng-if="exercise.publishBuildPlanUrl" ng-click="$ctrl.goToBuildPlan(exercise)"><i class="fa fa-external-link fa-fw"></i>&nbsp;Go to build plan</button>
             </div>
         </td>
     </tr>
