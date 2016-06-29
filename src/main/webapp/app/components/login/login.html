@@ -20,10 +20,11 @@
                     <label for="username" translate="global.form.username">TUM ID</label>
                     <input type="text" class="form-control" id="username" name="username"
                            placeholder="{{'global.form.username.placeholder' | translate}}" ng-model="vm.username"
-                           ng-pattern="/[a-z]{2}\d{2}[a-z]{3}/"
+                           ng-pattern="/^([a-z]{2}\d{2}[a-z]{3})$/"
                            ng-model-options="{ allowInvalid: 'true', updateOn: 'blur' }">
             <span id="helpBlock" class="help-block" ng-show="loginForm.username.$dirty && loginForm.username.$invalid">
-                <p class="text-primary">Your TUM ID should have the format '<em>ab12xyz</em>'.</p>
+                <p class="text-primary">Your TUM ID should have the format '<em>ab12xyz</em>'.<br>
+                    Don't include '<em>@mytum.de</em>' or '<em>@tum.de</em>' after your ID.</p>
             </span>
                 </div>
                 <div class="form-group">
