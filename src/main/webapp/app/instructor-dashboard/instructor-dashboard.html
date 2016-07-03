@@ -34,12 +34,12 @@
         <td ng-switch on="result.buildSuccessful">
         <span ng-switch-when="true">
         <span class="text-success">
-            <i class="fa fa-lg fa-fw fa-check-circle-o"></i>&nbsp;{{result.resultString}}
+            <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;{{result.resultString}}
         </span> (<span am-time-ago="result.buildCompletionDate"></span>)
     </span>
     <span ng-switch-when="false">
         <span class="text-danger">
-            <i class="fa fa-lg fa-fw fa-times-circle-o"></i>&nbsp;<a class="text-danger"
+            <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;<a class="text-danger"
                                                                      ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
         </span> (<span am-time-ago="result.buildCompletionDate"></span>)
     </span>
