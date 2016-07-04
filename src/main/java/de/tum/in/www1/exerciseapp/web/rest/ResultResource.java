@@ -171,7 +171,7 @@ public class ResultResource {
         if (showAllResults) {
             results = resultRepository.findLatestResultsForExercise(exerciseId);
         } else {
-            results = resultRepository.findLatestSuccessfulResultsForExercise(exerciseId);
+            results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
         }
         return results;
     }
