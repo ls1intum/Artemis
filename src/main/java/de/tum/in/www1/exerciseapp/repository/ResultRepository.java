@@ -17,11 +17,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     List<Result> findByParticipationExerciseIdOrderByBuildCompletionDateAsc(Long exerciseId);
 
-    @Query("select r from Result r where r.buildCompletionDate = (select max(rr.buildCompletionDate) from Result rr where rr.participation.student.id = r.participation.student.id) and r.participation.exercise.id = :exerciseId order by r.buildCompletionDate asc")
+    // TODO: What if select max ... doesn't work?
+    @Query("select r from Result r where r.buildCompletionDate = (select max(rr.buildCompletionDate) from Result rr where rr.participation.exercise.id = :exerciseId and rr.participation.student.id = r.participation.student.id) and r.participation.exercise.id = :exerciseId order by r.buildCompletionDate asc")
     List<Result> findLatestResultsForExercise(@Param("exerciseId") Long exerciseId);
 
-    @Query("select r from Result r where r.buildCompletionDate = (select min(rr.buildCompletionDate) from Result rr where rr.participation.student.id = r.participation.student.id and rr.buildSuccessful = true) and r.participation.exercise.id = :exerciseId and r.buildSuccessful = true order by r.buildCompletionDate asc")
-    List<Result> findLatestSuccessfulResultsForExercise(@Param("exerciseId") Long exerciseId);
+    @Query("select r from Result r where r.buildCompletionDate = (select min(rr.buildCompletionDate) from Result rr where rr.participation.exercise.id = :exerciseId and rr.participation.student.id = r.participation.student.id and rr.buildSuccessful = true) and r.participation.exercise.id = :exerciseId and r.buildSuccessful = true order by r.buildCompletionDate asc")
+    List<Result> findEarliestSuccessfulResultsForExercise(@Param("exerciseId") Long exerciseId);
 
     List<Result> findByParticipationExerciseIdAndBuildSuccessfulOrderByBuildCompletionDateAsc(Long exerciseId, boolean buildSuccessful);
 }
