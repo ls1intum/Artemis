@@ -20,20 +20,20 @@
     <tr>
         <th></th>
         <th>
-            <a ng-click="$ctrl.sortColumn = 'participation.student.firstName'; $ctrl.sortReverse = !$ctrl.sortReverse">
-                Student name
-            </a>&nbsp;<i ng-class="{'fa': $ctrl.sortColumn === 'participation.student.firstName', 'fa-caret-down': !$ctrl.sortReverse, 'fa-caret-up': $ctrl.sortReverse}"></i>
+            <a class="th-link" ng-click="$ctrl.sortColumn = 'participation.student.firstName'; $ctrl.sortReverse = !$ctrl.sortReverse">
+                Student name</a>&nbsp;<i
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'participation.student.firstName' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'participation.student.firstName' && $ctrl.sortReverse}"></i>
         </th>
         <th>
-            <a ng-click="$ctrl.sortColumn = 'buildCompletionDate'; $ctrl.sortReverse = !$ctrl.sortReverse">
-                Build completion date
-            </a>&nbsp;<i ng-class="{'fa': $ctrl.sortColumn === 'buildCompletionDate', 'fa-caret-down': !$ctrl.sortReverse, 'fa-caret-up': $ctrl.sortReverse}"></i>
+            <a class="th-link" ng-click="$ctrl.sortColumn = 'buildCompletionDate'; $ctrl.sortReverse = !$ctrl.sortReverse">
+                Build completion date</a>&nbsp;<i
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'buildCompletionDate' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'buildCompletionDate' && $ctrl.sortReverse}"></i>
         </th>
         <th>Build result</th>
         <th>
-            <a ng-click="$ctrl.sortColumn = '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)'; $ctrl.sortReverse = !$ctrl.sortReverse">
-                Duration
-            </a>&nbsp;<i ng-class="{'fa': $ctrl.sortColumn === '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)', 'fa-caret-down': !$ctrl.sortReverse, 'fa-caret-up': $ctrl.sortReverse}"></i>
+            <a class="th-link" ng-click="$ctrl.sortColumn = '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)'; $ctrl.sortReverse = !$ctrl.sortReverse">
+                Duration</a>&nbsp;<i
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)' && $ctrl.sortReverse}"></i>
         </th>
     </tr>
     </thead>
@@ -51,7 +51,7 @@
     <span ng-switch-when="false">
         <span class="text-danger">
             <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;<a class="text-danger"
-                                                                     ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+                                                               ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
         </span> (<span am-time-ago="result.buildCompletionDate"></span>)
     </span>
         </td>
