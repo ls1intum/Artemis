@@ -28,6 +28,8 @@ You will need to create a unique Bitbucket project per exercise.
                 |_ ... (any resources required for tests, e.g. structure definitions)
             pom.xml
 
+4. Add project-wide admin permissions for the user *exerciseapp*.
+
 ### [Bamboo Setup](https://bamboobruegge.in.tum.de)
 
 1. Create a new plan:
@@ -43,7 +45,7 @@ You will need to create a unique Bitbucket project per exercise.
         2. Click "*Add repository*".
         3. Add the exercise code repository. **Important:** Give it the same name as the actual repository! (In our example: *EIST16SC*).
         4. Add the test repository. Here, an arbitrary name can be chosen.
-    4. Stages:
+    3. Stages:
         1. Choose the default job in the default stage.
         2. Edit the source code checkout task: Add the exercise code repository (make sure it points to the repository and **not** to the default repository) and the test repository (set the checkout directory so it is checked out into the exercise code folder).
         3. Add a Maven 3.x task with goal `clean test`. Check "*This build will produce test results*". Other settings might depend on your specific code setup.
@@ -51,6 +53,8 @@ You will need to create a unique Bitbucket project per exercise.
 
                 curl -k -X POST https://exercisebruegge.in.tum.de/api/results/${bamboo.planKey}
         5. Add a requirement "*AgentType equals Amazon*" to the job.
+        
+3. Add project-wide admin permissions for the user *exerciseapp*.
 
 ### [Exercise Application Setup](https://exercisebruegge.in.tum.de)
 
