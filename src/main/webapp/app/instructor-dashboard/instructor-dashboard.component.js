@@ -71,7 +71,6 @@
                             }
                         }).then(function (response) {
                             vm.details = response.data;
-                            console.log(response);
                         }).finally(function () {
                             vm.loading = false;
                         });
@@ -86,7 +85,6 @@
 
         function toggleShowAllResults(newValue) {
             vm.showAllResults = newValue;
-            console.log(vm.showAllResults);
             getResults();
         }
     }
