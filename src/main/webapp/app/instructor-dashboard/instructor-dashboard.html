@@ -6,7 +6,6 @@
         <button class="btn btn-primary btn-sm" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
         </button>
     </div>
-    <!--<h4>Correct submissions:&nbsp;<span class="badge">{{ $ctrl.results.length }}</span></h4>-->
     <div ng-switch on="$ctrl.showAllResults">
         <button class="btn btn-primary btn-sm" ng-switch-when="true" ng-click="$ctrl.toggleShowAllResults(false)">Show
             successful
@@ -20,14 +19,26 @@
     <thead>
     <tr>
         <th></th>
-        <th>Student name</th>
-        <th>Build completion date</th>
+        <th>
+            <a ng-click="$ctrl.sortColumn = 'participation.student.firstName'; $ctrl.sortReverse = !$ctrl.sortReverse">
+                Student name
+            </a>&nbsp;<i ng-class="{'fa': $ctrl.sortColumn === 'participation.student.firstName', 'fa-caret-down': !$ctrl.sortReverse, 'fa-caret-up': $ctrl.sortReverse}"></i>
+        </th>
+        <th>
+            <a ng-click="$ctrl.sortColumn = 'buildCompletionDate'; $ctrl.sortReverse = !$ctrl.sortReverse">
+                Build completion date
+            </a>&nbsp;<i ng-class="{'fa': $ctrl.sortColumn === 'buildCompletionDate', 'fa-caret-down': !$ctrl.sortReverse, 'fa-caret-up': $ctrl.sortReverse}"></i>
+        </th>
         <th>Build result</th>
-        <th>Duration</th>
+        <th>
+            <a ng-click="$ctrl.sortColumn = '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)'; $ctrl.sortReverse = !$ctrl.sortReverse">
+                Duration
+            </a>&nbsp;<i ng-class="{'fa': $ctrl.sortColumn === '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)', 'fa-caret-down': !$ctrl.sortReverse, 'fa-caret-up': $ctrl.sortReverse}"></i>
+        </th>
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="result in $ctrl.results track by $index">
+    <tr ng-repeat="result in $ctrl.sortedResults = ($ctrl.results | orderBy:$ctrl.sortColumn:$ctrl.sortReverse) track by $index ">
         <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }}</td>
         <td>{{ result.buildCompletionDate | date:'MMM d, y HH:mm:ss' }}</td>
@@ -44,7 +55,7 @@
         </span> (<span am-time-ago="result.buildCompletionDate"></span>)
     </span>
         </td>
-        <td>{{result.buildCompletionDate | amDifference : result.participation.initializationDate : 'minutes' }} minutes</td>
+        <td>{{$ctrl.buildDuration(result.buildCompletionDate, result.participation.initializationDate)}} minutes</td>
     </tr>
     </tbody>
 </table>
