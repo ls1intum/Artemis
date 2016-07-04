@@ -12,14 +12,18 @@
             templateUrl: 'app/instructor-dashboard/instructor-dashboard.html'
         });
 
-    InstructorDashboardController.$inject = ['$uibModal', 'ExerciseResults'];
+    InstructorDashboardController.$inject = ['$filter', '$uibModal', 'ExerciseResults'];
 
-    function InstructorDashboardController ($uibModal, ExerciseResults) {
+    function InstructorDashboardController ($filter, $uibModal, ExerciseResults) {
         var vm = this;
 
         vm.showAllResults = false;
+        vm.sortColumn = 'buildCompletionDate';
+        vm.sortReverse = false;
+
 
         vm.$onInit = init;
+        vm.buildDuration = buildDuration;
         vm.export = exportData;
         vm.refresh = getResults;
         vm.showDetails = showDetails;
@@ -29,10 +33,14 @@
             getResults();
         }
 
+        function buildDuration(completionDate, initializationDate) {
+            return $filter('amDifference')(completionDate, initializationDate, 'minutes');
+        }
+
         function exportData() {
-            if (vm.results.length > 0) {
+            if (vm.sortedResults.length > 0) {
                 var rows = [];
-                vm.results.forEach(function (result, index) {
+                vm.sortedResults.forEach(function (result, index) {
                     var studentName = result.participation.student.firstName;
                     rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + studentName : studentName);
                 });
