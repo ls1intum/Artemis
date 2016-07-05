@@ -12,18 +12,16 @@
             templateUrl: 'app/instructor-dashboard/instructor-dashboard.html'
         });
 
-    InstructorDashboardController.$inject = ['$filter', '$uibModal', 'ExerciseResults'];
+    InstructorDashboardController.$inject = ['$filter', 'moment', '$uibModal', 'ExerciseResults'];
 
-    function InstructorDashboardController ($filter, $uibModal, ExerciseResults) {
+    function InstructorDashboardController ($filter, moment, $uibModal, ExerciseResults) {
         var vm = this;
 
         vm.showAllResults = false;
-        vm.sortColumn = 'buildCompletionDate';
         vm.sortReverse = false;
 
-
         vm.$onInit = init;
-        vm.buildDuration = buildDuration;
+        vm.buildDurationString = buildDurationString;
         vm.export = exportData;
         vm.refresh = getResults;
         vm.showDetails = showDetails;
@@ -33,9 +31,23 @@
             getResults();
         }
 
-        function buildDuration(completionDate, initializationDate) {
+        function buildDurationString(completionDate, initializationDate) {
             return $filter('amDifference')(completionDate, initializationDate, 'minutes');
         }
+
+        vm.sort = function (item) {
+            if (vm.sortColumn === 'buildCompletionDate') {
+                return item.buildCompletionDate;
+            } else if (vm.sortColumn === 'studentName') {
+                return item.participation.student.firstName;
+            } else if (vm.sortColumn === 'buildSuccessful') {
+                return item.buildSuccessful;
+            } else if (vm.sortColumn === 'duration') {
+                var completionDate = moment(item.buildCompletionDate);
+                var initializationDate = moment(item.participation.initializationDate);
+                return completionDate.diff(initializationDate, 'minutes');
+            }
+        };
 
         function exportData() {
             if (vm.sortedResults.length > 0) {
