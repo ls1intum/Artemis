@@ -20,25 +20,28 @@
     <tr>
         <th></th>
         <th>
-            <a class="th-link" ng-click="$ctrl.sortColumn = 'participation.student.firstName'; $ctrl.sortReverse = !$ctrl.sortReverse">
+            <a class="th-link" ng-click="$ctrl.sortColumn = 'studentName'; $ctrl.sortReverse = !$ctrl.sortReverse">
                 Student name</a>&nbsp;<i
-            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'participation.student.firstName' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'participation.student.firstName' && $ctrl.sortReverse}"></i>
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'studentName' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'studentName' && $ctrl.sortReverse}"></i>
         </th>
         <th>
             <a class="th-link" ng-click="$ctrl.sortColumn = 'buildCompletionDate'; $ctrl.sortReverse = !$ctrl.sortReverse">
                 Build completion date</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'buildCompletionDate' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'buildCompletionDate' && $ctrl.sortReverse}"></i>
         </th>
-        <th>Build result</th>
+        <th><a class="th-link" ng-click="$ctrl.sortColumn = 'buildSuccessful'; $ctrl.sortReverse = !$ctrl.sortReverse">
+            Build result</a>&nbsp;<i
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'buildSuccessful' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'buildSuccessful' && $ctrl.sortReverse}"></i>
+        </th>
         <th>
-            <a class="th-link" ng-click="$ctrl.sortColumn = '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)'; $ctrl.sortReverse = !$ctrl.sortReverse">
+            <a class="th-link" ng-click="$ctrl.sortColumn = 'duration'; $ctrl.sortReverse = !$ctrl.sortReverse">
                 Duration</a>&nbsp;<i
-            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === '$ctrl.buildDuration(buildCompletionDate, participation.initializationDate)' && $ctrl.sortReverse}"></i>
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'duration' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'duration' && $ctrl.sortReverse}"></i>
         </th>
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="result in $ctrl.sortedResults = ($ctrl.results | orderBy:$ctrl.sortColumn:$ctrl.sortReverse) track by $index ">
+    <tr ng-repeat="result in $ctrl.sortedResults = ($ctrl.results | orderBy:$ctrl.sort:$ctrl.sortReverse) track by $index ">
         <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }}</td>
         <td>{{ result.buildCompletionDate | date:'MMM d, y HH:mm:ss' }}</td>
@@ -55,7 +58,7 @@
         </span> (<span am-time-ago="result.buildCompletionDate"></span>)
     </span>
         </td>
-        <td>{{$ctrl.buildDuration(result.buildCompletionDate, result.participation.initializationDate)}} minutes</td>
+        <td>{{$ctrl.buildDurationString(result.buildCompletionDate, result.participation.initializationDate)}} minutes</td>
     </tr>
     </tbody>
 </table>
