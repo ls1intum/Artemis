@@ -36,7 +36,7 @@
                     <td translate="{{'exerciseApplicationApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
                     <td>{{participation.initializationDate | date:'medium'}}</td>
                     <td>
-                        {{participation.student.login}}
+                        <a ui-sref="user-management-detail({login:participation.student.login})">{{participation.student.firstName}}</a>
                     </td>
                     <td>
                         <a ui-sref="exercise-detail({id:participation.exercise.id})">{{participation.exercise.title}}</a>
