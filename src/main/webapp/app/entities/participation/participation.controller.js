@@ -14,9 +14,17 @@
 
         loadAll();
 
+        function getUniqueExercises() {
+            var exercises = _.map(vm.participations, function (participation) {
+                return participation.exercise;
+            });
+            vm.exercises = _.uniqBy(exercises, 'title');
+        }
+
         function loadAll() {
             Participation.query(function(result) {
                 vm.participations = result;
+                getUniqueExercises();
             });
         }
     }
