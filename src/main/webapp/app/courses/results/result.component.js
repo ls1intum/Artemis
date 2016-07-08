@@ -20,6 +20,7 @@
         var vm = this;
 
         vm.$onInit = init;
+        vm.buildResultString = buildResultString;
         vm.hasResults = hasResults;
         vm.showDetails = showDetails;
 
@@ -38,6 +39,14 @@
                     });
                 }
             });
+        }
+
+        function buildResultString(result) {
+            if (result.resultString === 'No tests found') {
+                return 'No tests found (Check for compile errors)';
+            } else {
+                return result.resultString;
+            }
         }
 
         function hasResults() {
