@@ -15,7 +15,7 @@
         </button>
     </div>
 </div>
-<table class="table">
+<table class="table exercise-table">
     <thead>
     <tr>
         <th></th>
@@ -25,7 +25,8 @@
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'studentName' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'studentName' && $ctrl.sortReverse}"></i>
         </th>
         <th>
-            <a class="th-link" ng-click="$ctrl.sortColumn = 'buildCompletionDate'; $ctrl.sortReverse = !$ctrl.sortReverse">
+            <a class="th-link"
+               ng-click="$ctrl.sortColumn = 'buildCompletionDate'; $ctrl.sortReverse = !$ctrl.sortReverse">
                 Build completion date</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'buildCompletionDate' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'buildCompletionDate' && $ctrl.sortReverse}"></i>
         </th>
@@ -38,10 +39,11 @@
                 Duration</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'duration' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'duration' && $ctrl.sortReverse}"></i>
         </th>
+        <th></th>
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="result in $ctrl.sortedResults = ($ctrl.results | orderBy:$ctrl.sort:$ctrl.sortReverse) track by $index ">
+    <tr ng-repeat="result in $ctrl.sortedResults = ($ctrl.results | orderBy:$ctrl.sort:$ctrl.sortReverse) track by $index">
         <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }}</td>
         <td>{{ result.buildCompletionDate | date:'MMM d, y HH:mm:ss' }}</td>
@@ -58,7 +60,16 @@
         </span> (<span am-time-ago="result.buildCompletionDate"></span>)
     </span>
         </td>
-        <td>{{$ctrl.buildDurationString(result.buildCompletionDate, result.participation.initializationDate)}} minutes</td>
+        <td>{{$ctrl.buildDurationString(result.buildCompletionDate, result.participation.initializationDate)}} minutes
+        </td>
+        <td>
+            <button class="btn btn-default btn-xs" ng-click="$ctrl.goToRepository(result)"><i
+                class="fa fa-code-fork"></i>&nbsp;Repository
+            </button>
+            <button class="btn btn-default btn-xs" ng-click="$ctrl.goToBuildPlan(result)">
+                <i class="fa fa-file-code-o"></i>&nbsp;Build plan
+            </button>
+        </td>
     </tr>
     </tbody>
 </table>
