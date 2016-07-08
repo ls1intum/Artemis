@@ -11,6 +11,9 @@
         var vm = this;
 
         vm.participation = entity;
+        vm.deleteBuildPlan = true;
+        vm.deleteRepository = true;
+        
         vm.clear = clear;
         vm.confirmDelete = confirmDelete;
 
