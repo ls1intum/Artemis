@@ -1,4 +1,4 @@
-(function() {
+(function () {
     'use strict';
 
     angular
@@ -12,9 +12,9 @@
             templateUrl: 'app/instructor-dashboard/instructor-dashboard.html'
         });
 
-    InstructorDashboardController.$inject = ['$filter', 'moment', '$uibModal', 'ExerciseResults'];
+    InstructorDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal', 'ExerciseResults'];
 
-    function InstructorDashboardController ($filter, moment, $uibModal, ExerciseResults) {
+    function InstructorDashboardController($window, $filter, moment, $uibModal, ExerciseResults) {
         var vm = this;
 
         vm.showAllResults = false;
@@ -23,8 +23,11 @@
         vm.$onInit = init;
         vm.buildDurationString = buildDurationString;
         vm.export = exportData;
+        vm.goToBuildPlan = goToBuildPlan;
+        vm.goToRepository = goToRepository;
         vm.refresh = getResults;
         vm.showDetails = showDetails;
+        vm.sort = sort;
         vm.toggleShowAllResults = toggleShowAllResults;
 
         function init() {
@@ -34,20 +37,6 @@
         function buildDurationString(completionDate, initializationDate) {
             return $filter('amDifference')(completionDate, initializationDate, 'minutes');
         }
-
-        vm.sort = function (item) {
-            if (vm.sortColumn === 'buildCompletionDate') {
-                return item.buildCompletionDate;
-            } else if (vm.sortColumn === 'studentName') {
-                return item.participation.student.firstName;
-            } else if (vm.sortColumn === 'buildSuccessful') {
-                return item.buildSuccessful;
-            } else if (vm.sortColumn === 'duration') {
-                var completionDate = moment(item.buildCompletionDate);
-                var initializationDate = moment(item.participation.initializationDate);
-                return completionDate.diff(initializationDate, 'minutes');
-            }
-        };
 
         function exportData() {
             if (vm.sortedResults.length > 0) {
@@ -72,6 +61,15 @@
                 exerciseId: vm.exerciseId,
                 showAllResults: vm.showAllResults
             });
+        }
+
+        function goToBuildPlan(result) {
+            var buildPlan = result.participation.exercise.baseProjectKey + '-' + result.participation.student.login;
+            $window.open('https://bamboobruegge.in.tum.de/browse/' + buildPlan.toUpperCase());
+        }
+
+        function goToRepository(result) {
+            $window.open('https://repobruegge.in.tum.de/projects/' + result.participation.exercise.baseProjectKey + '/repos/' + result.participation.repositorySlug + '/browse');
         }
 
         function showDetails(result) {
@@ -101,6 +99,20 @@
                 },
                 controllerAs: '$ctrl'
             });
+        }
+
+        function sort(item) {
+            if (vm.sortColumn === 'buildCompletionDate') {
+                return item.buildCompletionDate;
+            } else if (vm.sortColumn === 'studentName') {
+                return item.participation.student.firstName;
+            } else if (vm.sortColumn === 'buildSuccessful') {
+                return item.buildSuccessful;
+            } else if (vm.sortColumn === 'duration') {
+                var completionDate = moment(item.buildCompletionDate);
+                var initializationDate = moment(item.participation.initializationDate);
+                return completionDate.diff(initializationDate, 'minutes');
+            }
         }
 
         function toggleShowAllResults(newValue) {
