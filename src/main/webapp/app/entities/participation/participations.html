@@ -11,6 +11,14 @@
                     </span>
                 </button>
             </div>
+            <div class="col-xs-8 no-padding-right">
+                <form name="searchForm" class="form-inline">
+                    <div class="input-group pull-right">
+                        <input type="text" class="form-control" ng-model="vm.filterExercise" placeholder="Filter by exercise" uib-typeahead="exercise.title for exercise in vm.exercises | filter:$viewValue | limitTo:8" typeahead-no-results="noResults">
+                        <span class="input-group-addon"><i class="fa fa-filter"></i></span>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     <br/>
@@ -29,7 +37,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr ng-repeat="participation in vm.participations track by participation.id">
+                <tr ng-repeat="participation in vm.participations | filter:{exercise:{title:vm.filterExercise}} track by participation.id">
                     <td><a ui-sref="participation-detail({id:participation.id})">{{participation.id}}</a></td>
                     <td>{{participation.cloneUrl}}</td>
                     <td>{{participation.repositorySlug}}</td>
