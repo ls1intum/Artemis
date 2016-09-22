@@ -4,6 +4,9 @@
 /src/main/webapp/content/css/main.css
 /build/www/**
 !/libs/*.jar
+/repos
+/classes
+/application.yml
 
 ######################
 # Node
@@ -140,3 +143,4 @@ Desktop.ini
 # ESLint
 ######################
 .eslintcache
+
