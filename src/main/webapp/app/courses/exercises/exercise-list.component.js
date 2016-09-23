@@ -8,7 +8,8 @@
         .module('exerciseApplicationApp')
         .component('exerciseList', {
             bindings: {
-                course: '<'
+                course: '<',
+                filterByExerciseId: '<'
             },
             templateUrl: 'app/courses/exercises/exercise-list.html',
             controller: ExerciseListController
@@ -32,6 +33,11 @@
 
         function init() {
             CourseExercises.query({courseId: vm.course.id}).$promise.then(function (exercises) {
+
+                if(vm.filterByExerciseId) {
+                    exercises = _.filter(exercises, {id: vm.filterByExerciseId})
+                }
+
                 angular.forEach(exercises, function (exercise) {
                     exercise['participation'] = ExerciseParticipation.get({
                         courseId: exercise.course.id,
