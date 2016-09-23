@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.security;
 import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
+import de.tum.in.www1.exerciseapp.service.JiraService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.hibernate.Hibernate;
@@ -23,6 +24,7 @@ import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.inject.Inject;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.security.Principal;
 import java.util.*;
@@ -35,10 +37,11 @@ import java.util.stream.Collectors;
 @ComponentScan("de.tum.in.www1.exerciseapp.*")
 public class JiraAuthenticationProvider implements AuthenticationProvider {
 
-    private static final String AUTHENTICATION_URI = "https://jirabruegge.in.tum.de/rest/api/2/user?username=";
-
-    @Value("${exerciseapp.instructor-group-name}")
+    @Value("${exerciseapp.jira.instructor-group-name}")
     private String INSTRUCTOR_GROUP_NAME;
+
+    @Value("${exerciseapp.jira.url}")
+    private URL JIRA_URL;
 
     @Inject
     UserService userService;
@@ -46,8 +49,13 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
     @Inject
     UserRepository userRepository;
 
+    @Inject
+    JiraService jiraService;
+
+
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
         HttpEntity<Principal> entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
@@ -55,7 +63,7 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         ResponseEntity<Map> authenticationResponse = null;
         try {
             authenticationResponse = restTemplate.exchange(
-                AUTHENTICATION_URI + username + "&expand=groups",
+                JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups",
                 HttpMethod.GET,
                 entity,
                 Map.class);
