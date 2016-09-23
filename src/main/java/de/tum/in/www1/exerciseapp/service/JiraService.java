@@ -41,13 +41,12 @@ public class JiraService {
     private String JIRA_PASSWORD;
 
 
-
     /**
-     * Creates a JIRA user with a random password. Ignores "User already exists" errros.
+     * Creates a JIRA user with given password.
      *
-     * @param username The wanted JIRA username
+     * @param username     The wanted JIRA username
      * @param emailAddress The eMail address for the user
-     * @param displayName The display name (full name)
+     * @param displayName  The display name (full name)
      * @throws JiraException if JIRA returns an error
      */
 
@@ -55,10 +54,10 @@ public class JiraService {
         HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
         Map<String, Object> body = new HashMap<>();
         body.put("name", username);
-        body.put("emailAddress",emailAddress);
-        body.put("password",password);
-        body.put("displayName",displayName);
-        HttpEntity<?> entity = new HttpEntity<>(body,headers);
+        body.put("emailAddress", emailAddress);
+        body.put("password", password);
+        body.put("displayName", displayName);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
         RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(
@@ -67,11 +66,6 @@ public class JiraService {
                 entity,
                 Map.class);
         } catch (HttpClientErrorException e) {
-            if(e.getStatusCode().equals(HttpStatus.BAD_REQUEST)
-                && e.getResponseBodyAsString().contains("username already exists")) {
-                // ignore the error if the user already exists
-                return;
-            }
             log.error("Could not create JIRA user " + username, e);
             throw new JiraException("Error while creating user");
         }
@@ -81,14 +75,14 @@ public class JiraService {
      * Adds a JIRA user to a JIRA group. Ignores "user is already a member of" errors.
      *
      * @param username The JIRA username
-     * @param group The JIRA group name
+     * @param group    The JIRA group name
      * @throws JiraException if JIRA returns an error
      */
     public void addUserToGroup(String username, String group) throws JiraException {
         HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
         Map<String, Object> body = new HashMap<>();
         body.put("name", username);
-        HttpEntity<?> entity = new HttpEntity<>(body,headers);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
         RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(
@@ -97,7 +91,7 @@ public class JiraService {
                 entity,
                 Map.class);
         } catch (HttpClientErrorException e) {
-            if(e.getStatusCode().equals(HttpStatus.BAD_REQUEST)
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)
                 && e.getResponseBodyAsString().contains("user is already a member of")) {
                 // ignore the error if the user is already in the group
                 return;
@@ -106,7 +100,6 @@ public class JiraService {
             throw new JiraException("Error while adding user to group");
         }
     }
-
 
 
 }
