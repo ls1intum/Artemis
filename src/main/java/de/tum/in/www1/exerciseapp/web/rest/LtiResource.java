@@ -76,7 +76,8 @@ public class LtiResource {
             "://" +                                // "://"
             request.getServerName() +              // "myhost"
             ":" +                                  // ":"
-            request.getServerPort();
+            request.getServerPort() +
+            "/#/courses/" + exercise.getCourse().getId() + "/exercise/" + exercise.getId();
 
 
         response.sendRedirect(redirectUrl);
