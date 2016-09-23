@@ -6,7 +6,7 @@ These are development instructions for  the Exercise Application.
 Docker can be used to setup development containers for MySQL, Bitbucket, Bamboo and JIRA.
 
 1. Install Docker and `docker-compose`
-2. Run `docker-compose -f src/main/docker/dev.yml`. 
+2. Run `docker-compose -f src/main/docker/dev.yml up`. 
 3. This will startup the following containers. By accessing the first time you need to setup a license and an admin user. 
     1. Bitbucket: [http://127.0.0.1:7990](http://127.0.0.1:7990)
     2. Bamboo: [http://127.0.0.1:8085](http://127.0.0.1:8085)
@@ -18,9 +18,13 @@ Docker can be used to setup development containers for MySQL, Bitbucket, Bamboo 
 7. Setup your `application.yml` in the root directory of the app, example:
     
         exerciseapp:
-          instructor-group-name: jira-administrators
           repo-clone-path: ./repos/
           result-retrieval-delay: 5000
+          jira:
+            url: http://localhost:8000
+            user: jira
+            password: jira
+            instructor-group-name: jira-administrators
           bitbucket:
             url: http://localhost:7990
             user: bitbucket
@@ -30,4 +34,9 @@ Docker can be used to setup development containers for MySQL, Bitbucket, Bamboo 
             bitbucket-application-link-id: 0c3af16d-2aef-3660-8dd8-4f87042833de
             user: bamboo
             password: bamboo
+          lti:
+            oauth-key: exerciseapp_lti_key
+            oauth-secret: 7pipQv9MeidmZvMsTL
+            create-user-prefix: edx_
+
     
