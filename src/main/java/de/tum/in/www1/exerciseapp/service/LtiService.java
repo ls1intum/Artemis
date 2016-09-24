@@ -1,8 +1,11 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.Exercise;
+import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
+import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.JiraAuthenticationProvider;
+import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
 import org.apache.commons.lang.RandomStringUtils;
 import org.imsglobal.lti.launch.LtiOauthVerifier;
@@ -26,6 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -52,6 +58,9 @@ public class LtiService {
     @Inject
     private UserService userService;
 
+    @Inject
+    private UserRepository userRepository;
+
 
     @Inject
     private JiraAuthenticationProvider jiraAuthenticationProvider;
@@ -69,7 +78,7 @@ public class LtiService {
      */
     public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws JiraException, AuthenticationException {
 
-        String username = this.CREATE_USER_PREFIX + launchRequest.getLis_person_sourcedid();
+        String username = (this.CREATE_USER_PREFIX + launchRequest.getLis_person_sourcedid());
         String password;
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -113,7 +122,19 @@ public class LtiService {
 
 
         // Make sure user is added to group for this exercise
-        jiraService.addUserToGroup(username, exercise.getCourse().getStudentGroupName());
+        User user  =userRepository.findOneByLogin(username).get();
+
+        if(user.getLogin().equals(username)) {
+            String courseGroup = exercise.getCourse().getStudentGroupName();
+
+            if(!user.getGroups().contains(courseGroup)) {
+                jiraService.addUserToGroup(username, exercise.getCourse().getStudentGroupName());
+                List<String> groups = user.getGroups();
+                groups.add(courseGroup);
+                user.setGroups(groups);
+                userRepository.save(user);
+            }
+        }
 
 
     }
