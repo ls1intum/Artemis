@@ -185,7 +185,7 @@ public class ParticipationResource {
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation status for Exercise : {}", exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-        Map buildStatus = bambooService.retrieveBuildStatus(participation.getExercise().getBaseProjectKey() + "-" + principal.getName());
+        Map buildStatus = bambooService.retrieveBuildStatus(participation.getExercise().getBaseProjectKey(), principal.getName());
         return Optional.ofNullable(buildStatus)
             .map(status -> new ResponseEntity<>(
                 status,

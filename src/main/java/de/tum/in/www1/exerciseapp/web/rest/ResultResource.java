@@ -85,7 +85,7 @@ public class ResultResource {
 
         Participation participation = participationService.findOneByExerciseProjectKeyAndStudentLogin(projectKey, username);
         if (Optional.ofNullable(participation).isPresent()) {
-            bambooService.retrieveAndSaveBuildResult(projectKey + "-" + username, participation);
+            bambooService.retrieveAndSaveBuildResult(projectKey, username, participation);
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -211,8 +211,8 @@ public class ResultResource {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
         String planSlug = username != null ? username : principal.getName();
-        String planKey = result.getParticipation().getExercise().getBaseProjectKey() + "-" + planSlug;
-        Map details = bambooService.retrieveLatestBuildResultDetails(planKey);
+        String projectKey =  result.getParticipation().getExercise().getBaseProjectKey();
+        Map details = bambooService.retrieveLatestBuildResultDetails(projectKey, planSlug);
         return Optional.ofNullable(details.get("details"))
             .map(resultDetails -> new ResponseEntity<>(
                 details.get("details"),
