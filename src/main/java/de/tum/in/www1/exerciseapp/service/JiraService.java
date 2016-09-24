@@ -33,6 +33,8 @@ public class JiraService {
     @Value("${exerciseapp.jira.url}")
     private URL JIRA_URL;
 
+    @Value("${exerciseapp.bitbucket.url}")
+    private URL BITBUCKET_URL;
 
     @Value("${exerciseapp.jira.user}")
     private String JIRA_USER;
@@ -69,6 +71,29 @@ public class JiraService {
             log.error("Could not create JIRA user " + username, e);
             throw new JiraException("Error while creating user");
         }
+
+        /**
+         * As default JIRA <-> Bitbucket user directory is synced every hour.
+         * Unfortunately there is no way to sync the user database via API. See also: https://jira.atlassian.com/browse/BSERV-5108
+         *
+         * Workaround: "login" to Bitbucket with the new user via any API request. By this the new user is synced to Bitbucket.
+         *
+         */
+
+        headers = HeaderUtil.createAuthorization(username, password);
+        entity = new HttpEntity<>(headers);
+        restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                BITBUCKET_URL + "/rest/api/1.0/repos",
+                HttpMethod.GET,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            // ignore
+        }
+
+
     }
 
     /**
