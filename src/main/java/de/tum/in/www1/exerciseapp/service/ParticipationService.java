@@ -39,8 +39,11 @@ public class ParticipationService {
     @Inject
     private BambooService bambooService;
 
+//    @Inject
+//    private BitbucketService bitbucketService;
+
     @Inject
-    private BitbucketService bitbucketService;
+    private VersionControlService versionControlService;
 
     @Inject
     private GitService gitService;
@@ -75,8 +78,8 @@ public class ParticipationService {
         }
 
         try {
-            participation = forkRepository(participation);
-            participation = giveWritePermission(participation);
+            participation = copyRepository(participation);
+            participation = configureRepository(participation);
             participation = cloneBuildPlan(participation);
             participation = updateBuildPlanRepository(participation);
             participation = enableBuildPlan(participation);
@@ -88,9 +91,9 @@ public class ParticipationService {
         return participation;
     }
 
-    private Participation forkRepository(Participation participation) {
+    private Participation copyRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_FORKED)) {
-            Map forkResult = bitbucketService.forkRepository(
+            Map forkResult = versionControlService.copyRepository(
                 participation.getExercise().getBaseProjectKey(),
                 participation.getExercise().getBaseRepositorySlug(),
                 participation.getStudent().getLogin());
@@ -105,9 +108,9 @@ public class ParticipationService {
         }
     }
 
-    private Participation giveWritePermission(Participation participation) {
+    private Participation configureRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_PERMISSIONS_SET)) {
-            bitbucketService.giveWritePermission(
+            versionControlService.configureRepository(
                 participation.getExercise().getBaseProjectKey(),
                 participation.getRepositorySlug(),
                 participation.getStudent().getLogin()
@@ -238,7 +241,7 @@ public class ParticipationService {
                 bambooService.deletePlan(participation.getExercise().getBaseProjectKey(), participation.getStudent().getLogin());
             }
             if (deleteRepository) {
-                bitbucketService.deleteRepository(participation.getExercise().getBaseProjectKey(), participation.getRepositorySlug());
+                versionControlService.deleteRepository(participation.getExercise().getBaseProjectKey(), participation.getRepositorySlug());
             }
         }
         participationRepository.delete(id);

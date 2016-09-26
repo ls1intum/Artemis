@@ -5,6 +5,7 @@ import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,7 +19,8 @@ import java.util.Map;
 
 @Service
 @Transactional
-public class BitbucketService {
+@Profile("bitbucket")
+public class BitbucketService implements VersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
@@ -31,6 +33,61 @@ public class BitbucketService {
     @Value("${exerciseapp.bitbucket.password}")
     private String BITBUCKET_PASSWORD;
 
+    @Override
+    public URL copyRepository(URL baseRepositoryUrl, String username) {
+        Map<String, String> result = this.forkRepository(getProjectKeyFromUrl(baseRepositoryUrl), getRepositorySlugFromUrl(baseRepositoryUrl), username);
+        try {
+            return new URL(result.get("cloneUrl"));
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public Map copyRepository(String projectKey, String repositorySlug, String username) {
+        return this.forkRepository(projectKey, repositorySlug, username);
+    }
+
+    @Override
+    public void configureRepository(URL repositoryUrl, String username) {
+        this.giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+    }
+
+    @Override
+    public void configureRepository(String projectKey, String repositorySlug, String username) {
+        this.giveWritePermission(projectKey, repositorySlug, username);
+    }
+
+    @Override
+    public void deleteRepository(URL repositoryUrl) {
+        this.deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+    }
+
+    @Override
+    public void deleteRepository(String projectKey, String repositorySlug) {
+        this.deleteRepositoryImpl(projectKey, repositorySlug);
+    }
+
+    @Override
+    public String getRepositoryWebUrl() {
+        throw new UnsupportedOperationException("Method not implemented.");
+    }
+
+    private String getProjectKeyFromUrl(URL repositoryUrl) {
+        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        return repositoryUrl.getFile().split("/")[2];
+    }
+
+    private String getRepositorySlugFromUrl(URL repositoryUrl) {
+        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        String repositorySlug = repositoryUrl.getFile().split("/")[3];
+        if (repositorySlug.endsWith(".git")) {
+            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
+        }
+        return repositorySlug;
+    }
+
     /**
      * Uses the configured Bitbucket account to fork the given repository inside the project.
      *
@@ -39,7 +96,7 @@ public class BitbucketService {
      * @param username              The user for whom the repository is being forked.
      * @return The slug of the forked repository (i.e. its identifier).
      */
-    public Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) throws BitbucketException {
+    private Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) throws BitbucketException {
         String forkName = String.format("%s-%s", baseRepositorySlug, username);
         Map<String, Object> body = new HashMap<>();
         body.put("name", forkName);
@@ -87,7 +144,7 @@ public class BitbucketService {
      * @param repositorySlug    The repository's slug.
      * @param username          The user whom to give write permissions.
      */
-    public void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
+    private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
         String baseUrl = BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";//NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
@@ -109,7 +166,7 @@ public class BitbucketService {
      * @param projectKey        The project key of the repository's project.
      * @param repositorySlug    The repository's slug.
      */
-    public void deleteRepository(String projectKey, String repositorySlug) {
+    private void deleteRepositoryImpl(String projectKey, String repositorySlug) {
         String baseUrl = BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug;
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
