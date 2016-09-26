@@ -48,8 +48,11 @@ public class LtiService {
     @Value("${exerciseapp.lti.oauth-secret}")
     private String OAUTH_SECRET;
 
-    @Value("${exerciseapp.lti.create-user-prefix}")
-    private String CREATE_USER_PREFIX = "";
+    @Value("${exerciseapp.lti.user-prefix}")
+    private String USER_PREFIX = "";
+
+    @Value("${exerciseapp.lti.user-group-name}")
+    private String USER_GROUP_NAME = "lti";
 
     @Inject
     private JiraService jiraService;
@@ -78,7 +81,7 @@ public class LtiService {
      */
     public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws JiraException, AuthenticationException {
 
-        String username = (this.CREATE_USER_PREFIX + launchRequest.getLis_person_sourcedid());
+        String username = (this.USER_PREFIX + launchRequest.getLis_person_sourcedid());
         String password;
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -104,6 +107,8 @@ public class LtiService {
                     launchRequest.getLis_person_contact_email_primary(),
                     launchRequest.getLis_person_sourcedid());
 
+                jiraService.addUserToGroup(username, USER_GROUP_NAME);
+
                 log.debug("Created user {} on JIRA, signing in", username);
 
             }
@@ -128,7 +133,7 @@ public class LtiService {
             String courseGroup = exercise.getCourse().getStudentGroupName();
 
             if(!user.getGroups().contains(courseGroup)) {
-                jiraService.addUserToGroup(username, exercise.getCourse().getStudentGroupName());
+                jiraService.addUserToGroup(username, courseGroup);
                 List<String> groups = user.getGroups();
                 groups.add(courseGroup);
                 user.setGroups(groups);
