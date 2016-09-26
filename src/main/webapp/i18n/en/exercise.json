@@ -25,6 +25,10 @@
             "publishBuildPlanUrl": "Publish Build Plan Url",
             "course": "Course",
             "participations": "Participations"
+        },
+        "exerciseLtiConfiguration" : {
+            "lti": "LTI",
+            "configurationForExercise": "LTI Configuration for Exercise {{ title }}"
         }
     }
 }
