@@ -15,9 +15,9 @@
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'ExerciseParticipation'];
+    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'ExerciseParticipation', '$http'];
 
-    function ExerciseListController($sce, $window, AlertService, CourseExercises, ExerciseParticipation) {
+    function ExerciseListController($sce, $window, AlertService, CourseExercises, ExerciseParticipation, $http) {
         var vm = this;
 
         vm.clonePopover = {
@@ -26,6 +26,10 @@
         vm.loading = {};
 
         vm.$onInit = init;
+        getRepositoryPassword().then(function (password) {
+            vm.repositoryPassword = password;
+        });
+
         vm.getClonePopoverTemplate = getClonePopoverTemplate;
         vm.goToBuildPlan = goToBuildPlan;
         vm.hasParticipation = hasParticipation;
@@ -34,7 +38,7 @@
         function init() {
             CourseExercises.query({courseId: vm.course.id}).$promise.then(function (exercises) {
 
-                if(vm.filterByExerciseId) {
+                if (vm.filterByExerciseId) {
                     exercises = _.filter(exercises, {id: vm.filterByExerciseId})
                 }
 
@@ -45,6 +49,8 @@
                     });
                 });
                 vm.exercises = exercises;
+
+
             });
         }
 
@@ -60,8 +66,9 @@
                 '<div>',
                 '<p>Clone your personal repository for this exercise:</p>',
                 '<pre>', exercise.participation.cloneUrl, '</pre>',
-                '<a class="btn btn-primary btn-sm" href="', buildSourceTreeUrl(exercise.participation.cloneUrl),'">Clone in SourceTree</a>',
-                ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git and Mercurial client for Windows or Mac.',
+                vm.repositoryPassword ? '<p>Your password is: <code> ' + vm.repositoryPassword + ' </code><p>' : '',
+                '<a class="btn btn-primary btn-sm" href="', buildSourceTreeUrl(exercise.participation.cloneUrl), '">Clone in SourceTree</a>',
+                ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git and Mercurial client for Windows or Mac. ',
                 '</div>'
             ].join('');
             return trusted[html] || (trusted[html] = $sce.trustAsHtml(html));
@@ -69,13 +76,23 @@
 
         function goToBuildPlan(exercise) {
             if (exercise.publishBuildPlanUrl) {
-                var buildPlan = exercise.baseProjectKey + '-' + exercise.participation.student.login;
+                var buildPlan = exercise.baseProjectKey + '-' + exercise.participation.student.login.replace(/[^a-zA-Z0-9]/g, "");
                 $window.open('https://bamboobruegge.in.tum.de/browse/' + buildPlan.toUpperCase());
             }
         }
 
         function hasParticipation(exercise) {
             return !angular.equals({}, exercise.participation.toJSON());
+        }
+
+        function getRepositoryPassword() {
+            return $http.get('api/account/password', {
+                ignoreLoadingBar: true
+            }).then(function (response) {
+                return _.has(response, "data.password") && !_.isEmpty(response.data.password) ? response.data.password : null;
+            }).catch(function () {
+                return null;
+            });
         }
 
         function start(exercise) {
