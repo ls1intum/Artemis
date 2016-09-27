@@ -4,9 +4,7 @@ package de.tum.in.www1.exerciseapp.domain.enumeration;
  * The ParticipationState enumeration.
  */
 public enum ParticipationState {
-    UNINITIALIZED(0), REPO_FORKED(1), REPO_PERMISSIONS_SET(2), PLAN_CLONED(3), PLAN_REPO_UPDATED(4), PLAN_ENABLED(5), INITIALIZED(6);
-
-
+    UNINITIALIZED(0), REPO_COPIED(1), REPO_CONFIGURED(2), BUILD_PLAN_COPIED(3), BUILD_PLAN_CONFIGURED(4), INITIALIZED(5);
 
     private Integer stateNumber;
 

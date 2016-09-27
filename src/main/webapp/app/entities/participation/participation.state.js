@@ -74,9 +74,9 @@
                         entity: function () {
                             return {
                                 cloneUrl: null,
-                                repositorySlug: null,
                                 initializationState: null,
                                 initializationDate: null,
+                                buildPlanId: null,
                                 id: null
                             };
                         }

@@ -4,7 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
-import de.tum.in.www1.exerciseapp.service.BambooService;
+import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -40,7 +40,7 @@ public class ResultResource {
     private ParticipationService participationService;
 
     @Inject
-    private BambooService bambooService;
+    private ContinuousIntegrationService continuousIntegrationService;
 
     /**
      * POST  /results : Create a new result.
@@ -83,9 +83,9 @@ public class ResultResource {
         String projectKey = planKey.split("-")[0];
         String username = planKey.split("-")[1];
 
-        Participation participation = participationService.findOneByExerciseProjectKeyAndStudentLogin(projectKey, username);
+        Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
-            bambooService.retrieveAndSaveBuildResult(projectKey + "-" + username, participation);
+            continuousIntegrationService.onBuildCompleted(participation);
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
@@ -155,7 +155,7 @@ public class ResultResource {
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/results : get the successful results for an exercise, ordered ascending by build completion date.
      *
-     * @param courseId only included for API consistency, not actually used
+     * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
@@ -210,9 +210,7 @@ public class ResultResource {
     public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Principal principal) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
-        String planSlug = username != null ? username : principal.getName();
-        String planKey = result.getParticipation().getExercise().getBaseProjectKey() + "-" + planSlug;
-        Map details = bambooService.retrieveLatestBuildResultDetails(planKey);
+        Map<String, Object> details = continuousIntegrationService.getLatestBuildResultDetails(result.getParticipation());
         return Optional.ofNullable(details.get("details"))
             .map(resultDetails -> new ResponseEntity<>(
                 details.get("details"),

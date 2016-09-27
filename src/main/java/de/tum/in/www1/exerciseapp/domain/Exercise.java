@@ -6,10 +6,12 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
+import java.util.Objects;
 
 /**
  * A Exercise.
@@ -28,15 +30,6 @@ public class Exercise implements Serializable {
     @Column(name = "title")
     private String title;
 
-    @Column(name = "base_project_key")
-    private String baseProjectKey;
-
-    @Column(name = "base_repository_slug")
-    private String baseRepositorySlug;
-
-    @Column(name = "base_build_plan_slug")
-    private String baseBuildPlanSlug;
-
     @Column(name = "release_date")
     private ZonedDateTime releaseDate;
 
@@ -45,6 +38,12 @@ public class Exercise implements Serializable {
 
     @Column(name = "publish_build_plan_url")
     private Boolean publishBuildPlanUrl;
+
+    @Column(name = "base_build_plan_id")
+    private String baseBuildPlanId;
+
+    @Column(name = "base_repository_url")
+    private String baseRepositoryUrl;
 
     @ManyToOne
     private Course course;
@@ -68,30 +67,6 @@ public class Exercise implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
-    }
-
-    public String getBaseProjectKey() {
-        return baseProjectKey;
-    }
-
-    public void setBaseProjectKey(String baseProjectKey) {
-        this.baseProjectKey = baseProjectKey.toUpperCase();
-    }
-
-    public String getBaseRepositorySlug() {
-        return baseRepositorySlug;
-    }
-
-    public void setBaseRepositorySlug(String baseRepositorySlug) {
-        this.baseRepositorySlug = baseRepositorySlug.toUpperCase();
-    }
-
-    public String getBaseBuildPlanSlug() {
-        return baseBuildPlanSlug;
-    }
-
-    public void setBaseBuildPlanSlug(String baseBuildPlanSlug) {
-        this.baseBuildPlanSlug = baseBuildPlanSlug.toUpperCase();
     }
 
     public ZonedDateTime getReleaseDate() {
@@ -118,6 +93,22 @@ public class Exercise implements Serializable {
         this.publishBuildPlanUrl = publishBuildPlanUrl;
     }
 
+    public String getBaseBuildPlanId() {
+        return baseBuildPlanId;
+    }
+
+    public void setBaseBuildPlanId(String baseBuildPlanId) {
+        this.baseBuildPlanId = baseBuildPlanId;
+    }
+
+    public String getBaseRepositoryUrl() {
+        return baseRepositoryUrl;
+    }
+
+    public void setBaseRepositoryUrl(String baseRepositoryUrl) {
+        this.baseRepositoryUrl = baseRepositoryUrl;
+    }
+
     public Course getCourse() {
         return course;
     }
@@ -132,6 +123,15 @@ public class Exercise implements Serializable {
 
     public void setParticipations(Set<Participation> participations) {
         this.participations = participations;
+    }
+
+    public URL getBaseRepositoryUrlAsUrl() {
+        try {
+            return new URL(baseRepositoryUrl);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -159,12 +159,11 @@ public class Exercise implements Serializable {
         return "Exercise{" +
             "id=" + id +
             ", title='" + title + "'" +
-            ", baseProjectKey='" + baseProjectKey + "'" +
-            ", baseRepositorySlug='" + baseRepositorySlug + "'" +
-            ", baseBuildPlanSlug='" + baseBuildPlanSlug + "'" +
             ", releaseDate='" + releaseDate + "'" +
             ", dueDate='" + dueDate + "'" +
             ", publishBuildPlanUrl='" + publishBuildPlanUrl + "'" +
+            ", baseBuildPlanId='" + baseBuildPlanId + "'" +
+            ", baseRepositoryUrl='" + baseRepositoryUrl + "'" +
             '}';
     }
 }

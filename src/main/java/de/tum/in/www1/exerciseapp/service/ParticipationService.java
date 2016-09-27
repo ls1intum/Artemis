@@ -17,9 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -37,16 +37,10 @@ public class ParticipationService {
     private UserRepository userRepository;
 
     @Inject
-    private BambooService bambooService;
-
-//    @Inject
-//    private BitbucketService bitbucketService;
+    private ContinuousIntegrationService continuousIntegrationService;
 
     @Inject
     private VersionControlService versionControlService;
-
-    @Inject
-    private GitService gitService;
 
     /**
      * Save a participation.
@@ -80,10 +74,11 @@ public class ParticipationService {
         try {
             participation = copyRepository(participation);
             participation = configureRepository(participation);
-            participation = cloneBuildPlan(participation);
-            participation = updateBuildPlanRepository(participation);
-            participation = enableBuildPlan(participation);
-            participation = doEmptyCommit(participation);
+            participation = copyBuildPlan(participation);
+            participation = configureBuildPlan(participation);
+            participation.setInitializationState(ParticipationState.INITIALIZED);
+            participation.setInitializationDate(ZonedDateTime.now());
+            save(participation);
         } catch (BitbucketException | BambooException | GitException e) {
             log.error("Error while initializing participation");
             throw new CustomParameterizedException(ErrorConstants.ERR_INTERNAL_SERVER_ERROR);
@@ -92,15 +87,13 @@ public class ParticipationService {
     }
 
     private Participation copyRepository(Participation participation) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_FORKED)) {
-            Map forkResult = versionControlService.copyRepository(
-                participation.getExercise().getBaseProjectKey(),
-                participation.getExercise().getBaseRepositorySlug(),
+        if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_COPIED)) {
+            URL repositoryUrl = versionControlService.copyRepository(
+                participation.getExercise().getBaseRepositoryUrlAsUrl(),
                 participation.getStudent().getLogin());
-            if (Optional.ofNullable(forkResult).isPresent()) {
-                participation.setCloneUrl((String) forkResult.get("cloneUrl"));
-                participation.setRepositorySlug((String) forkResult.get("slug"));
-                participation.setInitializationState(ParticipationState.REPO_FORKED);
+            if (Optional.ofNullable(repositoryUrl).isPresent()) {
+                participation.setCloneUrl(repositoryUrl.toString());
+                participation.setInitializationState(ParticipationState.REPO_COPIED);
             }
             return save(participation);
         } else {
@@ -109,65 +102,35 @@ public class ParticipationService {
     }
 
     private Participation configureRepository(Participation participation) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_PERMISSIONS_SET)) {
-            versionControlService.configureRepository(
-                participation.getExercise().getBaseProjectKey(),
-                participation.getRepositorySlug(),
-                participation.getStudent().getLogin()
-            );
-            participation.setInitializationState(ParticipationState.REPO_PERMISSIONS_SET);
+        if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_CONFIGURED)) {
+            versionControlService.configureRepository(participation.getRepositoryUrl(), participation.getStudent().getLogin());
+            participation.setInitializationState(ParticipationState.REPO_CONFIGURED);
             return save(participation);
         } else {
             return participation;
         }
     }
 
-    private Participation cloneBuildPlan(Participation participation) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.PLAN_CLONED)) {
-            bambooService.clonePlan(
-                participation.getExercise().getBaseProjectKey(),
-                participation.getExercise().getBaseBuildPlanSlug(),
-                participation.getStudent().getLogin()
-            );
-            // TODO: Add property for build plan identifier on participation
-            participation.setInitializationState(ParticipationState.PLAN_CLONED);
+    private Participation copyBuildPlan(Participation participation) {
+        if (!participation.getInitializationState().hasCompletedState(ParticipationState.BUILD_PLAN_COPIED)) {
+            String buildPlanId = continuousIntegrationService.copyBuildPlan(
+                participation.getExercise().getBaseBuildPlanId(),
+                participation.getStudent().getLogin());
+            participation.setBuildPlanId(buildPlanId);
+            participation.setInitializationState(ParticipationState.BUILD_PLAN_COPIED);
             return save(participation);
         } else {
             return participation;
         }
     }
 
-    private Participation updateBuildPlanRepository(Participation participation) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.PLAN_REPO_UPDATED)) {
-            bambooService.updatePlanRepository(
-                participation.getExercise().getBaseProjectKey(),
-                participation.getStudent().getLogin(),
-                participation.getExercise().getBaseRepositorySlug(),
-                participation.getExercise().getBaseProjectKey(),
-                participation.getRepositorySlug()
-            );
-            participation.setInitializationState(ParticipationState.PLAN_REPO_UPDATED);
-            return save(participation);
-        } else {
-            return participation;
-        }
-    }
-
-    private Participation enableBuildPlan(Participation participation) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.PLAN_ENABLED)) {
-            bambooService.enablePlan(participation.getExercise().getBaseProjectKey(), participation.getStudent().getLogin());
-            participation.setInitializationState(ParticipationState.PLAN_ENABLED);
-            return save(participation);
-        } else {
-            return participation;
-        }
-    }
-
-    private Participation doEmptyCommit(Participation participation) {
-        if (!participation.getInitializationState().hasCompletedState(ParticipationState.INITIALIZED)) {
-            gitService.doEmptyCommit(participation.getExercise().getBaseProjectKey(), participation.getCloneUrl());
-            participation.setInitializationDate(ZonedDateTime.now());
-            participation.setInitializationState(ParticipationState.INITIALIZED);
+    private Participation configureBuildPlan(Participation participation) {
+        if (!participation.getInitializationState().hasCompletedState(ParticipationState.BUILD_PLAN_CONFIGURED)) {
+            continuousIntegrationService.configureBuildPlan(
+                participation.getBuildPlanId(),
+                participation.getRepositoryUrl(),
+                participation.getStudent().getLogin());
+            participation.setInitializationState(ParticipationState.BUILD_PLAN_CONFIGURED);
             return save(participation);
         } else {
             return participation;
@@ -213,17 +176,10 @@ public class ParticipationService {
         return participation;
     }
 
-    /**
-     * Get one participation by its student and exercise.
-     *
-     * @param projectKey the project key of the exercise
-     * @param username   the username of the student
-     * @return the entity
-     */
     @Transactional(readOnly = true)
-    public Participation findOneByExerciseProjectKeyAndStudentLogin(String projectKey, String username) {
-        log.debug("Request to get Participation for User {} for Exercise with project key: {}", username, projectKey);
-        Participation participation = participationRepository.findOneByExerciseBaseProjectKeyAndStudentLogin(projectKey, username);
+    public Participation findOneByBuildPlanId(String buildPlanId) {
+        log.debug("Request to get Participation for build plan id: {}", buildPlanId);
+        Participation participation = participationRepository.findOneByBuildPlanId(buildPlanId);
         return participation;
     }
 
@@ -238,10 +194,10 @@ public class ParticipationService {
         Participation participation = participationRepository.findOne(id);
         if (Optional.ofNullable(participation).isPresent()) {
             if (deleteBuildPlan) {
-                bambooService.deletePlan(participation.getExercise().getBaseProjectKey(), participation.getStudent().getLogin());
+                continuousIntegrationService.deleteBuildPlan(participation.getBuildPlanId());
             }
             if (deleteRepository) {
-                versionControlService.deleteRepository(participation.getExercise().getBaseProjectKey(), participation.getRepositorySlug());
+                versionControlService.deleteRepository(participation.getRepositoryUrl());
             }
         }
         participationRepository.delete(id);

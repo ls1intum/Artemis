@@ -12,9 +12,9 @@
             templateUrl: 'app/instructor-dashboard/instructor-dashboard.html'
         });
 
-    InstructorDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal', 'ExerciseResults'];
+    InstructorDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal', 'ExerciseResults', 'Participation'];
 
-    function InstructorDashboardController($window, $filter, moment, $uibModal, ExerciseResults) {
+    function InstructorDashboardController($window, $filter, moment, $uibModal, ExerciseResults, Participation) {
         var vm = this;
 
         vm.showAllResults = false;
@@ -64,12 +64,15 @@
         }
 
         function goToBuildPlan(result) {
-            var buildPlan = result.participation.exercise.baseProjectKey + '-' + result.participation.student.login;
-            $window.open('https://bamboobruegge.in.tum.de/browse/' + buildPlan.toUpperCase());
+            Participation.buildPlanWebUrl({id: result.participation.id}).$promise.then(function (response) {
+                $window.open(response.url);
+            });
         }
 
         function goToRepository(result) {
-            $window.open('https://repobruegge.in.tum.de/projects/' + result.participation.exercise.baseProjectKey + '/repos/' + result.participation.repositorySlug + '/browse');
+            Participation.repositoryWebUrl({id: result.participation.id}).$promise.then(function (response) {
+                $window.open(response.url);
+            });
         }
 
         function showDetails(result) {

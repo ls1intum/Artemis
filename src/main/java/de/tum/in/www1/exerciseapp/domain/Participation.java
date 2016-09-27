@@ -6,6 +6,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,15 +32,15 @@ public class Participation implements Serializable {
     @Column(name = "clone_url")
     private String cloneUrl;
 
-    @Column(name = "repository_slug")
-    private String repositorySlug;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
     private ParticipationState initializationState;
 
     @Column(name = "initialization_date")
     private ZonedDateTime initializationDate;
+
+    @Column(name = "build_plan_id")
+    private String buildPlanId;
 
     @ManyToOne
     private User student;
@@ -67,14 +69,6 @@ public class Participation implements Serializable {
         this.cloneUrl = cloneUrl;
     }
 
-    public String getRepositorySlug() {
-        return repositorySlug;
-    }
-
-    public void setRepositorySlug(String repositorySlug) {
-        this.repositorySlug = repositorySlug;
-    }
-
     public ParticipationState getInitializationState() {
         return initializationState;
     }
@@ -89,6 +83,14 @@ public class Participation implements Serializable {
 
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
+    }
+
+    public String getBuildPlanId() {
+        return buildPlanId;
+    }
+
+    public void setBuildPlanId(String buildPlanId) {
+        this.buildPlanId = buildPlanId;
     }
 
     public User getStudent() {
@@ -113,6 +115,15 @@ public class Participation implements Serializable {
 
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
+    }
+
+    public URL getRepositoryUrl() {
+        try {
+            return new URL(cloneUrl);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     @Override
@@ -140,9 +151,9 @@ public class Participation implements Serializable {
         return "Participation{" +
             "id=" + id +
             ", cloneUrl='" + cloneUrl + "'" +
-            ", repositorySlug='" + repositorySlug + "'" +
             ", initializationState='" + initializationState + "'" +
             ", initializationDate='" + initializationDate + "'" +
+            ", buildPlanId='" + buildPlanId + "'" +
             '}';
     }
 }

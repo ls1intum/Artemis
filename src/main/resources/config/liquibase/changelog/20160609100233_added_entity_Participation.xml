@@ -25,7 +25,15 @@
                 <constraints nullable="true" />
             </column>
             
-            <column name="repository_slug" type="varchar(255)">
+            <column name="initialization_state" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+            
+            <column name="initialization_date" type="timestamp">
+                <constraints nullable="true" />
+            </column>
+            
+            <column name="build_plan_id" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
             
@@ -39,6 +47,7 @@
 
             <!-- jhipster-needle-liquibase-add-column - Jhipster will add columns here, do not remove-->
         </createTable>
+        <dropDefaultValue tableName="participation" columnName="initialization_date" columnDataType="datetime"/>
         
     </changeSet>
 </databaseChangeLog>

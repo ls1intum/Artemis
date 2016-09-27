@@ -17,9 +17,9 @@
                 "title": "Participation"
             },
             "cloneUrl": "Clone Url",
-            "repositorySlug": "Repository Slug",
             "initializationState": "Initialization State",
             "initializationDate": "Initialization Date",
+            "buildPlanId": "Build Plan Id",
             "student": "Student",
             "results": "Results",
             "exercise": "Exercise"

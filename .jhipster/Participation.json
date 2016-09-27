@@ -25,17 +25,17 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "repositorySlug",
-            "fieldType": "String"
-        },
-        {
             "fieldName": "initializationState",
             "fieldType": "ParticipationState",
-            "fieldValues": "UNINITIALIZED, REPO_FORKED, REPO_PERMISSIONS_SET, PLAN_CLONED, PLAN_REPO_UPDATED, PLAN_ENABLED, INITIALIZED"
+            "fieldValues": "UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, BUILD_PLAN_COPIED, BUILD_PLAN_CONFIGURED, INITIALIZED"
         },
         {
             "fieldName": "initializationDate",
             "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "buildPlanId",
+            "fieldType": "String"
         }
     ],
     "changelogDate": "20160609100233",

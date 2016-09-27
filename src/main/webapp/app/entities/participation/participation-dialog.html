@@ -20,12 +20,6 @@
                      />
         </div>
         <div class="form-group">
-            <label class="control-label" translate="exerciseApplicationApp.participation.repositorySlug" for="field_repositorySlug">Repository Slug</label>
-            <input type="text" class="form-control" name="repositorySlug" id="field_repositorySlug"
-                    ng-model="vm.participation.repositorySlug"
-                     />
-        </div>
-        <div class="form-group">
             <label class="control-label" translate="exerciseApplicationApp.participation.initializationState" for="field_initializationState">Initialization State</label>
             <select class="form-control" name="initializationState" ng-model="vm.participation.initializationState" id="field_initializationState">
                 <option value="UNINITIALIZED" translate="exerciseApplicationApp.ParticipationState.UNINITIALIZED">UNINITIALIZED</option>
@@ -46,6 +40,12 @@
                         <button type="button" class="btn btn-default" ng-click="vm.openCalendar('initializationDate')"><i class="glyphicon glyphicon-calendar"></i></button>
                     </span>
                 </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label" translate="exerciseApplicationApp.participation.buildPlanId" for="field_buildPlanId">Build Plan Id</label>
+            <input type="text" class="form-control" name="buildPlanId" id="field_buildPlanId"
+                    ng-model="vm.participation.buildPlanId"
+                     />
         </div>
 
         <div class="form-group">

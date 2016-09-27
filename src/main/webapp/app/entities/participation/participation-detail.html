@@ -8,10 +8,6 @@
         <dd>
             <span>{{vm.participation.cloneUrl}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.participation.repositorySlug">Repository Slug</span></dt>
-        <dd>
-            <span>{{vm.participation.repositorySlug}}</span>
-        </dd>
         <dt><span translate="exerciseApplicationApp.participation.initializationState">Initialization State</span></dt>
         <dd>
             <span translate="{{'exerciseApplicationApp.ParticipationState.' + vm.participation.initializationState}}">{{vm.participation.initializationState}}</span>
@@ -19,6 +15,10 @@
         <dt><span translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span></dt>
         <dd>
             <span>{{vm.participation.initializationDate | date:'medium'}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.participation.buildPlanId">Build Plan Id</span></dt>
+        <dd>
+            <span>{{vm.participation.buildPlanId}}</span>
         </dd>
         <dt><span translate="exerciseApplicationApp.participation.student">Student</span></dt>
         <dd>

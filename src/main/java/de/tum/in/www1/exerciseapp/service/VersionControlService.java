@@ -1,5 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import de.tum.in.www1.exerciseapp.domain.Participation;
+
 import java.net.URL;
 import java.util.Map;
 
@@ -10,18 +12,9 @@ public interface VersionControlService {
 
     URL copyRepository(URL baseRepositoryUrl, String username);
 
-    @Deprecated
-    Map<String, String> copyRepository(String baseProjectKey, String baseRepositorySlug, String username);
-
     void configureRepository(URL repositoryUrl, String username);
-
-    @Deprecated
-    void configureRepository(String projectKey, String repositorySlug, String username);
 
     void deleteRepository(URL repositoryUrl);
 
-    @Deprecated
-    void deleteRepository(String projectKey, String repositorySlug);
-
-    String getRepositoryWebUrl();
+    URL getRepositoryWebUrl(Participation participation);
 }
