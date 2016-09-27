@@ -49,8 +49,10 @@ public class ParticipationResourceIntTest {
 
     private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneId.of("Z"));
 
-    private static final String DEFAULT_CLONE_URL = "AAAAA";
-    private static final String UPDATED_CLONE_URL = "BBBBB";
+    private static final String DEFAULT_REPOSITORY_URL = "AAAAA";
+    private static final String UPDATED_REPOSITORY_URL = "BBBBB";
+    private static final String DEFAULT_BUILD_PLAN_ID = "AAAAA";
+    private static final String UPDATED_BUILD_PLAN_ID = "BBBBB";
 
     private static final ParticipationState DEFAULT_INITIALIZATION_STATE = ParticipationState.UNINITIALIZED;
     private static final ParticipationState UPDATED_INITIALIZATION_STATE = ParticipationState.REPO_COPIED;
@@ -58,8 +60,6 @@ public class ParticipationResourceIntTest {
     private static final ZonedDateTime DEFAULT_INITIALIZATION_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.systemDefault());
     private static final ZonedDateTime UPDATED_INITIALIZATION_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
     private static final String DEFAULT_INITIALIZATION_DATE_STR = dateTimeFormatter.format(DEFAULT_INITIALIZATION_DATE);
-    private static final String DEFAULT_BUILD_PLAN_ID = "AAAAA";
-    private static final String UPDATED_BUILD_PLAN_ID = "BBBBB";
 
     @Inject
     private ParticipationRepository participationRepository;
@@ -90,10 +90,10 @@ public class ParticipationResourceIntTest {
     @Before
     public void initTest() {
         participation = new Participation();
-        participation.setCloneUrl(DEFAULT_CLONE_URL);
+        participation.setRepositoryUrl(DEFAULT_REPOSITORY_URL);
+        participation.setBuildPlanId(DEFAULT_BUILD_PLAN_ID);
         participation.setInitializationState(DEFAULT_INITIALIZATION_STATE);
         participation.setInitializationDate(DEFAULT_INITIALIZATION_DATE);
-        participation.setBuildPlanId(DEFAULT_BUILD_PLAN_ID);
     }
 
     @Test
@@ -112,10 +112,10 @@ public class ParticipationResourceIntTest {
         List<Participation> participations = participationRepository.findAll();
         assertThat(participations).hasSize(databaseSizeBeforeCreate + 1);
         Participation testParticipation = participations.get(participations.size() - 1);
-        assertThat(testParticipation.getCloneUrl()).isEqualTo(DEFAULT_CLONE_URL);
+        assertThat(testParticipation.getRepositoryUrl()).isEqualTo(DEFAULT_REPOSITORY_URL);
+        assertThat(testParticipation.getBuildPlanId()).isEqualTo(DEFAULT_BUILD_PLAN_ID);
         assertThat(testParticipation.getInitializationState()).isEqualTo(DEFAULT_INITIALIZATION_STATE);
         assertThat(testParticipation.getInitializationDate()).isEqualTo(DEFAULT_INITIALIZATION_DATE);
-        assertThat(testParticipation.getBuildPlanId()).isEqualTo(DEFAULT_BUILD_PLAN_ID);
     }
 
     @Test
@@ -129,10 +129,10 @@ public class ParticipationResourceIntTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(participation.getId().intValue())))
-                .andExpect(jsonPath("$.[*].cloneUrl").value(hasItem(DEFAULT_CLONE_URL.toString())))
+                .andExpect(jsonPath("$.[*].repositoryUrl").value(hasItem(DEFAULT_REPOSITORY_URL.toString())))
+                .andExpect(jsonPath("$.[*].buildPlanId").value(hasItem(DEFAULT_BUILD_PLAN_ID.toString())))
                 .andExpect(jsonPath("$.[*].initializationState").value(hasItem(DEFAULT_INITIALIZATION_STATE.toString())))
-                .andExpect(jsonPath("$.[*].initializationDate").value(hasItem(DEFAULT_INITIALIZATION_DATE_STR)))
-                .andExpect(jsonPath("$.[*].buildPlanId").value(hasItem(DEFAULT_BUILD_PLAN_ID.toString())));
+                .andExpect(jsonPath("$.[*].initializationDate").value(hasItem(DEFAULT_INITIALIZATION_DATE_STR)));
     }
 
     @Test
@@ -146,10 +146,10 @@ public class ParticipationResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(participation.getId().intValue()))
-            .andExpect(jsonPath("$.cloneUrl").value(DEFAULT_CLONE_URL.toString()))
+            .andExpect(jsonPath("$.repositoryUrl").value(DEFAULT_REPOSITORY_URL.toString()))
+            .andExpect(jsonPath("$.buildPlanId").value(DEFAULT_BUILD_PLAN_ID.toString()))
             .andExpect(jsonPath("$.initializationState").value(DEFAULT_INITIALIZATION_STATE.toString()))
-            .andExpect(jsonPath("$.initializationDate").value(DEFAULT_INITIALIZATION_DATE_STR))
-            .andExpect(jsonPath("$.buildPlanId").value(DEFAULT_BUILD_PLAN_ID.toString()));
+            .andExpect(jsonPath("$.initializationDate").value(DEFAULT_INITIALIZATION_DATE_STR));
     }
 
     @Test
@@ -171,10 +171,10 @@ public class ParticipationResourceIntTest {
         // Update the participation
         Participation updatedParticipation = new Participation();
         updatedParticipation.setId(participation.getId());
-        updatedParticipation.setCloneUrl(UPDATED_CLONE_URL);
+        updatedParticipation.setRepositoryUrl(UPDATED_REPOSITORY_URL);
+        updatedParticipation.setBuildPlanId(UPDATED_BUILD_PLAN_ID);
         updatedParticipation.setInitializationState(UPDATED_INITIALIZATION_STATE);
         updatedParticipation.setInitializationDate(UPDATED_INITIALIZATION_DATE);
-        updatedParticipation.setBuildPlanId(UPDATED_BUILD_PLAN_ID);
 
         restParticipationMockMvc.perform(put("/api/participations")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -185,10 +185,10 @@ public class ParticipationResourceIntTest {
         List<Participation> participations = participationRepository.findAll();
         assertThat(participations).hasSize(databaseSizeBeforeUpdate);
         Participation testParticipation = participations.get(participations.size() - 1);
-        assertThat(testParticipation.getCloneUrl()).isEqualTo(UPDATED_CLONE_URL);
+        assertThat(testParticipation.getRepositoryUrl()).isEqualTo(UPDATED_REPOSITORY_URL);
+        assertThat(testParticipation.getBuildPlanId()).isEqualTo(UPDATED_BUILD_PLAN_ID);
         assertThat(testParticipation.getInitializationState()).isEqualTo(UPDATED_INITIALIZATION_STATE);
         assertThat(testParticipation.getInitializationDate()).isEqualTo(UPDATED_INITIALIZATION_DATE);
-        assertThat(testParticipation.getBuildPlanId()).isEqualTo(UPDATED_BUILD_PLAN_ID);
     }
 
     @Test

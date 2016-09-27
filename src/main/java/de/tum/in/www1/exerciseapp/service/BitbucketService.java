@@ -59,8 +59,8 @@ public class BitbucketService implements VersionControlService {
     public URL getRepositoryWebUrl(Participation participation) {
         try {
             return new URL(BITBUCKET_URL +
-                "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrl()) +
-                "/repos/" + getRepositorySlugFromUrl(participation.getRepositoryUrl()) + "/browse");
+                "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrlAsUrl()) +
+                "/repos/" + getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl()) + "/browse");
         } catch (MalformedURLException e) {
             log.error("Couldn't construct repository web URL");
         }

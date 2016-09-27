@@ -14,20 +14,25 @@
                     ng-model="vm.participation.id" readonly />
         </div>
         <div class="form-group">
-            <label class="control-label" translate="exerciseApplicationApp.participation.cloneUrl" for="field_cloneUrl">Clone Url</label>
-            <input type="text" class="form-control" name="cloneUrl" id="field_cloneUrl"
-                    ng-model="vm.participation.cloneUrl"
+            <label class="control-label" translate="exerciseApplicationApp.participation.repositoryUrl" for="field_repositoryUrl">Repository Url</label>
+            <input type="text" class="form-control" name="repositoryUrl" id="field_repositoryUrl"
+                    ng-model="vm.participation.repositoryUrl"
+                     />
+        </div>
+        <div class="form-group">
+            <label class="control-label" translate="exerciseApplicationApp.participation.buildPlanId" for="field_buildPlanId">Build Plan Id</label>
+            <input type="text" class="form-control" name="buildPlanId" id="field_buildPlanId"
+                    ng-model="vm.participation.buildPlanId"
                      />
         </div>
         <div class="form-group">
             <label class="control-label" translate="exerciseApplicationApp.participation.initializationState" for="field_initializationState">Initialization State</label>
             <select class="form-control" name="initializationState" ng-model="vm.participation.initializationState" id="field_initializationState">
                 <option value="UNINITIALIZED" translate="exerciseApplicationApp.ParticipationState.UNINITIALIZED">UNINITIALIZED</option>
-                <option value="REPO_FORKED" translate="exerciseApplicationApp.ParticipationState.REPO_FORKED">REPO_FORKED</option>
-                <option value="REPO_PERMISSIONS_SET" translate="exerciseApplicationApp.ParticipationState.REPO_PERMISSIONS_SET">REPO_PERMISSIONS_SET</option>
-                <option value="PLAN_CLONED" translate="exerciseApplicationApp.ParticipationState.PLAN_CLONED">PLAN_CLONED</option>
-                <option value="PLAN_REPO_UPDATED" translate="exerciseApplicationApp.ParticipationState.PLAN_REPO_UPDATED">PLAN_REPO_UPDATED</option>
-                <option value="PLAN_ENABLED" translate="exerciseApplicationApp.ParticipationState.PLAN_ENABLED">PLAN_ENABLED</option>
+                <option value="REPO_COPIED" translate="exerciseApplicationApp.ParticipationState.REPO_COPIED">REPO_COPIED</option>
+                <option value="REPO_CONFIGURED" translate="exerciseApplicationApp.ParticipationState.REPO_CONFIGURED">REPO_CONFIGURED</option>
+                <option value="BUILD_PLAN_COPIED" translate="exerciseApplicationApp.ParticipationState.BUILD_PLAN_COPIED">BUILD_PLAN_COPIED</option>
+                <option value="BUILD_PLAN_CONFIGURED" translate="exerciseApplicationApp.ParticipationState.BUILD_PLAN_CONFIGURED">BUILD_PLAN_CONFIGURED</option>
                 <option value="INITIALIZED" translate="exerciseApplicationApp.ParticipationState.INITIALIZED">INITIALIZED</option>
             </select>
         </div>
@@ -40,12 +45,6 @@
                         <button type="button" class="btn btn-default" ng-click="vm.openCalendar('initializationDate')"><i class="glyphicon glyphicon-calendar"></i></button>
                     </span>
                 </div>
-        </div>
-        <div class="form-group">
-            <label class="control-label" translate="exerciseApplicationApp.participation.buildPlanId" for="field_buildPlanId">Build Plan Id</label>
-            <input type="text" class="form-control" name="buildPlanId" id="field_buildPlanId"
-                    ng-model="vm.participation.buildPlanId"
-                     />
         </div>
 
         <div class="form-group">

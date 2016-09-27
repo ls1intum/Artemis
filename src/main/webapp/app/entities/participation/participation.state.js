@@ -73,10 +73,10 @@
                     resolve: {
                         entity: function () {
                             return {
-                                cloneUrl: null,
+                                repositoryUrl: null,
+                                buildPlanId: null,
                                 initializationState: null,
                                 initializationDate: null,
-                                buildPlanId: null,
                                 id: null
                             };
                         }

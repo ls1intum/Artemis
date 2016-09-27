@@ -4,9 +4,13 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span translate="exerciseApplicationApp.participation.cloneUrl">Clone Url</span></dt>
+        <dt><span translate="exerciseApplicationApp.participation.repositoryUrl">Repository Url</span></dt>
         <dd>
-            <span>{{vm.participation.cloneUrl}}</span>
+            <span>{{vm.participation.repositoryUrl}}</span>
+        </dd>
+        <dt><span translate="exerciseApplicationApp.participation.buildPlanId">Build Plan Id</span></dt>
+        <dd>
+            <span>{{vm.participation.buildPlanId}}</span>
         </dd>
         <dt><span translate="exerciseApplicationApp.participation.initializationState">Initialization State</span></dt>
         <dd>
@@ -15,10 +19,6 @@
         <dt><span translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span></dt>
         <dd>
             <span>{{vm.participation.initializationDate | date:'medium'}}</span>
-        </dd>
-        <dt><span translate="exerciseApplicationApp.participation.buildPlanId">Build Plan Id</span></dt>
-        <dd>
-            <span>{{vm.participation.buildPlanId}}</span>
         </dd>
         <dt><span translate="exerciseApplicationApp.participation.student">Student</span></dt>
         <dd>

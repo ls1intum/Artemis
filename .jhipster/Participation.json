@@ -21,7 +21,11 @@
     ],
     "fields": [
         {
-            "fieldName": "cloneUrl",
+            "fieldName": "repositoryUrl",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "buildPlanId",
             "fieldType": "String"
         },
         {
@@ -32,10 +36,6 @@
         {
             "fieldName": "initializationDate",
             "fieldType": "ZonedDateTime"
-        },
-        {
-            "fieldName": "buildPlanId",
-            "fieldType": "String"
         }
     ],
     "changelogDate": "20160609100233",

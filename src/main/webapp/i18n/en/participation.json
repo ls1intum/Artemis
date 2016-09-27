@@ -16,10 +16,10 @@
             "detail": {
                 "title": "Participation"
             },
-            "cloneUrl": "Clone Url",
+            "repositoryUrl": "Repository Url",
+            "buildPlanId": "Build Plan Id",
             "initializationState": "Initialization State",
             "initializationDate": "Initialization Date",
-            "buildPlanId": "Build Plan Id",
             "student": "Student",
             "results": "Results",
             "exercise": "Exercise"
