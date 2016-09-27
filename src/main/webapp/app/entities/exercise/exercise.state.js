@@ -72,12 +72,11 @@
                         entity: function () {
                             return {
                                 title: null,
-                                baseProjectKey: null,
-                                baseRepositorySlug: null,
-                                baseBuildPlanSlug: null,
                                 releaseDate: null,
                                 dueDate: null,
                                 publishBuildPlanUrl: null,
+                                baseBuildPlanId: null,
+                                baseRepositoryUrl: null,
                                 id: null
                             };
                         }

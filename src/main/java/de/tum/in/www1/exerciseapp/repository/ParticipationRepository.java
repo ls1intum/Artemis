@@ -18,6 +18,6 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     Participation findOneByExerciseIdAndStudentLoginAndInitializationState(Long exerciseId, String username, ParticipationState state);
 
-    Participation findOneByExerciseBaseProjectKeyAndStudentLogin(String baseProjectKey, String username);
+    Participation findOneByBuildPlanId(String buildPlanId);
 
 }

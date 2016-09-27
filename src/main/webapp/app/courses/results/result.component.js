@@ -28,8 +28,8 @@
             $http.get('api/courses/' + vm.participation.exercise.course.id + '/exercises/' + vm.participation.exercise.id + '/participation/status', {
                 ignoreLoadingBar: true
             }).then(function (response) {
-                vm.queued = response.data.isActive && !response.data.isBuilding;
-                vm.building = response.data.isActive && response.data.isBuilding;
+                vm.queued = response.data === 'QUEUED';
+                vm.building = response.data === 'BUILDING';
             }).finally(function () {
                 if (!vm.queued && !vm.building) {
                     vm.results = ParticipationResult.query({

@@ -28,9 +28,9 @@
                 <tr>
                     <th><span translate="global.field.id">ID</span></th>
                     <th><span translate="exerciseApplicationApp.participation.cloneUrl">Clone Url</span></th>
-                    <th><span translate="exerciseApplicationApp.participation.repositorySlug">Repository Slug</span></th>
                     <th><span translate="exerciseApplicationApp.participation.initializationState">Initialization State</span></th>
                     <th><span translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span></th>
+                    <th><span translate="exerciseApplicationApp.participation.buildPlanId">Build Plan Id</span></th>
                     <th><span translate="exerciseApplicationApp.participation.student">Student</span></th>
                     <th><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
                     <th></th>
@@ -40,9 +40,9 @@
                 <tr ng-repeat="participation in vm.participations | filter:{exercise:{title:vm.filterExercise}} track by participation.id">
                     <td><a ui-sref="participation-detail({id:participation.id})">{{participation.id}}</a></td>
                     <td>{{participation.cloneUrl}}</td>
-                    <td>{{participation.repositorySlug}}</td>
                     <td translate="{{'exerciseApplicationApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
                     <td>{{participation.initializationDate | date:'medium'}}</td>
+                    <td>{{participation.buildPlanId}}</td>
                     <td>
                         <a ui-sref="user-management-detail({login:participation.student.login})">{{participation.student.firstName}}</a>
                     </td>

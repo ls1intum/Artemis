@@ -22,7 +22,21 @@
                     return data;
                 }
             },
-            'update': { method:'PUT' }
+            'update': { method:'PUT' },
+            'repositoryWebUrl': {
+                url: 'api/participations/:id/repositoryWebUrl',
+                method: 'GET',
+                transformResponse: function(data, headersGetter, status) {
+                    return {url: data};
+                }
+            },
+            'buildPlanWebUrl': {
+                url: 'api/participations/:id/buildPlanWebUrl',
+                method: 'GET',
+                transformResponse: function(data, headersGetter, status) {
+                    return {url: data};
+                }
+            }
         });
     }
 

@@ -3,14 +3,16 @@ package de.tum.in.www1.exerciseapp.service;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
-import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,7 @@ import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.CliClient;
 
 import javax.inject.Inject;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
@@ -27,7 +30,8 @@ import java.util.Map;
 
 @Service
 @Transactional
-public class BambooService {
+@Profile("bamboo")
+public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
@@ -50,10 +54,66 @@ public class BambooService {
     private int RESULT_RETRIEVAL_DELAY = 10000;
 
     @Inject
-    private ParticipationRepository participationRepository;
+    GitService gitService;
 
-    @Autowired
+    @Inject
     private ResultRepository resultRepository;
+
+    @Override
+    public String copyBuildPlan(String baseBuildPlanId, String username) {
+        clonePlan(
+            getProjectKeyFromBuildPlanId(baseBuildPlanId),
+            getPlanKeyFromBuildPlanId(baseBuildPlanId),
+            username);
+        // TODO: This should be returned by clone method instead of being built here
+        return getProjectKeyFromBuildPlanId(baseBuildPlanId) + "-" + username;
+    }
+
+    @Override
+    public void configureBuildPlan(String buildPlanId, URL repositoryUrl, String username) {
+        updatePlanRepository(
+            getProjectKeyFromBuildPlanId(buildPlanId),
+            getPlanKeyFromBuildPlanId(buildPlanId),
+            "Assignment", // TODO
+            getProjectKeyFromUrl(repositoryUrl),
+            getRepositorySlugFromUrl(repositoryUrl)
+        );
+        enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+        gitService.doEmptyCommit(getProjectKeyFromBuildPlanId(buildPlanId), repositoryUrl);
+    }
+
+    @Override
+    public void deleteBuildPlan(String buildPlanId) {
+        deletePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+    }
+
+    @Override
+    public BuildStatus getBuildStatus(Participation participation) {
+        Map<String, Boolean> status = retrieveBuildStatus(participation.getBuildPlanId());
+        if (status.get("isActive") && !status.get("isBuilding")) {
+            return BuildStatus.QUEUED;
+        } else if (status.get("isActive") && status.get("isBuilding")) {
+            return BuildStatus.BUILDING;
+        } else {
+            return BuildStatus.INACTIVE;
+        }
+    }
+
+    @Override
+    public Map<String, Object> getLatestBuildResultDetails(Participation participation) {
+        Map<String, Object> details = retrieveLatestBuildResultDetails(participation.getBuildPlanId());
+        return details;
+    }
+
+    @Override
+    public URL getBuildPlanWebUrl(Participation participation) {
+        try {
+            return new URL(BAMBOO_SERVER + "/browse/" + participation.getBuildPlanId().toUpperCase());
+        } catch (MalformedURLException e) {
+            log.error("Couldn't construct build plan web URL");
+        }
+        return BAMBOO_SERVER;
+    }
 
     /**
      * Clones an existing Bamboo plan.
@@ -163,11 +223,11 @@ public class BambooService {
     /**
      * Waits for a configurable delay and then retrieves the latest build result for the given plan key and saves it to the participation.
      *
-     * @param planKey       the plan for which to retrieve the latest result
-     * @param participation the participation to which to add the retrieved result
+     * @param participation
      */
+    @Override
     @Async
-    public void retrieveAndSaveBuildResult(String planKey, Participation participation) {
+    public void onBuildCompleted(Participation participation) {
         log.info("Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
         try {
             Thread.sleep(RESULT_RETRIEVAL_DELAY);
@@ -175,7 +235,7 @@ public class BambooService {
             e.printStackTrace();
         }
         log.info("Retrieving build result...");
-        Map buildResults = retrieveLatestBuildResult(planKey);
+        Map buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
         Result result = new Result();
         result.setBuildSuccessful((boolean) buildResults.get("buildSuccessful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
@@ -223,7 +283,7 @@ public class BambooService {
 
     /**
      * Performs a request to the Bamboo REST API to retrieve details on the failed tests of the latest build.
-     *
+     * <p>
      * TODO: This currently just gets the failed tests of the default job!
      *
      * @param planKey the key of the plan for which to retrieve the details
@@ -258,8 +318,8 @@ public class BambooService {
      *
      * @param planKey the key of the plan for which to retrieve the status
      * @returna map containing the following data:
-     *  - isActive: true if the plan is queued or building
-     *  - isBuilding: true if the plan is building
+     * - isActive: true if the plan is queued or building
+     * - isBuilding: true if the plan is building
      */
     public Map<String, Boolean> retrieveBuildStatus(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
@@ -289,5 +349,27 @@ public class BambooService {
     private String buildSshRepositoryUrl(String project, String slug) {
         final int sshPort = 7999;
         return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
+    }
+
+    private String getProjectKeyFromBuildPlanId(String buildPlanId) {
+        return buildPlanId.split("-")[0];
+    }
+
+    private String getPlanKeyFromBuildPlanId(String buildPlanId) {
+        return buildPlanId.split("-")[1];
+    }
+
+    private String getProjectKeyFromUrl(URL repositoryUrl) {
+        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        return repositoryUrl.getFile().split("/")[2];
+    }
+
+    private String getRepositorySlugFromUrl(URL repositoryUrl) {
+        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
+        String repositorySlug = repositoryUrl.getFile().split("/")[3];
+        if (repositorySlug.endsWith(".git")) {
+            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
+        }
+        return repositorySlug;
     }
 }

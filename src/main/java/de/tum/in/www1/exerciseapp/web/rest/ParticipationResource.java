@@ -3,9 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.service.BambooService;
-import de.tum.in.www1.exerciseapp.service.ExerciseService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.Principal;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +39,10 @@ public class ParticipationResource {
     private ExerciseService exerciseService;
 
     @Inject
-    private BambooService bambooService;
+    private ContinuousIntegrationService continuousIntegrationService;
+
+    @Inject
+    private VersionControlService versionControlService;
 
     /**
      * POST  /participations : Create a new participation.
@@ -148,6 +150,34 @@ public class ParticipationResource {
             .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    @RequestMapping(value = "/participations/{id}/repositoryWebUrl",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id) {
+        log.debug("REST request to get Participation : {}", id);
+        Participation participation = participationService.findOne(id);
+        URL url = versionControlService.getRepositoryWebUrl(participation);
+        return Optional.ofNullable(url)
+            .map(result -> new ResponseEntity<>(
+                url.toString(),
+                HttpStatus.OK))
+            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
+    @RequestMapping(value = "/participations/{id}/buildPlanWebUrl",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id) {
+        log.debug("REST request to get Participation : {}", id);
+        Participation participation = participationService.findOne(id);
+        URL url = continuousIntegrationService.getBuildPlanWebUrl(participation);
+        return Optional.ofNullable(url)
+            .map(result -> new ResponseEntity<>(
+                url.toString(),
+                HttpStatus.OK))
+            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
+
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for the "id" exercise.
      *
@@ -185,7 +215,7 @@ public class ParticipationResource {
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation status for Exercise : {}", exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-        Map buildStatus = bambooService.retrieveBuildStatus(participation.getExercise().getBaseProjectKey() + "-" + principal.getName());
+        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
         return Optional.ofNullable(buildStatus)
             .map(status -> new ResponseEntity<>(
                 status,

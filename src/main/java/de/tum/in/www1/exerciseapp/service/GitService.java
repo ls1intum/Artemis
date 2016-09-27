@@ -53,14 +53,14 @@ public class GitService {
         return repo;
     }
 
-    public void doEmptyCommit(String projectKey, String newRemote) throws GitException {
+    public void doEmptyCommit(String projectKey, URL newRemote) throws GitException {
         try {
-            File sourceFolder = checkoutRepository(projectKey, newRemote);
+            File sourceFolder = checkoutRepository(projectKey, newRemote.toString());
             File tmpFolder = new File(sourceFolder.getParentFile().getPath() + "/" + UUID.randomUUID());
             FileUtils.copyDirectory(sourceFolder, tmpFolder);
             Git git = new Git(new FileRepository(tmpFolder.getPath() + "/.git"));
             StoredConfig config = git.getRepository().getConfig();
-            config.setString("remote", "origin", "url", newRemote);
+            config.setString("remote", "origin", "url", newRemote.toString());
             config.save();
             git.commit().setMessage("Setup").setAllowEmpty(true).call();
             git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(BITBUCKET_USER, BITBUCKET_PASSWORD)).call();

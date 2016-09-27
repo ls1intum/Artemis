@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.exception.BitbucketException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -45,18 +46,8 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public Map copyRepository(String projectKey, String repositorySlug, String username) {
-        return this.forkRepository(projectKey, repositorySlug, username);
-    }
-
-    @Override
     public void configureRepository(URL repositoryUrl, String username) {
         this.giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
-    }
-
-    @Override
-    public void configureRepository(String projectKey, String repositorySlug, String username) {
-        this.giveWritePermission(projectKey, repositorySlug, username);
     }
 
     @Override
@@ -65,13 +56,15 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void deleteRepository(String projectKey, String repositorySlug) {
-        this.deleteRepositoryImpl(projectKey, repositorySlug);
-    }
-
-    @Override
-    public String getRepositoryWebUrl() {
-        throw new UnsupportedOperationException("Method not implemented.");
+    public URL getRepositoryWebUrl(Participation participation) {
+        try {
+            return new URL(BITBUCKET_URL +
+                "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrl()) +
+                "/repos/" + getRepositorySlugFromUrl(participation.getRepositoryUrl()) + "/browse");
+        } catch (MalformedURLException e) {
+            log.error("Couldn't construct repository web URL");
+        }
+        return BITBUCKET_URL;
     }
 
     private String getProjectKeyFromUrl(URL repositoryUrl) {
@@ -91,9 +84,9 @@ public class BitbucketService implements VersionControlService {
     /**
      * Uses the configured Bitbucket account to fork the given repository inside the project.
      *
-     * @param baseProjectKey        The project key of the base project.
-     * @param baseRepositorySlug    The repository slug of the base repository.
-     * @param username              The user for whom the repository is being forked.
+     * @param baseProjectKey     The project key of the base project.
+     * @param baseRepositorySlug The repository slug of the base repository.
+     * @param username           The user for whom the repository is being forked.
      * @return The slug of the forked repository (i.e. its identifier).
      */
     private Map<String, String> forkRepository(String baseProjectKey, String baseRepositorySlug, String username) throws BitbucketException {
@@ -140,9 +133,9 @@ public class BitbucketService implements VersionControlService {
     /**
      * Gives user write permissions for a repository.
      *
-     * @param projectKey        The project key of the repository's project.
-     * @param repositorySlug    The repository's slug.
-     * @param username          The user whom to give write permissions.
+     * @param projectKey     The project key of the repository's project.
+     * @param repositorySlug The repository's slug.
+     * @param username       The user whom to give write permissions.
      */
     private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
         String baseUrl = BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";//NAME&PERMISSION
@@ -163,8 +156,8 @@ public class BitbucketService implements VersionControlService {
     /**
      * Deletes the given repository from Bitbucket.
      *
-     * @param projectKey        The project key of the repository's project.
-     * @param repositorySlug    The repository's slug.
+     * @param projectKey     The project key of the repository's project.
+     * @param repositorySlug The repository's slug.
      */
     private void deleteRepositoryImpl(String projectKey, String repositorySlug) {
         String baseUrl = BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug;

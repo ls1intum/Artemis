@@ -19,18 +19,6 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "baseProjectKey",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "baseRepositorySlug",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "baseBuildPlanSlug",
-            "fieldType": "String"
-        },
-        {
             "fieldName": "releaseDate",
             "fieldType": "ZonedDateTime"
         },
@@ -41,6 +29,14 @@
         {
             "fieldName": "publishBuildPlanUrl",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "baseBuildPlanId",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "baseRepositoryUrl",
+            "fieldType": "String"
         }
     ],
     "changelogDate": "20160609094621",

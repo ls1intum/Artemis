@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+    <changeSet author="muenchdo (generated)" id="1474917132322-1">
+        <addColumn tableName="exercise">
+            <column name="base_build_plan_id" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="muenchdo (generated)" id="1474917132322-2">
+        <addColumn tableName="exercise">
+            <column name="base_repository_url" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="muenchdo (generated)" id="1474917132322-3">
+        <addColumn tableName="participation">
+            <column name="build_plan_id" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="muenchdo (generated)" id="1474917132322-4">
+        <dropColumn columnName="base_build_plan_slug" tableName="exercise"/>
+    </changeSet>
+    <changeSet author="muenchdo (generated)" id="1474917132322-5">
+        <dropColumn columnName="base_project_key" tableName="exercise"/>
+    </changeSet>
+    <changeSet author="muenchdo (generated)" id="1474917132322-6">
+        <dropColumn columnName="base_repository_slug" tableName="exercise"/>
+    </changeSet>
+</databaseChangeLog>

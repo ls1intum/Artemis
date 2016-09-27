@@ -17,12 +17,11 @@
                 "title": "Exercise"
             },
             "title": "Title",
-            "baseProjectKey": "Base Project Key",
-            "baseRepositorySlug": "Base Repository Slug",
-            "baseBuildPlanSlug": "Base Build Plan Slug",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
             "publishBuildPlanUrl": "Publish Build Plan Url",
+            "baseBuildPlanId": "Base Build Plan Id",
+            "baseRepositoryUrl": "Base Repository Url",
             "course": "Course",
             "participations": "Participations"
         }
