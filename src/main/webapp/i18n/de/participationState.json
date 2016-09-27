@@ -3,11 +3,10 @@
         "ParticipationState" : {
             "null": "",
             "UNINITIALIZED": "UNINITIALIZED",
-            "REPO_FORKED": "REPO_FORKED",
-            "REPO_PERMISSIONS_SET": "REPO_PERMISSIONS_SET",
-            "PLAN_CLONED": "PLAN_CLONED",
-            "PLAN_REPO_UPDATED": "PLAN_REPO_UPDATED",
-            "PLAN_ENABLED": "PLAN_ENABLED",
+            "REPO_COPIED": "REPO_COPIED",
+            "REPO_CONFIGURED": "REPO_CONFIGURED",
+            "BUILD_PLAN_COPIED": "BUILD_PLAN_COPIED",
+            "BUILD_PLAN_CONFIGURED": "BUILD_PLAN_CONFIGURED",
             "INITIALIZED": "INITIALIZED"
         }
     }

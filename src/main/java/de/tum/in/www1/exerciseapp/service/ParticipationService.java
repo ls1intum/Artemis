@@ -92,7 +92,7 @@ public class ParticipationService {
                 participation.getExercise().getBaseRepositoryUrlAsUrl(),
                 participation.getStudent().getLogin());
             if (Optional.ofNullable(repositoryUrl).isPresent()) {
-                participation.setCloneUrl(repositoryUrl.toString());
+                participation.setRepositoryUrl(repositoryUrl.toString());
                 participation.setInitializationState(ParticipationState.REPO_COPIED);
             }
             return save(participation);
@@ -103,7 +103,7 @@ public class ParticipationService {
 
     private Participation configureRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_CONFIGURED)) {
-            versionControlService.configureRepository(participation.getRepositoryUrl(), participation.getStudent().getLogin());
+            versionControlService.configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
             participation.setInitializationState(ParticipationState.REPO_CONFIGURED);
             return save(participation);
         } else {
@@ -128,7 +128,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.BUILD_PLAN_CONFIGURED)) {
             continuousIntegrationService.configureBuildPlan(
                 participation.getBuildPlanId(),
-                participation.getRepositoryUrl(),
+                participation.getRepositoryUrlAsUrl(),
                 participation.getStudent().getLogin());
             participation.setInitializationState(ParticipationState.BUILD_PLAN_CONFIGURED);
             return save(participation);
@@ -197,7 +197,7 @@ public class ParticipationService {
                 continuousIntegrationService.deleteBuildPlan(participation.getBuildPlanId());
             }
             if (deleteRepository) {
-                versionControlService.deleteRepository(participation.getRepositoryUrl());
+                versionControlService.deleteRepository(participation.getRepositoryUrlAsUrl());
             }
         }
         participationRepository.delete(id);

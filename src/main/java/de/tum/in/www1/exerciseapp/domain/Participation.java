@@ -29,8 +29,11 @@ public class Participation implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(name = "clone_url")
-    private String cloneUrl;
+    @Column(name = "repository_url")
+    private String repositoryUrl;
+
+    @Column(name = "build_plan_id")
+    private String buildPlanId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
@@ -38,9 +41,6 @@ public class Participation implements Serializable {
 
     @Column(name = "initialization_date")
     private ZonedDateTime initializationDate;
-
-    @Column(name = "build_plan_id")
-    private String buildPlanId;
 
     @ManyToOne
     private User student;
@@ -61,12 +61,20 @@ public class Participation implements Serializable {
         this.id = id;
     }
 
-    public String getCloneUrl() {
-        return cloneUrl;
+    public String getRepositoryUrl() {
+        return repositoryUrl;
     }
 
-    public void setCloneUrl(String cloneUrl) {
-        this.cloneUrl = cloneUrl;
+    public void setRepositoryUrl(String repositoryUrl) {
+        this.repositoryUrl = repositoryUrl;
+    }
+
+    public String getBuildPlanId() {
+        return buildPlanId;
+    }
+
+    public void setBuildPlanId(String buildPlanId) {
+        this.buildPlanId = buildPlanId;
     }
 
     public ParticipationState getInitializationState() {
@@ -83,14 +91,6 @@ public class Participation implements Serializable {
 
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
-    }
-
-    public String getBuildPlanId() {
-        return buildPlanId;
-    }
-
-    public void setBuildPlanId(String buildPlanId) {
-        this.buildPlanId = buildPlanId;
     }
 
     public User getStudent() {
@@ -117,9 +117,9 @@ public class Participation implements Serializable {
         this.exercise = exercise;
     }
 
-    public URL getRepositoryUrl() {
+    public URL getRepositoryUrlAsUrl() {
         try {
-            return new URL(cloneUrl);
+            return new URL(repositoryUrl);
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
@@ -150,10 +150,10 @@ public class Participation implements Serializable {
     public String toString() {
         return "Participation{" +
             "id=" + id +
-            ", cloneUrl='" + cloneUrl + "'" +
+            ", repositoryUrl='" + repositoryUrl + "'" +
+            ", buildPlanId='" + buildPlanId + "'" +
             ", initializationState='" + initializationState + "'" +
             ", initializationDate='" + initializationDate + "'" +
-            ", buildPlanId='" + buildPlanId + "'" +
             '}';
     }
 }
