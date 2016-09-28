@@ -19,24 +19,24 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "releaseDate",
-            "fieldType": "ZonedDateTime"
-        },
-        {
-            "fieldName": "dueDate",
-            "fieldType": "ZonedDateTime"
-        },
-        {
-            "fieldName": "publishBuildPlanUrl",
-            "fieldType": "Boolean"
+            "fieldName": "baseRepositoryUrl",
+            "fieldType": "String"
         },
         {
             "fieldName": "baseBuildPlanId",
             "fieldType": "String"
         },
         {
-            "fieldName": "baseRepositoryUrl",
-            "fieldType": "String"
+            "fieldName": "publishBuildPlanUrl",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "releaseDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "dueDate",
+            "fieldType": "ZonedDateTime"
         }
     ],
     "changelogDate": "20160609094621",

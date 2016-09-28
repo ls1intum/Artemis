@@ -30,20 +30,20 @@ public class Exercise implements Serializable {
     @Column(name = "title")
     private String title;
 
+    @Column(name = "base_repository_url")
+    private String baseRepositoryUrl;
+
+    @Column(name = "base_build_plan_id")
+    private String baseBuildPlanId;
+
+    @Column(name = "publish_build_plan_url")
+    private Boolean publishBuildPlanUrl;
+
     @Column(name = "release_date")
     private ZonedDateTime releaseDate;
 
     @Column(name = "due_date")
     private ZonedDateTime dueDate;
-
-    @Column(name = "publish_build_plan_url")
-    private Boolean publishBuildPlanUrl;
-
-    @Column(name = "base_build_plan_id")
-    private String baseBuildPlanId;
-
-    @Column(name = "base_repository_url")
-    private String baseRepositoryUrl;
 
     @ManyToOne
     private Course course;
@@ -69,6 +69,30 @@ public class Exercise implements Serializable {
         this.title = title;
     }
 
+    public String getBaseRepositoryUrl() {
+        return baseRepositoryUrl;
+    }
+
+    public void setBaseRepositoryUrl(String baseRepositoryUrl) {
+        this.baseRepositoryUrl = baseRepositoryUrl;
+    }
+
+    public String getBaseBuildPlanId() {
+        return baseBuildPlanId;
+    }
+
+    public void setBaseBuildPlanId(String baseBuildPlanId) {
+        this.baseBuildPlanId = baseBuildPlanId;
+    }
+
+    public Boolean isPublishBuildPlanUrl() {
+        return publishBuildPlanUrl;
+    }
+
+    public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
+        this.publishBuildPlanUrl = publishBuildPlanUrl;
+    }
+
     public ZonedDateTime getReleaseDate() {
         return releaseDate;
     }
@@ -83,30 +107,6 @@ public class Exercise implements Serializable {
 
     public void setDueDate(ZonedDateTime dueDate) {
         this.dueDate = dueDate;
-    }
-
-    public Boolean isPublishBuildPlanUrl() {
-        return publishBuildPlanUrl;
-    }
-
-    public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
-        this.publishBuildPlanUrl = publishBuildPlanUrl;
-    }
-
-    public String getBaseBuildPlanId() {
-        return baseBuildPlanId;
-    }
-
-    public void setBaseBuildPlanId(String baseBuildPlanId) {
-        this.baseBuildPlanId = baseBuildPlanId;
-    }
-
-    public String getBaseRepositoryUrl() {
-        return baseRepositoryUrl;
-    }
-
-    public void setBaseRepositoryUrl(String baseRepositoryUrl) {
-        this.baseRepositoryUrl = baseRepositoryUrl;
     }
 
     public Course getCourse() {
@@ -159,11 +159,11 @@ public class Exercise implements Serializable {
         return "Exercise{" +
             "id=" + id +
             ", title='" + title + "'" +
+            ", baseRepositoryUrl='" + baseRepositoryUrl + "'" +
+            ", baseBuildPlanId='" + baseBuildPlanId + "'" +
+            ", publishBuildPlanUrl='" + publishBuildPlanUrl + "'" +
             ", releaseDate='" + releaseDate + "'" +
             ", dueDate='" + dueDate + "'" +
-            ", publishBuildPlanUrl='" + publishBuildPlanUrl + "'" +
-            ", baseBuildPlanId='" + baseBuildPlanId + "'" +
-            ", baseRepositoryUrl='" + baseRepositoryUrl + "'" +
             '}';
     }
 }
