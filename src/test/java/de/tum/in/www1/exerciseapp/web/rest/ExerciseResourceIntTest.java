@@ -49,6 +49,13 @@ public class ExerciseResourceIntTest {
 
     private static final String DEFAULT_TITLE = "AAAAA";
     private static final String UPDATED_TITLE = "BBBBB";
+    private static final String DEFAULT_BASE_REPOSITORY_URL = "AAAAA";
+    private static final String UPDATED_BASE_REPOSITORY_URL = "BBBBB";
+    private static final String DEFAULT_BASE_BUILD_PLAN_ID = "AAAAA";
+    private static final String UPDATED_BASE_BUILD_PLAN_ID = "BBBBB";
+
+    private static final Boolean DEFAULT_PUBLISH_BUILD_PLAN_URL = false;
+    private static final Boolean UPDATED_PUBLISH_BUILD_PLAN_URL = true;
 
     private static final ZonedDateTime DEFAULT_RELEASE_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.systemDefault());
     private static final ZonedDateTime UPDATED_RELEASE_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
@@ -57,13 +64,6 @@ public class ExerciseResourceIntTest {
     private static final ZonedDateTime DEFAULT_DUE_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.systemDefault());
     private static final ZonedDateTime UPDATED_DUE_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
     private static final String DEFAULT_DUE_DATE_STR = dateTimeFormatter.format(DEFAULT_DUE_DATE);
-
-    private static final Boolean DEFAULT_PUBLISH_BUILD_PLAN_URL = false;
-    private static final Boolean UPDATED_PUBLISH_BUILD_PLAN_URL = true;
-    private static final String DEFAULT_BASE_BUILD_PLAN_ID = "AAAAA";
-    private static final String UPDATED_BASE_BUILD_PLAN_ID = "BBBBB";
-    private static final String DEFAULT_BASE_REPOSITORY_URL = "AAAAA";
-    private static final String UPDATED_BASE_REPOSITORY_URL = "BBBBB";
 
     @Inject
     private ExerciseRepository exerciseRepository;
@@ -92,11 +92,11 @@ public class ExerciseResourceIntTest {
     public void initTest() {
         exercise = new Exercise();
         exercise.setTitle(DEFAULT_TITLE);
+        exercise.setBaseRepositoryUrl(DEFAULT_BASE_REPOSITORY_URL);
+        exercise.setBaseBuildPlanId(DEFAULT_BASE_BUILD_PLAN_ID);
+        exercise.setPublishBuildPlanUrl(DEFAULT_PUBLISH_BUILD_PLAN_URL);
         exercise.setReleaseDate(DEFAULT_RELEASE_DATE);
         exercise.setDueDate(DEFAULT_DUE_DATE);
-        exercise.setPublishBuildPlanUrl(DEFAULT_PUBLISH_BUILD_PLAN_URL);
-        exercise.setBaseBuildPlanId(DEFAULT_BASE_BUILD_PLAN_ID);
-        exercise.setBaseRepositoryUrl(DEFAULT_BASE_REPOSITORY_URL);
     }
 
     @Test
@@ -116,11 +116,11 @@ public class ExerciseResourceIntTest {
         assertThat(exercises).hasSize(databaseSizeBeforeCreate + 1);
         Exercise testExercise = exercises.get(exercises.size() - 1);
         assertThat(testExercise.getTitle()).isEqualTo(DEFAULT_TITLE);
+        assertThat(testExercise.getBaseRepositoryUrl()).isEqualTo(DEFAULT_BASE_REPOSITORY_URL);
+        assertThat(testExercise.getBaseBuildPlanId()).isEqualTo(DEFAULT_BASE_BUILD_PLAN_ID);
+        assertThat(testExercise.isPublishBuildPlanUrl()).isEqualTo(DEFAULT_PUBLISH_BUILD_PLAN_URL);
         assertThat(testExercise.getReleaseDate()).isEqualTo(DEFAULT_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(DEFAULT_DUE_DATE);
-        assertThat(testExercise.isPublishBuildPlanUrl()).isEqualTo(DEFAULT_PUBLISH_BUILD_PLAN_URL);
-        assertThat(testExercise.getBaseBuildPlanId()).isEqualTo(DEFAULT_BASE_BUILD_PLAN_ID);
-        assertThat(testExercise.getBaseRepositoryUrl()).isEqualTo(DEFAULT_BASE_REPOSITORY_URL);
     }
 
     @Test
@@ -135,11 +135,11 @@ public class ExerciseResourceIntTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(exercise.getId().intValue())))
                 .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
-                .andExpect(jsonPath("$.[*].releaseDate").value(hasItem(DEFAULT_RELEASE_DATE_STR)))
-                .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)))
-                .andExpect(jsonPath("$.[*].publishBuildPlanUrl").value(hasItem(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue())))
+                .andExpect(jsonPath("$.[*].baseRepositoryUrl").value(hasItem(DEFAULT_BASE_REPOSITORY_URL.toString())))
                 .andExpect(jsonPath("$.[*].baseBuildPlanId").value(hasItem(DEFAULT_BASE_BUILD_PLAN_ID.toString())))
-                .andExpect(jsonPath("$.[*].baseRepositoryUrl").value(hasItem(DEFAULT_BASE_REPOSITORY_URL.toString())));
+                .andExpect(jsonPath("$.[*].publishBuildPlanUrl").value(hasItem(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue())))
+                .andExpect(jsonPath("$.[*].releaseDate").value(hasItem(DEFAULT_RELEASE_DATE_STR)))
+                .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)));
     }
 
     @Test
@@ -154,11 +154,11 @@ public class ExerciseResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(exercise.getId().intValue()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()))
-            .andExpect(jsonPath("$.releaseDate").value(DEFAULT_RELEASE_DATE_STR))
-            .andExpect(jsonPath("$.dueDate").value(DEFAULT_DUE_DATE_STR))
-            .andExpect(jsonPath("$.publishBuildPlanUrl").value(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue()))
+            .andExpect(jsonPath("$.baseRepositoryUrl").value(DEFAULT_BASE_REPOSITORY_URL.toString()))
             .andExpect(jsonPath("$.baseBuildPlanId").value(DEFAULT_BASE_BUILD_PLAN_ID.toString()))
-            .andExpect(jsonPath("$.baseRepositoryUrl").value(DEFAULT_BASE_REPOSITORY_URL.toString()));
+            .andExpect(jsonPath("$.publishBuildPlanUrl").value(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue()))
+            .andExpect(jsonPath("$.releaseDate").value(DEFAULT_RELEASE_DATE_STR))
+            .andExpect(jsonPath("$.dueDate").value(DEFAULT_DUE_DATE_STR));
     }
 
     @Test
@@ -180,11 +180,11 @@ public class ExerciseResourceIntTest {
         Exercise updatedExercise = new Exercise();
         updatedExercise.setId(exercise.getId());
         updatedExercise.setTitle(UPDATED_TITLE);
+        updatedExercise.setBaseRepositoryUrl(UPDATED_BASE_REPOSITORY_URL);
+        updatedExercise.setBaseBuildPlanId(UPDATED_BASE_BUILD_PLAN_ID);
+        updatedExercise.setPublishBuildPlanUrl(UPDATED_PUBLISH_BUILD_PLAN_URL);
         updatedExercise.setReleaseDate(UPDATED_RELEASE_DATE);
         updatedExercise.setDueDate(UPDATED_DUE_DATE);
-        updatedExercise.setPublishBuildPlanUrl(UPDATED_PUBLISH_BUILD_PLAN_URL);
-        updatedExercise.setBaseBuildPlanId(UPDATED_BASE_BUILD_PLAN_ID);
-        updatedExercise.setBaseRepositoryUrl(UPDATED_BASE_REPOSITORY_URL);
 
         restExerciseMockMvc.perform(put("/api/exercises")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -196,11 +196,11 @@ public class ExerciseResourceIntTest {
         assertThat(exercises).hasSize(databaseSizeBeforeUpdate);
         Exercise testExercise = exercises.get(exercises.size() - 1);
         assertThat(testExercise.getTitle()).isEqualTo(UPDATED_TITLE);
+        assertThat(testExercise.getBaseRepositoryUrl()).isEqualTo(UPDATED_BASE_REPOSITORY_URL);
+        assertThat(testExercise.getBaseBuildPlanId()).isEqualTo(UPDATED_BASE_BUILD_PLAN_ID);
+        assertThat(testExercise.isPublishBuildPlanUrl()).isEqualTo(UPDATED_PUBLISH_BUILD_PLAN_URL);
         assertThat(testExercise.getReleaseDate()).isEqualTo(UPDATED_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(UPDATED_DUE_DATE);
-        assertThat(testExercise.isPublishBuildPlanUrl()).isEqualTo(UPDATED_PUBLISH_BUILD_PLAN_URL);
-        assertThat(testExercise.getBaseBuildPlanId()).isEqualTo(UPDATED_BASE_BUILD_PLAN_ID);
-        assertThat(testExercise.getBaseRepositoryUrl()).isEqualTo(UPDATED_BASE_REPOSITORY_URL);
     }
 
     @Test

@@ -67,7 +67,7 @@ class ExerciseGatlingTest extends Simulation {
             .exec(http("Create new exercise")
             .post("/api/exercises")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "title":"SAMPLE_TEXT", "releaseDate":"2020-01-01T00:00:00.000Z", "dueDate":"2020-01-01T00:00:00.000Z", "publishBuildPlanUrl":null, "baseBuildPlanId":"SAMPLE_TEXT", "baseRepositoryUrl":"SAMPLE_TEXT"}""")).asJSON
+            .body(StringBody("""{"id":null, "title":"SAMPLE_TEXT", "baseRepositoryUrl":"SAMPLE_TEXT", "baseBuildPlanId":"SAMPLE_TEXT", "publishBuildPlanUrl":null, "releaseDate":"2020-01-01T00:00:00.000Z", "dueDate":"2020-01-01T00:00:00.000Z"}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_exercise_url"))).exitHereIfFailed
             .pause(10)

@@ -20,6 +20,24 @@
                      />
         </div>
         <div class="form-group">
+            <label class="control-label" translate="exerciseApplicationApp.exercise.baseRepositoryUrl" for="field_baseRepositoryUrl">Base Repository Url</label>
+            <input type="text" class="form-control" name="baseRepositoryUrl" id="field_baseRepositoryUrl"
+                    ng-model="vm.exercise.baseRepositoryUrl"
+                     />
+        </div>
+        <div class="form-group">
+            <label class="control-label" translate="exerciseApplicationApp.exercise.baseBuildPlanId" for="field_baseBuildPlanId">Base Build Plan Id</label>
+            <input type="text" class="form-control" name="baseBuildPlanId" id="field_baseBuildPlanId"
+                    ng-model="vm.exercise.baseBuildPlanId"
+                     />
+        </div>
+        <div class="form-group">
+            <label class="control-label" translate="exerciseApplicationApp.exercise.publishBuildPlanUrl" for="field_publishBuildPlanUrl">Publish Build Plan Url</label>
+            <input type="checkbox" class="form-control" name="publishBuildPlanUrl" id="field_publishBuildPlanUrl"
+                    ng-model="vm.exercise.publishBuildPlanUrl"
+                     />
+        </div>
+        <div class="form-group">
             <label class="control-label" translate="exerciseApplicationApp.exercise.releaseDate" for="field_releaseDate">Release Date</label>
                 <div class="input-group">
                     <input id="field_releaseDate" type="text" class="form-control" name="releaseDate" datetime-picker="{{dateformat}}" ng-model="vm.exercise.releaseDate" is-open="vm.datePickerOpenStatus.releaseDate"
@@ -38,24 +56,6 @@
                         <button type="button" class="btn btn-default" ng-click="vm.openCalendar('dueDate')"><i class="glyphicon glyphicon-calendar"></i></button>
                     </span>
                 </div>
-        </div>
-        <div class="form-group">
-            <label class="control-label" translate="exerciseApplicationApp.exercise.publishBuildPlanUrl" for="field_publishBuildPlanUrl">Publish Build Plan Url</label>
-            <input type="checkbox" class="form-control" name="publishBuildPlanUrl" id="field_publishBuildPlanUrl"
-                    ng-model="vm.exercise.publishBuildPlanUrl"
-                     />
-        </div>
-        <div class="form-group">
-            <label class="control-label" translate="exerciseApplicationApp.exercise.baseBuildPlanId" for="field_baseBuildPlanId">Base Build Plan Id</label>
-            <input type="text" class="form-control" name="baseBuildPlanId" id="field_baseBuildPlanId"
-                    ng-model="vm.exercise.baseBuildPlanId"
-                     />
-        </div>
-        <div class="form-group">
-            <label class="control-label" translate="exerciseApplicationApp.exercise.baseRepositoryUrl" for="field_baseRepositoryUrl">Base Repository Url</label>
-            <input type="text" class="form-control" name="baseRepositoryUrl" id="field_baseRepositoryUrl"
-                    ng-model="vm.exercise.baseRepositoryUrl"
-                     />
         </div>
 
         <div class="form-group">
