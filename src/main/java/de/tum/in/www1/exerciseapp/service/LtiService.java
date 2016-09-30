@@ -72,7 +72,10 @@ public class LtiService {
      */
     public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws JiraException, AuthenticationException {
 
-        String username = (this.USER_PREFIX + launchRequest.getLis_person_sourcedid());
+
+        String username =  this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+
+
         String password;
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -92,11 +95,13 @@ public class LtiService {
                 // user needs to be created
 
                 password = RandomStringUtils.randomAlphanumeric(10);
+                String email = launchRequest.getLis_person_contact_email_primary() != null  ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
+                String fullname = launchRequest.getLis_person_sourcedid() != null  ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
                 remoteUserService.createUser(username,
                     password,
-                    launchRequest.getLis_person_contact_email_primary(),
-                    launchRequest.getLis_person_sourcedid());
+                    email,
+                    fullname);
 
                 remoteUserService.addUserToGroup(username, USER_GROUP_NAME);
 
