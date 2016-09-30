@@ -9,6 +9,7 @@ import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.service.util.RandomUtil;
 import de.tum.in.www1.exerciseapp.web.rest.dto.ManagedUserDTO;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -44,6 +45,9 @@ public class UserService {
 
     @Inject
     private AuthorityRepository authorityRepository;
+
+    @Inject
+    private StandardPBEStringEncryptor encryptor;
 
     public Optional<User> activateRegistration(String key) {
         log.debug("Activating user for activation key {}", key);
@@ -158,12 +162,29 @@ public class UserService {
     }
 
     public void changePassword(String password) {
-        userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).ifPresent(u -> {
+        changePasswordByLogin(SecurityUtils.getCurrentUserLogin(), password);
+    }
+
+    public void changePasswordByLogin(String login, String password) {
+        userRepository.findOneByLogin(login).ifPresent(u -> {
             String encryptedPassword = passwordEncoder.encode(password);
             u.setPassword(encryptedPassword);
             userRepository.save(u);
             log.debug("Changed password for User: {}", u);
         });
+    }
+
+
+
+    @Transactional(readOnly = true)
+    public String decryptPassword() {
+        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
+        return encryptor.decrypt(user.getPassword());
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<String> decryptPasswordByLogin(String login) {
+        return userRepository.findOneByLogin(login).map(u -> encryptor.decrypt(u.getPassword()));
     }
 
     @Transactional(readOnly = true)

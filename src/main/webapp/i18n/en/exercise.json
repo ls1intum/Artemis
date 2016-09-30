@@ -24,6 +24,10 @@
             "dueDate": "Due Date",
             "course": "Course",
             "participations": "Participations"
+        },
+        "exerciseLtiConfiguration" : {
+            "lti": "LTI",
+            "configurationForExercise": "LTI Configuration for Exercise {{ title }}"
         }
     }
 }

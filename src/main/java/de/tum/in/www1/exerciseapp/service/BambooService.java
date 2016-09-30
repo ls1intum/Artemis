@@ -60,17 +60,19 @@ public class BambooService implements ContinuousIntegrationService {
     private ResultRepository resultRepository;
 
     @Override
-    public String copyBuildPlan(String baseBuildPlanId, String username) {
+    public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
+        wantedPlanKey = cleanPlanKey(wantedPlanKey);
         clonePlan(
             getProjectKeyFromBuildPlanId(baseBuildPlanId),
             getPlanKeyFromBuildPlanId(baseBuildPlanId),
-            username);
+            wantedPlanKey);
         // TODO: This should be returned by clone method instead of being built here
-        return getProjectKeyFromBuildPlanId(baseBuildPlanId) + "-" + username;
+        return getProjectKeyFromBuildPlanId(baseBuildPlanId) + "-" + wantedPlanKey;
     }
 
     @Override
-    public void configureBuildPlan(String buildPlanId, URL repositoryUrl, String username) {
+    public void configureBuildPlan(String buildPlanId, URL repositoryUrl, String planKey) {
+        // TODO: planKey not needed - remove from method signature?
         updatePlanRepository(
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
@@ -362,6 +364,11 @@ public class BambooService implements ContinuousIntegrationService {
     private String getProjectKeyFromUrl(URL repositoryUrl) {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         return repositoryUrl.getFile().split("/")[2];
+    }
+
+
+    private String cleanPlanKey(String name) {
+        return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     private String getRepositorySlugFromUrl(URL repositoryUrl) {

@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 
+import de.tum.in.www1.exerciseapp.config.SecurityConfiguration;
 import de.tum.in.www1.exerciseapp.domain.PersistentToken;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.PersistentTokenRepository;
@@ -15,6 +16,7 @@ import de.tum.in.www1.exerciseapp.web.rest.dto.UserDTO;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 
 import org.apache.commons.lang.StringUtils;
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -50,6 +52,7 @@ public class AccountResource {
 
     @Inject
     private MailService mailService;
+
 
     /**
      * POST  /register : register the user.
@@ -133,6 +136,26 @@ public class AccountResource {
             .map(user -> new ResponseEntity<>(new UserDTO(user), HttpStatus.OK))
             .orElse(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
     }
+
+
+    /**
+     * GET  /account/password : get the current users password.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the current user password in body, or status 500 (Internal Server Error) if the user couldn't be returned
+     */
+    @RequestMapping(value = "/account/password",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    public ResponseEntity<?> getPassword() {
+
+        Map<String, String> body = new HashMap<>();
+        body.put("password", userService.decryptPassword());
+
+        return new ResponseEntity<>(body, HttpStatus.OK);
+
+    }
+
 
     /**
      * POST  /account : update the current user information.

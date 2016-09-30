@@ -3,7 +3,8 @@
     angular
         .module('exerciseApplicationApp')
         .factory('Exercise', Exercise)
-        .factory('ExerciseResults', ExerciseResults);
+        .factory('ExerciseResults', ExerciseResults)
+        .factory('ExerciseLtiConfiguration', ExerciseLtiConfiguration);
 
     Exercise.$inject = ['$resource', 'DateUtils'];
 
@@ -36,4 +37,17 @@
             'query': { method: 'GET', isArray: true},
         });
     }
+
+
+    ExerciseLtiConfiguration.$inject = ['$resource'];
+
+    function ExerciseLtiConfiguration ($resource) {
+        var resourceUrl =  'api/lti/configuration/:exerciseId';
+
+        return $resource(resourceUrl, {}, {
+            'query': { method: 'GET', isArray: true},
+        });
+    }
+
+
 })();
