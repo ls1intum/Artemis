@@ -9,8 +9,10 @@ import de.tum.in.www1.exerciseapp.security.PBEPasswordEncoder;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -56,6 +58,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private SessionRegistry sessionRegistry;
 
 
+
     @Value("${exerciseapp.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
@@ -76,9 +79,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return encoder;
     }
 
-    @Bean JiraAuthenticationProvider jiraAuthenticationProvider() {
-        return new JiraAuthenticationProvider();
-    }
+    @Inject
+    private RemoteUserAuthenticationProvider remoteUserAuthenticationProvider;
+
 
     @Inject
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
@@ -86,7 +89,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .userDetailsService(userDetailsService)
                 .passwordEncoder(passwordEncoder())
             .and()
-            .authenticationProvider(jiraAuthenticationProvider());
+            .authenticationProvider(remoteUserAuthenticationProvider);
     }
 
     @Override

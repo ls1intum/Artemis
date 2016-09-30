@@ -4,8 +4,6 @@ import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
-import de.tum.in.www1.exerciseapp.security.JiraAuthenticationProvider;
-import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
 import org.apache.commons.lang.RandomStringUtils;
 import org.imsglobal.lti.launch.LtiOauthVerifier;
@@ -20,18 +18,14 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 
@@ -55,7 +49,7 @@ public class LtiService {
     private String USER_GROUP_NAME = "lti";
 
     @Inject
-    private JiraService jiraService;
+    private RemoteUserService remoteUserService;
 
 
     @Inject
@@ -64,9 +58,6 @@ public class LtiService {
     @Inject
     private UserRepository userRepository;
 
-
-    @Inject
-    private JiraAuthenticationProvider jiraAuthenticationProvider;
 
     @Autowired
     AuthenticationSuccessHandler successHandler;
@@ -102,19 +93,19 @@ public class LtiService {
 
                 password = RandomStringUtils.randomAlphanumeric(10);
 
-                jiraService.createUser(username,
+                remoteUserService.createUser(username,
                     password,
                     launchRequest.getLis_person_contact_email_primary(),
                     launchRequest.getLis_person_sourcedid());
 
-                jiraService.addUserToGroup(username, USER_GROUP_NAME);
+                remoteUserService.addUserToGroup(username, USER_GROUP_NAME);
 
                 log.debug("Created user {} on JIRA, signing in", username);
 
             }
 
             // Authenticate, which will create the local user
-            Authentication token = jiraAuthenticationProvider.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+            Authentication token = remoteUserService.authenticate(new UsernamePasswordAuthenticationToken(username, password));
             SecurityContextHolder.getContext().setAuthentication(token);
 
             // Save password if the user was newly created
@@ -133,7 +124,7 @@ public class LtiService {
             String courseGroup = exercise.getCourse().getStudentGroupName();
 
             if(!user.getGroups().contains(courseGroup)) {
-                jiraService.addUserToGroup(username, courseGroup);
+                remoteUserService.addUserToGroup(username, courseGroup);
                 List<String> groups = user.getGroups();
                 groups.add(courseGroup);
                 user.setGroups(groups);
