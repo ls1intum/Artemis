@@ -24,11 +24,11 @@
             <column name="clone_url" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            
+
             <column name="repository_slug" type="varchar(255)">
                 <constraints nullable="true" />
             </column>
-            
+
             <column name="student_id" type="bigint">
                 <constraints nullable="true" />
             </column>
@@ -39,7 +39,6 @@
 
             <!-- jhipster-needle-liquibase-add-column - Jhipster will add columns here, do not remove-->
         </createTable>
-        <dropDefaultValue tableName="participation" columnName="initialization_date" columnDataType="datetime"/>
-        
+
     </changeSet>
 </databaseChangeLog>

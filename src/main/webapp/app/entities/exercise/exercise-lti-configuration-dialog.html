@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+
+</body>
+</html>
+
+<form name="editForm" role="form" novalidate>
+
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+                ng-click="vm.clear()">&times;</button>
+        <h4 class="modal-title" id="myExerciseLabel" translate="exerciseApplicationApp.exerciseLtiConfiguration.configurationForExercise" translate-values="{title: '{{vm.exercise.title}}'}">LTI Configuration</h4>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <div class="form-group">
+            <label>LTI ID</label>
+            <input type="text" class="form-control"
+                   ng-model="vm.configuration.ltiId" readonly />
+        </div>
+
+        <div class="form-group">
+            <label>LTI Passport</label>
+            <input type="text" class="form-control"
+                   ng-model="vm.configuration.ltiPassport" readonly />
+        </div>
+
+        <div class="form-group">
+            <label>LTI URL</label>
+            <input type="text" class="form-control"
+                   ng-model="vm.configuration.launchUrl" readonly />
+        </div>
+
+        <div class="form-group">
+            <label>LTI Launch Target</label>
+            <input type="text" class="form-control"
+                   value="New Window" readonly />
+        </div>
+
+        <div class="form-group">
+            <label>Scored</label>
+            <input type="text" class="form-control"
+                   value="Yes" readonly />
+        </div>
+
+
+
+        <div class="form-group">
+            <label>Request user's username</label>
+            <input type="text" class="form-control"
+                   value="True" readonly />
+        </div>
+
+        <div class="form-group">
+            <label>Request user's email</label>
+            <input type="text" class="form-control"
+                   value="True" readonly />
+        </div>
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
+            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span translate="entity.action.cancel">Cancel</span>
+        </button>
+
+    </div>
+</form>

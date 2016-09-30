@@ -136,7 +136,35 @@
                     $state.go('^');
                 });
             }]
-        });
+        })
+        .state('exercise.ltiConfiguration', {
+            parent: 'exercise',
+            url: '/{id}/lticonfiguration',
+            data: {
+                authorities: ['ROLE_ADMIN']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/exercise/exercise-lti-configuration-dialog.html',
+                    controller: 'ExerciseLtiConfigurationDialogController',
+                    controllerAs: 'vm',
+                    backdrop: 'static',
+                    size: 'lg',
+                    resolve: {
+                        exercise: ['Exercise', function(Exercise) {
+                            return Exercise.get({id : $stateParams.id}).$promise;
+                        }],
+                        configuration: ['ExerciseLtiConfiguration', function(ExerciseLtiConfiguration) {
+                            return ExerciseLtiConfiguration.get({exerciseId : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('exercise', null, { reload: true });
+                }, function() {
+                    $state.go('^');
+                });
+            }]
+        })
     }
 
 })();

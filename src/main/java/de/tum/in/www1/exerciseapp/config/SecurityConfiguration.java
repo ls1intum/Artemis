@@ -1,9 +1,13 @@
 package de.tum.in.www1.exerciseapp.config;
 
+
 import de.tum.in.www1.exerciseapp.security.*;
 import de.tum.in.www1.exerciseapp.web.filter.CsrfCookieGeneratorFilter;
 import de.tum.in.www1.exerciseapp.config.JHipsterProperties;
+import de.tum.in.www1.exerciseapp.security.PBEPasswordEncoder;
 
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,8 +19,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.data.repository.query.SecurityEvaluationContextExtension;
 
 import org.springframework.security.web.authentication.RememberMeServices;
@@ -53,9 +55,25 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Inject
     private SessionRegistry sessionRegistry;
 
+
+    @Value("${exerciseapp.encryption-password}")
+    private String ENCRYPTION_PASSWORD;
+
+
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
+    public StandardPBEStringEncryptor encryptor() {
+        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+        encryptor.setAlgorithm("PBEWithMD5AndDES");
+        encryptor.setPassword(ENCRYPTION_PASSWORD);
+        return encryptor;
+    }
+
+    @Bean
+    public PBEPasswordEncoder passwordEncoder() {
+        PBEPasswordEncoder encoder = new PBEPasswordEncoder();
+        encoder.setPbeStringEncryptor(encryptor());
+
+        return encoder;
     }
 
     @Bean JiraAuthenticationProvider jiraAuthenticationProvider() {
@@ -95,6 +113,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .and().and()
             .csrf()
             .ignoringAntMatchers("/websocket/**")
+            .ignoringAntMatchers("/api/lti/launch/*")
         .and()
             .addFilterAfter(new CsrfCookieGeneratorFilter(), CsrfFilter.class)
             .exceptionHandling()
@@ -128,6 +147,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()
+            .antMatchers("/api/lti/launch/*").permitAll()
             .antMatchers("/api/account/reset_password/init").permitAll()
             .antMatchers("/api/account/reset_password/finish").permitAll()
             .antMatchers("/api/profile-info").permitAll()
