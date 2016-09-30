@@ -65,10 +65,10 @@
             var html = [
                 '<div>',
                 '<p>Clone your personal repository for this exercise:</p>',
-                '<pre>', exercise.participation.repositoryUrl, '</pre>',
+                '<pre style="max-width: 550px;">', exercise.participation.repositoryUrl, '</pre>',
                 vm.repositoryPassword ? '<p>Your password is: <code> ' + vm.repositoryPassword + ' </code><p>' : '',
                 '<a class="btn btn-primary btn-sm" href="', buildSourceTreeUrl(exercise.participation.repositoryUrl), '">Clone in SourceTree</a>',
-                ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git and Mercurial client for Windows or Mac. ',
+                ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. ',
                 '</div>'
             ].join('');
             return trusted[html] || (trusted[html] = $sce.trustAsHtml(html));
