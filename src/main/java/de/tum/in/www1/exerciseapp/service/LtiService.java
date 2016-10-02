@@ -1,9 +1,12 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.Exercise;
+import de.tum.in.www1.exerciseapp.domain.LtiOutcomeUrl;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
+import de.tum.in.www1.exerciseapp.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
+import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
 import org.apache.commons.lang.RandomStringUtils;
 import org.imsglobal.lti.launch.LtiOauthVerifier;
@@ -58,12 +61,14 @@ public class LtiService {
     @Inject
     private UserRepository userRepository;
 
+    @Inject
+    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
     @Autowired
     AuthenticationSuccessHandler successHandler;
 
     /**
-     * Handles LTI launch requests. Therefore it creates an user, and signs in if necessary.
+     * Handles LTI launch requests.
      *
      * @param launchRequest The launch request, sent by LTI consumer
      * @param exercise      Exercise to launch
@@ -73,7 +78,28 @@ public class LtiService {
     public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws JiraException, AuthenticationException {
 
 
-        String username =  this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        User user = authenticateLtiUser(launchRequest);
+
+        // Make sure user is added to group for this exercise
+        addUserToExerciseGroup(user, exercise);
+
+        // Save LTI outcome url
+        saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url());
+
+
+    }
+
+
+    /**
+     * Signs in the LTI user into the exercise app. Therefore it creates an user, if necessary.
+     *
+     * @param launchRequest The launch request, sent by LTI consumer
+     * @return
+     * @throws JiraException
+     * @throws AuthenticationException
+     */
+    private User authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws JiraException, AuthenticationException {
+        String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
 
 
         String password;
@@ -95,8 +121,8 @@ public class LtiService {
                 // user needs to be created
 
                 password = RandomStringUtils.randomAlphanumeric(10);
-                String email = launchRequest.getLis_person_contact_email_primary() != null  ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
-                String fullname = launchRequest.getLis_person_sourcedid() != null  ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
+                String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
+                String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
                 remoteUserService.createUser(username,
                     password,
@@ -117,28 +143,58 @@ public class LtiService {
             if (!existingPassword.isPresent()) {
                 userService.changePasswordByLogin(username, password);
             }
+
+
         } else {
             log.debug("User already signed in");
+            username = SecurityUtils.getCurrentUserLogin();
         }
 
-
-        // Make sure user is added to group for this exercise
-        User user  =userRepository.findOneByLogin(username).get();
-
-        if(user.getLogin().equals(username)) {
-            String courseGroup = exercise.getCourse().getStudentGroupName();
-
-            if(!user.getGroups().contains(courseGroup)) {
-                remoteUserService.addUserToGroup(username, courseGroup);
-                List<String> groups = user.getGroups();
-                groups.add(courseGroup);
-                user.setGroups(groups);
-                userRepository.save(user);
-            }
-        }
+        return userRepository.findOneByLogin(username).get();
 
 
     }
+
+    /**
+     * Add an user to the exercise group
+     *
+     * @param user
+     * @param exercise
+     */
+    private void addUserToExerciseGroup(User user, Exercise exercise) {
+        String courseGroup = exercise.getCourse().getStudentGroupName();
+        if (!user.getGroups().contains(courseGroup)) {
+            remoteUserService.addUserToGroup(user.getLogin(), courseGroup);
+            List<String> groups = user.getGroups();
+            groups.add(courseGroup);
+            user.setGroups(groups);
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * Save the LTO outcome url
+     *
+     * @param user
+     * @param exercise
+     * @param url
+     */
+    private void saveLtiOutcomeUrl(User user, Exercise exercise, String url) {
+
+        if(url == null || url.isEmpty()) {
+            return;
+        }
+
+        LtiOutcomeUrl ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserIsCurrentUserAndExercise(exercise).orElseGet(() -> {
+            LtiOutcomeUrl newLtiOutcomeUrl = new LtiOutcomeUrl();
+            newLtiOutcomeUrl.setUser(user);
+            newLtiOutcomeUrl.setExercise(exercise);
+            return newLtiOutcomeUrl;
+        });
+        ltiOutcomeUrl.setUrl(url);
+        ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
+    }
+
 
     /**
      * Checks if a LTI request is correctly signed via OAuth with the secret

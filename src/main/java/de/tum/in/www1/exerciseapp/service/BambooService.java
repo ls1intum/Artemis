@@ -350,8 +350,8 @@ public class BambooService implements ContinuousIntegrationService {
 
     private String buildSshRepositoryUrl(String project, String slug) {
         final int sshPort = 7999;
-        return "ssh://git@exerciseapplication-bitbucket:" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
-        //return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
+
+        return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
     }
 
     private String getProjectKeyFromBuildPlanId(String buildPlanId) {
