@@ -1,0 +1,27 @@
+{
+    "relationships": [
+        {
+            "relationshipName": "user",
+            "otherEntityName": "user",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipName": "exercise",
+            "otherEntityName": "exercise",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "url",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20161002111935",
+    "dto": "no",
+    "service": "no",
+    "entityTableName": "lti_outcome_url",
+    "pagination": "no"
+}
