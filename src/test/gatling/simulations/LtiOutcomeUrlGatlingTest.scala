@@ -67,7 +67,7 @@ class LtiOutcomeUrlGatlingTest extends Simulation {
             .exec(http("Create new ltiOutcomeUrl")
             .post("/api/lti-outcome-urls")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "url":"SAMPLE_TEXT"}""")).asJSON
+            .body(StringBody("""{"id":null, "url":"SAMPLE_TEXT", "sourcedId":"SAMPLE_TEXT"}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_ltiOutcomeUrl_url"))).exitHereIfFailed
             .pause(10)

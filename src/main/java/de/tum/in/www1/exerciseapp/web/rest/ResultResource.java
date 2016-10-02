@@ -5,6 +5,7 @@ import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
+import de.tum.in.www1.exerciseapp.service.LtiService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -41,6 +42,9 @@ public class ResultResource {
 
     @Inject
     private ContinuousIntegrationService continuousIntegrationService;
+
+    @Inject
+    private LtiService ltiService;
 
     /**
      * POST  /results : Create a new result.
@@ -86,6 +90,8 @@ public class ResultResource {
         Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
             continuousIntegrationService.onBuildCompleted(participation);
+            // A new result was saved. Notfiy the LTI service about it.
+            ltiService.onNewBuildResult(participation);
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();

@@ -1,18 +1,28 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import com.oracle.tools.packager.Log;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.LtiOutcomeUrl;
+import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.domain.util.PatchedIMSPOXRequest;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
 import de.tum.in.www1.exerciseapp.repository.LtiOutcomeUrlRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
+import oauth.signpost.exception.OAuthException;
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
 import org.imsglobal.lti.launch.LtiOauthVerifier;
 import org.imsglobal.lti.launch.LtiVerificationException;
 import org.imsglobal.lti.launch.LtiVerificationResult;
 import org.imsglobal.lti.launch.LtiVerifier;
+import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +38,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Optional;
 
@@ -64,6 +76,9 @@ public class LtiService {
     @Inject
     private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
 
+    @Inject
+    private ResultRepository resultRepository;
+
     @Autowired
     AuthenticationSuccessHandler successHandler;
 
@@ -84,7 +99,7 @@ public class LtiService {
         addUserToExerciseGroup(user, exercise);
 
         // Save LTI outcome url
-        saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url());
+        saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());
 
 
     }
@@ -179,19 +194,20 @@ public class LtiService {
      * @param exercise
      * @param url
      */
-    private void saveLtiOutcomeUrl(User user, Exercise exercise, String url) {
+    private void saveLtiOutcomeUrl(User user, Exercise exercise, String url, String sourcedId) {
 
         if(url == null || url.isEmpty()) {
             return;
         }
 
-        LtiOutcomeUrl ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserIsCurrentUserAndExercise(exercise).orElseGet(() -> {
+        LtiOutcomeUrl ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserAndExercise(user, exercise).orElseGet(() -> {
             LtiOutcomeUrl newLtiOutcomeUrl = new LtiOutcomeUrl();
             newLtiOutcomeUrl.setUser(user);
             newLtiOutcomeUrl.setExercise(exercise);
             return newLtiOutcomeUrl;
         });
         ltiOutcomeUrl.setUrl(url);
+        ltiOutcomeUrl.setSourcedId(sourcedId);
         ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
     }
 
@@ -216,6 +232,35 @@ public class LtiService {
             log.error("Lti signature verification failed. ", e);
         }
         return success;
+
+    }
+
+
+    /**
+     * This method is pinged on new build results.
+     * It sends an message to the LTI consumer with the new score.
+     *
+     * @param participation
+     */
+    public void onNewBuildResult(Participation participation) {
+
+        Optional<LtiOutcomeUrl> ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise());
+
+        if(ltiOutcomeUrl.isPresent()) {
+
+            String score = !resultRepository.findEarliestSuccessfulResultsForParticipationId(participation.getId()).isEmpty() ? "1.0" : "0.0";
+
+            log.debug("Reporting to LTI consumer: Score {} for Participation {}", score, participation);
+
+
+            try {
+                PatchedIMSPOXRequest.sendReplaceResult(ltiOutcomeUrl.get().getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.get().getSourcedId(), score);
+            } catch (Exception e) {
+                log.error("Reporting to LTI consumer failed: {}", e);
+            }
+
+
+        }
 
     }
 

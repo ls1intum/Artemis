@@ -228,7 +228,6 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation
      */
     @Override
-    @Async
     public void onBuildCompleted(Participation participation) {
         log.info("Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
         try {

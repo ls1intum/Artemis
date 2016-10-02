@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.repository;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.LtiOutcomeUrl;
 
+import de.tum.in.www1.exerciseapp.domain.User;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 
@@ -20,5 +21,9 @@ public interface LtiOutcomeUrlRepository extends JpaRepository<LtiOutcomeUrl,Lon
 
     @Query("select ltiOutcomeUrl from LtiOutcomeUrl ltiOutcomeUrl where ltiOutcomeUrl.user.login = ?#{principal} and ltiOutcomeUrl.exercise.id = :#{#exercise.id}")
     Optional<LtiOutcomeUrl> findByUserIsCurrentUserAndExercise(@Param("exercise") Exercise exercise);
+
+
+    Optional<LtiOutcomeUrl> findByUserAndExercise(User user, Exercise exercise);
+
 
 }

@@ -24,6 +24,9 @@ public class LtiOutcomeUrl implements Serializable {
     @Column(name = "url")
     private String url;
 
+    @Column(name = "sourced_id")
+    private String sourcedId;
+
     @ManyToOne
     private User user;
 
@@ -44,6 +47,14 @@ public class LtiOutcomeUrl implements Serializable {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    public String getSourcedId() {
+        return sourcedId;
+    }
+
+    public void setSourcedId(String sourcedId) {
+        this.sourcedId = sourcedId;
     }
 
     public User getUser() {
@@ -87,6 +98,7 @@ public class LtiOutcomeUrl implements Serializable {
         return "LtiOutcomeUrl{" +
             "id=" + id +
             ", url='" + url + "'" +
+            ", sourcedId='" + sourcedId + "'" +
             '}';
     }
 }
