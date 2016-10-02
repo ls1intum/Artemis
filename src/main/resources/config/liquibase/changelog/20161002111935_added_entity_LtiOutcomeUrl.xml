@@ -25,6 +25,10 @@
                 <constraints nullable="true" />
             </column>
 
+            <column name="sourced_id" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+
             <column name="user_id" type="bigint">
                 <constraints nullable="true" />
             </column>

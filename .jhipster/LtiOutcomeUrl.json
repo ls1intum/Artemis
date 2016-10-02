@@ -17,6 +17,10 @@
         {
             "fieldName": "url",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "sourcedId",
+            "fieldType": "String"
         }
     ],
     "changelogDate": "20161002111935",
