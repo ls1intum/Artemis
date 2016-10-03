@@ -1,6 +1,5 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import com.oracle.tools.packager.Log;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.LtiOutcomeUrl;
 import de.tum.in.www1.exerciseapp.domain.Participation;
@@ -12,17 +11,11 @@ import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
-import oauth.signpost.exception.OAuthException;
 import org.apache.commons.lang.RandomStringUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.util.EntityUtils;
 import org.imsglobal.lti.launch.LtiOauthVerifier;
 import org.imsglobal.lti.launch.LtiVerificationException;
 import org.imsglobal.lti.launch.LtiVerificationResult;
 import org.imsglobal.lti.launch.LtiVerifier;
-import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.util.List;
 import java.util.Optional;
 
