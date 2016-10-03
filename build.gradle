@@ -116,7 +116,7 @@ dependencies {
     compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.3.1.201605051710-r'
 
     compile "org.imsglobal:basiclti-util:1.1.2"
-    compile "org.jasypt:jasypt:1.9.2:lite"
+    compile "org.jasypt:jasypt:1.9.2"
 
     compile "io.dropwizard.metrics:metrics-core"
     compile "io.dropwizard.metrics:metrics-annotation:${dropwizard_metrics_version}"
