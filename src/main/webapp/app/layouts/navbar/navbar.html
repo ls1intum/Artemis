@@ -8,8 +8,9 @@
                 <span class="icon-bar"></span>
             </button>
             <a class="navbar-brand logo" href="#/" ng-click="vm.collapseNavbar()">
+                <img class="logo-img logo-img-tum" src="content/images/logo_tum.png"/>
                 <img class="logo-img" src="content/images/logo_l1_weiss.png"/>
-                <span translate="global.title">LS1 Exercises</span> <span class="navbar-version">v{{VERSION}}</span>
+                <span translate="global.title">TUM LS1 Exercises</span> <span class="navbar-version hidden-xs">v{{VERSION}}</span>
             </a>
         </div>
         <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed" ng-switch="vm.isAuthenticated()">
