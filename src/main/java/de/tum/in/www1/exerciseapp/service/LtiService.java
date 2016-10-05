@@ -1,9 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.LtiOutcomeUrl;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.util.PatchedIMSPOXRequest;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
 import de.tum.in.www1.exerciseapp.repository.LtiOutcomeUrlRepository;
@@ -32,7 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 @Service
@@ -137,7 +137,7 @@ public class LtiService {
 
                 remoteUserService.addUserToGroup(username, USER_GROUP_NAME);
 
-                log.debug("Created user {} on JIRA, signing in", username);
+                log.debug("Created user {} {} on JIRA, signing in", username, password);
 
             }
 
@@ -239,7 +239,7 @@ public class LtiService {
 
         if(ltiOutcomeUrl.isPresent()) {
 
-            String score = !resultRepository.findEarliestSuccessfulResultsForParticipationId(participation.getId()).isEmpty() ? "1.0" : "0.0";
+            String score = getScoreForParticipation(participation);
 
             log.debug("Reporting to LTI consumer: Score {} for Participation {}", score, participation);
 
@@ -252,6 +252,42 @@ public class LtiService {
 
 
         }
+
+    }
+
+    /**
+     * Calculates the score for a participation. Therefore is uses the number of successful tests in the latest build.
+     *
+     * @param participation
+     * @return score String value between 0.00 and 1.00
+     */
+    public String getScoreForParticipation(Participation participation) {
+
+        Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByBuildCompletionDateDesc(participation.getId());
+        if(!latestResult.isPresent()) {
+            return "0.00";
+        }
+
+        if(latestResult.get().isBuildSuccessful()) {
+            return "1.00";
+        }
+
+        if(latestResult.get().getResultString() != null && !latestResult.get().getResultString().isEmpty()) {
+
+            Pattern p = Pattern.compile("^([0-9]+) of ([0-9]+) failed");
+            Matcher m = p.matcher(latestResult.get().getResultString());
+
+            if (m.find()) {
+                float failedTests = Float.parseFloat(m.group(1));
+                float totalTests = Float.parseFloat(m.group(2));
+                float score = (totalTests - failedTests) / totalTests;
+                return String.format(Locale.ROOT, "%.2f", score);
+            }
+
+        }
+
+
+        return "0.00";
 
     }
 
