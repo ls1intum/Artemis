@@ -1,6 +1,6 @@
 {
     "home": {
-        "title": "Welcome to the LS1 Exercise Application!",
+        "title": "Welcome to the TUM LS1 Exercise Application!",
         "subtitle": "This application allows you take part in interactive programming exercises.",
         "logged": {
             "message": "You are logged in as user \"{{username}}\". View your <a class=\"alert-link\" ui-sref=\"courses\">courses</a> to get started."
