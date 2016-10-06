@@ -23,8 +23,6 @@ Docker can be used to setup development containers for MySQL, Bitbucket, Bamboo 
           encryption-password: X7RNnJUzeoUpB2EQsK
           jira:
             url: http://localhost:8000
-            user: jira
-            password: jira
             instructor-group-name: jira-administrators
           bitbucket:
             url: http://localhost:7990

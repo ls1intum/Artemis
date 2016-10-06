@@ -6,9 +6,19 @@ import de.tum.in.www1.exerciseapp.exception.JiraException;
 import de.tum.in.www1.exerciseapp.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
+import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
+import de.tum.in.www1.exerciseapp.service.util.RandomUtil;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
+import de.tum.in.www1.exerciseapp.web.rest.dto.ManagedUserDTO;
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.imsglobal.lti.launch.LtiOauthVerifier;
 import org.imsglobal.lti.launch.LtiVerificationException;
 import org.imsglobal.lti.launch.LtiVerificationResult;
@@ -21,16 +31,16 @@ import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -54,9 +64,6 @@ public class LtiService {
     @Value("${exerciseapp.lti.user-group-name}")
     private String USER_GROUP_NAME = "lti";
 
-    @Inject
-    private RemoteUserService remoteUserService;
-
 
     @Inject
     private UserService userService;
@@ -70,8 +77,8 @@ public class LtiService {
     @Inject
     private ResultRepository resultRepository;
 
-    @Autowired
-    AuthenticationSuccessHandler successHandler;
+    @Inject
+    private PasswordEncoder passwordEncoder;
 
     /**
      * Handles LTI launch requests.
@@ -115,48 +122,48 @@ public class LtiService {
         if (auth instanceof AnonymousAuthenticationToken) {
             // currently not logged in
 
-            // check if user already exists
-            Optional<String> existingPassword = userService.decryptPasswordByLogin(username);
-            if (existingPassword.isPresent()) {
 
-                password = existingPassword.get();
+            String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
+            String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
-                log.debug("User {} already exists, signing in", username);
+            User user = userRepository.findOneByLogin(username).orElseGet(() -> {
+                User newUser = userService.createUserInformation(username, "",
+                    fullname, "", email,
+                    "en");
 
-            } else {
-                // user needs to be created
+                // add user to LTI group
+                newUser.setGroups(new ArrayList<>(Arrays.asList(USER_GROUP_NAME)));
 
-                password = RandomStringUtils.randomAlphanumeric(10);
-                String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
-                String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
+                // set random password
+                String randomEncryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
+                newUser.setPassword(randomEncryptedPassword);
 
-                remoteUserService.createUser(username,
-                    password,
-                    email,
-                    fullname);
+                userRepository.save(newUser);
 
-                remoteUserService.addUserToGroup(username, USER_GROUP_NAME);
+                log.debug("Created user {}", username);
 
-                log.debug("Created user {} {} on JIRA, signing in", username, password);
+                return newUser;
+            });
 
+
+            if (!user.getActivated()) {
+                userService.activateRegistration(user.getActivationKey());
             }
 
-            // Authenticate, which will create the local user
-            Authentication token = remoteUserService.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-            SecurityContextHolder.getContext().setAuthentication(token);
 
-            // Save password if the user was newly created
-            if (!existingPassword.isPresent()) {
-                userService.changePasswordByLogin(username, password);
-            }
+            log.debug("Signing in as {}", username);
 
+
+            // Authenticate
+            auth = new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER)));
+            SecurityContextHolder.getContext().setAuthentication(auth);
+
+            return user;
 
         } else {
             log.debug("User already signed in");
-            username = SecurityUtils.getCurrentUserLogin();
+            return userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
         }
-
-        return userRepository.findOneByLogin(username).get();
 
 
     }
@@ -170,7 +177,6 @@ public class LtiService {
     private void addUserToExerciseGroup(User user, Exercise exercise) {
         String courseGroup = exercise.getCourse().getStudentGroupName();
         if (!user.getGroups().contains(courseGroup)) {
-            remoteUserService.addUserToGroup(user.getLogin(), courseGroup);
             List<String> groups = user.getGroups();
             groups.add(courseGroup);
             user.setGroups(groups);
@@ -187,7 +193,7 @@ public class LtiService {
      */
     private void saveLtiOutcomeUrl(User user, Exercise exercise, String url, String sourcedId) {
 
-        if(url == null || url.isEmpty()) {
+        if (url == null || url.isEmpty()) {
             return;
         }
 
@@ -237,7 +243,7 @@ public class LtiService {
 
         Optional<LtiOutcomeUrl> ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise());
 
-        if(ltiOutcomeUrl.isPresent()) {
+        if (ltiOutcomeUrl.isPresent()) {
 
             String score = getScoreForParticipation(participation);
 
@@ -245,7 +251,15 @@ public class LtiService {
 
 
             try {
-                PatchedIMSPOXRequest.sendReplaceResult(ltiOutcomeUrl.get().getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.get().getSourcedId(), score);
+                HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.get().getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.get().getSourcedId(), score, null, false);
+                HttpClient client = HttpClientBuilder.create().build();
+                HttpResponse response = client.execute(request);
+                String responseString = new BasicResponseHandler().handleResponse(response);
+                log.info("Response from LTI consumer: {}", responseString);
+                if (response.getStatusLine().getStatusCode() >= 400) {
+                    throw new HttpResponseException(response.getStatusLine().getStatusCode(),
+                        response.getStatusLine().getReasonPhrase());
+                }
             } catch (Exception e) {
                 log.error("Reporting to LTI consumer failed: {}", e);
             }
@@ -264,15 +278,15 @@ public class LtiService {
     public String getScoreForParticipation(Participation participation) {
 
         Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByBuildCompletionDateDesc(participation.getId());
-        if(!latestResult.isPresent()) {
+        if (!latestResult.isPresent()) {
             return "0.00";
         }
 
-        if(latestResult.get().isBuildSuccessful()) {
+        if (latestResult.get().isBuildSuccessful()) {
             return "1.00";
         }
 
-        if(latestResult.get().getResultString() != null && !latestResult.get().getResultString().isEmpty()) {
+        if (latestResult.get().getResultString() != null && !latestResult.get().getResultString().isEmpty()) {
 
             Pattern p = Pattern.compile("^([0-9]+) of ([0-9]+) failed");
             Matcher m = p.matcher(latestResult.get().getResultString());
