@@ -7,6 +7,7 @@ import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.LtiService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.ResultService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,7 @@ public class ResultResource {
     private ContinuousIntegrationService continuousIntegrationService;
 
     @Inject
-    private LtiService ltiService;
+    private ResultService resultService;
 
     /**
      * POST  /results : Create a new result.
@@ -90,25 +91,14 @@ public class ResultResource {
 
         Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
-            onResultNotified(participation);
+            resultService.onResultNotified(participation);
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 
-    /**
-     * Perform async operations after we were notified about new results.
-     *
-     * @param participation Participation for which a new build is available
-     */
-    @Async
-    private void onResultNotified(Participation participation) {
-        // fetches the new build result
-        continuousIntegrationService.onBuildCompleted(participation);
-        // handles new results and sends them to LTI consumers
-        ltiService.onNewBuildResult(participation);
-    }
+
 
     /**
      * PUT  /results : Updates an existing result.
