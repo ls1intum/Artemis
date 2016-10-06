@@ -49,7 +49,7 @@ public class User extends AbstractAuditingEntity implements Serializable {
 
     @Email
     @Size(max = 100)
-    @Column(length = 100, unique = true)
+    @Column(length = 100)
     private String email;
 
     @NotNull
