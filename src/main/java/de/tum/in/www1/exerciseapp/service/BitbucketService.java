@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.exception.BitbucketException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -12,10 +13,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import javax.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -34,6 +39,10 @@ public class BitbucketService implements VersionControlService {
     @Value("${exerciseapp.bitbucket.password}")
     private String BITBUCKET_PASSWORD;
 
+    @Inject
+    private UserService userService;
+
+
     @Override
     public URL copyRepository(URL baseRepositoryUrl, String username) {
         Map<String, String> result = this.forkRepository(getProjectKeyFromUrl(baseRepositoryUrl), getRepositorySlugFromUrl(baseRepositoryUrl), username);
@@ -47,12 +56,38 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void configureRepository(URL repositoryUrl, String username) {
-        this.giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+
+
+        User user = userService.getUserByLogin(username).get();
+
+        if (!userExists(username)) {
+            log.debug("Bitbucket user {} does not exist yet", username);
+            String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
+            createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
+
+            try {
+                addUserToGroups(username, user.getGroups());
+            } catch (BitbucketException e) {
+            /*
+                This might throw exceptions, for example if the group does not exist on Bitbucket.
+                We can safely ignore them.
+            */
+            }
+
+        } else {
+            log.debug("Bitbucket user {} already exists", username);
+        }
+
+
+        // add Bitbucket user to groups of the local user.
+
+
+        giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
     }
 
     @Override
     public void deleteRepository(URL repositoryUrl) {
-        this.deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
+        deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
     }
 
     @Override
@@ -130,6 +165,105 @@ public class BitbucketService implements VersionControlService {
         return null;
     }
 
+
+    /**
+     * Checks if an username exists on Bitbucket
+     *
+     * @param username the Bitbucket username to check
+     * @return true if it exists
+     * @throws BitbucketException
+     */
+    private Boolean userExists(String username) throws BitbucketException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                BITBUCKET_URL + "/rest/api/1.0/users/" + username,
+                HttpMethod.GET,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
+                return false;
+            }
+            log.error("Could not check if user  " + username + " exists.", e);
+            throw new BitbucketException("Could not check if user exists");
+        }
+        return true;
+    }
+
+
+    /**
+     * Creates an user on Bitbucket
+     *
+     * @param username     The wanted Bitbucket username
+     * @param password     The wanted passowrd in clear text
+     * @param emailAddress The eMail address for the user
+     * @param displayName  The display name (full name)
+     * @throws BitbucketException
+     */
+    public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(BITBUCKET_URL + "/rest/api/1.0/admin/users")
+            .queryParam("name", username)
+            .queryParam("email", emailAddress)
+            .queryParam("emailAddress", emailAddress)
+            .queryParam("password", password)
+            .queryParam("displayName", displayName)
+            .queryParam("addToDefaultGroup", "true")
+            .queryParam("notify", "false");
+
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+
+        log.debug("Creating Bitbucket user {} ({})", username, emailAddress);
+
+        try {
+            restTemplate.exchange(
+                builder.build().encode().toUri(),
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            log.error("Could not create Bitbucket user " + username, e);
+            throw new BitbucketException("Error while creating user");
+        }
+    }
+
+    /**
+     * Adds an Bitbucket user to (multiple) Bitbucket groups
+     *
+     * @param username The Bitbucket username
+     * @param groups   Names of Bitbucket groups
+     * @throws BitbucketException
+     */
+    public void addUserToGroups(String username, List<String> groups) throws BitbucketException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("user", username);
+        body.put("groups", groups);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        log.debug("Adding Bitbucket user {} to groups {}", username, groups);
+
+        try {
+            restTemplate.exchange(
+                BITBUCKET_URL + "/rest/api/1.0/admin/users/add-groups",
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            log.error("Could not add Bitbucket user " + username + " to groups" + groups, e);
+            throw new BitbucketException("Error while adding Bitbucket user to groups");
+        }
+    }
+
+
     /**
      * Gives user write permissions for a repository.
      *
@@ -152,6 +286,7 @@ public class BitbucketService implements VersionControlService {
             throw new BitbucketException("Error while giving repository permissions");
         }
     }
+
 
     /**
      * Deletes the given repository from Bitbucket.

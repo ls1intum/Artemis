@@ -27,6 +27,7 @@ import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.csrf.CsrfFilter;
 
 import javax.inject.Inject;
+import java.util.Optional;
 
 @Configuration
 @EnableWebSecurity
@@ -80,16 +81,18 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Inject
-    private RemoteUserAuthenticationProvider remoteUserAuthenticationProvider;
+    private Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
 
     @Inject
     public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
         auth
             .userDetailsService(userDetailsService)
-                .passwordEncoder(passwordEncoder())
-            .and()
-            .authenticationProvider(remoteUserAuthenticationProvider);
+                .passwordEncoder(passwordEncoder());
+
+        if(remoteUserAuthenticationProvider.isPresent()) {
+            auth.authenticationProvider(remoteUserAuthenticationProvider.get());
+        }
     }
 
     @Override

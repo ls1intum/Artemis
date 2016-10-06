@@ -187,6 +187,8 @@ public class UserService {
         return userRepository.findOneByLogin(login).map(u -> encryptor.decrypt(u.getPassword()));
     }
 
+
+
     @Transactional(readOnly = true)
     public Optional<User> getUserWithAuthoritiesByLogin(String login) {
         return userRepository.findOneByLogin(login).map(u -> {
@@ -202,6 +204,19 @@ public class UserService {
         user.getGroups().size(); // eagerly load the association
         user.getAuthorities().size(); // eagerly load the association
         return user;
+    }
+
+    @Transactional(readOnly = true)
+    public User getUser() {
+        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
+        return user;
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<User> getUserByLogin(String login) {
+        return userRepository.findOneByLogin(login).map(u -> {
+            return u;
+        });
     }
 
     @Transactional(readOnly = true)

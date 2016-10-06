@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -89,13 +90,24 @@ public class ResultResource {
 
         Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
-            continuousIntegrationService.onBuildCompleted(participation);
-            // A new result was saved. Notfiy the LTI service about it.
-            ltiService.onNewBuildResult(participation);
+            onResultNotified(participation);
             return ResponseEntity.ok().build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
+    }
+
+    /**
+     * Perform async operations after we were notified about new results.
+     *
+     * @param participation Participation for which a new build is available
+     */
+    @Async
+    private void onResultNotified(Participation participation) {
+        // fetches the new build result
+        continuousIntegrationService.onBuildCompleted(participation);
+        // handles new results and sends them to LTI consumers
+        ltiService.onNewBuildResult(participation);
     }
 
     /**
