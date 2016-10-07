@@ -3,10 +3,9 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.LtiService;
+import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
-import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
-import org.imsglobal.lti.launch.LtiVerificationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,15 +13,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by Josias Montag on 22.09.16.
@@ -47,6 +46,9 @@ public class LtiResource {
 
     @Inject
     private LtiService ltiService;
+
+    @Inject
+    private UserService userService;
 
     @Inject
     private ExerciseRepository exerciseRepository;
@@ -86,12 +88,16 @@ public class LtiResource {
             return;
         }
 
+        Boolean isNewUser = TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochSecond()) < 15;
+
         String redirectUrl = request.getScheme() + // "http"
             "://" +                                // "://"
             request.getServerName() +              // "myhost"
             ":" +                                  // ":"
             request.getServerPort() +
-            "/#/courses/" + exercise.getCourse().getId() + "/exercise/" + exercise.getId();
+            "/#/courses/" + exercise.getCourse().getId() + "/exercise/" + exercise.getId() +
+            (isNewUser ? "?welcome" : "");
+
 
 
         response.sendRedirect(redirectUrl);
