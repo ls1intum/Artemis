@@ -15,9 +15,9 @@
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'ExerciseParticipation', '$http'];
+    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'ExerciseParticipation', '$http', '$location'];
 
-    function ExerciseListController($sce, $window, AlertService, CourseExercises, ExerciseParticipation, $http) {
+    function ExerciseListController($sce, $window, AlertService, CourseExercises, ExerciseParticipation, $http,  $location) {
         var vm = this;
 
         vm.clonePopover = {
@@ -26,9 +26,6 @@
         vm.loading = {};
 
         vm.$onInit = init;
-        getRepositoryPassword().then(function (password) {
-            vm.repositoryPassword = password;
-        });
 
         vm.getClonePopoverTemplate = getClonePopoverTemplate;
         vm.goToBuildPlan = goToBuildPlan;
@@ -36,6 +33,17 @@
         vm.start = start;
 
         function init() {
+
+            if($location.search().welcome) {
+                showWelcomeAlert();
+            }
+
+            getRepositoryPassword().then(function (password) {
+                vm.repositoryPassword = password;
+            });
+
+
+
             CourseExercises.query({courseId: vm.course.id}).$promise.then(function (exercises) {
 
                 if (vm.filterByExerciseId) {
@@ -92,6 +100,13 @@
                 return _.has(response, "data.password") && !_.isEmpty(response.data.password) ? response.data.password : null;
             }).catch(function () {
                 return null;
+            });
+        }
+
+        function showWelcomeAlert() {
+            AlertService.add({
+                type: 'info',
+                msg: '<strong>Welcome to the TUM Exercise Application!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!'
             });
         }
 
