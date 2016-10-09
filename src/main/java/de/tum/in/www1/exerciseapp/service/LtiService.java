@@ -123,7 +123,7 @@ public class LtiService {
 
             User user = userRepository.findOneByLogin(username).orElseGet(() -> {
                 User newUser = userService.createUserInformation(username, "",
-                    fullname, "", email,
+                    USER_GROUP_NAME, fullname, email,
                     "en");
 
                 // add user to LTI group
