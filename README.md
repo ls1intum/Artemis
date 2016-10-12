@@ -1,4 +1,5 @@
-# Exercise Application
+# ArTEMiS
+AuTomated assEssment Management System
 
 ## Exercise Setup
 Please follow these instructions carefully to set up a new exercise for the students in course. The instructions demonstrate setting up a Java exercise, however this can be adapted to any programming language supported by the build server.
