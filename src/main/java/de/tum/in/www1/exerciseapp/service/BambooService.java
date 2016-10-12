@@ -3,8 +3,11 @@ package de.tum.in.www1.exerciseapp.service;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
+import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +24,7 @@ import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.CliClient;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
@@ -81,7 +85,22 @@ public class BambooService implements ContinuousIntegrationService {
             getRepositorySlugFromUrl(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
-        gitService.doEmptyCommit(getProjectKeyFromBuildPlanId(buildPlanId), repositoryUrl);
+
+        // Empty commit - Bamboo bug workaround
+
+        try {
+            Repository repo = gitService.getOrCheckoutRepository(repositoryUrl);
+            gitService.commitAndPush(repo, "Setup");
+            gitService.deleteLocalRepository(repo);
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+            throw new GitException("Git error while doing empty commit");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GitException("IOError while doing empty commit");
+        }
+
+
     }
 
     @Override
