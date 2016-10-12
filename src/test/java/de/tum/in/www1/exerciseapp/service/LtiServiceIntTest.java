@@ -32,7 +32,7 @@ import static org.assertj.core.api.Assertions.*;
  *
  * @see LtiService
  */
-@ActiveProfiles(profiles = "jira,bamboo,bitbucket")
+@ActiveProfiles(profiles = "dev,jira,bamboo,bitbucket")
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = ExerciseApplicationApp.class)
 @WebAppConfiguration

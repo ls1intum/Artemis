@@ -1,76 +1,140 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.exception.GitException;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.internal.storage.file.FileRepository;
-import org.eclipse.jgit.lib.StoredConfig;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.UUID;
+import java.nio.file.Path;
+import java.util.HashMap;
+
 
 @Service
 public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
 
-    @Value("${exerciseapp.bitbucket.url}")
-    private URL BITBUCKET_SERVER;
-
     @Value("${exerciseapp.bitbucket.user}")
-    private String BITBUCKET_USER;
+    private String GIT_USER;
 
     @Value("${exerciseapp.bitbucket.password}")
-    private String BITBUCKET_PASSWORD;
+    private String GIT_PASSWORD;
 
     @Value("${exerciseapp.repo-clone-path}")
     private String REPO_CLONE_PATH;
 
+
+    private HashMap<Path, Repository> cachedRepositories = new HashMap<>();
+
+
     /**
-     * Checks out the repository with the given URL to the file system
+     * Get the local repository for a given remote repository URL.
+     * If the local repo does not exist yet, it will be checked out.
+     *
+     * @param repoUrl URL of the remote repository.
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
      */
-    public File checkoutRepository(String projectKey, String repoUrl) throws GitAPIException {
-        File repo = new File(REPO_CLONE_PATH + projectKey);
-        if (!Files.exists(repo.toPath())) {
-            log.info("Repository for key {} doesn't exist, cloning...", projectKey);
-            Git.cloneRepository()
-                .setURI(repoUrl)
-                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(BITBUCKET_USER, BITBUCKET_PASSWORD))
-                .setDirectory(repo).call();
-        } else {
-            log.info("Repo already cloned.");
+    public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, GitAPIException {
+        Path localPath = new File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
+
+        // check if Repository object already created
+        if (cachedRepositories.containsKey(localPath)) {
+            return cachedRepositories.get(localPath);
         }
-        return repo;
+
+        if (!Files.exists(localPath)) {
+            log.debug("Cloning from " + repoUrl + " to " + localPath);
+            Git git = Git.cloneRepository()
+                .setURI(repoUrl.toString())
+                .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
+                .setDirectory(localPath.toFile())
+                .call();
+            Repository r1 = git.getRepository();
+        } else {
+            log.debug("Repository at " + localPath + " already exists");
+        }
+
+
+
+        FileRepositoryBuilder builder = new FileRepositoryBuilder();
+        Repository repository = builder.setGitDir(new File(localPath + "/.git"))
+            .readEnvironment() // scan environment GIT_* variables
+            .findGitDir() // scan up the file system tree
+            .build();
+
+        cachedRepositories.put(localPath, repository);
+
+        return repository;
     }
 
-    public void doEmptyCommit(String projectKey, URL newRemote) throws GitException {
-        try {
-            File sourceFolder = checkoutRepository(projectKey, newRemote.toString());
-            File tmpFolder = new File(sourceFolder.getParentFile().getPath() + "/" + UUID.randomUUID());
-            FileUtils.copyDirectory(sourceFolder, tmpFolder);
-            Git git = new Git(new FileRepository(tmpFolder.getPath() + "/.git"));
-            StoredConfig config = git.getRepository().getConfig();
-            config.setString("remote", "origin", "url", newRemote.toString());
-            config.save();
-            git.commit().setMessage("Setup").setAllowEmpty(true).call();
-            git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(BITBUCKET_USER, BITBUCKET_PASSWORD)).call();
-            FileUtils.deleteDirectory(tmpFolder);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new GitException("IOError while doing empty commit");
-        } catch (GitAPIException e) {
-            e.printStackTrace();
-            throw new GitException("Git error while doing empty commit");
-        }
+
+    /**
+     * Commits with the given message into the repository and pushes it to the remote.
+     *
+     * @param repo Local Repository Object.
+     * @param message Commit Message
+     * @throws GitAPIException
+     */
+    public void commitAndPush(Repository repo, String message) throws GitAPIException {
+        Git git = new Git(repo);
+        git.commit().setMessage(message).setAllowEmpty(true).call();
+        git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
     }
+
+    /**
+     * Pulls from remote repository.
+     *
+     * @param repo Local Repository Object.
+     * @return The PullResult which contains FetchResult and MergeResult.
+     * @throws GitAPIException
+     */
+    public PullResult pull(Repository repo) throws GitAPIException {
+        Git git = new Git(repo);
+        return git.pull().call();
+    }
+
+    /**
+     * Deletes a local repository folder.
+     *
+     * @param repo Local Repository Object.
+     * @throws IOException
+     */
+    public void deleteLocalRepository(Repository repo) throws IOException {
+        Path repoPath = new File(repo.getDirectory().getParent()).toPath();
+        cachedRepositories.remove(repoPath);
+        FileUtils.deleteDirectory(repoPath.toFile());
+        log.debug("Deleted Repository at " + repoPath);
+    }
+
+    /**
+     * Generates the unique local folder name for a given remote repository URL.
+     *
+     * @param repoUrl URL of the remote repository.
+     * @return
+     * @throws MalformedURLException
+     */
+    public String folderNameForRepositoryUrl(URL repoUrl) throws MalformedURLException {
+        String path = repoUrl.getPath();
+        path = path.replaceAll(".git$", "");
+        path = path.replaceAll("/$", "");
+        path = path.replaceAll("^/", "");
+        path = path.replaceAll("^scm/", "");
+        return path;
+    }
+
+
 }
