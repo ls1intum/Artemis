@@ -2,12 +2,13 @@ package de.tum.in.www1.exerciseapp.service;
 
 import com.google.common.io.Files;
 import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.Repository;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
-import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -60,7 +61,10 @@ public class GitServiceIntTest {
     @Test
     public void testGetOrCheckoutRepositoryForNewRepo() throws IOException, GitAPIException {
 
-        Repository repo = gitService.getOrCheckoutRepository(new URL(remoteTestRepo));
+        Participation participation = new Participation();
+        participation.setRepositoryUrl(remoteTestRepo);
+
+        Repository repo = gitService.getOrCheckoutRepository(participation);
 
         assertThat(repo.getBranch()).isEqualTo("master");
         assertThat(repo.getDirectory()).exists();
@@ -77,7 +81,10 @@ public class GitServiceIntTest {
     @Test
     public void testDeleteLocalRepository() throws IOException, GitAPIException {
 
-        Repository repo = gitService.getOrCheckoutRepository(new URL(remoteTestRepo));
+        Participation participation = new Participation();
+        participation.setRepositoryUrl(remoteTestRepo);
+
+        Repository repo = gitService.getOrCheckoutRepository(participation);
 
         assertThat(repo.getDirectory()).exists();
 
@@ -91,8 +98,12 @@ public class GitServiceIntTest {
     @Test
     public void testGetOrCheckoutRepositoryForExistingRepo() throws IOException, GitAPIException {
 
-        Repository repo = gitService.getOrCheckoutRepository(new URL(remoteTestRepo));
-        Repository repo2 = gitService.getOrCheckoutRepository(new URL(remoteTestRepo));
+        Participation participation = new Participation();
+        participation.setRepositoryUrl(remoteTestRepo);
+
+
+        Repository repo = gitService.getOrCheckoutRepository(participation);
+        Repository repo2 = gitService.getOrCheckoutRepository(participation);
 
         assertThat(repo.getDirectory()).isEqualTo(repo2.getDirectory());
         assertThat(repo2.getBranch()).isEqualTo("master");
@@ -103,11 +114,36 @@ public class GitServiceIntTest {
     }
 
 
+    @Test
+    public void testListFiles() throws IOException, GitAPIException {
+
+        Participation participation = new Participation();
+        participation.setRepositoryUrl(remoteTestRepo);
+
+        Repository repo = gitService.getOrCheckoutRepository(participation);
+
+        Collection<File> files = gitService.listFiles(repo);
+
+        assertThat(files.size()).isGreaterThan(0);
+
+
+
+        gitService.deleteLocalRepository(repo);
+
+
+    }
+
+
+
 
     @Test
     public void testCommitAndPush() throws IOException, GitAPIException {
 
-        Repository repo = gitService.getOrCheckoutRepository(new URL(remoteTestRepo));
+        Participation participation = new Participation();
+        participation.setRepositoryUrl(remoteTestRepo);
+
+
+        Repository repo = gitService.getOrCheckoutRepository(participation);
 
         Ref oldHead = repo.findRef("HEAD");
 
@@ -141,7 +177,12 @@ public class GitServiceIntTest {
     @Test
     public void testPull() throws IOException, GitAPIException {
 
-        Repository repo = gitService.getOrCheckoutRepository(new URL(remoteTestRepo));
+
+        Participation participation = new Participation();
+        participation.setRepositoryUrl(remoteTestRepo);
+
+
+        Repository repo = gitService.getOrCheckoutRepository(participation);
 
         Ref oldHead = repo.findRef("HEAD");
 

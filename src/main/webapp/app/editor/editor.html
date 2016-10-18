@@ -1,0 +1,43 @@
+<nav class="navbar navbar-default" role="navigation">
+    <div class="">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" ng-click="vm.toggleNavbar()">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand logo" href="#/" ng-click="vm.collapseNavbar()">
+                <img class="logo-img logo-img-tum" src="content/images/logo_tum.png"/>
+                <img class="logo-img" src="content/images/logo_l1_weiss.png"/>
+                <span translate="global.title">TUM LS1 Exercises</span>
+            </a>
+        </div>
+        <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed">
+            <ul class="nav navbar-nav navbar-right">
+
+
+
+            </ul>
+        </div>
+    </div>
+</nav>
+
+
+<div class="container-fluid">
+<div class="row">
+    <div class="col-md-3">
+
+        <div class="panel panel-primary">
+            <div class="panel-heading">
+                <h3 class="panel-title">{{$ctrl.participation.exercise.course.title}}</h3>
+            </div>
+            <div class="panel-body">
+                <editor-file-browser participation="$ctrl.participation"></editor-file-browser>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-md-9"> ddd</div>
+</div>
+</div>
