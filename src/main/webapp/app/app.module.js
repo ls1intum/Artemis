@@ -21,10 +21,17 @@
         ])
         .run(run);
 
-    run.$inject = ['stateHandler', 'translationHandler'];
+    run.$inject = ['stateHandler', 'translationHandler','$rootScope'];
 
-    function run(stateHandler, translationHandler) {
+    function run(stateHandler, translationHandler,$rootScope) {
         stateHandler.initialize();
         translationHandler.initialize();
+
+        $rootScope.$on('$stateChangeSuccess',function(event, toState, toParams, fromState, fromParams){
+            $rootScope.contentContainerClass = toState.contentContainerClass ? toState.contentContainerClass : "container";
+            $rootScope.bodyClass = toState.bodyClass ? toState.bodyClass : "";
+        });
+
+
     }
 })();

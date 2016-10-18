@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="bower_components/font-awesome-animation/dist/font-awesome-animation.css">
     <link rel="stylesheet" href="bower_components/font-awesome-animation/dist/font-awesome-animation.min.css">
     <link rel="stylesheet" href="bower_components/angular-loading-bar/build/loading-bar.css">
+    <link rel="stylesheet" href="bower_components/bootstrap-treeview/dist/bootstrap-treeview.min.css">
     <!-- endinject -->
     <link rel="stylesheet" href="content/css/vendor.css">
     <!-- endbuild -->
@@ -20,21 +21,17 @@
     <link rel="stylesheet" href="content/css/main.css">
     <!-- endbuild -->
 </head>
-<body ng-app="exerciseApplicationApp" ng-strict-di>
+<body ng-app="exerciseApplicationApp" ng-class="bodyClass" ng-strict-di>
     <!--[if lt IE 9]>
         <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     <![endif]-->
     <page-ribbon></page-ribbon>
-    <div ui-view="navbar" ng-cloak></div>
-    <div class="container">
-        <div ui-view="content">
-            <!-- Angular views -->
-        </div>
 
-        <div class="footer text-center"ng-cloak>
-            <p translate="footer">Found a bug or have some feedback? Please <a href="mailto:muenchdo@in.tum.de">let us know</a>!</p>
-        </div>
-    </div>
+    <div ui-view="navbar" ng-cloak></div>
+
+    <div ui-view="content" ng-class="contentContainerClass"></div>
+    <div ui-view="footer"></div>
+
 
     <!-- Google Analytics: uncomment and change UA-XXXXX-X to be your site's ID.
     <script>
@@ -55,6 +52,7 @@
     <script src="bower_components/sockjs-client/dist/sockjs.js"></script>
     <script src="bower_components/stomp-websocket/lib/stomp.min.js"></script>
     <script src="bower_components/moment/moment.js"></script>
+    <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-aria/angular-aria.js"></script>
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
@@ -74,6 +72,7 @@
     <script src="bower_components/ng-file-upload/ng-file-upload.js"></script>
     <script src="bower_components/ngInfiniteScroll/build/ng-infinite-scroll.js"></script>
     <script src="bower_components/angular-moment/angular-moment.js"></script>
+    <script src="bower_components/bootstrap-treeview/dist/bootstrap-treeview.min.js"></script>
     <!-- endinject -->
     <!-- endbuild -->
 
@@ -117,8 +116,8 @@
     <script src="app/entities/participation/participation.service.js"></script>
     <script src="app/entities/participation/participation.search.service.js"></script>
     <script src="app/entities/participation/participation.controller.js"></script>
-    <script src="app/entities/exercise/exercise-dialog.controller.js"></script>
     <script src="app/entities/exercise/exercise-lti-configuration-dialog.controller.js"></script>
+    <script src="app/entities/exercise/exercise-dialog.controller.js"></script>
     <script src="app/entities/exercise/exercise-detail.controller.js"></script>
     <script src="app/entities/exercise/exercise-delete-dialog.controller.js"></script>
     <script src="app/entities/exercise/exercise.state.js"></script>
@@ -133,6 +132,9 @@
     <script src="app/entities/course/course.service.js"></script>
     <script src="app/entities/course/course.search.service.js"></script>
     <script src="app/entities/course/course.controller.js"></script>
+    <script src="app/editor/file-browser/editor-file-browser.component.js"></script>
+    <script src="app/editor/editor.state.js"></script>
+    <script src="app/editor/editor.component.js"></script>
     <script src="app/courses/results/result.component.js"></script>
     <script src="app/courses/exercises/exercise-list.component.js"></script>
     <script src="app/courses/courses.state.js"></script>
