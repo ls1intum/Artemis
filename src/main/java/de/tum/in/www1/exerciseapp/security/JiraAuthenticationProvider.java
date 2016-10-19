@@ -131,6 +131,11 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
             adminAuthority.setName(AuthoritiesConstants.ADMIN);
             authorities.add(adminAuthority);
         }
+        if (groups.stream().anyMatch(g -> g.contains("tutor"))) {
+            Authority taAuthority = new Authority();
+            taAuthority.setName(AuthoritiesConstants.TEACHING_ASSISTANT);
+            authorities.add(taAuthority);
+        }
         Authority userAuthority = new Authority();
         userAuthority.setName(AuthoritiesConstants.USER);
         authorities.add(userAuthority);
