@@ -11,18 +11,21 @@
         $stateProvider
             .state('editor', {
                 parent: 'base',
-                url: '/editor/{participationId}',
+                url: '/editor/{participationId}/{file:any}',
+                params: {
+                    file: null
+                },
                 contentContainerClass: 'editor',
-                bodyClass: 'sidebar-mini',
                 data: {
                     authorities: ['ROLE_USER'],
                     pageTitle: 'exerciseApplicationApp.editor.title'
                 },
                 views: {
                     'content@': {
-                        template: '<editor participation="participation"></editor>',
-                        controller: ['$scope', 'participation', function ($scope, participation) {
+                        template: '<editor participation="participation" file="file"></editor>',
+                        controller: ['$scope', 'participation', '$state', function ($scope, participation, $state) {
                             $scope.participation = participation;
+                            $scope.file = $state.params.file;
                         }]
                     }
                 },
@@ -37,5 +40,6 @@
                 },
 
             })
+
     }
 })();

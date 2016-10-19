@@ -145,12 +145,23 @@ public class GitService {
 
             repo.setFiles(files);
         }
-
-
-
-
         return repo.getFiles();
     }
+
+
+    public Optional<File> getFileByName(Repository repo, String filename) {
+        Iterator<File> itr = listFiles(repo).iterator();
+
+        while (itr.hasNext()) {
+            File file = itr.next();
+            if(file.toString().equals(filename)) {
+                return Optional.of(file);
+            }
+        }
+        return Optional.empty();
+
+    }
+
 
 
     /**

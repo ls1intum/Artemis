@@ -8,7 +8,8 @@
         .module('exerciseApplicationApp')
         .component('editor', {
             bindings: {
-                participation: '<'
+                participation: '<',
+                file: '<'
             },
             templateUrl: 'app/editor/editor.html',
             controller: EditorController
@@ -20,6 +21,7 @@
         var vm = this;
 
         console.log(vm.participation);
+        console.log(vm.file);
 
     }
 })();
