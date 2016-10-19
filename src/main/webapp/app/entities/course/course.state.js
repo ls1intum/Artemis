@@ -73,6 +73,7 @@
                             return {
                                 title: null,
                                 studentGroupName: null,
+                                teachingAssistantGroupName: null,
                                 id: null
                             };
                         }
