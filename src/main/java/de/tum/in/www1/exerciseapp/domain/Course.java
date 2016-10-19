@@ -30,6 +30,9 @@ public class Course implements Serializable {
     @Column(name = "student_group_name")
     private String studentGroupName;
 
+    @Column(name = "teaching_assistant_group_name")
+    private String teachingAssistantGroupName;
+
     @OneToMany(mappedBy = "course")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -57,6 +60,14 @@ public class Course implements Serializable {
 
     public void setStudentGroupName(String studentGroupName) {
         this.studentGroupName = studentGroupName;
+    }
+
+    public String getTeachingAssistantGroupName() {
+        return teachingAssistantGroupName;
+    }
+
+    public void setTeachingAssistantGroupName(String teachingAssistantGroupName) {
+        this.teachingAssistantGroupName = teachingAssistantGroupName;
     }
 
     public Set<Exercise> getExercises() {
@@ -93,6 +104,7 @@ public class Course implements Serializable {
             "id=" + id +
             ", title='" + title + "'" +
             ", studentGroupName='" + studentGroupName + "'" +
+            ", teachingAssistantGroupName='" + teachingAssistantGroupName + "'" +
             '}';
     }
 }
