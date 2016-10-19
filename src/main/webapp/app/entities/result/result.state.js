@@ -12,6 +12,7 @@
         .state('result', {
             parent: 'entity',
             url: '/result',
+            contentContainerClass: 'container-fluid',
             data: {
                 authorities: ['ROLE_ADMIN'],
                 pageTitle: 'exerciseApplicationApp.result.home.title'
