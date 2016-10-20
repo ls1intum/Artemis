@@ -4,13 +4,10 @@ import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
-import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
-import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -56,8 +53,13 @@ public class CourseService {
         User user = userService.getUserWithGroupsAndAuthorities();
         Authority adminAuthority = new Authority();
         adminAuthority.setName("ROLE_ADMIN");
+        Authority taAuthority = new Authority();
+        taAuthority.setName("ROLE_TA");
         Stream<Course> userCourses = result.stream().filter(
-            c -> user.getGroups().contains(c.getStudentGroupName()) || user.getAuthorities().contains(adminAuthority)
+            c -> user.getGroups().contains(c.getStudentGroupName())
+                || user.getGroups().contains(c.getTeachingAssistantGroupName())
+                || (user.getAuthorities().contains(taAuthority) && c.getTitle().equals("Archive"))
+                || user.getAuthorities().contains(adminAuthority)
         );
         return userCourses.collect(Collectors.toList());
     }
@@ -83,5 +85,10 @@ public class CourseService {
     public void delete(Long id) {
         log.debug("Request to delete Course : {}", id);
         courseRepository.delete(id);
+    }
+
+    public List<String> getAllTeachingAssistantGroupNames() {
+        List<Course> courses = courseRepository.findAll();
+        return courses.stream().map(c -> c.getTeachingAssistantGroupName()).collect(Collectors.toList());
     }
 }

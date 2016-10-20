@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
+import de.tum.in.www1.exerciseapp.service.ExerciseService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -36,6 +37,9 @@ public class ExerciseResource {
     @Inject
     private ExerciseRepository exerciseRepository;
 
+    @Inject
+    private ExerciseService exerciseService;
+
     /**
      * POST  /exercises : Create a new exercise.
      *
@@ -46,6 +50,7 @@ public class ExerciseResource {
     @RequestMapping(value = "/exercises",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to save Exercise : {}", exercise);
@@ -70,6 +75,7 @@ public class ExerciseResource {
     @RequestMapping(value = "/exercises",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Exercise> updateExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to update Exercise : {}", exercise);
@@ -92,11 +98,12 @@ public class ExerciseResource {
     @RequestMapping(value = "/exercises",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<List<Exercise>> getAllExercises(Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseRepository.findAll(pageable);
+        Page<Exercise> page = exerciseService.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -112,7 +119,7 @@ public class ExerciseResource {
     @RequestMapping(value = "/courses/{courseId}/exercises",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, Pageable pageable)
@@ -132,6 +139,7 @@ public class ExerciseResource {
     @RequestMapping(value = "/exercises/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
