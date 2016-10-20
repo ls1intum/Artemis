@@ -21,6 +21,7 @@
                     <th><span translate="global.field.id">ID</span></th>
                     <th><span translate="exerciseApplicationApp.course.title">Title</span></th>
                     <th><span translate="exerciseApplicationApp.course.studentGroupName">Student Group Name</span></th>
+                    <th><span translate="exerciseApplicationApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -29,6 +30,7 @@
                     <td><a ui-sref="course-detail({id:course.id})">{{course.id}}</a></td>
                     <td>{{course.title}}</td>
                     <td>{{course.studentGroupName}}</td>
+                    <td>{{course.teachingAssistantGroupName}}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"
