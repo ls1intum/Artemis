@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.security;
 import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
+import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.hibernate.Hibernate;
@@ -49,6 +50,9 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
 
     @Inject
     UserRepository userRepository;
+
+    @Inject
+    CourseService courseService;
 
 
     @Override
@@ -126,16 +130,21 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
      */
     private Set<Authority> buildAuthoritiesFromGroups(List<String> groups) {
         Set<Authority> authorities = new HashSet<>();
+
+        // Check if user is instructor
         if (groups.contains(INSTRUCTOR_GROUP_NAME)) {
             Authority adminAuthority = new Authority();
             adminAuthority.setName(AuthoritiesConstants.ADMIN);
             authorities.add(adminAuthority);
         }
-        if (groups.stream().anyMatch(g -> g.contains("tutor"))) {
+
+        // Check if user is a tutor in any course
+        if (groups.stream().anyMatch(g -> courseService.getAllTeachingAssistantGroupNames().contains(g))) {
             Authority taAuthority = new Authority();
             taAuthority.setName(AuthoritiesConstants.TEACHING_ASSISTANT);
             authorities.add(taAuthority);
         }
+
         Authority userAuthority = new Authority();
         userAuthority.setName(AuthoritiesConstants.USER);
         authorities.add(userAuthority);
