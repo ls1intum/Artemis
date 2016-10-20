@@ -83,4 +83,9 @@ public class CourseService {
         log.debug("Request to delete Course : {}", id);
         courseRepository.delete(id);
     }
+
+    public List<String> getAllTeachingAssistantGroupNames() {
+        List<Course> courses = courseRepository.findAll();
+        return courses.stream().map(c -> c.getTeachingAssistantGroupName()).collect(Collectors.toList());
+    }
 }
