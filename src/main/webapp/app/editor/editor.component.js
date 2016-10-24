@@ -15,13 +15,26 @@
             controller: EditorController
         });
 
-    EditorController.$inject = ['Participation'];
+    EditorController.$inject = ['Participation', '$scope'];
 
-    function EditorController(Participation) {
+    function EditorController(Participation, $scope) {
         var vm = this;
 
         console.log(vm.participation);
         console.log(vm.file);
+
+        $scope.toggleCollapse = function ($event) {
+            $event.toElement.blur();
+
+            var $panel = $($event.toElement).closest('.panel');
+
+            if($panel.hasClass('collapsed')) {
+                $panel.removeClass('collapsed');
+            } else {
+                $panel.addClass('collapsed');
+            }
+
+        }
 
     }
 })();

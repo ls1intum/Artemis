@@ -35,7 +35,9 @@
     "font-awesome": "fontawesome#^4.6.3",
     "font-awesome-animation": "^0.0.9",
     "lodash": "^4.13.1",
-    "bootstrap-treeview": "^1.2.0"
+    "bootstrap-treeview": "^1.2.0",
+    "ace-builds": "1.2.5",
+    "angular-ui-ace": "bower"
   },
   "devDependencies": {
     "angular-mocks": "1.5.5"
@@ -59,6 +61,23 @@
     "bootstrap-sass": {
       "main": [
         "assets/stylesheets/_bootstrap.scss"
+      ]
+    },
+    "ace-builds": {
+      "main": [
+        "src-min-noconflict/ace.js",
+        "src-min-noconflict/mode-java.js",
+        "src-min-noconflict/mode-html.js",
+        "src-min-noconflict/mode-json.js",
+        "src-min-noconflict/mode-xml.js",
+        "src-min-noconflict/mode-python.js",
+        "src-min-noconflict/mode-sql.js",
+        "src-min-noconflict/mode-javascript.js",
+        "src-min-noconflict/mode-markdown.js",
+        "src-min-noconflict/mode-jsp.js",
+        "src-min-noconflict/mode-jade.js",
+        "src-min-noconflict/mode-swift.js",
+        "src-min-noconflict/ext-modelist.js"
       ]
     }
   },

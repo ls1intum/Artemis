@@ -14,7 +14,10 @@
             'query': { method: 'GET', isArray: true },
             'get': {
                 url: 'api/repository/:participationId/file',
-                method: 'GET'
+                method: 'GET',
+                transformResponse: function(data, headersGetter, status) {
+                    return {fileContent:  data};
+                }
             }
         });
     }

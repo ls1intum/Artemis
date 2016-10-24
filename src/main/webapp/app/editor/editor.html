@@ -1,43 +1,83 @@
-<nav class="navbar navbar-default" role="navigation">
-    <div class="">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle" ng-click="vm.toggleNavbar()">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand logo" href="#/" ng-click="vm.collapseNavbar()">
-                <img class="logo-img logo-img-tum" src="content/images/logo_tum.png"/>
-                <img class="logo-img" src="content/images/logo_l1_weiss.png"/>
-                <span translate="global.title">TUM LS1 Exercises</span>: <span> {{$ctrl.participation.exercise.course.title}}</span>
-            </a>
+
+
+<div class="editor-wrapper">
+
+    <nav class="navbar navbar-default editor-top" role="navigation">
+        <div class="">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" ng-click="vm.toggleNavbar()">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand logo" href="#/" ng-click="vm.collapseNavbar()">
+                    <img class="logo-img logo-img-tum" src="content/images/logo_tum.png"/>
+                    <img class="logo-img" src="content/images/logo_l1_weiss.png"/>
+                    <span translate="global.title" class="hidden-sm">TUM LS1 Exercises </span><span
+                    class="hidden-sm">: </span> <span>{{$ctrl.participation.exercise.course.title}}</span>
+                </a>
+            </div>
+            <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed">
+                <ul class="nav navbar-nav navbar-right">
+
+
+                </ul>
+            </div>
         </div>
-        <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed">
-            <ul class="nav navbar-nav navbar-right">
+    </nav>
+
+    <div class="editor-main">
 
 
+        <div class="editor-sidebar-left">
 
-            </ul>
+            <div class="panel panel-primary">
+                <div class="panel-heading" ng-click="toggleCollapse($event)">
+                    <span class="pull-right "><i class="glyphicon glyphicon-chevron-left"></i></span>
+                    <h3 class="panel-title">
+                        <i class="glyphicon glyphicon-folder-open"></i>
+                        <span> &nbsp; {{$ctrl.participation.exercise.title}}</span>
+                    </h3>
+
+                </div>
+                <div class="panel-body">
+                    <editor-file-browser participation="$ctrl.participation" file="$ctrl.file"></editor-file-browser>
+                </div>
+            </div>
+
         </div>
+        <div class="editor-center">
+            <editor-ace participation="$ctrl.participation" file="$ctrl.file"></editor-ace>
+        </div>
+
+        <div class="editor-sidebar-right">
+
+        </div>
+
+
     </div>
-</nav>
 
 
-<div class="container-fluid">
-<div class="row">
-    <div class="col-md-3">
+    <div class="editor-bottom">
 
-        <div class="panel panel-primary">
-            <div class="panel-heading">
-                <h3 class="panel-title">{{$ctrl.participation.exercise.title}}</h3>
+
+        <div class="panel panel-primary collapsed">
+            <div class="panel-heading" ng-click="toggleCollapse($event)">
+                <span class="pull-right "><i class="glyphicon glyphicon-chevron-down"></i></span>
+                <h3 class="panel-title">
+                    <i class="glyphicon glyphicon-console"></i>
+                    <span> &nbsp; Build Output</span>
+                </h3>
+
             </div>
             <div class="panel-body">
-                <editor-file-browser participation="$ctrl.participation" file="$ctrl.file"></editor-file-browser>
+
             </div>
         </div>
 
+
     </div>
-    <div class="col-md-9"> ddd {{$ctrl.file}}</div>
+
 </div>
-</div>
+
