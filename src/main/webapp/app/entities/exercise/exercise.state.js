@@ -14,7 +14,7 @@
             url: '/exercise',
             contentContainerClass: 'container-fluid',
             data: {
-                authorities: ['ROLE_ADMIN'],
+                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
                 pageTitle: 'exerciseApplicationApp.exercise.home.title'
             },
             views: {
@@ -36,7 +36,7 @@
             parent: 'entity',
             url: '/exercise/{id}',
             data: {
-                authorities: ['ROLE_ADMIN'],
+                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
                 pageTitle: 'exerciseApplicationApp.exercise.detail.title'
             },
             views: {
@@ -60,7 +60,7 @@
             parent: 'exercise',
             url: '/new',
             data: {
-                authorities: ['ROLE_ADMIN']
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -93,7 +93,7 @@
             parent: 'exercise',
             url: '/{id}/edit',
             data: {
-                authorities: ['ROLE_ADMIN']
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
