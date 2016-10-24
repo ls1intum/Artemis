@@ -48,6 +48,8 @@ public class CourseResourceIntTest {
     private static final String UPDATED_TITLE = "BBBBB";
     private static final String DEFAULT_STUDENT_GROUP_NAME = "AAAAA";
     private static final String UPDATED_STUDENT_GROUP_NAME = "BBBBB";
+    private static final String DEFAULT_TEACHING_ASSISTANT_GROUP_NAME = "AAAAA";
+    private static final String UPDATED_TEACHING_ASSISTANT_GROUP_NAME = "BBBBB";
 
     @Inject
     private CourseRepository courseRepository;
@@ -80,6 +82,7 @@ public class CourseResourceIntTest {
         course = new Course();
         course.setTitle(DEFAULT_TITLE);
         course.setStudentGroupName(DEFAULT_STUDENT_GROUP_NAME);
+        course.setTeachingAssistantGroupName(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME);
     }
 
     @Test
@@ -100,6 +103,7 @@ public class CourseResourceIntTest {
         Course testCourse = courses.get(courses.size() - 1);
         assertThat(testCourse.getTitle()).isEqualTo(DEFAULT_TITLE);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(DEFAULT_STUDENT_GROUP_NAME);
+        assertThat(testCourse.getTeachingAssistantGroupName()).isEqualTo(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME);
     }
 
     @Test
@@ -114,7 +118,8 @@ public class CourseResourceIntTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.[*].id").value(hasItem(course.getId().intValue())))
                 .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
-                .andExpect(jsonPath("$.[*].studentGroupName").value(hasItem(DEFAULT_STUDENT_GROUP_NAME.toString())));
+                .andExpect(jsonPath("$.[*].studentGroupName").value(hasItem(DEFAULT_STUDENT_GROUP_NAME.toString())))
+                .andExpect(jsonPath("$.[*].teachingAssistantGroupName").value(hasItem(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString())));
     }
 
     @Test
@@ -129,7 +134,8 @@ public class CourseResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.id").value(course.getId().intValue()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()))
-            .andExpect(jsonPath("$.studentGroupName").value(DEFAULT_STUDENT_GROUP_NAME.toString()));
+            .andExpect(jsonPath("$.studentGroupName").value(DEFAULT_STUDENT_GROUP_NAME.toString()))
+            .andExpect(jsonPath("$.teachingAssistantGroupName").value(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString()));
     }
 
     @Test
@@ -153,6 +159,7 @@ public class CourseResourceIntTest {
         updatedCourse.setId(course.getId());
         updatedCourse.setTitle(UPDATED_TITLE);
         updatedCourse.setStudentGroupName(UPDATED_STUDENT_GROUP_NAME);
+        updatedCourse.setTeachingAssistantGroupName(UPDATED_TEACHING_ASSISTANT_GROUP_NAME);
 
         restCourseMockMvc.perform(put("/api/courses")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -165,6 +172,7 @@ public class CourseResourceIntTest {
         Course testCourse = courses.get(courses.size() - 1);
         assertThat(testCourse.getTitle()).isEqualTo(UPDATED_TITLE);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(UPDATED_STUDENT_GROUP_NAME);
+        assertThat(testCourse.getTeachingAssistantGroupName()).isEqualTo(UPDATED_TEACHING_ASSISTANT_GROUP_NAME);
     }
 
     @Test

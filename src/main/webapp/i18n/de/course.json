@@ -18,6 +18,7 @@
             },
             "title": "Title",
             "studentGroupName": "Student Group Name",
+            "teachingAssistantGroupName": "Teaching Assistant Group Name",
             "exercises": "Exercises"
         }
     }
