@@ -16,6 +16,7 @@
                     file: null
                 },
                 contentContainerClass: 'editor',
+                bodyClass: 'editor',
                 data: {
                     authorities: ['ROLE_USER'],
                     pageTitle: 'exerciseApplicationApp.editor.title'

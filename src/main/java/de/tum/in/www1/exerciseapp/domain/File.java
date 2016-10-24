@@ -26,6 +26,6 @@ public class File extends java.io.File {
 
     @Override
     public String toString() {
-        return super.toString().replaceFirst(repository.getLocalPath().toString(),"");
+        return super.toString().replaceFirst(repository.getLocalPath().toString(),"").replaceAll("^/+", "");
     }
 }

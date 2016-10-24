@@ -1,5 +1,10 @@
 @import "vendor.scss";
+
 @import "editor.scss";
+
+html {
+    height: 100%;
+}
 
 body {
     background: #fafafa;
