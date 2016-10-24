@@ -13,6 +13,11 @@
                  translate="login.messages.error.authentication">
                 <strong>Failed to sign in!</strong> Please check your credentials and try again.
             </div>
+            <div class="alert alert-info" ng-show="vm.authenticationAttempts >= 3"
+                 translate="login.messages.info.authenticationAttempts">
+                Seems like your having some issues signing in :-( Please head to our <a href="https://jirabruegge.in.tum.de">JIRA</a> and try to sign in there.
+                After that, try again here.
+            </div>
         </div>
         <div class="col-md-8 col-md-offset-2">
             <form name="loginForm" class="form" role="form" ng-submit="vm.login($event)">
