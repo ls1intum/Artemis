@@ -11,6 +11,7 @@
         var vm = this;
 
         vm.authenticationError = false;
+        vm.authenticationAttempts = 0;
         vm.cancel = cancel;
         vm.credentials = {};
         vm.login = login;
@@ -29,6 +30,7 @@
                 rememberMe: true
             };
             vm.authenticationError = false;
+            vm.authenticationAttempts = 0;
             $uibModalInstance.dismiss('cancel');
         }
 
@@ -57,6 +59,7 @@
                 }
             }).catch(function () {
                 vm.authenticationError = true;
+                vm.authenticationAttempts++;
             });
         }
 
