@@ -5,6 +5,7 @@ import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Repository;
 import de.tum.in.www1.exerciseapp.service.GitService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,11 +17,14 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
+import javax.servlet.http.HttpServletRequest;
 import javax.swing.text.StringContent;
 import javax.swing.text.html.HTMLDocument;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -71,7 +75,7 @@ public class RepositoryResource {
 
     @RequestMapping(value = "/repository/{id}/file",
         method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+        produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename) throws IOException, GitAPIException {
         log.debug("REST request to file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
@@ -100,6 +104,33 @@ public class RepositoryResource {
 
     }
 
+
+    @RequestMapping(value = "/repository/{id}/file",
+        method = RequestMethod.PUT,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, GitAPIException {
+        log.debug("REST request to update file {} for Participation : {}", filename, id);
+        Participation participation = participationService.findOne(id);
+
+        if (!Optional.ofNullable(participation).isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Repository repository = gitService.getOrCheckoutRepository(participation);
+
+        Optional<File> file = gitService.getFileByName(repository, filename);
+
+        if(!file.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        InputStream inputStream = request.getInputStream();
+
+        Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", filename)).build();
+
+    }
 
 
 

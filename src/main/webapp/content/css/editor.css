@@ -92,7 +92,10 @@ body {
   display: none; }
 
 .panel.collapsed {
-  width: 50px; }
+  width: 52px; }
+
+.panel.collapsed .panel-footer span {
+  display: none; }
 
 .treeview .list-group-item,
 body.editor .panel-heading h3,

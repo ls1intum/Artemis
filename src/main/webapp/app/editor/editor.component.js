@@ -9,15 +9,15 @@
         .component('editor', {
             bindings: {
                 participation: '<',
-                file: '<'
+                file: '<',
             },
             templateUrl: 'app/editor/editor.html',
             controller: EditorController
         });
 
-    EditorController.$inject = ['Participation', '$scope'];
+    EditorController.$inject = ['Participation', '$scope', '$sce'];
 
-    function EditorController(Participation, $scope) {
+    function EditorController(Participation, $scope, $sce) {
         var vm = this;
 
         console.log(vm.participation);
@@ -35,6 +35,11 @@
             }
 
         }
+
+        $scope.$on('saveStatus', function(event, data) {
+            vm.saveStatusLabel = $sce.trustAsHtml(data);
+            $scope.$apply();
+        });
 
     }
 })();

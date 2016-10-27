@@ -18,6 +18,10 @@
                 transformResponse: function(data, headersGetter, status) {
                     return {fileContent:  data};
                 }
+            },
+            'update': {
+                url: 'api/repository/:participationId/file',
+                method:'PUT'
             }
         });
     }
