@@ -78,7 +78,8 @@
                                 publishBuildPlanUrl: null,
                                 releaseDate: null,
                                 dueDate: null,
-                                id: null
+                                id: null,
+                                allowOnlineEditor: null
                             };
                         }
                     }
