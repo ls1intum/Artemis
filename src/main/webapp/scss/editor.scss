@@ -108,7 +108,11 @@ body {
 }
 
 .panel.collapsed {
-    width: 50px;
+    width: 52px;
+}
+
+.panel.collapsed .panel-footer span {
+    display: none;
 }
 
 
