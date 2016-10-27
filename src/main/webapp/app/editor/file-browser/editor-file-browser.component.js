@@ -80,7 +80,7 @@
                     node.nodes = buildTree([fileSplit.join('/')], node.nodes, folder ? folder + '/' + node.text: node.text);
                 } else {
                     // file node
-                    node.file = folder  + '/' + node.text;
+                    node.file = (folder ? folder  + '/' : '' )+ node.text;
                     if(node.file == vm.file) {
                         node.state = {
                             selected: true

@@ -79,10 +79,17 @@ body {
 }
 .editor-wrapper > .editor-main > .editor-sidebar-left,
 .editor-wrapper > .editor-main > .editor-sidebar-right {
-    max-width: 300px;
     padding-left: 20px;
-    padding-right: 20px;
+    padding-right: 20px;;
 }
+
+.editor-wrapper > .editor-main > .editor-sidebar-left .panel:not(.collapsed) {
+    max-width: 350px;
+    min-width: 250px;
+}
+
+
+
 .editor-wrapper > .editor-main > .editor-center {
     flex: 1 1 auto;
 }
@@ -107,7 +114,7 @@ body {
 
 
 .treeview .list-group-item,
-body.editor.panel-heading h3,
+body.editor .panel-heading h3,
 body.editor .navbar-brand span {
     text-overflow: ellipsis;
     overflow: hidden;
