@@ -13,7 +13,7 @@
             parent: 'app',
             url: '/course/{courseId}/exercise/{exerciseId}/dashboard',
             data: {
-                authorities: ['ROLE_ADMIN'],
+                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
                 pageTitle: 'exerciseApplicationApp.exercise.home.title'
             },
             views: {

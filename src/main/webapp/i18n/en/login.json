@@ -10,6 +10,9 @@
         "messages": {
             "error": {
                 "authentication": "<strong>Failed to sign in!</strong> Please check your credentials and try again."
+            },
+            "info": {
+                "authenticationAttempts": "<strong>Having issues signing in?</strong> Please head to our <a class=\"alert-link\" href=\"https://jirabruegge.in.tum.de\">JIRA</a> and try to sign in there. After that, try again here."
             }
         },
         "password" : {
