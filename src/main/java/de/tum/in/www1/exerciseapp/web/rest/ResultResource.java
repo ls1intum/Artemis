@@ -226,15 +226,22 @@ public class ResultResource {
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
-    public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Principal principal) {
+    public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
-        Map<String, Object> details = continuousIntegrationService.getLatestBuildResultDetails(result.getParticipation());
-        return Optional.ofNullable(details.get("details"))
-            .map(resultDetails -> new ResponseEntity<>(
-                details.get("details"),
-                HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) authentication;
+        GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
+        GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        if (result.getParticipation().getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority))) {
+            Map<String, Object> details = continuousIntegrationService.getLatestBuildResultDetails(result.getParticipation());
+            return Optional.ofNullable(details.get("details"))
+                .map(resultDetails -> new ResponseEntity<>(
+                    details.get("details"),
+                    HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        } else {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
     }
 
     /**
