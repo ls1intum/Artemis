@@ -29,7 +29,7 @@
         translationHandler.initialize();
 
         $rootScope.$on('$stateChangeSuccess',function(event, toState, toParams, fromState, fromParams){
-            $rootScope.contentContainerClass = toState.contentContainerClass ? toState.contentContainerClass : "container";
+            $rootScope.contentContainerClass = toState.contentContainerClass ? toState.contentContainerClass : "container-fluid";
             $rootScope.bodyClass = toState.bodyClass ? toState.bodyClass : "";
         });
 
