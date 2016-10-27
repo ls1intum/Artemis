@@ -161,9 +161,10 @@ public class ResultResource {
         log.debug("REST request to get Results for Participation : {}", participationId);
         UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) authentication;
         GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
+        GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
-        if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || user.getAuthorities().contains(adminAuthority))) {
+        if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
             results = resultRepository.findByParticipationIdOrderByBuildCompletionDateDesc(participationId);
         }
         return results;
