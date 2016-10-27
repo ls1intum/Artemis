@@ -4,8 +4,8 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
+import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
-import de.tum.in.www1.exerciseapp.service.LtiService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.service.ResultService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -14,8 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +26,7 @@ import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +62,7 @@ public class ResultResource {
     @RequestMapping(value = "/results",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
@@ -85,10 +90,6 @@ public class ResultResource {
         if (planKey.contains("base")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        // Plan key has format PROJECTKEY-USERNAME, e.g. EIST16W1-ga56hur
-        String projectKey = planKey.split("-")[0];
-        String username = planKey.split("-")[1];
-
         Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
             resultService.onResultNotified(participation);
@@ -97,7 +98,6 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
-
 
 
     /**
@@ -112,6 +112,7 @@ public class ResultResource {
     @RequestMapping(value = "/results",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
@@ -132,6 +133,7 @@ public class ResultResource {
     @RequestMapping(value = "/results",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     @Timed
     public List<Result> getAllResults() {
         log.debug("REST request to get all Results");
@@ -150,13 +152,21 @@ public class ResultResource {
     @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public List<Result> getResultsForParticipation(@PathVariable Long courseId,
                                                    @PathVariable Long exerciseId,
-                                                   @PathVariable Long participationId) {
+                                                   @PathVariable Long participationId,
+                                                   Authentication authentication) {
         log.debug("REST request to get Results for Participation : {}", participationId);
-        List<Result> results = resultRepository.findByParticipationIdOrderByBuildCompletionDateDesc(participationId);
+        UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) authentication;
+        GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
+        GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        List<Result> results = new ArrayList<>();
+        Participation participation = participationService.findOne(participationId);
+        if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
+            results = resultRepository.findByParticipationIdOrderByBuildCompletionDateDesc(participationId);
+        }
         return results;
     }
 
@@ -170,6 +180,7 @@ public class ResultResource {
     @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Result> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
@@ -193,6 +204,7 @@ public class ResultResource {
     @RequestMapping(value = "/results/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
         log.debug("REST request to get Result : {}", id);
@@ -213,17 +225,24 @@ public class ResultResource {
     @RequestMapping(value = "/results/{id}/details",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
-    public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Principal principal) {
+    public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
-        Map<String, Object> details = continuousIntegrationService.getLatestBuildResultDetails(result.getParticipation());
-        return Optional.ofNullable(details.get("details"))
-            .map(resultDetails -> new ResponseEntity<>(
-                details.get("details"),
-                HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        UsernamePasswordAuthenticationToken user = (UsernamePasswordAuthenticationToken) authentication;
+        GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
+        GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+        if (result.getParticipation().getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority))) {
+            Map<String, Object> details = continuousIntegrationService.getLatestBuildResultDetails(result.getParticipation());
+            return Optional.ofNullable(details.get("details"))
+                .map(resultDetails -> new ResponseEntity<>(
+                    details.get("details"),
+                    HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        } else {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
     }
 
     /**
@@ -235,6 +254,7 @@ public class ResultResource {
     @RequestMapping(value = "/results/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);
