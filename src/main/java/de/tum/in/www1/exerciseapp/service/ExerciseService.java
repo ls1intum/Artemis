@@ -62,6 +62,7 @@ public class ExerciseService {
             e -> user.getGroups().contains(e.getCourse().getStudentGroupName())
                 || user.getGroups().contains(e.getCourse().getTeachingAssistantGroupName())
                 || user.getAuthorities().contains(adminAuthority)
+                || e.getCourse().getTitle().equals("Archive") // TODO: Maybe we want to externalize the configuration of the "Archive" course name
         );
         List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
         return new PageImpl<>(filteredExercises, pageable, filteredExercises.size());
