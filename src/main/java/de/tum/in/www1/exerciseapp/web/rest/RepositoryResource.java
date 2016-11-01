@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import de.tum.in.www1.exerciseapp.domain.File;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Repository;
+import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.GitService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -14,6 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
@@ -46,17 +50,25 @@ public class RepositoryResource {
     @Inject
     private ParticipationService participationService;
 
+    private GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
+    private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+
 
     @RequestMapping(value = "/repository/{id}/files",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id) throws IOException, GitAPIException {
+    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id, UsernamePasswordAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to files for Participation : {}", id);
         Participation participation = participationService.findOne(id);
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
+
+        if (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
 
         Repository repository = gitService.getOrCheckoutRepository(participation);
         Iterator<File> itr = gitService.listFiles(repository).iterator();
@@ -76,12 +88,16 @@ public class RepositoryResource {
     @RequestMapping(value = "/repository/{id}/file",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename) throws IOException, GitAPIException {
+    public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename, UsernamePasswordAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        if (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         Repository repository = gitService.getOrCheckoutRepository(participation);
@@ -108,12 +124,16 @@ public class RepositoryResource {
     @RequestMapping(value = "/repository/{id}/file",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request) throws IOException, GitAPIException {
+    public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, UsernamePasswordAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to update file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        if (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         Repository repository = gitService.getOrCheckoutRepository(participation);
