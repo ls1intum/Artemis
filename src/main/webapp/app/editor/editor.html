@@ -20,7 +20,7 @@
             </div>
             <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed">
                 <ul class="nav navbar-nav navbar-right">
-
+                    <li><button type="button" class="btn btn-primary navbar-btn" ng-disabled="!$ctrl.saveStatus" ng-click="$ctrl.commit()"><span class="fa fa-play-circle-o"></span> Commit & Run Tests</button></li>
 
                 </ul>
             </div>

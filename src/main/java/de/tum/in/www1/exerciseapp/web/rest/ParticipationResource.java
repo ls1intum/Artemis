@@ -15,7 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
@@ -151,7 +151,7 @@ public class ParticipationResource {
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
-    public ResponseEntity<Participation> getParticipation(@PathVariable Long id, UsernamePasswordAuthenticationToken authentication) {
+    public ResponseEntity<Participation> getParticipation(@PathVariable Long id, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
 
@@ -170,7 +170,7 @@ public class ParticipationResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
-    public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, UsernamePasswordAuthenticationToken authentication) {
+    public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
 
@@ -190,7 +190,7 @@ public class ParticipationResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
-    public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id, UsernamePasswordAuthenticationToken authentication) {
+    public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
 

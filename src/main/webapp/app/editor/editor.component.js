@@ -15,10 +15,12 @@
             controller: EditorController
         });
 
-    EditorController.$inject = ['Participation', '$scope', '$sce'];
+    EditorController.$inject = ['Participation' , 'Repository', '$scope', '$sce'];
 
-    function EditorController(Participation, $scope, $sce) {
+    function EditorController(Participation, Repository, $scope, $sce) {
         var vm = this;
+
+        vm.saveStatus = true;
 
         console.log(vm.participation);
         console.log(vm.file);
@@ -36,10 +38,25 @@
 
         }
 
-        $scope.$on('saveStatus', function(event, data) {
+        $scope.$on('saveStatusLabel', function(event, data) {
             vm.saveStatusLabel = $sce.trustAsHtml(data);
             $scope.$apply();
         });
+
+
+        $scope.$on('saveStatus', function(event, data) {
+            vm.saveStatus = data;
+        });
+
+        vm.commit = function () {
+            Repository.commit({
+                participationId: vm.participation.id
+            }, {}, function () {
+                console.log('comitted');
+            }, function (err) {
+                console.log(err);
+            });
+        };
 
     }
 })();

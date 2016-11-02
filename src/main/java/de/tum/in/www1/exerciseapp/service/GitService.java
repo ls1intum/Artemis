@@ -119,6 +119,19 @@ public class GitService {
         git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
     }
 
+
+    /**
+     * Stage all files in the repo including new files.
+     *
+     * @param repo
+     * @throws GitAPIException
+     */
+    public void stageAllChanges(Repository repo) throws GitAPIException {
+        Git git = new Git(repo);
+        git.add().addFilepattern(".").call();
+    }
+
+
     /**
      * Pulls from remote repository.
      *

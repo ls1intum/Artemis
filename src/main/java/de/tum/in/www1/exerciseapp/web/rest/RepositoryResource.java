@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -57,7 +58,7 @@ public class RepositoryResource {
     @RequestMapping(value = "/repository/{id}/files",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id, UsernamePasswordAuthenticationToken authentication) throws IOException, GitAPIException {
+    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to files for Participation : {}", id);
         Participation participation = participationService.findOne(id);
 
@@ -88,7 +89,7 @@ public class RepositoryResource {
     @RequestMapping(value = "/repository/{id}/file",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename, UsernamePasswordAuthenticationToken authentication) throws IOException, GitAPIException {
+    public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
 
@@ -124,7 +125,7 @@ public class RepositoryResource {
     @RequestMapping(value = "/repository/{id}/file",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, UsernamePasswordAuthenticationToken authentication) throws IOException, GitAPIException {
+    public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to update file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
 
@@ -151,6 +152,34 @@ public class RepositoryResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", filename)).build();
 
     }
+
+
+
+    @RequestMapping(value = "/repository/{id}/commit",
+        method = RequestMethod.POST,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateFile(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to commit Repository for Participation : {}", id);
+        Participation participation = participationService.findOne(id);
+
+        if (!Optional.ofNullable(participation).isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        if (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        Repository repository = gitService.getOrCheckoutRepository(participation);
+
+        gitService.stageAllChanges(repository);
+        gitService.commitAndPush(repository, "Changes by Online Editor");
+
+        return new ResponseEntity<>(HttpStatus.OK);
+
+    }
+
+
 
 
 

@@ -83,6 +83,9 @@ body {
 .editor-wrapper > .editor-main > .editor-center {
   flex: 1 1 auto; }
 
+.editor-wrapper .navbar-right button {
+  margin-right: 10px; }
+
 .panel-heading {
   outline: none; }
 
