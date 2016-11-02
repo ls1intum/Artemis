@@ -21,6 +21,7 @@
         var vm = this;
 
         vm.sessions = {};
+        vm.saveStatus = true; // true = all changes saved, false = unsaved changes
 
         vm.$onInit = function () {
             updateSaveStatusLabel();
@@ -73,7 +74,7 @@
         function saveFile(session) {
             console.log('Saving ' + session.file);
 
-            $scope.$emit('saveStatus',' <i class="fa fa-circle-o-notch fa-spin text-info"></i><span class="text-info"> Saving file.</span>');
+            $scope.$emit('saveStatusLabel',' <i class="fa fa-circle-o-notch fa-spin text-info"></i><span class="text-info"> Saving file.</span>');
 
             RepositoryFile.update({
                 participationId: vm.participation.id,
@@ -83,7 +84,7 @@
                 updateSaveStatusLabel();
 
             }, function (err) {
-                $scope.$emit('saveStatus','<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>');
+                $scope.$emit('saveStatusLabel','<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>');
             });
 
 
@@ -94,10 +95,13 @@
         function updateSaveStatusLabel() {
             var unsavedFiles = _.filter(vm.sessions, {'unsavedChanges': true}).length;
             if(unsavedFiles > 0) {
-                $scope.$emit('saveStatus',' <i class="fa fa-warning text-warning"></i> <span class="text-warning">Unsaved changes in ' + unsavedFiles + ' files.</span>');
+                vm.saveStatus = false;
+                $scope.$emit('saveStatusLabel',' <i class="fa fa-warning text-warning"></i> <span class="text-warning">Unsaved changes in ' + unsavedFiles + ' files.</span>');
             } else {
-                $scope.$emit('saveStatus',' <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>');
+                vm.saveStatus = true;
+                $scope.$emit('saveStatusLabel',' <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>');
             }
+            $scope.$emit('saveStatus', vm.saveStatus);
         }
 
         $scope.aceLoaded = function(_editor) {
