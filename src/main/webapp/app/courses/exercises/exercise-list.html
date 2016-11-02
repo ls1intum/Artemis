@@ -27,7 +27,8 @@
         <td class="text-center">
             <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
                     ng-switch-when="false"
-                    ng-click="$ctrl.start(exercise)">
+                    ng-click="$ctrl.start(exercise)"
+                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
                 <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
                 <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
             </button>
