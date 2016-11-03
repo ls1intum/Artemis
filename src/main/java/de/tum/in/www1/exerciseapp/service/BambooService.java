@@ -27,6 +27,7 @@ import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Transactional
@@ -223,20 +224,28 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     /**
-     * Waits for a configurable delay and then retrieves the latest build result for the given plan key and saves it to the participation.
+     * Retrieves the latest build result for the given plan key and saves it as result.
+     * It checks if the build result is the current one. If not, it waits for a configurable delay and then tries again.
      *
      * @param participation
      */
     @Override
     public void onBuildCompleted(Participation participation) {
-        log.info("Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
-        try {
-            Thread.sleep(RESULT_RETRIEVAL_DELAY);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         log.info("Retrieving build result...");
         Map buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
+
+        Boolean isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > RESULT_RETRIEVAL_DELAY;
+        if(isOldBuildResult) {
+            log.info("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
+            try {
+                Thread.sleep(RESULT_RETRIEVAL_DELAY);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            log.info("Retrieving build result (second try)...");
+            buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
+        }
+
         Result result = new Result();
         result.setBuildSuccessful((boolean) buildResults.get("buildSuccessful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
