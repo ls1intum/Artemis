@@ -14,9 +14,9 @@
             controller: ResultController
         });
 
-    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult'];
+    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', '$interval','$scope'];
 
-    function ResultController($http, $uibModal, ParticipationResult) {
+    function ResultController($http, $uibModal, ParticipationResult, $interval,$scope) {
         var vm = this;
 
         vm.$onInit = init;
@@ -25,6 +25,22 @@
         vm.showDetails = showDetails;
 
         function init() {
+            refresh();
+            var refreshInterval = $interval(function () {
+                if(typeof document.hidden !== "undefined" && !document.hidden) {
+                    console.log('refreshing build result for participation ' + vm.participation.id);
+                    refresh();
+                }
+            }, 5000);
+
+            $scope.$on('$destroy', function() {
+                $interval.cancel(refreshInterval);
+            });
+
+
+        }
+
+        function refresh() {
             $http.get('api/courses/' + vm.participation.exercise.course.id + '/exercises/' + vm.participation.exercise.id + '/participation/status', {
                 ignoreLoadingBar: true
             }).then(function (response) {
@@ -40,6 +56,7 @@
                 }
             });
         }
+
 
         function buildResultString(result) {
             if (result.resultString === 'No tests found') {
