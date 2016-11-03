@@ -83,8 +83,11 @@ body {
 .editor-wrapper > .editor-main > .editor-center {
   flex: 1 1 auto; }
 
-.editor-wrapper .navbar-right button {
+.editor-wrapper .navbar-right button, .editor-wrapper .navbar-right span {
   margin-right: 10px; }
+
+.editor-wrapper .navbar-right span {
+  vertical-align: baseline; }
 
 .panel-heading {
   outline: none; }

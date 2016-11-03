@@ -19,10 +19,11 @@
                 </a>
             </div>
             <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed">
-                <ul class="nav navbar-nav navbar-right">
-                    <li><button type="button" class="btn btn-primary navbar-btn" ng-disabled="!$ctrl.saveStatus" ng-click="$ctrl.commit()"><span class="fa fa-play-circle-o"></span> Commit & Run Tests</button></li>
+                <div class=" navbar-nav navbar-right">
+                    <result participation="$ctrl.participation"></result>
+                    <button type="button" class="btn btn-primary navbar-btn" ng-disabled="!$ctrl.saveStatus" ng-click="$ctrl.commit()"><i class="fa fa-play-circle-o"></i> Commit & Run Tests</button>
 
-                </ul>
+                </div>
             </div>
         </div>
     </nav>
