@@ -94,8 +94,12 @@ body {
 }
 
 
-.editor-wrapper .navbar-right button {
+.editor-wrapper .navbar-right button, .editor-wrapper .navbar-right span {
     margin-right: 10px;
+}
+
+.editor-wrapper .navbar-right span {
+    vertical-align: baseline;
 }
 
 
