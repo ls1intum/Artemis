@@ -45,6 +45,9 @@ public class Exercise implements Serializable {
     @Column(name = "due_date")
     private ZonedDateTime dueDate;
 
+    @Column(name = "allow_online_editor")
+    private Boolean allowOnlineEditor;
+
     @ManyToOne
     private Course course;
 
@@ -109,6 +112,14 @@ public class Exercise implements Serializable {
         this.dueDate = dueDate;
     }
 
+    public Boolean isAllowOnlineEditor() {
+        return allowOnlineEditor;
+    }
+
+    public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
+        this.allowOnlineEditor = allowOnlineEditor;
+    }
+
     public Course getCourse() {
         return course;
     }
@@ -164,6 +175,7 @@ public class Exercise implements Serializable {
             ", publishBuildPlanUrl='" + publishBuildPlanUrl + "'" +
             ", releaseDate='" + releaseDate + "'" +
             ", dueDate='" + dueDate + "'" +
+            ", allowOnlineEditor='" + allowOnlineEditor + "'" +
             '}';
     }
 }

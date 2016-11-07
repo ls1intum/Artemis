@@ -14,7 +14,6 @@ import org.springframework.boot.test.SpringApplicationConfiguration;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -40,7 +39,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  *
  * @see ExerciseResource
  */
-@ActiveProfiles(profiles = "jira,bamboo,bitbucket")
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringApplicationConfiguration(classes = ExerciseApplicationApp.class)
 @WebAppConfiguration
@@ -66,6 +64,9 @@ public class ExerciseResourceIntTest {
     private static final ZonedDateTime DEFAULT_DUE_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.systemDefault());
     private static final ZonedDateTime UPDATED_DUE_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
     private static final String DEFAULT_DUE_DATE_STR = dateTimeFormatter.format(DEFAULT_DUE_DATE);
+
+    private static final Boolean DEFAULT_ALLOW_ONLINE_EDITOR = false;
+    private static final Boolean UPDATED_ALLOW_ONLINE_EDITOR = true;
 
     @Inject
     private ExerciseRepository exerciseRepository;
@@ -99,6 +100,7 @@ public class ExerciseResourceIntTest {
         exercise.setPublishBuildPlanUrl(DEFAULT_PUBLISH_BUILD_PLAN_URL);
         exercise.setReleaseDate(DEFAULT_RELEASE_DATE);
         exercise.setDueDate(DEFAULT_DUE_DATE);
+        exercise.setAllowOnlineEditor(DEFAULT_ALLOW_ONLINE_EDITOR);
     }
 
     @Test
@@ -123,6 +125,7 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.isPublishBuildPlanUrl()).isEqualTo(DEFAULT_PUBLISH_BUILD_PLAN_URL);
         assertThat(testExercise.getReleaseDate()).isEqualTo(DEFAULT_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(DEFAULT_DUE_DATE);
+        assertThat(testExercise.isAllowOnlineEditor()).isEqualTo(DEFAULT_ALLOW_ONLINE_EDITOR);
     }
 
     @Test
@@ -141,7 +144,8 @@ public class ExerciseResourceIntTest {
                 .andExpect(jsonPath("$.[*].baseBuildPlanId").value(hasItem(DEFAULT_BASE_BUILD_PLAN_ID.toString())))
                 .andExpect(jsonPath("$.[*].publishBuildPlanUrl").value(hasItem(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue())))
                 .andExpect(jsonPath("$.[*].releaseDate").value(hasItem(DEFAULT_RELEASE_DATE_STR)))
-                .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)));
+                .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)))
+                .andExpect(jsonPath("$.[*].allowOnlineEditor").value(hasItem(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue())));
     }
 
     @Test
@@ -160,7 +164,8 @@ public class ExerciseResourceIntTest {
             .andExpect(jsonPath("$.baseBuildPlanId").value(DEFAULT_BASE_BUILD_PLAN_ID.toString()))
             .andExpect(jsonPath("$.publishBuildPlanUrl").value(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue()))
             .andExpect(jsonPath("$.releaseDate").value(DEFAULT_RELEASE_DATE_STR))
-            .andExpect(jsonPath("$.dueDate").value(DEFAULT_DUE_DATE_STR));
+            .andExpect(jsonPath("$.dueDate").value(DEFAULT_DUE_DATE_STR))
+            .andExpect(jsonPath("$.allowOnlineEditor").value(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue()));
     }
 
     @Test
@@ -187,6 +192,7 @@ public class ExerciseResourceIntTest {
         updatedExercise.setPublishBuildPlanUrl(UPDATED_PUBLISH_BUILD_PLAN_URL);
         updatedExercise.setReleaseDate(UPDATED_RELEASE_DATE);
         updatedExercise.setDueDate(UPDATED_DUE_DATE);
+        updatedExercise.setAllowOnlineEditor(UPDATED_ALLOW_ONLINE_EDITOR);
 
         restExerciseMockMvc.perform(put("/api/exercises")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -203,6 +209,7 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.isPublishBuildPlanUrl()).isEqualTo(UPDATED_PUBLISH_BUILD_PLAN_URL);
         assertThat(testExercise.getReleaseDate()).isEqualTo(UPDATED_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(UPDATED_DUE_DATE);
+        assertThat(testExercise.isAllowOnlineEditor()).isEqualTo(UPDATED_ALLOW_ONLINE_EDITOR);
     }
 
     @Test

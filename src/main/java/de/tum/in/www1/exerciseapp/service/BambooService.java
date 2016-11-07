@@ -1,10 +1,13 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.Repository;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
+import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,12 +24,14 @@ import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.CliClient;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Transactional
@@ -81,7 +86,22 @@ public class BambooService implements ContinuousIntegrationService {
             getRepositorySlugFromUrl(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
-        gitService.doEmptyCommit(getProjectKeyFromBuildPlanId(buildPlanId), repositoryUrl);
+
+        // Empty commit - Bamboo bug workaround
+
+        try {
+            Repository repo = gitService.getOrCheckoutRepository(repositoryUrl);
+            gitService.commitAndPush(repo, "Setup");
+            gitService.deleteLocalRepository(repo);
+        } catch (GitAPIException e) {
+            e.printStackTrace();
+            throw new GitException("Git error while doing empty commit");
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new GitException("IOError while doing empty commit");
+        }
+
+
     }
 
     @Override
@@ -223,20 +243,28 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     /**
-     * Waits for a configurable delay and then retrieves the latest build result for the given plan key and saves it to the participation.
+     * Retrieves the latest build result for the given plan key and saves it as result.
+     * It checks if the build result is the current one. If not, it waits for a configurable delay and then tries again.
      *
      * @param participation
      */
     @Override
     public void onBuildCompleted(Participation participation) {
-        log.info("Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
-        try {
-            Thread.sleep(RESULT_RETRIEVAL_DELAY);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
         log.info("Retrieving build result...");
         Map buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
+
+        Boolean isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > RESULT_RETRIEVAL_DELAY;
+        if(isOldBuildResult) {
+            log.info("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
+            try {
+                Thread.sleep(RESULT_RETRIEVAL_DELAY);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            log.info("Retrieving build result (second try)...");
+            buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
+        }
+
         Result result = new Result();
         result.setBuildSuccessful((boolean) buildResults.get("buildSuccessful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
