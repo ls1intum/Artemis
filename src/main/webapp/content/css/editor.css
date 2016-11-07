@@ -1,0 +1,115 @@
+body.editor {
+  height: 100%; }
+
+body.editor .ribbon {
+  display: none; }
+
+/*
+body.editor .container-fluid  {
+    display:table;
+    width: 100%;
+    margin-top: -75px;
+    padding: 75px 0 0 0;
+    box-sizing: border-box;
+}
+
+
+body.editor .row  {
+
+    display: table-row;
+}
+
+
+
+body.editor .editor-sidebar-left, body.editor .editor-center, body.editor .editor-sidebar-right, body.editor .editor-bottom  {
+    display: table-cell;
+    float: none;
+    position: relative;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+body.editor .editor-center {
+    height: 100%;
+    width: 100%;
+}
+
+body.editor .editor-sidebar-left {
+    max-width: 400px;
+}
+
+body.editor .editor-bottom {
+
+}
+*/
+.editor-wrapper, div.editor {
+  height: 100%; }
+
+body {
+  margin: 0; }
+
+.editor-wrapper {
+  display: flex;
+  overflow: hidden;
+  flex-direction: column; }
+
+.editor-wrapper > * {
+  flex: 0 0 auto;
+  overflow: scroll; }
+
+.editor-wrapper > .editor-bottom {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-top: 10px; }
+
+.editor-wrapper > .editor-main {
+  flex: 1 1 auto;
+  display: flex;
+  overflow: hidden; }
+
+.editor-wrapper > .editor-main > * {
+  flex: 0 0 auto;
+  overflow: scroll; }
+
+.editor-wrapper > .editor-main > .editor-sidebar-left,
+.editor-wrapper > .editor-main > .editor-sidebar-right {
+  padding-left: 20px;
+  padding-right: 20px; }
+
+.editor-wrapper > .editor-main > .editor-sidebar-left .panel:not(.collapsed) {
+  max-width: 350px;
+  min-width: 250px; }
+
+.editor-wrapper > .editor-main > .editor-center {
+  flex: 1 1 auto; }
+
+.editor-wrapper .navbar-right button, .editor-wrapper .navbar-right span {
+  margin-right: 10px; }
+
+.editor-wrapper .navbar-right span {
+  vertical-align: baseline; }
+
+.panel-heading {
+  outline: none; }
+
+.panel.collapsed .panel-body,
+.panel.collapsed .panel-heading .pull-right,
+.panel.collapsed .panel-heading h3 span {
+  display: none; }
+
+.panel.collapsed {
+  width: 52px; }
+
+.panel.collapsed .panel-footer span {
+  display: none; }
+
+.treeview .list-group-item,
+body.editor .panel-heading h3,
+body.editor .navbar-brand span {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap; }
+
+.ace_editor {
+  height: 100%;
+  margin-bottom: 0 !important; }

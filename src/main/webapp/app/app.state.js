@@ -1,4 +1,4 @@
-(function() {
+(function () {
     'use strict';
 
     angular
@@ -8,25 +8,33 @@
     stateConfig.$inject = ['$stateProvider'];
 
     function stateConfig($stateProvider) {
-        $stateProvider.state('app', {
-            abstract: true,
-            views: {
-                'navbar@': {
-                    templateUrl: 'app/layouts/navbar/navbar.html',
-                    controller: 'NavbarController',
-                    controllerAs: 'vm'
+        $stateProvider
+            .state('base', {
+                abstract: true,
+                resolve: {
+                    authorize: ['Auth',
+                        function (Auth) {
+                            return Auth.authorize();
+                        }
+                    ],
+                    translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        $translatePartialLoader.addPart('global');
+                    }]
                 }
-            },
-            resolve: {
-                authorize: ['Auth',
-                    function (Auth) {
-                        return Auth.authorize();
+            })
+            .state('app', {
+                abstract: true,
+                parent: 'base',
+                views: {
+                    'navbar@': {
+                        templateUrl: 'app/layouts/navbar/navbar.html',
+                        controller: 'NavbarController',
+                        controllerAs: 'vm'
+                    },
+                    'footer@': {
+                        templateUrl: 'app/layouts/footer.html'
                     }
-                ],
-                translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
-                    $translatePartialLoader.addPart('global');
-                }]
-            }
-        });
+                }
+            });
     }
 })();

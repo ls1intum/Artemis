@@ -22,6 +22,7 @@
             "publishBuildPlanUrl": "Publish Build Plan Url",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
+            "allowOnlineEditor": "Allow Online Editor",
             "course": "Course",
             "participations": "Participations"
         },

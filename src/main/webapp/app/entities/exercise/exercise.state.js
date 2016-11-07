@@ -12,6 +12,7 @@
         .state('exercise', {
             parent: 'entity',
             url: '/exercise',
+            contentContainerClass: 'container-fluid',
             data: {
                 authorities: ['ROLE_ADMIN', 'ROLE_TA'],
                 pageTitle: 'exerciseApplicationApp.exercise.home.title'
@@ -77,7 +78,8 @@
                                 publishBuildPlanUrl: null,
                                 releaseDate: null,
                                 dueDate: null,
-                                id: null
+                                id: null,
+                                allowOnlineEditor: null
                             };
                         }
                     }
