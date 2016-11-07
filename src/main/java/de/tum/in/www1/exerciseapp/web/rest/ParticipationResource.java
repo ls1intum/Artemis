@@ -195,7 +195,7 @@ public class ParticipationResource {
         Participation participation = participationService.findOne(id);
 
         if (participation != null && (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority)))) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         URL url = continuousIntegrationService.getBuildPlanWebUrl(participation);
