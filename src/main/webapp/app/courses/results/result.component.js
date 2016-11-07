@@ -26,7 +26,7 @@
 
         function init() {
             refresh();
-            var refreshInterval = $interval(function () {
+            /*var refreshInterval = $interval(function () {
                 if(typeof document.hidden !== "undefined" && !document.hidden) {
                     console.log('refreshing build result for participation ' + vm.participation.id);
                     refresh();
@@ -35,7 +35,7 @@
 
             $scope.$on('$destroy', function() {
                 $interval.cancel(refreshInterval);
-            });
+            });*/
 
 
         }
