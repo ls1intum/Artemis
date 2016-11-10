@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .factory('Principal', Principal);
 
-    Principal.$inject = ['$q', 'Account', 'JhiTrackerService'];
+    Principal.$inject = ['$q', 'Account', 'JhiWebsocketService'];
 
-    function Principal ($q, Account, JhiTrackerService) {
+    function Principal ($q, Account, JhiWebsocketService) {
         var _identity,
             _authenticated = false;
 
@@ -79,7 +79,7 @@
                 _identity = account.data;
                 _authenticated = true;
                 deferred.resolve(_identity);
-                JhiTrackerService.connect();
+                JhiWebsocketService.connect();
             }
 
             function getAccountCatch () {

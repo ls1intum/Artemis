@@ -28,11 +28,11 @@
                     return $translate.refresh();
                 }]
             },
-            onEnter: ['JhiTrackerService', function(JhiTrackerService) {
-                JhiTrackerService.subscribe();
+            onEnter: ['JhiWebsocketService', function(JhiWebsocketService) {
+                JhiWebsocketService.subscribe('/topic/tracker');
             }],
-            onExit: ['JhiTrackerService', function(JhiTrackerService) {
-                JhiTrackerService.unsubscribe();
+            onExit: ['JhiWebsocketService', function(JhiWebsocketService) {
+                JhiWebsocketService.unsubscribe('/topic/tracker');
             }]
         });
     }
