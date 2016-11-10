@@ -9,7 +9,8 @@
         .component('editorAce', {
             bindings: {
                 participation: '<',
-                file: '<'
+                file: '<',
+                onSaveStatusChange: '&'
             },
             templateUrl: 'app/editor/ace/editor-ace.html',
             controller: EditorAceController
@@ -21,7 +22,7 @@
         var vm = this;
 
         vm.sessions = {};
-        vm.saveStatus = true; // true = all changes saved, false = unsaved changes
+        vm.isSaved = true; // true = all changes saved, false = unsaved changes
 
         vm.$onInit = function () {
             updateSaveStatusLabel();
@@ -48,7 +49,9 @@
                     vm.sessions[file] = new ace.EditSession(fileObj.fileContent, mode);
                     vm.sessions[file].file = file;
                     vm.sessions[file].on("change", function (e) {
-                        onFileChanged(vm.sessions[file]);
+                        $timeout(function() {
+                            onFileChanged(vm.sessions[file]);
+                        });
                     });
 
                 }
@@ -74,7 +77,13 @@
         function saveFile(session) {
             console.log('Saving ' + session.file);
 
-            $scope.$emit('saveStatusLabel',' <i class="fa fa-circle-o-notch fa-spin text-info"></i><span class="text-info"> Saving file.</span>');
+            if(vm.onSaveStatusChange) {
+                vm.onSaveStatusChange({$event: {
+                    isSaved: vm.isSaved,
+                    saveStatusLabel: ' <i class="fa fa-circle-o-notch fa-spin text-info"></i><span class="text-info"> Saving file.</span>'
+                }
+                });
+            }
 
             RepositoryFile.update({
                 participationId: vm.participation.id,
@@ -84,7 +93,14 @@
                 updateSaveStatusLabel();
 
             }, function (err) {
-                $scope.$emit('saveStatusLabel','<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>');
+                if(vm.onSaveStatusChange) {
+                    vm.onSaveStatusChange({$event: {
+                        isSaved: vm.isSaved,
+                        saveStatusLabel: '<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>'
+                    }
+                    });
+
+                }
             });
 
 
@@ -95,13 +111,27 @@
         function updateSaveStatusLabel() {
             var unsavedFiles = _.filter(vm.sessions, {'unsavedChanges': true}).length;
             if(unsavedFiles > 0) {
-                vm.saveStatus = false;
-                $scope.$emit('saveStatusLabel',' <i class="fa fa-warning text-warning"></i> <span class="text-warning">Unsaved changes in ' + unsavedFiles + ' files.</span>');
+                vm.isSaved = false;
+                if(vm.onSaveStatusChange) {
+                    vm.onSaveStatusChange({$event: {
+                            isSaved: vm.isSaved,
+                            saveStatusLabel: '<i class="fa fa-circle-o-notch fa-spin text-info"></i> <span class="text-info">Unsaved changes in ' + unsavedFiles + ' files.</span>'
+                        }
+                    });
+                }
+
             } else {
-                vm.saveStatus = true;
-                $scope.$emit('saveStatusLabel',' <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>');
+                vm.isSaved = true;
+                if(vm.onSaveStatusChange) {
+                    vm.onSaveStatusChange({$event: {
+                        isSaved: vm.isSaved,
+                        saveStatusLabel: '<i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>'
+                    }
+                    });
+                }
+
             }
-            $scope.$emit('saveStatus', vm.saveStatus);
+
         }
 
         $scope.aceLoaded = function(_editor) {

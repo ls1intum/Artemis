@@ -8,7 +8,8 @@
         .module('exerciseApplicationApp')
         .component('result', {
             bindings: {
-                participation: '<'
+                participation: '<',
+                onNewResult: '&',
             },
             templateUrl: 'app/courses/results/result.html',
             controller: ResultController
@@ -55,6 +56,10 @@
                         exerciseId: vm.participation.exercise.id,
                         participationId: vm.participation.id,
                         showAllResults: false
+                    }, function (results) {
+                        if(vm.onNewResult) {
+                            vm.onNewResult(results[0]);
+                        }
                     });
                 }
             });
