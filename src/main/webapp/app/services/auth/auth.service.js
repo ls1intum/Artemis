@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .factory('Auth', Auth);
 
-    Auth.$inject = ['$rootScope', '$state', '$sessionStorage', '$q', '$translate', 'Principal', 'AuthServerProvider', 'Account', 'LoginService', 'Register', 'Activate', 'Password', 'PasswordResetInit', 'PasswordResetFinish', 'JhiTrackerService'];
+    Auth.$inject = ['$rootScope', '$state', '$sessionStorage', '$q', '$translate', 'Principal', 'AuthServerProvider', 'Account', 'LoginService', 'Register', 'Activate', 'Password', 'PasswordResetInit', 'PasswordResetFinish', 'JhiWebsocketService'];
 
-    function Auth ($rootScope, $state, $sessionStorage, $q, $translate, Principal, AuthServerProvider, Account, LoginService, Register, Activate, Password, PasswordResetInit, PasswordResetFinish, JhiTrackerService) {
+    function Auth ($rootScope, $state, $sessionStorage, $q, $translate, Principal, AuthServerProvider, Account, LoginService, Register, Activate, Password, PasswordResetInit, PasswordResetFinish, JhiWebsocketService) {
         var service = {
             activateAccount: activateAccount,
             authorize: authorize,
@@ -120,7 +120,7 @@
                             $translate.refresh();
                         });
                     }
-                    JhiTrackerService.sendActivity();
+                    JhiWebsocketService.sendActivity();
                     deferred.resolve(data);
                 });
                 return cb();
