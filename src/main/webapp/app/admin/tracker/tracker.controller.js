@@ -5,15 +5,15 @@
         .module('exerciseApplicationApp')
         .controller('JhiTrackerController', JhiTrackerController);
 
-    JhiTrackerController.$inject = ['$cookies', '$http', 'JhiTrackerService'];
+    JhiTrackerController.$inject = ['$cookies', '$http', 'JhiWebsocketService'];
 
-    function JhiTrackerController ($cookies, $http, JhiTrackerService) {
+    function JhiTrackerController ($cookies, $http, JhiWebsocketService) {
         // This controller uses a Websocket connection to receive user activities in real-time.
         var vm = this;
 
         vm.activities = [];
 
-        JhiTrackerService.receive().then(null, null, function(activity) {
+        JhiWebsocketService.receive('/topic/tracker').then(null, null, function(activity) {
             showActivity(activity);
         });
 
