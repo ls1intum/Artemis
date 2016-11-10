@@ -53,7 +53,8 @@
                     vm.results = ParticipationResult.query({
                         courseId: vm.participation.exercise.course.id,
                         exerciseId: vm.participation.exercise.id,
-                        participationId: vm.participation.id
+                        participationId: vm.participation.id,
+                        showAllResults: false
                     });
                 }
             });
