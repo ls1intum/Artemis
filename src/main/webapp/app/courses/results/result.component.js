@@ -14,9 +14,9 @@
             controller: ResultController
         });
 
-    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', '$interval','$scope'];
+    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', '$interval','$scope', 'JhiWebsocketService'];
 
-    function ResultController($http, $uibModal, ParticipationResult, $interval,$scope) {
+    function ResultController($http, $uibModal, ParticipationResult, $interval,$scope, JhiWebsocketService) {
         var vm = this;
 
         vm.$onInit = init;
@@ -26,17 +26,19 @@
 
         function init() {
             refresh();
-            /*var refreshInterval = $interval(function () {
-                if(typeof document.hidden !== "undefined" && !document.hidden) {
-                    console.log('refreshing build result for participation ' + vm.participation.id);
-                    refresh();
-                }
-            }, 5000);
+
+
+            var websocketChannel = '/topic/participation/' + vm.participation.id + '/newResults';
+
+            JhiWebsocketService.subscribe(websocketChannel);
+
+            JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
+                refresh();
+            });
 
             $scope.$on('$destroy', function() {
-                $interval.cancel(refreshInterval);
-            });*/
-
+                JhiWebsocketService.unsubscribe(websocketChannel);
+            })
 
         }
 
