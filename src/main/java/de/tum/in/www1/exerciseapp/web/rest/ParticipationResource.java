@@ -177,7 +177,7 @@ public class ParticipationResource {
 
         AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
         if (participation != null && (!participation.getStudent().getLogin().equals(user.getName()) && !(user.getAuthorities().contains(adminAuthority) && !user.getAuthorities().contains(taAuthority)))) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         URL url = versionControlService.getRepositoryWebUrl(participation);
@@ -198,7 +198,7 @@ public class ParticipationResource {
 
         AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
         if (participation != null && (!participation.getStudent().getLogin().equals(user.getName()) && !(user.getAuthorities().contains(adminAuthority) && !user.getAuthorities().contains(taAuthority)))) {
-            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         URL url = continuousIntegrationService.getBuildPlanWebUrl(participation);
