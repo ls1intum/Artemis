@@ -4,14 +4,14 @@
 
     angular
         .module('exerciseApplicationApp')
-        .factory('JhiTrackerService', JhiTrackerService);
+        .factory('JhiWebsocketService', JhiWebsocketService);
 
-    JhiTrackerService.$inject = ['$rootScope', '$window', '$cookies', '$http', '$q'];
+    JhiWebsocketService.$inject = ['$rootScope', '$window', '$cookies', '$http', '$q'];
 
-    function JhiTrackerService ($rootScope, $window, $cookies, $http, $q) {
+    function JhiWebsocketService ($rootScope, $window, $cookies, $http, $q) {
         var stompClient = null;
         var subscriber = null;
-        var listener = $q.defer();
+        var listener = {};
         var connected = $q.defer();
         var alreadyConnectedOnce = false;
 
@@ -59,32 +59,38 @@
             }
         }
 
-        function receive () {
-            return listener.promise;
+        function receive (channel) {
+            if(!listener[channel]) {
+                listener[channel] = $q.defer();
+            }
+            return listener[channel].promise;
         }
 
         function sendActivity() {
             if (stompClient !== null && stompClient.connected) {
                 stompClient
                     .send('/topic/activity',
-                    {},
-                    angular.toJson({'page': $rootScope.toState.name}));
+                        {},
+                        angular.toJson({'page': $rootScope.toState.name}));
             }
         }
 
-        function subscribe () {
+        function subscribe (channel) {
             connected.promise.then(function() {
-                subscriber = stompClient.subscribe('/topic/tracker', function(data) {
-                    listener.notify(angular.fromJson(data.body));
+                if(!listener[channel]) {
+                    listener[channel] = $q.defer();
+                }
+                subscriber = stompClient.subscribe(channel, function(data) {
+                    listener[channel].notify(angular.fromJson(data.body));
                 });
             }, null, null);
         }
 
-        function unsubscribe () {
+        function unsubscribe (channel) {
             if (subscriber !== null) {
                 subscriber.unsubscribe();
             }
-            listener = $q.defer();
+            listener[channel] = $q.defer();
         }
     }
 })();

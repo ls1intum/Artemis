@@ -8,15 +8,16 @@
         .module('exerciseApplicationApp')
         .component('result', {
             bindings: {
-                participation: '<'
+                participation: '<',
+                onNewResult: '&',
             },
             templateUrl: 'app/courses/results/result.html',
             controller: ResultController
         });
 
-    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', '$interval','$scope'];
+    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', '$interval','$scope', 'JhiWebsocketService'];
 
-    function ResultController($http, $uibModal, ParticipationResult, $interval,$scope) {
+    function ResultController($http, $uibModal, ParticipationResult, $interval,$scope, JhiWebsocketService) {
         var vm = this;
 
         vm.$onInit = init;
@@ -26,17 +27,19 @@
 
         function init() {
             refresh();
-            /*var refreshInterval = $interval(function () {
-                if(typeof document.hidden !== "undefined" && !document.hidden) {
-                    console.log('refreshing build result for participation ' + vm.participation.id);
-                    refresh();
-                }
-            }, 5000);
+
+
+            var websocketChannel = '/topic/participation/' + vm.participation.id + '/newResults';
+
+            JhiWebsocketService.subscribe(websocketChannel);
+
+            JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
+                refresh();
+            });
 
             $scope.$on('$destroy', function() {
-                $interval.cancel(refreshInterval);
-            });*/
-
+                JhiWebsocketService.unsubscribe(websocketChannel);
+            })
 
         }
 
@@ -51,7 +54,12 @@
                     vm.results = ParticipationResult.query({
                         courseId: vm.participation.exercise.course.id,
                         exerciseId: vm.participation.exercise.id,
-                        participationId: vm.participation.id
+                        participationId: vm.participation.id,
+                        showAllResults: false
+                    }, function (results) {
+                        if(vm.onNewResult) {
+                            vm.onNewResult(results[0]);
+                        }
                     });
                 }
             });
