@@ -20,7 +20,8 @@
     function EditorController(Participation, Repository, $scope, $sce) {
         var vm = this;
 
-        vm.saveStatus = true;
+        vm.isSaved = true;
+        vm.isBuilding = false;
 
         console.log(vm.participation);
         console.log(vm.file);
@@ -36,19 +37,17 @@
                 $panel.addClass('collapsed');
             }
 
-        }
-
-        $scope.$on('saveStatusLabel', function(event, data) {
-            vm.saveStatusLabel = $sce.trustAsHtml(data);
-            $scope.$apply();
-        });
+        };
 
 
-        $scope.$on('saveStatus', function(event, data) {
-            vm.saveStatus = data;
-        });
+        vm.updateSaveStatusLabel = function ($event) {
+            vm.isSaved = $event.isSaved;
+            vm.saveStatusLabel = $sce.trustAsHtml($event.saveStatusLabel);
+        };
 
-        vm.commit = function () {
+        vm.commit = function ($event) {
+            $event.toElement.blur();
+            vm.isBuilding = true;
             Repository.commit({
                 participationId: vm.participation.id
             }, {}, function () {

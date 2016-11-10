@@ -20,9 +20,11 @@
             </div>
             <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed">
                 <div class=" navbar-nav navbar-right">
-                    <result participation="$ctrl.participation"></result>
-                    <button type="button" class="btn btn-primary navbar-btn" ng-disabled="!$ctrl.saveStatus" ng-click="$ctrl.commit()"><i class="fa fa-play-circle-o"></i> Commit & Run Tests</button>
-
+                    <result participation="$ctrl.participation" ng-hide="$ctrl.isBuilding" on-new-result="$ctrl.isBuilding = false"></result>
+                    <button type="button" class="btn btn-primary navbar-btn" ng-disabled="!$ctrl.isSaved || $ctrl.isBuilding" ng-click="$ctrl.commit($event)" ng-switch="$ctrl.isBuilding" tooltip-placement="left" uib-tooltip="Stage, commit, push, build and test your changes.">
+                        <span ng-switch-when="true"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
+                        <span ng-switch-default ><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
+                    </button>
                 </div>
             </div>
         </div>
@@ -52,7 +54,7 @@
 
         </div>
         <div class="editor-center">
-            <editor-ace participation="$ctrl.participation" file="$ctrl.file"></editor-ace>
+            <editor-ace participation="$ctrl.participation" file="$ctrl.file" on-save-status-change="$ctrl.updateSaveStatusLabel($event)"></editor-ace>
         </div>
 
         <div class="editor-sidebar-right">
