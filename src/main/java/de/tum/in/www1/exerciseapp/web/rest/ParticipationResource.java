@@ -16,6 +16,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
@@ -170,12 +171,13 @@ public class ParticipationResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
-    public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, AbstractAuthenticationToken authentication) {
+    public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
 
-        if (participation != null && (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority)))) {
-            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
+        if (participation != null && (!participation.getStudent().getLogin().equals(user.getName()) && !(user.getAuthorities().contains(adminAuthority) && !user.getAuthorities().contains(taAuthority)))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         URL url = versionControlService.getRepositoryWebUrl(participation);
@@ -190,12 +192,13 @@ public class ParticipationResource {
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
-    public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id, AbstractAuthenticationToken authentication) {
+    public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
 
-        if (participation != null && (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority)))) {
-            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
+        if (participation != null && (!participation.getStudent().getLogin().equals(user.getName()) && !(user.getAuthorities().contains(adminAuthority) && !user.getAuthorities().contains(taAuthority)))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
         URL url = continuousIntegrationService.getBuildPlanWebUrl(participation);
