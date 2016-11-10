@@ -25,10 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * REST controller for managing Result.
@@ -156,6 +153,7 @@ public class ResultResource {
     public List<Result> getResultsForParticipation(@PathVariable Long courseId,
                                                    @PathVariable Long exerciseId,
                                                    @PathVariable Long participationId,
+                                                   @RequestParam(defaultValue = "true") boolean showAllResults,
                                                    Authentication authentication) {
         log.debug("REST request to get Results for Participation : {}", participationId);
         AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
@@ -164,7 +162,13 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
         if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
-            results = resultRepository.findByParticipationIdOrderByBuildCompletionDateDesc(participationId);
+            if(showAllResults) {
+                results = resultRepository.findByParticipationIdOrderByBuildCompletionDateDesc(participationId);
+            } else {
+                results = resultRepository.findFirstByParticipationIdOrderByBuildCompletionDateDesc(participationId)
+                .map(result -> Arrays.asList(result))
+                .orElse(new ArrayList<Result>());
+            }
         }
         return results;
     }
