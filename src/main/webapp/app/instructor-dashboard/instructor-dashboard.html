@@ -6,14 +6,18 @@
         <button class="btn btn-primary btn-sm" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
         </button>
     </div>
-    <div ng-switch on="$ctrl.showAllResults">
-        <button class="btn btn-primary btn-sm" ng-switch-when="true" ng-click="$ctrl.toggleShowAllResults(false)">Show
-            successful
-        </button>
-        <button class="btn btn-primary btn-sm" ng-switch-when="false" ng-click="$ctrl.toggleShowAllResults(true)">Show
-            all
-        </button>
-    </div>
+
+
+
+    <label class="radio-inline">
+        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults(false)" ng-value="false">
+        Show successful
+    </label>
+    <label class="radio-inline">
+        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults(true)" ng-value="true">
+        Show all
+    </label>
+
 </div>
 <table class="table exercise-table">
     <thead>
