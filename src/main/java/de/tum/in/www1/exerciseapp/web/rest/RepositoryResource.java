@@ -1,9 +1,11 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
+import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
 import de.tum.in.www1.exerciseapp.domain.File;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Repository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
+import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.GitService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.dto.RepositoryStatusDTO;
@@ -17,24 +19,18 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
-import javax.swing.text.StringContent;
-import javax.swing.text.html.HTMLDocument;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Created by Josias Montag on 14.10.16.
@@ -51,6 +47,9 @@ public class RepositoryResource {
 
     @Inject
     private ParticipationService participationService;
+
+    @Inject
+    private ContinuousIntegrationService continuousIntegrationService;
 
     private GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
     private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
@@ -210,6 +209,37 @@ public class RepositoryResource {
 
     }
 
+
+
+
+
+    /**
+     * GET  /repository/:id/buildlogs : get the build log from Bamboo for the "id" repository.
+     *
+     * @param id the id of the result to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
+     */
+    @RequestMapping(value = "/repository/{id}/buildlogs",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, AbstractAuthenticationToken authentication) {
+        log.debug("REST request to get build log : {}", id);
+
+        Participation participation = participationService.findOne(id);
+
+        if (!Optional.ofNullable(participation).isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        if (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        List<BuildLogEntry> logs = continuousIntegrationService.getLatestBuildLogs(participation);
+
+        return new ResponseEntity<>(logs, HttpStatus.OK);
+
+    }
 
 
 

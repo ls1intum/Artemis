@@ -58,7 +58,9 @@
                         showAllResults: false
                     }, function (results) {
                         if(vm.onNewResult) {
-                            vm.onNewResult(results[0]);
+                            vm.onNewResult({ $event: {
+                                newResult: results[0]
+                            }});
                         }
                     });
                 }
