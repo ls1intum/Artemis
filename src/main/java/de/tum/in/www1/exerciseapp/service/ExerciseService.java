@@ -1,9 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Authority;
-import de.tum.in.www1.exerciseapp.domain.Course;
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,6 +31,9 @@ public class ExerciseService {
     @Inject
     private UserService userService;
 
+    @Inject
+    private ParticipationService participationService;
+
     /**
      * Save a exercise.
      *
@@ -46,10 +47,10 @@ public class ExerciseService {
     }
 
     /**
-     *  Get all the exercises.
+     * Get all the exercises.
      *
-     *  @param pageable the pagination information
-     *  @return the list of entities
+     * @param pageable the pagination information
+     * @return the list of entities
      */
     @Transactional(readOnly = true)
     public Page<Exercise> findAll(Pageable pageable) {
@@ -69,10 +70,10 @@ public class ExerciseService {
     }
 
     /**
-     *  Get one exercise by id.
+     * Get one exercise by id.
      *
-     *  @param id the id of the entity
-     *  @return the entity
+     * @param id the id of the entity
+     * @return the entity
      */
     @Transactional(readOnly = true)
     public Exercise findOne(Long id) {
@@ -81,13 +82,36 @@ public class ExerciseService {
         return exercise;
     }
 
+
     /**
-     *  Delete the  exercise by id.
+     * Resets an Exercise by deleting all its Participations
      *
-     *  @param id the id of the entity
+     * @param exercise
      */
-    public void delete(Long id) {
+    @Transactional
+    public void reset(Exercise exercise) {
+        log.debug("Request reset Exercise : {}", exercise.getId());
+
+        // delete all participations for this exercise
+        for (Participation participation : exercise.getParticipations()) {
+            participationService.delete(participation.getId(), true, true);
+        }
+    }
+
+
+    /**
+     * Delete the  exercise by id.
+     *
+     * @param id the id of the entity
+     */
+    @Transactional
+    public void delete(Long id, boolean deleteParticipations) {
         log.debug("Request to delete Exercise : {}", id);
+        Exercise exercise = exerciseRepository.findOne(id);
+
+        if (deleteParticipations && Optional.ofNullable(exercise).isPresent()) {
+            reset(exercise);
+        }
         exerciseRepository.delete(id);
     }
 

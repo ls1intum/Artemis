@@ -57,6 +57,7 @@
                     </span>
                 </div>
         </div>
+
         <div class="form-group">
             <label class="control-label" translate="exerciseApplicationApp.exercise.allowOnlineEditor" for="field_allowOnlineEditor">Allow Online Editor</label>
             <input type="checkbox" class="form-control" name="allowOnlineEditor" id="field_allowOnlineEditor"
@@ -72,6 +73,11 @@
         </div>
     </div>
     <div class="modal-footer">
+        <a class="btn btn-danger pull-left" ui-sref="exercise.reset({id:vm.exercise.id})" ng-hide="vm.exercise.id == null">
+            <span class="glyphicon glyphicon-remove-circle"></span>&nbsp;<span>Reset Exercise</span>
+        </a>
+
+
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span translate="entity.action.cancel">Cancel</span>
         </button>
