@@ -8,6 +8,7 @@ import org.apache.commons.io.filefilter.HiddenFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.Status;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -144,10 +145,16 @@ public class GitService {
         Git git = new Git(repo);
         // flush cache
         repo.setFiles(null);
-        return git.pull().call();
+        return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
     }
 
 
+    /**
+     * List all files in the repository
+     *
+     * @param repo Local Repository Object.
+     * @return Collection of File objects
+     */
     public Collection<File> listFiles(Repository repo) {
         if(repo.getFiles() == null) {
             Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
@@ -163,6 +170,13 @@ public class GitService {
     }
 
 
+    /**
+     * Get a specific file by name. Makes sure the file is actually part of the repository.
+     *
+     * @param repo Local Repository Object.
+     * @param filename String of zje filename (including path)
+     * @return The File object
+     */
     public Optional<File> getFileByName(Repository repo, String filename) {
         Iterator<File> itr = listFiles(repo).iterator();
 
@@ -176,6 +190,19 @@ public class GitService {
 
     }
 
+
+    /**
+     * Checks if no differences exist between the working-tree, the index, and the current HEAD.
+     *
+     * @param repo  Local Repository Object.
+     * @return True if the status is clean
+     * @throws GitAPIException
+     */
+    public Boolean isClean(Repository repo) throws GitAPIException {
+        Git git = new Git(repo);
+        Status status = git.status().call();
+        return status.isClean();
+    }
 
 
     /**

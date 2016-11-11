@@ -6,6 +6,7 @@ import de.tum.in.www1.exerciseapp.domain.Repository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.GitService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -176,6 +177,36 @@ public class RepositoryResource {
         gitService.commitAndPush(repository, "Changes by Online Editor");
 
         return new ResponseEntity<>(HttpStatus.OK);
+
+    }
+
+
+
+    @RequestMapping(value = "/repository/{id}",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to get clean status for Repository for Participation : {}", id);
+        Participation participation = participationService.findOne(id);
+
+        if (!Optional.ofNullable(participation).isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        if (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority))) {
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        Repository repository = gitService.getOrCheckoutRepository(participation);
+
+        RepositoryStatusDTO status = new RepositoryStatusDTO();
+
+        status.isClean = gitService.isClean(repository);
+
+        if(status.isClean) {
+            gitService.pull(repository);
+        }
+
+        return new ResponseEntity<>(status, HttpStatus.OK);
 
     }
 
