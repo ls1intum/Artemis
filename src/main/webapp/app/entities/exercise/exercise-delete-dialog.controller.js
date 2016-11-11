@@ -13,16 +13,29 @@
         vm.exercise = entity;
         vm.clear = clear;
         vm.confirmDelete = confirmDelete;
-        
+        vm.confirmExerciseName = "";
+        vm.deleteParticipations = false;
+        vm.deleteInProgress = false;
+
         function clear () {
             $uibModalInstance.dismiss('cancel');
         }
 
         function confirmDelete (id) {
-            Exercise.delete({id: id},
+            vm.deleteInProgress = true;
+            Exercise.delete({
+                    id: id,
+                    deleteParticipations: vm.deleteParticipations
+                },
                 function () {
                     $uibModalInstance.close(true);
+                    vm.deleteInProgress = false;
+                }, function () {
+                    vm.deleteInProgress = false;
                 });
         }
+
+
+
     }
 })();

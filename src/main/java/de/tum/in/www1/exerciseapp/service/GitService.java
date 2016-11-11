@@ -14,6 +14,7 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.repository.query.parser.Part;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -190,6 +191,24 @@ public class GitService {
         repo.setFiles(null);
         log.debug("Deleted Repository at " + repoPath);
     }
+
+
+    /**
+     * Deletes a local repository folder for a Participation.
+     *
+     * @param participation Participation Object.
+     * @throws IOException
+     */
+    public void deleteLocalRepository(Participation participation) throws IOException {
+        Path repoPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(participation.getRepositoryUrlAsUrl())).toPath();
+        cachedRepositories.remove(repoPath);
+        if (Files.exists(repoPath)) {
+            FileUtils.deleteDirectory(repoPath.toFile());
+            log.debug("Deleted Repository at " + repoPath);
+        }
+    }
+
+
 
     /**
      * Generates the unique local folder name for a given remote repository URL.

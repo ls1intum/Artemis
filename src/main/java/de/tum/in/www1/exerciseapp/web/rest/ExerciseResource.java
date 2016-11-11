@@ -161,10 +161,33 @@ public class ExerciseResource {
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteExercise(@PathVariable Long id) {
+    @Transactional
+    public ResponseEntity<Void> deleteExercise(@PathVariable Long id,
+                                               @RequestParam(defaultValue = "false") boolean deleteParticipations) {
         log.debug("REST request to delete Exercise : {}", id);
-        exerciseRepository.delete(id);
+        exerciseService.delete(id, deleteParticipations);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("exercise", id.toString())).build();
     }
+
+
+
+    /**
+     * DELETE  /exercises/:id/participations : delete all participations of "id" exercise (reset).
+     *
+     * @param id the id of the exercise to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @RequestMapping(value = "/exercises/{id}/participations",
+        method = RequestMethod.DELETE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    @Transactional
+    public ResponseEntity<Void> resetExercise(@PathVariable Long id) {
+        log.debug("REST request to reset Exercise : {}", id);
+        Exercise exercise = exerciseRepository.findOne(id);
+        exerciseService.reset(exercise);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
+    }
+
 
 }
