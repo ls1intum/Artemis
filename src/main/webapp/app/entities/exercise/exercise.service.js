@@ -13,6 +13,7 @@
 
         return $resource(resourceUrl, {}, {
             'query': { method: 'GET', isArray: true},
+            'reset': { method: 'DELETE' , url: 'api/exercises/:id/participations'},
             'get': {
                 method: 'GET',
                 transformResponse: function (data) {
