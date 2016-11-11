@@ -9,7 +9,7 @@
 
     function ExerciseController ($scope, $state, Exercise, ParseLinks, AlertService) {
         var vm = this;
-        
+
         vm.exercises = [];
         vm.loadPage = loadPage;
         vm.page = 0;
@@ -41,10 +41,19 @@
                 for (var i = 0; i < data.length; i++) {
                     vm.exercises.push(data[i]);
                 }
+                getUniqueCourses();
             }
             function onError(error) {
                 AlertService.error(error.data.message);
             }
+        }
+
+
+        function getUniqueCourses() {
+            var courses = _.map(vm.exercises, function (exercise) {
+                return exercise.course;
+            });
+            vm.courses = _.uniqBy(courses, 'title');
         }
 
         function reset () {
