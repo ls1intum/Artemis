@@ -11,6 +11,14 @@
                     </span>
                 </button>
             </div>
+            <div class="col-xs-8 no-padding-right">
+                <form name="searchForm" class="form-inline">
+                    <div class="input-group pull-right">
+                        <input type="text" class="form-control" ng-model="vm.filterCourse" placeholder="Filter by course" uib-typeahead="course.title for course in vm.courses | filter:$viewValue | limitTo:8" typeahead-no-results="noResults">
+                        <span class="input-group-addon"><i class="fa fa-filter"></i></span>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     <br/>
@@ -31,7 +39,7 @@
                 </tr>
             </thead>
             <tbody infinite-scroll="vm.loadPage(vm.page + 1)" infinite-scroll-disabled="vm.page >= vm.links['last']">
-                <tr ng-repeat="exercise in vm.exercises track by exercise.id">
+                <tr ng-repeat="exercise in vm.exercises  | filter:{course:{title:vm.filterCourse}} track by exercise.id">
                     <td><a ui-sref="exercise-detail({id:exercise.id})">{{exercise.id}}</a></td>
                     <td>{{exercise.title}}</td>
                     <td>{{exercise.baseRepositoryUrl}}</td>
