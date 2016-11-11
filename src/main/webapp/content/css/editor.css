@@ -113,3 +113,19 @@ body.editor .navbar-brand span {
 .ace_editor {
   height: 100%;
   margin-bottom: 0 !important; }
+
+.buildoutput {
+  font-family: Menlo,Monaco,"Courier New",monospace;
+  font-size: 11px;
+  overflow: scroll;
+  max-height: 130px;
+  margin: 0; }
+
+.buildoutput dt {
+  width: 130px;
+  color: #505050;
+  font-weight: normal; }
+
+.buildoutput dd {
+  margin-left: 140px;
+  color: #003366; }

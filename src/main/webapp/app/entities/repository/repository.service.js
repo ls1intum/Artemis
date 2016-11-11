@@ -19,6 +19,10 @@
             'pull': {
                 url: 'api/repository/:participationId/pull',
                 method: 'POST'
+            },
+            'buildlogs': {
+                url: 'api/repository/:participationId/buildlogs',
+                method: 'GET', isArray: true
             }
         });
     }

@@ -24,6 +24,7 @@
         vm.isSaved = true;
         vm.isBuilding = false;
         vm.isCommitted = vm.repository.isClean;
+        vm.latestResult = null;
 
         console.log(vm.participation);
         console.log(vm.file);
@@ -48,6 +49,11 @@
                 vm.isCommitted = false;
             }
             vm.saveStatusLabel = $sce.trustAsHtml($event.saveStatusLabel);
+        };
+
+        vm.updateLatestResult = function ($event) {
+            vm.isBuilding = false;
+            vm.latestResult = $event.newResult;
         };
 
         vm.commit = function ($event) {
