@@ -15,9 +15,9 @@
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', '$http', '$location'];
+    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', '$http', '$location', 'Principal'];
 
-    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http,  $location) {
+    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http,  $location, Principal) {
         var vm = this;
 
         vm.clonePopover = {
@@ -30,7 +30,9 @@
         vm.getClonePopoverTemplate = getClonePopoverTemplate;
         vm.goToBuildPlan = goToBuildPlan;
         vm.hasParticipation = hasParticipation;
+        vm.isReleased = isReleased;
         vm.start = start;
+        vm.now = Date.now();
 
         function init() {
 
@@ -49,6 +51,16 @@
                 if (vm.filterByExerciseId) {
                     exercises = _.filter(exercises, {id: vm.filterByExerciseId})
                 }
+
+
+                // hide not released exercises
+                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
+                    exercises = _.filter(exercises, function (exercise) {
+                        return vm.isReleased(exercise);
+                    });
+                }
+
+
 
                 angular.forEach(exercises, function (exercise) {
                     exercise['participation'] = ExerciseParticipation.get({
@@ -90,6 +102,10 @@
 
         function hasParticipation(exercise) {
             return !angular.equals({}, exercise.participation.toJSON());
+        }
+
+        function isReleased(exercise) {
+            return _.isEmpty(exercise.releaseDate) || vm.now >= Date.parse(exercise.releaseDate);
         }
 
         function getRepositoryPassword() {
