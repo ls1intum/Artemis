@@ -36,6 +36,15 @@
         <dd>
             <a ui-sref="course-detail({id:vm.exercise.course.id})">{{vm.exercise.course.title}}</a>
         </dd>
+        <dt><span translate="exerciseApplicationApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+        <dd>
+            <button type="submit"
+                    ui-sref="exercise.ltiConfiguration({id:vm.exercise.id})"
+                    class="btn btn-dar">
+                <span class="glyphicon glyphicon-eye-open"></span>
+                <span translate="exerciseApplicationApp.exerciseLtiConfiguration.lti"></span>
+            </button>
+        </dd>
     </dl>
 
     <button type="submit"
