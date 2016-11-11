@@ -1,9 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Authority;
-import de.tum.in.www1.exerciseapp.domain.Course;
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,6 +30,9 @@ public class ExerciseService {
 
     @Inject
     private UserService userService;
+
+    @Inject
+    private ParticipationService participationService;
 
     /**
      * Save a exercise.
@@ -86,8 +87,17 @@ public class ExerciseService {
      *
      *  @param id the id of the entity
      */
-    public void delete(Long id) {
+    public void delete(Long id, boolean deleteParticipations) {
         log.debug("Request to delete Exercise : {}", id);
+        Exercise exercise = exerciseRepository.findOne(id);
+
+        if(deleteParticipations && Optional.ofNullable(exercise).isPresent()) {
+            // delete all participations for this exercise
+            for(Participation participation : exercise.getParticipations()) {
+                participationService.delete(participation.getId(), true , true);
+            }
+
+        }
         exerciseRepository.delete(id);
     }
 

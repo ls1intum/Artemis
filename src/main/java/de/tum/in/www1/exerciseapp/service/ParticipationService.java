@@ -197,10 +197,10 @@ public class ParticipationService {
         log.debug("Request to delete Participation : {}", id);
         Participation participation = participationRepository.findOne(id);
         if (Optional.ofNullable(participation).isPresent()) {
-            if (deleteBuildPlan) {
+            if (deleteBuildPlan && !participation.getBuildPlanId().isEmpty()) {
                 continuousIntegrationService.deleteBuildPlan(participation.getBuildPlanId());
             }
-            if (deleteRepository) {
+            if (deleteRepository && !participation.getRepositoryUrl().isEmpty()) {
                 versionControlService.deleteRepository(participation.getRepositoryUrlAsUrl());
             }
 

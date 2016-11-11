@@ -161,9 +161,10 @@ public class ExerciseResource {
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
-    public ResponseEntity<Void> deleteExercise(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteExercise(@PathVariable Long id,
+                                               @RequestParam(defaultValue = "false") boolean deleteParticipations) {
         log.debug("REST request to delete Exercise : {}", id);
-        exerciseRepository.delete(id);
+        exerciseService.delete(id, deleteParticipations);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("exercise", id.toString())).build();
     }
 
