@@ -49,6 +49,15 @@
                 </div>
                 <div class="panel-footer" ng-bind-html="$ctrl.saveStatusLabel">
 
+
+                </div>
+                <div class="panel-footer" ng-switch="$ctrl.isCommitted">
+                    <span ng-switch-when="true">
+                        <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
+                    </span>
+                    <span ng-switch-when="false">
+                        <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
+                    </span>
                 </div>
             </div>
 
