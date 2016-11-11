@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
+import java.io.IOException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -35,6 +36,9 @@ public class ParticipationService {
 
     @Inject
     private UserRepository userRepository;
+
+    @Inject
+    private GitService gitService;
 
     @Inject
     private ContinuousIntegrationService continuousIntegrationService;
@@ -199,6 +203,14 @@ public class ParticipationService {
             if (deleteRepository) {
                 versionControlService.deleteRepository(participation.getRepositoryUrlAsUrl());
             }
+
+            // delete local repository cache
+            try {
+                gitService.deleteLocalRepository(participation);
+            } catch (IOException e) {
+                log.error("Error while deleting local repository", e);
+            }
+
         }
         participationRepository.delete(id);
     }
