@@ -15,6 +15,14 @@
             'commit': {
                 url: 'api/repository/:participationId/commit',
                 method: 'POST'
+            },
+            'pull': {
+                url: 'api/repository/:participationId/pull',
+                method: 'POST'
+            },
+            'buildlogs': {
+                url: 'api/repository/:participationId/buildlogs',
+                method: 'GET', isArray: true
             }
         });
     }

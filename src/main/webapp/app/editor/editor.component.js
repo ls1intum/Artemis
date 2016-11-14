@@ -9,6 +9,7 @@
         .component('editor', {
             bindings: {
                 participation: '<',
+                repository: '<',
                 file: '<',
             },
             templateUrl: 'app/editor/editor.html',
@@ -22,6 +23,8 @@
 
         vm.isSaved = true;
         vm.isBuilding = false;
+        vm.isCommitted = vm.repository.isClean;
+        vm.latestResult = null;
 
         console.log(vm.participation);
         console.log(vm.file);
@@ -42,7 +45,15 @@
 
         vm.updateSaveStatusLabel = function ($event) {
             vm.isSaved = $event.isSaved;
+            if(!vm.isSaved) {
+                vm.isCommitted = false;
+            }
             vm.saveStatusLabel = $sce.trustAsHtml($event.saveStatusLabel);
+        };
+
+        vm.updateLatestResult = function ($event) {
+            vm.isBuilding = false;
+            vm.latestResult = $event.newResult;
         };
 
         vm.commit = function ($event) {
@@ -51,6 +62,7 @@
             Repository.commit({
                 participationId: vm.participation.id
             }, {}, function () {
+                vm.isCommitted = true;
                 console.log('comitted');
             }, function (err) {
                 console.log(err);

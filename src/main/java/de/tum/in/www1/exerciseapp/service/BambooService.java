@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Repository;
 import de.tum.in.www1.exerciseapp.domain.Result;
@@ -16,7 +17,6 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -27,10 +27,10 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.time.Instant;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -126,6 +126,12 @@ public class BambooService implements ContinuousIntegrationService {
         Map<String, Object> details = retrieveLatestBuildResultDetails(participation.getBuildPlanId());
         return details;
     }
+
+    @Override
+    public List<BuildLogEntry> getLatestBuildLogs(Participation participation) {
+        return retrieveLatestBuildLogs(participation.getBuildPlanId());
+    }
+
 
     @Override
     public URL getBuildPlanWebUrl(Participation participation) {
@@ -340,6 +346,40 @@ public class BambooService implements ContinuousIntegrationService {
             return result;
         }
         return null;
+    }
+
+
+    /**
+     * Performs a request to the Bamboo REST API to retrieve the build log of the latest build.
+     *
+     * @param planKey
+     * @return
+     */
+    public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = null;
+        try {
+            response = restTemplate.exchange(
+                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries",
+                HttpMethod.GET,
+                entity,
+                Map.class);
+        } catch (Exception e) {
+            log.error("HttpError while retrieving build result details", e);
+        }
+
+        ArrayList logs = new ArrayList<BuildLogEntry>();
+
+
+        for (HashMap<String,Object> logEntry : (List<HashMap>) ((Map)response.getBody().get("logEntries")).get("logEntry")) {
+            Instant i = Instant.ofEpochMilli( (long) logEntry.get("date") );
+            ZonedDateTime logDate = ZonedDateTime.ofInstant( i, ZoneId.systemDefault() );
+            BuildLogEntry log = new BuildLogEntry(logDate, (String) logEntry.get("log"));
+            logs.add(log);
+        }
+        return logs;
     }
 
     /**

@@ -20,7 +20,7 @@
             </div>
             <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed">
                 <div class=" navbar-nav navbar-right">
-                    <result participation="$ctrl.participation" ng-hide="$ctrl.isBuilding" on-new-result="$ctrl.isBuilding = false"></result>
+                    <result participation="$ctrl.participation" ng-hide="$ctrl.isBuilding" on-new-result="$ctrl.updateLatestResult($event)"></result>
                     <button type="button" class="btn btn-primary navbar-btn" ng-disabled="!$ctrl.isSaved || $ctrl.isBuilding" ng-click="$ctrl.commit($event)" ng-switch="$ctrl.isBuilding" tooltip-placement="left" uib-tooltip="Stage, commit, push, build and test your changes.">
                         <span ng-switch-when="true"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
                         <span ng-switch-default ><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
@@ -49,6 +49,15 @@
                 </div>
                 <div class="panel-footer" ng-bind-html="$ctrl.saveStatusLabel">
 
+
+                </div>
+                <div class="panel-footer" ng-switch="$ctrl.isCommitted">
+                    <span ng-switch-when="true">
+                        <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
+                    </span>
+                    <span ng-switch-when="false">
+                        <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
+                    </span>
                 </div>
             </div>
 
@@ -68,7 +77,7 @@
     <div class="editor-bottom">
 
 
-        <div class="panel panel-primary collapsed">
+        <div class="panel panel-primary">
             <div class="panel-heading" ng-click="toggleCollapse($event)">
                 <span class="pull-right "><i class="glyphicon glyphicon-chevron-down"></i></span>
                 <h3 class="panel-title">
@@ -78,7 +87,7 @@
 
             </div>
             <div class="panel-body">
-
+                <editor-build-output participation="$ctrl.participation" is-building="$ctrl.isBuilding"></editor-build-output>
             </div>
         </div>
 
