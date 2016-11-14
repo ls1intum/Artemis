@@ -1,0 +1,9 @@
+
+<p class="text-center" ng-show="$ctrl.isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building...</p>
+
+<p class="text-center" ng-show="$ctrl.buildLogs.length == 0 && $ctrl.isBuilding">No build results available</p>
+
+<dl class="buildoutput dl-horizontal" ng-hide="$ctrl.buildLogs.length == 0 || $ctrl.isBuilding">
+    <dt ng-repeat-start="logEntry in $ctrl.buildLogs">{{logEntry.time | date:'yyyy-MM-dd HH:mm:ss'}}</dt>
+    <dd ng-repeat-end>{{logEntry.log}}</dd>
+</dl>

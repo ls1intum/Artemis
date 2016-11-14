@@ -23,9 +23,10 @@
                 },
                 views: {
                     'content@': {
-                        template: '<editor participation="participation" file="file"></editor>',
-                        controller: ['$scope', 'participation', '$state', function ($scope, participation, $state) {
+                        template: '<editor participation="participation" file="file" repository="repository"></editor>',
+                        controller: ['$scope', 'participation', 'repository', '$state', function ($scope, participation, repository, $state) {
                             $scope.participation = participation;
+                            $scope.repository = repository;
                             $scope.file = $state.params.file;
                         }]
                     }
@@ -37,7 +38,10 @@
                     }],
                     participation: ['$stateParams', 'Participation', function($stateParams, Participation) {
                         return Participation.get({id : $stateParams.participationId}).$promise;
-                    }]
+                    }],
+                    repository: ['$stateParams', 'Repository', function($stateParams, Repository) {
+                        return Repository.get({participationId : $stateParams.participationId}).$promise;
+                    }],
                 },
 
             })

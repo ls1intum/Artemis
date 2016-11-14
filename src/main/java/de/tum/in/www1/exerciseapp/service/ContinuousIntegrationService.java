@@ -1,8 +1,10 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -61,6 +63,8 @@ public interface ContinuousIntegrationService {
 
     // TODO: This return type is temporary
     Map<String, Object> getLatestBuildResultDetails(Participation participation);
+
+    List<BuildLogEntry> getLatestBuildLogs(Participation participation);
 
     URL getBuildPlanWebUrl(Participation participation);
 
