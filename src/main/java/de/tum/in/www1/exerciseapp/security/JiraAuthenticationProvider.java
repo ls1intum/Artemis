@@ -2,13 +2,18 @@ package de.tum.in.www1.exerciseapp.security;
 
 import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.exception.JiraException;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.service.CourseService;
+import de.tum.in.www1.exerciseapp.service.GitService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.hibernate.Hibernate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.orm.jpa.JpaProperties;
+import org.springframework.boot.devtools.autoconfigure.OptionalLiveReloadServer;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
@@ -21,6 +26,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
@@ -39,11 +45,19 @@ import java.util.stream.Collectors;
 @ComponentScan("de.tum.in.www1.exerciseapp.*")
 public class JiraAuthenticationProvider implements AuthenticationProvider {
 
+    private final Logger log = LoggerFactory.getLogger(GitService.class);
+
     @Value("${exerciseapp.jira.instructor-group-name}")
     private String INSTRUCTOR_GROUP_NAME;
 
     @Value("${exerciseapp.jira.url}")
     private URL JIRA_URL;
+
+    @Value("${exerciseapp.jira.user}")
+    private String JIRA_USER;
+
+    @Value("${exerciseapp.jira.password}")
+    private String JIRA_PASSWORD;
 
     @Inject
     UserService userService;
@@ -58,9 +72,27 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
 
+        User user = getOrCreateUser(authentication, false);
+        List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream()
+            .map(authority -> new SimpleGrantedAuthority(authority.getName()))
+            .collect(Collectors.toList());
+        UsernamePasswordAuthenticationToken token;
+        token = new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
+        return token;
+
+    }
+
+    /**
+     * Gets or creates the user object for an JIRA user.
+     *
+     * @param authentication
+     * @param skipPasswordCheck     Skip checking the password
+     * @return
+     */
+    public User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
-        HttpEntity<Principal> entity = new HttpEntity<>(HeaderUtil.createAuthorization(username, password));
+        HttpEntity<Principal> entity = new HttpEntity<>(!skipPasswordCheck ? HeaderUtil.createAuthorization(username, password) : HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD));
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> authenticationResponse = null;
         try {
@@ -90,15 +122,10 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
             if (!user.getActivated()) {
                 userService.activateRegistration(user.getActivationKey());
             }
-            UsernamePasswordAuthenticationToken token;
+
             Optional<User> matchingUser = userService.getUserWithAuthoritiesByLogin(username);
             if (matchingUser.isPresent()) {
-                User user1 = matchingUser.get();
-                List<GrantedAuthority> grantedAuthorities = user1.getAuthorities().stream()
-                    .map(authority -> new SimpleGrantedAuthority(authority.getName()))
-                    .collect(Collectors.toList());
-                token = new UsernamePasswordAuthenticationToken(user1.getLogin(), user1.getPassword(), grantedAuthorities);
-                return token;
+                return matchingUser.get();
             } else {
                 throw new UsernameNotFoundException("User " + username + " was not found in the " +
                     "database");
@@ -106,7 +133,10 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         } else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed");
         }
+
     }
+
+
 
     @Override
     public boolean supports(Class<?> authentication) {
@@ -150,4 +180,72 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         authorities.add(userAuthority);
         return authorities;
     }
+
+
+
+    /**
+     * Adds a JIRA user to a JIRA group. Ignores "user is already a member of" errors.
+     *
+     * @param username The JIRA username
+     * @param group The JIRA group name
+     * @throws JiraException if JIRA returns an error
+     */
+    public void addUserToGroup(String username, String group) throws JiraException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", username);
+        HttpEntity<?> entity = new HttpEntity<>(body,headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                JIRA_URL + "/rest/api/2/group/user?groupname=" + group,
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            if(e.getStatusCode().equals(HttpStatus.BAD_REQUEST)
+                && e.getResponseBodyAsString().contains("user is already a member of")) {
+                // ignore the error if the user is already in the group
+                return;
+            }
+            log.error("Could not add JIRA user to group " + group, e);
+            throw new JiraException("Error while adding user to JIRA group");
+        }
+    }
+
+    /**
+     * Checks if an JIRA user for the given email address exists.
+     *
+     * @param email The JIRA user email address
+     * @return Optional String of JIRA username
+     * @throws JiraException
+     */
+    public Optional<String> getUsernameForEmail(String email) throws JiraException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            ResponseEntity<ArrayList> authenticationResponse = restTemplate.exchange(
+                JIRA_URL + "/rest/api/2/user/search?username=" + email,
+                HttpMethod.GET,
+                entity,
+                ArrayList.class);
+
+
+            ArrayList results = authenticationResponse.getBody();
+            if(results.size() == 0) {
+                // no result
+                return Optional.empty();
+            }
+            Map firstResult = (Map) results.get(0);
+            return Optional.of((String) firstResult.get("name"));
+        } catch (HttpClientErrorException e) {
+            log.error("Could not get JIRA username for email address " + email, e);
+            throw new JiraException("Error while checking eMail address");
+        }
+
+    }
+
+
+
 }
