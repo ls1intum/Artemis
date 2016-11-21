@@ -7,6 +7,7 @@ import de.tum.in.www1.exerciseapp.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
+import de.tum.in.www1.exerciseapp.security.JiraAuthenticationProvider;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.service.util.RandomUtil;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
@@ -24,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -75,6 +77,10 @@ public class LtiService {
     @Inject
     private PasswordEncoder passwordEncoder;
 
+    @Inject
+    private JiraAuthenticationProvider jiraAuthenticationProvider;
+
+
     /**
      * Handles LTI launch requests.
      *
@@ -108,7 +114,7 @@ public class LtiService {
      */
     private User authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws JiraException, AuthenticationException {
         String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
-
+        String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
 
         String password;
 
@@ -116,37 +122,56 @@ public class LtiService {
 
         if (auth instanceof AnonymousAuthenticationToken) {
             // currently not logged in
+            User user;
+
+            // check if an JIRA user with this email address exists
+            Optional<String> jiraUsername = jiraAuthenticationProvider.getUsernameForEmail(email);
+
+            if(jiraUsername.isPresent()) {
+                // found an user on JIRA. Continue as this user.
+                log.debug("Signing in as {}", jiraUsername.get());
+                user = jiraAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(jiraUsername.get(), ""), true);
+
+            } else {
+                // no user on JIRA found. We create a local user.
+
+                // temporary only allow users with existing JIRA account
+                if(true) {
+                    throw new JiraException("Your eMail address (" + email + ") was not found on JIRA");
+                }
+
+                String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
+
+                user = userRepository.findOneByLogin(username).orElseGet(() -> {
+                    User newUser = userService.createUserInformation(username, "",
+                        USER_GROUP_NAME, fullname, email,
+                        "en");
+
+                    // add user to LTI group
+                    newUser.setGroups(new ArrayList<>(Arrays.asList(USER_GROUP_NAME)));
+
+                    // set random password
+                    String randomEncryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
+                    newUser.setPassword(randomEncryptedPassword);
+
+                    userRepository.save(newUser);
+
+                    log.debug("Created user {}", username);
+
+                    return newUser;
+                });
 
 
-            String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
-            String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
+                if (!user.getActivated()) {
+                    userService.activateRegistration(user.getActivationKey());
+                }
 
-            User user = userRepository.findOneByLogin(username).orElseGet(() -> {
-                User newUser = userService.createUserInformation(username, "",
-                    USER_GROUP_NAME, fullname, email,
-                    "en");
+                log.debug("Signing in as {}", username);
 
-                // add user to LTI group
-                newUser.setGroups(new ArrayList<>(Arrays.asList(USER_GROUP_NAME)));
-
-                // set random password
-                String randomEncryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
-                newUser.setPassword(randomEncryptedPassword);
-
-                userRepository.save(newUser);
-
-                log.debug("Created user {}", username);
-
-                return newUser;
-            });
-
-
-            if (!user.getActivated()) {
-                userService.activateRegistration(user.getActivationKey());
             }
 
 
-            log.debug("Signing in as {}", username);
+
 
 
             // Authenticate
@@ -176,6 +201,17 @@ public class LtiService {
             groups.add(courseGroup);
             user.setGroups(groups);
             userRepository.save(user);
+
+            // try to sync with JIRA
+            try {
+                jiraAuthenticationProvider.addUserToGroup(user.getLogin(), courseGroup);
+            } catch (JiraException e) {
+            /*
+                This might throw exceptions, for example if the group does not exist on JIRA.
+                We can safely ignore them.
+            */
+            }
+
         }
     }
 
