@@ -5,10 +5,10 @@
         .module('exerciseApplicationApp')
         .factory('authExpiredInterceptor', authExpiredInterceptor);
 
-    
-    authExpiredInterceptor.$inject = ['$rootScope', '$q', '$injector', '$document'];
 
-    function authExpiredInterceptor($rootScope, $q, $injector, $document) {
+    authExpiredInterceptor.$inject = ['$rootScope', '$q', '$injector', '$document', '$location'];
+
+    function authExpiredInterceptor($rootScope, $q, $injector, $document, $location) {
         var service = {
             responseError: responseError
         };
@@ -22,7 +22,9 @@
                 var Auth = $injector.get('Auth');
                 var to = $rootScope.toState;
                 var params = $rootScope.toStateParams;
-                Auth.logout();
+                if(!$location.search().login) {
+                    Auth.logout();
+                }
                 if (to.name !== 'accessdenied') {
                     Auth.storePreviousState(to.name, params);
                 }

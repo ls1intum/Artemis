@@ -31,6 +31,24 @@ public class LtiLaunchRequestDTO {
     private String oauth_consumer_key;
     private String oauth_signature;
 
+    private Boolean custom_require_existing_user = false;
+    private Boolean custom_lookup_user_by_email = false;
+
+    public Boolean getCustom_require_existing_user() {
+        return custom_require_existing_user;
+    }
+
+    public void setCustom_require_existing_user(Boolean custom_require_existing_user) {
+        this.custom_require_existing_user = custom_require_existing_user;
+    }
+
+    public Boolean getCustom_lookup_user_by_email() {
+        return custom_lookup_user_by_email;
+    }
+
+    public void setCustom_lookup_user_by_email(Boolean custom_lookup_user_by_email) {
+        this.custom_lookup_user_by_email = custom_lookup_user_by_email;
+    }
 
     public String getLis_person_sourcedid() {
         return lis_person_sourcedid;
