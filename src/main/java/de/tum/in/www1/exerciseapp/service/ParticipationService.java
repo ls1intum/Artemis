@@ -75,18 +75,15 @@ public class ParticipationService {
             participation = save(participation);
         }
 
-        try {
-            participation = copyRepository(participation);
-            participation = configureRepository(participation);
-            participation = copyBuildPlan(participation);
-            participation = configureBuildPlan(participation);
-            participation.setInitializationState(ParticipationState.INITIALIZED);
-            participation.setInitializationDate(ZonedDateTime.now());
-            save(participation);
-        } catch (BitbucketException | BambooException | GitException e) {
-            log.error("Error while initializing participation");
-            throw new CustomParameterizedException(ErrorConstants.ERR_INTERNAL_SERVER_ERROR);
-        }
+
+        participation = copyRepository(participation);
+        participation = configureRepository(participation);
+        participation = copyBuildPlan(participation);
+        participation = configureBuildPlan(participation);
+        participation.setInitializationState(ParticipationState.INITIALIZED);
+        participation.setInitializationDate(ZonedDateTime.now());
+        save(participation);
+
         return participation;
     }
 
