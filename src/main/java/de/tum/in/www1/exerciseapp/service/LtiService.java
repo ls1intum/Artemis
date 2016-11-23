@@ -5,6 +5,7 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.util.PatchedIMSPOXRequest;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
 import de.tum.in.www1.exerciseapp.repository.LtiOutcomeUrlRepository;
+import de.tum.in.www1.exerciseapp.repository.LtiUserIdRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
@@ -81,6 +82,9 @@ public class LtiService {
     @Inject
     private JiraAuthenticationProvider jiraAuthenticationProvider;
 
+    @Inject
+    private LtiUserIdRepository ltiUserIdRepository;
+
 
     public HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
@@ -137,6 +141,9 @@ public class LtiService {
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise);
 
+        // Save LTI user ID to automatically sign in the next time
+        saveLtiUserId(user, launchRequest.getUser_id());
+
         // Save LTI outcome url
         saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());
     }
@@ -169,11 +176,17 @@ public class LtiService {
 
 
 
+        Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
+
+        if(ltiUserId.isPresent()) {
             /*
              * 2. Case:
              * Existing mapping for LTI user id
              *
              */
+            User user = ltiUserId.get().getUser();
+            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+        }
 
 
         if (launchRequest.getCustom_lookup_user_by_email() == true) {
@@ -294,6 +307,28 @@ public class LtiService {
         ltiOutcomeUrl.setUrl(url);
         ltiOutcomeUrl.setSourcedId(sourcedId);
         ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
+    }
+
+
+    /**
+     * Save the User <-> LTI User ID mapping
+     *
+     * @param user
+     * @param ltiUserIdString
+     */
+    private void saveLtiUserId(User user, String ltiUserIdString) {
+
+        if (ltiUserIdString == null || ltiUserIdString.isEmpty()) {
+            return;
+        }
+
+        LtiUserId ltiUserId = ltiUserIdRepository.findByUser(user).orElseGet(() -> {
+            LtiUserId newltiUserId = new LtiUserId();
+            newltiUserId.setUser(user);
+            return newltiUserId;
+        });
+        ltiUserId.setLtiUserId(ltiUserIdString);
+        ltiUserIdRepository.save(ltiUserId);
     }
 
 
