@@ -20,6 +20,7 @@
             'angularMoment',
             'ui.ace'
         ])
+        .constant('CONTACT_EMAIL', "muenchdo@in.tum.de,montag@in.tum.de")
         .run(run);
 
     run.$inject = ['stateHandler', 'translationHandler','$rootScope'];
