@@ -6,16 +6,17 @@
         .factory('stateHandler', stateHandler);
 
     stateHandler.$inject = ['$rootScope', '$state', '$sessionStorage', '$translate', 'JhiLanguageService', 'translationHandler', '$window',
-        'Auth', 'Principal', 'VERSION'];
+        'Auth', 'Principal', 'VERSION', 'CONTACT_EMAIL'];
 
     function stateHandler($rootScope, $state, $sessionStorage, $translate, JhiLanguageService, translationHandler, $window,
-        Auth, Principal, VERSION) {
+        Auth, Principal, VERSION,CONTACT_EMAIL) {
         return {
             initialize: initialize
         };
 
         function initialize() {
             $rootScope.VERSION = VERSION;
+            $rootScope.CONTACT_EMAIL = CONTACT_EMAIL;
 
             var stateChangeStart = $rootScope.$on('$stateChangeStart', function (event, toState, toStateParams, fromState) {
                 $rootScope.toState = toState;
@@ -32,12 +33,12 @@
                     Auth.authorize();
                 }
 
-                
+
                 // Update the language
                 JhiLanguageService.getCurrent().then(function (language) {
                     $translate.use(language);
                 });
-                
+
             });
 
             var stateChangeSuccess = $rootScope.$on('$stateChangeSuccess',  function(event, toState, toParams, fromState, fromParams) {
