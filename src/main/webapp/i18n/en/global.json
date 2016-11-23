@@ -122,7 +122,9 @@
         "Size": "Field {{ fieldName }} does not meet min/max size requirements!",
         "userexists": "Login name already used!",
         "emailexists": "E-mail is already in use!",
-        "idexists": "A new {{ entityName }} cannot already have an ID"
+        "idexists": "A new {{ entityName }} cannot already have an ID",
+        "invalid.build.plan.id": "The Build Plan ID seems to be invalid. Please make sure it exists and is accessible for the Exercise Application.",
+        "invalid.repository.url": "The Repository URL seems to be invalid. Please make sure it exists and is accessible for the Exercise Application."
     },
     "footer": "Found a bug or have some feedback? Please <a href=\"mailto:muenchdo@in.tum.de\">let us know</a>!"
 }
