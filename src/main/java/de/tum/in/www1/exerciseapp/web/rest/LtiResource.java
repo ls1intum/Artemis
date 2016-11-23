@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
+import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.service.LtiService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.dto.ExerciseLtiConfigurationDTO;
@@ -88,15 +89,15 @@ public class LtiResource {
             return;
         }
 
-        Boolean isNewUser = TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochSecond()) < 15;
+        Boolean isNewUser = SecurityUtils.isAuthenticated() && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochSecond()) < 15;
 
         String redirectUrl = request.getScheme() + // "http"
             "://" +                                // "://"
             request.getServerName() +              // "myhost"
-            ":" +                                  // ":"
-            request.getServerPort() +
+            (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "" ) +
             "/#/courses/" + exercise.getCourse().getId() + "/exercise/" + exercise.getId() +
-            (isNewUser ? "?welcome" : "");
+            (isNewUser ? "?welcome" : "") +
+            (!SecurityUtils.isAuthenticated() ? "?login" : "");
 
 
 
