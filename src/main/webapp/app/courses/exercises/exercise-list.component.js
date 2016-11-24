@@ -143,7 +143,7 @@
                 AlertService.add({
                     type: 'danger',
                     msg: '<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong> If this problem persists, please <a href="mailto:' + $rootScope.CONTACT_EMAIL + '?subject=Exercise%20Application%20Error%20Report&body=' + e.data.description+ '">send us an error report</a>.',
-                    timeout: 15000
+                    timeout: 30000
                 });
             }).finally(function () {
                 vm.loading[exercise.id.toString()] = false;
