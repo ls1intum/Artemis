@@ -3,7 +3,9 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
+import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.ExerciseService;
+import de.tum.in.www1.exerciseapp.service.VersionControlService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import org.slf4j.Logger;
@@ -40,6 +42,12 @@ public class ExerciseResource {
     @Inject
     private ExerciseService exerciseService;
 
+    @Inject
+    private ContinuousIntegrationService continuousIntegrationService;
+
+    @Inject
+    private VersionControlService versionControlService;
+
     /**
      * POST  /exercises : Create a new exercise.
      *
@@ -56,6 +64,12 @@ public class ExerciseResource {
         log.debug("REST request to save Exercise : {}", exercise);
         if (exercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "idexists", "A new exercise cannot already have an ID")).body(null);
+        }
+        if(!continuousIntegrationService.buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
+        }
+        if(!versionControlService.repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
         }
         Exercise result = exerciseRepository.save(exercise);
         return ResponseEntity.created(new URI("/api/exercises/" + result.getId()))
@@ -81,6 +95,12 @@ public class ExerciseResource {
         log.debug("REST request to update Exercise : {}", exercise);
         if (exercise.getId() == null) {
             return createExercise(exercise);
+        }
+        if(!continuousIntegrationService.buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
+        }
+        if(!versionControlService.repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
         }
         Exercise result = exerciseRepository.save(exercise);
         return ResponseEntity.ok()

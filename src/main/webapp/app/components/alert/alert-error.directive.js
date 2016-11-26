@@ -4,7 +4,7 @@
     var jhiAlertError = {
         template: '<div class="alerts" ng-cloak="">' +
                         '<div ng-repeat="alert in $ctrl.alerts" ng-class="[alert.position, {\'toast\': alert.toast}]">' +
-                            '<uib-alert ng-cloak="" type="{{alert.type}}" close="alert.close($ctrl.alerts)"><pre>{{ alert.msg }}</pre></uib-alert>' +
+                            '<uib-alert ng-cloak="" type="{{alert.type}}" close="alert.close($ctrl.alerts)"><pre ng-bind-html="alert.msg"></pre></uib-alert>' +
                         '</div>' +
                   '</div>',
         controller: jhiAlertErrorController
@@ -29,7 +29,7 @@
                         type: 'danger',
                         msg: key,
                         params: data,
-                        timeout: 5000,
+                        timeout: 60000,
                         toast: AlertService.isToast(),
                         scoped: true
                     },
@@ -74,7 +74,11 @@
 
             default:
                 if (httpResponse.data && httpResponse.data.message) {
-                    addErrorAlert(httpResponse.data.message);
+                    var msg = httpResponse.data.message;
+                    if(httpResponse.data.description) {
+                        msg += ' If this problem persists, please <a href="mailto:' + $rootScope.CONTACT_EMAIL + '?subject=Exercise%20Application%20Error%20Report&body=' + httpResponse.data.description+ '">send us an error report</a>.'
+                    }
+                    addErrorAlert(msg);
                 } else {
                     addErrorAlert(angular.toJson(httpResponse));
                 }

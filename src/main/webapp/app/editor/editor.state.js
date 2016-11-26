@@ -8,8 +8,12 @@
     stateConfig.$inject = ['$stateProvider'];
 
     function stateConfig($stateProvider) {
+
         $stateProvider
             .state('editor', {
+                flushRepositoryCacheAfter: 900000, // 15 min
+                participationCache: {},
+                repositoryCache: {},
                 parent: 'base',
                 url: '/editor/{participationId}/{file:any}',
                 params: {
@@ -36,11 +40,25 @@
                         //$translatePartialLoader.addPart('editor');
                         return $translate.refresh();
                     }],
-                    participation: ['$stateParams', 'Participation', function($stateParams, Participation) {
-                        return Participation.get({id : $stateParams.participationId}).$promise;
+                    participation: ['$stateParams', 'Participation', '$timeout', function($stateParams, Participation, $timeout) {
+                        var state = this;
+                        if(!state.participationCache[$stateParams.participationId]) {
+                            state.participationCache[$stateParams.participationId] = Participation.get({id : $stateParams.participationId}).$promise;
+                            $timeout(function() {
+                                delete state.participationCache[$stateParams.participationId];
+                            }, state.flushRepositoryCacheAfter);
+                        }
+                        return state.participationCache[$stateParams.participationId];
                     }],
-                    repository: ['$stateParams', 'Repository', function($stateParams, Repository) {
-                        return Repository.get({participationId : $stateParams.participationId}).$promise;
+                    repository: ['$stateParams', 'Repository', '$timeout', function($stateParams, Repository,$timeout) {
+                        var state = this;
+                        if(!state.repositoryCache[$stateParams.participationId]) {
+                            state.repositoryCache[$stateParams.participationId] = Repository.get({participationId : $stateParams.participationId}).$promise;
+                            $timeout(function() {
+                                delete state.repositoryCache[$stateParams.participationId];
+                            }, state.flushRepositoryCacheAfter);
+                        }
+                        return state.repositoryCache[$stateParams.participationId];
                     }],
                 },
 

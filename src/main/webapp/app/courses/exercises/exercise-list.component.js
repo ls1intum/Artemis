@@ -15,9 +15,9 @@
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', '$http', '$location', 'Principal'];
+    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', '$http', '$location', 'Principal', '$rootScope'];
 
-    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http,  $location, Principal) {
+    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http,  $location, Principal, $rootScope) {
         var vm = this;
 
         vm.clonePopover = {
@@ -138,11 +138,12 @@
                     msg: 'Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!',
                     timeout: 10000
                 });
-            }).catch(function () {
+            }).catch(function (e) {
+                console.log(e);
                 AlertService.add({
                     type: 'danger',
-                    msg: 'Uh oh! Something went wrong... Please try again in a few seconds.',
-                    timeout: 10000
+                    msg: '<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong> If this problem persists, please <a href="mailto:' + $rootScope.CONTACT_EMAIL + '?subject=Exercise%20Application%20Error%20Report&body=' + e.data.description+ '">send us an error report</a>.',
+                    timeout: 30000
                 });
             }).finally(function () {
                 vm.loading[exercise.id.toString()] = false;

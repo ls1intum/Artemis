@@ -179,7 +179,11 @@ public class UserService {
     @Transactional(readOnly = true)
     public String decryptPassword() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
-        return encryptor.decrypt(user.getPassword());
+        try {
+            return encryptor.decrypt(user.getPassword());
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     @Transactional(readOnly = true)

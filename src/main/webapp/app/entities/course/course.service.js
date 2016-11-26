@@ -47,10 +47,12 @@
                 transformResponse: function (data) {
                     if (data) {
                         data = angular.fromJson(data);
-                        var exercise = data.exercise;
-                        exercise['participation'] = data;
-                        console.log(exercise);
-                        return exercise;
+                        if(data.exercise) {
+                            var exercise = data.exercise;
+                            exercise['participation'] = data;
+                            console.log(exercise);
+                            return exercise;
+                        }
                     }
                     return data;
                 },
