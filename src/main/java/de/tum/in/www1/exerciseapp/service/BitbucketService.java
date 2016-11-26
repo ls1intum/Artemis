@@ -306,6 +306,26 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
+    /**
+     *  Check if the given repository url is valid and accessible on Bitbucket.
+     * @param repositoryUrl
+     * @return
+     */
+    @Override
+    public Boolean repositoryUrlIsValid(URL repositoryUrl) {
+        String projectKey = getProjectKeyFromUrl(repositoryUrl);
+        String repositorySlug = getRepositorySlugFromUrl(repositoryUrl);
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, entity, Map.class);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
     private URL buildCloneUrl(String projectKey, String repositorySlug, String username) {
         URL cloneUrl = null;
         try {

@@ -415,6 +415,31 @@ public class BambooService implements ContinuousIntegrationService {
         return null;
     }
 
+    /**
+     * Check if the given build plan is valid and accessible on Bamboo.
+     *
+     * @param buildPlanId   unique identifier for build plan on CI system
+     * @return
+     */
+    @Override
+    public Boolean buildPlanIdIsValid(String buildPlanId) {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response = null;
+        try {
+            response = restTemplate.exchange(
+                BAMBOO_SERVER + "/rest/api/latest/plan/" + buildPlanId.toUpperCase(),
+                HttpMethod.GET,
+                entity,
+                Map.class);
+        } catch (Exception e) {
+            return false;
+        }
+        return true;
+    }
+
+
     private String buildSshRepositoryUrl(String project, String slug) {
         final int sshPort = 7999;
 

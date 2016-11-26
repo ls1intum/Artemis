@@ -17,4 +17,13 @@ public interface VersionControlService {
     void deleteRepository(URL repositoryUrl);
 
     URL getRepositoryWebUrl(Participation participation);
+
+    /**
+     * Check if the given repository url is valid and accessible.
+     *
+     * @param repositoryUrl   repository URL
+     * @return
+     */
+    Boolean repositoryUrlIsValid(URL repositoryUrl);
+
 }

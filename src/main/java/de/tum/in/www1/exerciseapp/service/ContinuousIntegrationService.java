@@ -61,6 +61,14 @@ public interface ContinuousIntegrationService {
      */
     BuildStatus getBuildStatus(Participation participation);
 
+    /**
+     * Check if the given build plan is valid and accessible.
+     *
+     * @param buildPlanId   unique identifier for build plan on CI system
+     * @return
+     */
+    Boolean buildPlanIdIsValid(String buildPlanId);
+
     // TODO: This return type is temporary
     Map<String, Object> getLatestBuildResultDetails(Participation participation);
 

@@ -1,9 +1,11 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import de.tum.in.www1.exerciseapp.config.JHipsterProperties;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.util.PatchedIMSPOXRequest;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
 import de.tum.in.www1.exerciseapp.repository.LtiOutcomeUrlRepository;
+import de.tum.in.www1.exerciseapp.repository.LtiUserIdRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
@@ -11,6 +13,7 @@ import de.tum.in.www1.exerciseapp.security.JiraAuthenticationProvider;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.service.util.RandomUtil;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.HttpResponseException;
@@ -24,14 +27,13 @@ import org.imsglobal.lti.launch.LtiVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AnonymousAuthenticationToken;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,6 +82,13 @@ public class LtiService {
     @Inject
     private JiraAuthenticationProvider jiraAuthenticationProvider;
 
+    @Inject
+    private LtiUserIdRepository ltiUserIdRepository;
+
+
+    public HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
+
+
 
     /**
      * Handles LTI launch requests.
@@ -92,15 +101,51 @@ public class LtiService {
     public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws JiraException, AuthenticationException {
 
 
-        User user = authenticateLtiUser(launchRequest);
+        Optional<Authentication> auth = authenticateLtiUser(launchRequest);
+
+        if (auth.isPresent()) {
+
+            SecurityContextHolder.getContext().setAuthentication(auth.get());
+
+            onSuccessfulLtiAuthentication(launchRequest, exercise);
+
+        } else  {
+
+            /*
+             *
+             * None of the  auth methods were successful.
+             * -> Map the launchRequest to the Session ID
+             * -> If the user signs in manually later, we use it in LtiAuthenticationSuccessListener
+             *
+             */
+
+            WebAuthenticationDetails authDetails = (WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
+            launchRequestForSession.put(authDetails.getSessionId(), Pair.of(launchRequest, exercise));
+
+        }
+
+    }
+
+
+    /**
+     * Handler for successful LTI auth
+     * Saves the LTI outcome url and permanently maps the LTI user id to the user
+     *
+     * @param launchRequest The launch request, sent by LTI consumer
+     * @param exercise      Exercise to launch
+     */
+    public void onSuccessfulLtiAuthentication(LtiLaunchRequestDTO launchRequest, Exercise exercise) {
+        // Auth was successful
+        User user = userService.getUser();
 
         // Make sure user is added to group for this exercise
         addUserToExerciseGroup(user, exercise);
 
+        // Save LTI user ID to automatically sign in the next time
+        saveLtiUserId(user, launchRequest.getUser_id());
+
         // Save LTI outcome url
         saveLtiOutcomeUrl(user, exercise, launchRequest.getLis_outcome_service_url(), launchRequest.getLis_result_sourcedid());
-
-
     }
 
 
@@ -112,79 +157,104 @@ public class LtiService {
      * @throws JiraException
      * @throws AuthenticationException
      */
-    private User authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws JiraException, AuthenticationException {
-        String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
-        String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
-
-        String password;
+    private Optional<Authentication> authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws JiraException, AuthenticationException {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (auth instanceof AnonymousAuthenticationToken) {
-            // currently not logged in
-            User user;
 
-            // check if an JIRA user with this email address exists
-            Optional<String> jiraUsername = jiraAuthenticationProvider.getUsernameForEmail(email);
-
-            if(jiraUsername.isPresent()) {
-                // found an user on JIRA. Continue as this user.
-                log.debug("Signing in as {}", jiraUsername.get());
-                user = jiraAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(jiraUsername.get(), ""), true);
-
-            } else {
-                // no user on JIRA found. We create a local user.
-
-                // temporary only allow users with existing JIRA account
-                if(true) {
-                    throw new JiraException("Your eMail address (" + email + ") was not found on JIRA");
-                }
-
-                String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
-
-                user = userRepository.findOneByLogin(username).orElseGet(() -> {
-                    User newUser = userService.createUserInformation(username, "",
-                        USER_GROUP_NAME, fullname, email,
-                        "en");
-
-                    // add user to LTI group
-                    newUser.setGroups(new ArrayList<>(Arrays.asList(USER_GROUP_NAME)));
-
-                    // set random password
-                    String randomEncryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
-                    newUser.setPassword(randomEncryptedPassword);
-
-                    userRepository.save(newUser);
-
-                    log.debug("Created user {}", username);
-
-                    return newUser;
-                });
-
-
-                if (!user.getActivated()) {
-                    userService.activateRegistration(user.getActivationKey());
-                }
-
-                log.debug("Signing in as {}", username);
-
-            }
-
-
-
-
-
-            // Authenticate
-            auth = new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER)));
-            SecurityContextHolder.getContext().setAuthentication(auth);
-
-            return user;
-
-        } else {
-            log.debug("User already signed in");
-            return userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
+        if (SecurityUtils.isAuthenticated()) {
+            /**
+             * 1. Case:
+             * User is already signed in. We are done here.
+             *
+             */
+            return Optional.of(auth);
         }
 
+
+        String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
+
+
+
+        Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
+
+        if(ltiUserId.isPresent()) {
+            /*
+             * 2. Case:
+             * Existing mapping for LTI user id
+             *
+             */
+            User user = ltiUserId.get().getUser();
+            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+        }
+
+
+        if (launchRequest.getCustom_lookup_user_by_email() == true) {
+
+            /*
+             * 3. Case:
+             * Lookup JIRA user with the LTI email address.
+             * Sign in as this user.
+             *
+             */
+
+            // check if an JIRA user with this email address exists
+            Optional<String> jiraLookupByEmail = jiraAuthenticationProvider.getUsernameForEmail(email);
+
+
+            if (jiraLookupByEmail.isPresent()) {
+                log.debug("Signing in as {}", jiraLookupByEmail.get());
+                User user = jiraAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(jiraLookupByEmail.get(), ""), true);
+
+                return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+            }
+        }
+        if (launchRequest.getCustom_require_existing_user() == false) {
+            /*
+             * 4. Case:
+             * Create new user
+             *
+             */
+
+            // temporary only allow users with existing JIRA account
+            if (true) {
+                throw new JiraException("Your eMail address (" + email + ") was not found on JIRA");
+            }
+
+            String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+            String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
+
+            User user = userRepository.findOneByLogin(username).orElseGet(() -> {
+                User newUser = userService.createUserInformation(username, "",
+                    USER_GROUP_NAME, fullname, email,
+                    "en");
+
+                // add user to LTI group
+                newUser.setGroups(new ArrayList<>(Arrays.asList(USER_GROUP_NAME)));
+
+                // set random password
+                String randomEncryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
+                newUser.setPassword(randomEncryptedPassword);
+
+                userRepository.save(newUser);
+
+                log.debug("Created user {}", username);
+
+                return newUser;
+            });
+
+
+            if (!user.getActivated()) {
+                userService.activateRegistration(user.getActivationKey());
+            }
+
+            log.debug("Signing in as {}", username);
+            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+
+        }
+
+
+        return Optional.empty();
 
     }
 
@@ -237,6 +307,28 @@ public class LtiService {
         ltiOutcomeUrl.setUrl(url);
         ltiOutcomeUrl.setSourcedId(sourcedId);
         ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
+    }
+
+
+    /**
+     * Save the User <-> LTI User ID mapping
+     *
+     * @param user
+     * @param ltiUserIdString
+     */
+    private void saveLtiUserId(User user, String ltiUserIdString) {
+
+        if (ltiUserIdString == null || ltiUserIdString.isEmpty()) {
+            return;
+        }
+
+        LtiUserId ltiUserId = ltiUserIdRepository.findByUser(user).orElseGet(() -> {
+            LtiUserId newltiUserId = new LtiUserId();
+            newltiUserId.setUser(user);
+            return newltiUserId;
+        });
+        ltiUserId.setLtiUserId(ltiUserIdString);
+        ltiUserIdRepository.save(ltiUserId);
     }
 
 
@@ -334,6 +426,28 @@ public class LtiService {
 
         return "0.00";
 
+    }
+
+
+    /**
+     * Handle launch request which was initiated earlier by a LTI consumer
+     *
+     * @param sessionId
+     */
+    public void handleLaunchRequestForSession(String sessionId) {
+        if(launchRequestForSession.containsKey(sessionId)) {
+
+            log.debug("Found LTI launchRequest for session ID {}", sessionId);
+
+            LtiLaunchRequestDTO launchRequest = launchRequestForSession.get(sessionId).getLeft();
+            Exercise exercise = launchRequestForSession.get(sessionId).getRight();
+
+            onSuccessfulLtiAuthentication(launchRequest, exercise);
+
+            // clean up
+            launchRequestForSession.remove(sessionId);
+
+        }
     }
 
 
