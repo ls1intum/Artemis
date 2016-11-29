@@ -39,6 +39,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,6 +88,9 @@ public class LtiService {
     private LtiUserIdRepository ltiUserIdRepository;
 
 
+    @Inject
+    private HttpServletResponse response;
+
     public HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
 
@@ -119,8 +124,28 @@ public class LtiService {
              *
              */
 
-            WebAuthenticationDetails authDetails = (WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
-            launchRequestForSession.put(authDetails.getSessionId(), Pair.of(launchRequest, exercise));
+
+            // Find (new) session ID
+            String sessionId = null;
+            if(response.containsHeader("Set-Cookie")) {
+                Pattern pattern = Pattern.compile("=(.*?);");
+                Matcher matcher = pattern.matcher(response.getHeader("Set-Cookie"));
+                if (matcher.find()) {
+                    sessionId = matcher.group(1);
+                }
+            }
+            if(sessionId == null) {
+                WebAuthenticationDetails authDetails = (WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
+                log.debug("Remembering launchRequest for session ID {}", authDetails.getSessionId());
+                sessionId = authDetails.getSessionId();
+            }
+
+
+            // Found it. Save launch request.
+            if(sessionId != null) {
+                log.debug("Remembering launchRequest for session ID {}", sessionId);
+                launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
+            }
 
         }
 
