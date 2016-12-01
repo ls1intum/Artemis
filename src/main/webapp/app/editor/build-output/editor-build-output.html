@@ -1,9 +1,22 @@
+<div class="panel panel-primary">
+    <div class="panel-heading" ng-click="$ctrl.editor.toggleCollapse($event)">
+        <span class="pull-right "><i class="glyphicon glyphicon-chevron-down"></i></span>
+        <h3 class="panel-title">
+            <i class="glyphicon glyphicon-console"></i>
+            <span> &nbsp; Build Output</span>
+        </h3>
 
-<p class="text-center" ng-show="$ctrl.isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building...</p>
+    </div>
+    <div class="panel-body">
 
-<p class="text-center" ng-show="$ctrl.buildLogs.length == 0 && $ctrl.isBuilding">No build results available</p>
+        <p class="text-center" ng-show="$ctrl.isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building...</p>
 
-<dl class="buildoutput dl-horizontal" ng-hide="$ctrl.buildLogs.length == 0 || $ctrl.isBuilding">
-    <dt ng-repeat-start="logEntry in $ctrl.buildLogs">{{logEntry.time | date:'yyyy-MM-dd HH:mm:ss'}}</dt>
-    <dd ng-repeat-end>{{logEntry.log}}</dd>
-</dl>
+        <p class="text-center" ng-show="$ctrl.buildLogs.length == 0 && !$ctrl.isBuilding">No build results available</p>
+
+        <dl class="buildoutput dl-horizontal" ng-hide="$ctrl.buildLogs.length == 0 || $ctrl.isBuilding">
+            <dt ng-repeat-start="logEntry in $ctrl.buildLogs">{{logEntry.time | date:'yyyy-MM-dd HH:mm:ss'}}</dt>
+            <dd ng-repeat-end ng-bind-html="logEntry.log"></dd>
+        </dl>
+
+    </div>
+</div>

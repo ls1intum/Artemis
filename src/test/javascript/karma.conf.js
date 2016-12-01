@@ -44,6 +44,7 @@ module.exports = function (config) {
             'src/main/webapp/bower_components/ace-builds/src-min-noconflict/mode-jade.js',
             'src/main/webapp/bower_components/ace-builds/src-min-noconflict/mode-swift.js',
             'src/main/webapp/bower_components/ace-builds/src-min-noconflict/ext-modelist.js',
+            'src/main/webapp/bower_components/remarkable/dist/remarkable.js',
             'src/main/webapp/bower_components/angular/angular.js',
             'src/main/webapp/bower_components/angular-aria/angular-aria.js',
             'src/main/webapp/bower_components/angular-bootstrap/ui-bootstrap-tpls.js',

@@ -367,17 +367,18 @@ public class BambooService implements ContinuousIntegrationService {
                 entity,
                 Map.class);
         } catch (Exception e) {
-            log.error("HttpError while retrieving build result details", e);
+            log.error("HttpError while retrieving build result logs", e);
         }
 
         ArrayList logs = new ArrayList<BuildLogEntry>();
 
-
-        for (HashMap<String,Object> logEntry : (List<HashMap>) ((Map)response.getBody().get("logEntries")).get("logEntry")) {
-            Instant i = Instant.ofEpochMilli( (long) logEntry.get("date") );
-            ZonedDateTime logDate = ZonedDateTime.ofInstant( i, ZoneId.systemDefault() );
-            BuildLogEntry log = new BuildLogEntry(logDate, (String) logEntry.get("log"));
-            logs.add(log);
+        if (response != null) {
+            for (HashMap<String, Object> logEntry : (List<HashMap>) ((Map) response.getBody().get("logEntries")).get("logEntry")) {
+                Instant i = Instant.ofEpochMilli((long) logEntry.get("date"));
+                ZonedDateTime logDate = ZonedDateTime.ofInstant(i, ZoneId.systemDefault());
+                BuildLogEntry log = new BuildLogEntry(logDate, (String) logEntry.get("log"));
+                logs.add(log);
+            }
         }
         return logs;
     }

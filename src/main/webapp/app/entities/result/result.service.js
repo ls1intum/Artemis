@@ -22,7 +22,8 @@
                     return data;
                 }
             },
-            'update': { method:'PUT' }
+            'update': { method:'PUT' },
+            'details': { method: 'GET', url: 'api/results/:id/details', isArray: true},
         });
     }
 
@@ -44,4 +45,8 @@
             }
         });
     }
+
+
+
+
 })();
