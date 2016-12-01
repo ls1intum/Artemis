@@ -15,9 +15,9 @@
             controller: ResultController
         });
 
-    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', '$interval','$scope', 'JhiWebsocketService'];
+    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', '$interval','$scope', 'JhiWebsocketService', 'Result'];
 
-    function ResultController($http, $uibModal, ParticipationResult, $interval,$scope, JhiWebsocketService) {
+    function ResultController($http, $uibModal, ParticipationResult, $interval,$scope, JhiWebsocketService, Result) {
         var vm = this;
 
         vm.$onInit = init;
@@ -91,13 +91,12 @@
 
                     function init() {
                         vm.loading = true;
-                        $http.get('api/results/' + result.id + '/details').then(function (response) {
-                            vm.details = response.data;
-                            console.log(response);
-                        }).finally(function () {
+                        Result.details({
+                            id: result.id
+                        }, function (details) {
+                            vm.details = details;
                             vm.loading = false;
                         });
-
                     }
                 }],
                 resolve: {

@@ -34,6 +34,9 @@
             $rootScope.bodyClass = toState.bodyClass ? toState.bodyClass : "";
         });
 
-
     }
+
+
+
+
 })();

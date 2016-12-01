@@ -29,7 +29,7 @@
         console.log(vm.participation);
         console.log(vm.file);
 
-        $scope.toggleCollapse = function ($event) {
+        vm.toggleCollapse = function ($event) {
             $event.toElement.blur();
 
             var $panel = $($event.toElement).closest('.panel');

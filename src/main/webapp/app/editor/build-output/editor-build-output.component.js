@@ -11,13 +11,16 @@
                 participation: '<',
                 isBuilding: '<',
             },
+            require: {
+                editor: '^editor'
+            },
             templateUrl: 'app/editor/build-output/editor-build-output.html',
             controller: EditorBuildOutputController
         });
 
-    EditorBuildOutputController.$inject = ['Participation', 'Repository', '$scope' ,'$timeout'];
+    EditorBuildOutputController.$inject = ['Participation', 'Repository', '$scope' ,'$sce'];
 
-    function EditorBuildOutputController(Participation, Repository, $scope, $timeout) {
+    function EditorBuildOutputController(Participation, Repository, $scope, $sce) {
         var vm = this;
 
         vm.buildLogs = [];
@@ -37,6 +40,9 @@
             Repository.buildlogs({
                 participationId: vm.participation.id
             }, function (buildLogs) {
+                _.forEach(buildLogs, function (buildLog) {
+                   buildLog.log = $sce.trustAsHtml(buildLog.log);
+                });
                 vm.buildLogs = buildLogs;
                 $(".buildoutput").scrollTop($(".buildoutput")[0].scrollHeight);
             });
