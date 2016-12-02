@@ -41,7 +41,7 @@
 
 
         vm.$onChanges = function (changes) {
-            if (changes.latestResult && !vm.loading) {
+            if (changes.latestResult && changes.latestResult.currentValue && !vm.loading) {
                 vm.loadResultsDetails();
             }
         };
