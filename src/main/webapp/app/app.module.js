@@ -18,7 +18,8 @@
             // jhipster-needle-angularjs-add-module JHipster will add new module here
             'angular-loading-bar',
             'angularMoment',
-            'ui.ace'
+            'ui.ace',
+            'angularResizable'
         ])
         .constant('CONTACT_EMAIL', "muenchdo@in.tum.de,montag@in.tum.de")
         .run(run);

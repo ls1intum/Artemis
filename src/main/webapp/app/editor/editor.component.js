@@ -26,10 +26,11 @@
         vm.isCommitted = vm.repository.isClean;
         vm.latestResult = null;
 
+
         console.log(vm.participation);
         console.log(vm.file);
 
-        vm.toggleCollapse = function ($event) {
+        vm.toggleCollapse = function ($event, horizontal) {
             $event.toElement.blur();
 
             var $panel = $($event.toElement).closest('.panel');
@@ -38,9 +39,21 @@
                 $panel.removeClass('collapsed');
             } else {
                 $panel.addClass('collapsed');
+                if(horizontal) {
+                    $panel.height('35px');
+                } else {
+                    $panel.width('55px');
+                }
+
             }
 
         };
+
+
+        $scope.$on("angular-resizable.resizeEnd", function ($event, args) {
+            var $panel = $('#' + args.id);
+            $panel.removeClass('collapsed');
+        });
 
 
         vm.updateSaveStatusLabel = function ($event) {

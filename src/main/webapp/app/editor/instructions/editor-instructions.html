@@ -1,5 +1,5 @@
-<div class="panel panel-primary" ng-show="$ctrl.readmeRendered != null">
-    <div class="panel-heading" ng-click="$ctrl.editor.toggleCollapse($event)">
+<div class="panel panel-primary" ng-show="$ctrl.readmeRendered != null" resizable r-directions="['left']" r-width="$ctrl.initialInstructionsWidth" id="panelInstructions">
+    <div class="panel-heading" ng-click="$ctrl.editor.toggleCollapse($event, false)">
         <span class="pull-right "><i class="glyphicon glyphicon-chevron-right"></i></span>
         <h3 class="panel-title">
             <i class="glyphicon glyphicon glyphicon-list-alt"></i>
