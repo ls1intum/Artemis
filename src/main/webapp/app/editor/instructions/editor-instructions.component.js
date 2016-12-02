@@ -25,6 +25,8 @@
 
         vm.loading = true;
 
+        vm.initialInstructionsWidth = ($(window).width() - 300) / 2 ;
+
         vm.$onInit = function () {
             vm.loadReadme();
             vm.md = new Remarkable();

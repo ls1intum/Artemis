@@ -66,6 +66,7 @@ module.exports = function (config) {
             'src/main/webapp/bower_components/angular-moment/angular-moment.js',
             'src/main/webapp/bower_components/bootstrap-treeview/dist/bootstrap-treeview.min.js',
             'src/main/webapp/bower_components/angular-ui-ace/ui-ace.js',
+            'src/main/webapp/bower_components/angular-resizable/src/angular-resizable.js',
             'src/main/webapp/bower_components/angular-mocks/angular-mocks.js',
             // endbower
             'src/main/webapp/app/app.module.js',

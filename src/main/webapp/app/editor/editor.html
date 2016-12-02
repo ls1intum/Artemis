@@ -35,8 +35,8 @@
 
         <div class="editor-sidebar-left">
 
-            <div class="panel panel-primary">
-                <div class="panel-heading" ng-click="$ctrl.toggleCollapse($event)">
+            <div class="panel panel-primary" resizable r-directions="['right']" r-width="250" id="panelFiles">
+                <div class="panel-heading" ng-click="$ctrl.toggleCollapse($event, false)">
                     <span class="pull-right "><i class="glyphicon glyphicon-chevron-left"></i></span>
                     <h3 class="panel-title">
                         <i class="glyphicon glyphicon-folder-open"></i>
