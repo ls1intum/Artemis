@@ -52,7 +52,8 @@ body {
   overflow: scroll;
   position: absolute;
   bottom: 5px;
-  top: 35px; }
+  top: 40px;
+  width: 100%; }
 
 .editor-wrapper > .editor-main > .editor-center {
   flex: 1 1 auto; }
