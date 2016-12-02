@@ -37,7 +37,9 @@
     "lodash": "^4.13.1",
     "bootstrap-treeview": "^1.2.0",
     "ace-builds": "1.2.5",
-    "angular-ui-ace": "bower"
+    "angular-ui-ace": "bower",
+    "remarkable": "^1.7.1",
+    "angular-resizable": "https://github.com/Reklino/angular-resizable.git#bd77750c910f0cc85a774fba4f6df433a97fc53d"
   },
   "devDependencies": {
     "angular-mocks": "1.5.5"

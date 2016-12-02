@@ -4,44 +4,6 @@ body.editor {
 body.editor .ribbon {
   display: none; }
 
-/*
-body.editor .container-fluid  {
-    display:table;
-    width: 100%;
-    margin-top: -75px;
-    padding: 75px 0 0 0;
-    box-sizing: border-box;
-}
-
-
-body.editor .row  {
-
-    display: table-row;
-}
-
-
-
-body.editor .editor-sidebar-left, body.editor .editor-center, body.editor .editor-sidebar-right, body.editor .editor-bottom  {
-    display: table-cell;
-    float: none;
-    position: relative;
-    padding-left: 15px;
-    padding-right: 15px;
-}
-
-body.editor .editor-center {
-    height: 100%;
-    width: 100%;
-}
-
-body.editor .editor-sidebar-left {
-    max-width: 400px;
-}
-
-body.editor .editor-bottom {
-
-}
-*/
 .editor-wrapper, div.editor {
   height: 100%; }
 
@@ -73,12 +35,24 @@ body {
 
 .editor-wrapper > .editor-main > .editor-sidebar-left,
 .editor-wrapper > .editor-main > .editor-sidebar-right {
-  padding-left: 20px;
-  padding-right: 20px; }
+  padding-left: 14px;
+  padding-right: 14px; }
 
 .editor-wrapper > .editor-main > .editor-sidebar-left .panel:not(.collapsed) {
-  max-width: 350px;
-  min-width: 250px; }
+  max-width: 400px;
+  min-width: 150px; }
+
+.editor-wrapper > .editor-main > .editor-sidebar-right .panel:not(.collapsed) {
+  min-width: 200px; }
+
+.editor-wrapper > .editor-bottom .panel:not(.collapsed) {
+  min-height: 100px; }
+
+.editor-wrapper > .editor-bottom .panel-body {
+  overflow: scroll;
+  position: absolute;
+  bottom: 5px;
+  top: 35px; }
 
 .editor-wrapper > .editor-main > .editor-center {
   flex: 1 1 auto; }
@@ -118,7 +92,6 @@ body.editor .navbar-brand span {
   font-family: Menlo,Monaco,"Courier New",monospace;
   font-size: 11px;
   overflow: scroll;
-  max-height: 130px;
   margin: 0; }
 
 .buildoutput dt {
@@ -129,3 +102,12 @@ body.editor .navbar-brand span {
 .buildoutput dd {
   margin-left: 140px;
   color: #003366; }
+
+.editor .instructions h2 {
+  font-size: 28px; }
+
+.editor .instructions h1 {
+  font-size: 30px; }
+
+.editor .instructions :first-child {
+  margin-top: 0 !important; }
