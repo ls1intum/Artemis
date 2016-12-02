@@ -4,13 +4,17 @@
     <h4 class="modal-title">Failed Build Details</h4>
 </div>
 <div class="modal-body" id="result-detail-body" style="position: relative;" ng-switch on="$ctrl.loading">
-    <div class="text-muted" id="result-detail-spinner" ng-switch-when="true"><i class="fa fa-circle-o-notch fa-lg fa-spin "></i></div>
+    <div class="text-muted" id="result-detail-spinner" ng-switch-when="true"><i
+        class="fa fa-circle-o-notch fa-lg fa-spin "></i></div>
     <div ng-switch-when="false" ng-repeat="detail in $ctrl.details track by $index" ng-init="lastDetail = $last">
         <p>Error in method <code>{{detail.methodName}}</code>:</p>
         <div ng-repeat="error in detail.errors.error">
             <pre ng-bind="error.message.split('\n')[0]"></pre>
         </div>
         <hr ng-if="!lastDetail">
+    </div>
+    <div ng-switch-when="false" ng-if="$ctrl.details.length == 0" class="text-center text-danger">
+        No test results found. Please check for compile errors!
     </div>
 </div>
 <div class="modal-footer">

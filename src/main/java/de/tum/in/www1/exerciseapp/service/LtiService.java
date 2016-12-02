@@ -27,6 +27,7 @@ import org.imsglobal.lti.launch.LtiVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -39,6 +40,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -86,6 +89,9 @@ public class LtiService {
     private LtiUserIdRepository ltiUserIdRepository;
 
 
+    @Inject
+    private HttpServletResponse response;
+
     public HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
 
@@ -119,8 +125,33 @@ public class LtiService {
              *
              */
 
-            WebAuthenticationDetails authDetails = (WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
-            launchRequestForSession.put(authDetails.getSessionId(), Pair.of(launchRequest, exercise));
+
+            // Find (new) session ID
+            String sessionId = null;
+            if(response.containsHeader("Set-Cookie")) {
+                for(String cookie: response.getHeaders("Set-Cookie")){
+                    if(cookie.contains("JSESSIONID")) {
+                        Pattern pattern = Pattern.compile("=(.*?);");
+                        Matcher matcher = pattern.matcher(response.getHeader("Set-Cookie"));
+                        if (matcher.find()) {
+                            sessionId = matcher.group(1);
+                        }
+                        break;
+                    }
+                }
+            }
+            if(sessionId == null) {
+                WebAuthenticationDetails authDetails = (WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
+                log.debug("Remembering launchRequest for session ID {}", authDetails.getSessionId());
+                sessionId = authDetails.getSessionId();
+            }
+
+
+            // Found it. Save launch request.
+            if(sessionId != null) {
+                log.debug("Remembering launchRequest for session ID {}", sessionId);
+                launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
+            }
 
         }
 
@@ -172,8 +203,16 @@ public class LtiService {
         }
 
 
-        String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
 
+        if(launchRequest.getUser_id().equals("student")) {
+            throw new InternalAuthenticationServiceException("Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.");
+        }
+
+
+
+        String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
+        String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
 
         Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
@@ -216,13 +255,6 @@ public class LtiService {
              *
              */
 
-            // temporary only allow users with existing JIRA account
-            if (true) {
-                throw new JiraException("Your eMail address (" + email + ") was not found on JIRA");
-            }
-
-            String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
-            String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
             User user = userRepository.findOneByLogin(username).orElseGet(() -> {
                 User newUser = userService.createUserInformation(username, "",
