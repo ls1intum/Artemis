@@ -118,15 +118,17 @@
             var tests = tokens[0].tests;
             var status = vm.statusForTests(tests);
 
-            var text = "<h4 style='margin-bottom: 0px;'>";
+            var text = "<strong>";
 
             text += status.done ? '<i class="fa fa-lg fa-check-circle-o text-success"></i>' : '<i class="fa fa-lg fa-times-circle-o text-danger"></i>';
 
             text += ' ' + tokens[0].title;
 
-            text += "</h4> ";
+            text += "</strong>: ";
 
-            text += status.done ? ' <span class="text-success" style="margin-left: 28px">' + status.label + '</span>' : '<a style="margin-left: 28px" ng-click="$ctrl.showDetailsForTests($ctrl.latestResult,\'' + tests.toString() + '\')"><span class="text-danger">' + status.label + '</span></a>';
+            text += status.done ? ' <span class="text-success">' + status.label + '</span>' : '<a ng-click="$ctrl.showDetailsForTests($ctrl.latestResult,\'' + tests.toString() + '\')"><span class="text-danger">' + status.label + '</span></a>';
+
+            text += "<br />"
 
             return text;
 
@@ -139,7 +141,7 @@
             var label = "No results";
             var totalTests = tests.length;
 
-            if(vm.resultDetails) {
+            if(vm.resultDetails && vm.resultDetails.length > 0) {
                 var failedTests = 0;
                 _.forEach(tests, function (test) {
                     if(_.some(vm.resultDetails, {'methodName' : test})) {
