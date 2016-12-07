@@ -46,7 +46,7 @@
 
 
 
-            CourseExercises.query({courseId: vm.course.id}).$promise.then(function (exercises) {
+            CourseExercises.query({courseId: vm.course.id, withLtiOutcomeUrlExisting: true}).$promise.then(function (exercises) {
 
                 if (vm.filterByExerciseId) {
                     exercises = _.filter(exercises, {id: vm.filterByExerciseId})
