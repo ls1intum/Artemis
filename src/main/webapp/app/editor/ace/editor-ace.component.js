@@ -139,6 +139,12 @@
             // Options
             console.log('ACE editor loaded');
 
+            if($('.editor-center .panel').height() == 0) {
+                // Safari bug workaround
+                $('.editor-center .panel').height($('.editor-center').height() - 2);
+                vm.editor.resize();
+            }
+
             if(!vm.editor.getSession().file && vm.file) {
                 loadFile(vm.file);
             }

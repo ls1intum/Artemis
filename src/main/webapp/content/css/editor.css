@@ -20,8 +20,8 @@ body {
   overflow: scroll; }
 
 .editor-wrapper > .editor-bottom {
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 14px;
+  padding-right: 14px;
   padding-top: 10px; }
 
 .editor-wrapper > .editor-main {
@@ -38,12 +38,21 @@ body {
   padding-left: 14px;
   padding-right: 14px; }
 
+.editor-wrapper > .editor-main > .editor-sidebar-right {
+  overflow: initial; }
+
+.editor-wrapper > .editor-main > .editor-sidebar-right .panel-body {
+  overflow: scroll;
+  height: inherit;
+  padding-bottom: 50px; }
+
 .editor-wrapper > .editor-main > .editor-sidebar-left .panel:not(.collapsed) {
   max-width: 400px;
   min-width: 150px; }
 
 .editor-wrapper > .editor-main > .editor-sidebar-right .panel:not(.collapsed) {
-  min-width: 200px; }
+  min-width: 300px;
+  height: 100%; }
 
 .editor-wrapper > .editor-bottom .panel:not(.collapsed) {
   min-height: 100px; }
@@ -112,3 +121,7 @@ body.editor .navbar-brand span {
 
 .editor .instructions :first-child {
   margin-top: 0 !important; }
+
+.editor code {
+  color: inherit;
+  background-color: transparent; }
