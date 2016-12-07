@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
 
@@ -143,10 +144,10 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @PageableDefault(value = 100)  Pageable pageable)
+    public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, @PageableDefault(value = 100)  Pageable pageable, Principal principal)
         throws URISyntaxException {
         log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, pageable);
+        Page<Exercise> page = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal, pageable) : exerciseRepository.findByCourseId(courseId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
