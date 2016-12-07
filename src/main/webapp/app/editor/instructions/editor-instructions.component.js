@@ -120,7 +120,7 @@
 
             var text = "<strong>";
 
-            text += status.done ? '<i class="fa fa-lg fa-check-circle-o text-success"></i>' : '<i class="fa fa-lg fa-times-circle-o text-danger"></i>';
+            text += status.done ? '<i class="fa fa-lg fa-check-circle-o text-success" style="font-size: 1.7em;"></i>' : '<i class="fa fa-lg fa-times-circle-o text-danger" style="font-size: 1.7em;"></i>';
 
             text += ' ' + tokens[0].title;
 
