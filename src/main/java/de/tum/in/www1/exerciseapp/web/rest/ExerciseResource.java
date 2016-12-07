@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -142,10 +143,10 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, Pageable pageable)
+    public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @PageableDefault(value = 100)  Pageable pageable)
         throws URISyntaxException {
         log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseRepository.findByCourseId(courseId, pageable);
+        Page<Exercise> page = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
