@@ -141,6 +141,7 @@
             var label = "No results";
             var totalTests = tests.length;
 
+
             if(vm.resultDetails && vm.resultDetails.length > 0) {
                 var failedTests = 0;
                 _.forEach(tests, function (test) {
@@ -149,7 +150,7 @@
                     }
                 });
 
-                done = failedTests == 0;
+                done = (vm.latestResult && vm.latestResult.buildSuccessful) || failedTests == 0;
                 if(totalTests == 1) {
                     if(done) {
                         label = "Test passing";
