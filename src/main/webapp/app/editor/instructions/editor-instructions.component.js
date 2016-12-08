@@ -176,6 +176,9 @@
                     }
                 }
 
+            } else if(vm.latestResult && vm.latestResult.buildSuccessful) {
+                done = true;
+                label = "Test passing";
             }
 
             return {

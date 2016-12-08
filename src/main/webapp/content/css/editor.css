@@ -16,8 +16,7 @@ body {
   flex-direction: column; }
 
 .editor-wrapper > * {
-  flex: 0 0 auto;
-  overflow: scroll; }
+  flex: 0 0 auto; }
 
 .editor-wrapper > .editor-bottom {
   padding-left: 14px;
