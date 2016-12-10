@@ -39,6 +39,9 @@ public class BitbucketService implements VersionControlService {
     @Value("${exerciseapp.bitbucket.password}")
     private String BITBUCKET_PASSWORD;
 
+    @Value("${exerciseapp.lti.user-prefix}")
+    private String USER_PREFIX = "";
+
     @Inject
     private UserService userService;
 
@@ -58,29 +61,30 @@ public class BitbucketService implements VersionControlService {
     public void configureRepository(URL repositoryUrl, String username) {
 
 
-        User user = userService.getUserByLogin(username).get();
+        if(username.startsWith(USER_PREFIX)) {
+            // It is an automatically created user
 
-        if (!userExists(username)) {
-            log.debug("Bitbucket user {} does not exist yet", username);
-            String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-            createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
+            User user = userService.getUserByLogin(username).get();
 
-            try {
-                addUserToGroups(username, user.getGroups());
-            } catch (BitbucketException e) {
+            if (!userExists(username)) {
+                log.debug("Bitbucket user {} does not exist yet", username);
+                String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
+                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
+
+                try {
+                    addUserToGroups(username, user.getGroups());
+                } catch (BitbucketException e) {
             /*
                 This might throw exceptions, for example if the group does not exist on Bitbucket.
                 We can safely ignore them.
             */
+                }
+
+            } else {
+                log.debug("Bitbucket user {} already exists", username);
             }
 
-        } else {
-            log.debug("Bitbucket user {} already exists", username);
         }
-
-
-        // add Bitbucket user to groups of the local user.
-
 
         giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
     }
