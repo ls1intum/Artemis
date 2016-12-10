@@ -37,6 +37,9 @@
 
             //remarkable.renderer.rules[this.id] = this.render.bind(this)
 
+
+
+
         };
 
 
@@ -81,6 +84,14 @@
             $('.instructions').html(vm.readmeRendered);
 
             vm.loading = false;
+
+
+            if($('.editor-sidebar-right .panel').height() > $('.editor-sidebar-right').height()) {
+                // Safari bug workaround
+                $('.editor-sidebar-right .panel').height($('.editor-sidebar-right').height() - 2);
+            }
+
+
         };
 
 
@@ -165,6 +176,9 @@
                     }
                 }
 
+            } else if(vm.latestResult && vm.latestResult.buildSuccessful) {
+                done = true;
+                label = "Test passing";
             }
 
             return {

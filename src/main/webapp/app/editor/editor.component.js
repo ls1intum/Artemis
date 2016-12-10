@@ -31,9 +31,12 @@
         console.log(vm.file);
 
         vm.toggleCollapse = function ($event, horizontal) {
-            $event.toElement.blur();
 
-            var $panel = $($event.toElement).closest('.panel');
+            var target = $event.toElement || $event.relatedTarget || $event.target;
+
+            target.blur();
+
+            var $panel = $(target).closest('.panel');
 
             if($panel.hasClass('collapsed')) {
                 $panel.removeClass('collapsed');
@@ -70,7 +73,10 @@
         };
 
         vm.commit = function ($event) {
-            $event.toElement.blur();
+
+            var target = $event.toElement || $event.relatedTarget || $event.target;
+
+            target.blur();
             vm.isBuilding = true;
             Repository.commit({
                 participationId: vm.participation.id
