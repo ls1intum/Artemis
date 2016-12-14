@@ -73,6 +73,11 @@
             <button class="btn btn-default btn-xs" ng-click="$ctrl.goToBuildPlan(result)">
                 <i class="fa fa-file-code-o"></i>&nbsp;Build plan
             </button>
+
+            <a ui-sref="editor({participationId:result.participation.id})" class="btn btn-default btn-xs" ng-show="result.participation.exercise.allowOnlineEditor">
+                <i class="fa fa-folder-open fa-fw"></i>&nbsp;Online editor
+            </a>
+
         </td>
     </tr>
     </tbody>
