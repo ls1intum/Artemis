@@ -258,7 +258,7 @@ public class BambooService implements ContinuousIntegrationService {
     public void onBuildCompleted(Participation participation) {
         log.info("Retrieving build result...");
         Boolean isOldBuildResult = true;
-        Map buildResults;
+        Map buildResults = new HashMap<>();
         try {
             buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
             isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > RESULT_RETRIEVAL_DELAY;
