@@ -44,7 +44,7 @@
         }
 
         function refresh() {
-            $http.get('api/courses/' + vm.participation.exercise.course.id + '/exercises/' + vm.participation.exercise.id + '/participation/status', {
+            $http.get('api/participations/' + vm.participation.id  + '/status', {
                 ignoreLoadingBar: true
             }).then(function (response) {
                 vm.queued = response.data === 'QUEUED';
