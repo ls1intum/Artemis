@@ -238,14 +238,13 @@ public class ParticipationResource {
      * @param exerciseId the id of the exercise for which to retrieve the participation status
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation/status",
+    @RequestMapping(value = "/participations/{id}/status",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
-    public ResponseEntity<?> getParticipationStatus(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
-        log.debug("REST request to get Participation status for Exercise : {}", exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+    public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
+        Participation participation = participationService.findOne(id);
         ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
         return Optional.ofNullable(buildStatus)
             .map(status -> new ResponseEntity<>(
