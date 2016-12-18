@@ -115,6 +115,9 @@ dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
     compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.5.0.201609210915-r'
 
+    // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
+    compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8051'
+
     compile "org.imsglobal:basiclti-util:1.1.2"
     compile "org.jasypt:jasypt:1.9.2"
 

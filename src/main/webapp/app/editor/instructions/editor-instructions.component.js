@@ -30,12 +30,17 @@
         vm.$onInit = function () {
             vm.loadReadme();
             vm.md = new Remarkable();
-            vm.reg = /^✅\[([^\]]*)\]\s*\(([^)]+)\)/;
 
-            vm.md.inline.ruler.before("text","testsStatus", vm.remarkableParser);
-            vm.md.renderer.rules["testsStatus"] = vm.remarkableRenderer;
 
-            //remarkable.renderer.rules[this.id] = this.render.bind(this)
+            vm.md.inline.ruler.before("text","testsStatus", vm.remarkableTestsStatusParser);
+
+            vm.md.block.ruler.before("paragraph","plantUml", vm.remarkablePlantUmlParser);
+
+
+            vm.md.renderer.rules["testsStatus"] = vm.remarkableTestsStatusRenderer;
+            vm.md.renderer.rules["plantUml"] = vm.remarkablePlantUmlRenderer;
+
+
 
 
 
@@ -95,8 +100,76 @@
         };
 
 
+        vm.remarkablePlantUmlParser = function (state, startLine, endLine, silent) {
 
-        vm.remarkableParser = function (state, silent) {
+            var ch, match, nextLine,
+                pos = state.bMarks[startLine],
+                max = state.eMarks[startLine],
+                shift = state.tShift[startLine];
+
+            pos += shift;
+
+
+            if (shift > 3 || pos + 2 >= max) { return false; }
+
+            if (state.src.charCodeAt(pos) !== 0x40/* @ */) { return false; }
+
+            ch = state.src.charCodeAt(pos + 1);
+
+            if (ch === 0x73) {  // e or s
+
+                // Probably start or end of tag
+                if (ch === 0x73/* \ */) {
+                    // opening tag
+                    match = state.src.slice(pos, max).match(/^@startuml/);
+                    if (!match) { return false; }
+                }
+                if (silent) { return true; }
+
+            } else {
+                return false;
+            }
+
+            // If we are here - we detected PlantUML block.
+            // Let's roll down till empty line (block end).
+            nextLine = startLine + 1;
+            while (nextLine < state.lineMax && !state.src.slice(state.bMarks[nextLine], state.bMarks[nextLine + 1]).match(/^@enduml/)) {
+                nextLine++;
+            }
+
+
+            state.line = nextLine + 1;
+            state.tokens.push({
+                type: 'plantUml',
+                level: state.level,
+                lines: [ startLine, state.line ],
+                content: state.getLines(startLine, state.line, 0, true)
+            });
+
+            return true;
+
+
+        };
+
+        vm.remarkablePlantUmlRenderer = function (tokens, id, options, en) {
+
+            console.log();
+            var plantUml = tokens[id].content;
+
+            plantUml = plantUml.replace("@startuml", "@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nhide empty members\n");
+
+            plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, function (match, capture) {
+                var tests = capture.split(",");
+                var status = vm.statusForTests(tests);
+                return status.done ? "green" : "red";
+            });
+
+            return "<img src='/api/plantuml/png?plantuml=" + encodeURIComponent(plantUml) +" '/>";
+
+        };
+
+
+        vm.remarkableTestsStatusParser = function (state, silent) {
 
 
             var reg = /^✅\[([^\]]*)\]\s*\(([^)]+)\)/;
@@ -104,7 +177,7 @@
             // it is surely not our rule, so we could stop early
             if (state.src[state.pos] !== '✅') return false;
 
-            var match = vm.reg.exec(state.src.slice(state.pos));
+            var match = reg.exec(state.src.slice(state.pos));
             if (!match) return false;
 
             // in silent mode it shouldn't output any tokens or modify pending
@@ -124,7 +197,7 @@
         };
 
 
-        vm.remarkableRenderer = function (tokens, id, options, en) {
+        vm.remarkableTestsStatusRenderer = function (tokens, id, options, en) {
 
             var tests = tokens[0].tests;
             var status = vm.statusForTests(tests);
