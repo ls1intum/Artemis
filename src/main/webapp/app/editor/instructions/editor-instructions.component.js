@@ -24,6 +24,7 @@
         var vm = this;
 
         vm.loading = true;
+        vm.steps = [];
 
         vm.initialInstructionsWidth = ($(window).width() - 300) / 2 ;
 
@@ -83,6 +84,7 @@
         vm.renderReadme = function () {
             vm.loading = true;
 
+            vm.steps = [];
 
             vm.readmeRendered = $compile(vm.md.render(vm.readme))($scope);
 
@@ -212,7 +214,12 @@
 
             text += status.done ? ' <span class="text-success">' + status.label + '</span>' : '<a ng-click="$ctrl.showDetailsForTests($ctrl.latestResult,\'' + tests.toString() + '\')"><span class="text-danger">' + status.label + '</span></a>';
 
-            text += "<br />"
+            text += "<br />";
+
+            vm.steps.push({
+                title: tokens[0].title,
+                done: status.done
+            });
 
             return text;
 
