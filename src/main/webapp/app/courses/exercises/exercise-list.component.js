@@ -33,6 +33,11 @@
         vm.isReleased = isReleased;
         vm.start = start;
         vm.now = Date.now();
+        vm.numOfOverdueExercises = 0;
+        vm.showOverdueExercises = false;
+
+
+
 
         function init() {
 
@@ -53,6 +58,10 @@
                 }
 
 
+                vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
+                    return !isNotOverdue(exercise);
+                }).length;
+
                 // hide not released exercises
                 if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
                     exercises = _.filter(exercises, function (exercise) {
@@ -69,6 +78,7 @@
                     });
                 });
                 vm.exercises = exercises;
+
 
 
             });
@@ -107,6 +117,11 @@
         function isReleased(exercise) {
             return _.isEmpty(exercise.releaseDate) || vm.now >= Date.parse(exercise.releaseDate);
         }
+
+        function isNotOverdue(exercise) {
+            return vm.showOverdueExercises || _.isEmpty(exercise.dueDate) || vm.now <= Date.parse(exercise.dueDate);
+        }
+        vm.isNotOverdue = isNotOverdue;
 
         function getRepositoryPassword() {
             return $http.get('api/account/password', {
@@ -149,5 +164,11 @@
                 vm.loading[exercise.id.toString()] = false;
             });
         }
+
+        function toggleShowOverdueExercises() {
+            vm.showOverdueExercises = true;
+        }
+        vm.toggleShowOverdueExercises = toggleShowOverdueExercises;
+
     }
 })();
