@@ -29,6 +29,35 @@
                         $translatePartialLoader.addPart('exercise');
                         $translatePartialLoader.addPart('global');
                         return $translate.refresh();
+                    }],
+                    courseEntity: [function () {
+                       return null;
+                    }]
+                }
+            })
+            .state('exercise-for-course', {
+                parent: 'entity',
+                url: '/course/{courseid}/exercise',
+                contentContainerClass: 'container-fluid',
+                data: {
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    pageTitle: 'exerciseApplicationApp.exercise.home.title'
+                },
+                views: {
+                    'content@': {
+                        templateUrl: 'app/entities/exercise/exercises.html',
+                        controller: 'ExerciseController',
+                        controllerAs: 'vm'
+                    }
+                },
+                resolve: {
+                    translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        $translatePartialLoader.addPart('exercise');
+                        $translatePartialLoader.addPart('global');
+                        return $translate.refresh();
+                    }],
+                    courseEntity: ['$stateParams', 'Course', function ($stateParams, Course) {
+                        return Course.get({id: $stateParams.courseid}).$promise;
                     }]
                 }
             })
