@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -88,8 +89,14 @@ public class ResultResource {
         }
         Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
-            resultService.onResultNotified(participation);
-            return ResponseEntity.ok().build();
+            if(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()) ) {
+                resultService.onResultNotified(participation);
+                return ResponseEntity.ok().build();
+            } else {
+                log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+           
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
