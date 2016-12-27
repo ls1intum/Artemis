@@ -96,7 +96,7 @@ public class ResultResource {
                 log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-           
+
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }

@@ -19,6 +19,10 @@
         {
             "fieldName": "buildSuccessful",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "score",
+            "fieldType": "Long"
         }
     ],
     "changelogDate": "20160609110918",
