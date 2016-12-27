@@ -119,6 +119,40 @@
                     });
                 }]
             })
+            .state('exercise-for-course.new', {
+                parent: 'exercise-for-course',
+                url: '/new',
+                data: {
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                },
+                onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                    $uibModal.open({
+                        templateUrl: 'app/entities/exercise/exercise-dialog.html',
+                        controller: 'ExerciseDialogController',
+                        controllerAs: 'vm',
+                        backdrop: 'static',
+                        size: 'lg',
+                        resolve: {
+                            entity: function () {
+                                return {
+                                    title: null,
+                                    baseRepositoryUrl: null,
+                                    baseBuildPlanId: null,
+                                    publishBuildPlanUrl: null,
+                                    releaseDate: null,
+                                    dueDate: null,
+                                    id: null,
+                                    allowOnlineEditor: null
+                                };
+                            }
+                        }
+                    }).result.then(function () {
+                        $state.go('exercise-for-course', $state.params, {reload: true});
+                    }, function () {
+                        $state.go('exercise-for-course', $state.params);
+                    });
+                }]
+            })
             .state('exercise.edit', {
                 parent: 'exercise',
                 url: '/{id}/edit',
