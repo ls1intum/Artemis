@@ -178,6 +178,31 @@
                     });
                 }]
             })
+            .state('exercise-for-course.edit', {
+                parent: 'exercise-for-course',
+                url: '/{id}/edit',
+                data: {
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                },
+                onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                    $uibModal.open({
+                        templateUrl: 'app/entities/exercise/exercise-dialog.html',
+                        controller: 'ExerciseDialogController',
+                        controllerAs: 'vm',
+                        backdrop: 'static',
+                        size: 'lg',
+                        resolve: {
+                            entity: ['Exercise', function (Exercise) {
+                                return Exercise.get({id: $stateParams.id}).$promise;
+                            }]
+                        }
+                    }).result.then(function () {
+                        $state.go('exercise-for-course', $state.params, {reload: true});
+                    }, function () {
+                        $state.go('^');
+                    });
+                }]
+            })
             .state('exercise.delete', {
                 parent: 'exercise',
                 url: '/{id}/delete',
@@ -202,6 +227,30 @@
                     });
                 }]
             })
+            .state('exercise-for-course.delete', {
+                parent: 'exercise-for-course',
+                url: '/{id}/delete',
+                data: {
+                    authorities: ['ROLE_ADMIN']
+                },
+                onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                    $uibModal.open({
+                        templateUrl: 'app/entities/exercise/exercise-delete-dialog.html',
+                        controller: 'ExerciseDeleteController',
+                        controllerAs: 'vm',
+                        size: 'md',
+                        resolve: {
+                            entity: ['Exercise', function (Exercise) {
+                                return Exercise.get({id: $stateParams.id}).$promise;
+                            }]
+                        }
+                    }).result.then(function () {
+                        $state.go('exercise-for-course', $state.params, {reload: true});
+                    }, function () {
+                        $state.go('^');
+                    });
+                }]
+            })
             .state('exercise.reset', {
                 parent: 'exercise',
                 url: '/{id}/reset',
@@ -221,6 +270,30 @@
                         }
                     }).result.then(function () {
                         $state.go('exercise', null, {reload: true});
+                    }, function () {
+                        $state.go('^');
+                    });
+                }]
+            })
+            .state('exercise-for-course.reset', {
+                parent: 'exercise-for-course',
+                url: '/{id}/reset',
+                data: {
+                    authorities: ['ROLE_ADMIN']
+                },
+                onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                    $uibModal.open({
+                        templateUrl: 'app/entities/exercise/exercise-reset-dialog.html',
+                        controller: 'ExerciseResetController',
+                        controllerAs: 'vm',
+                        size: 'md',
+                        resolve: {
+                            entity: ['Exercise', function (Exercise) {
+                                return Exercise.get({id: $stateParams.id}).$promise;
+                            }]
+                        }
+                    }).result.then(function () {
+                        $state.go('exercise-for-course', $state.params, {reload: true});
                     }, function () {
                         $state.go('^');
                     });
