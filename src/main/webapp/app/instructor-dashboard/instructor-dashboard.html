@@ -1,5 +1,12 @@
 <div>
     <div class="button-toolbar pull-right">
+        <button type="submit"
+                ui-sref="participation-for-exercise({exerciseId:$ctrl.exerciseId})"
+                class="btn btn-primary btn-sm">
+            <span class="fa fa-list-alt"></span>
+            <span>Participations</span>
+        </button>
+
         <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Export
             to CSV
         </button>
