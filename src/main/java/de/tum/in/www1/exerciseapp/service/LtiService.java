@@ -400,7 +400,11 @@ public class LtiService {
 
         if (ltiOutcomeUrl.isPresent()) {
 
-            String score = getScoreForParticipation(participation);
+            String score = "0.00";
+            Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByBuildCompletionDateDesc(participation.getId());
+            if (latestResult.isPresent() && latestResult.get().getScore() != null) {
+                score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
+            }
 
             log.debug("Reporting to LTI consumer: Score {} for Participation {}", score, participation);
 
@@ -421,42 +425,6 @@ public class LtiService {
 
 
         }
-
-    }
-
-    /**
-     * Calculates the score for a participation. Therefore is uses the number of successful tests in the latest build.
-     *
-     * @param participation
-     * @return score String value between 0.00 and 1.00
-     */
-    public String getScoreForParticipation(Participation participation) {
-
-        Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByBuildCompletionDateDesc(participation.getId());
-        if (!latestResult.isPresent()) {
-            return "0.00";
-        }
-
-        if (latestResult.get().isBuildSuccessful()) {
-            return "1.00";
-        }
-
-        if (latestResult.get().getResultString() != null && !latestResult.get().getResultString().isEmpty()) {
-
-            Pattern p = Pattern.compile("^([0-9]+) of ([0-9]+) failed");
-            Matcher m = p.matcher(latestResult.get().getResultString());
-
-            if (m.find()) {
-                float failedTests = Float.parseFloat(m.group(1));
-                float totalTests = Float.parseFloat(m.group(2));
-                float score = (totalTests - failedTests) / totalTests;
-                return String.format(Locale.ROOT, "%.2f", score);
-            }
-
-        }
-
-
-        return "0.00";
 
     }
 

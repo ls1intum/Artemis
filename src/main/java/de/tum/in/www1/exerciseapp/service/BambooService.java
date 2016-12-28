@@ -32,6 +32,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @Transactional
@@ -266,7 +268,7 @@ public class BambooService implements ContinuousIntegrationService {
             // First try failed.
         }
 
-        if(isOldBuildResult) {
+        if (isOldBuildResult) {
             log.info("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
             try {
                 Thread.sleep(RESULT_RETRIEVAL_DELAY);
@@ -281,9 +283,40 @@ public class BambooService implements ContinuousIntegrationService {
         result.setBuildSuccessful((boolean) buildResults.get("buildSuccessful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setBuildCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
+        result.setScore(calculateScoreForResult(result));
         result.setParticipation(participation);
         resultRepository.save(result);
     }
+
+    /**
+     * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.
+     *
+     * @param result
+     * @return
+     */
+    private Long calculateScoreForResult(Result result) {
+
+        if (result.isBuildSuccessful()) {
+            return (long) 100;
+        }
+
+        if (result.getResultString() != null && !result.getResultString().isEmpty()) {
+
+            Pattern p = Pattern.compile("^([0-9]+) of ([0-9]+) failed");
+            Matcher m = p.matcher(result.getResultString());
+
+            if (m.find()) {
+                float failedTests = Float.parseFloat(m.group(1));
+                float totalTests = Float.parseFloat(m.group(2));
+                float score = (totalTests - failedTests) / totalTests;
+                return (long) (score * 100);
+            }
+
+        }
+
+        return (long) 0;
+    }
+
 
     /**
      * Performs a request to the Bamboo REST API to retrive the latest result for the given plan.
@@ -425,7 +458,7 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Check if the given build plan is valid and accessible on Bamboo.
      *
-     * @param buildPlanId   unique identifier for build plan on CI system
+     * @param buildPlanId unique identifier for build plan on CI system
      * @return
      */
     @Override

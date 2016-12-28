@@ -6,6 +6,7 @@ import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
+import de.tum.in.www1.exerciseapp.service.LtiService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.service.ResultService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 /**
@@ -48,6 +50,9 @@ public class ResultResource {
     @Inject
     private ResultService resultService;
 
+    @Inject
+    private LtiService ltiService;
+
     /**
      * POST  /results : Create a new result.
      *
@@ -58,7 +63,7 @@ public class ResultResource {
     @RequestMapping(value = "/results",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
@@ -66,6 +71,7 @@ public class ResultResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "idexists", "A new result cannot already have an ID")).body(null);
         }
         Result savedResult = resultRepository.save(result);
+        ltiService.onNewBuildResult(savedResult.getParticipation());
         return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
             .headers(HeaderUtil.createEntityCreationAlert("result", savedResult.getId().toString()))
             .body(savedResult);
@@ -88,8 +94,14 @@ public class ResultResource {
         }
         Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
-            resultService.onResultNotified(participation);
-            return ResponseEntity.ok().build();
+            if(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()) ) {
+                resultService.onResultNotified(participation);
+                return ResponseEntity.ok().build();
+            } else {
+                log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -108,7 +120,7 @@ public class ResultResource {
     @RequestMapping(value = "/results",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
@@ -129,7 +141,7 @@ public class ResultResource {
     @RequestMapping(value = "/results",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Result> getAllResults() {
         log.debug("REST request to get all Results");
@@ -207,7 +219,7 @@ public class ResultResource {
     @RequestMapping(value = "/results/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
         log.debug("REST request to get Result : {}", id);
@@ -257,7 +269,7 @@ public class ResultResource {
     @RequestMapping(value = "/results/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);

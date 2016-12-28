@@ -31,6 +31,9 @@ public class Result implements Serializable {
     @Column(name = "build_successful")
     private Boolean buildSuccessful;
 
+    @Column(name = "score")
+    private Long score;
+
     @ManyToOne
     private Participation participation;
 
@@ -74,6 +77,14 @@ public class Result implements Serializable {
         this.participation = participation;
     }
 
+    public Long getScore() {
+        return score;
+    }
+
+    public void setScore(Long score) {
+        this.score = score;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -101,6 +112,7 @@ public class Result implements Serializable {
             ", resultString='" + resultString + "'" +
             ", buildCompletionDate='" + buildCompletionDate + "'" +
             ", buildSuccessful='" + buildSuccessful + "'" +
+            ", score='" + score + "'" +
             '}';
     }
 }

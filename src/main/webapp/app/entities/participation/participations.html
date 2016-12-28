@@ -1,9 +1,12 @@
 <div>
-    <h2 translate="exerciseApplicationApp.participation.home.title">Participations</h2>
+    <h2>
+        <span ng-show="vm.exercise">{{vm.exercise.title}} - </span>
+        Participations
+    </h2>
     <jhi-alert></jhi-alert>
     <div class="container-fluid">
         <div class="row">
-            <div class="col-xs-4 no-padding-left">
+            <div class="col-xs-4 no-padding-left" ng-hide="true">
                 <button class="btn btn-primary" ui-sref="participation.new" >
                     <span class="glyphicon glyphicon-plus"></span>
                     <span  translate="exerciseApplicationApp.participation.home.createLabel">
@@ -11,7 +14,7 @@
                     </span>
                 </button>
             </div>
-            <div class="col-xs-8 no-padding-right">
+            <div class="col-xs-8 no-padding-right" ng-hide="vm.exercise">
                 <form name="searchForm" class="form-inline">
                     <div class="input-group pull-right">
                         <input type="text" class="form-control" ng-model="vm.filterExercise" placeholder="Filter by exercise" uib-typeahead="exercise.title for exercise in vm.exercises | filter:$viewValue | limitTo:8" typeahead-no-results="noResults">
@@ -32,7 +35,7 @@
                     <th><span translate="exerciseApplicationApp.participation.initializationState">Initialization State</span></th>
                     <th><span translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span></th>
                     <th><span translate="exerciseApplicationApp.participation.student">Student</span></th>
-                    <th><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
+                    <th ng-hide="vm.exercise"><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -46,7 +49,7 @@
                     <td>
                         <a ui-sref="user-management-detail({login:participation.student.login})">{{participation.student.firstName}}</a>
                     </td>
-                    <td>
+                    <td ng-hide="vm.exercise">
                         <a ui-sref="exercise-detail({id:participation.exercise.id})">{{participation.exercise.title}}</a>
                     </td>
                     <td class="text-right">
@@ -58,13 +61,13 @@
                                 <span class="hidden-xs hidden-sm" translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
-                                    ui-sref="participation.edit({id:participation.id})"
-                                    class="btn btn-primary btn-sm">
+                                    ui-sref="participation-for-exercise.edit({id:participation.id})"
+                                    class="btn btn-warning btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
                                 <span class="hidden-xs hidden-sm" translate="entity.action.edit"></span>
                             </button>
                             <button type="submit"
-                                    ui-sref="participation.delete({id:participation.id})"
+                                    ui-sref="participation-for-exercise.delete({id:participation.id})"
                                     class="btn btn-danger btn-sm">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
                                 <span class="hidden-xs hidden-sm" translate="entity.action.delete"></span>
