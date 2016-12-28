@@ -126,9 +126,8 @@ public class LtiResource {
             .map(result -> {
                 String launchUrl = request.getScheme() + // "http"
                     "://" +                                // "://"
-                    request.getServerName() +              // "myhost"
-                    ":" +                                  // ":"
-                    request.getServerPort() +
+                    request.getServerName() +              // "myhost"                     // ":"
+                    (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "" ) +
                     "/api/lti/launch/" + exercise.getId();
 
                 String ltiId = LTI_ID;

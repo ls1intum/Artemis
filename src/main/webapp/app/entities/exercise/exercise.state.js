@@ -299,8 +299,8 @@
                     });
                 }]
             })
-            .state('exercise.ltiConfiguration', {
-                parent: 'exercise',
+            .state('exercise-detail.ltiConfiguration', {
+                parent: 'exercise-detail',
                 url: '/{id}/lticonfiguration',
                 data: {
                     authorities: ['ROLE_ADMIN']
@@ -321,7 +321,7 @@
                             }]
                         }
                     }).result.then(function () {
-                        $state.go('exercise', null, {reload: true});
+                        $state.go('exercise-detail', null, {reload: true});
                     }, function () {
                         $state.go('^');
                     });
