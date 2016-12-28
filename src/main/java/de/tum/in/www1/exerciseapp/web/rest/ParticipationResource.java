@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.ExerciseService;
@@ -41,6 +42,9 @@ public class ParticipationResource {
 
     @Inject
     private ParticipationService participationService;
+
+    @Inject
+    private ParticipationRepository participationRepository;
 
     @Inject
     private ExerciseService exerciseService;
@@ -139,6 +143,22 @@ public class ParticipationResource {
     public List<Participation> getAllParticipations() {
         log.debug("REST request to get all Participations");
         return participationService.findAll();
+    }
+
+
+    /**
+     * GET  /exercise/{exerciseId}/participations : get all the participations for an exercise
+     *
+     * @param exerciseId
+     * @return
+     */
+    @RequestMapping(value = "/exercise/{exerciseId}/participations",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @Timed
+    public List<Participation> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
+        log.debug("REST request to get all Participations for Exercise {}", exerciseId);
+        return participationRepository.findByExerciseId(exerciseId);
     }
 
     /**

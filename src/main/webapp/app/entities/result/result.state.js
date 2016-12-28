@@ -36,7 +36,7 @@
             parent: 'entity',
             url: '/result/{id}',
             data: {
-                authorities: ['ROLE_ADMIN'],
+                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
                 pageTitle: 'exerciseApplicationApp.result.detail.title'
             },
             views: {
@@ -60,7 +60,7 @@
             parent: 'result',
             url: '/new',
             data: {
-                authorities: ['ROLE_ADMIN']
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -90,7 +90,7 @@
             parent: 'result',
             url: '/{id}/edit',
             data: {
-                authorities: ['ROLE_ADMIN']
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -115,7 +115,7 @@
             parent: 'result',
             url: '/{id}/delete',
             data: {
-                authorities: ['ROLE_ADMIN']
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({

@@ -1,17 +1,20 @@
 <div>
-    <h2 translate="exerciseApplicationApp.exercise.home.title">Exercises</h2>
+    <h2>
+        <span ng-show="vm.course">{{vm.course.title}} - </span>
+        Exercises
+    </h2>
     <jhi-alert></jhi-alert>
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-4 no-padding-left">
-                <button class="btn btn-primary" ui-sref="exercise.new" >
+                <button class="btn btn-primary" ui-sref="exercise-for-course.new" >
                     <span class="glyphicon glyphicon-plus"></span>
                     <span  translate="exerciseApplicationApp.exercise.home.createLabel">
                         Create new Exercise
                     </span>
                 </button>
             </div>
-            <div class="col-xs-8 no-padding-right">
+            <div class="col-xs-8 no-padding-right" ng-hide="vm.course">
                 <form name="searchForm" class="form-inline">
                     <div class="input-group pull-right">
                         <input type="text" class="form-control" ng-model="vm.filterCourse" placeholder="Filter by course" uib-typeahead="course.title for course in vm.courses | filter:$viewValue | limitTo:8" typeahead-no-results="noResults">
@@ -34,7 +37,7 @@
                     <th jh-sort-by="allowOnlineEditor"><span translate="exerciseApplicationApp.exercise.allowOnlineEditor">Allow Online Editor</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="releaseDate"><span translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="dueDate"><span translate="exerciseApplicationApp.exercise.dueDate">Due Date</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="course.title"><span translate="exerciseApplicationApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="course.title" ng-hide="vm.course"><span translate="exerciseApplicationApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -48,11 +51,17 @@
                     <td>{{exercise.allowOnlineEditor}}</td>
                     <td>{{exercise.releaseDate | date:'medium'}}</td>
                     <td>{{exercise.dueDate | date:'medium'}}</td>
-                    <td>
+                    <td ng-hide="vm.course">
                         <a ui-sref="course-detail({id:exercise.course.id})">{{exercise.course.title}}</a>
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
+                            <button type="submit"
+                                    ui-sref="participation-for-exercise({exerciseId:exercise.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="fa fa-list-alt"></span>
+                                <span class="hidden-xs hidden-sm">Participations</span>
+                            </button>
                             <button type="submit"
                                     ui-sref="exercise-detail({id:exercise.id})"
                                     class="btn btn-info btn-sm">
@@ -60,13 +69,13 @@
                                 <span class="hidden-xs hidden-sm" translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
-                                    ui-sref="exercise.edit({id:exercise.id})"
-                                    class="btn btn-primary btn-sm">
+                                    ui-sref="exercise-for-course.edit({id:exercise.id})"
+                                    class="btn btn-warning btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
                                 <span class="hidden-xs hidden-sm" translate="entity.action.edit"></span>
                             </button>
                             <button type="submit"
-                                    ui-sref="exercise.delete({id:exercise.id})"
+                                    ui-sref="exercise-for-course.delete({id:exercise.id})"
                                     class="btn btn-danger btn-sm">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
                                 <span class="hidden-xs hidden-sm" translate="entity.action.delete"></span>

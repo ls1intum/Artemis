@@ -10,7 +10,15 @@
     </tr>
     </thead>
     <tbody>
-    <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate'" ng-switch on="$ctrl.hasParticipation(exercise)">
+
+    <tr ng-show="!$ctrl.showOverdueExercises &&  $ctrl.numOfOverdueExercises > 0">
+        <td colspan="4" ng-switch on="$ctrl.numOfOverdueExercises == 1">
+            <a ng-switch-when="true" ng-click="$ctrl.toggleShowOverdueExercises()">Show one overdue exercise</a>
+            <a ng-switch-when="false" ng-click="$ctrl.toggleShowOverdueExercises()">Show {{$ctrl.numOfOverdueExercises}} overdue exercises</a>
+        </td>
+    </tr>
+
+    <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch on="$ctrl.hasParticipation(exercise)">
         <td>
             <span has-authority="ROLE_USER">{{exercise.title}}</span>
             <a class="text-primary" has-any-authority="ROLE_ADMIN, ROLE_TA"><i class="fa fa-info-circle fa-fw"

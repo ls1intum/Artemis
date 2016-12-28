@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .controller('ExerciseController', ExerciseController);
 
-    ExerciseController.$inject = ['$scope', '$state', 'Exercise', 'ParseLinks', 'AlertService'];
+    ExerciseController.$inject = ['$scope', '$state', 'Exercise', 'ParseLinks', 'AlertService', 'CourseExercises', 'courseEntity'];
 
-    function ExerciseController ($scope, $state, Exercise, ParseLinks, AlertService) {
+    function ExerciseController ($scope, $state, Exercise, ParseLinks, AlertService, CourseExercises ,courseEntity) {
         var vm = this;
 
         vm.exercises = [];
@@ -19,8 +19,19 @@
         vm.predicate = 'id';
         vm.reset = reset;
         vm.reverse = true;
+        vm.course = courseEntity;
 
-        loadAll();
+
+        function load() {
+            if(vm.course) {
+                loadForCourse(vm.course);
+            } else {
+                loadAll();
+            }
+        }
+
+        load();
+
 
         function loadAll () {
             Exercise.query({
@@ -48,6 +59,32 @@
             }
         }
 
+        function loadForCourse (course) {
+            CourseExercises.query({
+                page: vm.page,
+                size: 20,
+                courseId: course.id,
+                sort: sort()
+            }, onSuccess, onError);
+            function sort() {
+                var result = [vm.predicate + ',' + (vm.reverse ? 'asc' : 'desc')];
+                if (vm.predicate !== 'id') {
+                    result.push('id');
+                }
+                return result;
+            }
+            function onSuccess(data, headers) {
+                vm.links = ParseLinks.parse(headers('link'));
+                vm.totalItems = headers('X-Total-Count');
+                for (var i = 0; i < data.length; i++) {
+                    vm.exercises.push(data[i]);
+                }
+            }
+            function onError(error) {
+                AlertService.error(error.data.message);
+            }
+        }
+
 
         function getUniqueCourses() {
             var courses = _.map(vm.exercises, function (exercise) {
@@ -59,12 +96,12 @@
         function reset () {
             vm.page = 0;
             vm.exercises = [];
-            loadAll();
+            load();
         }
 
         function loadPage(page) {
             vm.page = page;
-            loadAll();
+            load();
         }
     }
 })();

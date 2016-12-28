@@ -7,7 +7,35 @@
         </h3>
 
     </div>
+
+    <div class="panel-second-header" ng-show="$ctrl.steps.length > 0">
+
+
+        <div class="stepwizard">
+            <div class="stepwizard-row">
+
+                <div ng-repeat="step in $ctrl.steps" class="stepwizard-step" >
+                    <div  uib-tooltip="{{step.title}}" tooltip-placement="bottom" tooltip-append-to-body="true" class="btn btn-default btn-circle"  ng-switch on="step.done">
+                        <i class="fa fa-lg fa-check text-success"  ng-switch-when="true"></i>
+                        <i class="fa fa-lg fa-times text-danger" ng-switch-when="false"></i>
+
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+
+
+
+
+    </div>
+
     <div class="panel-body instructions">
+
+
+
 
     </div>
 </div>
