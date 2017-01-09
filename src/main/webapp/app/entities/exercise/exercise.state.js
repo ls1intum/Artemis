@@ -303,7 +303,7 @@
                 parent: 'exercise-detail',
                 url: '/{id}/lticonfiguration',
                 data: {
-                    authorities: ['ROLE_ADMIN']
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({

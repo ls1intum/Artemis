@@ -13,7 +13,7 @@
             parent: 'entity',
             url: '/course',
             data: {
-                authorities: ['ROLE_ADMIN'],
+                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
                 pageTitle: 'exerciseApplicationApp.course.home.title'
             },
             views: {
