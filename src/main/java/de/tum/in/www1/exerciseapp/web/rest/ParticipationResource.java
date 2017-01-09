@@ -155,6 +155,7 @@ public class ParticipationResource {
     @RequestMapping(value = "/exercise/{exerciseId}/participations",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Participation> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
@@ -284,6 +285,7 @@ public class ParticipationResource {
     @RequestMapping(value = "/participations/{id}",
         method = RequestMethod.DELETE,
         produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long id,
                                                     @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
