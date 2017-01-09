@@ -72,6 +72,12 @@
                                 <span class="glyphicon glyphicon-remove-circle"></span>
                                 <span class="hidden-xs hidden-sm" translate="entity.action.delete"></span>
                             </button>
+                            <button type="submit"
+                                    ui-sref="instructor-dashboard.new-result({participationId:participation.id, courseId: participation.exercise.course.id, exerciseId:participation.exercise.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="glyphicon glyphicon-asterisk"></span>
+                                <span class="hidden-xs hidden-sm">New result</span>
+                            </button>
                         </div>
                     </td>
                 </tr>
