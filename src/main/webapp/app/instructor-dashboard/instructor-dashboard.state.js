@@ -33,6 +33,29 @@
                     }]
                 }
             })
+            .state('instructor-course-dashboard', {
+                parent: 'app',
+                url: '/course/{courseId}/dashboard',
+                data: {
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    pageTitle: 'exerciseApplicationApp.exercise.home.title'
+                },
+                views: {
+                    'content@': {
+                        template: '<instructor-course-dashboard course-id="courseId"></instructor-course-dashboard>',
+                        controller: ['$scope', '$state', function ($scope, $state) {
+                            $scope.courseId = $state.params.courseId;
+                        }]
+                    }
+                },
+                resolve: {
+                    translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        // TODO: Create partial for instructor dashboard
+                        $translatePartialLoader.addPart('global');
+                        return $translate.refresh();
+                    }]
+                }
+            })
             .state('instructor-dashboard.new-result', {
                 parent: 'instructor-dashboard',
                 url: '/participation/{participationId}/result/new',

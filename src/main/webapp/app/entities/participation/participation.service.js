@@ -3,7 +3,8 @@
     angular
         .module('exerciseApplicationApp')
         .factory('Participation', Participation)
-        .factory('ExerciseParticipation', ExerciseParticipation);
+        .factory('ExerciseParticipation', ExerciseParticipation)
+        .factory('CourseParticipation', CourseParticipation);
 
     Participation.$inject = ['$resource', 'DateUtils'];
 
@@ -58,4 +59,16 @@
             }
         });
     }
+
+
+    CourseParticipation.$inject = ['$resource'];
+
+    function CourseParticipation ($resource) {
+        var resourceUrl = 'api/courses/:courseId/participations';
+
+        return $resource(resourceUrl, {}, {
+            'query': {method: 'GET', isArray: true}
+        });
+    }
+
 })();

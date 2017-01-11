@@ -12,9 +12,9 @@
             templateUrl: 'app/instructor-dashboard/instructor-dashboard.html'
         });
 
-    InstructorDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal', 'ExerciseResults', 'Participation'];
+    InstructorDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal', 'Exercise', 'ExerciseResults', 'Participation'];
 
-    function InstructorDashboardController($window, $filter, moment, $uibModal, ExerciseResults, Participation) {
+    function InstructorDashboardController($window, $filter, moment, $uibModal, Exercise, ExerciseResults, Participation) {
         var vm = this;
 
         vm.showAllResults = false;
@@ -29,6 +29,7 @@
         vm.showDetails = showDetails;
         vm.sort = sort;
         vm.toggleShowAllResults = toggleShowAllResults;
+        vm.exercise = Exercise.get({id : vm.exerciseId});
 
         function init() {
             getResults();
