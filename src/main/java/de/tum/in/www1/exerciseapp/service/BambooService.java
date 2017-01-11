@@ -284,6 +284,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setBuildCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
         result.setScore(calculateScoreForResult(result));
+        result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation(participation);
         resultRepository.save(result);
     }

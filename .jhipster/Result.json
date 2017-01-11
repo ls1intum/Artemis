@@ -21,6 +21,10 @@
             "fieldType": "Boolean"
         },
         {
+            "fieldName": "buildArtifact",
+            "fieldType": "Boolean"
+        },
+        {
             "fieldName": "score",
             "fieldType": "Long"
         }
