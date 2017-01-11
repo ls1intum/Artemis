@@ -158,7 +158,7 @@
             console.log();
             var plantUml = tokens[id].content;
 
-            plantUml = plantUml.replace("@startuml", "@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nhide empty members\n");
+            plantUml = plantUml.replace("@startuml", "@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nskinparam classAttributeIconSize 0\nhide empty members\n");
 
             plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, function (match, capture) {
                 var tests = capture.split(",");
