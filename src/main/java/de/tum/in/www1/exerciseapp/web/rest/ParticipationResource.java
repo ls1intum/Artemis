@@ -230,6 +230,21 @@ public class ParticipationResource {
             .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+
+
+    @RequestMapping(value = "/participations/{id}/buildArtifact",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id, Authentication authentication) {
+        log.debug("REST request to get Participation build artifact: {}", id);
+        Participation participation = participationService.findOne(id);
+
+        return continuousIntegrationService.retrieveLatestArtifact(participation);
+
+    }
+
+
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for the "id" exercise.
      *

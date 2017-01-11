@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
 import de.tum.in.www1.exerciseapp.domain.Participation;
+import org.springframework.http.ResponseEntity;
 
 import java.net.URL;
 import java.util.List;
@@ -75,5 +76,7 @@ public interface ContinuousIntegrationService {
     List<BuildLogEntry> getLatestBuildLogs(Participation participation);
 
     URL getBuildPlanWebUrl(Participation participation);
+
+    ResponseEntity retrieveLatestArtifact(Participation participation);
 
 }
