@@ -211,6 +211,25 @@ public class ResultResource {
     }
 
     /**
+     * GET  /courses/:courseId/results : get the successful results for a course, ordered ascending by build completion date.
+     *
+     * @param courseId the id of the course for which to retrieve the results
+     * @return the ResponseEntity with status 200 (OK) and the list of results in body
+     */
+    @RequestMapping(value = "/courses/{courseId}/results",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @Timed
+    public List<Result> getResultsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get Results for Course : {}", courseId);
+        List<Result> results;
+        return resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+    }
+
+
+
+    /**
      * GET  /results/:id : get the "id" result.
      *
      * @param id the id of the result to retrieve
