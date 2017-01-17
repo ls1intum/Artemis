@@ -25,7 +25,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select r from Result r where r.buildCompletionDate = (select min(rr.buildCompletionDate) from Result rr where rr.participation.exercise.id = :exerciseId and rr.participation.student.id = r.participation.student.id and rr.buildSuccessful = true) and r.participation.exercise.id = :exerciseId and r.buildSuccessful = true order by r.buildCompletionDate asc")
     List<Result> findEarliestSuccessfulResultsForExercise(@Param("exerciseId") Long exerciseId);
 
-    @Query("select r from Result r where r.buildCompletionDate = (select min(rr.buildCompletionDate) from Result rr where rr.participation.exercise.course.id = :courseId and rr.participation.student.id = r.participation.student.id and rr.buildSuccessful = true) and r.participation.exercise.course.id = :courseId and r.buildSuccessful = true order by r.buildCompletionDate asc")
+    @Query("select r from Result r where r.buildCompletionDate = (select min(rr.buildCompletionDate) from Result rr where rr.participation.exercise.id = r.participation.exercise.id and rr.participation.student.id = r.participation.student.id and rr.buildSuccessful = true) and r.participation.exercise.course.id = :courseId and r.buildSuccessful = true order by r.buildCompletionDate asc")
     List<Result> findEarliestSuccessfulResultsForCourse(@Param("courseId") Long courseId);
 
 
