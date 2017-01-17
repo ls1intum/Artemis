@@ -43,7 +43,7 @@ body {
 .editor-wrapper > .editor-main > .editor-sidebar-right .panel-body {
   overflow: scroll;
   height: inherit;
-  padding-bottom: 50px; }
+  padding-bottom: 100px; }
 
 .editor-wrapper > .editor-main > .editor-sidebar-left .panel:not(.collapsed) {
   max-width: 400px;
