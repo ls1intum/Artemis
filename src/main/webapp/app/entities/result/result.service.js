@@ -3,7 +3,8 @@
     angular
         .module('exerciseApplicationApp')
         .factory('Result', Result)
-        .factory('ParticipationResult', ParticipationResult);
+        .factory('ParticipationResult', ParticipationResult)
+        .factory('CourseResult', CourseResult);
 
     Result.$inject = ['$resource', 'DateUtils'];
 
@@ -43,6 +44,16 @@
                     return data;
                 }
             }
+        });
+    }
+
+
+    CourseResult.$inject = ['$resource'];
+    function CourseResult($resource) {
+        var resourceUrl = 'api/courses/:courseId/results';
+
+        return $resource(resourceUrl, {}, {
+            'query': {method: 'GET', isArray: true}
         });
     }
 

@@ -15,9 +15,9 @@
             controller: ResultController
         });
 
-    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', '$interval','$scope', 'JhiWebsocketService', 'Result'];
+    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', 'Repository', '$interval','$scope', '$sce', 'JhiWebsocketService', 'Result'];
 
-    function ResultController($http, $uibModal, ParticipationResult, $interval,$scope, JhiWebsocketService, Result) {
+    function ResultController($http, $uibModal, ParticipationResult, Repository, $interval,$scope, $sce, JhiWebsocketService, Result) {
         var vm = this;
 
         vm.$onInit = init;
@@ -70,7 +70,7 @@
 
         function buildResultString(result) {
             if (result.resultString === 'No tests found') {
-                return 'No tests found (Check for compile errors)';
+                return 'Build failed';
             } else {
                 return result.resultString;
             }
@@ -95,7 +95,19 @@
                             id: result.id
                         }, function (details) {
                             vm.details = details;
-                            vm.loading = false;
+                            if(details.length == 0) {
+                                Repository.buildlogs({
+                                    participationId: result.participation.id
+                                }, function (buildLogs) {
+                                    _.forEach(buildLogs, function (buildLog) {
+                                        buildLog.log = $sce.trustAsHtml(buildLog.log);
+                                    });
+                                    vm.buildLogs = buildLogs;
+                                    vm.loading = false;
+                                });
+                            } else {
+                                vm.loading = false;
+                            }
                         });
                     }
                 }],
