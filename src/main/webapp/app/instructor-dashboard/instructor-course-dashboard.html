@@ -8,13 +8,8 @@
     <thead>
     <tr>
         <th>
-            <a class="th-link" ng-click="$ctrl.sortColumn = 'lastName'; $ctrl.sortReverse = !$ctrl.sortReverse">
-                Last name</a>&nbsp;<i
-            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'lastName' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'lastName' && $ctrl.sortReverse}"></i>
-        </th>
-        <th>
             <a class="th-link" ng-click="$ctrl.sortColumn = 'firstName'; $ctrl.sortReverse = !$ctrl.sortReverse">
-                First name</a>&nbsp;<i
+                Name</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'firstName' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'firstName' && $ctrl.sortReverse}"></i>
         </th>
 
@@ -39,8 +34,7 @@
     </thead>
     <tbody>
     <tr ng-repeat="row in $ctrl.sortedResults = ($ctrl.rows | orderBy:$ctrl.sort:$ctrl.sortReverse) track by $index">
-        <td>{{ row.lastName }}</td>
-        <td>{{ row.firstName }}</td>
+        <td>{{ row.firstName }} {{ row.lastName }}</td>
         <td>{{ row.login }}</td>
         <td>{{ row.participated }}</td>
         <td>{{ row.successful }}</td>
