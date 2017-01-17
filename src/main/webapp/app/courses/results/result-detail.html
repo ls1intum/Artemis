@@ -13,8 +13,11 @@
         </div>
         <hr ng-if="!lastDetail">
     </div>
-    <div ng-switch-when="false" ng-if="$ctrl.details.length == 0" class="text-center text-danger">
-        No test results found. Please check for compile errors!
+    <div ng-switch-when="false" ng-if="$ctrl.details.length == 0">
+        <dl class="buildoutput dl-horizontal" ng-hide="$ctrl.buildLogs.length == 0">
+            <dt ng-repeat-start="logEntry in $ctrl.buildLogs">{{logEntry.time | date:'yyyy-MM-dd HH:mm:ss'}}</dt>
+            <dd ng-repeat-end ng-bind-html="logEntry.log"></dd>
+        </dl>
     </div>
 </div>
 <div class="modal-footer">

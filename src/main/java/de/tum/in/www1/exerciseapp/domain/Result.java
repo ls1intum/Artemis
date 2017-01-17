@@ -34,6 +34,9 @@ public class Result implements Serializable {
     @Column(name = "score")
     private Long score;
 
+    @Column(name = "build_artifact")
+    private Boolean buildArtifact;
+
     @ManyToOne
     private Participation participation;
 
@@ -85,6 +88,14 @@ public class Result implements Serializable {
         this.score = score;
     }
 
+    public Boolean getBuildArtifact() {
+        return buildArtifact;
+    }
+
+    public void setBuildArtifact(Boolean buildArtifact) {
+        this.buildArtifact = buildArtifact;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -112,6 +123,7 @@ public class Result implements Serializable {
             ", resultString='" + resultString + "'" +
             ", buildCompletionDate='" + buildCompletionDate + "'" +
             ", buildSuccessful='" + buildSuccessful + "'" +
+            ", buildArtifact='" + buildArtifact + "'" +
             ", score='" + score + "'" +
             '}';
     }

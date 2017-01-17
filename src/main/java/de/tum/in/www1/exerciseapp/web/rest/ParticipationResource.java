@@ -162,6 +162,25 @@ public class ParticipationResource {
         return participationRepository.findByExerciseId(exerciseId);
     }
 
+
+    /**
+     * GET  /course/{courseId}/participations : get all the participations for a course
+     *
+     * @param courseId
+     * @return
+     */
+    @RequestMapping(value = "/courses/{courseId}/participations",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @Timed
+    public List<Participation> getAllParticipationsForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get all Participations for Course {}", courseId);
+        return participationRepository.findByCourseId(courseId);
+    }
+
+
+
     /**
      * GET  /participations/:id : get the "id" participation.
      *
@@ -229,6 +248,21 @@ public class ParticipationResource {
                 HttpStatus.OK))
             .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
+
+
+
+    @RequestMapping(value = "/participations/{id}/buildArtifact",
+        method = RequestMethod.GET,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id, Authentication authentication) {
+        log.debug("REST request to get Participation build artifact: {}", id);
+        Participation participation = participationService.findOne(id);
+
+        return continuousIntegrationService.retrieveLatestArtifact(participation);
+
+    }
+
 
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for the "id" exercise.

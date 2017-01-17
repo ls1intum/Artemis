@@ -284,6 +284,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setBuildCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
         result.setScore(calculateScoreForResult(result));
+        result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation(participation);
         resultRepository.save(result);
     }
@@ -334,7 +335,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "/latest.json?expand=testResults",
+                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "/latest.json?expand=testResults,artifacts",
                 HttpMethod.GET,
                 entity,
                 Map.class);
@@ -350,6 +351,16 @@ public class BambooService implements ContinuousIntegrationService {
             String dateString = (String) response.getBody().get("buildCompletedDate");
             ZonedDateTime buildCompletedDate = ZonedDateTime.parse(dateString);
             result.put("buildCompletedDate", buildCompletedDate);
+
+            if(response.getBody().containsKey("artifacts")) {
+                Map<String, Object> artifacts = (Map<String, Object>)response.getBody().get("artifacts");
+                if((int)artifacts.get("size") > 0 && artifacts.containsKey("artifact")) {
+                    Map<String, Object> firstArtifact = (Map<String, Object>) ((ArrayList<Map>) artifacts.get("artifact")).get(0);
+                    String artifact = (String) ((Map<String, Object>) firstArtifact.get("link")).get("href");
+                    result.put("artifact", artifact);
+                }
+            }
+
             return result;
         }
         return null;
@@ -420,6 +431,70 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
         return logs;
+    }
+
+
+    /**
+     * Gets the latest available artifact for the given plan key
+     *
+      * @param participation
+     * @return
+     */
+    public ResponseEntity retrieveLatestArtifact(Participation participation) {
+        String planKey = participation.getBuildPlanId();
+        Map<String, Object> latestResult = retrieveLatestBuildResult(planKey);
+        if(latestResult.containsKey("artifact")) {
+            return retrievArtifactPage((String)latestResult.get("artifact"));
+        } else {
+            throw new BambooException("No build artifact available for this plan");
+        }
+
+
+    }
+
+    /**
+     * Gets the content from a Bamboo artifact link
+     * Follows links on HTML directory pages, if necessary
+     *
+     * @param url
+     * @return
+     */
+    private ResponseEntity retrievArtifactPage(String url) throws BambooException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = null;
+
+        try {
+            response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                entity,
+                String.class);
+        } catch (Exception e) {
+            log.error("HttpError while retrieving build artifact", e);
+            throw new BambooException("HttpError while retrieving build artifact");
+        }
+
+        System.out.println(response);
+
+        if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).equals("text/html")) {
+
+            // HTML directory page
+            Pattern p = Pattern.compile("href=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
+            Matcher m = p.matcher(response.getBody());
+            if (m.find()) {
+                url = m.group(1);
+                return retrievArtifactPage(BAMBOO_SERVER + url);
+            } else {
+                throw new BambooException("No artifact link found on artifact page");
+            }
+
+        } else {
+            // Actual artifact file
+            return response;
+        }
+
     }
 
     /**

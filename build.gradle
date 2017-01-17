@@ -90,7 +90,7 @@ if (project.hasProperty('prod')) {
 }
 
 group = 'de.tum.in.www1.exerciseapp'
-version = '1.2.0'
+version = '1.2.1'
 
 description = ''
 
