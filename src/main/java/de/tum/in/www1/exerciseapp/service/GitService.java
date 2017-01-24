@@ -40,6 +40,12 @@ public class GitService {
     @Value("${exerciseapp.repo-clone-path}")
     private String REPO_CLONE_PATH;
 
+    @Value("${exerciseapp.git.name}")
+    private String GIT_NAME;
+
+    @Value("${exerciseapp.git.email}")
+    private String GIT_EMAIL;
+
 
     private HashMap<Path, Repository> cachedRepositories = new HashMap<>();
 
@@ -117,7 +123,7 @@ public class GitService {
      */
     public void commitAndPush(Repository repo, String message) throws GitAPIException {
         Git git = new Git(repo);
-        git.commit().setMessage(message).setAllowEmpty(true).call();
+        git.commit().setMessage(message).setAllowEmpty(true).setCommitter(GIT_NAME, GIT_EMAIL).call();
         git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
     }
 

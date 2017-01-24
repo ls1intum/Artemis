@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -463,26 +464,25 @@ public class BambooService implements ContinuousIntegrationService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<String> response = null;
+        ResponseEntity<byte[]> response = null;
 
         try {
             response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 entity,
-                String.class);
+                byte[].class);
         } catch (Exception e) {
             log.error("HttpError while retrieving build artifact", e);
             throw new BambooException("HttpError while retrieving build artifact");
         }
 
-        System.out.println(response);
 
         if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).equals("text/html")) {
-
+            String html = new String(response.getBody(), StandardCharsets.UTF_8);
             // HTML directory page
             Pattern p = Pattern.compile("href=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
-            Matcher m = p.matcher(response.getBody());
+            Matcher m = p.matcher(html);
             if (m.find()) {
                 url = m.group(1);
                 return retrievArtifactPage(BAMBOO_SERVER + url);
