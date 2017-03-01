@@ -9,19 +9,22 @@
         .component('editorFileBrowser', {
             bindings: {
                 participation: '<',
-                file: '='
+                file: '=',
+                onCreatedFile: '&',
+                onDeletedFile: '&',
             },
             templateUrl: 'app/editor/file-browser/editor-file-browser.html',
             controller: EditorFileBrowserController
         });
 
-    EditorFileBrowserController.$inject = ['Participation', 'RepositoryFile', '$state'];
+    EditorFileBrowserController.$inject = ['Participation', 'RepositoryFile', '$state','$uibModal'];
 
-    function EditorFileBrowserController(Participation, RepositoryFile, $state) {
+    function EditorFileBrowserController(Participation, RepositoryFile, $state,$uibModal) {
         var vm = this;
 
 
         vm.$onInit = init;
+        vm.$state = $state;
 
         function init() {
             getFiles();
@@ -33,6 +36,8 @@
                 participationId: vm.participation.id
             }, setupTreeview);
         }
+
+        vm.getFiles = getFiles;
 
         function setupTreeview(files) {
             var tree = buildTree(files);
@@ -46,6 +51,7 @@
                 showBorder: false
             }).on('nodeSelected', function (event, node) {
                 vm.file = node.file;
+                vm.folder = node.folder;
                 $state.go('editor', {
                     file: node.file
                 }, {notify:false});
@@ -78,10 +84,14 @@
                     // directory node
                     node.selectable = false;
                     node.nodes = buildTree([fileSplit.join('/')], node.nodes, folder ? folder + '/' + node.text: node.text);
+                    node.folder = node.text;
                 } else {
                     // file node
+                    node.folder = folder;
                     node.file = (folder ? folder  + '/' : '' )+ node.text;
+
                     if(node.file == vm.file) {
+                        vm.folder = node.folder;
                         node.state = {
                             selected: true
                         }
@@ -113,43 +123,112 @@
         }
 
 
-        function getTree() {
-            // Some logic to retrieve, or generate tree structure
-            return [
-                {
-                    text: "Parent 1",
-                    nodes: [
-                        {
-                            text: "Child 1",
-                            nodes: [
-                                {
-                                    text: "Grandchild 1"
-                                },
-                                {
-                                    text: "Grandchild 2"
-                                }
-                            ]
-                        },
-                        {
-                            text: "Child 2"
-                        }
-                    ]
+
+        vm.create = function() {
+            $uibModal.open({
+                size: 'md',
+                templateUrl: 'app/editor/file-browser/create-file.html',
+                controller: ['$http', '$uibModalInstance', 'fileBrowserComponent', function ($http, $uibModalInstance, fileBrowserComponent) {
+                    var vm = this;
+
+                    vm.$onInit = init;
+                    vm.folder = fileBrowserComponent.folder;
+
+                    vm.clear = function () {
+                        $uibModalInstance.dismiss('cancel');
+                    };
+
+                    vm.create = function () {
+                        var file = (vm.folder ? vm.folder + "/" : "") + vm.filename;
+                        RepositoryFile.create({
+                            participationId: fileBrowserComponent.participation.id,
+                            file: file
+                        }, "" , function () {
+                            $uibModalInstance.dismiss();
+                            fileBrowserComponent.getFiles();
+
+                            fileBrowserComponent.$state.go('editor', {
+                                file: file
+                            }, {notify:true});
+
+
+                            if(fileBrowserComponent.onCreatedFile) {
+                                fileBrowserComponent.onCreatedFile(file);
+                            }
+
+                        }, function (err) {
+
+
+                        });
+                    };
+
+                    function init() {
+                        console.log(vm.folder);
+                    }
+                }],
+                resolve: {
+                    fileBrowserComponent: function () {
+                        return vm;
+                    }
                 },
-                {
-                    text: "Parent 2"
-                },
-                {
-                    text: "Parent 3"
-                },
-                {
-                    text: "Parent 4"
-                },
-                {
-                    text: "Parent 5"
-                }
-            ];
-            ;
+                controllerAs: '$ctrl'
+            });
         }
+
+
+
+        vm.delete = function() {
+            if(!vm.file) {
+                return;
+            }
+
+            $uibModal.open({
+                size: 'md',
+                templateUrl: 'app/editor/file-browser/delete-file.html',
+                controller: ['$http', '$uibModalInstance', 'fileBrowserComponent', function ($http, $uibModalInstance, fileBrowserComponent) {
+                    var vm = this;
+
+                    vm.$onInit = init;
+                    vm.file = fileBrowserComponent.file;
+
+                    vm.clear = function () {
+                        $uibModalInstance.dismiss('cancel');
+                    };
+
+                    vm.delete = function () {
+                        RepositoryFile.delete({
+                            participationId: fileBrowserComponent.participation.id,
+                            file: vm.file
+                        }, {} , function () {
+                            $uibModalInstance.dismiss();
+                            fileBrowserComponent.getFiles();
+
+                            fileBrowserComponent.$state.go('editor', {
+                                file: null
+                            }, {notify:true});
+
+                            if(fileBrowserComponent.onDeletedFile) {
+                                fileBrowserComponent.onDeletedFile(vm.file);
+                            }
+
+                        }, function (err) {
+
+                        });
+                    };
+
+                    function init() {
+                        console.log(vm.file);
+                    }
+                }],
+                resolve: {
+                    fileBrowserComponent: function () {
+                        return vm;
+                    }
+                },
+                controllerAs: '$ctrl'
+            });
+        }
+
 
 
     }
