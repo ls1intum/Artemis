@@ -44,9 +44,9 @@
                     </h3>
 
                 </div>
-                <div class="panel-body">
-                    <editor-file-browser participation="$ctrl.participation" file="$ctrl.file"></editor-file-browser>
-                </div>
+
+                    <editor-file-browser participation="$ctrl.participation" file="$ctrl.file" on-created-file="$ctrl.isCommitted = false" on-deleted-file="$ctrl.isCommitted = false"></editor-file-browser>
+
                 <div class="panel-footer" ng-bind-html="$ctrl.saveStatusLabel">
                 </div>
                 <div class="panel-footer" ng-switch="$ctrl.isCommitted">
