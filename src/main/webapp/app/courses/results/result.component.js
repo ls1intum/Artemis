@@ -9,6 +9,7 @@
         .component('result', {
             bindings: {
                 participation: '<',
+                showScore: '<',
                 onNewResult: '&',
             },
             templateUrl: 'app/courses/results/result.html',
