@@ -16,7 +16,7 @@
     <span ng-switch-when="false">
         <span class="text-danger">
             <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;<a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.buildResultString($ctrl.results[0])}}</a>
-        </span> (<span am-time-ago="$ctrl.results[0].buildCompletionDate"></span>)
+        </span> (<span am-time-ago="$ctrl.results[0].buildCompletionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
     </span>
 </span>
 <span ng-if="$ctrl.results[0].buildArtifact">
