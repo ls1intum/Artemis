@@ -47,6 +47,14 @@
             'update': {
                 url: 'api/repository/:participationId/file',
                 method:'PUT'
+            },
+            'create': {
+                url: 'api/repository/:participationId/file',
+                method:'POST'
+            },
+            'delete': {
+                url: 'api/repository/:participationId/file',
+                method:'DELETE'
             }
         });
     }

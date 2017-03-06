@@ -136,6 +136,9 @@ public class GitService {
      */
     public void stageAllChanges(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
+        // stage deleted files:  http://stackoverflow.com/a/35601677/4013020
+        git.add().setUpdate(true).addFilepattern(".").call();
+        // stage new files
         git.add().addFilepattern(".").call();
     }
 
