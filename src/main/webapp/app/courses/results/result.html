@@ -7,7 +7,11 @@
     <span ng-switch-when="true">
         <span class="text-success">
             <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;{{$ctrl.results[0].resultString}}
-        </span> (<span am-time-ago="$ctrl.results[0].buildCompletionDate"></span>)
+        </span>
+
+        (<span am-time-ago="$ctrl.results[0].buildCompletionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+
+
     </span>
     <span ng-switch-when="false">
         <span class="text-danger">

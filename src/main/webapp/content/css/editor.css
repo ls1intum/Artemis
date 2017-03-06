@@ -133,6 +133,9 @@ body.editor .navbar-brand span {
   border-bottom: 1px solid #ddd;
   overflow: scroll; }
 
+.editor-sidebar-left .panel-second-header {
+  padding: 3px 5px; }
+
 .stepwizard-step p {
   margin-top: 10px; }
 

@@ -55,6 +55,15 @@ public class RepositoryResource {
     private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
 
+    /**
+     * GET /repository/{id}/files: List all file names of the repository
+     *
+     * @param id Participation ID
+     * @param authentication
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
     @RequestMapping(value = "/repository/{id}/files",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
@@ -83,6 +92,16 @@ public class RepositoryResource {
     }
 
 
+    /**
+     * GET /repository/{id}/file: Get the content of a file
+     *
+     * @param id Participation ID
+     * @param filename
+     * @param authentication
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
     @RequestMapping(value = "/repository/{id}/file",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -118,6 +137,73 @@ public class RepositoryResource {
     }
 
 
+
+    /**
+     * POST /repository/{id}/file: Create new file
+     *
+     * @param id Participation ID
+     * @param filename
+     * @param request
+     * @param authentication
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
+    @RequestMapping(value = "/repository/{id}/file",
+        method = RequestMethod.POST,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasPermission(#id, 'Repository', 'update')")
+    public ResponseEntity<Void> createFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to create file {} for Participation : {}", filename, id);
+        Participation participation = participationService.findOne(id);
+
+        if (!Optional.ofNullable(participation).isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Repository repository = gitService.getOrCheckoutRepository(participation);
+
+
+
+        if(gitService.getFileByName(repository, filename).isPresent()) {
+            // File already existing. Conflict.
+            return new ResponseEntity<>(HttpStatus.CONFLICT);
+        }
+
+        File file = new File(new java.io.File(repository.getLocalPath() + File.separator + filename), repository);
+
+
+        if(!repository.isValidFile(file)) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+
+
+        file.getParentFile().mkdirs();
+
+        InputStream inputStream = request.getInputStream();
+        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        repository.setFiles(null); // invalidate cache
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
+
+    }
+
+
+
+
+
+    /**
+     * PUT /repository/{id}/file: Update the file content
+     *
+     * @param id Participation ID
+     * @param filename
+     * @param request
+     * @param authentication
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
     @RequestMapping(value = "/repository/{id}/file",
         method = RequestMethod.PUT,
         produces = MediaType.APPLICATION_JSON_VALUE)
@@ -149,6 +235,59 @@ public class RepositoryResource {
 
 
 
+
+
+    /**
+     * DELETE /repository/{id}/file: Delete the file
+     *
+     * @param id Participation ID
+     * @param filename
+     * @param request
+     * @param authentication
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
+    @RequestMapping(value = "/repository/{id}/file",
+        method = RequestMethod.DELETE,
+        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PreAuthorize("hasPermission(#id, 'Repository', 'update')")
+    public ResponseEntity<Void> deleteFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to delete file {} for Participation : {}", filename, id);
+        Participation participation = participationService.findOne(id);
+
+        if (!Optional.ofNullable(participation).isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Repository repository = gitService.getOrCheckoutRepository(participation);
+
+        Optional<File> file = gitService.getFileByName(repository, filename);
+
+        if(!file.isPresent()) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        Files.delete(file.get().toPath());
+
+        repository.setFiles(null); // invalidate cache
+
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("file", filename)).build();
+    }
+
+
+
+
+    /**
+     * POST /repository/{id}/commit: Commit into the participation repository
+     *
+     * @param id Participation ID
+     * @param request
+     * @param authentication
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
     @RequestMapping(value = "/repository/{id}/commit",
         method = RequestMethod.POST,
         produces = MediaType.APPLICATION_JSON_VALUE)
@@ -172,7 +311,16 @@ public class RepositoryResource {
     }
 
 
-
+    /**
+     * GET /repository/{id}: Get the "clean" status of the repository. Clean = No uncommitted changes.
+     *
+     * @param id Participation ID
+     * @param request
+     * @param authentication
+     * @return
+     * @throws IOException
+     * @throws GitAPIException
+     */
     @RequestMapping(value = "/repository/{id}",
         method = RequestMethod.GET,
         produces = MediaType.APPLICATION_JSON_VALUE)
