@@ -42,15 +42,12 @@
             vm.md.renderer.rules["plantUml"] = vm.remarkablePlantUmlRenderer;
 
 
-
-
-
-
         };
 
 
         vm.$onChanges = function (changes) {
             if (changes.latestResult && changes.latestResult.currentValue && !vm.loading) {
+                // New result available
                 vm.loadResultsDetails();
             }
         };
