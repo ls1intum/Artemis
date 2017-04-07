@@ -96,7 +96,7 @@
                 '<div>',
                 '<p>Clone your personal repository for this exercise:</p>',
                 '<pre style="max-width: 550px;">', exercise.participation.repositoryUrl, '</pre>',
-                vm.repositoryPassword ? '<p>Your password is: <code> ' + vm.repositoryPassword + ' </code><p>' : '',
+                vm.repositoryPassword ? '<p>Your password is: <code class="password"> ' + vm.repositoryPassword + '</code> (hover to show)<p>' : '',
                 '<a class="btn btn-primary btn-sm" href="', buildSourceTreeUrl(exercise.participation.repositoryUrl), '">Clone in SourceTree</a>',
                 ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. ',
                 '</div>'

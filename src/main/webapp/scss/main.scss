@@ -50,6 +50,22 @@ body {
 }
 
 
+code.password {
+    color:transparent;
+    background: black;
+}
+
+code.password::selection {
+    background: #3297fd;
+    color: white;
+}
+
+code.password:hover {
+    color:white;
+}
+
+
+
 
 /* ==========================================================================
 Hide ng-cloak on page load, https://docs.angularjs.org/api/ng/directive/ngCloak
@@ -393,7 +409,7 @@ ui bootstrap tweaks
     outline: none;
 }
 
- 
+
 /* jhipster-needle-scss-add-main JHipster will add new css style */
 
 
