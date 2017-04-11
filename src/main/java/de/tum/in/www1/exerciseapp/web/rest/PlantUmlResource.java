@@ -24,16 +24,25 @@ public class PlantUmlResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
+    /**
+     * Generate PNG diagram for given PlantUML commands
+     *
+     * @param plantuml PlantUML command(s)
+     * @return ResponseEntity PNG stream
+     * @throws IOException
+     */
     @RequestMapping(value = "/plantuml/png",
         method = RequestMethod.GET)
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml) throws IOException {
 
+        // Create PNG output stream
         ByteArrayOutputStream png = new ByteArrayOutputStream();
 
+        // Create input stream reader
         SourceStringReader reader = new SourceStringReader(plantuml);
 
+        // Create PNG
         String dest = reader.generateImage(png);
-
 
 
         HttpHeaders responseHeaders = new HttpHeaders();

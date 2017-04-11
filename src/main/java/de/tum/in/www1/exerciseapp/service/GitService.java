@@ -51,7 +51,7 @@ public class GitService {
 
 
     /**
-     * Get the local repository for a given remote repository URL.
+     * Get the local repository for a given participation.
      * If the local repo does not exist yet, it will be checked out.
      *
      * @param participation Participation the remote repository belongs to.
@@ -82,12 +82,15 @@ public class GitService {
     public Repository getOrCheckoutRepository(URL repoUrl) throws IOException, GitAPIException {
         Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
 
-        // check if Repository object already created
+        // check if Repository object already created and available in cachedRepositories
         if (cachedRepositories.containsKey(localPath)) {
             return cachedRepositories.get(localPath);
         }
 
+        // Check if the repository is already checked out on the server
         if (!Files.exists(localPath)) {
+            // Repository is not yet available on the server
+            // We need to check it out from the remote repositroy
             log.debug("Cloning from " + repoUrl + " to " + localPath);
             Git.cloneRepository()
                 .setURI(repoUrl.toString())
@@ -98,16 +101,19 @@ public class GitService {
             log.debug("Repository at " + localPath + " already exists");
         }
 
-
+        // Open the repository from the filesystem
         FileRepositoryBuilder builder = new FileRepositoryBuilder();
         builder.setGitDir(new java.io.File(localPath + "/.git"))
             .readEnvironment() // scan environment GIT_* variables
             .findGitDir()
             .setup();
 
+        // Create the JGit repository object
         Repository repository = new Repository(builder);
         repository.setLocalPath(localPath);
 
+        // Cache the JGit repository object for later use
+        // Avoids the expensive re-opening of local repositories
         cachedRepositories.put(localPath, repository);
 
         return repository;
@@ -152,7 +158,7 @@ public class GitService {
      */
     public PullResult pull(Repository repo) throws GitAPIException {
         Git git = new Git(repo);
-        // flush cache
+        // flush cache of files
         repo.setFiles(null);
         return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
     }
@@ -165,6 +171,7 @@ public class GitService {
      * @return Collection of File objects
      */
     public Collection<File> listFiles(Repository repo) {
+        // Check if list of files is already cached
         if(repo.getFiles() == null) {
             Iterator<java.io.File> itr = FileUtils.iterateFiles(repo.getLocalPath().toFile(), HiddenFileFilter.VISIBLE, HiddenFileFilter.VISIBLE);
             Collection<File> files = new LinkedList<>();
@@ -173,6 +180,8 @@ public class GitService {
                 files.add(new File(itr.next(), repo));
             }
 
+            // Cache the list of files
+            // Avoid expensive rescanning
             repo.setFiles(files);
         }
         return repo.getFiles();
@@ -187,6 +196,10 @@ public class GitService {
      * @return The File object
      */
     public Optional<File> getFileByName(Repository repo, String filename) {
+
+        // Makes sure the requested file is part of the scanned list of files.
+        // Ensures that it is not possible to do bad things like filename="../../passwd"
+
         Iterator<File> itr = listFiles(repo).iterator();
 
         while (itr.hasNext()) {

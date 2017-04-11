@@ -444,7 +444,11 @@ public class BambooService implements ContinuousIntegrationService {
     public ResponseEntity retrieveLatestArtifact(Participation participation) {
         String planKey = participation.getBuildPlanId();
         Map<String, Object> latestResult = retrieveLatestBuildResult(planKey);
+        // If the build has an artifact, the resppnse contains an artifact key.
+        // It seems this key is only available if the "Share" checkbox in Bamboo was used.
         if(latestResult.containsKey("artifact")) {
+            // The URL points to the directory. Bamboo returns an "Index of" page.
+            // Recursively walk through the responses until we get the actual artifact.
             return retrievArtifactPage((String)latestResult.get("artifact"));
         } else {
             throw new BambooException("No build artifact available for this plan");
@@ -479,12 +483,13 @@ public class BambooService implements ContinuousIntegrationService {
 
 
         if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).equals("text/html")) {
+            // This is an "Index of" HTML page.
             String html = new String(response.getBody(), StandardCharsets.UTF_8);
-            // HTML directory page
             Pattern p = Pattern.compile("href=\"(.*?)\"", Pattern.CASE_INSENSITIVE);
             Matcher m = p.matcher(html);
             if (m.find()) {
                 url = m.group(1);
+                // Recursively walk through the responses until we get the actual artifact.
                 return retrievArtifactPage(BAMBOO_SERVER + url);
             } else {
                 throw new BambooException("No artifact link found on artifact page");
