@@ -107,9 +107,11 @@ public class LtiService {
     public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws JiraException, AuthenticationException {
 
 
+        // Authenticate the the LTI user
         Optional<Authentication> auth = authenticateLtiUser(launchRequest);
 
         if (auth.isPresent()) {
+            // Authentication was successful
 
             SecurityContextHolder.getContext().setAuthentication(auth.get());
 
@@ -147,7 +149,7 @@ public class LtiService {
             }
 
 
-            // Found it. Save launch request.
+            // Found it. Remember the launch request for later login.
             if(sessionId != null) {
                 log.debug("Remembering launchRequest for session ID {}", sessionId);
                 launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
@@ -203,7 +205,10 @@ public class LtiService {
         }
 
 
-
+        /**
+         * If the LTI launch is used from edX studio, edX sends dummy data. (id="student")
+         * Catch this case here.
+         */
         if(launchRequest.getUser_id().equals("student")) {
             throw new InternalAuthenticationServiceException("Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.");
         }
@@ -214,7 +219,7 @@ public class LtiService {
         String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
         String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
-
+        // Check if there is an existing mapping for the user ID
         Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
 
         if(ltiUserId.isPresent()) {
@@ -224,10 +229,12 @@ public class LtiService {
              *
              */
             User user = ltiUserId.get().getUser();
+            // Authenticate
             return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
         }
 
 
+        // Check if lookup by email is enabled
         if (launchRequest.getCustom_lookup_user_by_email() == true) {
 
             /*
@@ -248,7 +255,9 @@ public class LtiService {
                 return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
             }
         }
+        // Check if an existing user is required
         if (launchRequest.getCustom_require_existing_user() == false) {
+
             /*
              * 4. Case:
              * Create new user
@@ -275,7 +284,7 @@ public class LtiService {
                 return newUser;
             });
 
-
+            // Make sure the user is activated
             if (!user.getActivated()) {
                 userService.activateRegistration(user.getActivationKey());
             }
@@ -396,13 +405,18 @@ public class LtiService {
      */
     public void onNewBuildResult(Participation participation) {
 
+        // Get the LTI outcome URL
         Optional<LtiOutcomeUrl> ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise());
 
         if (ltiOutcomeUrl.isPresent()) {
 
             String score = "0.00";
+
+            // Get the latest result
             Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByBuildCompletionDateDesc(participation.getId());
+
             if (latestResult.isPresent() && latestResult.get().getScore() != null) {
+                // LTI scores needs to be formatted as String between "0.00" and "1.00"
                 score = String.format(Locale.ROOT, "%.2f", latestResult.get().getScore().floatValue() / 100);
             }
 
@@ -410,6 +424,7 @@ public class LtiService {
 
 
             try {
+                // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
                 HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.get().getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.get().getSourcedId(), score, null, false);
                 HttpClient client = HttpClientBuilder.create().build();
                 HttpResponse response = client.execute(request);

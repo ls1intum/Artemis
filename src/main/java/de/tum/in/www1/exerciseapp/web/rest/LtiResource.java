@@ -71,17 +71,20 @@ public class LtiResource {
         log.debug("Launch request : {}", launchRequest);
 
 
+        // Verify request
         if (!ltiService.verifyRequest(request)) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Bad or expired request. Please try again.");
             return;
         }
 
+        // Check if exercise ID is valid
         Exercise exercise = exerciseRepository.findOne(exerciseId);
         if (exercise == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Exercise not found");
             return;
         }
 
+        // Handle the launch request using LtiService
         try {
             ltiService.handleLaunchRequest(launchRequest, exercise);
         } catch (Exception e) {
@@ -89,7 +92,12 @@ public class LtiResource {
             return;
         }
 
+        /**
+         * If the current user was created within the last 15 seconds, we just created the user
+         * Display a weclome message to the user
+         **/
         Boolean isNewUser = SecurityUtils.isAuthenticated() && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochSecond()) < 15;
+
 
         String redirectUrl = request.getScheme() + // "http"
             "://" +                                // "://"
