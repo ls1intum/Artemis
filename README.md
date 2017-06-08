@@ -39,3 +39,11 @@ Docker can be used to setup development containers for MySQL, Bitbucket, Bamboo 
             create-user-prefix: edx_
 
     
+## Profiles
+
+ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
+
+
+    --spring.profiles.active=dev,bamboo,bitbucket,jira 
+
+
