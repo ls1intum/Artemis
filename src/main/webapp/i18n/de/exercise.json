@@ -23,6 +23,7 @@
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
             "allowOnlineEditor": "Allow Online Editor",
+            "exerciseType": "Exercise Type",
             "course": "Course",
             "participations": "Participations"
         }

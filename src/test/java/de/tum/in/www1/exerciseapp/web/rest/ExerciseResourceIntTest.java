@@ -33,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.ExerciseType;
 
 /**
  * Test class for the ExerciseResource REST controller.
@@ -68,6 +69,9 @@ public class ExerciseResourceIntTest {
     private static final Boolean DEFAULT_ALLOW_ONLINE_EDITOR = false;
     private static final Boolean UPDATED_ALLOW_ONLINE_EDITOR = true;
 
+    private static final ExerciseType DEFAULT_EXERCISE_TYPE = ExerciseType.CODING;
+    private static final ExerciseType UPDATED_EXERCISE_TYPE = ExerciseType.UML_CLASS_DIAGRAMM;
+
     @Inject
     private ExerciseRepository exerciseRepository;
 
@@ -101,6 +105,7 @@ public class ExerciseResourceIntTest {
         exercise.setReleaseDate(DEFAULT_RELEASE_DATE);
         exercise.setDueDate(DEFAULT_DUE_DATE);
         exercise.setAllowOnlineEditor(DEFAULT_ALLOW_ONLINE_EDITOR);
+        exercise.setExerciseType(DEFAULT_EXERCISE_TYPE);
     }
 
     @Test
@@ -126,6 +131,7 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.getReleaseDate()).isEqualTo(DEFAULT_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(DEFAULT_DUE_DATE);
         assertThat(testExercise.isAllowOnlineEditor()).isEqualTo(DEFAULT_ALLOW_ONLINE_EDITOR);
+        assertThat(testExercise.getExerciseType()).isEqualTo(DEFAULT_EXERCISE_TYPE);
     }
 
     @Test
@@ -145,7 +151,8 @@ public class ExerciseResourceIntTest {
                 .andExpect(jsonPath("$.[*].publishBuildPlanUrl").value(hasItem(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue())))
                 .andExpect(jsonPath("$.[*].releaseDate").value(hasItem(DEFAULT_RELEASE_DATE_STR)))
                 .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)))
-                .andExpect(jsonPath("$.[*].allowOnlineEditor").value(hasItem(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue())));
+                .andExpect(jsonPath("$.[*].allowOnlineEditor").value(hasItem(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue())))
+                .andExpect(jsonPath("$.[*].exerciseType").value(hasItem(DEFAULT_EXERCISE_TYPE.toString())));
     }
 
     @Test
@@ -165,7 +172,8 @@ public class ExerciseResourceIntTest {
             .andExpect(jsonPath("$.publishBuildPlanUrl").value(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue()))
             .andExpect(jsonPath("$.releaseDate").value(DEFAULT_RELEASE_DATE_STR))
             .andExpect(jsonPath("$.dueDate").value(DEFAULT_DUE_DATE_STR))
-            .andExpect(jsonPath("$.allowOnlineEditor").value(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue()));
+            .andExpect(jsonPath("$.allowOnlineEditor").value(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue()))
+            .andExpect(jsonPath("$.exerciseType").value(DEFAULT_EXERCISE_TYPE.toString()));
     }
 
     @Test
@@ -193,6 +201,7 @@ public class ExerciseResourceIntTest {
         updatedExercise.setReleaseDate(UPDATED_RELEASE_DATE);
         updatedExercise.setDueDate(UPDATED_DUE_DATE);
         updatedExercise.setAllowOnlineEditor(UPDATED_ALLOW_ONLINE_EDITOR);
+        updatedExercise.setExerciseType(UPDATED_EXERCISE_TYPE);
 
         restExerciseMockMvc.perform(put("/api/exercises")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -210,6 +219,7 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.getReleaseDate()).isEqualTo(UPDATED_RELEASE_DATE);
         assertThat(testExercise.getDueDate()).isEqualTo(UPDATED_DUE_DATE);
         assertThat(testExercise.isAllowOnlineEditor()).isEqualTo(UPDATED_ALLOW_ONLINE_EDITOR);
+        assertThat(testExercise.getExerciseType()).isEqualTo(UPDATED_EXERCISE_TYPE);
     }
 
     @Test

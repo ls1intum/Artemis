@@ -16,11 +16,11 @@ task liquibaseDiffChangelog(dependsOn: compileJava, type: JavaExec) {
     args "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml"
     args "--referenceUrl=hibernate:spring:de.tum.in.www1.exerciseapp.domain?dialect=org.hibernate.dialect.MySQL5InnoDBDialect&hibernate.ejb.naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringNamingStrategy"
     args "--username=root"
-    args "--password="
+    args "--password=av498kk1qwe"
     args "--url=jdbc:mysql://localhost:3306/ExerciseApplication"
     args "--driver=com.mysql.jdbc.Driver"
     args "diffChangeLog"
-    
+
 }
 
 def buildTimestamp() {
