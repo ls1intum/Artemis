@@ -67,6 +67,9 @@ public class ExerciseResource {
         if (exercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "idexists", "A new exercise cannot already have an ID")).body(null);
         }
+        if (exercise.getExerciseType() == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.exercise.type", "Exercise Type cannot be empty!")).body(null);
+        }
         if(!continuousIntegrationService.buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
         }

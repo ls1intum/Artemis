@@ -30,7 +30,6 @@ module.exports = function (config) {
             'src/main/webapp/bower_components/sockjs-client/dist/sockjs.js',
             'src/main/webapp/bower_components/stomp-websocket/lib/stomp.min.js',
             'src/main/webapp/bower_components/moment/moment.js',
-            'src/main/webapp/bower_components/bootstrap/dist/js/bootstrap.js',
             'src/main/webapp/bower_components/ace-builds/src-min-noconflict/ace.js',
             'src/main/webapp/bower_components/ace-builds/src-min-noconflict/mode-java.js',
             'src/main/webapp/bower_components/ace-builds/src-min-noconflict/mode-html.js',
