@@ -61,7 +61,7 @@ public class BitbucketService implements VersionControlService {
     public void configureRepository(URL repositoryUrl, String username) {
 
 
-        if(username.startsWith(USER_PREFIX)) {
+        if (username.startsWith(USER_PREFIX)) {
             // It is an automatically created user
 
             User user = userService.getUserByLogin(username).get();
@@ -311,7 +311,8 @@ public class BitbucketService implements VersionControlService {
     }
 
     /**
-     *  Check if the given repository url is valid and accessible on Bitbucket.
+     * Check if the given repository url is valid and accessible on Bitbucket.
+     *
      * @param repositoryUrl
      * @return
      */
@@ -323,8 +324,10 @@ public class BitbucketService implements VersionControlService {
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         try {
-            restTemplate.exchange(BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, entity, Map.class);
+            String url = BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug;
+            restTemplate.exchange(url, HttpMethod.GET, entity, Map.class);
         } catch (Exception e) {
+            log.error("Repository URL is not valid: ", e);
             return false;
         }
         return true;
