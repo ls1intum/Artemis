@@ -67,6 +67,17 @@
 
 
         <div class="form-group">
+            <label class="control-label" translate="exerciseApplicationApp.exercise.exerciseType" for="field_exerciseType">Exercise Type</label>
+            <select class="form-control" name="exerciseType" ng-model="vm.exercise.exerciseType" id="field_exerciseType">
+                <option value="CODING">CODING</option>
+                <option value="UML_CLASS_DIAGRAM">UML_CLASS_DIAGRAM</option>
+            </select>
+        </div>
+
+
+
+
+        <div class="form-group">
             <label translate="exerciseApplicationApp.exercise.course" for="field_course">Course</label>
             <select class="form-control" id="field_course" name="course" ng-model="vm.exercise.course" ng-options="course as course.title for course in vm.courses track by course.id">
                 <option value=""></option>
