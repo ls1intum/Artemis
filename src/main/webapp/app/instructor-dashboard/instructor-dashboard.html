@@ -64,7 +64,7 @@
     <tbody>
     <tr ng-repeat="result in $ctrl.sortedResults = ($ctrl.results | orderBy:$ctrl.sort:$ctrl.sortReverse) track by $index">
         <td>{{ $index + 1 }}</td>
-        <td>{{ result.participation.student.firstName }}</td>
+        <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
         <td>{{ result.buildCompletionDate | date:'MMM d, y HH:mm:ss' }}</td>
         <td ng-switch on="result.buildSuccessful">
         <span ng-switch-when="true">
