@@ -207,6 +207,8 @@ public class BambooService implements ContinuousIntegrationService {
      */
     public CliClient.ExitCode updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) throws BambooException {
         final BambooClient client = new BambooClient();
+        client.setDebug(true);
+        client.setLogging(true);
         String[] args = new String[]{
             "--action", "updateRepository",
             "--plan", bambooProject + "-" + bambooPlan,
@@ -224,8 +226,8 @@ public class BambooService implements ContinuousIntegrationService {
         };
         CliClient.ExitCode exitCode = client.doWork(args);
         if (!exitCode.equals(CliClient.ExitCode.SUCCESS)) {
-            log.error("Error while updating build plan repository");
-            throw new BambooException("Something went wrong while updating build plan repository");
+            log.error("Error while updating build plan repository. ExitCode: "+exitCode);
+            throw new BambooException("Something went wrong while updating build plan repository. ExitCode: "+exitCode);
         }
         return exitCode;
     }
