@@ -1,10 +1,9 @@
 {
     "home": {
         "title": "Welcome to ArTEMiS!",
-        "subtitle": "This application allows you take part in interactive programming exercises.",
+        "subtitle": "Interactive Learning with an AuTomated assEssment Management System",
         "logged": {
-            "message": "You are logged in as user \"{{username}}\". View your <a class=\"alert-link\" ui-sref=\"courses\">courses</a> to get started."
-        },
-        "question": "If you have any question on JHipster:"
+            "message": "You are logged in as user \"{{username}}\". Go to your <a class=\"alert-link\" ui-sref=\"courses\">courses</a> to get started."
+        }
     }
 }
