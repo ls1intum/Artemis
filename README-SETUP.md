@@ -61,7 +61,7 @@ You will need to create a unique Bitbucket project per exercise.
 
 ## [ArTEMiS Application Setup](https://exercisebruegge.in.tum.de)
 
-Make sure you are in user group *ls1instructor* to have admin permissions inside the exercise application.
+Make sure you are in user group *ls1instructor* to have admin permissions in ArTEMiS.
 
 1. If you have not created a course yet, do so now (`Entities` -> `Course` -> `Create a new Course`). The student group name defines in which group (in JIRA) users need to be to see this course. 
 
