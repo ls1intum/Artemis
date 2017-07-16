@@ -33,9 +33,17 @@
     </nav>
 
 
-    <div class="editor-main" style="background: red; display: table-row; height: 100%; overflow: hidden;">
-        <iframe src="/app/uml-editor/frame/UmlEditorFrame.html" style="width: 100%; height: 100%; border: none; margin: 0; padding: 0; display: block;"/>
+    <div class="editor-main" style="display: table-row; height: 100%; overflow: hidden;">
 
+        <div id="main-container"
+             style="width: 100%; height: 100%; border: none; margin: 0; padding: 0; display: block;">
+
+        </div>
+
+        <script src="/app/uml-editor/frame/EditorBundled.js"></script>
+        <script>
+            UmlClassEditor.startUmlEditor(null, null);
+        </script>
 
 
         <!--
