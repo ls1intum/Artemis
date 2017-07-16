@@ -1,5 +1,3 @@
-
-
 <div class="editor-wrapper">
 
     <nav class="navbar navbar-default editor-top" role="navigation">
@@ -20,33 +18,39 @@
             </div>
             <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed">
                 <div class=" navbar-nav navbar-right">
-                    <result participation="$ctrl.participation" ng-hide="$ctrl.isBuilding" on-new-result="$ctrl.updateLatestResult($event)" show-score="true"></result>
-                    <button type="button" class="btn btn-primary navbar-btn" ng-disabled="!$ctrl.isSaved || $ctrl.isBuilding" ng-click="$ctrl.commit($event)" ng-switch="$ctrl.isBuilding" tooltip-placement="left" uib-tooltip="Stage, commit, push, build and test your changes.">
+                    <result participation="$ctrl.participation" ng-hide="$ctrl.isBuilding"
+                            on-new-result="$ctrl.updateLatestResult($event)" show-score="true"></result>
+                    <button type="button" class="btn btn-primary navbar-btn"
+                            ng-disabled="!$ctrl.isSaved || $ctrl.isBuilding" ng-click="$ctrl.commit($event)"
+                            ng-switch="$ctrl.isBuilding" tooltip-placement="left"
+                            uib-tooltip="Stage, commit, push, build and test your changes.">
                         <span ng-switch-when="true"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
-                        <span ng-switch-default ><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
+                        <span ng-switch-default><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
                     </button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <div class="editor-main">
 
-        <div class="editor-center">
+    <div class="editor-main" style="background: red; display: table-row; height: 100%; overflow: hidden;">
+        <iframe src="/app/uml-editor/frame/UmlEditorFrame.html" style="width: 100%; height: 100%; border: none; margin: 0; padding: 0; display: block;"/>
 
-            HERE COMES THE EDITOR
-        </div>
+
+
+        <!--
+        <div class="editor-center" style="" background: red;">
+            </div>
 
         <div class="editor-sidebar-right">
 
-            <editor-instructions participation="$ctrl.participation" latest-result="$ctrl.latestResult"></editor-instructions>
+            <editor-instructions participation="$ctrl.participation"
+                                 latest-result="$ctrl.latestResult"></editor-instructions>
 
         </div>
-
+        -->
 
     </div>
-
-
 
 
 </div>
