@@ -26,7 +26,6 @@
         vm.isCommitted = vm.repository.isClean;
         vm.latestResult = null;
 
-
         console.log(vm.participation);
         console.log(vm.file);
 

@@ -23,19 +23,22 @@ exports.newErrorsMap = newErrorsMap;
  * @param msg The error message. if null the previous error message for this element will be removed
  */
 function addOrRemoveError(errors, elementIdOfCausedError, msg) {
-    var oldError = errors.get(elementIdOfCausedError);
+    /*
+    const oldError = errors.get(elementIdOfCausedError)
     if (oldError == msg) {
-        // Nothing has changed. 
+        // Nothing has changed.
         // Either:
-        //  - same error as before or 
+        //  - same error as before or
         //  - there was no error before and now there is no new one (both are null or undefined)
-        return errors;
+        return errors
     }
-    if (msg != null) {
+     if (msg != null) {
         // There is a new error
-        return errors.set(elementIdOfCausedError, msg);
+        return errors.set(elementIdOfCausedError, msg)
     }
-    return errors.remove(elementIdOfCausedError);
+     return errors.remove(elementIdOfCausedError)
+    */
+    return errors;
 }
 exports.addOrRemoveError = addOrRemoveError;
 /**
@@ -49,7 +52,7 @@ function removeError(errors, elementIdOfCausedError) {
 exports.removeError = removeError;
 
 
-},{"immutable":404}],2:[function(require,module,exports){
+},{"immutable":407}],2:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -102,9 +105,13 @@ exports.INFO_MESSAGE_FOR_INTERFACE_IMPLEMENTATION = "SelectClassForInterfaceImpl
  * Internally used to add / remove a InfoMessage asking the user to click on the canvas to add a new uml relation
  */
 exports.INFO_MESSAGE_SELECT_TYPE_FOR_RELATION = "SelectTypeForRelation";
+/**
+ * Internally used to display an error message that loading the UmlDocument hasn't worked (an error has occurred).
+ */
+exports.INFO_MESSAGE_ERROR_LOADING_UML_DOCUMENT = "UmlDocumentLoadingErrror";
 
 
-},{"immutable":404}],3:[function(require,module,exports){
+},{"immutable":407}],3:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -179,7 +186,7 @@ function selectMenuItem(menuItemType) {
 exports.selectMenuItem = selectMenuItem;
 
 
-},{"immutable":404}],4:[function(require,module,exports){
+},{"immutable":407}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -196,25 +203,37 @@ var UmlRelationReducer_1 = require("./reducer/UmlRelationReducer");
  * This method is responsible to take intents and to transform them to a new state (by using reducers)
  * @param intents$ The stream of Intents to change the model (a.k.a ViewStae)
  */
-function modelFunction(intents$, saveUmlDocument, loadUmlDocument) {
-    var logging = true;
-    var initialState = ViewState_1.initialViewState();
-    if (logging) {
-        intents$ = intents$.do(function (intent) {
-            return console.log("Intent: " + intent);
-        }); // Add some console logging
-    }
-    var reducers$ = Rx.Observable.merge(UmlTypeReducer_1.addUmlTypeAtPositionReducer(intents$, logging), UmlTypeReducer_1.renameUmlTypeReducer(intents$, logging), UmlTypeReducer_1.cancelRenamingUmlTypeReducer(intents$, logging), UmlCanvasReducer_1.deselectAllOnUmlCanvasClickReducer(intents$, logging), UmlCanvasReducer_1.cancelEverythingReducer(intents$, logging), InteractionTransactionReducer_1.menuAddUmlTypeClickedReducer(intents$, logging), InteractionTransactionReducer_1.menuInheritanceClickedReducer(intents$, logging), InteractionTransactionReducer_1.menuImplementsInterfaceClickedReducer(intents$, logging), InteractionTransactionReducer_1.menuAddUmlReactionClickedReducer(intents$, logging), InteractionTransactionReducer_1.transactionSelectedFirstTypeForInheritanceReducer(intents$, logging), InteractionTransactionReducer_1.transactionSelectedClassForInterfaceImplementationReducer(intents$, logging), InteractionTransactionReducer_1.transactionSelectedStartTypeForRelationReducer(intents$, logging), UmlInheritanceReducer_1.addInheritanceReducer(intents$, logging), UmlCanvasReducer_1.selectUmlTypeOnUmCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlTypeOnUmCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlTypeAndMethodOnUmCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlTypeAndPropertyOnUmCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlInheritanceOnCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlImplementInterfacenReducer(intents$, logging), UmlCanvasReducer_1.selectUmlRelationReducer(intents$, logging), UmlTypeReducer_1.startRenamingUmlTypeReducer(intents$, logging), UmlTypeReducer_1.addUmlMethodReducer(intents$, logging), UmlTypeReducer_1.startEditingUmlMethodReducer(intents$, logging), UmlTypeReducer_1.cancelEditingUmlMethodReducer(intents$, logging), UmlTypeReducer_1.changeUmlMethodSpecificationReducer(intents$, logging), UmlTypeReducer_1.addUmlPropertyReducer(intents$, logging), UmlTypeReducer_1.startEditingUmlPropertyReducer(intents$, logging), UmlTypeReducer_1.cancelEditingUmlPropertyReducer(intents$, logging), UmlTypeReducer_1.changeUmlPropertyReducer(intents$, logging), UmlCanvasReducer_1.deleteSelectedElementsReducer(intents$, logging), UmlInterfaceImplementationReducer_1.addInterfaceImplementationReducer(intents$, logging), UmlRelationReducer_1.addRelationReducer(intents$, logging), UmlCanvasReducer_1.startEditinUmlRelationTextFieldReducer(intents$, logging), UmlCanvasReducer_1.cancelEditinUmlRelationTextFieldReducer(intents$, logging), UmlCanvasReducer_1.changeUmlRelationTextFieldReducer(intents$, logging), UmlRelationReducer_1.startMovingConnectionAnchorPointReducer(intents$, logging), UmlRelationReducer_1.stopMovingConnectionAnchorPointReducer(intents$, logging), UmlRelationReducer_1.moveConnectionAnchorPointReducer(intents$, logging), UmlCanvasReducer_1.moveSelectedElementsReducer(intents$, logging), LoadSaveReducer_1.loadUmlDocumentReducer(intents$, logging, loadUmlDocument), LoadSaveReducer_1.saveUmlDocumentReducer(intents$, logging, saveUmlDocument));
-    return reducers$.scan(function (oldState, reducerFunc) {
-        return reducerFunc(oldState);
-    }, initialState).do(function (newState) {
-        if (logging) console.log("New State " + JSON.stringify(newState, null, 1));
-    });
+function modelFunction(intents$,
+/**
+ * Load uml document
+ */
+loadUmlDocument,
+/**
+ * Save the uml document
+ */
+saveUmlDocument) {
+  var logging = true;
+  var initialState = ViewState_1.initialViewState();
+  if (logging) {
+    intents$ = intents$.do(function (intent) {
+      return console.log("Intent: " + intent);
+    }); // Add some console logging
+  }
+  // TODO error recovery
+  var lastSuccessfulState = null;
+  var reducers$ = Rx.Observable.merge(UmlTypeReducer_1.addUmlTypeAtPositionReducer(intents$, logging), UmlRelationReducer_1.addConnectionPointReducer(intents$, logging), UmlTypeReducer_1.renameUmlTypeReducer(intents$, logging), UmlTypeReducer_1.cancelRenamingUmlTypeReducer(intents$, logging), UmlCanvasReducer_1.deselectAllOnUmlCanvasClickReducer(intents$, logging), UmlCanvasReducer_1.cancelEverythingReducer(intents$, logging), InteractionTransactionReducer_1.menuAddUmlTypeClickedReducer(intents$, logging), InteractionTransactionReducer_1.menuInheritanceClickedReducer(intents$, logging), InteractionTransactionReducer_1.menuImplementsInterfaceClickedReducer(intents$, logging), InteractionTransactionReducer_1.menuAddUmlReactionClickedReducer(intents$, logging), InteractionTransactionReducer_1.transactionSelectedFirstTypeForInheritanceReducer(intents$, logging), InteractionTransactionReducer_1.transactionSelectedClassForInterfaceImplementationReducer(intents$, logging), InteractionTransactionReducer_1.transactionSelectedStartTypeForRelationReducer(intents$, logging), UmlInheritanceReducer_1.addInheritanceReducer(intents$, logging), UmlCanvasReducer_1.selectUmlTypeOnUmCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlTypeOnUmCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlTypeAndMethodOnUmCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlTypeAndPropertyOnUmCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlInheritanceOnCanvasReducer(intents$, logging), UmlCanvasReducer_1.selectUmlImplementInterfacenReducer(intents$, logging), UmlCanvasReducer_1.selectUmlRelationReducer(intents$, logging), UmlTypeReducer_1.startRenamingUmlTypeReducer(intents$, logging), UmlTypeReducer_1.addUmlMethodReducer(intents$, logging), UmlTypeReducer_1.startEditingUmlMethodReducer(intents$, logging), UmlTypeReducer_1.cancelEditingUmlMethodReducer(intents$, logging), UmlTypeReducer_1.changeUmlMethodSpecificationReducer(intents$, logging), UmlTypeReducer_1.addUmlPropertyReducer(intents$, logging), UmlTypeReducer_1.startEditingUmlPropertyReducer(intents$, logging), UmlTypeReducer_1.cancelEditingUmlPropertyReducer(intents$, logging), UmlTypeReducer_1.changeUmlPropertyReducer(intents$, logging), UmlCanvasReducer_1.deleteSelectedElementsReducer(intents$, logging), UmlInterfaceImplementationReducer_1.addInterfaceImplementationReducer(intents$, logging), UmlRelationReducer_1.addRelationReducer(intents$, logging), UmlCanvasReducer_1.startEditinUmlRelationTextFieldReducer(intents$, logging), UmlCanvasReducer_1.cancelEditinUmlRelationTextFieldReducer(intents$, logging), UmlCanvasReducer_1.changeUmlRelationTextFieldReducer(intents$, logging), UmlRelationReducer_1.startMovingConnectionAnchorPointReducer(intents$, logging), UmlRelationReducer_1.stopMovingConnectionAnchorPointReducer(intents$, logging), UmlRelationReducer_1.moveConnectionAnchorPointReducer(intents$, logging), UmlCanvasReducer_1.moveSelectedElementsReducer(intents$, logging), UmlRelationReducer_1.startMovingConnectionPointReducer(intents$, logging), UmlRelationReducer_1.moveConnectionPointReducer(intents$, logging), UmlRelationReducer_1.stopMovingConnectionPointReducer(intents$, logging), LoadSaveReducer_1.loadUmlDocumentReducer(intents$, logging, loadUmlDocument), LoadSaveReducer_1.saveUmlDocumentReducer(intents$, logging, saveUmlDocument), LoadSaveReducer_1.importAssessmentResultsReducer(intents$, logging));
+  return reducers$.scan(function (oldState, reducerFunc) {
+    return reducerFunc(oldState);
+  }, initialState).do(function (newState) {
+    return lastSuccessfulState = newState;
+  }).do(function (newState) {
+    if (logging) console.log("New State " + JSON.stringify(newState, null, 1));
+  });
 }
 exports.modelFunction = modelFunction;
 
 
-},{"./ViewState":6,"./reducer/InteractionTransactionReducer":17,"./reducer/LoadSaveReducer":18,"./reducer/UmlCanvasReducer":19,"./reducer/UmlInheritanceReducer":20,"./reducer/UmlInterfaceImplementationReducer":21,"./reducer/UmlRelationReducer":22,"./reducer/UmlTypeReducer":23,"@reactivex/rxjs":376}],5:[function(require,module,exports){
+},{"./ViewState":6,"./reducer/InteractionTransactionReducer":20,"./reducer/LoadSaveReducer":21,"./reducer/UmlCanvasReducer":22,"./reducer/UmlInheritanceReducer":23,"./reducer/UmlInterfaceImplementationReducer":24,"./reducer/UmlRelationReducer":25,"./reducer/UmlTypeReducer":26,"@reactivex/rxjs":379}],5:[function(require,module,exports){
 "use strict";
 
 var __extends = undefined && undefined.__extends || function () {
@@ -403,7 +422,7 @@ var SelectUmlRelation = function (_super) {
 exports.SelectUmlRelation = SelectUmlRelation;
 
 
-},{"immutable":404}],6:[function(require,module,exports){
+},{"immutable":407}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -417,9 +436,10 @@ var SelectedElement_1 = require("./SelectedElement");
  * The inital view state
  */
 function initialViewState() {
+    var umlDiagramType = EditorUmlDocument_1.EditorGlobalMetaUmlDiagramType.AnalysisObjectModel;
     return {
         menuItems: MenuItem_1.unselectedItems(),
-        umlDocument: EditorUmlDocument_1.emptyUmlDocument(),
+        umlDocument: EditorUmlDocument_1.emptyUmlDocument(umlDiagramType),
         currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
         errors: ErrorMessage_1.newErrorsMap(),
         infoMessages: InfoMessage_1.newInfoMessageMap(),
@@ -429,7 +449,7 @@ function initialViewState() {
 exports.initialViewState = initialViewState;
 
 
-},{"./ErrorMessage":1,"./InfoMessage":2,"./MenuItem":3,"./SelectedElement":5,"./interaction/InteractionTransaction":12,"./model/EditorUmlDocument":15}],7:[function(require,module,exports){
+},{"./ErrorMessage":1,"./InfoMessage":2,"./MenuItem":3,"./SelectedElement":5,"./interaction/InteractionTransaction":12,"./model/EditorUmlDocument":17}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -545,6 +565,19 @@ var SaveUmlDocumentIntent = function () {
     return SaveUmlDocumentIntent;
 }();
 exports.SaveUmlDocumentIntent = SaveUmlDocumentIntent;
+/**
+ * The intent to import the test result from backend with the result of which elements are wrong
+ */
+var ImportAssessmentResultsIntent = function () {
+    function ImportAssessmentResultsIntent(errorMap) {
+        this.errorMap = errorMap;
+    }
+    ImportAssessmentResultsIntent.prototype.toString = function () {
+        return "ImportTestResultIntent " + this.errorMap.toString();
+    };
+    return ImportAssessmentResultsIntent;
+}();
+exports.ImportAssessmentResultsIntent = ImportAssessmentResultsIntent;
 
 
 },{}],10:[function(require,module,exports){
@@ -686,13 +719,14 @@ exports.CancelEditingUmlRelationTextFieldIntent = CancelEditingUmlRelationTextFi
  * The intent to cancel editing a uml relation multiplicity
  */
 var ChangeUmlRelationTextFieldIntent = function () {
-    function ChangeUmlRelationTextFieldIntent(umlRelationId, relationField, updatedValue) {
+    function ChangeUmlRelationTextFieldIntent(umlRelationId, relationField, updatedValue, stopEditing) {
         this.umlRelationId = umlRelationId;
         this.relationField = relationField;
         this.updatedValue = updatedValue;
+        this.stopEditing = stopEditing;
     }
     ChangeUmlRelationTextFieldIntent.prototype.toString = function () {
-        return "CancelEditingUmlRelationTextFieldIntent: Element: " + this.umlRelationId + " " + this.relationField + " updated value: " + this.updatedValue;
+        return "CancelEditingUmlRelationTextFieldIntent: Element: " + this.umlRelationId + " " + this.relationField + " updated value: " + this.updatedValue + " " + this.stopEditing;
     };
     return ChangeUmlRelationTextFieldIntent;
 }();
@@ -790,6 +824,64 @@ var MoveAnchorPointIntent = function () {
 }();
 exports.MoveAnchorPointIntent = MoveAnchorPointIntent;
 /**
+ * The intent to move a Point on the canvas.
+ * For lower memory usage internally this class uses a pool.
+ * So you have to use static method obtain() to get a instance and call recycle() once you are done
+ * consuming this intent
+ */
+var MovePointIntent = function () {
+    function MovePointIntent(umlConnectionId, newPosition, pointId) {
+        this.umlConnectionId = umlConnectionId;
+        this.newPosition = newPosition;
+        this.pointId = pointId;
+    }
+    MovePointIntent.prototype.recycle = function () {
+        MovePointIntent.POOL.push(this);
+    };
+    MovePointIntent.obtain = function (umlConnectionId, newPosition, pointId) {
+        if (MoveAnchorPointIntent.POOL.length == 0) {
+            return new MovePointIntent(umlConnectionId, newPosition, pointId);
+        } else {
+            var reused = MovePointIntent.POOL.pop();
+            reused.umlConnectionId = umlConnectionId;
+            reused.newPosition = newPosition;
+            reused.pointId = pointId;
+            return reused;
+        }
+    };
+    MovePointIntent.prototype.toString = function () {
+        return "MovePointIntent. connection id : " + this.umlConnectionId + " x: " + this.newPosition.x + " y: " + this.newPosition.y + " " + this.pointId;
+    };
+    MovePointIntent.POOL = [];
+    return MovePointIntent;
+}();
+exports.MovePointIntent = MovePointIntent;
+/**
+ * Intent to start moving an AnchorPoint of a UML connection like inheritance, association etc.
+ */
+var StartMovingPointIntent = function () {
+    function StartMovingPointIntent(umlConnectionId, pointId) {
+        this.umlConnectionId = umlConnectionId;
+        this.pointId = pointId;
+    }
+    StartMovingPointIntent.prototype.toString = function () {
+        return "StartMovingPointIntent";
+    };
+    return StartMovingPointIntent;
+}();
+exports.StartMovingPointIntent = StartMovingPointIntent;
+/**
+ * Intent to stop any ongoing moving AnchorPoint action
+ */
+var StopMovingPointIntent = function () {
+    function StopMovingPointIntent() {}
+    StopMovingPointIntent.prototype.toString = function () {
+        return "StopMovingPointIntent";
+    };
+    return StopMovingPointIntent;
+}();
+exports.StopMovingPointIntent = StopMovingPointIntent;
+/**
  * Intent to start moving an AnchorPoint of a UML connection like inheritance, association etc.
  */
 var StartMovingAnchorPointIntent = function () {
@@ -838,12 +930,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * The intent to change the name of an uml type
  */
 var RenameUmlTypeIntent = function () {
-    function RenameUmlTypeIntent(umlType, newName) {
+    function RenameUmlTypeIntent(umlType, newName, stopEditing) {
         this.umlType = umlType;
         this.newName = newName;
+        this.stopEditing = stopEditing;
     }
     RenameUmlTypeIntent.prototype.toString = function () {
-        return "RenameUmlTypeIntent: old name = '" + this.umlType.name + "' - new name '" + this.newName + "'";
+        return "RenameUmlTypeIntent: old name = '" + this.umlType.name + "' - new name '" + this.newName + "' " + this.stopEditing;
     };
     return RenameUmlTypeIntent;
 }();
@@ -919,13 +1012,14 @@ exports.CancelEditingUmlMethodIntent = CancelEditingUmlMethodIntent;
  * The intent to change the method specification of a uml method
  */
 var ChangeUmlMethodIntent = function () {
-    function ChangeUmlMethodIntent(umlType, methodId, newMethodSpec) {
+    function ChangeUmlMethodIntent(umlType, methodId, newMethodSpec, stopEditing) {
         this.umlType = umlType;
         this.methodId = methodId;
         this.newMethodSpec = newMethodSpec;
+        this.stopEditing = stopEditing;
     }
     ChangeUmlMethodIntent.prototype.toString = function () {
-        return "ChangeUmlMethodIntent for type " + this.umlType.name + " to change method to " + this.newMethodSpec;
+        return "ChangeUmlMethodIntent for type " + this.umlType.name + " to change method to " + this.newMethodSpec + " " + this.stopEditing;
     };
     return ChangeUmlMethodIntent;
 }();
@@ -947,13 +1041,14 @@ exports.AddUmlPropertyIntent = AddUmlPropertyIntent;
  * The intent to change the property specification of a uml property
  */
 var ChangeUmlPropertyIntent = function () {
-    function ChangeUmlPropertyIntent(umlType, methodId, newPropertySpec) {
+    function ChangeUmlPropertyIntent(umlType, methodId, newPropertySpec, stopEditing) {
         this.umlType = umlType;
         this.propertyId = methodId;
         this.newPropertySpec = newPropertySpec;
+        this.stopEditing = stopEditing;
     }
     ChangeUmlPropertyIntent.prototype.toString = function () {
-        return "ChangeUmlPropertyIntent for type " + this.umlType.name + " to change method to " + this.newPropertySpec;
+        return "ChangeUmlPropertyIntent for type " + this.umlType.name + " to change method to " + this.newPropertySpec + " " + this.stopEditing;
     };
     return ChangeUmlPropertyIntent;
 }();
@@ -1062,6 +1157,20 @@ var MovingAnchorPointInteractionTransaction = function () {
     return MovingAnchorPointInteractionTransaction;
 }();
 exports.MovingAnchorPointInteractionTransaction = MovingAnchorPointInteractionTransaction;
+/**
+ * InteractionTransaction that indicates that a Point is currently moved
+ */
+var MovingPointInteractionTransaction = function () {
+    function MovingPointInteractionTransaction(umlConnectionId, pointId) {
+        this.umlConnectionId = umlConnectionId;
+        this.pointId = pointId;
+    }
+    MovingPointInteractionTransaction.prototype.toString = function () {
+        return "MovingPointInteractionTransaction.";
+    };
+    return MovingPointInteractionTransaction;
+}();
+exports.MovingPointInteractionTransaction = MovingPointInteractionTransaction;
 
 
 },{}],13:[function(require,module,exports){
@@ -1103,6 +1212,216 @@ exports.calcAnchorPoints = calcAnchorPoints;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
+var EditorUmlClass_1 = require("./EditorUmlClass");
+var EditorUmlRelation_1 = require("./EditorUmlRelation");
+var immutable_1 = require("immutable");
+var VISIBILITY_PUBLIC = "PUBLIC";
+var VISIBILITY_PRIVATE = "PRIVATE";
+/**
+ * Converts a json object to EditorUmlDocument
+ * @param json the json object representation of the whole uml document
+ */
+function umlDocumentFromJson(json) {
+    var classes = immutable_1.OrderedMap().withMutations(function (map) {
+        json.classes.forEach(function (c) {
+            var cls = umlTypeFromJson(c);
+            map.set(cls.id, cls);
+        });
+        json.interfaces.forEach(function (c) {
+            var inf = umlTypeFromJson(c);
+            map.set(inf.id, inf);
+        });
+    });
+    var inheritance = immutable_1.Map().withMutations(function (map) {
+        json.classInheritance.forEach(function (element) {
+            var inh = umlInheritanceFromJson(element);
+            map.set(inh.id, inh);
+        });
+        json.interfaceInheritance.forEach(function (element) {
+            var inh = umlInheritanceFromJson(element);
+            map.set(inh.id, inh);
+        });
+    });
+    var classImplementingInterface = immutable_1.Map().withMutations(function (map) {
+        json.classImplementingInterface.forEach(function (element) {
+            var impl = umlInterfaceImplementationFormJson(element);
+            map.set(impl.id, impl);
+        });
+    });
+    var relations = immutable_1.Map().withMutations(function (map) {
+        json.relations.forEach(function (element) {
+            var rel = umlRelationFromJson(element);
+            map.set(rel.id, rel);
+        });
+    });
+    /*
+    const globalMeta = Map<number, number>().withMutations(map => {
+        json.globalMeta.forEach(element => {
+            map.set(element.id, element)
+        });
+    })
+    */
+    return {
+        types: classes,
+        inheritance: inheritance,
+        classImplementingInterface: classImplementingInterface,
+        relations: relations,
+        globalMeta: immutable_1.Map(json.globalMeta)
+    };
+}
+exports.umlDocumentFromJson = umlDocumentFromJson;
+/**
+ * Converts a json object to an EditorUmlType
+ * @param json the json object representation of the uml type (either interface or class)
+ */
+function umlTypeFromJson(json) {
+    var type = json.properties === undefined ? EditorUmlClass_1.UmlType.INTERFACE : EditorUmlClass_1.UmlType.CLASS;
+    var methods = immutable_1.OrderedMap().withMutations(function (map) {
+        json.methods.forEach(function (m) {
+            var method = umlMethodFromJson(m);
+            map.set(method.id, method);
+        });
+    });
+    var props = immutable_1.OrderedMap();
+    if (type === EditorUmlClass_1.UmlType.CLASS) {
+        props = props.withMutations(function (map) {
+            json.properties.forEach(function (p) {
+                var property = umlPropertyFromJson(p);
+                map.set(property.id, property);
+            });
+        });
+    }
+    return {
+        id: json.id,
+        name: json.name,
+        type: type,
+        methods: methods,
+        properties: props,
+        x: json.x,
+        y: json.y
+    };
+}
+/**
+ * Converts the string value to a uml visibilityl notation "+" for public "-" for private
+ *
+ * @param visibility Converts the strign value to a uml notation representation
+ */
+function getVisibilityModifier(visibility) {
+    return visibility === VISIBILITY_PUBLIC ? "+" : "-";
+}
+/**
+ * Converts a json object to a EditorUmlTypeMethod
+ * @param json to original json object representation of a uml method
+ */
+function umlMethodFromJson(json) {
+    /*
+    let visibility = getVisibilityModifier(json.visibility)
+    let params = "";
+    for (let i = 0; i < json.parameters.length; i++) {
+        let par = json.parameters[i];
+        if (i > 0) {
+            params = params + ", "
+        }
+        params = params + par.name + " : " + par.type;
+    }
+     let returnType = ""
+    if (json.returnType.length > 0) {
+        returnType = " : " + json.returnType;
+    }
+     let methodSpec = visibility + " " + json.name + "(" + params + ")" + returnType;
+     return {
+        id: json.meta.id,
+        methodSepcification: methodSpec
+    };
+    */
+    return {
+        id: json.id,
+        methodSepcification: json.name
+    };
+}
+/**
+ * Converts a json object into a EditorUmlClassProperty
+ * @param json the original json representation of a uml propertySpec
+ */
+function umlPropertyFromJson(json) {
+    return {
+        id: json.id,
+        //propertySpec: getVisibilityModifier(json.visibility) + " " + json.name + " : " + json.type
+        propertySpec: json.name
+    };
+}
+function umlInheritanceFromJson(json) {
+    console.log(json);
+    console.log(json.subTypeAnchorPoint);
+    return {
+        id: json.id,
+        subTypeId: json.subTypeId,
+        superTypeId: json.superTypeId,
+        subTypeAnchorPoint: json.subTypeAnchorPoint,
+        superTypeAnchorPoint: json.superTypeAnchorPoint,
+        points: immutable_1.List.of(json.points)
+    };
+}
+function umlInterfaceImplementationFormJson(json) {
+    return {
+        id: json.id,
+        interfaceId: json.interfaceId,
+        classId: json.classId,
+        interfaceAnchorPoint: json.interfaceAnchorPoint,
+        classAnchorPoint: json.classAnchorPoint,
+        points: immutable_1.List.of(json.points)
+    };
+}
+function umlRelationFromJson(json) {
+    return {
+        id: json.id,
+        startTypeId: json.startTypeId,
+        endTypeId: json.endTypeId,
+        startMultiplicity: json.startMultiplicity,
+        endMultiplicity: json.endMultiplicity,
+        endTypeAnchorPoint: json.endTypeAnchorPoint,
+        startTypeAnchorPoint: json.startTypeAnchorPoint,
+        relationType: EditorUmlRelation_1.relationTypeFromString(json.relationType),
+        points: immutable_1.List.of(json.points)
+    };
+}
+
+
+},{"./EditorUmlClass":16,"./EditorUmlRelation":18,"immutable":407}],15:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var EditorUmlDocument_1 = require("./EditorUmlDocument");
+function getMethodPlaceholder(globalMeta) {
+    var type = globalMeta.get(EditorUmlDocument_1.EditorGlobalMetaInformations.UmlDiagramType);
+    switch (type) {
+        case EditorUmlDocument_1.EditorGlobalMetaUmlDiagramType.AnalysisObjectModel:
+            return "Method()";
+        case EditorUmlDocument_1.EditorGlobalMetaUmlDiagramType.ClassDiagram:
+            return "+ method()";
+        default:
+            throw new Error("Don't know how to map type = " + type);
+    }
+}
+exports.getMethodPlaceholder = getMethodPlaceholder;
+function getPropertyPlaceholer(globalMeta) {
+    var type = globalMeta.get(EditorUmlDocument_1.EditorGlobalMetaInformations.UmlDiagramType);
+    switch (type) {
+        case EditorUmlDocument_1.EditorGlobalMetaUmlDiagramType.AnalysisObjectModel:
+            return "Property";
+        case EditorUmlDocument_1.EditorGlobalMetaUmlDiagramType.ClassDiagram:
+            return "- property : int";
+        default:
+            throw new Error("Don't know how to map type = " + type);
+    }
+}
+exports.getPropertyPlaceholer = getPropertyPlaceholer;
+
+
+},{"./EditorUmlDocument":17}],16:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
  * An internal enum to distinguish between UML Class and UML Interface
  */
@@ -1129,23 +1448,34 @@ function umlTypeToHumanString(type) {
 exports.umlTypeToHumanString = umlTypeToHumanString;
 
 
-},{}],15:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var immutable_1 = require("immutable");
 var AnchorPoint_1 = require("./AnchorPoint");
+var EditorPlaceholder_1 = require("./EditorPlaceholder");
 var angular2_uuid_1 = require("angular2-uuid");
 var immutable_2 = require("immutable");
+var EditorGlobalMetaInformations;
+(function (EditorGlobalMetaInformations) {
+    EditorGlobalMetaInformations["UmlDiagramType"] = "UmlDiagramType";
+})(EditorGlobalMetaInformations = exports.EditorGlobalMetaInformations || (exports.EditorGlobalMetaInformations = {}));
+var EditorGlobalMetaUmlDiagramType;
+(function (EditorGlobalMetaUmlDiagramType) {
+    EditorGlobalMetaUmlDiagramType["ClassDiagram"] = "CLASS";
+    EditorGlobalMetaUmlDiagramType["AnalysisObjectModel"] = "OBJECT_ANALYSIS";
+})(EditorGlobalMetaUmlDiagramType = exports.EditorGlobalMetaUmlDiagramType || (exports.EditorGlobalMetaUmlDiagramType = {}));
 /**
  * Creates an empty UML document
  */
-function emptyUmlDocument() {
+function emptyUmlDocument(umlDiagramType) {
     return {
         types: immutable_1.Map(),
         inheritance: immutable_1.Map(),
         classImplementingInterface: immutable_1.Map(),
-        relations: immutable_1.Map()
+        relations: immutable_1.Map(),
+        globalMeta: immutable_1.Map().set(EditorGlobalMetaInformations.UmlDiagramType, umlDiagramType)
     };
 }
 exports.emptyUmlDocument = emptyUmlDocument;
@@ -1173,7 +1503,8 @@ function addUmlType(umlDocument, id, className, x, y, umlType) {
         types: types.set(newClass.id, newClass),
         inheritance: umlDocument.inheritance,
         classImplementingInterface: umlDocument.classImplementingInterface,
-        relations: umlDocument.relations
+        relations: umlDocument.relations,
+        globalMeta: umlDocument.globalMeta
     }, errorMessage];
 }
 exports.addUmlType = addUmlType;
@@ -1248,7 +1579,8 @@ function renameUmlType(umlDocument, umlTypeId, newName) {
             types: umlDocument.types.set(umlType.id, renamedClass),
             inheritance: umlDocument.inheritance,
             classImplementingInterface: umlDocument.classImplementingInterface,
-            relations: umlDocument.relations
+            relations: umlDocument.relations,
+            globalMeta: umlDocument.globalMeta
         }, errorMessage];
     } else {
         throw new Error("Couldn't find uml type with id = " + umlTypeId);
@@ -1263,7 +1595,7 @@ exports.renameUmlType = renameUmlType;
 function addUmlMethod(umlDocument, umlTypeId, methodId) {
     var newMethod = {
         id: methodId,
-        methodSepcification: "+ method()"
+        methodSepcification: EditorPlaceholder_1.getMethodPlaceholder(umlDocument.globalMeta)
     };
     var typeToChange = umlDocument.types.get(umlTypeId);
     if (typeToChange === undefined) {
@@ -1284,7 +1616,8 @@ function addUmlMethod(umlDocument, umlTypeId, methodId) {
         types: umlDocument.types.set(changedType.id, changedType),
         inheritance: umlDocument.inheritance,
         classImplementingInterface: umlDocument.classImplementingInterface,
-        relations: umlDocument.relations
+        relations: umlDocument.relations,
+        globalMeta: umlDocument.globalMeta
     }, errorMessage];
 }
 exports.addUmlMethod = addUmlMethod;
@@ -1321,7 +1654,8 @@ function changeUmlMethodSpecification(umlDocument, umlTypeId, methodId, newMetho
         types: umlDocument.types.set(changedClass.id, changedClass),
         inheritance: umlDocument.inheritance,
         classImplementingInterface: umlDocument.classImplementingInterface,
-        relations: umlDocument.relations
+        relations: umlDocument.relations,
+        globalMeta: umlDocument.globalMeta
     }, errorMessage];
 }
 exports.changeUmlMethodSpecification = changeUmlMethodSpecification;
@@ -1391,7 +1725,8 @@ function addUmlProperty(umlDocument, typeId, propertyId, propertySpec) {
         types: umlDocument.types.set(changedClass.id, changedClass),
         inheritance: umlDocument.inheritance,
         classImplementingInterface: umlDocument.classImplementingInterface,
-        relations: umlDocument.relations
+        relations: umlDocument.relations,
+        globalMeta: umlDocument.globalMeta
     }, errorMessage];
 }
 exports.addUmlProperty = addUmlProperty;
@@ -1430,7 +1765,8 @@ function changeUmlProperty(umlDocument, typeId, propertyId, newPropertySpec) {
         types: umlDocument.types.set(changedClass.id, changedClass),
         inheritance: umlDocument.inheritance,
         classImplementingInterface: umlDocument.classImplementingInterface,
-        relations: umlDocument.relations
+        relations: umlDocument.relations,
+        globalMeta: umlDocument.globalMeta
     }, errorMessage];
 }
 exports.changeUmlProperty = changeUmlProperty;
@@ -1458,7 +1794,8 @@ function removeMethodFromType(document, umlTypeId, methodId) {
         types: document.types.set(changedType.id, changedType),
         inheritance: document.inheritance,
         classImplementingInterface: document.classImplementingInterface,
-        relations: document.relations
+        relations: document.relations,
+        globalMeta: document.globalMeta
     };
 }
 exports.removeMethodFromType = removeMethodFromType;
@@ -1487,7 +1824,8 @@ function removePropertyFromType(document, umlTypeId, propertyId) {
         types: document.types.set(changedType.id, changedType),
         inheritance: document.inheritance,
         classImplementingInterface: document.classImplementingInterface,
-        relations: document.relations
+        relations: document.relations,
+        globalMeta: document.globalMeta
     };
 }
 exports.removePropertyFromType = removePropertyFromType;
@@ -1517,13 +1855,14 @@ function addUmlInheritance(umlDocument, superClassId, subclassId) {
         subTypeId: subclassId,
         superTypeAnchorPoint: superClassAnchorPoint,
         subTypeAnchorPoint: subClassAnchorPoint,
-        points: immutable_2.OrderedSet()
+        points: immutable_2.List()
     };
     return {
         types: umlDocument.types,
         inheritance: umlDocument.inheritance.set(newInheritance.id, newInheritance),
         classImplementingInterface: umlDocument.classImplementingInterface,
-        relations: umlDocument.relations
+        relations: umlDocument.relations,
+        globalMeta: umlDocument.globalMeta
     };
 }
 exports.addUmlInheritance = addUmlInheritance;
@@ -1556,13 +1895,14 @@ function addUmlRelation(umlDocument, startTypeId, endTypeId, type) {
         startMultiplicity: "1",
         endMultiplicity: "1",
         relationType: type,
-        points: immutable_2.OrderedSet()
+        points: immutable_2.List()
     };
     return {
         types: umlDocument.types,
         inheritance: umlDocument.inheritance,
         classImplementingInterface: umlDocument.classImplementingInterface,
-        relations: umlDocument.relations.set(newRelation.id, newRelation)
+        relations: umlDocument.relations.set(newRelation.id, newRelation),
+        globalMeta: umlDocument.globalMeta
     };
 }
 exports.addUmlRelation = addUmlRelation;
@@ -1592,13 +1932,14 @@ function addUmlInterfaceImplementation(umlDocument, interfaceId, classId) {
         interfaceId: interfaceType.id,
         interfaceAnchorPoint: interfaceAnchorPoint,
         classAnchorPoint: classAnchorPoint,
-        points: immutable_2.OrderedSet()
+        points: immutable_2.List()
     };
     return {
         types: umlDocument.types,
         inheritance: umlDocument.inheritance,
         classImplementingInterface: umlDocument.classImplementingInterface.set(implementation.id, implementation),
-        relations: umlDocument.relations
+        relations: umlDocument.relations,
+        globalMeta: umlDocument.globalMeta
     };
 }
 exports.addUmlInterfaceImplementation = addUmlInterfaceImplementation;
@@ -1652,7 +1993,8 @@ function removeSelectedElements(document, selectedElements) {
         types: updatedTypes,
         inheritance: updatedInheritance,
         classImplementingInterface: updatedClassImplementsInterface,
-        relations: updatedRelations
+        relations: updatedRelations,
+        globalMeta: document.globalMeta
     };
 }
 exports.removeSelectedElements = removeSelectedElements;
@@ -1663,10 +2005,16 @@ exports.removeSelectedElements = removeSelectedElements;
  * @param x The x position of the new point
  * @param y The y position of the new point
  */
-function addPointToUmlRelation(document, umlRelationId, x, y) {
+function addPointToUmlRelation(document, umlRelationId, x, y, beforeId) {
     var relation = document.relations.get(umlRelationId);
     if (relation == null) {
         throw new Error("Couldn't find relation with id = " + umlRelationId);
+    }
+    var newPoints;
+    if (beforeId <= relation.points.count()) {
+        newPoints = relation.points.insert(beforeId, { x: x, y: y });
+    } else {
+        newPoints = relation.points.push({ x: x, y: y });
     }
     var updatedRelation = {
         id: relation.id,
@@ -1677,13 +2025,14 @@ function addPointToUmlRelation(document, umlRelationId, x, y) {
         endTypeAnchorPoint: relation.endTypeAnchorPoint,
         startMultiplicity: relation.startMultiplicity,
         endMultiplicity: relation.endMultiplicity,
-        points: relation.points.add({ x: x, y: y })
+        points: newPoints
     };
     return {
         types: document.types,
         inheritance: document.inheritance,
         classImplementingInterface: document.classImplementingInterface,
-        relations: document.relations.set(updatedRelation.id, updatedRelation)
+        relations: document.relations.set(updatedRelation.id, updatedRelation),
+        globalMeta: document.globalMeta
     };
 }
 exports.addPointToUmlRelation = addPointToUmlRelation;
@@ -1694,10 +2043,16 @@ exports.addPointToUmlRelation = addPointToUmlRelation;
  * @param x The x position of the new point
  * @param y The y position of the new point
  */
-function addPointToUmlInheritance(document, umlInheritanceId, x, y) {
+function addPointToUmlInheritance(document, umlInheritanceId, x, y, beforeId) {
     var inher = document.inheritance.get(umlInheritanceId);
     if (inher == null) {
         throw new Error("Couldn't find inheritance with id = " + umlInheritanceId);
+    }
+    var newPoints;
+    if (beforeId <= inher.points.count()) {
+        newPoints = inher.points.insert(beforeId, { x: x, y: y });
+    } else {
+        newPoints = inher.points.push({ x: x, y: y });
     }
     var updated = {
         id: inher.id,
@@ -1705,13 +2060,14 @@ function addPointToUmlInheritance(document, umlInheritanceId, x, y) {
         subTypeId: inher.subTypeId,
         superTypeAnchorPoint: inher.superTypeAnchorPoint,
         superTypeId: inher.superTypeId,
-        points: inher.points.add({ x: x, y: y })
+        points: newPoints
     };
     return {
         types: document.types,
         inheritance: document.inheritance.set(umlInheritanceId, updated),
         classImplementingInterface: document.classImplementingInterface,
-        relations: document.relations
+        relations: document.relations,
+        globalMeta: document.globalMeta
     };
 }
 exports.addPointToUmlInheritance = addPointToUmlInheritance;
@@ -1722,10 +2078,16 @@ exports.addPointToUmlInheritance = addPointToUmlInheritance;
  * @param x The x position of the new point
  * @param y The y position of the new point
  */
-function addPointToUmlClassImplementingInterface(document, umlImplementingInterfaceId, x, y) {
+function addPointToUmlClassImplementingInterface(document, umlImplementingInterfaceId, x, y, beforeId) {
     var inher = document.classImplementingInterface.get(umlImplementingInterfaceId);
     if (inher == null) {
         throw new Error("Couldn't find classImplementsInterface with id = " + umlImplementingInterfaceId);
+    }
+    var newPoints;
+    if (beforeId <= inher.points.count()) {
+        newPoints = inher.points.insert(beforeId, { x: x, y: y });
+    } else {
+        newPoints = inher.points.push({ x: x, y: y });
     }
     var updated = {
         id: inher.id,
@@ -1733,13 +2095,14 @@ function addPointToUmlClassImplementingInterface(document, umlImplementingInterf
         classId: inher.classId,
         interfaceAnchorPoint: inher.interfaceAnchorPoint,
         interfaceId: inher.interfaceId,
-        points: inher.points.add({ x: x, y: y })
+        points: newPoints
     };
     return {
         types: document.types,
         inheritance: document.inheritance,
         classImplementingInterface: document.classImplementingInterface.set(updated.id, updated),
-        relations: document.relations
+        relations: document.relations,
+        globalMeta: document.globalMeta
     };
 }
 exports.addPointToUmlClassImplementingInterface = addPointToUmlClassImplementingInterface;
@@ -1771,7 +2134,8 @@ function changeMultiplicityOfUmlRelation(document, umlRelationId, updatedMultipl
         classImplementingInterface: document.classImplementingInterface,
         inheritance: document.inheritance,
         types: document.types,
-        relations: document.relations.set(updated.id, updated)
+        relations: document.relations.set(updated.id, updated),
+        globalMeta: document.globalMeta
     };
 }
 exports.changeMultiplicityOfUmlRelation = changeMultiplicityOfUmlRelation;
@@ -1815,7 +2179,8 @@ function moveConnectionAnchorPoint(document, umlRelationId, newAnchorPointPositi
             classImplementingInterface: document.classImplementingInterface,
             inheritance: document.inheritance,
             types: document.types,
-            relations: document.relations.set(updated.id, updated)
+            relations: document.relations.set(updated.id, updated),
+            globalMeta: document.globalMeta
         };
     } else {
         // 
@@ -1846,7 +2211,8 @@ function moveConnectionAnchorPoint(document, umlRelationId, newAnchorPointPositi
                 classImplementingInterface: document.classImplementingInterface,
                 inheritance: document.inheritance.set(updated.id, updated),
                 types: document.types,
-                relations: document.relations
+                relations: document.relations,
+                globalMeta: document.globalMeta
             };
         } else {
             // 
@@ -1877,7 +2243,8 @@ function moveConnectionAnchorPoint(document, umlRelationId, newAnchorPointPositi
                     classImplementingInterface: document.classImplementingInterface.set(updated.id, updated),
                     inheritance: document.inheritance,
                     types: document.types,
-                    relations: document.relations
+                    relations: document.relations,
+                    globalMeta: document.globalMeta
                 };
             } else {
                 throw new Error("Couldn't find any relation, inheritance or class implements an interface connection with id = " + umlRelationId);
@@ -1886,9 +2253,76 @@ function moveConnectionAnchorPoint(document, umlRelationId, newAnchorPointPositi
     }
 }
 exports.moveConnectionAnchorPoint = moveConnectionAnchorPoint;
+function moveConnectionPoint(document, umlConnectionId, newPosition, pointId) {
+    if (document.classImplementingInterface.get(umlConnectionId) != null) {
+        var connection = document.classImplementingInterface.get(umlConnectionId);
+        var newPoints = connection.points.delete(pointId);
+        newPoints = newPoints.insert(pointId, newPosition);
+        var newConnection = {
+            classAnchorPoint: connection.classAnchorPoint,
+            classId: connection.classId,
+            id: connection.id,
+            interfaceAnchorPoint: connection.interfaceAnchorPoint,
+            interfaceId: connection.interfaceId,
+            points: newPoints
+        };
+        return {
+            classImplementingInterface: document.classImplementingInterface.set(connection.id, newConnection),
+            inheritance: document.inheritance,
+            types: document.types,
+            relations: document.relations,
+            globalMeta: document.globalMeta
+        };
+    } else if (document.inheritance.get(umlConnectionId) != null) {
+        var connection = document.inheritance.get(umlConnectionId);
+        var newPoints = connection.points.delete(pointId);
+        newPoints = newPoints.insert(pointId, newPosition);
+        var newConnection = {
+            subTypeAnchorPoint: connection.subTypeAnchorPoint,
+            subTypeId: connection.subTypeId,
+            id: connection.id,
+            superTypeAnchorPoint: connection.superTypeAnchorPoint,
+            superTypeId: connection.superTypeId,
+            points: newPoints
+        };
+        return {
+            classImplementingInterface: document.classImplementingInterface,
+            inheritance: document.inheritance.set(connection.id, newConnection),
+            types: document.types,
+            relations: document.relations,
+            globalMeta: document.globalMeta
+        };
+    } else if (document.relations.get(umlConnectionId) != null) {
+        var connection = document.relations.get(umlConnectionId);
+        var newPoints = connection.points.delete(pointId);
+        newPoints = newPoints.insert(pointId, newPosition);
+        var newConnection = {
+            startTypeAnchorPoint: connection.startTypeAnchorPoint,
+            startTypeId: connection.startTypeId,
+            startMultiplicity: connection.startMultiplicity,
+            id: connection.id,
+            endTypeAnchorPoint: connection.endTypeAnchorPoint,
+            endTypeId: connection.endTypeId,
+            endMultiplicity: connection.endMultiplicity,
+            relationType: connection.relationType,
+            points: newPoints
+        };
+        return {
+            classImplementingInterface: document.classImplementingInterface,
+            inheritance: document.inheritance,
+            types: document.types,
+            relations: document.relations.set(connection.id, newConnection),
+            globalMeta: document.globalMeta
+        };
+    } else {
+        console.log("CANT FIND CONNECTION with Id " + umlConnectionId);
+        return document;
+    }
+}
+exports.moveConnectionPoint = moveConnectionPoint;
 
 
-},{"./AnchorPoint":13,"angular2-uuid":377,"immutable":404}],16:[function(require,module,exports){
+},{"./AnchorPoint":13,"./EditorPlaceholder":15,"angular2-uuid":380,"immutable":407}],18:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -1918,7 +2352,223 @@ function relationTypeFromString(type) {
 exports.relationTypeFromString = relationTypeFromString;
 
 
-},{}],17:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+var EditorUmlClass_1 = require("./EditorUmlClass");
+var EditorUmlRelation_1 = require("./EditorUmlRelation");
+var VISIBILITY_PUBLIC = "PUBLIC";
+var VISIBILITY_PRIVATE = "PRIVATE";
+/**
+ * Converts a json object to EditorUmlDocument
+ * @param json the json object representation of the whole uml document
+ */
+function umlDocumentToJson(doc) {
+    var interfaces = doc.types.filter(function (t) {
+        return t.type === EditorUmlClass_1.UmlType.INTERFACE;
+    });
+    var classes = doc.types.filter(function (t) {
+        return t.type === EditorUmlClass_1.UmlType.CLASS;
+    });
+    var classInheritance = doc.inheritance.filter(function (i) {
+        return doc.types.get(i.subTypeId).type === EditorUmlClass_1.UmlType.CLASS;
+    });
+    var interfaceInheritance = doc.inheritance.filter(function (i) {
+        return doc.types.get(i.subTypeId).type === EditorUmlClass_1.UmlType.INTERFACE;
+    });
+    return {
+        classes: classes.map(function (c) {
+            return umlTypeToJson(c, c.type);
+        }).toArray(),
+        interfaces: interfaces.map(function (i) {
+            return umlTypeToJson(i, i.type);
+        }).toArray(),
+        classInheritance: classInheritance.map(function (i) {
+            return umlInheritanceToJson(i, doc.types);
+        }).toArray(),
+        interfaceInheritance: interfaceInheritance.map(function (i) {
+            return umlInheritanceToJson(i, doc.types);
+        }).toArray(),
+        relations: doc.relations.map(function (r) {
+            return umlRelationToJson(r, doc.types);
+        }).toArray(),
+        classImplementingInterface: doc.classImplementingInterface.map(function (i) {
+            return umlClassImplementinInterfaceToJson(i, doc.types);
+        }).toArray(),
+        globalMeta: doc.globalMeta.toJS()
+    };
+}
+exports.umlDocumentToJson = umlDocumentToJson;
+/**
+ * Converts a json object to an EditorUmlType
+ * @param json the json object representation of the uml type (either interface or class)
+ */
+function umlTypeToJson(t, umlType) {
+    if (umlType === EditorUmlClass_1.UmlType.CLASS) {
+        return {
+            name: t.name,
+            properties: t.properties.map(function (p) {
+                return umlPropertyToJson(p);
+            }).toArray(),
+            methods: t.methods.map(function (m) {
+                return umlMethodToJson(m);
+            }).toArray(),
+            id: t.id,
+            x: t.x,
+            y: t.y
+        };
+    } else {
+        return {
+            name: t.name,
+            methods: t.methods.map(function (m) {
+                return umlMethodToJson(m);
+            }).toArray(),
+            id: t.id,
+            x: t.x,
+            y: t.y
+        };
+    }
+}
+/**
+ * Converts the string value to a uml visibilityl notation "+" for public "-" for private
+ *
+ * @param visibility Converts the strign value to a uml notation representation
+ */
+function getVisibilityModifier(visibility) {
+    return visibility === "+" ? VISIBILITY_PUBLIC : VISIBILITY_PRIVATE;
+}
+/**
+ * Serializes a EditorUmlTypeMethod to json
+ * @param m the uml method
+ */
+function umlMethodToJson(m) {
+    /*
+    const trimmed = m.methodSepcification.trim();
+    const visibility = getVisibilityModifierFromFirstCharacter(trimmed);
+    const paranthesisStartIndex = trimmed.indexOf("(");
+    const parenthesisEndIndex = trimmed.indexOf(")");
+    const returnTypeIndex = trimmed.lastIndexOf(":");
+     const name = trimmed.substr(1, paranthesisStartIndex - 1).trim();
+     let returnType = ""
+    if (returnTypeIndex < parenthesisEndIndex) {
+        returnType = ""
+    } else {
+        returnType = trimmed.substr(returnTypeIndex + 1).trim();
+    }
+     let parameters = [];
+    if (paranthesisStartIndex + 1 == parenthesisEndIndex) {
+        parameters = [];
+    } else {
+        const parDef = trimmed.substr(paranthesisStartIndex + 1, parenthesisEndIndex - (paranthesisStartIndex + 1)).trim();
+        if (parDef.length == 0) {
+            parameters = []
+        } else {
+            const paramsPart = parDef.split(",");
+            paramsPart.forEach(p => {
+                const pDef = p.trim().split(":");
+                if (pDef.length != 2) {
+                    // TODO error
+                } else {
+                    parameters.push({ name: pDef[0].trim(), type: pDef[1].trim() });
+                }
+            });
+        }
+    }
+      return {
+        name: name,
+        visibilityModifier: visibility,
+        returnType: returnType,
+        parameters: parameters,
+        meta: {
+            id: m.id
+        }
+    };
+    */
+    return {
+        name: m.methodSepcification,
+        id: m.id
+    };
+}
+function getVisibilityModifierFromFirstCharacter(trimmed) {
+    var visibility = VISIBILITY_PRIVATE;
+    if (trimmed.charAt(0) === '+' || trimmed.charAt(0) === '-') {
+        visibility = getVisibilityModifier(trimmed.charAt(0));
+    }
+    // TODO else it is an error?
+    return visibility;
+}
+/**
+ * Converts a EditorUmlClassProperty to a json representation
+ * @param p the propery to serialize to json
+ */
+function umlPropertyToJson(p) {
+    /*
+    const trimmed = p.propertySpec.trim();
+    const parts = trimmed.split(":")
+    let name, type;
+    if (parts.length != 2) {
+        // TODO error
+    } else {
+        name = parts[0].substr(1).trim();
+        type = parts[1].trim();
+    }
+     return {
+        visibilityModifier: getVisibilityModifierFromFirstCharacter(trimmed),
+        name: name,
+        type: type,
+        meta: {
+            id: p.id
+        }
+    }
+    */
+    return {
+        name: p.propertySpec,
+        id: p.id
+    };
+}
+function umlInheritanceToJson(i, types) {
+    return {
+        subclassName: types.get(i.subTypeId).name,
+        baseclassName: types.get(i.superTypeId).name,
+        id: i.id,
+        subTypeId: i.subTypeId,
+        superTypeId: i.superTypeId,
+        subTypeAnchorPoint: i.subTypeAnchorPoint,
+        superTypeAnchorPoint: i.superTypeAnchorPoint,
+        points: i.points.toJS()
+    };
+}
+function umlClassImplementinInterfaceToJson(i, types) {
+    return {
+        className: types.get(i.classId).name,
+        interfaceName: types.get(i.interfaceId).name,
+        id: i.id,
+        classAnchorPoint: i.classAnchorPoint,
+        interfaceAnchorPoint: i.interfaceAnchorPoint,
+        classId: i.classId,
+        interfaceId: i.interfaceId,
+        points: i.points.toJS()
+    };
+}
+function umlRelationToJson(r, types) {
+    return {
+        relationType: EditorUmlRelation_1.relationTypeToString(r.relationType),
+        startTypeName: types.get(r.startTypeId).name,
+        endTypeName: types.get(r.endTypeId).name,
+        startMultiplicity: r.startMultiplicity,
+        endMultiplicity: r.endMultiplicity,
+        id: r.id,
+        startTypeId: r.startTypeId,
+        endTypeId: r.endTypeId,
+        startTypeAnchorPoint: r.startTypeAnchorPoint,
+        endTypeAnchorPoint: r.endTypeAnchorPoint,
+        points: r.points.toJS()
+    };
+}
+
+
+},{"./EditorUmlClass":16,"./EditorUmlRelation":18}],20:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2199,7 +2849,7 @@ function transactionSelectedStartTypeForRelationReducer(intent$, log) {
 exports.transactionSelectedStartTypeForRelationReducer = transactionSelectedStartTypeForRelationReducer;
 
 
-},{"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/InteractionTransactionIntent":8,"../interaction/InteractionTransaction":12,"../model/EditorUmlClass":14,"../reducer/ViewStateReducer":24,"@reactivex/rxjs":376}],18:[function(require,module,exports){
+},{"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/InteractionTransactionIntent":8,"../interaction/InteractionTransaction":12,"../model/EditorUmlClass":16,"../reducer/ViewStateReducer":27,"@reactivex/rxjs":379}],21:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2207,13 +2857,19 @@ var ViewStateReducer_1 = require("../reducer/ViewStateReducer");
 var Rx = require("@reactivex/rxjs");
 var LoadSaveIntents_1 = require("../intent/LoadSaveIntents");
 var MenuItem_1 = require("../MenuItem");
+var Deserializer_1 = require("../model/Deserializer");
+var Serializer_1 = require("../model/Serializer");
 var InteractionTransaction_1 = require("../interaction/InteractionTransaction");
+var EditorUmlDocument_1 = require("../model/EditorUmlDocument");
+var ErrorMessage_1 = require("../ErrorMessage");
+var SelectedElement_1 = require("../SelectedElement");
+var InfoMessage_1 = require("../InfoMessage");
 /**
  * Opens the uml document file.
  * Emits the read document as new state.
  * @param intent$ The intent observable stream
  */
-function loadUmlDocumentReducer(intent$, log, loadFnc) {
+function loadUmlDocumentReducer(intent$, log, loadFunc) {
     return intent$.filter(function (intent) {
         return intent instanceof LoadSaveIntents_1.LoadUmlDocumentIntent;
     }).map(function (intent) {
@@ -2221,16 +2877,40 @@ function loadUmlDocumentReducer(intent$, log, loadFnc) {
     }).do(function (i) {
         return ViewStateReducer_1.logReducer(log, "loadUmlDocumentReducer");
     }).switchMap(function (intent) {
-        return Rx.Observable.of(function (oldState) {
-            // TODO maybe async
-            return {
-                menuItems: MenuItem_1.unselectedItems(),
-                umlDocument: loadFnc(),
-                currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
-                errors: oldState.errors,
-                selectedElements: oldState.selectedElements,
-                infoMessages: oldState.infoMessages
-            };
+        return Rx.Observable.create(function (observer) {
+            function successfulCallback(umlDocumentAsJson) {
+                var loaded = {
+                    menuItems: MenuItem_1.unselectedItems(),
+                    umlDocument: Deserializer_1.umlDocumentFromJson(umlDocumentAsJson),
+                    currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
+                    errors: ErrorMessage_1.newErrorsMap(),
+                    selectedElements: SelectedElement_1.newSelectedElementsMap(),
+                    infoMessages: InfoMessage_1.newInfoMessageMap()
+                };
+                observer.next(function (oldState) {
+                    return loaded;
+                });
+                observer.complete();
+            }
+            function errorCallback(error) {
+                var loaded = {
+                    menuItems: MenuItem_1.unselectedItems(),
+                    umlDocument: EditorUmlDocument_1.emptyUmlDocument(EditorUmlDocument_1.EditorGlobalMetaUmlDiagramType.AnalysisObjectModel),
+                    currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
+                    errors: ErrorMessage_1.newErrorsMap(),
+                    selectedElements: SelectedElement_1.newSelectedElementsMap(),
+                    infoMessages: InfoMessage_1.newInfoMessageMap().set(InfoMessage_1.INFO_MESSAGE_ERROR_LOADING_UML_DOCUMENT, {
+                        id: InfoMessage_1.INFO_MESSAGE_ERROR_LOADING_UML_DOCUMENT,
+                        message: "An error has occurred while loading the UML document.\nPlease reload the whole page",
+                        type: InfoMessage_1.InfoMessageType.BIG_INFO
+                    })
+                };
+                observer.next(function (oldState) {
+                    return loaded;
+                });
+                observer.complete();
+            }
+            loadFunc(successfulCallback, errorCallback);
         });
     });
 }
@@ -2241,6 +2921,14 @@ exports.loadUmlDocumentReducer = loadUmlDocumentReducer;
  * @param intent$ The intent observable stream
  */
 function saveUmlDocumentReducer(intent$, log, saveFnc) {
+    // Ugly workaround but does the job
+    var publishSubject = new Rx.Subject();
+    function successfulCallback() {
+        publishSubject.next(null);
+    }
+    function errorCallback(error) {
+        publishSubject.next(error);
+    }
     return intent$.filter(function (intent) {
         return intent instanceof LoadSaveIntents_1.SaveUmlDocumentIntent;
     }).map(function (intent) {
@@ -2248,17 +2936,52 @@ function saveUmlDocumentReducer(intent$, log, saveFnc) {
     }).do(function (i) {
         return ViewStateReducer_1.logReducer(log, "saveUmlDocumentReducer");
     }).switchMap(function (intent) {
-        return Rx.Observable.of(function (oldState) {
-            // TODO maybe async observable / promise
-            saveFnc(oldState.umlDocument);
+        return publishSubject.map(function (error) {
+            if (error == null) {
+                return function (oldstate) {
+                    return oldstate;
+                };
+            } else
+                // TODO error handling
+                return function (oldstate) {
+                    return oldstate;
+                };
+        }).startWith(function (oldState) {
+            saveFnc(Serializer_1.umlDocumentToJson(oldState.umlDocument), successfulCallback, errorCallback);
             return oldState;
         });
     });
 }
 exports.saveUmlDocumentReducer = saveUmlDocumentReducer;
+/**
+ * Opens the uml document file.
+ * Emits the read document as new state.
+ * @param intent$ The intent observable stream
+ */
+function importAssessmentResultsReducer(intent$, log) {
+    return intent$.filter(function (intent) {
+        return intent instanceof LoadSaveIntents_1.ImportAssessmentResultsIntent;
+    }).map(function (intent) {
+        return intent;
+    }).do(function (i) {
+        return ViewStateReducer_1.logReducer(log, "importAssessmentResultsReducer");
+    }).switchMap(function (intent) {
+        return Rx.Observable.of(function (oldState) {
+            return {
+                menuItems: oldState.menuItems,
+                umlDocument: oldState.umlDocument,
+                currentInteractionTransaction: oldState.currentInteractionTransaction,
+                errors: intent.errorMap,
+                infoMessages: oldState.infoMessages,
+                selectedElements: oldState.selectedElements
+            };
+        });
+    });
+}
+exports.importAssessmentResultsReducer = importAssessmentResultsReducer;
 
 
-},{"../MenuItem":3,"../intent/LoadSaveIntents":9,"../interaction/InteractionTransaction":12,"../reducer/ViewStateReducer":24,"@reactivex/rxjs":376}],19:[function(require,module,exports){
+},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/LoadSaveIntents":9,"../interaction/InteractionTransaction":12,"../model/Deserializer":14,"../model/EditorUmlDocument":17,"../model/Serializer":19,"../reducer/ViewStateReducer":27,"@reactivex/rxjs":379}],22:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2664,12 +3387,19 @@ function changeUmlRelationTextFieldReducer(intent$, log) {
             }
             var error = EditorUmlDocument_1.isValidMultiplicity(intent.updatedValue);
             var errors = ErrorMessage_1.addOrRemoveError(oldState.errors, EditorUmlDocument_1.umlRelationMultiplicityId(intent.umlRelationId, startMultiplicity), error);
+            var editingFirstMultiplicity = false;
+            var editingSecondMultiplicity = false;
+            if (intent.relationField === UmlCanvasIntents_1.UmlRelationTextFieldType.START_MULTIPLICITY) {
+                editingFirstMultiplicity = !intent.stopEditing;
+            } else {
+                editingSecondMultiplicity = !intent.stopEditing;
+            }
             return {
                 menuItems: oldState.menuItems,
                 umlDocument: EditorUmlDocument_1.changeMultiplicityOfUmlRelation(oldState.umlDocument, intent.umlRelationId, intent.updatedValue, startMultiplicity),
                 currentInteractionTransaction: oldState.currentInteractionTransaction,
                 errors: errors,
-                selectedElements: SelectedElement_1.setSelected(new SelectedElement_1.SelectUmlRelation(intent.umlRelationId, false, false)),
+                selectedElements: SelectedElement_1.setSelected(new SelectedElement_1.SelectUmlRelation(intent.umlRelationId, editingFirstMultiplicity, editingSecondMultiplicity)),
                 infoMessages: oldState.infoMessages
             };
         });
@@ -2724,7 +3454,8 @@ function moveSelectedElementsReducer(intent$, log) {
                     types: updatedTypes,
                     classImplementingInterface: oldState.umlDocument.classImplementingInterface,
                     inheritance: oldState.umlDocument.inheritance,
-                    relations: oldState.umlDocument.relations
+                    relations: oldState.umlDocument.relations,
+                    globalMeta: oldState.umlDocument.globalMeta
                 },
                 currentInteractionTransaction: oldState.currentInteractionTransaction,
                 errors: oldState.errors,
@@ -2737,7 +3468,7 @@ function moveSelectedElementsReducer(intent$, log) {
 exports.moveSelectedElementsReducer = moveSelectedElementsReducer;
 
 
-},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/UmlCanvasIntents":10,"../interaction/InteractionTransaction":12,"../model/EditorUmlClass":14,"../model/EditorUmlDocument":15,"../reducer/ViewStateReducer":24,"@reactivex/rxjs":376}],20:[function(require,module,exports){
+},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/UmlCanvasIntents":10,"../interaction/InteractionTransaction":12,"../model/EditorUmlClass":16,"../model/EditorUmlDocument":17,"../reducer/ViewStateReducer":27,"@reactivex/rxjs":379}],23:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2854,7 +3585,7 @@ function addInheritanceReducer(intent$, log) {
 exports.addInheritanceReducer = addInheritanceReducer;
 
 
-},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/InteractionTransactionIntent":8,"../interaction/InteractionTransaction":12,"../model/EditorUmlClass":14,"../model/EditorUmlDocument":15,"../reducer/ViewStateReducer":24,"@reactivex/rxjs":376}],21:[function(require,module,exports){
+},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/InteractionTransactionIntent":8,"../interaction/InteractionTransaction":12,"../model/EditorUmlClass":16,"../model/EditorUmlDocument":17,"../reducer/ViewStateReducer":27,"@reactivex/rxjs":379}],24:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2968,7 +3699,7 @@ function addInterfaceImplementationReducer(intent$, log) {
 exports.addInterfaceImplementationReducer = addInterfaceImplementationReducer;
 
 
-},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/InteractionTransactionIntent":8,"../interaction/InteractionTransaction":12,"../model/EditorUmlClass":14,"../model/EditorUmlDocument":15,"../reducer/ViewStateReducer":24,"@reactivex/rxjs":376}],22:[function(require,module,exports){
+},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/InteractionTransactionIntent":8,"../interaction/InteractionTransaction":12,"../model/EditorUmlClass":16,"../model/EditorUmlDocument":17,"../reducer/ViewStateReducer":27,"@reactivex/rxjs":379}],25:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -2978,13 +3709,11 @@ var MenuItem_1 = require("../MenuItem");
 var SelectedElement_1 = require("../SelectedElement");
 var MenuItem_2 = require("../MenuItem");
 var EditorUmlRelation_1 = require("../model/EditorUmlRelation");
-var EditorUmlDocument_1 = require("../model/EditorUmlDocument");
 var InfoMessage_1 = require("../InfoMessage");
 var InteractionTransactionIntent_1 = require("../intent/InteractionTransactionIntent");
 var UmlCanvasIntents_1 = require("../intent/UmlCanvasIntents");
 var InteractionTransaction_1 = require("../interaction/InteractionTransaction");
-var EditorUmlDocument_2 = require("../model/EditorUmlDocument");
-var UmlConnectionCanvas_1 = require("../../components/uml/UmlConnectionCanvas");
+var EditorUmlDocument_1 = require("../model/EditorUmlDocument");
 /**
  * The intent to add a uml relation like association, aggregation and composition
  * @param intent$ the stream of intents
@@ -3009,7 +3738,7 @@ function addRelationReducer(intent$, log) {
             }
             return {
                 menuItems: MenuItem_1.unselectedItems(),
-                umlDocument: EditorUmlDocument_2.addUmlRelation(oldState.umlDocument, intent.secondSelectedElementId, intent.firstSelectedElementId, menuTypeToRelationType(intent.menuItemType)),
+                umlDocument: EditorUmlDocument_1.addUmlRelation(oldState.umlDocument, intent.secondSelectedElementId, intent.firstSelectedElementId, menuTypeToRelationType(intent.menuItemType)),
                 currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
                 errors: oldState.errors,
                 selectedElements: SelectedElement_1.noSelectedElements(oldState.selectedElements),
@@ -3041,19 +3770,20 @@ function addConnectionPointReducer(intent$, log) {
     }).switchMap(function (intent) {
         return Rx.Observable.of(function (oldState) {
             var document = oldState.umlDocument;
+            /*
             switch (intent.connectionType) {
-                case UmlConnectionCanvas_1.UmlConnectionType.INHERITANCE:
-                    document = EditorUmlDocument_1.addPointToUmlInheritance(oldState.umlDocument, intent.umlConnectionId, intent.position.x, intent.position.y);
+                case UmlConnectionType.INHERITANCE:
+                    document = addPointToUmlInheritance(oldState.umlDocument, intent.umlConnectionId, intent.position.x, intent.position.y, intent.startPointId)
                     break;
-                case UmlConnectionCanvas_1.UmlConnectionType.INTERFACE_IMPLEMENTATION:
-                    document = EditorUmlDocument_1.addPointToUmlClassImplementingInterface(oldState.umlDocument, intent.umlConnectionId, intent.position.x, intent.position.y);
+                case UmlConnectionType.INTERFACE_IMPLEMENTATION:
+                    document = addPointToUmlClassImplementingInterface(oldState.umlDocument, intent.umlConnectionId, intent.position.x, intent.position.y, intent.startPointId)
                     break;
-                case UmlConnectionCanvas_1.UmlConnectionType.RELATION:
-                    document = EditorUmlDocument_1.addPointToUmlRelation(oldState.umlDocument, intent.umlConnectionId, intent.position.x, intent.position.y);
+                case UmlConnectionType.RELATION:
+                    document = addPointToUmlRelation(oldState.umlDocument, intent.umlConnectionId, intent.position.x, intent.position.y, intent.startPointId)
                     break;
-                default:
-                    throw new Error("Don't know which connection type it is. Type = " + intent.connectionType);
+                default: throw new Error("Don't know which connection type it is. Type = " + intent.connectionType);
             }
+            */
             return {
                 menuItems: MenuItem_1.unselectedItems(),
                 umlDocument: document,
@@ -3066,6 +3796,31 @@ function addConnectionPointReducer(intent$, log) {
     });
 }
 exports.addConnectionPointReducer = addConnectionPointReducer;
+function moveConnectionPointReducer(intent$, log) {
+    return intent$.filter(function (intent) {
+        return intent instanceof UmlCanvasIntents_1.MovePointIntent;
+    }).map(function (intent) {
+        return intent;
+    }).do(function (i) {
+        return ViewStateReducer_1.logReducer(log, "moveConnectionPointReducer");
+    }).switchMap(function (intent) {
+        return Rx.Observable.of(function (oldState) {
+            var connectionId = intent.umlConnectionId;
+            var newPosition = intent.newPosition;
+            var pointId = intent.pointId;
+            intent.recycle();
+            return {
+                menuItems: oldState.menuItems,
+                umlDocument: EditorUmlDocument_1.moveConnectionPoint(oldState.umlDocument, connectionId, newPosition, pointId),
+                currentInteractionTransaction: oldState.currentInteractionTransaction,
+                errors: oldState.errors,
+                selectedElements: oldState.selectedElements,
+                infoMessages: oldState.infoMessages
+            };
+        });
+    });
+}
+exports.moveConnectionPointReducer = moveConnectionPointReducer;
 /**
  * Move an AnchorPoint of a certain UML connection like Inheritance, Association, Composition, Aggregation and interface implementation
  */
@@ -3084,7 +3839,7 @@ function moveConnectionAnchorPointReducer(intent$, log) {
             intent.recycle();
             return {
                 menuItems: oldState.menuItems,
-                umlDocument: EditorUmlDocument_2.moveConnectionAnchorPoint(oldState.umlDocument, connectionId, newPercentage, firstAnchorPoint),
+                umlDocument: EditorUmlDocument_1.moveConnectionAnchorPoint(oldState.umlDocument, connectionId, newPercentage, firstAnchorPoint),
                 currentInteractionTransaction: oldState.currentInteractionTransaction,
                 errors: oldState.errors,
                 selectedElements: oldState.selectedElements,
@@ -3142,9 +3897,57 @@ function stopMovingConnectionAnchorPointReducer(intent$, log) {
     });
 }
 exports.stopMovingConnectionAnchorPointReducer = stopMovingConnectionAnchorPointReducer;
+/**
+ * Starts moving an AnchorPoint of a certain UML connection like Inheritance, Association, Composition, Aggregation and interface implementation
+ */
+function startMovingConnectionPointReducer(intent$, log) {
+    return intent$.filter(function (intent) {
+        return intent instanceof UmlCanvasIntents_1.StartMovingPointIntent;
+    }).map(function (intent) {
+        return intent;
+    }).do(function (i) {
+        return ViewStateReducer_1.logReducer(log, "startMovingConnectionAnchorPointReducer");
+    }).switchMap(function (intent) {
+        return Rx.Observable.of(function (oldState) {
+            return {
+                menuItems: MenuItem_1.unselectedItems(),
+                umlDocument: oldState.umlDocument,
+                currentInteractionTransaction: new InteractionTransaction_1.MovingPointInteractionTransaction(intent.umlConnectionId, intent.pointId),
+                errors: oldState.errors,
+                selectedElements: oldState.selectedElements,
+                infoMessages: oldState.infoMessages
+            };
+        });
+    });
+}
+exports.startMovingConnectionPointReducer = startMovingConnectionPointReducer;
+/**
+ * Stops moving an AnchorPoint of a certain UML connection like Inheritance, Association, Composition, Aggregation and interface implementation
+ */
+function stopMovingConnectionPointReducer(intent$, log) {
+    return intent$.filter(function (intent) {
+        return intent instanceof UmlCanvasIntents_1.StopMovingPointIntent;
+    }).map(function (intent) {
+        return intent;
+    }).do(function (i) {
+        return ViewStateReducer_1.logReducer(log, "stopMovingConnectionAnchorPointReducer");
+    }).switchMap(function (intent) {
+        return Rx.Observable.of(function (oldState) {
+            return {
+                menuItems: oldState.menuItems,
+                umlDocument: oldState.umlDocument,
+                currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
+                errors: oldState.errors,
+                selectedElements: oldState.selectedElements,
+                infoMessages: oldState.infoMessages
+            };
+        });
+    });
+}
+exports.stopMovingConnectionPointReducer = stopMovingConnectionPointReducer;
 
 
-},{"../../components/uml/UmlConnectionCanvas":29,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/InteractionTransactionIntent":8,"../intent/UmlCanvasIntents":10,"../interaction/InteractionTransaction":12,"../model/EditorUmlDocument":15,"../model/EditorUmlRelation":16,"../reducer/ViewStateReducer":24,"@reactivex/rxjs":376}],23:[function(require,module,exports){
+},{"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/InteractionTransactionIntent":8,"../intent/UmlCanvasIntents":10,"../interaction/InteractionTransaction":12,"../model/EditorUmlDocument":17,"../model/EditorUmlRelation":18,"../reducer/ViewStateReducer":27,"@reactivex/rxjs":379}],26:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3152,6 +3955,7 @@ var ViewStateReducer_1 = require("../reducer/ViewStateReducer");
 var Rx = require("@reactivex/rxjs");
 var UmlTypeIntents_1 = require("../intent/UmlTypeIntents");
 var EditorUmlDocument_1 = require("../model/EditorUmlDocument");
+var EditorPlaceholder_1 = require("../model/EditorPlaceholder");
 var InteractionTransaction_1 = require("../interaction/InteractionTransaction");
 var UmlCanvasIntents_1 = require("../intent/UmlCanvasIntents");
 var InteractionTransaction_2 = require("../interaction/InteractionTransaction");
@@ -3211,7 +4015,7 @@ function renameUmlTypeReducer(intent$, log) {
                 umlDocument: document,
                 currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
                 errors: ErrorMessage_1.addOrRemoveError(oldState.errors, intent.umlType.id, errorMsg),
-                selectedElements: SelectedElement_1.noSelectedElements(oldState.selectedElements),
+                selectedElements: intent.stopEditing === true ? SelectedElement_1.noSelectedElements(oldState.selectedElements) : oldState.selectedElements,
                 infoMessages: oldState.infoMessages
             };
         });
@@ -3370,7 +4174,7 @@ function changeUmlMethodSpecificationReducer(intent$, log) {
                 currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
                 errors: ErrorMessage_1.addOrRemoveError(oldState.errors, intent.methodId, errorMsg),
                 infoMessages: oldState.infoMessages,
-                selectedElements: oldState.selectedElements.set(intent.methodId, new SelectedElement_1.MethodSelectedElement(intent.methodId, intent.umlType.id, false))
+                selectedElements: oldState.selectedElements.set(intent.methodId, new SelectedElement_1.MethodSelectedElement(intent.methodId, intent.umlType.id, !intent.stopEditing))
             };
         });
     });
@@ -3390,7 +4194,7 @@ function addUmlPropertyReducer(intent$, log) {
     }).switchMap(function (intent) {
         return Rx.Observable.of(function (oldState) {
             var propertyId = angular2_uuid_1.UUID.UUID();
-            var _a = EditorUmlDocument_1.addUmlProperty(oldState.umlDocument, intent.umlType.id, propertyId, "- property : int"),
+            var _a = EditorUmlDocument_1.addUmlProperty(oldState.umlDocument, intent.umlType.id, propertyId, EditorPlaceholder_1.getPropertyPlaceholer(oldState.umlDocument.globalMeta)),
                 document = _a[0],
                 errorMsg = _a[1];
             return {
@@ -3477,7 +4281,7 @@ function changeUmlPropertyReducer(intent$, log) {
                 currentInteractionTransaction: InteractionTransaction_1.NoInteractionTransactionRunning.getInstance(),
                 errors: ErrorMessage_1.addOrRemoveError(oldState.errors, intent.propertyId, errorMsg),
                 infoMessages: oldState.infoMessages,
-                selectedElements: oldState.selectedElements.set(intent.propertyId, new SelectedElement_1.PropertySelectedElement(intent.propertyId, intent.umlType.id, false))
+                selectedElements: oldState.selectedElements.set(intent.propertyId, new SelectedElement_1.PropertySelectedElement(intent.propertyId, intent.umlType.id, !intent.stopEditing))
             };
         });
     });
@@ -3485,7 +4289,7 @@ function changeUmlPropertyReducer(intent$, log) {
 exports.changeUmlPropertyReducer = changeUmlPropertyReducer;
 
 
-},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/UmlCanvasIntents":10,"../intent/UmlTypeIntents":11,"../interaction/InteractionTransaction":12,"../model/EditorUmlDocument":15,"../reducer/ViewStateReducer":24,"@reactivex/rxjs":376,"angular2-uuid":377}],24:[function(require,module,exports){
+},{"../ErrorMessage":1,"../InfoMessage":2,"../MenuItem":3,"../SelectedElement":5,"../intent/UmlCanvasIntents":10,"../intent/UmlTypeIntents":11,"../interaction/InteractionTransaction":12,"../model/EditorPlaceholder":15,"../model/EditorUmlDocument":17,"../reducer/ViewStateReducer":27,"@reactivex/rxjs":379,"angular2-uuid":380}],27:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -3500,7 +4304,7 @@ function logReducer(enabled, reducerName) {
 exports.logReducer = logReducer;
 
 
-},{}],25:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 "use strict";
 
 var __extends = undefined && undefined.__extends || function () {
@@ -3542,11 +4346,6 @@ var KEY_DELETE = 46;
 var KEY_ESC = 27;
 exports.CANVAS_WIDTH_PX = 3000;
 exports.CANVAS_HEIGHT_PX = 3000;
-var EditorProps = function () {
-    function EditorProps() {}
-    return EditorProps;
-}();
-exports.EditorProps = EditorProps;
 var Editor = function (_super) {
     __extends(Editor, _super);
     function Editor(props) {
@@ -3554,6 +4353,7 @@ var Editor = function (_super) {
         _this.intentSubject = new Rx.Subject();
         _this.intentEmitter = new Intent_1.IntentEmitter(_this.intentSubject);
         _this.subscription = null;
+        _this.assesmentResultSubscription = null;
         _this.currentState = null; // For performance reasons
         _this.movingElement = false;
         _this.umlCanvasElement = null;
@@ -3587,7 +4387,7 @@ var Editor = function (_super) {
         // TODO fix mouse event dispatching for siblings so that relations etc. can be drawn on top of uml classes
         // https://stackoverflow.com/questions/1009753/pass-mouse-events-through-absolutely-positioned-element
         // https://stackoverflow.com/questions/24082498/conditional-mouse-event-pass-through-between-sibling-elements-that-overlap
-        return React.createElement("div", { className: "editor-container", onKeyDown: this.handleKeyDown }, React.createElement("div", { className: "menu-container" }, menuItems), React.createElement("div", { id: "uml-canvas", onClick: this.onClickInUmlCanvas, onMouseDown: this.onMouseDownInUmlCanvas, onMouseUp: this.onMouseUpInUmlCanvas, onMouseMove: this.onMouseMoveInUmlCanvas, onMouseLeave: this.onMouseLeaveUmlCanvas }, React.createElement(UmlConnectionCanvas_1.UmlConnectionCanvas, { key: "uml-connection-canvas", selectedElementsMap: this.state.selectedElements, umlDocument: this.state.umlDocument, intentEmitter: this.intentEmitter, errorsMap: this.state.errors, movingAnchorPointInteractionTransaction: this.state.currentInteractionTransaction instanceof InteractionTransaction_1.MovingAnchorPointInteractionTransaction ? this.state.currentInteractionTransaction : null }), umlClasses), bigNotification !== null && React.createElement("div", { key: "BigNotifi0cation", className: "toast-big" }, bigNotification.message));
+        return React.createElement("div", { className: "editor-container", onKeyDown: this.handleKeyDown }, React.createElement("div", { className: "menu-container" }, menuItems), React.createElement("div", { id: "uml-canvas", onClick: this.onClickInUmlCanvas, onMouseDown: this.onMouseDownInUmlCanvas, onMouseUp: this.onMouseUpInUmlCanvas, onMouseMove: this.onMouseMoveInUmlCanvas, onMouseLeave: this.onMouseLeaveUmlCanvas }, React.createElement(UmlConnectionCanvas_1.UmlConnectionCanvas, { key: "uml-connection-canvas", selectedElementsMap: this.state.selectedElements, umlDocument: this.state.umlDocument, intentEmitter: this.intentEmitter, errorsMap: this.state.errors, movingAnchorPointInteractionTransaction: this.state.currentInteractionTransaction instanceof InteractionTransaction_1.MovingAnchorPointInteractionTransaction ? this.state.currentInteractionTransaction : null, movingPointInteractionTransaction: this.state.currentInteractionTransaction instanceof InteractionTransaction_1.MovingPointInteractionTransaction ? this.state.currentInteractionTransaction : null }), umlClasses), bigNotification !== null && React.createElement("div", { key: "BigNotifi0cation", className: "toast-big" }, bigNotification.message));
     };
     Editor.prototype.getBigInfoNotification = function () {
         var lastAdded = this.state.infoMessages.filter(function (m) {
@@ -3612,7 +4412,7 @@ var Editor = function (_super) {
     };
     Editor.prototype.componentDidMount = function () {
         var _this = this;
-        this.subscription = ModelFunc_1.modelFunction(this.intentSubject, this.props.saveModel, this.props.loadModel).subscribe(function (newState) {
+        this.subscription = ModelFunc_1.modelFunction(this.intentSubject, this.props.loadUmlDocument, this.props.saveUmlDocument).subscribe(function (newState) {
             // only renders if state has been changed
             if (_this.currentState !== newState) {
                 _this.setState(newState);
@@ -3623,10 +4423,29 @@ var Editor = function (_super) {
             // i.e. reload the page
         });
         document.body.addEventListener("keydown", this.handleKeyDown);
+        // Load the file
+        if (this.props.triggerLoadingUmlDocumentAtStart === true) {
+            this.intentEmitter.emit(new LoadSaveIntents_1.LoadUmlDocumentIntent());
+        }
+        // Listen for result events
+        if (this.props.assessmentResults != null) {
+            var self_1 = this;
+            this.assesmentResultSubscription = this.props.assessmentResults.map(function (result) {
+                return new LoadSaveIntents_1.ImportAssessmentResultsIntent(result);
+            }).subscribe(function (intent) {
+                self_1.intentEmitter.emit(intent);
+            }, function (error) {
+                console.log(error);
+                // TODO error handling
+            });
+        }
     };
     Editor.prototype.componentWillUnmount = function () {
         if (this.subscription != null) {
             this.subscription.unsubscribe();
+        }
+        if (this.assesmentResultSubscription != null) {
+            this.assesmentResultSubscription.unsubscribe();
         }
         document.body.removeEventListener("keydown", this.handleKeyDown);
     };
@@ -3716,7 +4535,7 @@ exports.Editor = Editor;
 exports.default = Editor;
 
 
-},{"../../businesslogic/InfoMessage":2,"../../businesslogic/MenuItem":3,"../../businesslogic/ModelFunc":4,"../../businesslogic/ViewState":6,"../../businesslogic/intent/Intent":7,"../../businesslogic/intent/InteractionTransactionIntent":8,"../../businesslogic/intent/LoadSaveIntents":9,"../../businesslogic/intent/UmlCanvasIntents":10,"../../businesslogic/interaction/InteractionTransaction":12,"../../businesslogic/model/EditorUmlClass":14,"../menu/MenuButton":26,"../uml/UmlClass":28,"../uml/UmlConnectionCanvas":29,"@reactivex/rxjs":376,"react":566}],26:[function(require,module,exports){
+},{"../../businesslogic/InfoMessage":2,"../../businesslogic/MenuItem":3,"../../businesslogic/ModelFunc":4,"../../businesslogic/ViewState":6,"../../businesslogic/intent/Intent":7,"../../businesslogic/intent/InteractionTransactionIntent":8,"../../businesslogic/intent/LoadSaveIntents":9,"../../businesslogic/intent/UmlCanvasIntents":10,"../../businesslogic/interaction/InteractionTransaction":12,"../../businesslogic/model/EditorUmlClass":16,"../menu/MenuButton":29,"../uml/UmlClass":31,"../uml/UmlConnectionCanvas":32,"@reactivex/rxjs":379,"react":569}],29:[function(require,module,exports){
 "use strict";
 
 var __extends = undefined && undefined.__extends || function () {
@@ -3757,7 +4576,7 @@ var MenuButton = function (_super) {
 exports.MenuButton = MenuButton;
 
 
-},{"react":566}],27:[function(require,module,exports){
+},{"react":569}],30:[function(require,module,exports){
 "use strict";
 
 var __extends = undefined && undefined.__extends || function () {
@@ -3787,7 +4606,6 @@ var TextInput = function (_super) {
         // Workaround to request the focus
         // private inputElement: HTMLInputElement
         _this.enterPressed = false;
-        _this.state = { value: props.text };
         _this.onKeyDown = _this.onKeyDown.bind(_this);
         _this.onTextChanged = _this.onTextChanged.bind(_this);
         _this.onDoubleClick = _this.onDoubleClick.bind(_this);
@@ -3797,7 +4615,8 @@ var TextInput = function (_super) {
         return _this;
     }
     TextInput.prototype.render = function () {
-        var computedWidth = (this.state.value.length + 1) * 8;
+        var text = this.props.text;
+        var computedWidth = (text.length + 1) * 8;
         var computedWidthPx = computedWidth + "px";
         var styleProps = null;
         if (this.props.errorMessage != null && !this.props.focused) {
@@ -3829,7 +4648,7 @@ var TextInput = function (_super) {
             styleProps.width = this.props.additionalStyleProps.width;
         }
         if (this.props.focused) {
-            return React.createElement("input", { autoFocus: true, type: "text", className: "uml-input-field", style: styleProps, value: this.state.value, onKeyDown: this.onKeyDown, onChange: this.onTextChanged, contentEditable: true, disabled: false, onBlur: this.onBlur, onMouseDown: this.onMouseDown, onClick: this.onClicked });
+            return React.createElement("input", { autoFocus: true, type: "text", className: "uml-input-field", style: styleProps, value: text, onKeyDown: this.onKeyDown, onChange: this.onTextChanged, contentEditable: true, disabled: false, onBlur: this.onBlur, onMouseDown: this.onMouseDown, onClick: this.onClicked });
         } else {
             styleProps.userSelect = "none";
             if (this.props.selected === true) {
@@ -3837,22 +4656,15 @@ var TextInput = function (_super) {
             }
             return React.createElement("div", { onDoubleClick: this.onDoubleClick, onClick: this.onClicked, title: this.props.errorMessage }, React.createElement("input", { type: "text",
                 // ref={(input) => { this.inputElement = input; }}
-                style: styleProps, className: "uml-input-field", value: this.state.value, onKeyDown: this.onKeyDown, onChange: this.onTextChanged, contentEditable: false, disabled: true, onBlur: this.onBlur }));
+                style: styleProps, className: "uml-input-field", value: text, onKeyDown: this.onKeyDown, onChange: this.onTextChanged, contentEditable: false, disabled: true, onBlur: this.onBlur }));
         }
     };
     TextInput.prototype.onKeyDown = function (event) {
         if (KEY_CODE_ENTER === event.keyCode) {
-            if (event.target.value !== this.props.text) {
-                // Text has been changed
-                this.props.onTextChanged(this.props.id, this.props.idType, event.target.value);
-            } else {
-                // Text is the same as before - therefore we treat this a cancel event
-                this.props.onChangingTextCanceled(this.props.id, this.props.idType);
-            }
+            this.props.onTextChanged(this.props.id, this.props.idType, event.target.value, true);
             event.preventDefault(); // prevent onTextChanged()
         } else if (KEY_CODE_ESC === event.keyCode) {
             this.props.onChangingTextCanceled(this.props.id, this.props.idType);
-            this.setState({ value: this.props.text });
             event.preventDefault(); // prevent onTextChanged()
         }
         // Otherwise do nothing which triggers onTextChanged()
@@ -3863,15 +4675,13 @@ var TextInput = function (_super) {
         }
     };
     TextInput.prototype.onTextChanged = function (event) {
-        this.setState({ value: event.target.value });
+        this.props.onTextChanged(this.props.id, this.props.idType, event.target.value, false);
     };
     TextInput.prototype.onDoubleClick = function (event) {
         this.props.onFocusRequired(this.props.id, this.props.idType);
     };
     TextInput.prototype.onBlur = function (event) {
-        if (event.target.value !== this.props.text) {
-            this.props.onTextChanged(this.props.id, this.props.idType, event.target.value);
-        }
+        this.props.onTextChanged(this.props.id, this.props.idType, event.target.value, true);
     };
     TextInput.prototype.onClicked = function (event) {
         if (this.props.focused === true) {} else {
@@ -3884,7 +4694,7 @@ var TextInput = function (_super) {
 exports.TextInput = TextInput;
 
 
-},{"react":566}],28:[function(require,module,exports){
+},{"react":569}],31:[function(require,module,exports){
 "use strict";
 
 var __extends = undefined && undefined.__extends || function () {
@@ -3978,7 +4788,7 @@ var UmlClass = function (_super) {
                 return React.createElement(TextInput_1.TextInput, { key: property.id, id: property.id, idType: ID_TYPE_PROPERTY, focused: propertyEditing, selected: propertySelected, text: property.propertySpec, bold: false, onClicked: _this.onTextInputClicked, onTextChanged: _this.onTextChanged, onChangingTextCanceled: _this.onTextCanceled, onFocusRequired: _this.onTextInputRequiresFocus, errorMessage: errors.get(property.id) });
             }).toArray();
             if (this.state.showAddPropertiesButton) {
-                propertiesTextInputs.push(React.createElement("button", { key: "AddProperty" + this.props.umlType.id, className: "uml-type-add-to-section-button", alt: "add property", onClick: this.onAddPropertyClicked, onMouseDown: this.stopMouseEventPropagation, onMouseUp: this.stopMouseEventPropagation }, "+"));
+                propertiesTextInputs.push(React.createElement("button", { key: "AddProperty" + this.props.umlType.id, className: "uml-type-add-to-section-button", onClick: this.onAddPropertyClicked, onMouseDown: this.stopMouseEventPropagation, onMouseUp: this.stopMouseEventPropagation }, "+"));
             }
         }
         this.methodTextInputHasFocus = false;
@@ -3992,7 +4802,7 @@ var UmlClass = function (_super) {
             return React.createElement(TextInput_1.TextInput, { key: method.id, id: method.id, idType: ID_TYPE_METHOD, focused: methodEditing, selected: methodSelected, text: method.methodSepcification, bold: false, onClicked: _this.onTextInputClicked, onTextChanged: _this.onTextChanged, onChangingTextCanceled: _this.onTextCanceled, onFocusRequired: _this.onTextInputRequiresFocus, errorMessage: errors.get(method.id) });
         }).toArray();
         if (this.state.showAddMethodsButton) {
-            methodTextInputs.push(React.createElement("button", { key: "AddMethod" + this.props.umlType.id, className: "uml-type-add-to-section-button", alt: "add method", onClick: this.onAddMethodClicked, onMouseDown: this.stopMouseEventPropagation, onMouseUp: this.stopMouseEventPropagation }, "+"));
+            methodTextInputs.push(React.createElement("button", { key: "AddMethod" + this.props.umlType.id, className: "uml-type-add-to-section-button", onClick: this.onAddMethodClicked, onMouseDown: this.stopMouseEventPropagation, onMouseUp: this.stopMouseEventPropagation }, "+"));
         }
         var selectedElement = this.props.selectionMap.get(uml.id);
         var editingTypeName = false;
@@ -4009,14 +4819,14 @@ var UmlClass = function (_super) {
         var onMouseLeaveMethodsSection = sectionEnabled === true ? this.onMouseLeaveMethodsSection : null;
         return React.createElement("div", { id: this.props.umlType.id, className: cssClasses, style: position, onClick: this.onClicked, onMouseDown: this.onMouseDown }, React.createElement("div", { className: "uml-type-header" }, React.createElement("div", { className: "uml-type-name" }, React.createElement(TextInput_1.TextInput, { key: "title" + this.props.umlType.id, id: "title", idType: ID_TYPE_TITLE, focused: umlTypeEditingName, selected: false, text: this.props.umlType.name, bold: true, onClicked: this.onTextInputClicked, onTextChanged: this.onTextChanged, onChangingTextCanceled: this.onTextCanceled, onFocusRequired: this.onTextInputRequiresFocus, errorMessage: errors.get(this.props.umlType.id) }))), !isClass ? null : React.createElement("div", { className: sectionCssClasses, onMouseEnter: onMouseEnterPropertiesSection, onMouseLeave: onMouseLeavePropertySection }, propertiesTextInputs), React.createElement("div", { className: sectionCssClasses, onMouseEnter: onMouseEnterMethodsSection, onMouseLeave: onMouseLeaveMethodsSection }, methodTextInputs));
     };
-    UmlClass.prototype.onTextChanged = function (id, idType, newText) {
+    UmlClass.prototype.onTextChanged = function (id, idType, newText, stopEditing) {
         var intentEmitter = this.props.intentEmitter;
         if (idType === ID_TYPE_TITLE) {
-            intentEmitter.emit(new UmlTypeIntents_1.RenameUmlTypeIntent(this.props.umlType, newText));
+            intentEmitter.emit(new UmlTypeIntents_1.RenameUmlTypeIntent(this.props.umlType, newText, stopEditing));
         } else if (idType === ID_TYPE_METHOD) {
-            intentEmitter.emit(new UmlTypeIntents_1.ChangeUmlMethodIntent(this.props.umlType, id, newText));
+            intentEmitter.emit(new UmlTypeIntents_1.ChangeUmlMethodIntent(this.props.umlType, id, newText, stopEditing));
         } else if (idType === ID_TYPE_PROPERTY) {
-            intentEmitter.emit(new UmlTypeIntents_1.ChangeUmlPropertyIntent(this.props.umlType, id, newText));
+            intentEmitter.emit(new UmlTypeIntents_1.ChangeUmlPropertyIntent(this.props.umlType, id, newText, stopEditing));
         } else throw new Error("onTextInputRequiresFocus() on unknown idType " + idType);
     };
     UmlClass.prototype.onTextCanceled = function (id, idType) {
@@ -4129,7 +4939,7 @@ var UmlClass = function (_super) {
 exports.UmlClass = UmlClass;
 
 
-},{"../../businesslogic/SelectedElement":5,"../../businesslogic/intent/UmlCanvasIntents":10,"../../businesslogic/intent/UmlTypeIntents":11,"../../businesslogic/interaction/InteractionTransaction":12,"../../businesslogic/model/EditorUmlClass":14,"./TextInput":27,"react":566}],29:[function(require,module,exports){
+},{"../../businesslogic/SelectedElement":5,"../../businesslogic/intent/UmlCanvasIntents":10,"../../businesslogic/intent/UmlTypeIntents":11,"../../businesslogic/interaction/InteractionTransaction":12,"../../businesslogic/model/EditorUmlClass":16,"./TextInput":30,"react":569}],32:[function(require,module,exports){
 "use strict";
 
 var __extends = undefined && undefined.__extends || function () {
@@ -4347,6 +5157,188 @@ var UmlConnectionCanvas = function (_super) {
         var elements = [React.createElement(TextInput_1.TextInput, { key: connection.id + "start-multiplicity", idType: FIRST_MULTIPLICITY_INPUT, id: connection.id, errorMessage: startMultiplicityErrorMsg, onClicked: this.onTextInputClicked, onChangingTextCanceled: this.onTextInputCanceled, onFocusRequired: this.onTextInputRequiresFocus, onTextChanged: this.onTextInputChanged, bold: false, additionalStyleProps: firstMultiplicityPos, text: connection.startMultiplicity, focused: editingStartMultiplicity, selected: selected }), React.createElement(TextInput_1.TextInput, { key: connection.id + "end-multiplicity", idType: SECOND_MULTIPLICITY_INPUT, id: connection.id, errorMessage: endMultiplicityErrorMsg, onClicked: this.onTextInputClicked, onChangingTextCanceled: this.onTextInputCanceled, onFocusRequired: this.onTextInputRequiresFocus, onTextChanged: this.onTextInputChanged, bold: false, additionalStyleProps: secondMultiplicityPos, text: connection.endMultiplicity, focused: editingEndMultiplicity, selected: selected })];
         return elements;
     };
+    /*
+    // TODO doesn't work
+    renderInheritanceOrInterfaceImplementation(connection: UmlConnection, umlConnectionType: UmlConnectionType, positions: Positions, lineColor: string, selected: boolean): JSX.Element {
+         var triangle: Array<number> = null
+        var line: Array<number> = null
+        const dash: Array<number> = (umlConnectionType === UmlConnectionType.INHERITANCE) ? [] : [6, 3]
+         switch (positions.secondAnchorPointSide) {
+            case AnchorPointSide.LEFT:
+                triangle = [
+                    positions.secondElementAnchorPointXInCanvas,
+                    positions.secondElementAnchorPointYInCanvas,
+                     positions.secondElementAnchorPointXInCanvas - ICON_SIZE,
+                    positions.secondElementAnchorPointYInCanvas - (ICON_SIZE / 2),
+                     positions.secondElementAnchorPointXInCanvas - ICON_SIZE,
+                    positions.secondElementAnchorPointYInCanvas + (ICON_SIZE / 2)
+                ]
+                line = [
+                    positions.firstElementAnchorPointXInCanvas,
+                    positions.firstElementAnchorPointYInCanvas,
+                     positions.secondElementAnchorPointXInCanvas - ICON_SIZE,
+                    positions.secondElementAnchorPointYInCanvas
+                ]
+                break;
+             case AnchorPointSide.RIGHT:
+                triangle = [
+                    positions.secondElementAnchorPointXInCanvas,
+                    positions.secondElementAnchorPointYInCanvas,
+                     positions.secondElementAnchorPointXInCanvas + ICON_SIZE,
+                    positions.secondElementAnchorPointYInCanvas - (ICON_SIZE / 2),
+                     positions.secondElementAnchorPointXInCanvas + ICON_SIZE,
+                    positions.secondElementAnchorPointYInCanvas + (ICON_SIZE / 2)
+                ]
+                line = [
+                    positions.firstElementAnchorPointXInCanvas,
+                    positions.firstElementAnchorPointYInCanvas,
+                     positions.secondElementAnchorPointXInCanvas + ICON_SIZE,
+                    positions.secondElementAnchorPointYInCanvas
+                ]
+                break;
+              case AnchorPointSide.TOP:
+                triangle = [
+                    positions.secondElementAnchorPointXInCanvas,
+                    positions.secondElementAnchorPointYInCanvas,
+                     positions.secondElementAnchorPointXInCanvas - (ICON_SIZE / 2),
+                    positions.secondElementAnchorPointYInCanvas - ICON_SIZE,
+                     positions.secondElementAnchorPointXInCanvas + (ICON_SIZE / 2),
+                    positions.secondElementAnchorPointYInCanvas - ICON_SIZE
+                ]
+                line = [
+                    positions.firstElementAnchorPointXInCanvas,
+                    positions.firstElementAnchorPointYInCanvas,
+                     positions.secondElementAnchorPointXInCanvas,
+                    positions.secondElementAnchorPointYInCanvas - ICON_SIZE
+                ]
+                break;
+             case AnchorPointSide.BOTTOM:
+                triangle = [
+                    positions.secondElementAnchorPointXInCanvas,
+                    positions.secondElementAnchorPointYInCanvas,
+                     positions.secondElementAnchorPointXInCanvas - (ICON_SIZE / 2),
+                    positions.secondElementAnchorPointYInCanvas + ICON_SIZE,
+                     positions.secondElementAnchorPointXInCanvas + (ICON_SIZE / 2),
+                    positions.secondElementAnchorPointYInCanvas + ICON_SIZE
+                ]
+                line = [
+                    positions.firstElementAnchorPointXInCanvas,
+                    positions.firstElementAnchorPointYInCanvas,
+                     positions.secondElementAnchorPointXInCanvas,
+                    positions.secondElementAnchorPointYInCanvas + ICON_SIZE
+                ]
+                break;
+        }
+         const self = this
+        const clickFunc = event => self.onClickedOnObjectOnTheCanvas(event, connection, umlConnectionType)
+        var mouseDownOnFirstAnchorPointFunc = null
+        var mouseDownOnSecondAnchorPointFunc = null
+        if (selected) {
+            mouseDownOnFirstAnchorPointFunc = event => self.onMouseDownOnAnchorPoint(event, connection.id, true, positions)
+            mouseDownOnSecondAnchorPointFunc = event => self.onMouseDownOnAnchorPoint(event, connection.id, false, positions)
+        }
+         var lines: JSX.Element[] = []
+        var circles: JSX.Element[] = []
+        var lastPosition: Point = { x: line[0], y: line[1] }
+        var idx = -1
+         circles.push(
+            <Circle
+                x={positions.firstElementAnchorPointXInCanvas}
+                y={positions.firstElementAnchorPointYInCanvas}
+                radius={4}
+                stroke={"black"}
+                fill={"white"}
+                strokeWidth={4}
+                onMouseDown={mouseDownOnFirstAnchorPointFunc}
+            />
+        )
+         for (let p of connection.points.toArray()) {
+            idx += 1
+            const dblClickFunc = event => self.onDoubleClickedOnObjectOnTheCanvas(event, connection, idx-1, idx, umlConnectionType)
+             let currentLine = [lastPosition.x, lastPosition.y, p.x, p.y]
+            lines.push(
+                <Line // workaround to increase the touchable area of a line
+                    points={currentLine}
+                    strokeWidth={LINE_TOUCH_AREA_INCREASEMENT}
+                    stroke={transparentLineColor}
+                    onClick={clickFunc}
+                    ondblclick={dblClickFunc}
+                />
+            )
+            lines.push(
+                <Line
+                    points={currentLine}
+                    strokeWidth={LINE_STROKE_WIDTH}
+                    stroke={lineColor}
+                    dash={dash}
+                    onClick={clickFunc}
+                    ondblclick={dblClickFunc}
+                />
+            )
+             
+            const mouseDownOnPoint = event => self.onMouseDownOnPoint(event, connection.id, idx, positions)
+            circles.push(
+                <Circle
+                        x={p.x}
+                        y={p.y}
+                        radius={4}
+                        stroke={"black"}
+                        fill={"white"}
+                        strokeWidth={4}
+                        onMouseDown={mouseDownOnPoint}
+                    />
+            )
+             lastPosition = p
+        }
+         const dblClickFunc = event => self.onDoubleClickedOnObjectOnTheCanvas(event, connection, idx, idx + 1, umlConnectionType)
+         lines.push(
+                <Line // workaround to increase the touchable area of a line
+                    points={[lastPosition.x, lastPosition.y, line[2], line[3]]}
+                    strokeWidth={LINE_TOUCH_AREA_INCREASEMENT}
+                    stroke={transparentLineColor}
+                    onClick={clickFunc}
+                    ondblclick={dblClickFunc}
+                />
+            )
+        lines.push(
+                <Line
+                    points={[lastPosition.x, lastPosition.y, line[2], line[3]]}
+                    strokeWidth={LINE_STROKE_WIDTH}
+                    stroke={lineColor}
+                    dash={dash}
+                    onClick={clickFunc}
+                    ondblclick={dblClickFunc}
+                />
+        )
+         circles.push(
+            <Circle
+                x={positions.secondElementAnchorPointXInCanvas}
+                y={positions.secondElementAnchorPointYInCanvas}
+                radius={4}
+                stroke={"black"}
+                fill={"white"}
+                strokeWidth={4}
+                onMouseDown={mouseDownOnSecondAnchorPointFunc}
+             />
+        )
+        
+         if (!selected) circles = []
+         return (
+            <Group key={connection.id}>
+                {lines}
+                <Line
+                    points={triangle}
+                    closed={true}
+                    fill={"white"}
+                    strokeWidth={LINE_STROKE_WIDTH}
+                    stroke={lineColor}
+                    onClick={clickFunc}
+                />
+                 {circles}
+             </Group>
+        )
+    }
+     */
     UmlConnectionCanvas.prototype.renderInheritanceOrInterfaceImplementation = function (connection, umlConnectionType, positions, lineColor, selected) {
         var triangle = null;
         var line = null;
@@ -4534,14 +5526,11 @@ var UmlConnectionCanvas = function (_super) {
                 throw new Error("Unexpected UmlConnectionType: " + connectionType);
         }
     };
-    UmlConnectionCanvas.prototype.onDoubleClickedOnObjectOnTheCanvas = function (event) {
-        /*
-        console.log("DOUBLE_CLICK_OBJ")
-        event.cancleBubble = true // just copy pasted from above
-             const x = event.pageX - event.target.offsetLeft
-        const y = event.pageY - event.target.offsetTop
-        this.intentToDeliver = new DoubleClickUmlConnectionIntent(this.props.connection.id, x, y, this.props.type)
-        */
+    UmlConnectionCanvas.prototype.onDoubleClickedOnObjectOnTheCanvas = function (event, connection, connectionType, startPointId, endPointId) {
+        event.cancleBubble = true; // just copy pasted from above
+        var x = event.evt.layerX;
+        var y = event.evt.layerY;
+        //this.intentToDeliver = new DoubleClickUmlConnectionIntent(connection.id, x, y, startPointId, endPointId, connectionType)
     };
     UmlConnectionCanvas.prototype.onClickedOnContainer = function (event) {
         if (this.intentToDeliver != null) {
@@ -4581,21 +5570,36 @@ var UmlConnectionCanvas = function (_super) {
         this.intentToDeliver = new UmlCanvasIntents_1.StartMovingAnchorPointIntent(umlConnectionid, firstAnchorPoint, min, max, achsis);
         event.cancelBubble = true;
     };
+    UmlConnectionCanvas.prototype.onMouseDownOnPoint = function (event, umlConnectionid, pointId, positions) {
+        var parentContainer = this.getParentContainer();
+        this.intentToDeliver = new UmlCanvasIntents_1.StartMovingPointIntent(umlConnectionid, pointId);
+        event.cancelBubble = true;
+    };
     UmlConnectionCanvas.prototype.onMouseMoveInCanvas = function (event) {
-        var movingTransaction = this.props.movingAnchorPointInteractionTransaction;
-        if (movingTransaction != null) {
+        var movingAnchorPointTransaction = this.props.movingAnchorPointInteractionTransaction;
+        var movingPointTransaction = this.props.movingPointInteractionTransaction;
+        if (movingAnchorPointTransaction != null) {
             var parentContainer = this.getParentContainer();
             var percentage = 0;
-            if (movingTransaction.achsis === true) {
+            if (movingAnchorPointTransaction.achsis === true) {
                 // X Achsis
                 var mouseX = event.pageX - parentContainer.offsetLeft + parentContainer.scrollLeft;
-                percentage = mapValue(mouseX, movingTransaction.minMouseValue, movingTransaction.maxMouseValue, 0, 100);
+                percentage = mapValue(mouseX, movingAnchorPointTransaction.minMouseValue, movingAnchorPointTransaction.maxMouseValue, 0, 100);
             } else {
                 // Y Achsis
                 var mouseY = event.pageY - parentContainer.offsetTop + parentContainer.scrollTop;
-                percentage = mapValue(mouseY, movingTransaction.minMouseValue, movingTransaction.maxMouseValue, 0, 100);
+                percentage = mapValue(mouseY, movingAnchorPointTransaction.minMouseValue, movingAnchorPointTransaction.maxMouseValue, 0, 100);
             }
-            this.props.intentEmitter.emit(UmlCanvasIntents_1.MoveAnchorPointIntent.obtain(movingTransaction.umlConnectionId, percentage, movingTransaction.firstAnchorPoint));
+            this.props.intentEmitter.emit(UmlCanvasIntents_1.MoveAnchorPointIntent.obtain(movingAnchorPointTransaction.umlConnectionId, percentage, movingAnchorPointTransaction.firstAnchorPoint));
+            event.stopPropagation();
+        }
+        if (movingPointTransaction != null) {
+            var parentContainer = this.getParentContainer();
+            var newPosition = {
+                x: event.pageX - parentContainer.offsetLeft + parentContainer.scrollLeft,
+                y: event.pageY - parentContainer.offsetTop + parentContainer.scrollTop
+            };
+            this.props.intentEmitter.emit(UmlCanvasIntents_1.MovePointIntent.obtain(movingPointTransaction.umlConnectionId, newPosition, movingPointTransaction.pointId));
             event.stopPropagation();
         }
     };
@@ -4611,6 +5615,8 @@ var UmlConnectionCanvas = function (_super) {
             this.props.intentEmitter.emit(new UmlCanvasIntents_1.StopMovingAnchorPointIntent());
             event.stopPropagation();
             this.mouseUpDeliveredBeforeCatchingClick = true;
+        } else if (this.props.movingPointInteractionTransaction != null) {
+            this.props.intentEmitter.emit(new UmlCanvasIntents_1.StopMovingPointIntent());
         } else {
             this.mouseUpDeliveredBeforeCatchingClick = false;
         }
@@ -4627,12 +5633,12 @@ var UmlConnectionCanvas = function (_super) {
         var intentEmitter = this.props.intentEmitter;
         this.props.intentEmitter.emit(new UmlCanvasIntents_1.SelectUmlRelationIntent(id));
     };
-    UmlConnectionCanvas.prototype.onTextInputChanged = function (id, idType, newText) {
+    UmlConnectionCanvas.prototype.onTextInputChanged = function (id, idType, newText, stopEditing) {
         var intentEmitter = this.props.intentEmitter;
         if (idType === FIRST_MULTIPLICITY_INPUT) {
-            intentEmitter.emit(new UmlCanvasIntents_1.ChangeUmlRelationTextFieldIntent(id, UmlCanvasIntents_1.UmlRelationTextFieldType.START_MULTIPLICITY, newText));
+            intentEmitter.emit(new UmlCanvasIntents_1.ChangeUmlRelationTextFieldIntent(id, UmlCanvasIntents_1.UmlRelationTextFieldType.START_MULTIPLICITY, newText, stopEditing));
         } else if (idType === SECOND_MULTIPLICITY_INPUT) {
-            intentEmitter.emit(new UmlCanvasIntents_1.ChangeUmlRelationTextFieldIntent(id, UmlCanvasIntents_1.UmlRelationTextFieldType.END_MULTIPLICITY, newText));
+            intentEmitter.emit(new UmlCanvasIntents_1.ChangeUmlRelationTextFieldIntent(id, UmlCanvasIntents_1.UmlRelationTextFieldType.END_MULTIPLICITY, newText, stopEditing));
         } else throw new Error("onTextInputRequiresFocus() on unknown idType " + idType);
     };
     UmlConnectionCanvas.prototype.onTextInputCanceled = function (id, idType) {
@@ -4825,20 +5831,24 @@ function mapValue(x, sourceStart, sourceEnd, targetStart, targetEnd) {
 }
 
 
-},{"../../businesslogic/intent/UmlCanvasIntents":10,"../../businesslogic/model/AnchorPoint":13,"../../businesslogic/model/EditorUmlDocument":15,"../../businesslogic/model/EditorUmlRelation":16,"../editor/Editor":25,"./TextInput":27,"@reactivex/rxjs":376,"react":566,"react-konva":540}],30:[function(require,module,exports){
+},{"../../businesslogic/intent/UmlCanvasIntents":10,"../../businesslogic/model/AnchorPoint":13,"../../businesslogic/model/EditorUmlDocument":17,"../../businesslogic/model/EditorUmlRelation":18,"../editor/Editor":28,"./TextInput":30,"@reactivex/rxjs":379,"react":569,"react-konva":543}],33:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 var Editor_1 = require("./components/editor/Editor");
 var React = require("react");
 var ReactDOM = require("react-dom");
-function startUmlEditor(loadModel, saveModel) {
-    ReactDOM.render(React.createElement(Editor_1.Editor, { loadModel: loadModel, saveModel: saveModel }), document.getElementById("main-container"));
+function startUmlEditor(loadUml, saveUmlDocument, assessmentResults, autoStartLoadingUmlDocument) {
+    ReactDOM.render(getEditor(loadUml, saveUmlDocument, assessmentResults, autoStartLoadingUmlDocument), document.getElementById("main-container"));
 }
 exports.startUmlEditor = startUmlEditor;
+function getEditor(loadUml, saveUmlDocument, assessmentResults, autoStartLoadingUmlDocument) {
+    return React.createElement(Editor_1.Editor, { loadUmlDocument: loadUml, saveUmlDocument: saveUmlDocument, assessmentResults: assessmentResults, triggerLoadingUmlDocumentAtStart: autoStartLoadingUmlDocument });
+}
+exports.getEditor = getEditor;
 
 
-},{"./components/editor/Editor":25,"react":566,"react-dom":414}],31:[function(require,module,exports){
+},{"./components/editor/Editor":28,"react":569,"react-dom":417}],34:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -4892,7 +5902,7 @@ var AsyncSubject = (function (_super) {
 }(Subject_1.Subject));
 exports.AsyncSubject = AsyncSubject;
 
-},{"./Subject":41,"./Subscription":44}],32:[function(require,module,exports){
+},{"./Subject":44,"./Subscription":47}],35:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -4942,7 +5952,7 @@ var BehaviorSubject = (function (_super) {
 }(Subject_1.Subject));
 exports.BehaviorSubject = BehaviorSubject;
 
-},{"./Subject":41,"./util/ObjectUnsubscribedError":355}],33:[function(require,module,exports){
+},{"./Subject":44,"./util/ObjectUnsubscribedError":358}],36:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -4979,7 +5989,7 @@ var InnerSubscriber = (function (_super) {
 }(Subscriber_1.Subscriber));
 exports.InnerSubscriber = InnerSubscriber;
 
-},{"./Subscriber":43}],34:[function(require,module,exports){
+},{"./Subscriber":46}],37:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('./Observable');
 /**
@@ -5107,7 +6117,7 @@ var Notification = (function () {
 }());
 exports.Notification = Notification;
 
-},{"./Observable":35}],35:[function(require,module,exports){
+},{"./Observable":38}],38:[function(require,module,exports){
 "use strict";
 var root_1 = require('./util/root');
 var toSubscriber_1 = require('./util/toSubscriber');
@@ -5364,7 +6374,7 @@ var Observable = (function () {
 }());
 exports.Observable = Observable;
 
-},{"./symbol/observable":341,"./util/root":372,"./util/toSubscriber":374}],36:[function(require,module,exports){
+},{"./symbol/observable":344,"./util/root":375,"./util/toSubscriber":377}],39:[function(require,module,exports){
 "use strict";
 exports.empty = {
     closed: true,
@@ -5373,7 +6383,7 @@ exports.empty = {
     complete: function () { }
 };
 
-},{}],37:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -5404,7 +6414,7 @@ var OuterSubscriber = (function (_super) {
 }(Subscriber_1.Subscriber));
 exports.OuterSubscriber = OuterSubscriber;
 
-},{"./Subscriber":43}],38:[function(require,module,exports){
+},{"./Subscriber":46}],41:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -5507,7 +6517,7 @@ var ReplayEvent = (function () {
     return ReplayEvent;
 }());
 
-},{"./Subject":41,"./SubjectSubscription":42,"./Subscription":44,"./operator/observeOn":275,"./scheduler/queue":339,"./util/ObjectUnsubscribedError":355}],39:[function(require,module,exports){
+},{"./Subject":44,"./SubjectSubscription":45,"./Subscription":47,"./operator/observeOn":278,"./scheduler/queue":342,"./util/ObjectUnsubscribedError":358}],42:[function(require,module,exports){
 "use strict";
 /* tslint:disable:no-unused-variable */
 // Subject imported before Observable to bypass circular dependency issue since
@@ -5737,7 +6747,7 @@ var Symbol = {
 };
 exports.Symbol = Symbol;
 
-},{"./AsyncSubject":31,"./BehaviorSubject":32,"./Notification":34,"./Observable":35,"./ReplaySubject":38,"./Subject":41,"./Subscriber":43,"./Subscription":44,"./add/observable/bindCallback":45,"./add/observable/bindNodeCallback":46,"./add/observable/combineLatest":47,"./add/observable/concat":48,"./add/observable/defer":49,"./add/observable/dom/ajax":50,"./add/observable/dom/webSocket":51,"./add/observable/empty":52,"./add/observable/forkJoin":53,"./add/observable/from":54,"./add/observable/fromEvent":55,"./add/observable/fromEventPattern":56,"./add/observable/fromPromise":57,"./add/observable/generate":58,"./add/observable/if":59,"./add/observable/interval":60,"./add/observable/merge":61,"./add/observable/never":62,"./add/observable/of":63,"./add/observable/onErrorResumeNext":64,"./add/observable/pairs":65,"./add/observable/race":66,"./add/observable/range":67,"./add/observable/throw":68,"./add/observable/timer":69,"./add/observable/using":70,"./add/observable/zip":71,"./add/operator/audit":72,"./add/operator/auditTime":73,"./add/operator/buffer":74,"./add/operator/bufferCount":75,"./add/operator/bufferTime":76,"./add/operator/bufferToggle":77,"./add/operator/bufferWhen":78,"./add/operator/catch":79,"./add/operator/combineAll":80,"./add/operator/combineLatest":81,"./add/operator/concat":82,"./add/operator/concatAll":83,"./add/operator/concatMap":84,"./add/operator/concatMapTo":85,"./add/operator/count":86,"./add/operator/debounce":87,"./add/operator/debounceTime":88,"./add/operator/defaultIfEmpty":89,"./add/operator/delay":90,"./add/operator/delayWhen":91,"./add/operator/dematerialize":92,"./add/operator/distinct":93,"./add/operator/distinctUntilChanged":94,"./add/operator/distinctUntilKeyChanged":95,"./add/operator/do":96,"./add/operator/elementAt":97,"./add/operator/every":98,"./add/operator/exhaust":99,"./add/operator/exhaustMap":100,"./add/operator/expand":101,"./add/operator/filter":102,"./add/operator/finally":103,"./add/operator/find":104,"./add/operator/findIndex":105,"./add/operator/first":106,"./add/operator/groupBy":107,"./add/operator/ignoreElements":108,"./add/operator/isEmpty":109,"./add/operator/last":110,"./add/operator/let":111,"./add/operator/map":112,"./add/operator/mapTo":113,"./add/operator/materialize":114,"./add/operator/max":115,"./add/operator/merge":116,"./add/operator/mergeAll":117,"./add/operator/mergeMap":118,"./add/operator/mergeMapTo":119,"./add/operator/mergeScan":120,"./add/operator/min":121,"./add/operator/multicast":122,"./add/operator/observeOn":123,"./add/operator/onErrorResumeNext":124,"./add/operator/pairwise":125,"./add/operator/partition":126,"./add/operator/pluck":127,"./add/operator/publish":128,"./add/operator/publishBehavior":129,"./add/operator/publishLast":130,"./add/operator/publishReplay":131,"./add/operator/race":132,"./add/operator/reduce":133,"./add/operator/repeat":134,"./add/operator/repeatWhen":135,"./add/operator/retry":136,"./add/operator/retryWhen":137,"./add/operator/sample":138,"./add/operator/sampleTime":139,"./add/operator/scan":140,"./add/operator/sequenceEqual":141,"./add/operator/share":142,"./add/operator/shareReplay":143,"./add/operator/single":144,"./add/operator/skip":145,"./add/operator/skipLast":146,"./add/operator/skipUntil":147,"./add/operator/skipWhile":148,"./add/operator/startWith":149,"./add/operator/subscribeOn":150,"./add/operator/switch":151,"./add/operator/switchMap":152,"./add/operator/switchMapTo":153,"./add/operator/take":154,"./add/operator/takeLast":155,"./add/operator/takeUntil":156,"./add/operator/takeWhile":157,"./add/operator/throttle":158,"./add/operator/throttleTime":159,"./add/operator/timeInterval":160,"./add/operator/timeout":161,"./add/operator/timeoutWith":162,"./add/operator/timestamp":163,"./add/operator/toArray":164,"./add/operator/toPromise":165,"./add/operator/window":166,"./add/operator/windowCount":167,"./add/operator/windowTime":168,"./add/operator/windowToggle":169,"./add/operator/windowWhen":170,"./add/operator/withLatestFrom":171,"./add/operator/zip":172,"./add/operator/zipAll":173,"./observable/ConnectableObservable":178,"./observable/dom/AjaxObservable":203,"./operator/timeInterval":312,"./operator/timestamp":315,"./scheduler/VirtualTimeScheduler":335,"./scheduler/animationFrame":336,"./scheduler/asap":337,"./scheduler/async":338,"./scheduler/queue":339,"./symbol/iterator":340,"./symbol/observable":341,"./symbol/rxSubscriber":342,"./testing/TestScheduler":347,"./util/ArgumentOutOfRangeError":349,"./util/EmptyError":350,"./util/ObjectUnsubscribedError":355,"./util/TimeoutError":357,"./util/UnsubscriptionError":358}],40:[function(require,module,exports){
+},{"./AsyncSubject":34,"./BehaviorSubject":35,"./Notification":37,"./Observable":38,"./ReplaySubject":41,"./Subject":44,"./Subscriber":46,"./Subscription":47,"./add/observable/bindCallback":48,"./add/observable/bindNodeCallback":49,"./add/observable/combineLatest":50,"./add/observable/concat":51,"./add/observable/defer":52,"./add/observable/dom/ajax":53,"./add/observable/dom/webSocket":54,"./add/observable/empty":55,"./add/observable/forkJoin":56,"./add/observable/from":57,"./add/observable/fromEvent":58,"./add/observable/fromEventPattern":59,"./add/observable/fromPromise":60,"./add/observable/generate":61,"./add/observable/if":62,"./add/observable/interval":63,"./add/observable/merge":64,"./add/observable/never":65,"./add/observable/of":66,"./add/observable/onErrorResumeNext":67,"./add/observable/pairs":68,"./add/observable/race":69,"./add/observable/range":70,"./add/observable/throw":71,"./add/observable/timer":72,"./add/observable/using":73,"./add/observable/zip":74,"./add/operator/audit":75,"./add/operator/auditTime":76,"./add/operator/buffer":77,"./add/operator/bufferCount":78,"./add/operator/bufferTime":79,"./add/operator/bufferToggle":80,"./add/operator/bufferWhen":81,"./add/operator/catch":82,"./add/operator/combineAll":83,"./add/operator/combineLatest":84,"./add/operator/concat":85,"./add/operator/concatAll":86,"./add/operator/concatMap":87,"./add/operator/concatMapTo":88,"./add/operator/count":89,"./add/operator/debounce":90,"./add/operator/debounceTime":91,"./add/operator/defaultIfEmpty":92,"./add/operator/delay":93,"./add/operator/delayWhen":94,"./add/operator/dematerialize":95,"./add/operator/distinct":96,"./add/operator/distinctUntilChanged":97,"./add/operator/distinctUntilKeyChanged":98,"./add/operator/do":99,"./add/operator/elementAt":100,"./add/operator/every":101,"./add/operator/exhaust":102,"./add/operator/exhaustMap":103,"./add/operator/expand":104,"./add/operator/filter":105,"./add/operator/finally":106,"./add/operator/find":107,"./add/operator/findIndex":108,"./add/operator/first":109,"./add/operator/groupBy":110,"./add/operator/ignoreElements":111,"./add/operator/isEmpty":112,"./add/operator/last":113,"./add/operator/let":114,"./add/operator/map":115,"./add/operator/mapTo":116,"./add/operator/materialize":117,"./add/operator/max":118,"./add/operator/merge":119,"./add/operator/mergeAll":120,"./add/operator/mergeMap":121,"./add/operator/mergeMapTo":122,"./add/operator/mergeScan":123,"./add/operator/min":124,"./add/operator/multicast":125,"./add/operator/observeOn":126,"./add/operator/onErrorResumeNext":127,"./add/operator/pairwise":128,"./add/operator/partition":129,"./add/operator/pluck":130,"./add/operator/publish":131,"./add/operator/publishBehavior":132,"./add/operator/publishLast":133,"./add/operator/publishReplay":134,"./add/operator/race":135,"./add/operator/reduce":136,"./add/operator/repeat":137,"./add/operator/repeatWhen":138,"./add/operator/retry":139,"./add/operator/retryWhen":140,"./add/operator/sample":141,"./add/operator/sampleTime":142,"./add/operator/scan":143,"./add/operator/sequenceEqual":144,"./add/operator/share":145,"./add/operator/shareReplay":146,"./add/operator/single":147,"./add/operator/skip":148,"./add/operator/skipLast":149,"./add/operator/skipUntil":150,"./add/operator/skipWhile":151,"./add/operator/startWith":152,"./add/operator/subscribeOn":153,"./add/operator/switch":154,"./add/operator/switchMap":155,"./add/operator/switchMapTo":156,"./add/operator/take":157,"./add/operator/takeLast":158,"./add/operator/takeUntil":159,"./add/operator/takeWhile":160,"./add/operator/throttle":161,"./add/operator/throttleTime":162,"./add/operator/timeInterval":163,"./add/operator/timeout":164,"./add/operator/timeoutWith":165,"./add/operator/timestamp":166,"./add/operator/toArray":167,"./add/operator/toPromise":168,"./add/operator/window":169,"./add/operator/windowCount":170,"./add/operator/windowTime":171,"./add/operator/windowToggle":172,"./add/operator/windowWhen":173,"./add/operator/withLatestFrom":174,"./add/operator/zip":175,"./add/operator/zipAll":176,"./observable/ConnectableObservable":181,"./observable/dom/AjaxObservable":206,"./operator/timeInterval":315,"./operator/timestamp":318,"./scheduler/VirtualTimeScheduler":338,"./scheduler/animationFrame":339,"./scheduler/asap":340,"./scheduler/async":341,"./scheduler/queue":342,"./symbol/iterator":343,"./symbol/observable":344,"./symbol/rxSubscriber":345,"./testing/TestScheduler":350,"./util/ArgumentOutOfRangeError":352,"./util/EmptyError":353,"./util/ObjectUnsubscribedError":358,"./util/TimeoutError":360,"./util/UnsubscriptionError":361}],43:[function(require,module,exports){
 "use strict";
 /**
  * An execution context and a data structure to order tasks and schedule their
@@ -5787,7 +6797,7 @@ var Scheduler = (function () {
 }());
 exports.Scheduler = Scheduler;
 
-},{}],41:[function(require,module,exports){
+},{}],44:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -5956,7 +6966,7 @@ var AnonymousSubject = (function (_super) {
 }(Subject));
 exports.AnonymousSubject = AnonymousSubject;
 
-},{"./Observable":35,"./SubjectSubscription":42,"./Subscriber":43,"./Subscription":44,"./symbol/rxSubscriber":342,"./util/ObjectUnsubscribedError":355}],42:[function(require,module,exports){
+},{"./Observable":38,"./SubjectSubscription":45,"./Subscriber":46,"./Subscription":47,"./symbol/rxSubscriber":345,"./util/ObjectUnsubscribedError":358}],45:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -5997,7 +7007,7 @@ var SubjectSubscription = (function (_super) {
 }(Subscription_1.Subscription));
 exports.SubjectSubscription = SubjectSubscription;
 
-},{"./Subscription":44}],43:[function(require,module,exports){
+},{"./Subscription":47}],46:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -6262,7 +7272,7 @@ var SafeSubscriber = (function (_super) {
     return SafeSubscriber;
 }(Subscriber));
 
-},{"./Observer":36,"./Subscription":44,"./symbol/rxSubscriber":342,"./util/isFunction":365}],44:[function(require,module,exports){
+},{"./Observer":39,"./Subscription":47,"./symbol/rxSubscriber":345,"./util/isFunction":368}],47:[function(require,module,exports){
 "use strict";
 var isArray_1 = require('./util/isArray');
 var isObject_1 = require('./util/isObject');
@@ -6456,788 +7466,788 @@ function flattenUnsubscriptionErrors(errors) {
     return errors.reduce(function (errs, err) { return errs.concat((err instanceof UnsubscriptionError_1.UnsubscriptionError) ? err.errors : err); }, []);
 }
 
-},{"./util/UnsubscriptionError":358,"./util/errorObject":361,"./util/isArray":362,"./util/isFunction":365,"./util/isObject":367,"./util/tryCatch":375}],45:[function(require,module,exports){
+},{"./util/UnsubscriptionError":361,"./util/errorObject":364,"./util/isArray":365,"./util/isFunction":368,"./util/isObject":370,"./util/tryCatch":378}],48:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var bindCallback_1 = require('../../observable/bindCallback');
 Observable_1.Observable.bindCallback = bindCallback_1.bindCallback;
 
-},{"../../Observable":35,"../../observable/bindCallback":198}],46:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/bindCallback":201}],49:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var bindNodeCallback_1 = require('../../observable/bindNodeCallback');
 Observable_1.Observable.bindNodeCallback = bindNodeCallback_1.bindNodeCallback;
 
-},{"../../Observable":35,"../../observable/bindNodeCallback":199}],47:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/bindNodeCallback":202}],50:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var combineLatest_1 = require('../../observable/combineLatest');
 Observable_1.Observable.combineLatest = combineLatest_1.combineLatest;
 
-},{"../../Observable":35,"../../observable/combineLatest":200}],48:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/combineLatest":203}],51:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var concat_1 = require('../../observable/concat');
 Observable_1.Observable.concat = concat_1.concat;
 
-},{"../../Observable":35,"../../observable/concat":201}],49:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/concat":204}],52:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var defer_1 = require('../../observable/defer');
 Observable_1.Observable.defer = defer_1.defer;
 
-},{"../../Observable":35,"../../observable/defer":202}],50:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/defer":205}],53:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../../Observable');
 var ajax_1 = require('../../../observable/dom/ajax');
 Observable_1.Observable.ajax = ajax_1.ajax;
 
-},{"../../../Observable":35,"../../../observable/dom/ajax":205}],51:[function(require,module,exports){
+},{"../../../Observable":38,"../../../observable/dom/ajax":208}],54:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../../Observable');
 var webSocket_1 = require('../../../observable/dom/webSocket');
 Observable_1.Observable.webSocket = webSocket_1.webSocket;
 
-},{"../../../Observable":35,"../../../observable/dom/webSocket":206}],52:[function(require,module,exports){
+},{"../../../Observable":38,"../../../observable/dom/webSocket":209}],55:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var empty_1 = require('../../observable/empty');
 Observable_1.Observable.empty = empty_1.empty;
 
-},{"../../Observable":35,"../../observable/empty":207}],53:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/empty":210}],56:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var forkJoin_1 = require('../../observable/forkJoin');
 Observable_1.Observable.forkJoin = forkJoin_1.forkJoin;
 
-},{"../../Observable":35,"../../observable/forkJoin":208}],54:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/forkJoin":211}],57:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var from_1 = require('../../observable/from');
 Observable_1.Observable.from = from_1.from;
 
-},{"../../Observable":35,"../../observable/from":209}],55:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/from":212}],58:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var fromEvent_1 = require('../../observable/fromEvent');
 Observable_1.Observable.fromEvent = fromEvent_1.fromEvent;
 
-},{"../../Observable":35,"../../observable/fromEvent":210}],56:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/fromEvent":213}],59:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var fromEventPattern_1 = require('../../observable/fromEventPattern');
 Observable_1.Observable.fromEventPattern = fromEventPattern_1.fromEventPattern;
 
-},{"../../Observable":35,"../../observable/fromEventPattern":211}],57:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/fromEventPattern":214}],60:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var fromPromise_1 = require('../../observable/fromPromise');
 Observable_1.Observable.fromPromise = fromPromise_1.fromPromise;
 
-},{"../../Observable":35,"../../observable/fromPromise":212}],58:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/fromPromise":215}],61:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var GenerateObservable_1 = require('../../observable/GenerateObservable');
 Observable_1.Observable.generate = GenerateObservable_1.GenerateObservable.create;
 
-},{"../../Observable":35,"../../observable/GenerateObservable":186}],59:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/GenerateObservable":189}],62:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var if_1 = require('../../observable/if');
 Observable_1.Observable.if = if_1._if;
 
-},{"../../Observable":35,"../../observable/if":213}],60:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/if":216}],63:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var interval_1 = require('../../observable/interval');
 Observable_1.Observable.interval = interval_1.interval;
 
-},{"../../Observable":35,"../../observable/interval":214}],61:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/interval":217}],64:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var merge_1 = require('../../observable/merge');
 Observable_1.Observable.merge = merge_1.merge;
 
-},{"../../Observable":35,"../../observable/merge":215}],62:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/merge":218}],65:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var never_1 = require('../../observable/never');
 Observable_1.Observable.never = never_1.never;
 
-},{"../../Observable":35,"../../observable/never":216}],63:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/never":219}],66:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var of_1 = require('../../observable/of');
 Observable_1.Observable.of = of_1.of;
 
-},{"../../Observable":35,"../../observable/of":217}],64:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/of":220}],67:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var onErrorResumeNext_1 = require('../../operator/onErrorResumeNext');
 Observable_1.Observable.onErrorResumeNext = onErrorResumeNext_1.onErrorResumeNextStatic;
 
-},{"../../Observable":35,"../../operator/onErrorResumeNext":276}],65:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/onErrorResumeNext":279}],68:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var pairs_1 = require('../../observable/pairs');
 Observable_1.Observable.pairs = pairs_1.pairs;
 
-},{"../../Observable":35,"../../observable/pairs":218}],66:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/pairs":221}],69:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var race_1 = require('../../operator/race');
 Observable_1.Observable.race = race_1.raceStatic;
 
-},{"../../Observable":35,"../../operator/race":284}],67:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/race":287}],70:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var range_1 = require('../../observable/range');
 Observable_1.Observable.range = range_1.range;
 
-},{"../../Observable":35,"../../observable/range":219}],68:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/range":222}],71:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var throw_1 = require('../../observable/throw');
 Observable_1.Observable.throw = throw_1._throw;
 
-},{"../../Observable":35,"../../observable/throw":220}],69:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/throw":223}],72:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var timer_1 = require('../../observable/timer');
 Observable_1.Observable.timer = timer_1.timer;
 
-},{"../../Observable":35,"../../observable/timer":221}],70:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/timer":224}],73:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var using_1 = require('../../observable/using');
 Observable_1.Observable.using = using_1.using;
 
-},{"../../Observable":35,"../../observable/using":222}],71:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/using":225}],74:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var zip_1 = require('../../observable/zip');
 Observable_1.Observable.zip = zip_1.zip;
 
-},{"../../Observable":35,"../../observable/zip":223}],72:[function(require,module,exports){
+},{"../../Observable":38,"../../observable/zip":226}],75:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var audit_1 = require('../../operator/audit');
 Observable_1.Observable.prototype.audit = audit_1.audit;
 
-},{"../../Observable":35,"../../operator/audit":224}],73:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/audit":227}],76:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var auditTime_1 = require('../../operator/auditTime');
 Observable_1.Observable.prototype.auditTime = auditTime_1.auditTime;
 
-},{"../../Observable":35,"../../operator/auditTime":225}],74:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/auditTime":228}],77:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var buffer_1 = require('../../operator/buffer');
 Observable_1.Observable.prototype.buffer = buffer_1.buffer;
 
-},{"../../Observable":35,"../../operator/buffer":226}],75:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/buffer":229}],78:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var bufferCount_1 = require('../../operator/bufferCount');
 Observable_1.Observable.prototype.bufferCount = bufferCount_1.bufferCount;
 
-},{"../../Observable":35,"../../operator/bufferCount":227}],76:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/bufferCount":230}],79:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var bufferTime_1 = require('../../operator/bufferTime');
 Observable_1.Observable.prototype.bufferTime = bufferTime_1.bufferTime;
 
-},{"../../Observable":35,"../../operator/bufferTime":228}],77:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/bufferTime":231}],80:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var bufferToggle_1 = require('../../operator/bufferToggle');
 Observable_1.Observable.prototype.bufferToggle = bufferToggle_1.bufferToggle;
 
-},{"../../Observable":35,"../../operator/bufferToggle":229}],78:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/bufferToggle":232}],81:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var bufferWhen_1 = require('../../operator/bufferWhen');
 Observable_1.Observable.prototype.bufferWhen = bufferWhen_1.bufferWhen;
 
-},{"../../Observable":35,"../../operator/bufferWhen":230}],79:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/bufferWhen":233}],82:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var catch_1 = require('../../operator/catch');
 Observable_1.Observable.prototype.catch = catch_1._catch;
 Observable_1.Observable.prototype._catch = catch_1._catch;
 
-},{"../../Observable":35,"../../operator/catch":231}],80:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/catch":234}],83:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var combineAll_1 = require('../../operator/combineAll');
 Observable_1.Observable.prototype.combineAll = combineAll_1.combineAll;
 
-},{"../../Observable":35,"../../operator/combineAll":232}],81:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/combineAll":235}],84:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var combineLatest_1 = require('../../operator/combineLatest');
 Observable_1.Observable.prototype.combineLatest = combineLatest_1.combineLatest;
 
-},{"../../Observable":35,"../../operator/combineLatest":233}],82:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/combineLatest":236}],85:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var concat_1 = require('../../operator/concat');
 Observable_1.Observable.prototype.concat = concat_1.concat;
 
-},{"../../Observable":35,"../../operator/concat":234}],83:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/concat":237}],86:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var concatAll_1 = require('../../operator/concatAll');
 Observable_1.Observable.prototype.concatAll = concatAll_1.concatAll;
 
-},{"../../Observable":35,"../../operator/concatAll":235}],84:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/concatAll":238}],87:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var concatMap_1 = require('../../operator/concatMap');
 Observable_1.Observable.prototype.concatMap = concatMap_1.concatMap;
 
-},{"../../Observable":35,"../../operator/concatMap":236}],85:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/concatMap":239}],88:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var concatMapTo_1 = require('../../operator/concatMapTo');
 Observable_1.Observable.prototype.concatMapTo = concatMapTo_1.concatMapTo;
 
-},{"../../Observable":35,"../../operator/concatMapTo":237}],86:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/concatMapTo":240}],89:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var count_1 = require('../../operator/count');
 Observable_1.Observable.prototype.count = count_1.count;
 
-},{"../../Observable":35,"../../operator/count":238}],87:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/count":241}],90:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var debounce_1 = require('../../operator/debounce');
 Observable_1.Observable.prototype.debounce = debounce_1.debounce;
 
-},{"../../Observable":35,"../../operator/debounce":239}],88:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/debounce":242}],91:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var debounceTime_1 = require('../../operator/debounceTime');
 Observable_1.Observable.prototype.debounceTime = debounceTime_1.debounceTime;
 
-},{"../../Observable":35,"../../operator/debounceTime":240}],89:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/debounceTime":243}],92:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var defaultIfEmpty_1 = require('../../operator/defaultIfEmpty');
 Observable_1.Observable.prototype.defaultIfEmpty = defaultIfEmpty_1.defaultIfEmpty;
 
-},{"../../Observable":35,"../../operator/defaultIfEmpty":241}],90:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/defaultIfEmpty":244}],93:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var delay_1 = require('../../operator/delay');
 Observable_1.Observable.prototype.delay = delay_1.delay;
 
-},{"../../Observable":35,"../../operator/delay":242}],91:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/delay":245}],94:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var delayWhen_1 = require('../../operator/delayWhen');
 Observable_1.Observable.prototype.delayWhen = delayWhen_1.delayWhen;
 
-},{"../../Observable":35,"../../operator/delayWhen":243}],92:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/delayWhen":246}],95:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var dematerialize_1 = require('../../operator/dematerialize');
 Observable_1.Observable.prototype.dematerialize = dematerialize_1.dematerialize;
 
-},{"../../Observable":35,"../../operator/dematerialize":244}],93:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/dematerialize":247}],96:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var distinct_1 = require('../../operator/distinct');
 Observable_1.Observable.prototype.distinct = distinct_1.distinct;
 
-},{"../../Observable":35,"../../operator/distinct":245}],94:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/distinct":248}],97:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var distinctUntilChanged_1 = require('../../operator/distinctUntilChanged');
 Observable_1.Observable.prototype.distinctUntilChanged = distinctUntilChanged_1.distinctUntilChanged;
 
-},{"../../Observable":35,"../../operator/distinctUntilChanged":246}],95:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/distinctUntilChanged":249}],98:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var distinctUntilKeyChanged_1 = require('../../operator/distinctUntilKeyChanged');
 Observable_1.Observable.prototype.distinctUntilKeyChanged = distinctUntilKeyChanged_1.distinctUntilKeyChanged;
 
-},{"../../Observable":35,"../../operator/distinctUntilKeyChanged":247}],96:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/distinctUntilKeyChanged":250}],99:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var do_1 = require('../../operator/do');
 Observable_1.Observable.prototype.do = do_1._do;
 Observable_1.Observable.prototype._do = do_1._do;
 
-},{"../../Observable":35,"../../operator/do":248}],97:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/do":251}],100:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var elementAt_1 = require('../../operator/elementAt');
 Observable_1.Observable.prototype.elementAt = elementAt_1.elementAt;
 
-},{"../../Observable":35,"../../operator/elementAt":249}],98:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/elementAt":252}],101:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var every_1 = require('../../operator/every');
 Observable_1.Observable.prototype.every = every_1.every;
 
-},{"../../Observable":35,"../../operator/every":250}],99:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/every":253}],102:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var exhaust_1 = require('../../operator/exhaust');
 Observable_1.Observable.prototype.exhaust = exhaust_1.exhaust;
 
-},{"../../Observable":35,"../../operator/exhaust":251}],100:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/exhaust":254}],103:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var exhaustMap_1 = require('../../operator/exhaustMap');
 Observable_1.Observable.prototype.exhaustMap = exhaustMap_1.exhaustMap;
 
-},{"../../Observable":35,"../../operator/exhaustMap":252}],101:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/exhaustMap":255}],104:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var expand_1 = require('../../operator/expand');
 Observable_1.Observable.prototype.expand = expand_1.expand;
 
-},{"../../Observable":35,"../../operator/expand":253}],102:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/expand":256}],105:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var filter_1 = require('../../operator/filter');
 Observable_1.Observable.prototype.filter = filter_1.filter;
 
-},{"../../Observable":35,"../../operator/filter":254}],103:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/filter":257}],106:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var finally_1 = require('../../operator/finally');
 Observable_1.Observable.prototype.finally = finally_1._finally;
 Observable_1.Observable.prototype._finally = finally_1._finally;
 
-},{"../../Observable":35,"../../operator/finally":255}],104:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/finally":258}],107:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var find_1 = require('../../operator/find');
 Observable_1.Observable.prototype.find = find_1.find;
 
-},{"../../Observable":35,"../../operator/find":256}],105:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/find":259}],108:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var findIndex_1 = require('../../operator/findIndex');
 Observable_1.Observable.prototype.findIndex = findIndex_1.findIndex;
 
-},{"../../Observable":35,"../../operator/findIndex":257}],106:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/findIndex":260}],109:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var first_1 = require('../../operator/first');
 Observable_1.Observable.prototype.first = first_1.first;
 
-},{"../../Observable":35,"../../operator/first":258}],107:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/first":261}],110:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var groupBy_1 = require('../../operator/groupBy');
 Observable_1.Observable.prototype.groupBy = groupBy_1.groupBy;
 
-},{"../../Observable":35,"../../operator/groupBy":259}],108:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/groupBy":262}],111:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var ignoreElements_1 = require('../../operator/ignoreElements');
 Observable_1.Observable.prototype.ignoreElements = ignoreElements_1.ignoreElements;
 
-},{"../../Observable":35,"../../operator/ignoreElements":260}],109:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/ignoreElements":263}],112:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var isEmpty_1 = require('../../operator/isEmpty');
 Observable_1.Observable.prototype.isEmpty = isEmpty_1.isEmpty;
 
-},{"../../Observable":35,"../../operator/isEmpty":261}],110:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/isEmpty":264}],113:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var last_1 = require('../../operator/last');
 Observable_1.Observable.prototype.last = last_1.last;
 
-},{"../../Observable":35,"../../operator/last":262}],111:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/last":265}],114:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var let_1 = require('../../operator/let');
 Observable_1.Observable.prototype.let = let_1.letProto;
 Observable_1.Observable.prototype.letBind = let_1.letProto;
 
-},{"../../Observable":35,"../../operator/let":263}],112:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/let":266}],115:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var map_1 = require('../../operator/map');
 Observable_1.Observable.prototype.map = map_1.map;
 
-},{"../../Observable":35,"../../operator/map":264}],113:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/map":267}],116:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var mapTo_1 = require('../../operator/mapTo');
 Observable_1.Observable.prototype.mapTo = mapTo_1.mapTo;
 
-},{"../../Observable":35,"../../operator/mapTo":265}],114:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/mapTo":268}],117:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var materialize_1 = require('../../operator/materialize');
 Observable_1.Observable.prototype.materialize = materialize_1.materialize;
 
-},{"../../Observable":35,"../../operator/materialize":266}],115:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/materialize":269}],118:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var max_1 = require('../../operator/max');
 Observable_1.Observable.prototype.max = max_1.max;
 
-},{"../../Observable":35,"../../operator/max":267}],116:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/max":270}],119:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var merge_1 = require('../../operator/merge');
 Observable_1.Observable.prototype.merge = merge_1.merge;
 
-},{"../../Observable":35,"../../operator/merge":268}],117:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/merge":271}],120:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var mergeAll_1 = require('../../operator/mergeAll');
 Observable_1.Observable.prototype.mergeAll = mergeAll_1.mergeAll;
 
-},{"../../Observable":35,"../../operator/mergeAll":269}],118:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/mergeAll":272}],121:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var mergeMap_1 = require('../../operator/mergeMap');
 Observable_1.Observable.prototype.mergeMap = mergeMap_1.mergeMap;
 Observable_1.Observable.prototype.flatMap = mergeMap_1.mergeMap;
 
-},{"../../Observable":35,"../../operator/mergeMap":270}],119:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/mergeMap":273}],122:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var mergeMapTo_1 = require('../../operator/mergeMapTo');
 Observable_1.Observable.prototype.flatMapTo = mergeMapTo_1.mergeMapTo;
 Observable_1.Observable.prototype.mergeMapTo = mergeMapTo_1.mergeMapTo;
 
-},{"../../Observable":35,"../../operator/mergeMapTo":271}],120:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/mergeMapTo":274}],123:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var mergeScan_1 = require('../../operator/mergeScan');
 Observable_1.Observable.prototype.mergeScan = mergeScan_1.mergeScan;
 
-},{"../../Observable":35,"../../operator/mergeScan":272}],121:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/mergeScan":275}],124:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var min_1 = require('../../operator/min');
 Observable_1.Observable.prototype.min = min_1.min;
 
-},{"../../Observable":35,"../../operator/min":273}],122:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/min":276}],125:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var multicast_1 = require('../../operator/multicast');
 Observable_1.Observable.prototype.multicast = multicast_1.multicast;
 
-},{"../../Observable":35,"../../operator/multicast":274}],123:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/multicast":277}],126:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var observeOn_1 = require('../../operator/observeOn');
 Observable_1.Observable.prototype.observeOn = observeOn_1.observeOn;
 
-},{"../../Observable":35,"../../operator/observeOn":275}],124:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/observeOn":278}],127:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var onErrorResumeNext_1 = require('../../operator/onErrorResumeNext');
 Observable_1.Observable.prototype.onErrorResumeNext = onErrorResumeNext_1.onErrorResumeNext;
 
-},{"../../Observable":35,"../../operator/onErrorResumeNext":276}],125:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/onErrorResumeNext":279}],128:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var pairwise_1 = require('../../operator/pairwise');
 Observable_1.Observable.prototype.pairwise = pairwise_1.pairwise;
 
-},{"../../Observable":35,"../../operator/pairwise":277}],126:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/pairwise":280}],129:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var partition_1 = require('../../operator/partition');
 Observable_1.Observable.prototype.partition = partition_1.partition;
 
-},{"../../Observable":35,"../../operator/partition":278}],127:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/partition":281}],130:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var pluck_1 = require('../../operator/pluck');
 Observable_1.Observable.prototype.pluck = pluck_1.pluck;
 
-},{"../../Observable":35,"../../operator/pluck":279}],128:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/pluck":282}],131:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var publish_1 = require('../../operator/publish');
 Observable_1.Observable.prototype.publish = publish_1.publish;
 
-},{"../../Observable":35,"../../operator/publish":280}],129:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/publish":283}],132:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var publishBehavior_1 = require('../../operator/publishBehavior');
 Observable_1.Observable.prototype.publishBehavior = publishBehavior_1.publishBehavior;
 
-},{"../../Observable":35,"../../operator/publishBehavior":281}],130:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/publishBehavior":284}],133:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var publishLast_1 = require('../../operator/publishLast');
 Observable_1.Observable.prototype.publishLast = publishLast_1.publishLast;
 
-},{"../../Observable":35,"../../operator/publishLast":282}],131:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/publishLast":285}],134:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var publishReplay_1 = require('../../operator/publishReplay');
 Observable_1.Observable.prototype.publishReplay = publishReplay_1.publishReplay;
 
-},{"../../Observable":35,"../../operator/publishReplay":283}],132:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/publishReplay":286}],135:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var race_1 = require('../../operator/race');
 Observable_1.Observable.prototype.race = race_1.race;
 
-},{"../../Observable":35,"../../operator/race":284}],133:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/race":287}],136:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var reduce_1 = require('../../operator/reduce');
 Observable_1.Observable.prototype.reduce = reduce_1.reduce;
 
-},{"../../Observable":35,"../../operator/reduce":285}],134:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/reduce":288}],137:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var repeat_1 = require('../../operator/repeat');
 Observable_1.Observable.prototype.repeat = repeat_1.repeat;
 
-},{"../../Observable":35,"../../operator/repeat":286}],135:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/repeat":289}],138:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var repeatWhen_1 = require('../../operator/repeatWhen');
 Observable_1.Observable.prototype.repeatWhen = repeatWhen_1.repeatWhen;
 
-},{"../../Observable":35,"../../operator/repeatWhen":287}],136:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/repeatWhen":290}],139:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var retry_1 = require('../../operator/retry');
 Observable_1.Observable.prototype.retry = retry_1.retry;
 
-},{"../../Observable":35,"../../operator/retry":288}],137:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/retry":291}],140:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var retryWhen_1 = require('../../operator/retryWhen');
 Observable_1.Observable.prototype.retryWhen = retryWhen_1.retryWhen;
 
-},{"../../Observable":35,"../../operator/retryWhen":289}],138:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/retryWhen":292}],141:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var sample_1 = require('../../operator/sample');
 Observable_1.Observable.prototype.sample = sample_1.sample;
 
-},{"../../Observable":35,"../../operator/sample":290}],139:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/sample":293}],142:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var sampleTime_1 = require('../../operator/sampleTime');
 Observable_1.Observable.prototype.sampleTime = sampleTime_1.sampleTime;
 
-},{"../../Observable":35,"../../operator/sampleTime":291}],140:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/sampleTime":294}],143:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var scan_1 = require('../../operator/scan');
 Observable_1.Observable.prototype.scan = scan_1.scan;
 
-},{"../../Observable":35,"../../operator/scan":292}],141:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/scan":295}],144:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var sequenceEqual_1 = require('../../operator/sequenceEqual');
 Observable_1.Observable.prototype.sequenceEqual = sequenceEqual_1.sequenceEqual;
 
-},{"../../Observable":35,"../../operator/sequenceEqual":293}],142:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/sequenceEqual":296}],145:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var share_1 = require('../../operator/share');
 Observable_1.Observable.prototype.share = share_1.share;
 
-},{"../../Observable":35,"../../operator/share":294}],143:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/share":297}],146:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var shareReplay_1 = require('../../operator/shareReplay');
 Observable_1.Observable.prototype.shareReplay = shareReplay_1.shareReplay;
 
-},{"../../Observable":35,"../../operator/shareReplay":295}],144:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/shareReplay":298}],147:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var single_1 = require('../../operator/single');
 Observable_1.Observable.prototype.single = single_1.single;
 
-},{"../../Observable":35,"../../operator/single":296}],145:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/single":299}],148:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var skip_1 = require('../../operator/skip');
 Observable_1.Observable.prototype.skip = skip_1.skip;
 
-},{"../../Observable":35,"../../operator/skip":297}],146:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/skip":300}],149:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var skipLast_1 = require('../../operator/skipLast');
 Observable_1.Observable.prototype.skipLast = skipLast_1.skipLast;
 
-},{"../../Observable":35,"../../operator/skipLast":298}],147:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/skipLast":301}],150:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var skipUntil_1 = require('../../operator/skipUntil');
 Observable_1.Observable.prototype.skipUntil = skipUntil_1.skipUntil;
 
-},{"../../Observable":35,"../../operator/skipUntil":299}],148:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/skipUntil":302}],151:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var skipWhile_1 = require('../../operator/skipWhile');
 Observable_1.Observable.prototype.skipWhile = skipWhile_1.skipWhile;
 
-},{"../../Observable":35,"../../operator/skipWhile":300}],149:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/skipWhile":303}],152:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var startWith_1 = require('../../operator/startWith');
 Observable_1.Observable.prototype.startWith = startWith_1.startWith;
 
-},{"../../Observable":35,"../../operator/startWith":301}],150:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/startWith":304}],153:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var subscribeOn_1 = require('../../operator/subscribeOn');
 Observable_1.Observable.prototype.subscribeOn = subscribeOn_1.subscribeOn;
 
-},{"../../Observable":35,"../../operator/subscribeOn":302}],151:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/subscribeOn":305}],154:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var switch_1 = require('../../operator/switch');
 Observable_1.Observable.prototype.switch = switch_1._switch;
 Observable_1.Observable.prototype._switch = switch_1._switch;
 
-},{"../../Observable":35,"../../operator/switch":303}],152:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/switch":306}],155:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var switchMap_1 = require('../../operator/switchMap');
 Observable_1.Observable.prototype.switchMap = switchMap_1.switchMap;
 
-},{"../../Observable":35,"../../operator/switchMap":304}],153:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/switchMap":307}],156:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var switchMapTo_1 = require('../../operator/switchMapTo');
 Observable_1.Observable.prototype.switchMapTo = switchMapTo_1.switchMapTo;
 
-},{"../../Observable":35,"../../operator/switchMapTo":305}],154:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/switchMapTo":308}],157:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var take_1 = require('../../operator/take');
 Observable_1.Observable.prototype.take = take_1.take;
 
-},{"../../Observable":35,"../../operator/take":306}],155:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/take":309}],158:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var takeLast_1 = require('../../operator/takeLast');
 Observable_1.Observable.prototype.takeLast = takeLast_1.takeLast;
 
-},{"../../Observable":35,"../../operator/takeLast":307}],156:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/takeLast":310}],159:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var takeUntil_1 = require('../../operator/takeUntil');
 Observable_1.Observable.prototype.takeUntil = takeUntil_1.takeUntil;
 
-},{"../../Observable":35,"../../operator/takeUntil":308}],157:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/takeUntil":311}],160:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var takeWhile_1 = require('../../operator/takeWhile');
 Observable_1.Observable.prototype.takeWhile = takeWhile_1.takeWhile;
 
-},{"../../Observable":35,"../../operator/takeWhile":309}],158:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/takeWhile":312}],161:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var throttle_1 = require('../../operator/throttle');
 Observable_1.Observable.prototype.throttle = throttle_1.throttle;
 
-},{"../../Observable":35,"../../operator/throttle":310}],159:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/throttle":313}],162:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var throttleTime_1 = require('../../operator/throttleTime');
 Observable_1.Observable.prototype.throttleTime = throttleTime_1.throttleTime;
 
-},{"../../Observable":35,"../../operator/throttleTime":311}],160:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/throttleTime":314}],163:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var timeInterval_1 = require('../../operator/timeInterval');
 Observable_1.Observable.prototype.timeInterval = timeInterval_1.timeInterval;
 
-},{"../../Observable":35,"../../operator/timeInterval":312}],161:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/timeInterval":315}],164:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var timeout_1 = require('../../operator/timeout');
 Observable_1.Observable.prototype.timeout = timeout_1.timeout;
 
-},{"../../Observable":35,"../../operator/timeout":313}],162:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/timeout":316}],165:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var timeoutWith_1 = require('../../operator/timeoutWith');
 Observable_1.Observable.prototype.timeoutWith = timeoutWith_1.timeoutWith;
 
-},{"../../Observable":35,"../../operator/timeoutWith":314}],163:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/timeoutWith":317}],166:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var timestamp_1 = require('../../operator/timestamp');
 Observable_1.Observable.prototype.timestamp = timestamp_1.timestamp;
 
-},{"../../Observable":35,"../../operator/timestamp":315}],164:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/timestamp":318}],167:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var toArray_1 = require('../../operator/toArray');
 Observable_1.Observable.prototype.toArray = toArray_1.toArray;
 
-},{"../../Observable":35,"../../operator/toArray":316}],165:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/toArray":319}],168:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var toPromise_1 = require('../../operator/toPromise');
 Observable_1.Observable.prototype.toPromise = toPromise_1.toPromise;
 
-},{"../../Observable":35,"../../operator/toPromise":317}],166:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/toPromise":320}],169:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var window_1 = require('../../operator/window');
 Observable_1.Observable.prototype.window = window_1.window;
 
-},{"../../Observable":35,"../../operator/window":318}],167:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/window":321}],170:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var windowCount_1 = require('../../operator/windowCount');
 Observable_1.Observable.prototype.windowCount = windowCount_1.windowCount;
 
-},{"../../Observable":35,"../../operator/windowCount":319}],168:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/windowCount":322}],171:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var windowTime_1 = require('../../operator/windowTime');
 Observable_1.Observable.prototype.windowTime = windowTime_1.windowTime;
 
-},{"../../Observable":35,"../../operator/windowTime":320}],169:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/windowTime":323}],172:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var windowToggle_1 = require('../../operator/windowToggle');
 Observable_1.Observable.prototype.windowToggle = windowToggle_1.windowToggle;
 
-},{"../../Observable":35,"../../operator/windowToggle":321}],170:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/windowToggle":324}],173:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var windowWhen_1 = require('../../operator/windowWhen');
 Observable_1.Observable.prototype.windowWhen = windowWhen_1.windowWhen;
 
-},{"../../Observable":35,"../../operator/windowWhen":322}],171:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/windowWhen":325}],174:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var withLatestFrom_1 = require('../../operator/withLatestFrom');
 Observable_1.Observable.prototype.withLatestFrom = withLatestFrom_1.withLatestFrom;
 
-},{"../../Observable":35,"../../operator/withLatestFrom":323}],172:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/withLatestFrom":326}],175:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var zip_1 = require('../../operator/zip');
 Observable_1.Observable.prototype.zip = zip_1.zipProto;
 
-},{"../../Observable":35,"../../operator/zip":324}],173:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/zip":327}],176:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../../Observable');
 var zipAll_1 = require('../../operator/zipAll');
 Observable_1.Observable.prototype.zipAll = zipAll_1.zipAll;
 
-},{"../../Observable":35,"../../operator/zipAll":325}],174:[function(require,module,exports){
+},{"../../Observable":38,"../../operator/zipAll":328}],177:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -7308,7 +8318,7 @@ var ArrayLikeObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.ArrayLikeObservable = ArrayLikeObservable;
 
-},{"../Observable":35,"./EmptyObservable":180,"./ScalarObservable":194}],175:[function(require,module,exports){
+},{"../Observable":38,"./EmptyObservable":183,"./ScalarObservable":197}],178:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -7431,7 +8441,7 @@ var ArrayObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.ArrayObservable = ArrayObservable;
 
-},{"../Observable":35,"../util/isScheduler":369,"./EmptyObservable":180,"./ScalarObservable":194}],176:[function(require,module,exports){
+},{"../Observable":38,"../util/isScheduler":372,"./EmptyObservable":183,"./ScalarObservable":197}],179:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -7700,7 +8710,7 @@ function dispatchError(arg) {
     subject.error(err);
 }
 
-},{"../AsyncSubject":31,"../Observable":35,"../util/errorObject":361,"../util/tryCatch":375}],177:[function(require,module,exports){
+},{"../AsyncSubject":34,"../Observable":38,"../util/errorObject":364,"../util/tryCatch":378}],180:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -7964,7 +8974,7 @@ function dispatchError(arg) {
     subject.error(err);
 }
 
-},{"../AsyncSubject":31,"../Observable":35,"../util/errorObject":361,"../util/tryCatch":375}],178:[function(require,module,exports){
+},{"../AsyncSubject":34,"../Observable":38,"../util/errorObject":364,"../util/tryCatch":378}],181:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -8134,7 +9144,7 @@ var RefCountSubscriber = (function (_super) {
     return RefCountSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Observable":35,"../Subject":41,"../Subscriber":43,"../Subscription":44}],179:[function(require,module,exports){
+},{"../Observable":38,"../Subject":44,"../Subscriber":46,"../Subscription":47}],182:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -8234,7 +9244,7 @@ var DeferSubscriber = (function (_super) {
     return DeferSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../Observable":35,"../OuterSubscriber":37,"../util/subscribeToResult":373}],180:[function(require,module,exports){
+},{"../Observable":38,"../OuterSubscriber":40,"../util/subscribeToResult":376}],183:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -8316,7 +9326,7 @@ var EmptyObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.EmptyObservable = EmptyObservable;
 
-},{"../Observable":35}],181:[function(require,module,exports){
+},{"../Observable":38}],184:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -8400,7 +9410,7 @@ var ErrorObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.ErrorObservable = ErrorObservable;
 
-},{"../Observable":35}],182:[function(require,module,exports){
+},{"../Observable":38}],185:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -8513,7 +9523,7 @@ var ForkJoinSubscriber = (function (_super) {
     return ForkJoinSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../Observable":35,"../OuterSubscriber":37,"../util/isArray":362,"../util/subscribeToResult":373,"./EmptyObservable":180}],183:[function(require,module,exports){
+},{"../Observable":38,"../OuterSubscriber":40,"../util/isArray":365,"../util/subscribeToResult":376,"./EmptyObservable":183}],186:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -8654,7 +9664,7 @@ var FromEventObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.FromEventObservable = FromEventObservable;
 
-},{"../Observable":35,"../Subscription":44,"../util/errorObject":361,"../util/isFunction":365,"../util/tryCatch":375}],184:[function(require,module,exports){
+},{"../Observable":38,"../Subscription":47,"../util/errorObject":364,"../util/isFunction":368,"../util/tryCatch":378}],187:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -8768,7 +9778,7 @@ var FromEventPatternObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.FromEventPatternObservable = FromEventPatternObservable;
 
-},{"../Observable":35,"../Subscription":44,"../util/isFunction":365}],185:[function(require,module,exports){
+},{"../Observable":38,"../Subscription":47,"../util/isFunction":368}],188:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -8891,7 +9901,7 @@ var FromObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.FromObservable = FromObservable;
 
-},{"../Observable":35,"../operator/observeOn":275,"../symbol/iterator":340,"../symbol/observable":341,"../util/isArray":362,"../util/isArrayLike":363,"../util/isPromise":368,"./ArrayLikeObservable":174,"./ArrayObservable":175,"./IteratorObservable":189,"./PromiseObservable":192}],186:[function(require,module,exports){
+},{"../Observable":38,"../operator/observeOn":278,"../symbol/iterator":343,"../symbol/observable":344,"../util/isArray":365,"../util/isArrayLike":366,"../util/isPromise":371,"./ArrayLikeObservable":177,"./ArrayObservable":178,"./IteratorObservable":192,"./PromiseObservable":195}],189:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9027,7 +10037,7 @@ var GenerateObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.GenerateObservable = GenerateObservable;
 
-},{"../Observable":35,"../util/isScheduler":369}],187:[function(require,module,exports){
+},{"../Observable":38,"../util/isScheduler":372}],190:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9089,7 +10099,7 @@ var IfSubscriber = (function (_super) {
     return IfSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../Observable":35,"../OuterSubscriber":37,"../util/subscribeToResult":373}],188:[function(require,module,exports){
+},{"../Observable":38,"../OuterSubscriber":40,"../util/subscribeToResult":376}],191:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9178,7 +10188,7 @@ var IntervalObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.IntervalObservable = IntervalObservable;
 
-},{"../Observable":35,"../scheduler/async":338,"../util/isNumeric":366}],189:[function(require,module,exports){
+},{"../Observable":38,"../scheduler/async":341,"../util/isNumeric":369}],192:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9342,7 +10352,7 @@ function sign(value) {
     return valueAsNumber < 0 ? -1 : 1;
 }
 
-},{"../Observable":35,"../symbol/iterator":340,"../util/root":372}],190:[function(require,module,exports){
+},{"../Observable":38,"../symbol/iterator":343,"../util/root":375}],193:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9402,7 +10412,7 @@ var NeverObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.NeverObservable = NeverObservable;
 
-},{"../Observable":35,"../util/noop":370}],191:[function(require,module,exports){
+},{"../Observable":38,"../util/noop":373}],194:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9488,7 +10498,7 @@ var PairsObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.PairsObservable = PairsObservable;
 
-},{"../Observable":35}],192:[function(require,module,exports){
+},{"../Observable":38}],195:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9610,7 +10620,7 @@ function dispatchError(arg) {
     }
 }
 
-},{"../Observable":35,"../util/root":372}],193:[function(require,module,exports){
+},{"../Observable":38,"../util/root":375}],196:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9707,7 +10717,7 @@ var RangeObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.RangeObservable = RangeObservable;
 
-},{"../Observable":35}],194:[function(require,module,exports){
+},{"../Observable":38}],197:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9766,7 +10776,7 @@ var ScalarObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.ScalarObservable = ScalarObservable;
 
-},{"../Observable":35}],195:[function(require,module,exports){
+},{"../Observable":38}],198:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9818,7 +10828,7 @@ var SubscribeOnObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.SubscribeOnObservable = SubscribeOnObservable;
 
-},{"../Observable":35,"../scheduler/asap":337,"../util/isNumeric":366}],196:[function(require,module,exports){
+},{"../Observable":38,"../scheduler/asap":340,"../util/isNumeric":369}],199:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9926,7 +10936,7 @@ var TimerObservable = (function (_super) {
 }(Observable_1.Observable));
 exports.TimerObservable = TimerObservable;
 
-},{"../Observable":35,"../scheduler/async":338,"../util/isDate":364,"../util/isNumeric":366,"../util/isScheduler":369}],197:[function(require,module,exports){
+},{"../Observable":38,"../scheduler/async":341,"../util/isDate":367,"../util/isNumeric":369,"../util/isScheduler":372}],200:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -9988,17 +10998,17 @@ var UsingSubscriber = (function (_super) {
     return UsingSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../Observable":35,"../OuterSubscriber":37,"../util/subscribeToResult":373}],198:[function(require,module,exports){
+},{"../Observable":38,"../OuterSubscriber":40,"../util/subscribeToResult":376}],201:[function(require,module,exports){
 "use strict";
 var BoundCallbackObservable_1 = require('./BoundCallbackObservable');
 exports.bindCallback = BoundCallbackObservable_1.BoundCallbackObservable.create;
 
-},{"./BoundCallbackObservable":176}],199:[function(require,module,exports){
+},{"./BoundCallbackObservable":179}],202:[function(require,module,exports){
 "use strict";
 var BoundNodeCallbackObservable_1 = require('./BoundNodeCallbackObservable');
 exports.bindNodeCallback = BoundNodeCallbackObservable_1.BoundNodeCallbackObservable.create;
 
-},{"./BoundNodeCallbackObservable":177}],200:[function(require,module,exports){
+},{"./BoundNodeCallbackObservable":180}],203:[function(require,module,exports){
 "use strict";
 var isScheduler_1 = require('../util/isScheduler');
 var isArray_1 = require('../util/isArray');
@@ -10135,17 +11145,17 @@ function combineLatest() {
 }
 exports.combineLatest = combineLatest;
 
-},{"../operator/combineLatest":233,"../util/isArray":362,"../util/isScheduler":369,"./ArrayObservable":175}],201:[function(require,module,exports){
+},{"../operator/combineLatest":236,"../util/isArray":365,"../util/isScheduler":372,"./ArrayObservable":178}],204:[function(require,module,exports){
 "use strict";
 var concat_1 = require('../operator/concat');
 exports.concat = concat_1.concatStatic;
 
-},{"../operator/concat":234}],202:[function(require,module,exports){
+},{"../operator/concat":237}],205:[function(require,module,exports){
 "use strict";
 var DeferObservable_1 = require('./DeferObservable');
 exports.defer = DeferObservable_1.DeferObservable.create;
 
-},{"./DeferObservable":179}],203:[function(require,module,exports){
+},{"./DeferObservable":182}],206:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -10561,7 +11571,7 @@ var AjaxTimeoutError = (function (_super) {
 }(AjaxError));
 exports.AjaxTimeoutError = AjaxTimeoutError;
 
-},{"../../Observable":35,"../../Subscriber":43,"../../operator/map":264,"../../util/errorObject":361,"../../util/root":372,"../../util/tryCatch":375}],204:[function(require,module,exports){
+},{"../../Observable":38,"../../Subscriber":46,"../../operator/map":267,"../../util/errorObject":364,"../../util/root":375,"../../util/tryCatch":378}],207:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -10812,102 +11822,102 @@ var WebSocketSubject = (function (_super) {
 }(Subject_1.AnonymousSubject));
 exports.WebSocketSubject = WebSocketSubject;
 
-},{"../../Observable":35,"../../ReplaySubject":38,"../../Subject":41,"../../Subscriber":43,"../../Subscription":44,"../../util/assign":360,"../../util/errorObject":361,"../../util/root":372,"../../util/tryCatch":375}],205:[function(require,module,exports){
+},{"../../Observable":38,"../../ReplaySubject":41,"../../Subject":44,"../../Subscriber":46,"../../Subscription":47,"../../util/assign":363,"../../util/errorObject":364,"../../util/root":375,"../../util/tryCatch":378}],208:[function(require,module,exports){
 "use strict";
 var AjaxObservable_1 = require('./AjaxObservable');
 exports.ajax = AjaxObservable_1.AjaxObservable.create;
 
-},{"./AjaxObservable":203}],206:[function(require,module,exports){
+},{"./AjaxObservable":206}],209:[function(require,module,exports){
 "use strict";
 var WebSocketSubject_1 = require('./WebSocketSubject');
 exports.webSocket = WebSocketSubject_1.WebSocketSubject.create;
 
-},{"./WebSocketSubject":204}],207:[function(require,module,exports){
+},{"./WebSocketSubject":207}],210:[function(require,module,exports){
 "use strict";
 var EmptyObservable_1 = require('./EmptyObservable');
 exports.empty = EmptyObservable_1.EmptyObservable.create;
 
-},{"./EmptyObservable":180}],208:[function(require,module,exports){
+},{"./EmptyObservable":183}],211:[function(require,module,exports){
 "use strict";
 var ForkJoinObservable_1 = require('./ForkJoinObservable');
 exports.forkJoin = ForkJoinObservable_1.ForkJoinObservable.create;
 
-},{"./ForkJoinObservable":182}],209:[function(require,module,exports){
+},{"./ForkJoinObservable":185}],212:[function(require,module,exports){
 "use strict";
 var FromObservable_1 = require('./FromObservable');
 exports.from = FromObservable_1.FromObservable.create;
 
-},{"./FromObservable":185}],210:[function(require,module,exports){
+},{"./FromObservable":188}],213:[function(require,module,exports){
 "use strict";
 var FromEventObservable_1 = require('./FromEventObservable');
 exports.fromEvent = FromEventObservable_1.FromEventObservable.create;
 
-},{"./FromEventObservable":183}],211:[function(require,module,exports){
+},{"./FromEventObservable":186}],214:[function(require,module,exports){
 "use strict";
 var FromEventPatternObservable_1 = require('./FromEventPatternObservable');
 exports.fromEventPattern = FromEventPatternObservable_1.FromEventPatternObservable.create;
 
-},{"./FromEventPatternObservable":184}],212:[function(require,module,exports){
+},{"./FromEventPatternObservable":187}],215:[function(require,module,exports){
 "use strict";
 var PromiseObservable_1 = require('./PromiseObservable');
 exports.fromPromise = PromiseObservable_1.PromiseObservable.create;
 
-},{"./PromiseObservable":192}],213:[function(require,module,exports){
+},{"./PromiseObservable":195}],216:[function(require,module,exports){
 "use strict";
 var IfObservable_1 = require('./IfObservable');
 exports._if = IfObservable_1.IfObservable.create;
 
-},{"./IfObservable":187}],214:[function(require,module,exports){
+},{"./IfObservable":190}],217:[function(require,module,exports){
 "use strict";
 var IntervalObservable_1 = require('./IntervalObservable');
 exports.interval = IntervalObservable_1.IntervalObservable.create;
 
-},{"./IntervalObservable":188}],215:[function(require,module,exports){
+},{"./IntervalObservable":191}],218:[function(require,module,exports){
 "use strict";
 var merge_1 = require('../operator/merge');
 exports.merge = merge_1.mergeStatic;
 
-},{"../operator/merge":268}],216:[function(require,module,exports){
+},{"../operator/merge":271}],219:[function(require,module,exports){
 "use strict";
 var NeverObservable_1 = require('./NeverObservable');
 exports.never = NeverObservable_1.NeverObservable.create;
 
-},{"./NeverObservable":190}],217:[function(require,module,exports){
+},{"./NeverObservable":193}],220:[function(require,module,exports){
 "use strict";
 var ArrayObservable_1 = require('./ArrayObservable');
 exports.of = ArrayObservable_1.ArrayObservable.of;
 
-},{"./ArrayObservable":175}],218:[function(require,module,exports){
+},{"./ArrayObservable":178}],221:[function(require,module,exports){
 "use strict";
 var PairsObservable_1 = require('./PairsObservable');
 exports.pairs = PairsObservable_1.PairsObservable.create;
 
-},{"./PairsObservable":191}],219:[function(require,module,exports){
+},{"./PairsObservable":194}],222:[function(require,module,exports){
 "use strict";
 var RangeObservable_1 = require('./RangeObservable');
 exports.range = RangeObservable_1.RangeObservable.create;
 
-},{"./RangeObservable":193}],220:[function(require,module,exports){
+},{"./RangeObservable":196}],223:[function(require,module,exports){
 "use strict";
 var ErrorObservable_1 = require('./ErrorObservable');
 exports._throw = ErrorObservable_1.ErrorObservable.create;
 
-},{"./ErrorObservable":181}],221:[function(require,module,exports){
+},{"./ErrorObservable":184}],224:[function(require,module,exports){
 "use strict";
 var TimerObservable_1 = require('./TimerObservable');
 exports.timer = TimerObservable_1.TimerObservable.create;
 
-},{"./TimerObservable":196}],222:[function(require,module,exports){
+},{"./TimerObservable":199}],225:[function(require,module,exports){
 "use strict";
 var UsingObservable_1 = require('./UsingObservable');
 exports.using = UsingObservable_1.UsingObservable.create;
 
-},{"./UsingObservable":197}],223:[function(require,module,exports){
+},{"./UsingObservable":200}],226:[function(require,module,exports){
 "use strict";
 var zip_1 = require('../operator/zip');
 exports.zip = zip_1.zipStatic;
 
-},{"../operator/zip":324}],224:[function(require,module,exports){
+},{"../operator/zip":327}],227:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -11024,7 +12034,7 @@ var AuditSubscriber = (function (_super) {
     return AuditSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/errorObject":361,"../util/subscribeToResult":373,"../util/tryCatch":375}],225:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/errorObject":364,"../util/subscribeToResult":376,"../util/tryCatch":378}],228:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -11129,7 +12139,7 @@ function dispatchNext(subscriber) {
     subscriber.clearThrottle();
 }
 
-},{"../Subscriber":43,"../scheduler/async":338}],226:[function(require,module,exports){
+},{"../Subscriber":46,"../scheduler/async":341}],229:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -11206,7 +12216,7 @@ var BufferSubscriber = (function (_super) {
     return BufferSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],227:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],230:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -11347,7 +12357,7 @@ var BufferSkipCountSubscriber = (function (_super) {
     return BufferSkipCountSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],228:[function(require,module,exports){
+},{"../Subscriber":46}],231:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -11547,7 +12557,7 @@ function dispatchBufferClose(arg) {
     subscriber.closeContext(context);
 }
 
-},{"../Subscriber":43,"../scheduler/async":338,"../util/isScheduler":369}],229:[function(require,module,exports){
+},{"../Subscriber":46,"../scheduler/async":341,"../util/isScheduler":372}],232:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -11700,7 +12710,7 @@ var BufferToggleSubscriber = (function (_super) {
     return BufferToggleSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../Subscription":44,"../util/subscribeToResult":373}],230:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../Subscription":47,"../util/subscribeToResult":376}],233:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -11823,7 +12833,7 @@ var BufferWhenSubscriber = (function (_super) {
     return BufferWhenSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../Subscription":44,"../util/errorObject":361,"../util/subscribeToResult":373,"../util/tryCatch":375}],231:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../Subscription":47,"../util/errorObject":364,"../util/subscribeToResult":376,"../util/tryCatch":378}],234:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -11940,7 +12950,7 @@ var CatchSubscriber = (function (_super) {
     return CatchSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],232:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],235:[function(require,module,exports){
 "use strict";
 var combineLatest_1 = require('./combineLatest');
 /**
@@ -11988,7 +12998,7 @@ function combineAll(project) {
 }
 exports.combineAll = combineAll;
 
-},{"./combineLatest":233}],233:[function(require,module,exports){
+},{"./combineLatest":236}],236:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -12141,7 +13151,7 @@ var CombineLatestSubscriber = (function (_super) {
 }(OuterSubscriber_1.OuterSubscriber));
 exports.CombineLatestSubscriber = CombineLatestSubscriber;
 
-},{"../OuterSubscriber":37,"../observable/ArrayObservable":175,"../util/isArray":362,"../util/subscribeToResult":373}],234:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../observable/ArrayObservable":178,"../util/isArray":365,"../util/subscribeToResult":376}],237:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../Observable');
 var isScheduler_1 = require('../util/isScheduler');
@@ -12316,7 +13326,7 @@ function concatStatic() {
 }
 exports.concatStatic = concatStatic;
 
-},{"../Observable":35,"../observable/ArrayObservable":175,"../util/isScheduler":369,"./mergeAll":269}],235:[function(require,module,exports){
+},{"../Observable":38,"../observable/ArrayObservable":178,"../util/isScheduler":372,"./mergeAll":272}],238:[function(require,module,exports){
 "use strict";
 var mergeAll_1 = require('./mergeAll');
 /* tslint:enable:max-line-length */
@@ -12373,7 +13383,7 @@ function concatAll() {
 }
 exports.concatAll = concatAll;
 
-},{"./mergeAll":269}],236:[function(require,module,exports){
+},{"./mergeAll":272}],239:[function(require,module,exports){
 "use strict";
 var mergeMap_1 = require('./mergeMap');
 /* tslint:enable:max-line-length */
@@ -12441,7 +13451,7 @@ function concatMap(project, resultSelector) {
 }
 exports.concatMap = concatMap;
 
-},{"./mergeMap":270}],237:[function(require,module,exports){
+},{"./mergeMap":273}],240:[function(require,module,exports){
 "use strict";
 var mergeMapTo_1 = require('./mergeMapTo');
 /* tslint:enable:max-line-length */
@@ -12506,7 +13516,7 @@ function concatMapTo(innerObservable, resultSelector) {
 }
 exports.concatMapTo = concatMapTo;
 
-},{"./mergeMapTo":271}],238:[function(require,module,exports){
+},{"./mergeMapTo":274}],241:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -12618,7 +13628,7 @@ var CountSubscriber = (function (_super) {
     return CountSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],239:[function(require,module,exports){
+},{"../Subscriber":46}],242:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -12746,7 +13756,7 @@ var DebounceSubscriber = (function (_super) {
     return DebounceSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],240:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],243:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -12863,7 +13873,7 @@ function dispatchNext(subscriber) {
     subscriber.debouncedNext();
 }
 
-},{"../Subscriber":43,"../scheduler/async":338}],241:[function(require,module,exports){
+},{"../Subscriber":46,"../scheduler/async":341}],244:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -12941,7 +13951,7 @@ var DefaultIfEmptySubscriber = (function (_super) {
     return DefaultIfEmptySubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],242:[function(require,module,exports){
+},{"../Subscriber":46}],245:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -13077,7 +14087,7 @@ var DelayMessage = (function () {
     return DelayMessage;
 }());
 
-},{"../Notification":34,"../Subscriber":43,"../scheduler/async":338,"../util/isDate":364}],243:[function(require,module,exports){
+},{"../Notification":37,"../Subscriber":46,"../scheduler/async":341,"../util/isDate":367}],246:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -13270,7 +14280,7 @@ var SubscriptionDelaySubscriber = (function (_super) {
     return SubscriptionDelaySubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Observable":35,"../OuterSubscriber":37,"../Subscriber":43,"../util/subscribeToResult":373}],244:[function(require,module,exports){
+},{"../Observable":38,"../OuterSubscriber":40,"../Subscriber":46,"../util/subscribeToResult":376}],247:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -13346,7 +14356,7 @@ var DeMaterializeSubscriber = (function (_super) {
     return DeMaterializeSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],245:[function(require,module,exports){
+},{"../Subscriber":46}],248:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -13467,7 +14477,7 @@ var DistinctSubscriber = (function (_super) {
 }(OuterSubscriber_1.OuterSubscriber));
 exports.DistinctSubscriber = DistinctSubscriber;
 
-},{"../OuterSubscriber":37,"../util/Set":356,"../util/subscribeToResult":373}],246:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/Set":359,"../util/subscribeToResult":376}],249:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -13576,7 +14586,7 @@ var DistinctUntilChangedSubscriber = (function (_super) {
     return DistinctUntilChangedSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../util/errorObject":361,"../util/tryCatch":375}],247:[function(require,module,exports){
+},{"../Subscriber":46,"../util/errorObject":364,"../util/tryCatch":378}],250:[function(require,module,exports){
 "use strict";
 var distinctUntilChanged_1 = require('./distinctUntilChanged');
 /* tslint:enable:max-line-length */
@@ -13647,7 +14657,7 @@ function distinctUntilKeyChanged(key, compare) {
 }
 exports.distinctUntilKeyChanged = distinctUntilKeyChanged;
 
-},{"./distinctUntilChanged":246}],248:[function(require,module,exports){
+},{"./distinctUntilChanged":249}],251:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -13761,7 +14771,7 @@ var DoSubscriber = (function (_super) {
     return DoSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],249:[function(require,module,exports){
+},{"../Subscriber":46}],252:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -13862,7 +14872,7 @@ var ElementAtSubscriber = (function (_super) {
     return ElementAtSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../util/ArgumentOutOfRangeError":349}],250:[function(require,module,exports){
+},{"../Subscriber":46,"../util/ArgumentOutOfRangeError":352}],253:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -13937,7 +14947,7 @@ var EverySubscriber = (function (_super) {
     return EverySubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],251:[function(require,module,exports){
+},{"../Subscriber":46}],254:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -14027,7 +15037,7 @@ var SwitchFirstSubscriber = (function (_super) {
     return SwitchFirstSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],252:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],255:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -14166,7 +15176,7 @@ var SwitchFirstMapSubscriber = (function (_super) {
     return SwitchFirstMapSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],253:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],256:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -14318,7 +15328,7 @@ var ExpandSubscriber = (function (_super) {
 }(OuterSubscriber_1.OuterSubscriber));
 exports.ExpandSubscriber = ExpandSubscriber;
 
-},{"../OuterSubscriber":37,"../util/errorObject":361,"../util/subscribeToResult":373,"../util/tryCatch":375}],254:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/errorObject":364,"../util/subscribeToResult":376,"../util/tryCatch":378}],257:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -14412,7 +15422,7 @@ var FilterSubscriber = (function (_super) {
     return FilterSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],255:[function(require,module,exports){
+},{"../Subscriber":46}],258:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -14456,7 +15466,7 @@ var FinallySubscriber = (function (_super) {
     return FinallySubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../Subscription":44}],256:[function(require,module,exports){
+},{"../Subscriber":46,"../Subscription":47}],259:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -14558,7 +15568,7 @@ var FindValueSubscriber = (function (_super) {
 }(Subscriber_1.Subscriber));
 exports.FindValueSubscriber = FindValueSubscriber;
 
-},{"../Subscriber":43}],257:[function(require,module,exports){
+},{"../Subscriber":46}],260:[function(require,module,exports){
 "use strict";
 var find_1 = require('./find');
 /**
@@ -14600,7 +15610,7 @@ function findIndex(predicate, thisArg) {
 }
 exports.findIndex = findIndex;
 
-},{"./find":256}],258:[function(require,module,exports){
+},{"./find":259}],261:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -14753,7 +15763,7 @@ var FirstSubscriber = (function (_super) {
     return FirstSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../util/EmptyError":350}],259:[function(require,module,exports){
+},{"../Subscriber":46,"../util/EmptyError":353}],262:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15028,7 +16038,7 @@ var InnerRefCountSubscription = (function (_super) {
     return InnerRefCountSubscription;
 }(Subscription_1.Subscription));
 
-},{"../Observable":35,"../Subject":41,"../Subscriber":43,"../Subscription":44,"../util/FastMap":351,"../util/Map":353}],260:[function(require,module,exports){
+},{"../Observable":38,"../Subject":44,"../Subscriber":46,"../Subscription":47,"../util/FastMap":354,"../util/Map":356}],263:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15076,7 +16086,7 @@ var IgnoreElementsSubscriber = (function (_super) {
     return IgnoreElementsSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../util/noop":370}],261:[function(require,module,exports){
+},{"../Subscriber":46,"../util/noop":373}],264:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15129,7 +16139,7 @@ var IsEmptySubscriber = (function (_super) {
     return IsEmptySubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],262:[function(require,module,exports){
+},{"../Subscriber":46}],265:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15249,7 +16259,7 @@ var LastSubscriber = (function (_super) {
     return LastSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../util/EmptyError":350}],263:[function(require,module,exports){
+},{"../Subscriber":46,"../util/EmptyError":353}],266:[function(require,module,exports){
 "use strict";
 /**
  * @param func
@@ -15262,7 +16272,7 @@ function letProto(func) {
 }
 exports.letProto = letProto;
 
-},{}],264:[function(require,module,exports){
+},{}],267:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15350,7 +16360,7 @@ var MapSubscriber = (function (_super) {
     return MapSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],265:[function(require,module,exports){
+},{"../Subscriber":46}],268:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15414,7 +16424,7 @@ var MapToSubscriber = (function (_super) {
     return MapToSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],266:[function(require,module,exports){
+},{"../Subscriber":46}],269:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15505,7 +16515,7 @@ var MaterializeSubscriber = (function (_super) {
     return MaterializeSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Notification":34,"../Subscriber":43}],267:[function(require,module,exports){
+},{"../Notification":37,"../Subscriber":46}],270:[function(require,module,exports){
 "use strict";
 var reduce_1 = require('./reduce');
 /**
@@ -15547,7 +16557,7 @@ function max(comparer) {
 }
 exports.max = max;
 
-},{"./reduce":285}],268:[function(require,module,exports){
+},{"./reduce":288}],271:[function(require,module,exports){
 "use strict";
 var Observable_1 = require('../Observable');
 var ArrayObservable_1 = require('../observable/ArrayObservable');
@@ -15693,7 +16703,7 @@ function mergeStatic() {
 }
 exports.mergeStatic = mergeStatic;
 
-},{"../Observable":35,"../observable/ArrayObservable":175,"../util/isScheduler":369,"./mergeAll":269}],269:[function(require,module,exports){
+},{"../Observable":38,"../observable/ArrayObservable":178,"../util/isScheduler":372,"./mergeAll":272}],272:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15805,7 +16815,7 @@ var MergeAllSubscriber = (function (_super) {
 }(OuterSubscriber_1.OuterSubscriber));
 exports.MergeAllSubscriber = MergeAllSubscriber;
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],270:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],273:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -15977,7 +16987,7 @@ var MergeMapSubscriber = (function (_super) {
 }(OuterSubscriber_1.OuterSubscriber));
 exports.MergeMapSubscriber = MergeMapSubscriber;
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],271:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],274:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -16133,7 +17143,7 @@ var MergeMapToSubscriber = (function (_super) {
 }(OuterSubscriber_1.OuterSubscriber));
 exports.MergeMapToSubscriber = MergeMapToSubscriber;
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],272:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],275:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -16263,7 +17273,7 @@ var MergeScanSubscriber = (function (_super) {
 }(OuterSubscriber_1.OuterSubscriber));
 exports.MergeScanSubscriber = MergeScanSubscriber;
 
-},{"../OuterSubscriber":37,"../util/errorObject":361,"../util/subscribeToResult":373,"../util/tryCatch":375}],273:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/errorObject":364,"../util/subscribeToResult":376,"../util/tryCatch":378}],276:[function(require,module,exports){
 "use strict";
 var reduce_1 = require('./reduce');
 /**
@@ -16305,7 +17315,7 @@ function min(comparer) {
 }
 exports.min = min;
 
-},{"./reduce":285}],274:[function(require,module,exports){
+},{"./reduce":288}],277:[function(require,module,exports){
 "use strict";
 var ConnectableObservable_1 = require('../observable/ConnectableObservable');
 /* tslint:enable:max-line-length */
@@ -16363,7 +17373,7 @@ var MulticastOperator = (function () {
 }());
 exports.MulticastOperator = MulticastOperator;
 
-},{"../observable/ConnectableObservable":178}],275:[function(require,module,exports){
+},{"../observable/ConnectableObservable":181}],278:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -16477,7 +17487,7 @@ var ObserveOnMessage = (function () {
 }());
 exports.ObserveOnMessage = ObserveOnMessage;
 
-},{"../Notification":34,"../Subscriber":43}],276:[function(require,module,exports){
+},{"../Notification":37,"../Subscriber":46}],279:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -16615,7 +17625,7 @@ var OnErrorResumeNextSubscriber = (function (_super) {
     return OnErrorResumeNextSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../observable/FromObservable":185,"../util/isArray":362,"../util/subscribeToResult":373}],277:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../observable/FromObservable":188,"../util/isArray":365,"../util/subscribeToResult":376}],280:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -16693,7 +17703,7 @@ var PairwiseSubscriber = (function (_super) {
     return PairwiseSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],278:[function(require,module,exports){
+},{"../Subscriber":46}],281:[function(require,module,exports){
 "use strict";
 var not_1 = require('../util/not');
 var filter_1 = require('./filter');
@@ -16746,7 +17756,7 @@ function partition(predicate, thisArg) {
 }
 exports.partition = partition;
 
-},{"../util/not":371,"./filter":254}],279:[function(require,module,exports){
+},{"../util/not":374,"./filter":257}],282:[function(require,module,exports){
 "use strict";
 var map_1 = require('./map');
 /**
@@ -16804,7 +17814,7 @@ function plucker(props, length) {
     return mapper;
 }
 
-},{"./map":264}],280:[function(require,module,exports){
+},{"./map":267}],283:[function(require,module,exports){
 "use strict";
 var Subject_1 = require('../Subject');
 var multicast_1 = require('./multicast');
@@ -16828,7 +17838,7 @@ function publish(selector) {
 }
 exports.publish = publish;
 
-},{"../Subject":41,"./multicast":274}],281:[function(require,module,exports){
+},{"../Subject":44,"./multicast":277}],284:[function(require,module,exports){
 "use strict";
 var BehaviorSubject_1 = require('../BehaviorSubject');
 var multicast_1 = require('./multicast');
@@ -16843,7 +17853,7 @@ function publishBehavior(value) {
 }
 exports.publishBehavior = publishBehavior;
 
-},{"../BehaviorSubject":32,"./multicast":274}],282:[function(require,module,exports){
+},{"../BehaviorSubject":35,"./multicast":277}],285:[function(require,module,exports){
 "use strict";
 var AsyncSubject_1 = require('../AsyncSubject');
 var multicast_1 = require('./multicast');
@@ -16857,7 +17867,7 @@ function publishLast() {
 }
 exports.publishLast = publishLast;
 
-},{"../AsyncSubject":31,"./multicast":274}],283:[function(require,module,exports){
+},{"../AsyncSubject":34,"./multicast":277}],286:[function(require,module,exports){
 "use strict";
 var ReplaySubject_1 = require('../ReplaySubject');
 var multicast_1 = require('./multicast');
@@ -16876,7 +17886,7 @@ function publishReplay(bufferSize, windowTime, scheduler) {
 }
 exports.publishReplay = publishReplay;
 
-},{"../ReplaySubject":38,"./multicast":274}],284:[function(require,module,exports){
+},{"../ReplaySubject":41,"./multicast":277}],287:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -16988,7 +17998,7 @@ var RaceSubscriber = (function (_super) {
 }(OuterSubscriber_1.OuterSubscriber));
 exports.RaceSubscriber = RaceSubscriber;
 
-},{"../OuterSubscriber":37,"../observable/ArrayObservable":175,"../util/isArray":362,"../util/subscribeToResult":373}],285:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../observable/ArrayObservable":178,"../util/isArray":365,"../util/subscribeToResult":376}],288:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17115,7 +18125,7 @@ var ReduceSubscriber = (function (_super) {
 }(Subscriber_1.Subscriber));
 exports.ReduceSubscriber = ReduceSubscriber;
 
-},{"../Subscriber":43}],286:[function(require,module,exports){
+},{"../Subscriber":46}],289:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17186,7 +18196,7 @@ var RepeatSubscriber = (function (_super) {
     return RepeatSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../observable/EmptyObservable":180}],287:[function(require,module,exports){
+},{"../Subscriber":46,"../observable/EmptyObservable":183}],290:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17295,7 +18305,7 @@ var RepeatWhenSubscriber = (function (_super) {
     return RepeatWhenSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../Subject":41,"../util/errorObject":361,"../util/subscribeToResult":373,"../util/tryCatch":375}],288:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../Subject":44,"../util/errorObject":364,"../util/subscribeToResult":376,"../util/tryCatch":378}],291:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17361,7 +18371,7 @@ var RetrySubscriber = (function (_super) {
     return RetrySubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],289:[function(require,module,exports){
+},{"../Subscriber":46}],292:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17463,7 +18473,7 @@ var RetryWhenSubscriber = (function (_super) {
     return RetryWhenSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../Subject":41,"../util/errorObject":361,"../util/subscribeToResult":373,"../util/tryCatch":375}],290:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../Subject":44,"../util/errorObject":364,"../util/subscribeToResult":376,"../util/tryCatch":378}],293:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17552,7 +18562,7 @@ var SampleSubscriber = (function (_super) {
     return SampleSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],291:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],294:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17644,7 +18654,7 @@ function dispatchNotification(state) {
     this.schedule(state, period);
 }
 
-},{"../Subscriber":43,"../scheduler/async":338}],292:[function(require,module,exports){
+},{"../Subscriber":46,"../scheduler/async":341}],295:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17764,7 +18774,7 @@ var ScanSubscriber = (function (_super) {
     return ScanSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],293:[function(require,module,exports){
+},{"../Subscriber":46}],296:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -17929,7 +18939,7 @@ var SequenceEqualCompareToSubscriber = (function (_super) {
     return SequenceEqualCompareToSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../util/errorObject":361,"../util/tryCatch":375}],294:[function(require,module,exports){
+},{"../Subscriber":46,"../util/errorObject":364,"../util/tryCatch":378}],297:[function(require,module,exports){
 "use strict";
 var multicast_1 = require('./multicast');
 var Subject_1 = require('../Subject');
@@ -17954,7 +18964,7 @@ function share() {
 exports.share = share;
 ;
 
-},{"../Subject":41,"./multicast":274}],295:[function(require,module,exports){
+},{"../Subject":44,"./multicast":277}],298:[function(require,module,exports){
 "use strict";
 var multicast_1 = require('./multicast');
 var ReplaySubject_1 = require('../ReplaySubject');
@@ -17977,7 +18987,7 @@ function shareReplay(bufferSize, windowTime, scheduler) {
 exports.shareReplay = shareReplay;
 ;
 
-},{"../ReplaySubject":38,"./multicast":274}],296:[function(require,module,exports){
+},{"../ReplaySubject":41,"./multicast":277}],299:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18071,7 +19081,7 @@ var SingleSubscriber = (function (_super) {
     return SingleSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../util/EmptyError":350}],297:[function(require,module,exports){
+},{"../Subscriber":46,"../util/EmptyError":353}],300:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18123,7 +19133,7 @@ var SkipSubscriber = (function (_super) {
     return SkipSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],298:[function(require,module,exports){
+},{"../Subscriber":46}],301:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18217,7 +19227,7 @@ var SkipLastSubscriber = (function (_super) {
     return SkipLastSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../util/ArgumentOutOfRangeError":349}],299:[function(require,module,exports){
+},{"../Subscriber":46,"../util/ArgumentOutOfRangeError":352}],302:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18289,7 +19299,7 @@ var SkipUntilSubscriber = (function (_super) {
     return SkipUntilSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],300:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],303:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18356,7 +19366,7 @@ var SkipWhileSubscriber = (function (_super) {
     return SkipWhileSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],301:[function(require,module,exports){
+},{"../Subscriber":46}],304:[function(require,module,exports){
 "use strict";
 var ArrayObservable_1 = require('../observable/ArrayObservable');
 var ScalarObservable_1 = require('../observable/ScalarObservable');
@@ -18403,7 +19413,7 @@ function startWith() {
 }
 exports.startWith = startWith;
 
-},{"../observable/ArrayObservable":175,"../observable/EmptyObservable":180,"../observable/ScalarObservable":194,"../util/isScheduler":369,"./concat":234}],302:[function(require,module,exports){
+},{"../observable/ArrayObservable":178,"../observable/EmptyObservable":183,"../observable/ScalarObservable":197,"../util/isScheduler":372,"./concat":237}],305:[function(require,module,exports){
 "use strict";
 var SubscribeOnObservable_1 = require('../observable/SubscribeOnObservable');
 /**
@@ -18433,7 +19443,7 @@ var SubscribeOnOperator = (function () {
     return SubscribeOnOperator;
 }());
 
-},{"../observable/SubscribeOnObservable":195}],303:[function(require,module,exports){
+},{"../observable/SubscribeOnObservable":198}],306:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18542,7 +19552,7 @@ var SwitchSubscriber = (function (_super) {
     return SwitchSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],304:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],307:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18683,7 +19693,7 @@ var SwitchMapSubscriber = (function (_super) {
     return SwitchMapSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],305:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],308:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18809,7 +19819,7 @@ var SwitchMapToSubscriber = (function (_super) {
     return SwitchMapToSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],306:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],309:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -18899,7 +19909,7 @@ var TakeSubscriber = (function (_super) {
     return TakeSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../observable/EmptyObservable":180,"../util/ArgumentOutOfRangeError":349}],307:[function(require,module,exports){
+},{"../Subscriber":46,"../observable/EmptyObservable":183,"../util/ArgumentOutOfRangeError":352}],310:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19007,7 +20017,7 @@ var TakeLastSubscriber = (function (_super) {
     return TakeLastSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../observable/EmptyObservable":180,"../util/ArgumentOutOfRangeError":349}],308:[function(require,module,exports){
+},{"../Subscriber":46,"../observable/EmptyObservable":183,"../util/ArgumentOutOfRangeError":352}],311:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19083,7 +20093,7 @@ var TakeUntilSubscriber = (function (_super) {
     return TakeUntilSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],309:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],312:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19176,7 +20186,7 @@ var TakeWhileSubscriber = (function (_super) {
     return TakeWhileSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],310:[function(require,module,exports){
+},{"../Subscriber":46}],313:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19319,7 +20329,7 @@ var ThrottleSubscriber = (function (_super) {
     return ThrottleSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],311:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],314:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19436,7 +20446,7 @@ function dispatchNext(arg) {
     subscriber.clearThrottle();
 }
 
-},{"../Subscriber":43,"../scheduler/async":338,"./throttle":310}],312:[function(require,module,exports){
+},{"../Subscriber":46,"../scheduler/async":341,"./throttle":313}],315:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19496,7 +20506,7 @@ var TimeIntervalSubscriber = (function (_super) {
     return TimeIntervalSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../scheduler/async":338}],313:[function(require,module,exports){
+},{"../Subscriber":46,"../scheduler/async":341}],316:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19580,7 +20590,7 @@ var TimeoutSubscriber = (function (_super) {
     return TimeoutSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../scheduler/async":338,"../util/TimeoutError":357,"../util/isDate":364}],314:[function(require,module,exports){
+},{"../Subscriber":46,"../scheduler/async":341,"../util/TimeoutError":360,"../util/isDate":367}],317:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19668,7 +20678,7 @@ var TimeoutWithSubscriber = (function (_super) {
     return TimeoutWithSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../scheduler/async":338,"../util/isDate":364,"../util/subscribeToResult":373}],315:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../scheduler/async":341,"../util/isDate":367,"../util/subscribeToResult":376}],318:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19719,7 +20729,7 @@ var TimestampSubscriber = (function (_super) {
     return TimestampSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43,"../scheduler/async":338}],316:[function(require,module,exports){
+},{"../Subscriber":46,"../scheduler/async":341}],319:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19765,7 +20775,7 @@ var ToArraySubscriber = (function (_super) {
     return ToArraySubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subscriber":43}],317:[function(require,module,exports){
+},{"../Subscriber":46}],320:[function(require,module,exports){
 "use strict";
 var root_1 = require('../util/root');
 /* tslint:enable:max-line-length */
@@ -19838,7 +20848,7 @@ function toPromise(PromiseCtor) {
 }
 exports.toPromise = toPromise;
 
-},{"../util/root":372}],318:[function(require,module,exports){
+},{"../util/root":375}],321:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -19949,7 +20959,7 @@ var WindowSubscriber = (function (_super) {
     return WindowSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../Subject":41,"../util/subscribeToResult":373}],319:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../Subject":44,"../util/subscribeToResult":376}],322:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -20081,7 +21091,7 @@ var WindowCountSubscriber = (function (_super) {
     return WindowCountSubscriber;
 }(Subscriber_1.Subscriber));
 
-},{"../Subject":41,"../Subscriber":43}],320:[function(require,module,exports){
+},{"../Subject":44,"../Subscriber":46}],323:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -20243,7 +21253,7 @@ function dispatchWindowClose(state) {
     subscriber.closeWindow(window);
 }
 
-},{"../Subject":41,"../Subscriber":43,"../scheduler/async":338,"../util/isNumeric":366,"../util/isScheduler":369}],321:[function(require,module,exports){
+},{"../Subject":44,"../Subscriber":46,"../scheduler/async":341,"../util/isNumeric":369,"../util/isScheduler":372}],324:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -20424,7 +21434,7 @@ var WindowToggleSubscriber = (function (_super) {
     return WindowToggleSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../Subject":41,"../Subscription":44,"../util/errorObject":361,"../util/subscribeToResult":373,"../util/tryCatch":375}],322:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../Subject":44,"../Subscription":47,"../util/errorObject":364,"../util/subscribeToResult":376,"../util/tryCatch":378}],325:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -20552,7 +21562,7 @@ var WindowSubscriber = (function (_super) {
     return WindowSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../Subject":41,"../util/errorObject":361,"../util/subscribeToResult":373,"../util/tryCatch":375}],323:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../Subject":44,"../util/errorObject":364,"../util/subscribeToResult":376,"../util/tryCatch":378}],326:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -20683,7 +21693,7 @@ var WithLatestFromSubscriber = (function (_super) {
     return WithLatestFromSubscriber;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../util/subscribeToResult":373}],324:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../util/subscribeToResult":376}],327:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -20963,7 +21973,7 @@ var ZipBufferIterator = (function (_super) {
     return ZipBufferIterator;
 }(OuterSubscriber_1.OuterSubscriber));
 
-},{"../OuterSubscriber":37,"../Subscriber":43,"../observable/ArrayObservable":175,"../symbol/iterator":340,"../util/isArray":362,"../util/subscribeToResult":373}],325:[function(require,module,exports){
+},{"../OuterSubscriber":40,"../Subscriber":46,"../observable/ArrayObservable":178,"../symbol/iterator":343,"../util/isArray":365,"../util/subscribeToResult":376}],328:[function(require,module,exports){
 "use strict";
 var zip_1 = require('./zip');
 /**
@@ -20977,7 +21987,7 @@ function zipAll(project) {
 }
 exports.zipAll = zipAll;
 
-},{"./zip":324}],326:[function(require,module,exports){
+},{"./zip":327}],329:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21022,7 +22032,7 @@ var Action = (function (_super) {
 }(Subscription_1.Subscription));
 exports.Action = Action;
 
-},{"../Subscription":44}],327:[function(require,module,exports){
+},{"../Subscription":47}],330:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21078,7 +22088,7 @@ var AnimationFrameAction = (function (_super) {
 }(AsyncAction_1.AsyncAction));
 exports.AnimationFrameAction = AnimationFrameAction;
 
-},{"../util/AnimationFrame":348,"./AsyncAction":331}],328:[function(require,module,exports){
+},{"../util/AnimationFrame":351,"./AsyncAction":334}],331:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21116,7 +22126,7 @@ var AnimationFrameScheduler = (function (_super) {
 }(AsyncScheduler_1.AsyncScheduler));
 exports.AnimationFrameScheduler = AnimationFrameScheduler;
 
-},{"./AsyncScheduler":332}],329:[function(require,module,exports){
+},{"./AsyncScheduler":335}],332:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21172,7 +22182,7 @@ var AsapAction = (function (_super) {
 }(AsyncAction_1.AsyncAction));
 exports.AsapAction = AsapAction;
 
-},{"../util/Immediate":352,"./AsyncAction":331}],330:[function(require,module,exports){
+},{"../util/Immediate":355,"./AsyncAction":334}],333:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21210,7 +22220,7 @@ var AsapScheduler = (function (_super) {
 }(AsyncScheduler_1.AsyncScheduler));
 exports.AsapScheduler = AsapScheduler;
 
-},{"./AsyncScheduler":332}],331:[function(require,module,exports){
+},{"./AsyncScheduler":335}],334:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21353,7 +22363,7 @@ var AsyncAction = (function (_super) {
 }(Action_1.Action));
 exports.AsyncAction = AsyncAction;
 
-},{"../util/root":372,"./Action":326}],332:[function(require,module,exports){
+},{"../util/root":375,"./Action":329}],335:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21405,7 +22415,7 @@ var AsyncScheduler = (function (_super) {
 }(Scheduler_1.Scheduler));
 exports.AsyncScheduler = AsyncScheduler;
 
-},{"../Scheduler":40}],333:[function(require,module,exports){
+},{"../Scheduler":43}],336:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21455,7 +22465,7 @@ var QueueAction = (function (_super) {
 }(AsyncAction_1.AsyncAction));
 exports.QueueAction = QueueAction;
 
-},{"./AsyncAction":331}],334:[function(require,module,exports){
+},{"./AsyncAction":334}],337:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21472,7 +22482,7 @@ var QueueScheduler = (function (_super) {
 }(AsyncScheduler_1.AsyncScheduler));
 exports.QueueScheduler = QueueScheduler;
 
-},{"./AsyncScheduler":332}],335:[function(require,module,exports){
+},{"./AsyncScheduler":335}],338:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21586,7 +22596,7 @@ var VirtualAction = (function (_super) {
 }(AsyncAction_1.AsyncAction));
 exports.VirtualAction = VirtualAction;
 
-},{"./AsyncAction":331,"./AsyncScheduler":332}],336:[function(require,module,exports){
+},{"./AsyncAction":334,"./AsyncScheduler":335}],339:[function(require,module,exports){
 "use strict";
 var AnimationFrameAction_1 = require('./AnimationFrameAction');
 var AnimationFrameScheduler_1 = require('./AnimationFrameScheduler');
@@ -21622,7 +22632,7 @@ var AnimationFrameScheduler_1 = require('./AnimationFrameScheduler');
  */
 exports.animationFrame = new AnimationFrameScheduler_1.AnimationFrameScheduler(AnimationFrameAction_1.AnimationFrameAction);
 
-},{"./AnimationFrameAction":327,"./AnimationFrameScheduler":328}],337:[function(require,module,exports){
+},{"./AnimationFrameAction":330,"./AnimationFrameScheduler":331}],340:[function(require,module,exports){
 "use strict";
 var AsapAction_1 = require('./AsapAction');
 var AsapScheduler_1 = require('./AsapScheduler');
@@ -21662,7 +22672,7 @@ var AsapScheduler_1 = require('./AsapScheduler');
  */
 exports.asap = new AsapScheduler_1.AsapScheduler(AsapAction_1.AsapAction);
 
-},{"./AsapAction":329,"./AsapScheduler":330}],338:[function(require,module,exports){
+},{"./AsapAction":332,"./AsapScheduler":333}],341:[function(require,module,exports){
 "use strict";
 var AsyncAction_1 = require('./AsyncAction');
 var AsyncScheduler_1 = require('./AsyncScheduler');
@@ -21710,7 +22720,7 @@ var AsyncScheduler_1 = require('./AsyncScheduler');
  */
 exports.async = new AsyncScheduler_1.AsyncScheduler(AsyncAction_1.AsyncAction);
 
-},{"./AsyncAction":331,"./AsyncScheduler":332}],339:[function(require,module,exports){
+},{"./AsyncAction":334,"./AsyncScheduler":335}],342:[function(require,module,exports){
 "use strict";
 var QueueAction_1 = require('./QueueAction');
 var QueueScheduler_1 = require('./QueueScheduler');
@@ -21777,7 +22787,7 @@ var QueueScheduler_1 = require('./QueueScheduler');
  */
 exports.queue = new QueueScheduler_1.QueueScheduler(QueueAction_1.QueueAction);
 
-},{"./QueueAction":333,"./QueueScheduler":334}],340:[function(require,module,exports){
+},{"./QueueAction":336,"./QueueScheduler":337}],343:[function(require,module,exports){
 "use strict";
 var root_1 = require('../util/root');
 function symbolIteratorPonyfill(root) {
@@ -21816,7 +22826,7 @@ exports.iterator = symbolIteratorPonyfill(root_1.root);
  */
 exports.$$iterator = exports.iterator;
 
-},{"../util/root":372}],341:[function(require,module,exports){
+},{"../util/root":375}],344:[function(require,module,exports){
 "use strict";
 var root_1 = require('../util/root');
 function getSymbolObservable(context) {
@@ -21843,7 +22853,7 @@ exports.observable = getSymbolObservable(root_1.root);
  */
 exports.$$observable = exports.observable;
 
-},{"../util/root":372}],342:[function(require,module,exports){
+},{"../util/root":375}],345:[function(require,module,exports){
 "use strict";
 var root_1 = require('../util/root');
 var Symbol = root_1.root.Symbol;
@@ -21854,7 +22864,7 @@ exports.rxSubscriber = (typeof Symbol === 'function' && typeof Symbol.for === 'f
  */
 exports.$$rxSubscriber = exports.rxSubscriber;
 
-},{"../util/root":372}],343:[function(require,module,exports){
+},{"../util/root":375}],346:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21901,7 +22911,7 @@ var ColdObservable = (function (_super) {
 exports.ColdObservable = ColdObservable;
 applyMixins_1.applyMixins(ColdObservable, [SubscriptionLoggable_1.SubscriptionLoggable]);
 
-},{"../Observable":35,"../Subscription":44,"../util/applyMixins":359,"./SubscriptionLoggable":346}],344:[function(require,module,exports){
+},{"../Observable":38,"../Subscription":47,"../util/applyMixins":362,"./SubscriptionLoggable":349}],347:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -21950,7 +22960,7 @@ var HotObservable = (function (_super) {
 exports.HotObservable = HotObservable;
 applyMixins_1.applyMixins(HotObservable, [SubscriptionLoggable_1.SubscriptionLoggable]);
 
-},{"../Subject":41,"../Subscription":44,"../util/applyMixins":359,"./SubscriptionLoggable":346}],345:[function(require,module,exports){
+},{"../Subject":44,"../Subscription":47,"../util/applyMixins":362,"./SubscriptionLoggable":349}],348:[function(require,module,exports){
 "use strict";
 var SubscriptionLog = (function () {
     function SubscriptionLog(subscribedFrame, unsubscribedFrame) {
@@ -21962,7 +22972,7 @@ var SubscriptionLog = (function () {
 }());
 exports.SubscriptionLog = SubscriptionLog;
 
-},{}],346:[function(require,module,exports){
+},{}],349:[function(require,module,exports){
 "use strict";
 var SubscriptionLog_1 = require('./SubscriptionLog');
 var SubscriptionLoggable = (function () {
@@ -21982,7 +22992,7 @@ var SubscriptionLoggable = (function () {
 }());
 exports.SubscriptionLoggable = SubscriptionLoggable;
 
-},{"./SubscriptionLog":345}],347:[function(require,module,exports){
+},{"./SubscriptionLog":348}],350:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -22206,7 +23216,7 @@ var TestScheduler = (function (_super) {
 }(VirtualTimeScheduler_1.VirtualTimeScheduler));
 exports.TestScheduler = TestScheduler;
 
-},{"../Notification":34,"../Observable":35,"../scheduler/VirtualTimeScheduler":335,"./ColdObservable":343,"./HotObservable":344,"./SubscriptionLog":345}],348:[function(require,module,exports){
+},{"../Notification":37,"../Observable":38,"../scheduler/VirtualTimeScheduler":338,"./ColdObservable":346,"./HotObservable":347,"./SubscriptionLog":348}],351:[function(require,module,exports){
 "use strict";
 var root_1 = require('./root');
 var RequestAnimationFrameDefinition = (function () {
@@ -22241,7 +23251,7 @@ var RequestAnimationFrameDefinition = (function () {
 exports.RequestAnimationFrameDefinition = RequestAnimationFrameDefinition;
 exports.AnimationFrame = new RequestAnimationFrameDefinition(root_1.root);
 
-},{"./root":372}],349:[function(require,module,exports){
+},{"./root":375}],352:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -22270,7 +23280,7 @@ var ArgumentOutOfRangeError = (function (_super) {
 }(Error));
 exports.ArgumentOutOfRangeError = ArgumentOutOfRangeError;
 
-},{}],350:[function(require,module,exports){
+},{}],353:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -22299,7 +23309,7 @@ var EmptyError = (function (_super) {
 }(Error));
 exports.EmptyError = EmptyError;
 
-},{}],351:[function(require,module,exports){
+},{}],354:[function(require,module,exports){
 "use strict";
 var FastMap = (function () {
     function FastMap() {
@@ -22331,7 +23341,7 @@ var FastMap = (function () {
 }());
 exports.FastMap = FastMap;
 
-},{}],352:[function(require,module,exports){
+},{}],355:[function(require,module,exports){
 /**
 Some credit for this helper goes to http://github.com/YuzuJS/setImmediate
 */
@@ -22541,13 +23551,13 @@ var ImmediateDefinition = (function () {
 exports.ImmediateDefinition = ImmediateDefinition;
 exports.Immediate = new ImmediateDefinition(root_1.root);
 
-},{"./root":372}],353:[function(require,module,exports){
+},{"./root":375}],356:[function(require,module,exports){
 "use strict";
 var root_1 = require('./root');
 var MapPolyfill_1 = require('./MapPolyfill');
 exports.Map = root_1.root.Map || (function () { return MapPolyfill_1.MapPolyfill; })();
 
-},{"./MapPolyfill":354,"./root":372}],354:[function(require,module,exports){
+},{"./MapPolyfill":357,"./root":375}],357:[function(require,module,exports){
 "use strict";
 var MapPolyfill = (function () {
     function MapPolyfill() {
@@ -22595,7 +23605,7 @@ var MapPolyfill = (function () {
 }());
 exports.MapPolyfill = MapPolyfill;
 
-},{}],355:[function(require,module,exports){
+},{}],358:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -22623,7 +23633,7 @@ var ObjectUnsubscribedError = (function (_super) {
 }(Error));
 exports.ObjectUnsubscribedError = ObjectUnsubscribedError;
 
-},{}],356:[function(require,module,exports){
+},{}],359:[function(require,module,exports){
 "use strict";
 var root_1 = require('./root');
 function minimalSetImpl() {
@@ -22657,7 +23667,7 @@ function minimalSetImpl() {
 exports.minimalSetImpl = minimalSetImpl;
 exports.Set = root_1.root.Set || minimalSetImpl();
 
-},{"./root":372}],357:[function(require,module,exports){
+},{"./root":375}],360:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -22683,7 +23693,7 @@ var TimeoutError = (function (_super) {
 }(Error));
 exports.TimeoutError = TimeoutError;
 
-},{}],358:[function(require,module,exports){
+},{}],361:[function(require,module,exports){
 "use strict";
 var __extends = (this && this.__extends) || function (d, b) {
     for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
@@ -22709,7 +23719,7 @@ var UnsubscriptionError = (function (_super) {
 }(Error));
 exports.UnsubscriptionError = UnsubscriptionError;
 
-},{}],359:[function(require,module,exports){
+},{}],362:[function(require,module,exports){
 "use strict";
 function applyMixins(derivedCtor, baseCtors) {
     for (var i = 0, len = baseCtors.length; i < len; i++) {
@@ -22723,7 +23733,7 @@ function applyMixins(derivedCtor, baseCtors) {
 }
 exports.applyMixins = applyMixins;
 
-},{}],360:[function(require,module,exports){
+},{}],363:[function(require,module,exports){
 "use strict";
 var root_1 = require('./root');
 function assignImpl(target) {
@@ -22750,34 +23760,34 @@ function getAssign(root) {
 exports.getAssign = getAssign;
 exports.assign = getAssign(root_1.root);
 
-},{"./root":372}],361:[function(require,module,exports){
+},{"./root":375}],364:[function(require,module,exports){
 "use strict";
 // typeof any so that it we don't have to cast when comparing a result to the error object
 exports.errorObject = { e: {} };
 
-},{}],362:[function(require,module,exports){
+},{}],365:[function(require,module,exports){
 "use strict";
 exports.isArray = Array.isArray || (function (x) { return x && typeof x.length === 'number'; });
 
-},{}],363:[function(require,module,exports){
+},{}],366:[function(require,module,exports){
 "use strict";
 exports.isArrayLike = (function (x) { return x && typeof x.length === 'number'; });
 
-},{}],364:[function(require,module,exports){
+},{}],367:[function(require,module,exports){
 "use strict";
 function isDate(value) {
     return value instanceof Date && !isNaN(+value);
 }
 exports.isDate = isDate;
 
-},{}],365:[function(require,module,exports){
+},{}],368:[function(require,module,exports){
 "use strict";
 function isFunction(x) {
     return typeof x === 'function';
 }
 exports.isFunction = isFunction;
 
-},{}],366:[function(require,module,exports){
+},{}],369:[function(require,module,exports){
 "use strict";
 var isArray_1 = require('../util/isArray');
 function isNumeric(val) {
@@ -22790,34 +23800,34 @@ function isNumeric(val) {
 exports.isNumeric = isNumeric;
 ;
 
-},{"../util/isArray":362}],367:[function(require,module,exports){
+},{"../util/isArray":365}],370:[function(require,module,exports){
 "use strict";
 function isObject(x) {
     return x != null && typeof x === 'object';
 }
 exports.isObject = isObject;
 
-},{}],368:[function(require,module,exports){
+},{}],371:[function(require,module,exports){
 "use strict";
 function isPromise(value) {
     return value && typeof value.subscribe !== 'function' && typeof value.then === 'function';
 }
 exports.isPromise = isPromise;
 
-},{}],369:[function(require,module,exports){
+},{}],372:[function(require,module,exports){
 "use strict";
 function isScheduler(value) {
     return value && typeof value.schedule === 'function';
 }
 exports.isScheduler = isScheduler;
 
-},{}],370:[function(require,module,exports){
+},{}],373:[function(require,module,exports){
 "use strict";
 /* tslint:disable:no-empty */
 function noop() { }
 exports.noop = noop;
 
-},{}],371:[function(require,module,exports){
+},{}],374:[function(require,module,exports){
 "use strict";
 function not(pred, thisArg) {
     function notPred() {
@@ -22829,7 +23839,7 @@ function not(pred, thisArg) {
 }
 exports.not = not;
 
-},{}],372:[function(require,module,exports){
+},{}],375:[function(require,module,exports){
 (function (global){
 "use strict";
 // CommonJS / Node have global context exposed as "global" variable.
@@ -22851,7 +23861,7 @@ exports.root = _root;
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],373:[function(require,module,exports){
+},{}],376:[function(require,module,exports){
 "use strict";
 var root_1 = require('./root');
 var isArrayLike_1 = require('./isArrayLike');
@@ -22930,7 +23940,7 @@ function subscribeToResult(outerSubscriber, result, outerValue, outerIndex) {
 }
 exports.subscribeToResult = subscribeToResult;
 
-},{"../InnerSubscriber":33,"../Observable":35,"../symbol/iterator":340,"../symbol/observable":341,"./isArrayLike":363,"./isObject":367,"./isPromise":368,"./root":372}],374:[function(require,module,exports){
+},{"../InnerSubscriber":36,"../Observable":38,"../symbol/iterator":343,"../symbol/observable":344,"./isArrayLike":366,"./isObject":370,"./isPromise":371,"./root":375}],377:[function(require,module,exports){
 "use strict";
 var Subscriber_1 = require('../Subscriber');
 var rxSubscriber_1 = require('../symbol/rxSubscriber');
@@ -22951,7 +23961,7 @@ function toSubscriber(nextOrObserver, error, complete) {
 }
 exports.toSubscriber = toSubscriber;
 
-},{"../Observer":36,"../Subscriber":43,"../symbol/rxSubscriber":342}],375:[function(require,module,exports){
+},{"../Observer":39,"../Subscriber":46,"../symbol/rxSubscriber":345}],378:[function(require,module,exports){
 "use strict";
 var errorObject_1 = require('./errorObject');
 var tryCatchTarget;
@@ -22971,10 +23981,10 @@ function tryCatch(fn) {
 exports.tryCatch = tryCatch;
 ;
 
-},{"./errorObject":361}],376:[function(require,module,exports){
+},{"./errorObject":364}],379:[function(require,module,exports){
 module.exports = require('./dist/cjs/Rx');
 
-},{"./dist/cjs/Rx":39}],377:[function(require,module,exports){
+},{"./dist/cjs/Rx":42}],380:[function(require,module,exports){
 "use strict";
 var UUID = (function () {
     function UUID() {
@@ -23012,9 +24022,9 @@ var UUID = (function () {
 }());
 exports.UUID = UUID;
 
-},{}],378:[function(require,module,exports){
+},{}],381:[function(require,module,exports){
 
-},{}],379:[function(require,module,exports){
+},{}],382:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -23890,7 +24900,7 @@ function factory(ReactComponent, isValidElement, ReactNoopUpdateQueue) {
 module.exports = factory;
 
 }).call(this,require('_process'))
-},{"_process":407,"fbjs/lib/emptyObject":389,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"object-assign":406}],380:[function(require,module,exports){
+},{"_process":410,"fbjs/lib/emptyObject":392,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"object-assign":409}],383:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -23922,7 +24932,7 @@ module.exports = factory(
   ReactNoopUpdateQueue
 );
 
-},{"./factory":379,"react":566}],381:[function(require,module,exports){
+},{"./factory":382,"react":569}],384:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -24008,7 +25018,7 @@ var EventListener = {
 
 module.exports = EventListener;
 }).call(this,require('_process'))
-},{"./emptyFunction":388,"_process":407}],382:[function(require,module,exports){
+},{"./emptyFunction":391,"_process":410}],385:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -24044,7 +25054,7 @@ var ExecutionEnvironment = {
 };
 
 module.exports = ExecutionEnvironment;
-},{}],383:[function(require,module,exports){
+},{}],386:[function(require,module,exports){
 "use strict";
 
 /**
@@ -24076,7 +25086,7 @@ function camelize(string) {
 }
 
 module.exports = camelize;
-},{}],384:[function(require,module,exports){
+},{}],387:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -24116,7 +25126,7 @@ function camelizeStyleName(string) {
 }
 
 module.exports = camelizeStyleName;
-},{"./camelize":383}],385:[function(require,module,exports){
+},{"./camelize":386}],388:[function(require,module,exports){
 'use strict';
 
 /**
@@ -24156,7 +25166,7 @@ function containsNode(outerNode, innerNode) {
 }
 
 module.exports = containsNode;
-},{"./isTextNode":398}],386:[function(require,module,exports){
+},{"./isTextNode":401}],389:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -24285,7 +25295,7 @@ function createArrayFromMixed(obj) {
 
 module.exports = createArrayFromMixed;
 }).call(this,require('_process'))
-},{"./invariant":396,"_process":407}],387:[function(require,module,exports){
+},{"./invariant":399,"_process":410}],390:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -24371,7 +25381,7 @@ function createNodesFromMarkup(markup, handleScript) {
 
 module.exports = createNodesFromMarkup;
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":382,"./createArrayFromMixed":386,"./getMarkupWrap":392,"./invariant":396,"_process":407}],388:[function(require,module,exports){
+},{"./ExecutionEnvironment":385,"./createArrayFromMixed":389,"./getMarkupWrap":395,"./invariant":399,"_process":410}],391:[function(require,module,exports){
 "use strict";
 
 /**
@@ -24410,7 +25420,7 @@ emptyFunction.thatReturnsArgument = function (arg) {
 };
 
 module.exports = emptyFunction;
-},{}],389:[function(require,module,exports){
+},{}],392:[function(require,module,exports){
 (function (process){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
@@ -24432,7 +25442,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = emptyObject;
 }).call(this,require('_process'))
-},{"_process":407}],390:[function(require,module,exports){
+},{"_process":410}],393:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -24459,7 +25469,7 @@ function focusNode(node) {
 }
 
 module.exports = focusNode;
-},{}],391:[function(require,module,exports){
+},{}],394:[function(require,module,exports){
 'use strict';
 
 /**
@@ -24498,7 +25508,7 @@ function getActiveElement(doc) /*?DOMElement*/{
 }
 
 module.exports = getActiveElement;
-},{}],392:[function(require,module,exports){
+},{}],395:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -24595,7 +25605,7 @@ function getMarkupWrap(nodeName) {
 
 module.exports = getMarkupWrap;
 }).call(this,require('_process'))
-},{"./ExecutionEnvironment":382,"./invariant":396,"_process":407}],393:[function(require,module,exports){
+},{"./ExecutionEnvironment":385,"./invariant":399,"_process":410}],396:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -24634,7 +25644,7 @@ function getUnboundedScrollPosition(scrollable) {
 }
 
 module.exports = getUnboundedScrollPosition;
-},{}],394:[function(require,module,exports){
+},{}],397:[function(require,module,exports){
 'use strict';
 
 /**
@@ -24667,7 +25677,7 @@ function hyphenate(string) {
 }
 
 module.exports = hyphenate;
-},{}],395:[function(require,module,exports){
+},{}],398:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -24706,7 +25716,7 @@ function hyphenateStyleName(string) {
 }
 
 module.exports = hyphenateStyleName;
-},{"./hyphenate":394}],396:[function(require,module,exports){
+},{"./hyphenate":397}],399:[function(require,module,exports){
 (function (process){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
@@ -24764,7 +25774,7 @@ function invariant(condition, format, a, b, c, d, e, f) {
 
 module.exports = invariant;
 }).call(this,require('_process'))
-},{"_process":407}],397:[function(require,module,exports){
+},{"_process":410}],400:[function(require,module,exports){
 'use strict';
 
 /**
@@ -24789,7 +25799,7 @@ function isNode(object) {
 }
 
 module.exports = isNode;
-},{}],398:[function(require,module,exports){
+},{}],401:[function(require,module,exports){
 'use strict';
 
 /**
@@ -24814,7 +25824,7 @@ function isTextNode(object) {
 }
 
 module.exports = isTextNode;
-},{"./isNode":397}],399:[function(require,module,exports){
+},{"./isNode":400}],402:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -24844,7 +25854,7 @@ function memoizeStringOnly(callback) {
 }
 
 module.exports = memoizeStringOnly;
-},{}],400:[function(require,module,exports){
+},{}],403:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -24867,7 +25877,7 @@ if (ExecutionEnvironment.canUseDOM) {
 }
 
 module.exports = performance || {};
-},{"./ExecutionEnvironment":382}],401:[function(require,module,exports){
+},{"./ExecutionEnvironment":385}],404:[function(require,module,exports){
 'use strict';
 
 /**
@@ -24901,7 +25911,7 @@ if (performance.now) {
 }
 
 module.exports = performanceNow;
-},{"./performance":400}],402:[function(require,module,exports){
+},{"./performance":403}],405:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -24969,7 +25979,7 @@ function shallowEqual(objA, objB) {
 }
 
 module.exports = shallowEqual;
-},{}],403:[function(require,module,exports){
+},{}],406:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -25038,7 +26048,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = warning;
 }).call(this,require('_process'))
-},{"./emptyFunction":388,"_process":407}],404:[function(require,module,exports){
+},{"./emptyFunction":391,"_process":410}],407:[function(require,module,exports){
 /**
  *  Copyright (c) 2014-2015, Facebook, Inc.
  *  All rights reserved.
@@ -30018,7 +31028,7 @@ module.exports = warning;
   return Immutable;
 
 }));
-},{}],405:[function(require,module,exports){
+},{}],408:[function(require,module,exports){
 (function (global){
 /*
  * Konva JavaScript Framework v1.6.3
@@ -48068,7 +49078,7 @@ module.exports = warning;
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"canvas":378,"jsdom":378}],406:[function(require,module,exports){
+},{"canvas":381,"jsdom":381}],409:[function(require,module,exports){
 /*
 object-assign
 (c) Sindre Sorhus
@@ -48160,7 +49170,7 @@ module.exports = shouldUseNative() ? Object.assign : function (target, source) {
 	return to;
 };
 
-},{}],407:[function(require,module,exports){
+},{}],410:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -48346,7 +49356,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],408:[function(require,module,exports){
+},{}],411:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -48411,7 +49421,7 @@ function checkPropTypes(typeSpecs, values, location, componentName, getStack) {
 module.exports = checkPropTypes;
 
 }).call(this,require('_process'))
-},{"./lib/ReactPropTypesSecret":413,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403}],409:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":416,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406}],412:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -48434,7 +49444,7 @@ module.exports = function(isValidElement) {
   return factory(isValidElement, throwOnDirectAccess);
 };
 
-},{"./factoryWithTypeCheckers":411}],410:[function(require,module,exports){
+},{"./factoryWithTypeCheckers":414}],413:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -48495,7 +49505,7 @@ module.exports = function() {
   return ReactPropTypes;
 };
 
-},{"./lib/ReactPropTypesSecret":413,"fbjs/lib/emptyFunction":388,"fbjs/lib/invariant":396}],411:[function(require,module,exports){
+},{"./lib/ReactPropTypesSecret":416,"fbjs/lib/emptyFunction":391,"fbjs/lib/invariant":399}],414:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -49011,7 +50021,7 @@ module.exports = function(isValidElement, throwOnDirectAccess) {
 };
 
 }).call(this,require('_process'))
-},{"./checkPropTypes":408,"./lib/ReactPropTypesSecret":413,"_process":407,"fbjs/lib/emptyFunction":388,"fbjs/lib/invariant":396,"fbjs/lib/warning":403}],412:[function(require,module,exports){
+},{"./checkPropTypes":411,"./lib/ReactPropTypesSecret":416,"_process":410,"fbjs/lib/emptyFunction":391,"fbjs/lib/invariant":399,"fbjs/lib/warning":406}],415:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -49045,7 +50055,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 }).call(this,require('_process'))
-},{"./factoryWithThrowingShims":410,"./factoryWithTypeCheckers":411,"_process":407}],413:[function(require,module,exports){
+},{"./factoryWithThrowingShims":413,"./factoryWithTypeCheckers":414,"_process":410}],416:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -49061,12 +50071,12 @@ var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 module.exports = ReactPropTypesSecret;
 
-},{}],414:[function(require,module,exports){
+},{}],417:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib/ReactDOM');
 
-},{"./lib/ReactDOM":444}],415:[function(require,module,exports){
+},{"./lib/ReactDOM":447}],418:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -49140,7 +50150,7 @@ var ARIADOMPropertyConfig = {
 };
 
 module.exports = ARIADOMPropertyConfig;
-},{}],416:[function(require,module,exports){
+},{}],419:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -49164,7 +50174,7 @@ var AutoFocusUtils = {
 };
 
 module.exports = AutoFocusUtils;
-},{"./ReactDOMComponentTree":447,"fbjs/lib/focusNode":390}],417:[function(require,module,exports){
+},{"./ReactDOMComponentTree":450,"fbjs/lib/focusNode":393}],420:[function(require,module,exports){
 /**
  * Copyright 2013-present Facebook, Inc.
  * All rights reserved.
@@ -49549,7 +50559,7 @@ var BeforeInputEventPlugin = {
 };
 
 module.exports = BeforeInputEventPlugin;
-},{"./EventPropagators":433,"./FallbackCompositionState":434,"./SyntheticCompositionEvent":498,"./SyntheticInputEvent":502,"fbjs/lib/ExecutionEnvironment":382}],418:[function(require,module,exports){
+},{"./EventPropagators":436,"./FallbackCompositionState":437,"./SyntheticCompositionEvent":501,"./SyntheticInputEvent":505,"fbjs/lib/ExecutionEnvironment":385}],421:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -49697,7 +50707,7 @@ var CSSProperty = {
 };
 
 module.exports = CSSProperty;
-},{}],419:[function(require,module,exports){
+},{}],422:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -49908,7 +50918,7 @@ var CSSPropertyOperations = {
 
 module.exports = CSSPropertyOperations;
 }).call(this,require('_process'))
-},{"./CSSProperty":418,"./ReactInstrumentation":476,"./dangerousStyleValue":515,"_process":407,"fbjs/lib/ExecutionEnvironment":382,"fbjs/lib/camelizeStyleName":384,"fbjs/lib/hyphenateStyleName":395,"fbjs/lib/memoizeStringOnly":399,"fbjs/lib/warning":403}],420:[function(require,module,exports){
+},{"./CSSProperty":421,"./ReactInstrumentation":479,"./dangerousStyleValue":518,"_process":410,"fbjs/lib/ExecutionEnvironment":385,"fbjs/lib/camelizeStyleName":387,"fbjs/lib/hyphenateStyleName":398,"fbjs/lib/memoizeStringOnly":402,"fbjs/lib/warning":406}],423:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -50029,7 +51039,7 @@ var CallbackQueue = function () {
 
 module.exports = PooledClass.addPoolingTo(CallbackQueue);
 }).call(this,require('_process'))
-},{"./PooledClass":438,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],421:[function(require,module,exports){
+},{"./PooledClass":441,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],424:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -50375,7 +51385,7 @@ var ChangeEventPlugin = {
 };
 
 module.exports = ChangeEventPlugin;
-},{"./EventPluginHub":430,"./EventPropagators":433,"./ReactDOMComponentTree":447,"./ReactUpdates":491,"./SyntheticEvent":500,"./getEventTarget":523,"./isEventSupported":530,"./isTextInputElement":531,"fbjs/lib/ExecutionEnvironment":382}],422:[function(require,module,exports){
+},{"./EventPluginHub":433,"./EventPropagators":436,"./ReactDOMComponentTree":450,"./ReactUpdates":494,"./SyntheticEvent":503,"./getEventTarget":526,"./isEventSupported":533,"./isTextInputElement":534,"fbjs/lib/ExecutionEnvironment":385}],425:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -50602,7 +51612,7 @@ var DOMChildrenOperations = {
 
 module.exports = DOMChildrenOperations;
 }).call(this,require('_process'))
-},{"./DOMLazyTree":423,"./Danger":427,"./ReactDOMComponentTree":447,"./ReactInstrumentation":476,"./createMicrosoftUnsafeLocalFunction":514,"./setInnerHTML":535,"./setTextContent":536,"_process":407}],423:[function(require,module,exports){
+},{"./DOMLazyTree":426,"./Danger":430,"./ReactDOMComponentTree":450,"./ReactInstrumentation":479,"./createMicrosoftUnsafeLocalFunction":517,"./setInnerHTML":538,"./setTextContent":539,"_process":410}],426:[function(require,module,exports){
 /**
  * Copyright 2015-present, Facebook, Inc.
  * All rights reserved.
@@ -50720,7 +51730,7 @@ DOMLazyTree.queueHTML = queueHTML;
 DOMLazyTree.queueText = queueText;
 
 module.exports = DOMLazyTree;
-},{"./DOMNamespaces":424,"./createMicrosoftUnsafeLocalFunction":514,"./setInnerHTML":535,"./setTextContent":536}],424:[function(require,module,exports){
+},{"./DOMNamespaces":427,"./createMicrosoftUnsafeLocalFunction":517,"./setInnerHTML":538,"./setTextContent":539}],427:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -50740,7 +51750,7 @@ var DOMNamespaces = {
 };
 
 module.exports = DOMNamespaces;
-},{}],425:[function(require,module,exports){
+},{}],428:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -50952,7 +51962,7 @@ var DOMProperty = {
 
 module.exports = DOMProperty;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],426:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],429:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -51191,7 +52201,7 @@ var DOMPropertyOperations = {
 
 module.exports = DOMPropertyOperations;
 }).call(this,require('_process'))
-},{"./DOMProperty":425,"./ReactDOMComponentTree":447,"./ReactInstrumentation":476,"./quoteAttributeValueForBrowser":532,"_process":407,"fbjs/lib/warning":403}],427:[function(require,module,exports){
+},{"./DOMProperty":428,"./ReactDOMComponentTree":450,"./ReactInstrumentation":479,"./quoteAttributeValueForBrowser":535,"_process":410,"fbjs/lib/warning":406}],430:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -51241,7 +52251,7 @@ var Danger = {
 
 module.exports = Danger;
 }).call(this,require('_process'))
-},{"./DOMLazyTree":423,"./reactProdInvariant":533,"_process":407,"fbjs/lib/ExecutionEnvironment":382,"fbjs/lib/createNodesFromMarkup":387,"fbjs/lib/emptyFunction":388,"fbjs/lib/invariant":396}],428:[function(require,module,exports){
+},{"./DOMLazyTree":426,"./reactProdInvariant":536,"_process":410,"fbjs/lib/ExecutionEnvironment":385,"fbjs/lib/createNodesFromMarkup":390,"fbjs/lib/emptyFunction":391,"fbjs/lib/invariant":399}],431:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -51267,7 +52277,7 @@ module.exports = Danger;
 var DefaultEventPluginOrder = ['ResponderEventPlugin', 'SimpleEventPlugin', 'TapEventPlugin', 'EnterLeaveEventPlugin', 'ChangeEventPlugin', 'SelectEventPlugin', 'BeforeInputEventPlugin'];
 
 module.exports = DefaultEventPluginOrder;
-},{}],429:[function(require,module,exports){
+},{}],432:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -51367,7 +52377,7 @@ var EnterLeaveEventPlugin = {
 };
 
 module.exports = EnterLeaveEventPlugin;
-},{"./EventPropagators":433,"./ReactDOMComponentTree":447,"./SyntheticMouseEvent":504}],430:[function(require,module,exports){
+},{"./EventPropagators":436,"./ReactDOMComponentTree":450,"./SyntheticMouseEvent":507}],433:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -51647,7 +52657,7 @@ var EventPluginHub = {
 
 module.exports = EventPluginHub;
 }).call(this,require('_process'))
-},{"./EventPluginRegistry":431,"./EventPluginUtils":432,"./ReactErrorUtils":467,"./accumulateInto":511,"./forEachAccumulated":519,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],431:[function(require,module,exports){
+},{"./EventPluginRegistry":434,"./EventPluginUtils":435,"./ReactErrorUtils":470,"./accumulateInto":514,"./forEachAccumulated":522,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],434:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -51904,7 +52914,7 @@ var EventPluginRegistry = {
 
 module.exports = EventPluginRegistry;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],432:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],435:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -52132,7 +53142,7 @@ var EventPluginUtils = {
 
 module.exports = EventPluginUtils;
 }).call(this,require('_process'))
-},{"./ReactErrorUtils":467,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403}],433:[function(require,module,exports){
+},{"./ReactErrorUtils":470,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406}],436:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -52268,7 +53278,7 @@ var EventPropagators = {
 
 module.exports = EventPropagators;
 }).call(this,require('_process'))
-},{"./EventPluginHub":430,"./EventPluginUtils":432,"./accumulateInto":511,"./forEachAccumulated":519,"_process":407,"fbjs/lib/warning":403}],434:[function(require,module,exports){
+},{"./EventPluginHub":433,"./EventPluginUtils":435,"./accumulateInto":514,"./forEachAccumulated":522,"_process":410,"fbjs/lib/warning":406}],437:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -52363,7 +53373,7 @@ _assign(FallbackCompositionState.prototype, {
 PooledClass.addPoolingTo(FallbackCompositionState);
 
 module.exports = FallbackCompositionState;
-},{"./PooledClass":438,"./getTextContentAccessor":527,"object-assign":406}],435:[function(require,module,exports){
+},{"./PooledClass":441,"./getTextContentAccessor":530,"object-assign":409}],438:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -52599,7 +53609,7 @@ var HTMLDOMPropertyConfig = {
 };
 
 module.exports = HTMLDOMPropertyConfig;
-},{"./DOMProperty":425}],436:[function(require,module,exports){
+},{"./DOMProperty":428}],439:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -52658,7 +53668,7 @@ var KeyEscapeUtils = {
 };
 
 module.exports = KeyEscapeUtils;
-},{}],437:[function(require,module,exports){
+},{}],440:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -52798,7 +53808,7 @@ var LinkedValueUtils = {
 
 module.exports = LinkedValueUtils;
 }).call(this,require('_process'))
-},{"./ReactPropTypesSecret":484,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"prop-types/factory":409,"react/lib/React":543}],438:[function(require,module,exports){
+},{"./ReactPropTypesSecret":487,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"prop-types/factory":412,"react/lib/React":546}],441:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -52912,7 +53922,7 @@ var PooledClass = {
 
 module.exports = PooledClass;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],439:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],442:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -53240,7 +54250,7 @@ var ReactBrowserEventEmitter = _assign({}, ReactEventEmitterMixin, {
 });
 
 module.exports = ReactBrowserEventEmitter;
-},{"./EventPluginRegistry":431,"./ReactEventEmitterMixin":468,"./ViewportMetrics":510,"./getVendorPrefixedEventName":528,"./isEventSupported":530,"object-assign":406}],440:[function(require,module,exports){
+},{"./EventPluginRegistry":434,"./ReactEventEmitterMixin":471,"./ViewportMetrics":513,"./getVendorPrefixedEventName":531,"./isEventSupported":533,"object-assign":409}],443:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-present, Facebook, Inc.
@@ -53396,7 +54406,7 @@ var ReactChildReconciler = {
 
 module.exports = ReactChildReconciler;
 }).call(this,require('_process'))
-},{"./KeyEscapeUtils":436,"./ReactReconciler":486,"./instantiateReactComponent":529,"./shouldUpdateReactComponent":537,"./traverseAllChildren":538,"_process":407,"fbjs/lib/warning":403,"react/lib/ReactComponentTreeHook":546}],441:[function(require,module,exports){
+},{"./KeyEscapeUtils":439,"./ReactReconciler":489,"./instantiateReactComponent":532,"./shouldUpdateReactComponent":540,"./traverseAllChildren":541,"_process":410,"fbjs/lib/warning":406,"react/lib/ReactComponentTreeHook":549}],444:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -53426,7 +54436,7 @@ var ReactComponentBrowserEnvironment = {
 };
 
 module.exports = ReactComponentBrowserEnvironment;
-},{"./DOMChildrenOperations":422,"./ReactDOMIDOperations":451}],442:[function(require,module,exports){
+},{"./DOMChildrenOperations":425,"./ReactDOMIDOperations":454}],445:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-present, Facebook, Inc.
@@ -53474,7 +54484,7 @@ var ReactComponentEnvironment = {
 
 module.exports = ReactComponentEnvironment;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],443:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],446:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -54378,7 +55388,7 @@ var ReactCompositeComponent = {
 
 module.exports = ReactCompositeComponent;
 }).call(this,require('_process'))
-},{"./ReactComponentEnvironment":442,"./ReactErrorUtils":467,"./ReactInstanceMap":475,"./ReactInstrumentation":476,"./ReactNodeTypes":481,"./ReactReconciler":486,"./checkReactTypeSpec":513,"./reactProdInvariant":533,"./shouldUpdateReactComponent":537,"_process":407,"fbjs/lib/emptyObject":389,"fbjs/lib/invariant":396,"fbjs/lib/shallowEqual":402,"fbjs/lib/warning":403,"object-assign":406,"react/lib/React":543,"react/lib/ReactCurrentOwner":547}],444:[function(require,module,exports){
+},{"./ReactComponentEnvironment":445,"./ReactErrorUtils":470,"./ReactInstanceMap":478,"./ReactInstrumentation":479,"./ReactNodeTypes":484,"./ReactReconciler":489,"./checkReactTypeSpec":516,"./reactProdInvariant":536,"./shouldUpdateReactComponent":540,"_process":410,"fbjs/lib/emptyObject":392,"fbjs/lib/invariant":399,"fbjs/lib/shallowEqual":405,"fbjs/lib/warning":406,"object-assign":409,"react/lib/React":546,"react/lib/ReactCurrentOwner":550}],447:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -54491,7 +55501,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = ReactDOM;
 }).call(this,require('_process'))
-},{"./ReactDOMComponentTree":447,"./ReactDOMInvalidARIAHook":453,"./ReactDOMNullInputValuePropHook":454,"./ReactDOMUnknownPropertyHook":461,"./ReactDefaultInjection":464,"./ReactInstrumentation":476,"./ReactMount":479,"./ReactReconciler":486,"./ReactUpdates":491,"./ReactVersion":492,"./findDOMNode":517,"./getHostComponentFromComposite":524,"./renderSubtreeIntoContainer":534,"_process":407,"fbjs/lib/ExecutionEnvironment":382,"fbjs/lib/warning":403}],445:[function(require,module,exports){
+},{"./ReactDOMComponentTree":450,"./ReactDOMInvalidARIAHook":456,"./ReactDOMNullInputValuePropHook":457,"./ReactDOMUnknownPropertyHook":464,"./ReactDefaultInjection":467,"./ReactInstrumentation":479,"./ReactMount":482,"./ReactReconciler":489,"./ReactUpdates":494,"./ReactVersion":495,"./findDOMNode":520,"./getHostComponentFromComposite":527,"./renderSubtreeIntoContainer":537,"_process":410,"fbjs/lib/ExecutionEnvironment":385,"fbjs/lib/warning":406}],448:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -55494,7 +56504,7 @@ _assign(ReactDOMComponent.prototype, ReactDOMComponent.Mixin, ReactMultiChild.Mi
 
 module.exports = ReactDOMComponent;
 }).call(this,require('_process'))
-},{"./AutoFocusUtils":416,"./CSSPropertyOperations":419,"./DOMLazyTree":423,"./DOMNamespaces":424,"./DOMProperty":425,"./DOMPropertyOperations":426,"./EventPluginHub":430,"./EventPluginRegistry":431,"./ReactBrowserEventEmitter":439,"./ReactDOMComponentFlags":446,"./ReactDOMComponentTree":447,"./ReactDOMInput":452,"./ReactDOMOption":455,"./ReactDOMSelect":456,"./ReactDOMTextarea":459,"./ReactInstrumentation":476,"./ReactMultiChild":480,"./ReactServerRenderingTransaction":488,"./escapeTextContentForBrowser":516,"./isEventSupported":530,"./reactProdInvariant":533,"./validateDOMNesting":539,"_process":407,"fbjs/lib/emptyFunction":388,"fbjs/lib/invariant":396,"fbjs/lib/shallowEqual":402,"fbjs/lib/warning":403,"object-assign":406}],446:[function(require,module,exports){
+},{"./AutoFocusUtils":419,"./CSSPropertyOperations":422,"./DOMLazyTree":426,"./DOMNamespaces":427,"./DOMProperty":428,"./DOMPropertyOperations":429,"./EventPluginHub":433,"./EventPluginRegistry":434,"./ReactBrowserEventEmitter":442,"./ReactDOMComponentFlags":449,"./ReactDOMComponentTree":450,"./ReactDOMInput":455,"./ReactDOMOption":458,"./ReactDOMSelect":459,"./ReactDOMTextarea":462,"./ReactInstrumentation":479,"./ReactMultiChild":483,"./ReactServerRenderingTransaction":491,"./escapeTextContentForBrowser":519,"./isEventSupported":533,"./reactProdInvariant":536,"./validateDOMNesting":542,"_process":410,"fbjs/lib/emptyFunction":391,"fbjs/lib/invariant":399,"fbjs/lib/shallowEqual":405,"fbjs/lib/warning":406,"object-assign":409}],449:[function(require,module,exports){
 /**
  * Copyright 2015-present, Facebook, Inc.
  * All rights reserved.
@@ -55512,7 +56522,7 @@ var ReactDOMComponentFlags = {
 };
 
 module.exports = ReactDOMComponentFlags;
-},{}],447:[function(require,module,exports){
+},{}],450:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -55709,7 +56719,7 @@ var ReactDOMComponentTree = {
 
 module.exports = ReactDOMComponentTree;
 }).call(this,require('_process'))
-},{"./DOMProperty":425,"./ReactDOMComponentFlags":446,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],448:[function(require,module,exports){
+},{"./DOMProperty":428,"./ReactDOMComponentFlags":449,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],451:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -55744,7 +56754,7 @@ function ReactDOMContainerInfo(topLevelWrapper, node) {
 
 module.exports = ReactDOMContainerInfo;
 }).call(this,require('_process'))
-},{"./validateDOMNesting":539,"_process":407}],449:[function(require,module,exports){
+},{"./validateDOMNesting":542,"_process":410}],452:[function(require,module,exports){
 /**
  * Copyright 2014-present, Facebook, Inc.
  * All rights reserved.
@@ -55804,7 +56814,7 @@ _assign(ReactDOMEmptyComponent.prototype, {
 });
 
 module.exports = ReactDOMEmptyComponent;
-},{"./DOMLazyTree":423,"./ReactDOMComponentTree":447,"object-assign":406}],450:[function(require,module,exports){
+},{"./DOMLazyTree":426,"./ReactDOMComponentTree":450,"object-assign":409}],453:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -55823,7 +56833,7 @@ var ReactDOMFeatureFlags = {
 };
 
 module.exports = ReactDOMFeatureFlags;
-},{}],451:[function(require,module,exports){
+},{}],454:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -55857,7 +56867,7 @@ var ReactDOMIDOperations = {
 };
 
 module.exports = ReactDOMIDOperations;
-},{"./DOMChildrenOperations":422,"./ReactDOMComponentTree":447}],452:[function(require,module,exports){
+},{"./DOMChildrenOperations":425,"./ReactDOMComponentTree":450}],455:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -56144,7 +57154,7 @@ function _handleChange(event) {
 
 module.exports = ReactDOMInput;
 }).call(this,require('_process'))
-},{"./DOMPropertyOperations":426,"./LinkedValueUtils":437,"./ReactDOMComponentTree":447,"./ReactUpdates":491,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"object-assign":406}],453:[function(require,module,exports){
+},{"./DOMPropertyOperations":429,"./LinkedValueUtils":440,"./ReactDOMComponentTree":450,"./ReactUpdates":494,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"object-assign":409}],456:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -56239,7 +57249,7 @@ var ReactDOMInvalidARIAHook = {
 
 module.exports = ReactDOMInvalidARIAHook;
 }).call(this,require('_process'))
-},{"./DOMProperty":425,"_process":407,"fbjs/lib/warning":403,"react/lib/ReactComponentTreeHook":546}],454:[function(require,module,exports){
+},{"./DOMProperty":428,"_process":410,"fbjs/lib/warning":406,"react/lib/ReactComponentTreeHook":549}],457:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -56284,7 +57294,7 @@ var ReactDOMNullInputValuePropHook = {
 
 module.exports = ReactDOMNullInputValuePropHook;
 }).call(this,require('_process'))
-},{"_process":407,"fbjs/lib/warning":403,"react/lib/ReactComponentTreeHook":546}],455:[function(require,module,exports){
+},{"_process":410,"fbjs/lib/warning":406,"react/lib/ReactComponentTreeHook":549}],458:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -56409,7 +57419,7 @@ var ReactDOMOption = {
 
 module.exports = ReactDOMOption;
 }).call(this,require('_process'))
-},{"./ReactDOMComponentTree":447,"./ReactDOMSelect":456,"_process":407,"fbjs/lib/warning":403,"object-assign":406,"react/lib/React":543}],456:[function(require,module,exports){
+},{"./ReactDOMComponentTree":450,"./ReactDOMSelect":459,"_process":410,"fbjs/lib/warning":406,"object-assign":409,"react/lib/React":546}],459:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -56611,7 +57621,7 @@ function _handleChange(event) {
 
 module.exports = ReactDOMSelect;
 }).call(this,require('_process'))
-},{"./LinkedValueUtils":437,"./ReactDOMComponentTree":447,"./ReactUpdates":491,"_process":407,"fbjs/lib/warning":403,"object-assign":406}],457:[function(require,module,exports){
+},{"./LinkedValueUtils":440,"./ReactDOMComponentTree":450,"./ReactUpdates":494,"_process":410,"fbjs/lib/warning":406,"object-assign":409}],460:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -56823,7 +57833,7 @@ var ReactDOMSelection = {
 };
 
 module.exports = ReactDOMSelection;
-},{"./getNodeForCharacterOffset":526,"./getTextContentAccessor":527,"fbjs/lib/ExecutionEnvironment":382}],458:[function(require,module,exports){
+},{"./getNodeForCharacterOffset":529,"./getTextContentAccessor":530,"fbjs/lib/ExecutionEnvironment":385}],461:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -56989,7 +57999,7 @@ _assign(ReactDOMTextComponent.prototype, {
 
 module.exports = ReactDOMTextComponent;
 }).call(this,require('_process'))
-},{"./DOMChildrenOperations":422,"./DOMLazyTree":423,"./ReactDOMComponentTree":447,"./escapeTextContentForBrowser":516,"./reactProdInvariant":533,"./validateDOMNesting":539,"_process":407,"fbjs/lib/invariant":396,"object-assign":406}],459:[function(require,module,exports){
+},{"./DOMChildrenOperations":425,"./DOMLazyTree":426,"./ReactDOMComponentTree":450,"./escapeTextContentForBrowser":519,"./reactProdInvariant":536,"./validateDOMNesting":542,"_process":410,"fbjs/lib/invariant":399,"object-assign":409}],462:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -57151,7 +58161,7 @@ function _handleChange(event) {
 
 module.exports = ReactDOMTextarea;
 }).call(this,require('_process'))
-},{"./LinkedValueUtils":437,"./ReactDOMComponentTree":447,"./ReactUpdates":491,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"object-assign":406}],460:[function(require,module,exports){
+},{"./LinkedValueUtils":440,"./ReactDOMComponentTree":450,"./ReactUpdates":494,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"object-assign":409}],463:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015-present, Facebook, Inc.
@@ -57289,7 +58299,7 @@ module.exports = {
   traverseEnterLeave: traverseEnterLeave
 };
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],461:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],464:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -57403,7 +58413,7 @@ var ReactDOMUnknownPropertyHook = {
 
 module.exports = ReactDOMUnknownPropertyHook;
 }).call(this,require('_process'))
-},{"./DOMProperty":425,"./EventPluginRegistry":431,"_process":407,"fbjs/lib/warning":403,"react/lib/ReactComponentTreeHook":546}],462:[function(require,module,exports){
+},{"./DOMProperty":428,"./EventPluginRegistry":434,"_process":410,"fbjs/lib/warning":406,"react/lib/ReactComponentTreeHook":549}],465:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2016-present, Facebook, Inc.
@@ -57764,7 +58774,7 @@ if (/[?&]react_perf\b/.test(url)) {
 
 module.exports = ReactDebugTool;
 }).call(this,require('_process'))
-},{"./ReactHostOperationHistoryHook":472,"./ReactInvalidSetStateWarningHook":477,"_process":407,"fbjs/lib/ExecutionEnvironment":382,"fbjs/lib/performanceNow":401,"fbjs/lib/warning":403,"react/lib/ReactComponentTreeHook":546}],463:[function(require,module,exports){
+},{"./ReactHostOperationHistoryHook":475,"./ReactInvalidSetStateWarningHook":480,"_process":410,"fbjs/lib/ExecutionEnvironment":385,"fbjs/lib/performanceNow":404,"fbjs/lib/warning":406,"react/lib/ReactComponentTreeHook":549}],466:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -57832,7 +58842,7 @@ var ReactDefaultBatchingStrategy = {
 };
 
 module.exports = ReactDefaultBatchingStrategy;
-},{"./ReactUpdates":491,"./Transaction":509,"fbjs/lib/emptyFunction":388,"object-assign":406}],464:[function(require,module,exports){
+},{"./ReactUpdates":494,"./Transaction":512,"fbjs/lib/emptyFunction":391,"object-assign":409}],467:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -57918,7 +58928,7 @@ function inject() {
 module.exports = {
   inject: inject
 };
-},{"./ARIADOMPropertyConfig":415,"./BeforeInputEventPlugin":417,"./ChangeEventPlugin":421,"./DefaultEventPluginOrder":428,"./EnterLeaveEventPlugin":429,"./HTMLDOMPropertyConfig":435,"./ReactComponentBrowserEnvironment":441,"./ReactDOMComponent":445,"./ReactDOMComponentTree":447,"./ReactDOMEmptyComponent":449,"./ReactDOMTextComponent":458,"./ReactDOMTreeTraversal":460,"./ReactDefaultBatchingStrategy":463,"./ReactEventListener":469,"./ReactInjection":473,"./ReactReconcileTransaction":485,"./SVGDOMPropertyConfig":493,"./SelectEventPlugin":494,"./SimpleEventPlugin":495}],465:[function(require,module,exports){
+},{"./ARIADOMPropertyConfig":418,"./BeforeInputEventPlugin":420,"./ChangeEventPlugin":424,"./DefaultEventPluginOrder":431,"./EnterLeaveEventPlugin":432,"./HTMLDOMPropertyConfig":438,"./ReactComponentBrowserEnvironment":444,"./ReactDOMComponent":448,"./ReactDOMComponentTree":450,"./ReactDOMEmptyComponent":452,"./ReactDOMTextComponent":461,"./ReactDOMTreeTraversal":463,"./ReactDefaultBatchingStrategy":466,"./ReactEventListener":472,"./ReactInjection":476,"./ReactReconcileTransaction":488,"./SVGDOMPropertyConfig":496,"./SelectEventPlugin":497,"./SimpleEventPlugin":498}],468:[function(require,module,exports){
 /**
  * Copyright 2014-present, Facebook, Inc.
  * All rights reserved.
@@ -57938,7 +58948,7 @@ module.exports = {
 var REACT_ELEMENT_TYPE = typeof Symbol === 'function' && Symbol['for'] && Symbol['for']('react.element') || 0xeac7;
 
 module.exports = REACT_ELEMENT_TYPE;
-},{}],466:[function(require,module,exports){
+},{}],469:[function(require,module,exports){
 /**
  * Copyright 2014-present, Facebook, Inc.
  * All rights reserved.
@@ -57968,7 +58978,7 @@ var ReactEmptyComponent = {
 ReactEmptyComponent.injection = ReactEmptyComponentInjection;
 
 module.exports = ReactEmptyComponent;
-},{}],467:[function(require,module,exports){
+},{}],470:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -58046,7 +59056,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = ReactErrorUtils;
 }).call(this,require('_process'))
-},{"_process":407}],468:[function(require,module,exports){
+},{"_process":410}],471:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -58079,7 +59089,7 @@ var ReactEventEmitterMixin = {
 };
 
 module.exports = ReactEventEmitterMixin;
-},{"./EventPluginHub":430}],469:[function(require,module,exports){
+},{"./EventPluginHub":433}],472:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -58234,7 +59244,7 @@ var ReactEventListener = {
 };
 
 module.exports = ReactEventListener;
-},{"./PooledClass":438,"./ReactDOMComponentTree":447,"./ReactUpdates":491,"./getEventTarget":523,"fbjs/lib/EventListener":381,"fbjs/lib/ExecutionEnvironment":382,"fbjs/lib/getUnboundedScrollPosition":393,"object-assign":406}],470:[function(require,module,exports){
+},{"./PooledClass":441,"./ReactDOMComponentTree":450,"./ReactUpdates":494,"./getEventTarget":526,"fbjs/lib/EventListener":384,"fbjs/lib/ExecutionEnvironment":385,"fbjs/lib/getUnboundedScrollPosition":396,"object-assign":409}],473:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -58256,7 +59266,7 @@ var ReactFeatureFlags = {
 };
 
 module.exports = ReactFeatureFlags;
-},{}],471:[function(require,module,exports){
+},{}],474:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-present, Facebook, Inc.
@@ -58326,7 +59336,7 @@ var ReactHostComponent = {
 
 module.exports = ReactHostComponent;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],472:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],475:[function(require,module,exports){
 /**
  * Copyright 2016-present, Facebook, Inc.
  * All rights reserved.
@@ -58360,7 +59370,7 @@ var ReactHostOperationHistoryHook = {
 };
 
 module.exports = ReactHostOperationHistoryHook;
-},{}],473:[function(require,module,exports){
+},{}],476:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -58394,7 +59404,7 @@ var ReactInjection = {
 };
 
 module.exports = ReactInjection;
-},{"./DOMProperty":425,"./EventPluginHub":430,"./EventPluginUtils":432,"./ReactBrowserEventEmitter":439,"./ReactComponentEnvironment":442,"./ReactEmptyComponent":466,"./ReactHostComponent":471,"./ReactUpdates":491}],474:[function(require,module,exports){
+},{"./DOMProperty":428,"./EventPluginHub":433,"./EventPluginUtils":435,"./ReactBrowserEventEmitter":442,"./ReactComponentEnvironment":445,"./ReactEmptyComponent":469,"./ReactHostComponent":474,"./ReactUpdates":494}],477:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -58518,7 +59528,7 @@ var ReactInputSelection = {
 };
 
 module.exports = ReactInputSelection;
-},{"./ReactDOMSelection":457,"fbjs/lib/containsNode":385,"fbjs/lib/focusNode":390,"fbjs/lib/getActiveElement":391}],475:[function(require,module,exports){
+},{"./ReactDOMSelection":460,"fbjs/lib/containsNode":388,"fbjs/lib/focusNode":393,"fbjs/lib/getActiveElement":394}],478:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -58566,7 +59576,7 @@ var ReactInstanceMap = {
 };
 
 module.exports = ReactInstanceMap;
-},{}],476:[function(require,module,exports){
+},{}],479:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2016-present, Facebook, Inc.
@@ -58592,7 +59602,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = { debugTool: debugTool };
 }).call(this,require('_process'))
-},{"./ReactDebugTool":462,"_process":407}],477:[function(require,module,exports){
+},{"./ReactDebugTool":465,"_process":410}],480:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2016-present, Facebook, Inc.
@@ -58631,7 +59641,7 @@ var ReactInvalidSetStateWarningHook = {
 
 module.exports = ReactInvalidSetStateWarningHook;
 }).call(this,require('_process'))
-},{"_process":407,"fbjs/lib/warning":403}],478:[function(require,module,exports){
+},{"_process":410,"fbjs/lib/warning":406}],481:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -58681,7 +59691,7 @@ var ReactMarkupChecksum = {
 };
 
 module.exports = ReactMarkupChecksum;
-},{"./adler32":512}],479:[function(require,module,exports){
+},{"./adler32":515}],482:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -59221,7 +60231,7 @@ var ReactMount = {
 
 module.exports = ReactMount;
 }).call(this,require('_process'))
-},{"./DOMLazyTree":423,"./DOMProperty":425,"./ReactBrowserEventEmitter":439,"./ReactDOMComponentTree":447,"./ReactDOMContainerInfo":448,"./ReactDOMFeatureFlags":450,"./ReactFeatureFlags":470,"./ReactInstanceMap":475,"./ReactInstrumentation":476,"./ReactMarkupChecksum":478,"./ReactReconciler":486,"./ReactUpdateQueue":490,"./ReactUpdates":491,"./instantiateReactComponent":529,"./reactProdInvariant":533,"./setInnerHTML":535,"./shouldUpdateReactComponent":537,"_process":407,"fbjs/lib/emptyObject":389,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"react/lib/React":543,"react/lib/ReactCurrentOwner":547}],480:[function(require,module,exports){
+},{"./DOMLazyTree":426,"./DOMProperty":428,"./ReactBrowserEventEmitter":442,"./ReactDOMComponentTree":450,"./ReactDOMContainerInfo":451,"./ReactDOMFeatureFlags":453,"./ReactFeatureFlags":473,"./ReactInstanceMap":478,"./ReactInstrumentation":479,"./ReactMarkupChecksum":481,"./ReactReconciler":489,"./ReactUpdateQueue":493,"./ReactUpdates":494,"./instantiateReactComponent":532,"./reactProdInvariant":536,"./setInnerHTML":538,"./shouldUpdateReactComponent":540,"_process":410,"fbjs/lib/emptyObject":392,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"react/lib/React":546,"react/lib/ReactCurrentOwner":550}],483:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -59673,7 +60683,7 @@ var ReactMultiChild = {
 
 module.exports = ReactMultiChild;
 }).call(this,require('_process'))
-},{"./ReactChildReconciler":440,"./ReactComponentEnvironment":442,"./ReactInstanceMap":475,"./ReactInstrumentation":476,"./ReactReconciler":486,"./flattenChildren":518,"./reactProdInvariant":533,"_process":407,"fbjs/lib/emptyFunction":388,"fbjs/lib/invariant":396,"react/lib/ReactCurrentOwner":547}],481:[function(require,module,exports){
+},{"./ReactChildReconciler":443,"./ReactComponentEnvironment":445,"./ReactInstanceMap":478,"./ReactInstrumentation":479,"./ReactReconciler":489,"./flattenChildren":521,"./reactProdInvariant":536,"_process":410,"fbjs/lib/emptyFunction":391,"fbjs/lib/invariant":399,"react/lib/ReactCurrentOwner":550}],484:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -59715,7 +60725,7 @@ var ReactNodeTypes = {
 
 module.exports = ReactNodeTypes;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"react/lib/React":543}],482:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"react/lib/React":546}],485:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -59811,7 +60821,7 @@ var ReactOwner = {
 
 module.exports = ReactOwner;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],483:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],486:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -59838,7 +60848,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = ReactPropTypeLocationNames;
 }).call(this,require('_process'))
-},{"_process":407}],484:[function(require,module,exports){
+},{"_process":410}],487:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -59855,7 +60865,7 @@ module.exports = ReactPropTypeLocationNames;
 var ReactPropTypesSecret = 'SECRET_DO_NOT_PASS_THIS_OR_YOU_WILL_BE_FIRED';
 
 module.exports = ReactPropTypesSecret;
-},{}],485:[function(require,module,exports){
+},{}],488:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -60035,7 +61045,7 @@ PooledClass.addPoolingTo(ReactReconcileTransaction);
 
 module.exports = ReactReconcileTransaction;
 }).call(this,require('_process'))
-},{"./CallbackQueue":420,"./PooledClass":438,"./ReactBrowserEventEmitter":439,"./ReactInputSelection":474,"./ReactInstrumentation":476,"./ReactUpdateQueue":490,"./Transaction":509,"_process":407,"object-assign":406}],486:[function(require,module,exports){
+},{"./CallbackQueue":423,"./PooledClass":441,"./ReactBrowserEventEmitter":442,"./ReactInputSelection":477,"./ReactInstrumentation":479,"./ReactUpdateQueue":493,"./Transaction":512,"_process":410,"object-assign":409}],489:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -60205,7 +61215,7 @@ var ReactReconciler = {
 
 module.exports = ReactReconciler;
 }).call(this,require('_process'))
-},{"./ReactInstrumentation":476,"./ReactRef":487,"_process":407,"fbjs/lib/warning":403}],487:[function(require,module,exports){
+},{"./ReactInstrumentation":479,"./ReactRef":490,"_process":410,"fbjs/lib/warning":406}],490:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -60294,7 +61304,7 @@ ReactRef.detachRefs = function (instance, element) {
 };
 
 module.exports = ReactRef;
-},{"./ReactOwner":482}],488:[function(require,module,exports){
+},{"./ReactOwner":485}],491:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-present, Facebook, Inc.
@@ -60386,7 +61396,7 @@ PooledClass.addPoolingTo(ReactServerRenderingTransaction);
 
 module.exports = ReactServerRenderingTransaction;
 }).call(this,require('_process'))
-},{"./PooledClass":438,"./ReactInstrumentation":476,"./ReactServerUpdateQueue":489,"./Transaction":509,"_process":407,"object-assign":406}],489:[function(require,module,exports){
+},{"./PooledClass":441,"./ReactInstrumentation":479,"./ReactServerUpdateQueue":492,"./Transaction":512,"_process":410,"object-assign":409}],492:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015-present, Facebook, Inc.
@@ -60527,7 +61537,7 @@ var ReactServerUpdateQueue = function () {
 
 module.exports = ReactServerUpdateQueue;
 }).call(this,require('_process'))
-},{"./ReactUpdateQueue":490,"_process":407,"fbjs/lib/warning":403}],490:[function(require,module,exports){
+},{"./ReactUpdateQueue":493,"_process":410,"fbjs/lib/warning":406}],493:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015-present, Facebook, Inc.
@@ -60765,7 +61775,7 @@ var ReactUpdateQueue = {
 
 module.exports = ReactUpdateQueue;
 }).call(this,require('_process'))
-},{"./ReactInstanceMap":475,"./ReactInstrumentation":476,"./ReactUpdates":491,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"react/lib/ReactCurrentOwner":547}],491:[function(require,module,exports){
+},{"./ReactInstanceMap":478,"./ReactInstrumentation":479,"./ReactUpdates":494,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"react/lib/ReactCurrentOwner":550}],494:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -61018,7 +62028,7 @@ var ReactUpdates = {
 
 module.exports = ReactUpdates;
 }).call(this,require('_process'))
-},{"./CallbackQueue":420,"./PooledClass":438,"./ReactFeatureFlags":470,"./ReactReconciler":486,"./Transaction":509,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"object-assign":406}],492:[function(require,module,exports){
+},{"./CallbackQueue":423,"./PooledClass":441,"./ReactFeatureFlags":473,"./ReactReconciler":489,"./Transaction":512,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"object-assign":409}],495:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -61032,7 +62042,7 @@ module.exports = ReactUpdates;
 'use strict';
 
 module.exports = '15.5.4';
-},{}],493:[function(require,module,exports){
+},{}],496:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -61334,7 +62344,7 @@ Object.keys(ATTRS).forEach(function (key) {
 });
 
 module.exports = SVGDOMPropertyConfig;
-},{}],494:[function(require,module,exports){
+},{}],497:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -61525,7 +62535,7 @@ var SelectEventPlugin = {
 };
 
 module.exports = SelectEventPlugin;
-},{"./EventPropagators":433,"./ReactDOMComponentTree":447,"./ReactInputSelection":474,"./SyntheticEvent":500,"./isTextInputElement":531,"fbjs/lib/ExecutionEnvironment":382,"fbjs/lib/getActiveElement":391,"fbjs/lib/shallowEqual":402}],495:[function(require,module,exports){
+},{"./EventPropagators":436,"./ReactDOMComponentTree":450,"./ReactInputSelection":477,"./SyntheticEvent":503,"./isTextInputElement":534,"fbjs/lib/ExecutionEnvironment":385,"fbjs/lib/getActiveElement":394,"fbjs/lib/shallowEqual":405}],498:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -61755,7 +62765,7 @@ var SimpleEventPlugin = {
 
 module.exports = SimpleEventPlugin;
 }).call(this,require('_process'))
-},{"./EventPropagators":433,"./ReactDOMComponentTree":447,"./SyntheticAnimationEvent":496,"./SyntheticClipboardEvent":497,"./SyntheticDragEvent":499,"./SyntheticEvent":500,"./SyntheticFocusEvent":501,"./SyntheticKeyboardEvent":503,"./SyntheticMouseEvent":504,"./SyntheticTouchEvent":505,"./SyntheticTransitionEvent":506,"./SyntheticUIEvent":507,"./SyntheticWheelEvent":508,"./getEventCharCode":520,"./reactProdInvariant":533,"_process":407,"fbjs/lib/EventListener":381,"fbjs/lib/emptyFunction":388,"fbjs/lib/invariant":396}],496:[function(require,module,exports){
+},{"./EventPropagators":436,"./ReactDOMComponentTree":450,"./SyntheticAnimationEvent":499,"./SyntheticClipboardEvent":500,"./SyntheticDragEvent":502,"./SyntheticEvent":503,"./SyntheticFocusEvent":504,"./SyntheticKeyboardEvent":506,"./SyntheticMouseEvent":507,"./SyntheticTouchEvent":508,"./SyntheticTransitionEvent":509,"./SyntheticUIEvent":510,"./SyntheticWheelEvent":511,"./getEventCharCode":523,"./reactProdInvariant":536,"_process":410,"fbjs/lib/EventListener":384,"fbjs/lib/emptyFunction":391,"fbjs/lib/invariant":399}],499:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -61794,7 +62804,7 @@ function SyntheticAnimationEvent(dispatchConfig, dispatchMarker, nativeEvent, na
 SyntheticEvent.augmentClass(SyntheticAnimationEvent, AnimationEventInterface);
 
 module.exports = SyntheticAnimationEvent;
-},{"./SyntheticEvent":500}],497:[function(require,module,exports){
+},{"./SyntheticEvent":503}],500:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -61832,7 +62842,7 @@ function SyntheticClipboardEvent(dispatchConfig, dispatchMarker, nativeEvent, na
 SyntheticEvent.augmentClass(SyntheticClipboardEvent, ClipboardEventInterface);
 
 module.exports = SyntheticClipboardEvent;
-},{"./SyntheticEvent":500}],498:[function(require,module,exports){
+},{"./SyntheticEvent":503}],501:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -61868,7 +62878,7 @@ function SyntheticCompositionEvent(dispatchConfig, dispatchMarker, nativeEvent, 
 SyntheticEvent.augmentClass(SyntheticCompositionEvent, CompositionEventInterface);
 
 module.exports = SyntheticCompositionEvent;
-},{"./SyntheticEvent":500}],499:[function(require,module,exports){
+},{"./SyntheticEvent":503}],502:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -61904,7 +62914,7 @@ function SyntheticDragEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeE
 SyntheticMouseEvent.augmentClass(SyntheticDragEvent, DragEventInterface);
 
 module.exports = SyntheticDragEvent;
-},{"./SyntheticMouseEvent":504}],500:[function(require,module,exports){
+},{"./SyntheticMouseEvent":507}],503:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -62174,7 +63184,7 @@ function getPooledWarningPropertyDefinition(propName, getVal) {
   }
 }
 }).call(this,require('_process'))
-},{"./PooledClass":438,"_process":407,"fbjs/lib/emptyFunction":388,"fbjs/lib/warning":403,"object-assign":406}],501:[function(require,module,exports){
+},{"./PooledClass":441,"_process":410,"fbjs/lib/emptyFunction":391,"fbjs/lib/warning":406,"object-assign":409}],504:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62210,7 +63220,7 @@ function SyntheticFocusEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticUIEvent.augmentClass(SyntheticFocusEvent, FocusEventInterface);
 
 module.exports = SyntheticFocusEvent;
-},{"./SyntheticUIEvent":507}],502:[function(require,module,exports){
+},{"./SyntheticUIEvent":510}],505:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62247,7 +63257,7 @@ function SyntheticInputEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticEvent.augmentClass(SyntheticInputEvent, InputEventInterface);
 
 module.exports = SyntheticInputEvent;
-},{"./SyntheticEvent":500}],503:[function(require,module,exports){
+},{"./SyntheticEvent":503}],506:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62331,7 +63341,7 @@ function SyntheticKeyboardEvent(dispatchConfig, dispatchMarker, nativeEvent, nat
 SyntheticUIEvent.augmentClass(SyntheticKeyboardEvent, KeyboardEventInterface);
 
 module.exports = SyntheticKeyboardEvent;
-},{"./SyntheticUIEvent":507,"./getEventCharCode":520,"./getEventKey":521,"./getEventModifierState":522}],504:[function(require,module,exports){
+},{"./SyntheticUIEvent":510,"./getEventCharCode":523,"./getEventKey":524,"./getEventModifierState":525}],507:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62403,7 +63413,7 @@ function SyntheticMouseEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticUIEvent.augmentClass(SyntheticMouseEvent, MouseEventInterface);
 
 module.exports = SyntheticMouseEvent;
-},{"./SyntheticUIEvent":507,"./ViewportMetrics":510,"./getEventModifierState":522}],505:[function(require,module,exports){
+},{"./SyntheticUIEvent":510,"./ViewportMetrics":513,"./getEventModifierState":525}],508:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62448,7 +63458,7 @@ function SyntheticTouchEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticUIEvent.augmentClass(SyntheticTouchEvent, TouchEventInterface);
 
 module.exports = SyntheticTouchEvent;
-},{"./SyntheticUIEvent":507,"./getEventModifierState":522}],506:[function(require,module,exports){
+},{"./SyntheticUIEvent":510,"./getEventModifierState":525}],509:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62487,7 +63497,7 @@ function SyntheticTransitionEvent(dispatchConfig, dispatchMarker, nativeEvent, n
 SyntheticEvent.augmentClass(SyntheticTransitionEvent, TransitionEventInterface);
 
 module.exports = SyntheticTransitionEvent;
-},{"./SyntheticEvent":500}],507:[function(require,module,exports){
+},{"./SyntheticEvent":503}],510:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62546,7 +63556,7 @@ function SyntheticUIEvent(dispatchConfig, dispatchMarker, nativeEvent, nativeEve
 SyntheticEvent.augmentClass(SyntheticUIEvent, UIEventInterface);
 
 module.exports = SyntheticUIEvent;
-},{"./SyntheticEvent":500,"./getEventTarget":523}],508:[function(require,module,exports){
+},{"./SyntheticEvent":503,"./getEventTarget":526}],511:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62600,7 +63610,7 @@ function SyntheticWheelEvent(dispatchConfig, dispatchMarker, nativeEvent, native
 SyntheticMouseEvent.augmentClass(SyntheticWheelEvent, WheelEventInterface);
 
 module.exports = SyntheticWheelEvent;
-},{"./SyntheticMouseEvent":504}],509:[function(require,module,exports){
+},{"./SyntheticMouseEvent":507}],512:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -62827,7 +63837,7 @@ var TransactionImpl = {
 
 module.exports = TransactionImpl;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],510:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],513:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62854,7 +63864,7 @@ var ViewportMetrics = {
 };
 
 module.exports = ViewportMetrics;
-},{}],511:[function(require,module,exports){
+},{}],514:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-present, Facebook, Inc.
@@ -62914,7 +63924,7 @@ function accumulateInto(current, next) {
 
 module.exports = accumulateInto;
 }).call(this,require('_process'))
-},{"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396}],512:[function(require,module,exports){
+},{"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399}],515:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -62958,7 +63968,7 @@ function adler32(data) {
 }
 
 module.exports = adler32;
-},{}],513:[function(require,module,exports){
+},{}],516:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -63047,7 +64057,7 @@ function checkReactTypeSpec(typeSpecs, values, location, componentName, element,
 
 module.exports = checkReactTypeSpec;
 }).call(this,require('_process'))
-},{"./ReactPropTypeLocationNames":483,"./ReactPropTypesSecret":484,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"react/lib/ReactComponentTreeHook":546}],514:[function(require,module,exports){
+},{"./ReactPropTypeLocationNames":486,"./ReactPropTypesSecret":487,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"react/lib/ReactComponentTreeHook":549}],517:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63079,7 +64089,7 @@ var createMicrosoftUnsafeLocalFunction = function (func) {
 };
 
 module.exports = createMicrosoftUnsafeLocalFunction;
-},{}],515:[function(require,module,exports){
+},{}],518:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -63160,7 +64170,7 @@ function dangerousStyleValue(name, value, component) {
 
 module.exports = dangerousStyleValue;
 }).call(this,require('_process'))
-},{"./CSSProperty":418,"_process":407,"fbjs/lib/warning":403}],516:[function(require,module,exports){
+},{"./CSSProperty":421,"_process":410,"fbjs/lib/warning":406}],519:[function(require,module,exports){
 /**
  * Copyright 2016-present, Facebook, Inc.
  * All rights reserved.
@@ -63283,7 +64293,7 @@ function escapeTextContentForBrowser(text) {
 }
 
 module.exports = escapeTextContentForBrowser;
-},{}],517:[function(require,module,exports){
+},{}],520:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -63345,7 +64355,7 @@ function findDOMNode(componentOrElement) {
 
 module.exports = findDOMNode;
 }).call(this,require('_process'))
-},{"./ReactDOMComponentTree":447,"./ReactInstanceMap":475,"./getHostComponentFromComposite":524,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"react/lib/ReactCurrentOwner":547}],518:[function(require,module,exports){
+},{"./ReactDOMComponentTree":450,"./ReactInstanceMap":478,"./getHostComponentFromComposite":527,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"react/lib/ReactCurrentOwner":550}],521:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -63423,7 +64433,7 @@ function flattenChildren(children, selfDebugID) {
 
 module.exports = flattenChildren;
 }).call(this,require('_process'))
-},{"./KeyEscapeUtils":436,"./traverseAllChildren":538,"_process":407,"fbjs/lib/warning":403,"react/lib/ReactComponentTreeHook":546}],519:[function(require,module,exports){
+},{"./KeyEscapeUtils":439,"./traverseAllChildren":541,"_process":410,"fbjs/lib/warning":406,"react/lib/ReactComponentTreeHook":549}],522:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63454,7 +64464,7 @@ function forEachAccumulated(arr, cb, scope) {
 }
 
 module.exports = forEachAccumulated;
-},{}],520:[function(require,module,exports){
+},{}],523:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63504,7 +64514,7 @@ function getEventCharCode(nativeEvent) {
 }
 
 module.exports = getEventCharCode;
-},{}],521:[function(require,module,exports){
+},{}],524:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63606,7 +64616,7 @@ function getEventKey(nativeEvent) {
 }
 
 module.exports = getEventKey;
-},{"./getEventCharCode":520}],522:[function(require,module,exports){
+},{"./getEventCharCode":523}],525:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63649,7 +64659,7 @@ function getEventModifierState(nativeEvent) {
 }
 
 module.exports = getEventModifierState;
-},{}],523:[function(require,module,exports){
+},{}],526:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63684,7 +64694,7 @@ function getEventTarget(nativeEvent) {
 }
 
 module.exports = getEventTarget;
-},{}],524:[function(require,module,exports){
+},{}],527:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63714,7 +64724,7 @@ function getHostComponentFromComposite(inst) {
 }
 
 module.exports = getHostComponentFromComposite;
-},{"./ReactNodeTypes":481}],525:[function(require,module,exports){
+},{"./ReactNodeTypes":484}],528:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63755,7 +64765,7 @@ function getIteratorFn(maybeIterable) {
 }
 
 module.exports = getIteratorFn;
-},{}],526:[function(require,module,exports){
+},{}],529:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63829,7 +64839,7 @@ function getNodeForCharacterOffset(root, offset) {
 }
 
 module.exports = getNodeForCharacterOffset;
-},{}],527:[function(require,module,exports){
+},{}],530:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63862,7 +64872,7 @@ function getTextContentAccessor() {
 }
 
 module.exports = getTextContentAccessor;
-},{"fbjs/lib/ExecutionEnvironment":382}],528:[function(require,module,exports){
+},{"fbjs/lib/ExecutionEnvironment":385}],531:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -63963,7 +64973,7 @@ function getVendorPrefixedEventName(eventName) {
 }
 
 module.exports = getVendorPrefixedEventName;
-},{"fbjs/lib/ExecutionEnvironment":382}],529:[function(require,module,exports){
+},{"fbjs/lib/ExecutionEnvironment":385}],532:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -64094,7 +65104,7 @@ _assign(ReactCompositeComponentWrapper.prototype, ReactCompositeComponent, {
 
 module.exports = instantiateReactComponent;
 }).call(this,require('_process'))
-},{"./ReactCompositeComponent":443,"./ReactEmptyComponent":466,"./ReactHostComponent":471,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"object-assign":406,"react/lib/getNextDebugID":561}],530:[function(require,module,exports){
+},{"./ReactCompositeComponent":446,"./ReactEmptyComponent":469,"./ReactHostComponent":474,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"object-assign":409,"react/lib/getNextDebugID":564}],533:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64154,7 +65164,7 @@ function isEventSupported(eventNameSuffix, capture) {
 }
 
 module.exports = isEventSupported;
-},{"fbjs/lib/ExecutionEnvironment":382}],531:[function(require,module,exports){
+},{"fbjs/lib/ExecutionEnvironment":385}],534:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64205,7 +65215,7 @@ function isTextInputElement(elem) {
 }
 
 module.exports = isTextInputElement;
-},{}],532:[function(require,module,exports){
+},{}],535:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64231,7 +65241,7 @@ function quoteAttributeValueForBrowser(value) {
 }
 
 module.exports = quoteAttributeValueForBrowser;
-},{"./escapeTextContentForBrowser":516}],533:[function(require,module,exports){
+},{"./escapeTextContentForBrowser":519}],536:[function(require,module,exports){
 /**
  * Copyright (c) 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64270,7 +65280,7 @@ function reactProdInvariant(code) {
 }
 
 module.exports = reactProdInvariant;
-},{}],534:[function(require,module,exports){
+},{}],537:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64286,7 +65296,7 @@ module.exports = reactProdInvariant;
 var ReactMount = require('./ReactMount');
 
 module.exports = ReactMount.renderSubtreeIntoContainer;
-},{"./ReactMount":479}],535:[function(require,module,exports){
+},{"./ReactMount":482}],538:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64384,7 +65394,7 @@ if (ExecutionEnvironment.canUseDOM) {
 }
 
 module.exports = setInnerHTML;
-},{"./DOMNamespaces":424,"./createMicrosoftUnsafeLocalFunction":514,"fbjs/lib/ExecutionEnvironment":382}],536:[function(require,module,exports){
+},{"./DOMNamespaces":427,"./createMicrosoftUnsafeLocalFunction":517,"fbjs/lib/ExecutionEnvironment":385}],539:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64436,7 +65446,7 @@ if (ExecutionEnvironment.canUseDOM) {
 }
 
 module.exports = setTextContent;
-},{"./escapeTextContentForBrowser":516,"./setInnerHTML":535,"fbjs/lib/ExecutionEnvironment":382}],537:[function(require,module,exports){
+},{"./escapeTextContentForBrowser":519,"./setInnerHTML":538,"fbjs/lib/ExecutionEnvironment":385}],540:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -64478,7 +65488,7 @@ function shouldUpdateReactComponent(prevElement, nextElement) {
 }
 
 module.exports = shouldUpdateReactComponent;
-},{}],538:[function(require,module,exports){
+},{}],541:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -64656,7 +65666,7 @@ function traverseAllChildren(children, callback, traverseContext) {
 
 module.exports = traverseAllChildren;
 }).call(this,require('_process'))
-},{"./KeyEscapeUtils":436,"./ReactElementSymbol":465,"./getIteratorFn":525,"./reactProdInvariant":533,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403,"react/lib/ReactCurrentOwner":547}],539:[function(require,module,exports){
+},{"./KeyEscapeUtils":439,"./ReactElementSymbol":468,"./getIteratorFn":528,"./reactProdInvariant":536,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406,"react/lib/ReactCurrentOwner":550}],542:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015-present, Facebook, Inc.
@@ -65035,7 +66045,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = validateDOMNesting;
 }).call(this,require('_process'))
-},{"_process":407,"fbjs/lib/emptyFunction":388,"fbjs/lib/warning":403,"object-assign":406}],540:[function(require,module,exports){
+},{"_process":410,"fbjs/lib/emptyFunction":391,"fbjs/lib/warning":406,"object-assign":409}],543:[function(require,module,exports){
 // Adapted from ReactART:
 // https://github.com/reactjs/react-art
 
@@ -65426,11 +66436,11 @@ shapes.forEach(function(shapeName) {
 
 module.exports = ReactKonva;
 
-},{"create-react-class":380,"fbjs/lib/emptyObject":389,"konva":405,"object-assign":406,"prop-types":412,"react-dom/lib/ReactInstanceMap":475,"react-dom/lib/ReactMultiChild":480,"react-dom/lib/ReactUpdates":491,"react/lib/React":543}],541:[function(require,module,exports){
-arguments[4][436][0].apply(exports,arguments)
-},{"dup":436}],542:[function(require,module,exports){
-arguments[4][438][0].apply(exports,arguments)
-},{"./reactProdInvariant":564,"_process":407,"dup":438,"fbjs/lib/invariant":396}],543:[function(require,module,exports){
+},{"create-react-class":383,"fbjs/lib/emptyObject":392,"konva":408,"object-assign":409,"prop-types":415,"react-dom/lib/ReactInstanceMap":478,"react-dom/lib/ReactMultiChild":483,"react-dom/lib/ReactUpdates":494,"react/lib/React":546}],544:[function(require,module,exports){
+arguments[4][439][0].apply(exports,arguments)
+},{"dup":439}],545:[function(require,module,exports){
+arguments[4][441][0].apply(exports,arguments)
+},{"./reactProdInvariant":567,"_process":410,"dup":441,"fbjs/lib/invariant":399}],546:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -65564,7 +66574,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = React;
 }).call(this,require('_process'))
-},{"./ReactBaseClasses":544,"./ReactChildren":545,"./ReactDOMFactories":548,"./ReactElement":549,"./ReactElementValidator":551,"./ReactPropTypes":554,"./ReactVersion":556,"./canDefineProperty":557,"./createClass":559,"./lowPriorityWarning":562,"./onlyChild":563,"_process":407,"object-assign":406}],544:[function(require,module,exports){
+},{"./ReactBaseClasses":547,"./ReactChildren":548,"./ReactDOMFactories":551,"./ReactElement":552,"./ReactElementValidator":554,"./ReactPropTypes":557,"./ReactVersion":559,"./canDefineProperty":560,"./createClass":562,"./lowPriorityWarning":565,"./onlyChild":566,"_process":410,"object-assign":409}],547:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -65709,7 +66719,7 @@ module.exports = {
   PureComponent: ReactPureComponent
 };
 }).call(this,require('_process'))
-},{"./ReactNoopUpdateQueue":552,"./canDefineProperty":557,"./lowPriorityWarning":562,"./reactProdInvariant":564,"_process":407,"fbjs/lib/emptyObject":389,"fbjs/lib/invariant":396,"object-assign":406}],545:[function(require,module,exports){
+},{"./ReactNoopUpdateQueue":555,"./canDefineProperty":560,"./lowPriorityWarning":565,"./reactProdInvariant":567,"_process":410,"fbjs/lib/emptyObject":392,"fbjs/lib/invariant":399,"object-assign":409}],548:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -65900,7 +66910,7 @@ var ReactChildren = {
 };
 
 module.exports = ReactChildren;
-},{"./PooledClass":542,"./ReactElement":549,"./traverseAllChildren":565,"fbjs/lib/emptyFunction":388}],546:[function(require,module,exports){
+},{"./PooledClass":545,"./ReactElement":552,"./traverseAllChildren":568,"fbjs/lib/emptyFunction":391}],549:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2016-present, Facebook, Inc.
@@ -66281,7 +67291,7 @@ var ReactComponentTreeHook = {
 
 module.exports = ReactComponentTreeHook;
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":547,"./reactProdInvariant":564,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403}],547:[function(require,module,exports){
+},{"./ReactCurrentOwner":550,"./reactProdInvariant":567,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406}],550:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -66310,7 +67320,7 @@ var ReactCurrentOwner = {
 };
 
 module.exports = ReactCurrentOwner;
-},{}],548:[function(require,module,exports){
+},{}],551:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -66481,7 +67491,7 @@ var ReactDOMFactories = {
 
 module.exports = ReactDOMFactories;
 }).call(this,require('_process'))
-},{"./ReactElement":549,"./ReactElementValidator":551,"_process":407}],549:[function(require,module,exports){
+},{"./ReactElement":552,"./ReactElementValidator":554,"_process":410}],552:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-present, Facebook, Inc.
@@ -66824,9 +67834,9 @@ ReactElement.isValidElement = function (object) {
 
 module.exports = ReactElement;
 }).call(this,require('_process'))
-},{"./ReactCurrentOwner":547,"./ReactElementSymbol":550,"./canDefineProperty":557,"_process":407,"fbjs/lib/warning":403,"object-assign":406}],550:[function(require,module,exports){
-arguments[4][465][0].apply(exports,arguments)
-},{"dup":465}],551:[function(require,module,exports){
+},{"./ReactCurrentOwner":550,"./ReactElementSymbol":553,"./canDefineProperty":560,"_process":410,"fbjs/lib/warning":406,"object-assign":409}],553:[function(require,module,exports){
+arguments[4][468][0].apply(exports,arguments)
+},{"dup":468}],554:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-present, Facebook, Inc.
@@ -67083,7 +68093,7 @@ var ReactElementValidator = {
 
 module.exports = ReactElementValidator;
 }).call(this,require('_process'))
-},{"./ReactComponentTreeHook":546,"./ReactCurrentOwner":547,"./ReactElement":549,"./canDefineProperty":557,"./checkReactTypeSpec":558,"./getIteratorFn":560,"./lowPriorityWarning":562,"_process":407,"fbjs/lib/warning":403}],552:[function(require,module,exports){
+},{"./ReactComponentTreeHook":549,"./ReactCurrentOwner":550,"./ReactElement":552,"./canDefineProperty":560,"./checkReactTypeSpec":561,"./getIteratorFn":563,"./lowPriorityWarning":565,"_process":410,"fbjs/lib/warning":406}],555:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2015-present, Facebook, Inc.
@@ -67180,9 +68190,9 @@ var ReactNoopUpdateQueue = {
 
 module.exports = ReactNoopUpdateQueue;
 }).call(this,require('_process'))
-},{"_process":407,"fbjs/lib/warning":403}],553:[function(require,module,exports){
-arguments[4][483][0].apply(exports,arguments)
-},{"_process":407,"dup":483}],554:[function(require,module,exports){
+},{"_process":410,"fbjs/lib/warning":406}],556:[function(require,module,exports){
+arguments[4][486][0].apply(exports,arguments)
+},{"_process":410,"dup":486}],557:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -67201,9 +68211,9 @@ var _require = require('./ReactElement'),
 var factory = require('prop-types/factory');
 
 module.exports = factory(isValidElement);
-},{"./ReactElement":549,"prop-types/factory":409}],555:[function(require,module,exports){
-arguments[4][484][0].apply(exports,arguments)
-},{"dup":484}],556:[function(require,module,exports){
+},{"./ReactElement":552,"prop-types/factory":412}],558:[function(require,module,exports){
+arguments[4][487][0].apply(exports,arguments)
+},{"dup":487}],559:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -67217,7 +68227,7 @@ arguments[4][484][0].apply(exports,arguments)
 'use strict';
 
 module.exports = '15.6.1';
-},{}],557:[function(require,module,exports){
+},{}],560:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -67245,7 +68255,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = canDefineProperty;
 }).call(this,require('_process'))
-},{"_process":407}],558:[function(require,module,exports){
+},{"_process":410}],561:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -67334,7 +68344,7 @@ function checkReactTypeSpec(typeSpecs, values, location, componentName, element,
 
 module.exports = checkReactTypeSpec;
 }).call(this,require('_process'))
-},{"./ReactComponentTreeHook":546,"./ReactPropTypeLocationNames":553,"./ReactPropTypesSecret":555,"./reactProdInvariant":564,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403}],559:[function(require,module,exports){
+},{"./ReactComponentTreeHook":549,"./ReactPropTypeLocationNames":556,"./ReactPropTypesSecret":558,"./reactProdInvariant":567,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406}],562:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -67357,9 +68367,9 @@ var ReactNoopUpdateQueue = require('./ReactNoopUpdateQueue');
 var factory = require('create-react-class/factory');
 
 module.exports = factory(Component, isValidElement, ReactNoopUpdateQueue);
-},{"./ReactBaseClasses":544,"./ReactElement":549,"./ReactNoopUpdateQueue":552,"create-react-class/factory":379}],560:[function(require,module,exports){
-arguments[4][525][0].apply(exports,arguments)
-},{"dup":525}],561:[function(require,module,exports){
+},{"./ReactBaseClasses":547,"./ReactElement":552,"./ReactNoopUpdateQueue":555,"create-react-class/factory":382}],563:[function(require,module,exports){
+arguments[4][528][0].apply(exports,arguments)
+},{"dup":528}],564:[function(require,module,exports){
 /**
  * Copyright 2013-present, Facebook, Inc.
  * All rights reserved.
@@ -67380,7 +68390,7 @@ function getNextDebugID() {
 }
 
 module.exports = getNextDebugID;
-},{}],562:[function(require,module,exports){
+},{}],565:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2014-2015, Facebook, Inc.
@@ -67447,7 +68457,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 module.exports = lowPriorityWarning;
 }).call(this,require('_process'))
-},{"_process":407}],563:[function(require,module,exports){
+},{"_process":410}],566:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -67487,9 +68497,9 @@ function onlyChild(children) {
 
 module.exports = onlyChild;
 }).call(this,require('_process'))
-},{"./ReactElement":549,"./reactProdInvariant":564,"_process":407,"fbjs/lib/invariant":396}],564:[function(require,module,exports){
-arguments[4][533][0].apply(exports,arguments)
-},{"dup":533}],565:[function(require,module,exports){
+},{"./ReactElement":552,"./reactProdInvariant":567,"_process":410,"fbjs/lib/invariant":399}],567:[function(require,module,exports){
+arguments[4][536][0].apply(exports,arguments)
+},{"dup":536}],568:[function(require,module,exports){
 (function (process){
 /**
  * Copyright 2013-present, Facebook, Inc.
@@ -67667,10 +68677,10 @@ function traverseAllChildren(children, callback, traverseContext) {
 
 module.exports = traverseAllChildren;
 }).call(this,require('_process'))
-},{"./KeyEscapeUtils":541,"./ReactCurrentOwner":547,"./ReactElementSymbol":550,"./getIteratorFn":560,"./reactProdInvariant":564,"_process":407,"fbjs/lib/invariant":396,"fbjs/lib/warning":403}],566:[function(require,module,exports){
+},{"./KeyEscapeUtils":544,"./ReactCurrentOwner":550,"./ReactElementSymbol":553,"./getIteratorFn":563,"./reactProdInvariant":567,"_process":410,"fbjs/lib/invariant":399,"fbjs/lib/warning":406}],569:[function(require,module,exports){
 'use strict';
 
 module.exports = require('./lib/React');
 
-},{"./lib/React":543}]},{},[30])(30)
+},{"./lib/React":546}]},{},[33])(33)
 });

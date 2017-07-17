@@ -42,7 +42,50 @@
 
         <script src="/app/uml-editor/frame/EditorBundled.js"></script>
         <script>
-            UmlClassEditor.startUmlEditor(null, null);
+
+            var Repository = angular.element('*[ng-app]').injector().get("Repository");
+            var RepositoryFile = angular.element('*[ng-app]').injector().get("RepositoryFile");
+            var participation = angular.element('*[ng-app]').injector().get("Participation");
+            var url = window.window.location.href;
+            var urlIndex = url.lastIndexOf('/');
+            var participationId = Number(url.substring(urlIndex + 1));
+
+
+            function loadFile(successCallback, errorCallback) {
+                RepositoryFile.get({
+                    participationId: participationId,
+                    file: "submission.json"
+                }, function (fileObj) {
+                    try {
+                        console.log(fileObj.fileContent);
+                        successCallback(JSON.parse(fileObj.fileContent))
+                    } catch (e){
+                        errorCallback(e)
+                    }
+                });
+            }
+
+
+            /*
+            Repository.commit({
+                participationId: vm.participation.id
+            }, {}, function () {
+                vm.isCommitted = true;
+                console.log('comitted');
+            }, function (err) {
+                console.log(err);
+            });
+
+            */
+
+
+            UmlClassEditor.startUmlEditor(loadFile, null, null, true);
+
+            console.log("Repository");
+            console.log(Repository);
+            console.log("RepositoryFile");
+            console.log(RepositoryFile);
+            console.log("ParticipationId " + participationId);
         </script>
 
 
