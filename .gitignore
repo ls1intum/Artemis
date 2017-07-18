@@ -146,4 +146,4 @@ Desktop.ini
 
 vpproject
 
-
+src/main/resources/config/application-dev.yml
