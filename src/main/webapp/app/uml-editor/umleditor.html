@@ -1,4 +1,4 @@
-<div class="editor-wrapper">
+<div class="editor-wrapper" id="uml-editor-root">
 
     <nav class="navbar navbar-default editor-top" role="navigation">
         <div class="">
@@ -45,47 +45,72 @@
 
             var Repository = angular.element('*[ng-app]').injector().get("Repository");
             var RepositoryFile = angular.element('*[ng-app]').injector().get("RepositoryFile");
-            var participation = angular.element('*[ng-app]').injector().get("Participation");
+            var parentController = angular.element(document.getElementById('uml-editor-root')).scope();
             var url = window.window.location.href;
             var urlIndex = url.lastIndexOf('/');
             var participationId = Number(url.substring(urlIndex + 1));
 
 
+            //
+            // Function to load the file
+            //
             function loadFile(successCallback, errorCallback) {
                 RepositoryFile.get({
-                    participationId: participationId,
-                    file: "submission.json"
-                }, function (fileObj) {
-                    try {
-                        console.log(fileObj.fileContent);
-                        successCallback(JSON.parse(fileObj.fileContent))
-                    } catch (e){
-                        errorCallback(e)
+                        participationId: participationId,
+                        file: "submission.json"
+                    }, function (fileObj) {
+                        try {
+                            successCallback(JSON.parse(fileObj.fileContent))
+                        } catch (e) {
+                            errorCallback(e)
+                        }
+                    },
+                    function (error) {
+                        errorCallback(error)
                     }
-                });
+                );
             }
 
 
-            /*
-            Repository.commit({
-                participationId: vm.participation.id
-            }, {}, function () {
-                vm.isCommitted = true;
-                console.log('comitted');
-            }, function (err) {
-                console.log(err);
-            });
+            //
+            //
+            //
+            function saveAndCommitFile(umlDocumentAsJson, successCallback, errorCallback) {
 
-            */
+                RepositoryFile.update({
+                    participationId: participationId,
+                    file: "submission.json"
+                }, JSON.stringify(umlDocumentAsJson), function () {
+                    console.log("Saved file");
+
+                    Repository.commit({
+                        participationId: participationId
+                    }, {}, function () {
+                        console.log('comitted');
+                        successCallback()
+                    }, function (err) {
+                        console.log(err);
+                        errorCallback(err)
+                    });
+
+                }, function (err) {
+                    console.log(err);
+                    errorCallback(err)
+                })
 
 
-            UmlClassEditor.startUmlEditor(loadFile, null, null, true);
+            } // End save Function
+
+
+            UmlClassEditor.startUmlEditor(loadFile, saveAndCommitFile, null, true);
 
             console.log("Repository");
             console.log(Repository);
             console.log("RepositoryFile");
             console.log(RepositoryFile);
             console.log("ParticipationId " + participationId);
+            console.log("Controller");
+            console.log(parentController);
         </script>
 
 
