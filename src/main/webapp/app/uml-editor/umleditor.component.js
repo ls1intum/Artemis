@@ -6,19 +6,19 @@
 
     angular
         .module('exerciseApplicationApp')
-        .component('editor', {
+        .component('umleditor', {
             bindings: {
                 participation: '<',
                 repository: '<',
                 file: '<',
             },
-            templateUrl: 'app/editor/editor.html',
-            controller: EditorController
+            templateUrl: 'app/uml-editor/umleditor.html',
+            controller: UmlEditorController
         });
 
-    EditorController.$inject = ['Participation' , 'Repository', '$scope', '$sce'];
+    UmlEditorController.$inject = ['Participation' , 'Repository', '$scope', '$sce'];
 
-    function EditorController(Participation, Repository, $scope, $sce) {
+    function UmlEditorController(Participation, Repository, $scope, $sce) {
         var vm = this;
 
         vm.isSaved = true;
@@ -26,37 +26,10 @@
         vm.isCommitted = vm.repository.isClean;
         vm.latestResult = null;
 
+
         console.log(vm.participation);
         console.log(vm.file);
 
-        // Collapse parts of the editor (file browser, build output...)
-        vm.toggleCollapse = function ($event, horizontal) {
-
-            var target = $event.toElement || $event.relatedTarget || $event.target;
-
-            target.blur();
-
-            var $panel = $(target).closest('.panel');
-
-            if($panel.hasClass('collapsed')) {
-                $panel.removeClass('collapsed');
-            } else {
-                $panel.addClass('collapsed');
-                if(horizontal) {
-                    $panel.height('35px');
-                } else {
-                    $panel.width('55px');
-                }
-
-            }
-
-        };
-
-
-        $scope.$on("angular-resizable.resizeEnd", function ($event, args) {
-            var $panel = $('#' + args.id);
-            $panel.removeClass('collapsed');
-        });
 
 
         vm.updateSaveStatusLabel = function ($event) {

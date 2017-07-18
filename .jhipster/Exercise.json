@@ -41,6 +41,11 @@
         {
             "fieldName": "allowOnlineEditor",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "exerciseType",
+            "fieldType": "ExerciseType",
+            "fieldValues": "CODING,UML_CLASS_DIAGRAMM"
         }
     ],
     "changelogDate": "20160609094621",

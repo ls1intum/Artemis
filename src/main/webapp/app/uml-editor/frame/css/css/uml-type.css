@@ -1,0 +1,66 @@
+.uml-type-element {
+    display: inline-block;
+    position: absolute;
+}
+
+.uml-type-class {
+    background: #f9f9f9;
+    border: 2px solid #616161;
+}
+
+.uml-type-class-selected {
+    background:#f9f9f9;
+    border: 2px solid blue;
+}
+
+.uml-type-interface {
+    background: #f9f9f9;
+    border: 2px solid #616161;
+}
+
+.uml-type-interface-selected {
+    background:#f9f9f9;
+    border: 2px solid blue;
+}
+
+.uml-type-header {
+    display: flex;
+    flex-direction: column;
+    padding: 8px;
+}
+
+.uml-input-field {
+    display: inline-block;
+    border: none;
+    background: transparent;
+    box-shadow: 0 0 0px 1000px transparent inset;
+     -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+}
+
+.uml-type-section {
+    display: flex;
+    flex-direction: column;
+    padding: 4px;
+    min-height: 34px;
+    position: relative;
+}
+
+.uml-type-section {
+    border-top: 1px solid #616161 ;
+}
+
+.uml-type-section-selected {
+    border-top: 1px solid #212121 ;
+}
+
+.uml-type-add-to-section-button {
+    position: absolute;
+    bottom: 4px;
+    right: 4px;
+    display: inline-block;
+    padding:2px;
+    background: #E0E0E0;
+    border: 1px solid #BDBDBD;
+    border-radius: 3px;
+}
+

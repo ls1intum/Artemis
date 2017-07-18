@@ -108,7 +108,8 @@
                                     releaseDate: null,
                                     dueDate: null,
                                     id: null,
-                                    allowOnlineEditor: null
+                                    allowOnlineEditor: null,
+                                    exerciseType: null
                                 };
                             }
                         }
@@ -142,7 +143,8 @@
                                     releaseDate: null,
                                     dueDate: null,
                                     id: null,
-                                    allowOnlineEditor: null
+                                    allowOnlineEditor: null,
+                                    exerciseType: null
                                 };
                             }
                         }

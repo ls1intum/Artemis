@@ -1,0 +1,9 @@
+{
+    "exerciseApplicationApp": {
+        "ExerciseType" : {
+            "null": "",
+            "CODING": "CODING",
+            "UML_CLASS_DIAGRAMM": "UML_CLASS_DIAGRAMM"
+        }
+    }
+}

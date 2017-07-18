@@ -64,6 +64,7 @@
             });
         }
 
+
         // File content was changed
         // This function throttles the persisting to once every 3s
         function onFileChanged(session) {
