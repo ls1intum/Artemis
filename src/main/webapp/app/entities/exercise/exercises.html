@@ -35,6 +35,7 @@
                     <th jh-sort-by="baseBuildPlanId"><span translate="exerciseApplicationApp.exercise.baseBuildPlanId">Base Build Plan Id</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="publishBuildPlanUrl"><span translate="exerciseApplicationApp.exercise.publishBuildPlanUrl">Publish Build Plan Url</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="allowOnlineEditor"><span translate="exerciseApplicationApp.exercise.allowOnlineEditor">Allow Online Editor</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="exerciseType"><span translate="exerciseApplicationApp.exercise.exerciseType">Exercise Type</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="releaseDate"><span translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="dueDate"><span translate="exerciseApplicationApp.exercise.dueDate">Due Date</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="course.title" ng-hide="vm.course"><span translate="exerciseApplicationApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
@@ -49,6 +50,7 @@
                     <td>{{exercise.baseBuildPlanId}}</td>
                     <td>{{exercise.publishBuildPlanUrl}}</td>
                     <td>{{exercise.allowOnlineEditor}}</td>
+                    <td>{{exercise.exerciseType}}</td>
                     <td>{{exercise.releaseDate | date:'medium'}}</td>
                     <td>{{exercise.dueDate | date:'medium'}}</td>
                     <td ng-hide="vm.course">

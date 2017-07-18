@@ -58,12 +58,24 @@
                 </div>
         </div>
 
-        <div class="form-group">
+        <div class="form-group" ng-if="vm.exercise.exerciseType === 'CODING'">
             <label class="control-label" translate="exerciseApplicationApp.exercise.allowOnlineEditor" for="field_allowOnlineEditor">Allow Online Editor</label>
             <input type="checkbox" class="form-control" name="allowOnlineEditor" id="field_allowOnlineEditor"
                     ng-model="vm.exercise.allowOnlineEditor"
                      />
         </div>
+
+
+        <div class="form-group">
+            <label class="control-label" translate="exerciseApplicationApp.exercise.exerciseType" for="field_exerciseType">Exercise Type</label>
+            <select class="form-control" name="exerciseType" ng-model="vm.exercise.exerciseType" ng-init="vm.exercise.exerciseType = 'CODING'" id="field_exerciseType">
+                <option value="CODING">CODING</option>
+                <option value="UML_CLASS_DIAGRAM">UML_CLASS_DIAGRAM</option>
+            </select>
+        </div>
+
+
+
 
         <div class="form-group">
             <label translate="exerciseApplicationApp.exercise.course" for="field_course">Course</label>

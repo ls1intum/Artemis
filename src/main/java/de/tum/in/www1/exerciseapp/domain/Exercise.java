@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ExerciseType;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -47,6 +48,10 @@ public class Exercise implements Serializable {
 
     @Column(name = "allow_online_editor")
     private Boolean allowOnlineEditor;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "exercise_type")
+    private ExerciseType exerciseType;
 
     @ManyToOne
     private Course course;
@@ -118,6 +123,14 @@ public class Exercise implements Serializable {
 
     public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
         this.allowOnlineEditor = allowOnlineEditor;
+    }
+
+    public ExerciseType getExerciseType() {
+        return exerciseType;
+    }
+
+    public void setExerciseType(ExerciseType exerciseType) {
+        this.exerciseType = exerciseType;
     }
 
     public Course getCourse() {
