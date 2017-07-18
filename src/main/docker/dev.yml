@@ -8,21 +8,12 @@ services:
         image: josezuazo/atlassian-bamboo-server
         ports:
          - "8085:8085"
-#        environment:
-#        - JVM_OPTS=-Xmx12g -Xms12g -XX:MaxPermSize=1024m
-#        - CATALINA_OPTS=-Xmx12g -Xms12g -XX:MaxPermSize=1024m
     exerciseapplication-bitbucket:
         image: cptactionhank/atlassian-bitbucket
         ports:
          - "7990:7990"
          - "7999:7999"
-#        environment:
-#            - JVM_OPTS=-Xmx12g -Xms12g -XX:MaxPermSize=1024m
-#            - CATALINA_OPTS=-Xmx12g -Xms12g -XX:MaxPermSize=1024m
-#    exerciseapplication-jira:
-#        image: cptactionhank/atlassian-jira
-#        ports:
-#         - "8000:8080"
-#       environment:
-#        - JVM_OPTS=-Xmx12g -Xms12g -XX:MaxPermSize=1024m
-#        - CATALINA_OPTS=-Xmx12g -Xms12g -XX:MaxPermSize=1024m
+    exerciseapplication-jira:
+        image: cptactionhank/atlassian-jira
+        ports:
+         - "8000:8080"

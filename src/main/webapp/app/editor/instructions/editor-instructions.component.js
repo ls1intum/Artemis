@@ -41,11 +41,6 @@
             vm.md.renderer.rules["testsStatus"] = vm.remarkableTestsStatusRenderer;
             vm.md.renderer.rules["plantUml"] = vm.remarkablePlantUmlRenderer;
 
-
-
-
-
-
         };
 
 

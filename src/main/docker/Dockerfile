@@ -1,7 +1,5 @@
 FROM java:openjdk-8-jre-alpine
 
-echo "severstarting"
-
 ENV JHIPSTER_SLEEP 0
 
 # add directly the war

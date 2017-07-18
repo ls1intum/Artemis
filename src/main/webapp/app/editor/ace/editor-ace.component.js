@@ -30,10 +30,13 @@
 
         vm.$onChanges = function (changes) {
             if (changes.file && vm.file) {
+                // current file has changed
                 loadFile(vm.file);
             }
         };
 
+        // Open the file, given by filename
+        // If the file was not opened before, a new ACE EditSession for the file is created
         function loadFile(file) {
             RepositoryFile.get({
                 participationId: vm.participation.id,
@@ -61,6 +64,9 @@
             });
         }
 
+
+        // File content was changed
+        // This function throttles the persisting to once every 3s
         function onFileChanged(session) {
             if(session.saveTimer) {
                 $timeout.cancel(session.saveTimer);

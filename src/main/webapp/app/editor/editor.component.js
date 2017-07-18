@@ -29,6 +29,7 @@
         console.log(vm.participation);
         console.log(vm.file);
 
+        // Collapse parts of the editor (file browser, build output...)
         vm.toggleCollapse = function ($event, horizontal) {
 
             var target = $event.toElement || $event.relatedTarget || $event.target;

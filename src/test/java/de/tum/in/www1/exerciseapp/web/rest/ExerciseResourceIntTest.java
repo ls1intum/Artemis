@@ -32,7 +32,6 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
 import de.tum.in.www1.exerciseapp.domain.enumeration.ExerciseType;
 
 /**
@@ -70,7 +69,7 @@ public class ExerciseResourceIntTest {
     private static final Boolean UPDATED_ALLOW_ONLINE_EDITOR = true;
 
     private static final ExerciseType DEFAULT_EXERCISE_TYPE = ExerciseType.CODING;
-    private static final ExerciseType UPDATED_EXERCISE_TYPE = ExerciseType.UML_CLASS_DIAGRAMM;
+    private static final ExerciseType UPDATED_EXERCISE_TYPE = ExerciseType.UML_CLASS_DIAGRAM;
 
     @Inject
     private ExerciseRepository exerciseRepository;
@@ -106,6 +105,7 @@ public class ExerciseResourceIntTest {
         exercise.setDueDate(DEFAULT_DUE_DATE);
         exercise.setAllowOnlineEditor(DEFAULT_ALLOW_ONLINE_EDITOR);
         exercise.setExerciseType(DEFAULT_EXERCISE_TYPE);
+
     }
 
     @Test
@@ -153,6 +153,7 @@ public class ExerciseResourceIntTest {
                 .andExpect(jsonPath("$.[*].dueDate").value(hasItem(DEFAULT_DUE_DATE_STR)))
                 .andExpect(jsonPath("$.[*].allowOnlineEditor").value(hasItem(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue())))
                 .andExpect(jsonPath("$.[*].exerciseType").value(hasItem(DEFAULT_EXERCISE_TYPE.toString())));
+
     }
 
     @Test
@@ -203,6 +204,7 @@ public class ExerciseResourceIntTest {
         updatedExercise.setAllowOnlineEditor(UPDATED_ALLOW_ONLINE_EDITOR);
         updatedExercise.setExerciseType(UPDATED_EXERCISE_TYPE);
 
+
         restExerciseMockMvc.perform(put("/api/exercises")
                 .contentType(TestUtil.APPLICATION_JSON_UTF8)
                 .content(TestUtil.convertObjectToJsonBytes(updatedExercise)))
@@ -220,6 +222,7 @@ public class ExerciseResourceIntTest {
         assertThat(testExercise.getDueDate()).isEqualTo(UPDATED_DUE_DATE);
         assertThat(testExercise.isAllowOnlineEditor()).isEqualTo(UPDATED_ALLOW_ONLINE_EDITOR);
         assertThat(testExercise.getExerciseType()).isEqualTo(UPDATED_EXERCISE_TYPE);
+
     }
 
     @Test

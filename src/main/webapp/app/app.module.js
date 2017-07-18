@@ -21,7 +21,7 @@
             'ui.ace',
             'angularResizable'
         ])
-        .constant('CONTACT_EMAIL', "muenchdo@in.tum.de,montag@in.tum.de")
+        .constant('CONTACT_EMAIL', "krusche@in.tum.de,seitz@in.tum.de,montag@in.tum.de")
         .run(run);
 
     run.$inject = ['stateHandler', 'translationHandler','$rootScope'];

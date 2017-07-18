@@ -103,6 +103,7 @@
             return tree;
         }
 
+        // Compress tree to not contain nodes with only one directory child node
         function compressTree(tree) {
 
             _.forEach(tree, function (node) {
@@ -124,6 +125,7 @@
 
 
 
+        // Show create file modal
         vm.create = function() {
             $uibModal.open({
                 size: 'md',
@@ -177,6 +179,7 @@
 
 
 
+        // Show delete file modal
         vm.delete = function() {
             if(!vm.file) {
                 return;

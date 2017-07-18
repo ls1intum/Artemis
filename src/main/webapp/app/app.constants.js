@@ -4,6 +4,6 @@
     angular
         .module('exerciseApplicationApp')
         .constant('VERSION', "1.2.2")
-        .constant('DEBUG_INFO_ENABLED', false)
+        .constant('DEBUG_INFO_ENABLED', true)
 ;
 })();

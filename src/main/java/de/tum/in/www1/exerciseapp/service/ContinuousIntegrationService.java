@@ -63,20 +63,59 @@ public interface ContinuousIntegrationService {
     BuildStatus getBuildStatus(Participation participation);
 
     /**
-     * Check if the given build plan is valid and accessible.
+     * Check if the given build plan ID is valid and accessible.
      *
      * @param buildPlanId   unique identifier for build plan on CI system
      * @return
      */
     Boolean buildPlanIdIsValid(String buildPlanId);
 
-    // TODO: This return type is temporary
+    /**
+     * Get details about the latest build result.
+     *
+     * Used to display the results of the test cases to the student: webapp/app/courses/results/result-deatil.html
+     * Used to generate the interactive exercise instructions: webapp/app/editor/instructions/editor-instructions.components.js
+     *
+     * @param participation participation for which to get details
+     * @return The details map. contains the test methods and their results:
+     *  {
+        "details": {
+            "className": "edu.tum.cs.i1.ease.DiscussionTestTest",
+            "methodName": "testTestStartCourseDiscussionWithBrokenClass",
+            "error": [
+                    {
+                        "message": "java.lang.AssertionError: ..."
+                    }
+                ]
+            }
+        }
+     *
+     */
+    // TODO: Change the return type to a CI system independent return type.
     Map<String, Object> getLatestBuildResultDetails(Participation participation);
 
+    /**
+     * Get the build logs of the latest CI build.
+     *
+     * @param participation  participation for which to get the build logs
+     * @return  list of build log entries
+     */
     List<BuildLogEntry> getLatestBuildLogs(Participation participation);
 
+    /**
+     * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
+     *
+     * @param participation  participation for which to get the build plan URL
+     * @return
+     */
     URL getBuildPlanWebUrl(Participation participation);
 
+    /**
+     * Get the build artifact (JAR/WAR), if any, of the latest build
+     *
+     * @param participation participation for which to get the build artifact
+     * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
+     */
     ResponseEntity retrieveLatestArtifact(Participation participation);
 
 }
