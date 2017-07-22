@@ -11,7 +11,11 @@ While ArTEMiS includes generic adapters to these three external systems with a d
 3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
 
 ## Development Setup
-Docker can be used to setup development containers for MySQL, Bitbucket, Bamboo and JIRA.
+ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Boot](http://projects.spring.io/spring-boot) development on the application server and Javascript ([Angular 1](https://angularjs.org)) development on the application client in the browser. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials of the JHipster homepage.  
+
+You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
+
+Docker can be used to setup development containers on your own computer for the required external components MySQL, Bitbucket (version control), Bamboo (continuous integration) and JIRA (user management).
 
 1. Install Docker and `docker-compose`
 2. Run `docker-compose -f src/main/docker/dev.yml up`. 
