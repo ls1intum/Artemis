@@ -15,7 +15,55 @@ ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Bo
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 
-Docker can be used to setup development containers on your own computer for the required external components MySQL, Bitbucket (version control), Bamboo (continuous integration) and JIRA (user management).
+To start ArTEMiS from the development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.exerciseapp.ExerciseApplicationApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
+
+```
+exerciseapp:
+  repo-clone-path: ./repos/
+  encryption-password: <password>
+  result-retrieval-delay: 5000
+  jira:
+    url: https://jirabruegge.in.tum.de
+    user: <user>
+    password: <password>
+    instructor-group-name: <admin-group>
+  bitbucket:
+    url: https://repobruegge.in.tum.de
+    user: <user>
+    password: <password>
+  bamboo:
+    url: https://bamboobruegge.in.tum.de
+    bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
+    user: <user>
+    password: <password>
+  lti:
+    id: exerciseapp_lti
+    oauth-key: exerciseapp_lti_key
+    oauth-secret: <secret>
+    user-prefix: edx_
+    user-group-name: edx
+  git:
+    name: ExerciseApplication
+    email: <email>
+```
+Change the entries with <...> with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can conncet to your local JIRA, Bitbucket and Bamboo instances (see Docker Setup below). 
+
+In addition, you have to install MySQL, setup a root user without password and create an ExerciseApplication scheme.
+
+Then ArTEMiS should startup by running the main class de.tum.in.www1.exerciseapp.ExerciseApplicationApp using Spring Boot.
+
+To access ArTEMiS in your browser, you have to install npm and execute the following commannds in the terminal / command line in the ArTEMiS root folder:
+
+```
+npm install
+bower install
+gulp
+```
+
+After that you should be able to access http://127.0.0.1:8080/ and login with your TUM Online account (if you use our JIRA instance).
+
+## Docker Setup
+If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can use Docker. Docker can be used to setup development containers on your own computer for the required external components MySQL, Bitbucket (version control), Bamboo (continuous integration) and JIRA (user management).
 
 1. Install Docker and `docker-compose`
 2. Run `docker-compose -f src/main/docker/dev.yml up`. 
