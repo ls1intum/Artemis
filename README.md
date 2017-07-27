@@ -75,7 +75,7 @@ If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can
 4. In Bamboo go to `Administration` -> `Application Links` and add Bitbucket using the URL `http://exerciseapplication-bitbucket:7990`. Use OAuth without Impersonation.
 5. In Bitbucket go to `Administration` -> `Application Links` and add Bamboo using the URL `http://exerciseapplication-bamboo:8085`. Use OAuth without Impersonation.
 6. Configure JIRA/Bitbucket/Bamboo with Groups, Test Users, Plans etc. Please note that as default JIRA/Bitbucket/Bamboo do have seperate user databases and test users might need to be created on all instances.
-7. Setup your `application.yml` in the root directory of the app, example:
+7. Change `application-dev.yml` to add the following elements:
     
         exerciseapp:
           repo-clone-path: ./repos/
