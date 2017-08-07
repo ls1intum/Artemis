@@ -50,9 +50,9 @@ Change the entries with <...> with proper values, e.g. your TUM Online account t
 
 In addition, you have to install MySQL, setup a root user without password and create an ExerciseApplication scheme.
 
-Then ArTEMiS should startup by running the main class de.tum.in.www1.exerciseapp.ExerciseApplicationApp using Spring Boot.
+Then ArTEMiS should startup by running the main class ```de.tum.in.www1.exerciseapp.ExerciseApplicationApp``` using Spring Boot.
 
-To access ArTEMiS in your browser, you have to install npm and execute the following commannds in the terminal / command line in the ArTEMiS root folder:
+To access ArTEMiS in your browser, you have to install npm and execute the following commands in the terminal / command line in the ArTEMiS root folder:
 
 ```
 npm install
