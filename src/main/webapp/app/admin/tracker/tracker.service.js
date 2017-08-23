@@ -27,14 +27,14 @@
         return service;
 
         function connect () {
-            //building absolute path so that websocket doesnt fail when deploying with a context path
+            //building absolute path so that websocket doesn't fail when deploying with a context path
             var loc = $window.location;
             var url = '//' + loc.host + loc.pathname + 'websocket/tracker';
             var socket = new SockJS(url);
             stompClient = Stomp.over(socket);
             var stateChangeStart;
             var headers = {};
-            headers['X-CSRF-TOKEN'] = $cookies[$http.defaults.xsrfCookieName];
+            headers[$http.defaults.xsrfHeaderName] = $cookies.get($http.defaults.xsrfCookieName);
             stompClient.connect(headers, function() {
                 connected.resolve('success');
                 sendActivity();

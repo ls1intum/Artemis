@@ -19,7 +19,7 @@ public class Result implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "result_string")
@@ -34,6 +34,7 @@ public class Result implements Serializable {
     @ManyToOne
     private Participation participation;
 
+    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -73,6 +74,7 @@ public class Result implements Serializable {
     public void setParticipation(Participation participation) {
         this.participation = participation;
     }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -83,24 +85,24 @@ public class Result implements Serializable {
             return false;
         }
         Result result = (Result) o;
-        if(result.id == null || id == null) {
+        if (result.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(id, result.id);
+        return Objects.equals(getId(), result.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(getId());
     }
 
     @Override
     public String toString() {
         return "Result{" +
-            "id=" + id +
-            ", resultString='" + resultString + "'" +
-            ", buildCompletionDate='" + buildCompletionDate + "'" +
-            ", buildSuccessful='" + buildSuccessful + "'" +
-            '}';
+            "id=" + getId() +
+            ", resultString='" + getResultString() + "'" +
+            ", buildCompletionDate='" + getBuildCompletionDate() + "'" +
+            ", buildSuccessful='" + isBuildSuccessful() + "'" +
+            "}";
     }
 }

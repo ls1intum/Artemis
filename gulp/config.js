@@ -1,6 +1,9 @@
+'use strict';
+
 module.exports = {
     app: 'src/main/webapp/',
     dist: 'build/www/',
+    swaggerDist: 'build/www/swagger-ui/',
     test: 'src/test/javascript/',
     scss: 'src/main/webapp/scss/',
     sassSrc: 'src/main/webapp/scss/**/*.{scss,sass}',

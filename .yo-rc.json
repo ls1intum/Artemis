@@ -1,13 +1,13 @@
 {
   "generator-jhipster": {
-    "jhipsterVersion": "3.4.2",
+    "jhipsterVersion": "4.7.0",
     "baseName": "ExerciseApplication",
     "packageName": "de.tum.in.www1.exerciseapp",
     "packageFolder": "de/tum/in/www1/exerciseapp",
     "serverPort": "8080",
     "authenticationType": "session",
     "hibernateCache": "ehcache",
-    "clusteredHttpSession": "hazelcast",
+    "clusteredHttpSession": false,
     "websocket": "spring-websocket",
     "databaseType": "sql",
     "devDatabaseType": "mysql",
@@ -29,6 +29,10 @@
     "languages": [
       "en",
       "de"
-    ]
+    ],
+    "messageBroker": false,
+    "serviceDiscoveryType": false,
+    "clientFramework": "angular1",
+    "clientPackageManager": "yarn"
   }
 }

@@ -1,12 +1,12 @@
 <div>
-    <h2 translate="exerciseApplicationApp.exercise.home.title">Exercises</h2>
+    <h2 data-translate="exerciseApplicationApp.exercise.home.title">Exercises</h2>
     <jhi-alert></jhi-alert>
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-4 no-padding-left">
                 <button class="btn btn-primary" ui-sref="exercise.new" >
                     <span class="glyphicon glyphicon-plus"></span>
-                    <span  translate="exerciseApplicationApp.exercise.home.createLabel">
+                    <span  data-translate="exerciseApplicationApp.exercise.home.createLabel">
                         Create new Exercise
                     </span>
                 </button>
@@ -18,14 +18,14 @@
         <table class="jh-table table table-striped">
             <thead>
                 <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.reset()">
-                    <th jh-sort-by="id"><span translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="title"><span translate="exerciseApplicationApp.exercise.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="baseProjectKey"><span translate="exerciseApplicationApp.exercise.baseProjectKey">Base Project Key</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="baseRepositorySlug"><span translate="exerciseApplicationApp.exercise.baseRepositorySlug">Base Repository Slug</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="baseBuildPlanSlug"><span translate="exerciseApplicationApp.exercise.baseBuildPlanSlug">Base Build Plan Slug</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="releaseDate"><span translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="dueDate"><span translate="exerciseApplicationApp.exercise.dueDate">Due Date</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="course.title"><span translate="exerciseApplicationApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="id"><span data-translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="title"><span data-translate="exerciseApplicationApp.exercise.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="baseProjectKey"><span data-translate="exerciseApplicationApp.exercise.baseProjectKey">Base Project Key</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="baseRepositorySlug"><span data-translate="exerciseApplicationApp.exercise.baseRepositorySlug">Base Repository Slug</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="baseBuildPlanSlug"><span data-translate="exerciseApplicationApp.exercise.baseBuildPlanSlug">Base Build Plan Slug</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="releaseDate"><span data-translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="dueDate"><span data-translate="exerciseApplicationApp.exercise.dueDate">Due Date</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="course.title"><span data-translate="exerciseApplicationApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -47,19 +47,19 @@
                                     ui-sref="exercise-detail({id:exercise.id})"
                                     class="btn btn-info btn-sm">
                                 <span class="glyphicon glyphicon-eye-open"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.view"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="exercise.edit({id:exercise.id})"
                                     class="btn btn-primary btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.edit"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="exercise.delete({id:exercise.id})"
                                     class="btn btn-danger btn-sm">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.delete"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
                             </button>
                         </div>
                     </td>

@@ -5,13 +5,15 @@
         .module('exerciseApplicationApp')
         .controller('ExerciseController', ExerciseController);
 
-    ExerciseController.$inject = ['$scope', '$state', 'Exercise', 'ParseLinks', 'AlertService'];
+    ExerciseController.$inject = ['Exercise', 'ParseLinks', 'AlertService', 'paginationConstants'];
 
-    function ExerciseController ($scope, $state, Exercise, ParseLinks, AlertService) {
+    function ExerciseController(Exercise, ParseLinks, AlertService, paginationConstants) {
+
         var vm = this;
-        
+
         vm.exercises = [];
         vm.loadPage = loadPage;
+        vm.itemsPerPage = paginationConstants.itemsPerPage;
         vm.page = 0;
         vm.links = {
             last: 0
@@ -25,7 +27,7 @@
         function loadAll () {
             Exercise.query({
                 page: vm.page,
-                size: 20,
+                size: vm.itemsPerPage,
                 sort: sort()
             }, onSuccess, onError);
             function sort() {
@@ -35,6 +37,7 @@
                 }
                 return result;
             }
+
             function onSuccess(data, headers) {
                 vm.links = ParseLinks.parse(headers('link'));
                 vm.totalItems = headers('X-Total-Count');
@@ -42,6 +45,7 @@
                     vm.exercises.push(data[i]);
                 }
             }
+
             function onError(error) {
                 AlertService.error(error.data.message);
             }

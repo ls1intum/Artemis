@@ -4,8 +4,7 @@
             "home": {
                 "title": "Participations",
                 "createLabel": "Create a new Participation",
-                "createOrEditLabel": "Create or edit a Participation",
-                "search": "Search for Participation"
+                "createOrEditLabel": "Create or edit a Participation"
             },
             "created": "A new Participation is created with identifier {{ param }}",
             "updated": "A Participation is updated with identifier {{ param }}",

@@ -4,7 +4,7 @@
     angular
         .module('exerciseApplicationApp')
         .filter('characters', characters);
-        
+
     function characters () {
         return charactersFilter;
 

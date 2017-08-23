@@ -32,7 +32,7 @@
             }
         })
         .state('exercise-detail', {
-            parent: 'entity',
+            parent: 'exercise',
             url: '/exercise/{id}',
             data: {
                 authorities: ['ROLE_USER'],
@@ -52,8 +52,41 @@
                 }],
                 entity: ['$stateParams', 'Exercise', function($stateParams, Exercise) {
                     return Exercise.get({id : $stateParams.id}).$promise;
+                }],
+                previousState: ["$state", function ($state) {
+                    var currentStateData = {
+                        name: $state.current.name || 'exercise',
+                        params: $state.params,
+                        url: $state.href($state.current.name, $state.params)
+                    };
+                    return currentStateData;
                 }]
             }
+        })
+        .state('exercise-detail.edit', {
+            parent: 'exercise-detail',
+            url: '/detail/edit',
+            data: {
+                authorities: ['ROLE_USER']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/exercise/exercise-dialog.html',
+                    controller: 'ExerciseDialogController',
+                    controllerAs: 'vm',
+                    backdrop: 'static',
+                    size: 'lg',
+                    resolve: {
+                        entity: ['Exercise', function(Exercise) {
+                            return Exercise.get({id : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('^', {}, { reload: false });
+                }, function() {
+                    $state.go('^');
+                });
+            }]
         })
         .state('exercise.new', {
             parent: 'exercise',
@@ -82,7 +115,7 @@
                         }
                     }
                 }).result.then(function() {
-                    $state.go('exercise', null, { reload: true });
+                    $state.go('exercise', null, { reload: 'exercise' });
                 }, function() {
                     $state.go('exercise');
                 });
@@ -107,7 +140,7 @@
                         }]
                     }
                 }).result.then(function() {
-                    $state.go('exercise', null, { reload: true });
+                    $state.go('exercise', null, { reload: 'exercise' });
                 }, function() {
                     $state.go('^');
                 });
@@ -131,7 +164,7 @@
                         }]
                     }
                 }).result.then(function() {
-                    $state.go('exercise', null, { reload: true });
+                    $state.go('exercise', null, { reload: 'exercise' });
                 }, function() {
                     $state.go('^');
                 });

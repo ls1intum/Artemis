@@ -12,7 +12,7 @@ Hide ng-cloak on page load, https://docs.angularjs.org/api/ng/directive/ngCloak
 }
 
 /* ==========================================================================
-Developement Ribbon
+Development Ribbon
 ========================================================================== */
 .ribbon {
     background-color: #a00;
@@ -154,11 +154,7 @@ Generic styles
 /* ==========================================================================
 make sure browsers use the pointer cursor for anchors, even with no href
 ========================================================================== */
-a:hover {
-  cursor: pointer;
-}
-
-.hand {
+a:hover, .hand, [jh-sort-by] {
     cursor: pointer;
 }
 
@@ -286,7 +282,7 @@ entity tables helpers
 
 .jh-table > {
     tbody > tr > td {
-        /* Align text in td verifically (top aligned by Bootstrap) */
+        /* Align text in td vertically (top aligned by Bootstrap) */
         vertical-align: middle;
     }
     thead > tr > th > {
@@ -340,6 +336,7 @@ ui bootstrap tweaks
 .uib-datepicker-popup  > li > div.uib-datepicker > table:focus {
     outline: none;
 }
+
 
 
 /* jhipster-needle-scss-add-main JHipster will add new css style */
