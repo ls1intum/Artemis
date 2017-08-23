@@ -1,12 +1,12 @@
 <div>
-    <h2 translate="exerciseApplicationApp.course.home.title">Courses</h2>
+    <h2 data-translate="exerciseApplicationApp.course.home.title">Courses</h2>
     <jhi-alert></jhi-alert>
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-4 no-padding-left">
                 <button class="btn btn-primary" ui-sref="course.new" >
                     <span class="glyphicon glyphicon-plus"></span>
-                    <span  translate="exerciseApplicationApp.course.home.createLabel">
+                    <span  data-translate="exerciseApplicationApp.course.home.createLabel">
                         Create new Course
                     </span>
                 </button>
@@ -18,9 +18,9 @@
         <table class="jh-table table table-striped">
             <thead>
                 <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.reset()">
-                    <th jh-sort-by="id"><span translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="title"><span translate="exerciseApplicationApp.course.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="studentGroupName"><span translate="exerciseApplicationApp.course.studentGroupName">Student Group Name</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="id"><span data-translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="title"><span data-translate="exerciseApplicationApp.course.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="studentGroupName"><span data-translate="exerciseApplicationApp.course.studentGroupName">Student Group Name</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -35,19 +35,19 @@
                                     ui-sref="course-detail({id:course.id})"
                                     class="btn btn-info btn-sm">
                                 <span class="glyphicon glyphicon-eye-open"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.view"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="course.edit({id:course.id})"
                                     class="btn btn-primary btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.edit"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="course.delete({id:course.id})"
                                     class="btn btn-danger btn-sm">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.delete"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
                             </button>
                         </div>
                     </td>

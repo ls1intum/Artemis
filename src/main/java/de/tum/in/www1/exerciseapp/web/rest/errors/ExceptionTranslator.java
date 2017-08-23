@@ -2,6 +2,8 @@ package de.tum.in.www1.exerciseapp.web.rest.errors;
 
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.http.HttpStatus;
@@ -20,66 +22,66 @@ import org.springframework.web.bind.annotation.*;
 @ControllerAdvice
 public class ExceptionTranslator {
 
+    private final Logger log = LoggerFactory.getLogger(ExceptionTranslator.class);
+
     @ExceptionHandler(ConcurrencyFailureException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     @ResponseBody
-    public ErrorDTO processConcurencyError(ConcurrencyFailureException ex) {
-        return new ErrorDTO(ErrorConstants.ERR_CONCURRENCY_FAILURE);
+    public ErrorVM processConcurrencyError(ConcurrencyFailureException ex) {
+        return new ErrorVM(ErrorConstants.ERR_CONCURRENCY_FAILURE);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    public ErrorDTO processValidationError(MethodArgumentNotValidException ex) {
+    public ErrorVM processValidationError(MethodArgumentNotValidException ex) {
         BindingResult result = ex.getBindingResult();
         List<FieldError> fieldErrors = result.getFieldErrors();
-
-        return processFieldErrors(fieldErrors);
+        ErrorVM dto = new ErrorVM(ErrorConstants.ERR_VALIDATION);
+        for (FieldError fieldError : fieldErrors) {
+            dto.add(fieldError.getObjectName(), fieldError.getField(), fieldError.getCode());
+        }
+        return dto;
     }
 
     @ExceptionHandler(CustomParameterizedException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    public ParameterizedErrorDTO processParameterizedValidationError(CustomParameterizedException ex) {
-        return ex.getErrorDTO();
+    public ParameterizedErrorVM processParameterizedValidationError(CustomParameterizedException ex) {
+        return ex.getErrorVM();
     }
 
     @ExceptionHandler(AccessDeniedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ResponseBody
-    public ErrorDTO processAccessDeniedException(AccessDeniedException e) {
-        return new ErrorDTO(ErrorConstants.ERR_ACCESS_DENIED, e.getMessage());
-    }
-
-    private ErrorDTO processFieldErrors(List<FieldError> fieldErrors) {
-        ErrorDTO dto = new ErrorDTO(ErrorConstants.ERR_VALIDATION);
-
-        for (FieldError fieldError : fieldErrors) {
-            dto.add(fieldError.getObjectName(), fieldError.getField(), fieldError.getCode());
-        }
-
-        return dto;
+    public ErrorVM processAccessDeniedException(AccessDeniedException e) {
+        return new ErrorVM(ErrorConstants.ERR_ACCESS_DENIED, e.getMessage());
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     @ResponseBody
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
-    public ErrorDTO processMethodNotSupportedException(HttpRequestMethodNotSupportedException exception) {
-        return new ErrorDTO(ErrorConstants.ERR_METHOD_NOT_SUPPORTED, exception.getMessage());
+    public ErrorVM processMethodNotSupportedException(HttpRequestMethodNotSupportedException exception) {
+        return new ErrorVM(ErrorConstants.ERR_METHOD_NOT_SUPPORTED, exception.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorDTO> processRuntimeException(Exception ex) throws Exception {
+    public ResponseEntity<ErrorVM> processException(Exception ex) {
+        if (log.isDebugEnabled()) {
+            log.debug("An unexpected error occurred: {}", ex.getMessage(), ex);
+        } else {
+            log.error("An unexpected error occurred: {}", ex.getMessage());
+        }
         BodyBuilder builder;
-        ErrorDTO errorDTO;
+        ErrorVM errorVM;
         ResponseStatus responseStatus = AnnotationUtils.findAnnotation(ex.getClass(), ResponseStatus.class);
         if (responseStatus != null) {
             builder = ResponseEntity.status(responseStatus.value());
-            errorDTO = new ErrorDTO("error." + responseStatus.value().value(), responseStatus.reason());
+            errorVM = new ErrorVM("error." + responseStatus.value().value(), responseStatus.reason());
         } else {
             builder = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR);
-            errorDTO = new ErrorDTO(ErrorConstants.ERR_INTERNAL_SERVER_ERROR, "Internal server error");
+            errorVM = new ErrorVM(ErrorConstants.ERR_INTERNAL_SERVER_ERROR, "Internal server error");
         }
-        return builder.body(errorDTO);
+        return builder.body(errorVM);
     }
 }

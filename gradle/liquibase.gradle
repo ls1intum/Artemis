@@ -1,26 +1,51 @@
+import org.gradle.internal.os.OperatingSystem
+
 configurations {
     liquibase
 }
 
 dependencies {
-    liquibase "org.liquibase.ext:liquibase-hibernate4:${liquibase_hibernate4_version}"
+    liquibase "org.liquibase.ext:liquibase-hibernate5:${liquibase_hibernate5_version}"
+}
+
+if (OperatingSystem.current().isWindows()) {
+    task pathingLiquibaseJar(type: Jar) {
+        dependsOn configurations.liquibase
+        appendix = 'pathingLiquibase'
+
+        doFirst {
+            manifest {
+                attributes 'Class-Path':
+                    sourceSets.main.runtimeClasspath.plus(configurations.liquibase)
+                    .collect {
+                        it.toURL().toString().replaceFirst(/file:\/+/, '/')
+                    }.join(' ')
+            }
+        }
+    }
 }
 
 task liquibaseDiffChangelog(dependsOn: compileJava, type: JavaExec) {
     group = "liquibase"
 
-    classpath sourceSets.main.runtimeClasspath
-    classpath configurations.liquibase
+    if (OperatingSystem.current().isWindows()) {
+        dependsOn pathingLiquibaseJar
+        doFirst {
+            classpath = files(pathingLiquibaseJar.archivePath)
+        }
+    } else {
+        classpath sourceSets.main.runtimeClasspath
+        classpath configurations.liquibase
+    }
     main = "liquibase.integration.commandline.Main"
 
     args "--changeLogFile=src/main/resources/config/liquibase/changelog/" + buildTimestamp() +"_changelog.xml"
-    args "--referenceUrl=hibernate:spring:de.tum.in.www1.exerciseapp.domain?dialect=org.hibernate.dialect.MySQL5InnoDBDialect&hibernate.ejb.naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringNamingStrategy"
+    args "--referenceUrl=hibernate:spring:de.tum.in.www1.exerciseapp.domain?dialect=org.hibernate.dialect.MySQL5InnoDBDialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
     args "--username=root"
     args "--password="
     args "--url=jdbc:mysql://localhost:3306/ExerciseApplication"
     args "--driver=com.mysql.jdbc.Driver"
     args "diffChangeLog"
-    
 }
 
 def buildTimestamp() {

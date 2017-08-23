@@ -4,8 +4,7 @@
             "home": {
                 "title": "Results",
                 "createLabel": "Result erstellen",
-                "createOrEditLabel": "Result erstellen oder bearbeiten",
-                "search": "Suche nach Result"
+                "createOrEditLabel": "Result erstellen oder bearbeiten"
             },
             "created": "Result erstellt mit ID {{ param }}",
             "updated": "Result aktualisiert mit ID {{ param }}",

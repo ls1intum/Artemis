@@ -1,8 +1,10 @@
-// Generated on 2016-06-21 using generator-jhipster 3.4.2
+// Generated on 2017-08-23 using generator-jhipster 4.7.0
 'use strict';
 
 var gulp = require('gulp'),
     expect = require('gulp-expect-file'),
+    es = require('event-stream'),
+    flatten = require('gulp-flatten'),
     sass = require('gulp-sass'),
     rev = require('gulp-rev'),
     templateCache = require('gulp-angular-templatecache'),
@@ -14,26 +16,20 @@ var gulp = require('gulp'),
     argv = require('yargs').argv,
     gutil = require('gulp-util'),
     protractor = require('gulp-protractor').protractor,
-    es = require('event-stream'),
-    flatten = require('gulp-flatten'),
     del = require('del'),
     runSequence = require('run-sequence'),
     browserSync = require('browser-sync'),
     KarmaServer = require('karma').Server,
     plumber = require('gulp-plumber'),
     changed = require('gulp-changed'),
-    gulpIf = require('gulp-if'),
-    inject = require('gulp-inject'),
-    angularFilesort = require('gulp-angular-filesort'),
-    naturalSort = require('gulp-natural-sort'),
-    bowerFiles = require('main-bower-files');
+    gulpIf = require('gulp-if');
 
-var handleErrors = require('./gulp/handleErrors'),
+var handleErrors = require('./gulp/handle-errors'),
     serve = require('./gulp/serve'),
     util = require('./gulp/utils'),
+    copy = require('./gulp/copy'),
+    inject = require('./gulp/inject'),
     build = require('./gulp/build');
-
-var yorc = require('./.yo-rc.json')['generator-jhipster'];
 
 var config = require('./gulp/config');
 
@@ -41,29 +37,19 @@ gulp.task('clean', function () {
     return del([config.dist], { dot: true });
 });
 
-gulp.task('copy', function () {
-    return es.merge( 
-        gulp.src(config.app + 'i18n/**')
-        .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(changed(config.dist + 'i18n/'))
-        .pipe(gulp.dest(config.dist + 'i18n/')),
-        gulp.src(config.app + 'content/**/*.{woff,woff2,svg,ttf,eot,otf}')
-        .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(changed(config.dist + 'content/fonts/'))
-        .pipe(flatten())
-        .pipe(rev())
-        .pipe(gulp.dest(config.dist + 'content/fonts/'))
-        .pipe(rev.manifest(config.revManifest, {
-            base: config.dist,
-            merge: true
-        }))
-        .pipe(gulp.dest(config.dist)),
-        gulp.src([config.app + 'robots.txt', config.app + 'favicon.ico', config.app + '.htaccess'], { dot: true })
-        .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(changed(config.dist))
-        .pipe(gulp.dest(config.dist))
-    );
-});
+gulp.task('copy', ['copy:i18n', 'copy:fonts', 'copy:common']);
+
+gulp.task('copy:i18n', copy.i18n);
+
+gulp.task('copy:languages', copy.languages);
+
+gulp.task('copy:fonts', copy.fonts);
+
+gulp.task('copy:common', copy.common);
+
+gulp.task('copy:swagger', copy.swagger);
+
+gulp.task('copy:images', copy.images);
 
 gulp.task('images', function () {
     return gulp.src(config.app + 'content/images/**')
@@ -85,7 +71,6 @@ gulp.task('sass', function () {
         gulp.src(config.sassSrc)
         .pipe(plumber({errorHandler: handleErrors}))
         .pipe(expect(config.sassSrc))
-        .pipe(changed(config.cssDir, {extension: '.css'}))
         .pipe(sass({includePaths:config.bower}).on('error', sass.logError))
         .pipe(gulp.dest(config.cssDir)),
         gulp.src(config.bower + '**/fonts/**/*.{woff,woff2,svg,ttf,eot,otf}')
@@ -96,79 +81,26 @@ gulp.task('sass', function () {
     );
 });
 
-gulp.task('languages', function () {
-    var locales = yorc.languages.map(function (locale) {
-        return config.bower + 'angular-i18n/angular-locale_' + locale + '.js';
-    });
-    return gulp.src(locales)
-        .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(changed(config.app + 'i18n/'))
-        .pipe(gulp.dest(config.app + 'i18n/'));
-});
-
 gulp.task('styles', ['sass'], function () {
     return gulp.src(config.app + 'content/css')
         .pipe(browserSync.reload({stream: true}));
 });
 
-gulp.task('inject', ['inject:dep', 'inject:app']);
+gulp.task('inject', function() {
+    runSequence('inject:dep', 'inject:app');
+});
+
 gulp.task('inject:dep', ['inject:test', 'inject:vendor']);
 
-gulp.task('inject:app', function () {
-    return gulp.src(config.app + 'index.html')
-        .pipe(inject(gulp.src(config.app + 'app/**/*.js')
-            .pipe(naturalSort())
-            .pipe(angularFilesort()), {relative: true}))
-        .pipe(gulp.dest(config.app));
-});
+gulp.task('inject:app', inject.app);
 
-gulp.task('inject:vendor', function () {
-    var stream = gulp.src(config.app + 'index.html')
-        .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(inject(gulp.src(bowerFiles(), {read: false}), {
-            name: 'bower',
-            relative: true
-        }))
-        .pipe(gulp.dest(config.app));
+gulp.task('inject:vendor', inject.vendor);
 
-    return es.merge(stream, gulp.src(config.sassVendor)
-        .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(inject(gulp.src(bowerFiles({filter:['**/*.{scss,sass}']}), {read: false}), {
-            name: 'bower',
-            relative: true
-        }))
-        .pipe(gulp.dest(config.scss)));
-});
+gulp.task('inject:test', inject.test);
 
-gulp.task('inject:test', function () {
-    return gulp.src(config.test + 'karma.conf.js')
-        .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(inject(gulp.src(bowerFiles({includeDev: true, filter: ['**/*.js']}), {read: false}), {
-            starttag: '// bower:js',
-            endtag: '// endbower',
-            transform: function (filepath) {
-                return '\'' + filepath.substring(1, filepath.length) + '\',';
-            }
-        }))
-        .pipe(gulp.dest(config.test));
-});
+gulp.task('inject:troubleshoot', inject.troubleshoot);
 
-gulp.task('inject:troubleshoot', function () {
-    /* this task removes the troubleshooting content from index.html*/
-    return gulp.src(config.app + 'index.html')
-        .pipe(plumber({errorHandler: handleErrors}))
-        /* having empty src as we dont have to read any files*/
-        .pipe(inject(gulp.src('', {read: false}), {
-            starttag: '<!-- inject:troubleshoot -->',
-            removeTags: true,
-            transform: function () {
-                return '<!-- Angular views -->';
-            }
-        }))
-        .pipe(gulp.dest(config.app));
-});
-
-gulp.task('assets:prod', ['images', 'styles', 'html'], build);
+gulp.task('assets:prod', ['images', 'styles', 'html', 'copy:swagger', 'copy:images'], build);
 
 gulp.task('html', function () {
     return gulp.src(config.app + 'app/**/*.html')
@@ -186,7 +118,8 @@ gulp.task('ngconstant:dev', function () {
         name: 'exerciseApplicationApp',
         constants: {
             VERSION: util.parseVersion(),
-            DEBUG_INFO_ENABLED: true
+            DEBUG_INFO_ENABLED: true,
+            BUILD_TIMESTAMP: ''
         },
         template: config.constantTemplate,
         stream: true
@@ -200,7 +133,8 @@ gulp.task('ngconstant:prod', function () {
         name: 'exerciseApplicationApp',
         constants: {
             VERSION: util.parseVersion(),
-            DEBUG_INFO_ENABLED: false
+            DEBUG_INFO_ENABLED: false,
+            BUILD_TIMESTAMP: new Date().getTime()
         },
         template: config.constantTemplate,
         stream: true
@@ -265,15 +199,13 @@ gulp.task('watch', function () {
 });
 
 gulp.task('install', function () {
-    runSequence(['inject:dep', 'ngconstant:dev'], 'sass', 'languages', 'inject:app', 'inject:troubleshoot');
+    runSequence(['inject:dep', 'ngconstant:dev'], 'sass', 'copy:languages', 'inject:app', 'inject:troubleshoot');
 });
 
-gulp.task('serve', function () {
-    runSequence('install', serve);
-});
+gulp.task('serve', ['install'], serve);
 
 gulp.task('build', ['clean'], function (cb) {
-    runSequence(['copy', 'inject:vendor', 'ngconstant:prod', 'languages'], 'inject:app', 'inject:troubleshoot', 'assets:prod', cb);
+    runSequence(['copy', 'inject:vendor', 'ngconstant:prod', 'copy:languages'], 'inject:app', 'inject:troubleshoot', 'assets:prod', cb);
 });
 
 gulp.task('default', ['serve']);

@@ -32,7 +32,7 @@
             }
         })
         .state('course-detail', {
-            parent: 'entity',
+            parent: 'course',
             url: '/course/{id}',
             data: {
                 authorities: ['ROLE_USER'],
@@ -52,8 +52,41 @@
                 }],
                 entity: ['$stateParams', 'Course', function($stateParams, Course) {
                     return Course.get({id : $stateParams.id}).$promise;
+                }],
+                previousState: ["$state", function ($state) {
+                    var currentStateData = {
+                        name: $state.current.name || 'course',
+                        params: $state.params,
+                        url: $state.href($state.current.name, $state.params)
+                    };
+                    return currentStateData;
                 }]
             }
+        })
+        .state('course-detail.edit', {
+            parent: 'course-detail',
+            url: '/detail/edit',
+            data: {
+                authorities: ['ROLE_USER']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/course/course-dialog.html',
+                    controller: 'CourseDialogController',
+                    controllerAs: 'vm',
+                    backdrop: 'static',
+                    size: 'lg',
+                    resolve: {
+                        entity: ['Course', function(Course) {
+                            return Course.get({id : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('^', {}, { reload: false });
+                }, function() {
+                    $state.go('^');
+                });
+            }]
         })
         .state('course.new', {
             parent: 'course',
@@ -78,7 +111,7 @@
                         }
                     }
                 }).result.then(function() {
-                    $state.go('course', null, { reload: true });
+                    $state.go('course', null, { reload: 'course' });
                 }, function() {
                     $state.go('course');
                 });
@@ -103,7 +136,7 @@
                         }]
                     }
                 }).result.then(function() {
-                    $state.go('course', null, { reload: true });
+                    $state.go('course', null, { reload: 'course' });
                 }, function() {
                     $state.go('^');
                 });
@@ -127,7 +160,7 @@
                         }]
                     }
                 }).result.then(function() {
-                    $state.go('course', null, { reload: true });
+                    $state.go('course', null, { reload: 'course' });
                 }, function() {
                     $state.go('^');
                 });

@@ -4,10 +4,9 @@ import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -18,32 +17,32 @@ import java.util.List;
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
-    
-    @Inject
-    private ParticipationRepository participationRepository;
-    
+
+    private final ParticipationRepository participationRepository;
+    public ParticipationService(ParticipationRepository participationRepository) {
+        this.participationRepository = participationRepository;
+    }
+
     /**
      * Save a participation.
-     * 
+     *
      * @param participation the entity to save
      * @return the persisted entity
      */
     public Participation save(Participation participation) {
         log.debug("Request to save Participation : {}", participation);
-        Participation result = participationRepository.save(participation);
-        return result;
+        return participationRepository.save(participation);
     }
 
     /**
      *  Get all the participations.
-     *  
+     *
      *  @return the list of entities
      */
-    @Transactional(readOnly = true) 
+    @Transactional(readOnly = true)
     public List<Participation> findAll() {
         log.debug("Request to get all Participations");
-        List<Participation> result = participationRepository.findAll();
-        return result;
+        return participationRepository.findAll();
     }
 
     /**
@@ -52,16 +51,15 @@ public class ParticipationService {
      *  @param id the id of the entity
      *  @return the entity
      */
-    @Transactional(readOnly = true) 
+    @Transactional(readOnly = true)
     public Participation findOne(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Participation participation = participationRepository.findOne(id);
-        return participation;
+        return participationRepository.findOne(id);
     }
 
     /**
      *  Delete the  participation by id.
-     *  
+     *
      *  @param id the id of the entity
      */
     public void delete(Long id) {

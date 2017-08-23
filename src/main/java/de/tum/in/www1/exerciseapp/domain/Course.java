@@ -21,7 +21,7 @@ public class Course implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "title")
@@ -35,6 +35,7 @@ public class Course implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Exercise> exercises = new HashSet<>();
 
+    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -66,6 +67,7 @@ public class Course implements Serializable {
     public void setExercises(Set<Exercise> exercises) {
         this.exercises = exercises;
     }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -76,23 +78,23 @@ public class Course implements Serializable {
             return false;
         }
         Course course = (Course) o;
-        if(course.id == null || id == null) {
+        if (course.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(id, course.id);
+        return Objects.equals(getId(), course.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(getId());
     }
 
     @Override
     public String toString() {
         return "Course{" +
-            "id=" + id +
-            ", title='" + title + "'" +
-            ", studentGroupName='" + studentGroupName + "'" +
-            '}';
+            "id=" + getId() +
+            ", title='" + getTitle() + "'" +
+            ", studentGroupName='" + getStudentGroupName() + "'" +
+            "}";
     }
 }

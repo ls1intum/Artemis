@@ -32,7 +32,7 @@
             }
         })
         .state('result-detail', {
-            parent: 'entity',
+            parent: 'result',
             url: '/result/{id}',
             data: {
                 authorities: ['ROLE_USER'],
@@ -52,8 +52,41 @@
                 }],
                 entity: ['$stateParams', 'Result', function($stateParams, Result) {
                     return Result.get({id : $stateParams.id}).$promise;
+                }],
+                previousState: ["$state", function ($state) {
+                    var currentStateData = {
+                        name: $state.current.name || 'result',
+                        params: $state.params,
+                        url: $state.href($state.current.name, $state.params)
+                    };
+                    return currentStateData;
                 }]
             }
+        })
+        .state('result-detail.edit', {
+            parent: 'result-detail',
+            url: '/detail/edit',
+            data: {
+                authorities: ['ROLE_USER']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/result/result-dialog.html',
+                    controller: 'ResultDialogController',
+                    controllerAs: 'vm',
+                    backdrop: 'static',
+                    size: 'lg',
+                    resolve: {
+                        entity: ['Result', function(Result) {
+                            return Result.get({id : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('^', {}, { reload: false });
+                }, function() {
+                    $state.go('^');
+                });
+            }]
         })
         .state('result.new', {
             parent: 'result',
@@ -79,7 +112,7 @@
                         }
                     }
                 }).result.then(function() {
-                    $state.go('result', null, { reload: true });
+                    $state.go('result', null, { reload: 'result' });
                 }, function() {
                     $state.go('result');
                 });
@@ -104,7 +137,7 @@
                         }]
                     }
                 }).result.then(function() {
-                    $state.go('result', null, { reload: true });
+                    $state.go('result', null, { reload: 'result' });
                 }, function() {
                     $state.go('^');
                 });
@@ -128,7 +161,7 @@
                         }]
                     }
                 }).result.then(function() {
-                    $state.go('result', null, { reload: true });
+                    $state.go('result', null, { reload: 'result' });
                 }, function() {
                     $state.go('^');
                 });

@@ -1,12 +1,12 @@
 <div>
-    <h2 translate="exerciseApplicationApp.participation.home.title">Participations</h2>
+    <h2 data-translate="exerciseApplicationApp.participation.home.title">Participations</h2>
     <jhi-alert></jhi-alert>
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-4 no-padding-left">
                 <button class="btn btn-primary" ui-sref="participation.new" >
                     <span class="glyphicon glyphicon-plus"></span>
-                    <span  translate="exerciseApplicationApp.participation.home.createLabel">
+                    <span  data-translate="exerciseApplicationApp.participation.home.createLabel">
                         Create new Participation
                     </span>
                 </button>
@@ -18,11 +18,11 @@
         <table class="jh-table table table-striped">
             <thead>
                 <tr>
-                    <th><span translate="global.field.id">ID</span></th>
-                    <th><span translate="exerciseApplicationApp.participation.cloneUrl">Clone Url</span></th>
-                    <th><span translate="exerciseApplicationApp.participation.repositorySlug">Repository Slug</span></th>
-                    <th><span translate="exerciseApplicationApp.participation.student">Student</span></th>
-                    <th><span translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
+                    <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="exerciseApplicationApp.participation.cloneUrl">Clone Url</span></th>
+                    <th><span data-translate="exerciseApplicationApp.participation.repositorySlug">Repository Slug</span></th>
+                    <th><span data-translate="exerciseApplicationApp.participation.student">Student</span></th>
+                    <th><span data-translate="exerciseApplicationApp.participation.exercise">Exercise</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -43,19 +43,19 @@
                                     ui-sref="participation-detail({id:participation.id})"
                                     class="btn btn-info btn-sm">
                                 <span class="glyphicon glyphicon-eye-open"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.view"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="participation.edit({id:participation.id})"
                                     class="btn btn-primary btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.edit"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="participation.delete({id:participation.id})"
                                     class="btn btn-danger btn-sm">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.delete"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
                             </button>
                         </div>
                     </td>

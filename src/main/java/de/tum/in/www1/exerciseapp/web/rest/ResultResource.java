@@ -2,19 +2,18 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Result;
+
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -26,10 +25,14 @@ import java.util.Optional;
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
-        
-    @Inject
-    private ResultRepository resultRepository;
-    
+
+    private static final String ENTITY_NAME = "result";
+
+    private final ResultRepository resultRepository;
+    public ResultResource(ResultRepository resultRepository) {
+        this.resultRepository = resultRepository;
+    }
+
     /**
      * POST  /results : Create a new result.
      *
@@ -37,18 +40,16 @@ public class ResultResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/results",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping("/results")
     @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
         if (result.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "idexists", "A new result cannot already have an ID")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new result cannot already have an ID")).body(null);
         }
         Result result = resultRepository.save(result);
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert("result", result.getId().toString()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
@@ -58,12 +59,10 @@ public class ResultResource {
      * @param result the result to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated result,
      * or with status 400 (Bad Request) if the result is not valid,
-     * or with status 500 (Internal Server Error) if the result couldnt be updated
+     * or with status 500 (Internal Server Error) if the result couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/results",
-        method = RequestMethod.PUT,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping("/results")
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
@@ -72,7 +71,7 @@ public class ResultResource {
         }
         Result result = resultRepository.save(result);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert("result", result.getId().toString()))
+            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
@@ -81,15 +80,12 @@ public class ResultResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @RequestMapping(value = "/results",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/results")
     @Timed
     public List<Result> getAllResults() {
         log.debug("REST request to get all Results");
-        List<Result> results = resultRepository.findAll();
-        return results;
-    }
+        return resultRepository.findAll();
+        }
 
     /**
      * GET  /results/:id : get the "id" result.
@@ -97,18 +93,12 @@ public class ResultResource {
      * @param id the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/results/{id}",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/results/{id}")
     @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
-        return Optional.ofNullable(result)
-            .map(result -> new ResponseEntity<>(
-                result,
-                HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(result));
     }
 
     /**
@@ -117,14 +107,11 @@ public class ResultResource {
      * @param id the id of the result to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @RequestMapping(value = "/results/{id}",
-        method = RequestMethod.DELETE,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping("/results/{id}")
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);
         resultRepository.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("result", id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
-
 }

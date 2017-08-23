@@ -4,36 +4,36 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 ng-click="vm.clear()">&times;</button>
-        <h4 class="modal-title" id="myParticipationLabel" translate="exerciseApplicationApp.participation.home.createOrEditLabel">Create or edit a Participation</h4>
+        <h4 class="modal-title" id="myParticipationLabel" data-translate="exerciseApplicationApp.participation.home.createOrEditLabel">Create or edit a Participation</h4>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
         <div class="form-group" ng-show="vm.participation.id">
-            <label for="id" translate="global.field.id">ID</label>
+            <label for="id" data-translate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id"
                     ng-model="vm.participation.id" readonly />
         </div>
         <div class="form-group">
-            <label class="control-label" translate="exerciseApplicationApp.participation.cloneUrl" for="field_cloneUrl">Clone Url</label>
+            <label class="control-label" data-translate="exerciseApplicationApp.participation.cloneUrl" for="field_cloneUrl">Clone Url</label>
             <input type="text" class="form-control" name="cloneUrl" id="field_cloneUrl"
                     ng-model="vm.participation.cloneUrl"
-                     />
+                    />
         </div>
         <div class="form-group">
-            <label class="control-label" translate="exerciseApplicationApp.participation.repositorySlug" for="field_repositorySlug">Repository Slug</label>
+            <label class="control-label" data-translate="exerciseApplicationApp.participation.repositorySlug" for="field_repositorySlug">Repository Slug</label>
             <input type="text" class="form-control" name="repositorySlug" id="field_repositorySlug"
                     ng-model="vm.participation.repositorySlug"
-                     />
+                    />
         </div>
 
         <div class="form-group">
-            <label translate="exerciseApplicationApp.participation.student" for="field_student">Student</label>
+            <label data-translate="exerciseApplicationApp.participation.student" for="field_student">Student</label>
             <select class="form-control" id="field_student" name="student" ng-model="vm.participation.student" ng-options="user as user.login for user in vm.users track by user.id">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
-            <label translate="exerciseApplicationApp.participation.exercise" for="field_exercise">Exercise</label>
+            <label data-translate="exerciseApplicationApp.participation.exercise" for="field_exercise">Exercise</label>
             <select class="form-control" id="field_exercise" name="exercise" ng-model="vm.participation.exercise" ng-options="exercise as exercise.title for exercise in vm.exercises track by exercise.id">
                 <option value=""></option>
             </select>
@@ -41,10 +41,10 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
-            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span translate="entity.action.cancel">Cancel</span>
+            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" ng-disabled="editForm.$invalid || vm.isSaving" class="btn btn-primary">
-            <span class="glyphicon glyphicon-save"></span>&nbsp;<span translate="entity.action.save">Save</span>
+            <span class="glyphicon glyphicon-save"></span>&nbsp;<span data-translate="entity.action.save">Save</span>
         </button>
     </div>
 </form>
