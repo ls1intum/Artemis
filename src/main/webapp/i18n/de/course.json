@@ -4,8 +4,7 @@
             "home": {
                 "title": "Courses",
                 "createLabel": "Course erstellen",
-                "createOrEditLabel": "Course erstellen oder bearbeiten",
-                "search": "Suche nach Course"
+                "createOrEditLabel": "Course erstellen oder bearbeiten"
             },
             "created": "Course erstellt mit ID {{ param }}",
             "updated": "Course aktualisiert mit ID {{ param }}",

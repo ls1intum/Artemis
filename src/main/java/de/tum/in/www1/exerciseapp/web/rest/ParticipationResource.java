@@ -10,6 +10,7 @@ import de.tum.in.www1.exerciseapp.service.ExerciseService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.service.VersionControlService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -22,7 +23,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -40,21 +40,25 @@ public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
-    @Inject
     private ParticipationService participationService;
 
-    @Inject
     private ParticipationRepository participationRepository;
 
-    @Inject
     private ExerciseService exerciseService;
 
-    @Inject
-    private ContinuousIntegrationService continuousIntegrationService;
+    private Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    @Inject
-    private VersionControlService versionControlService;
+    private Optional<VersionControlService> versionControlService;
 
+    private static final String ENTITY_NAME = "participation";
+
+    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+        this.participationService = participationService;
+        this.participationRepository = participationRepository;
+        this.exerciseService = exerciseService;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.versionControlService = versionControlService;
+    }
 
     private GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
     private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
@@ -66,18 +70,16 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new participation, or with status 400 (Bad Request) if the participation has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/participations",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping("/participations")
     @Timed
     public ResponseEntity<Participation> createParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to save Participation : {}", participation);
         if (participation.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "idexists", "A new participation cannot already have an ID")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new participation cannot already have an ID")).body(null);
         }
         Participation result = participationService.save(participation);
         return ResponseEntity.created(new URI("/api/participations/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert("participation", result.getId().toString()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
@@ -113,12 +115,10 @@ public class ParticipationResource {
      * @param participation the participation to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated participation,
      * or with status 400 (Bad Request) if the participation is not valid,
-     * or with status 500 (Internal Server Error) if the participation couldnt be updated
+     * or with status 500 (Internal Server Error) if the participation couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/participations",
-        method = RequestMethod.PUT,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping("/participations")
     @Timed
     public ResponseEntity<Participation> updateParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
@@ -127,7 +127,7 @@ public class ParticipationResource {
         }
         Participation result = participationService.save(participation);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert("participation", participation.getId().toString()))
+            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
             .body(result);
     }
 
@@ -136,14 +136,12 @@ public class ParticipationResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the list of participations in body
      */
-    @RequestMapping(value = "/participations",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/participations")
     @Timed
     public List<Participation> getAllParticipations() {
         log.debug("REST request to get all Participations");
         return participationService.findAll();
-    }
+        }
 
 
     /**
@@ -187,9 +185,7 @@ public class ParticipationResource {
      * @param id the id of the participation to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/participations/{id}",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/participations/{id}")
     @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     public ResponseEntity<Participation> getParticipation(@PathVariable Long id, AbstractAuthenticationToken authentication) {
@@ -220,7 +216,7 @@ public class ParticipationResource {
             //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
-        URL url = versionControlService.getRepositoryWebUrl(participation);
+        URL url = versionControlService.get().getRepositoryWebUrl(participation);
         return Optional.ofNullable(url)
             .map(result -> new ResponseEntity<>(
                 url.toString(),
@@ -241,7 +237,7 @@ public class ParticipationResource {
             //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
         }
 
-        URL url = continuousIntegrationService.getBuildPlanWebUrl(participation);
+        URL url = continuousIntegrationService.get().getBuildPlanWebUrl(participation);
         return Optional.ofNullable(url)
             .map(result -> new ResponseEntity<>(
                 url.toString(),
@@ -259,7 +255,7 @@ public class ParticipationResource {
         log.debug("REST request to get Participation build artifact: {}", id);
         Participation participation = participationService.findOne(id);
 
-        return continuousIntegrationService.retrieveLatestArtifact(participation);
+        return continuousIntegrationService.get().retrieveLatestArtifact(participation);
 
     }
 
@@ -289,8 +285,7 @@ public class ParticipationResource {
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participation/status: get build status of the user's participation for the "id" exercise.
      *
-     * @param courseId   only included for API consistency, not actually used
-     * @param exerciseId the id of the exercise for which to retrieve the participation status
+     * @param id   the participation id
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @RequestMapping(value = "/participations/{id}/status",
@@ -300,7 +295,7 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
         Participation participation = participationService.findOne(id);
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.getBuildStatus(participation);
+        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(participation);
         return Optional.ofNullable(buildStatus)
             .map(status -> new ResponseEntity<>(
                 status,
@@ -328,5 +323,4 @@ public class ParticipationResource {
         participationService.delete(id, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", id.toString())).build();
     }
-
 }

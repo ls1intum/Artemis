@@ -6,8 +6,6 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
-import java.time.ZoneId;
 import java.util.*;
 
 @Component
@@ -37,8 +35,10 @@ public class AuditEventConverter {
      * @return the converted list.
      */
     public AuditEvent convertToAuditEvent(PersistentAuditEvent persistentAuditEvent) {
-        Instant instant = persistentAuditEvent.getAuditEventDate().atZone(ZoneId.systemDefault()).toInstant();
-        return new AuditEvent(Date.from(instant), persistentAuditEvent.getPrincipal(),
+        if (persistentAuditEvent == null) {
+            return null;
+        }
+        return new AuditEvent(Date.from(persistentAuditEvent.getAuditEventDate()), persistentAuditEvent.getPrincipal(),
             persistentAuditEvent.getAuditEventType(), convertDataToObjects(persistentAuditEvent.getData()));
     }
 
@@ -52,8 +52,8 @@ public class AuditEventConverter {
         Map<String, Object> results = new HashMap<>();
 
         if (data != null) {
-            for (String key : data.keySet()) {
-                results.put(key, data.get(key));
+            for (Map.Entry<String, String> entry : data.entrySet()) {
+                results.put(entry.getKey(), entry.getValue());
             }
         }
         return results;
@@ -70,8 +70,8 @@ public class AuditEventConverter {
         Map<String, String> results = new HashMap<>();
 
         if (data != null) {
-            for (String key : data.keySet()) {
-                Object object = data.get(key);
+            for (Map.Entry<String, Object> entry : data.entrySet()) {
+                Object object = entry.getValue();
 
                 // Extract the data that will be saved.
                 if (object instanceof WebAuthenticationDetails) {
@@ -79,9 +79,9 @@ public class AuditEventConverter {
                     results.put("remoteAddress", authenticationDetails.getRemoteAddress());
                     results.put("sessionId", authenticationDetails.getSessionId());
                 } else if (object != null) {
-                    results.put(key, object.toString());
+                    results.put(entry.getKey(), object.toString());
                 } else {
-                    results.put(key, "null");
+                    results.put(entry.getKey(), "null");
                 }
             }
         }

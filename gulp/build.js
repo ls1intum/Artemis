@@ -1,3 +1,5 @@
+'use strict';
+
 var fs = require('fs'),
     gulp = require('gulp'),
     lazypipe = require('lazypipe'),
@@ -10,16 +12,15 @@ var fs = require('fs'),
     cssnano = require('gulp-cssnano'),
     uglify = require('gulp-uglify'),
     useref = require("gulp-useref"),
-    revReplace = require("gulp-rev-replace")
+    revReplace = require("gulp-rev-replace"),
     plumber = require('gulp-plumber'),
     gulpIf = require('gulp-if'),
-    handleErrors = require('./handleErrors');
+    handleErrors = require('./handle-errors');
 
 var config = require('./config');
 
 var initTask = lazypipe()
-    .pipe(sourcemaps.init)
-    .pipe(footer, ';');
+    .pipe(sourcemaps.init);
 var jsTask = lazypipe()
     .pipe(ngAnnotate)
     .pipe(uglify);
@@ -47,4 +48,4 @@ module.exports = function() {
         .pipe(revReplace({manifest: manifest}))
         .pipe(sourcemaps.write('.'))
         .pipe(gulp.dest(config.dist));
-}
+};

@@ -5,7 +5,6 @@ import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.service.CourseService;
-import de.tum.in.www1.exerciseapp.service.GitService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -25,7 +24,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.inject.Inject;
 import java.net.URL;
 import java.security.Principal;
 import java.util.*;
@@ -39,7 +37,7 @@ import java.util.stream.Collectors;
 @ComponentScan("de.tum.in.www1.exerciseapp.*")
 public class JiraAuthenticationProvider implements AuthenticationProvider {
 
-    private final Logger log = LoggerFactory.getLogger(GitService.class);
+    private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
     @Value("${exerciseapp.jira.instructor-group-name}")
     private String INSTRUCTOR_GROUP_NAME;
@@ -53,15 +51,15 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
     @Value("${exerciseapp.jira.password}")
     private String JIRA_PASSWORD;
 
-    @Inject
-    UserService userService;
+    private final UserService userService;
+    private final UserRepository userRepository;
+    private final CourseService courseService;
 
-    @Inject
-    UserRepository userRepository;
-
-    @Inject
-    CourseService courseService;
-
+    public JiraAuthenticationProvider(UserService userService, UserRepository userRepository, CourseService courseService) {
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.courseService = courseService;
+    }
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
@@ -73,7 +71,6 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         UsernamePasswordAuthenticationToken token;
         token = new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
         return token;
-
     }
 
     /**
@@ -105,8 +102,8 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         if (authenticationResponse != null) {
             Map content = authenticationResponse.getBody();
             User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() -> {
-                User newUser = userService.createUserInformation((String) content.get("name"), "",
-                    (String) content.get("displayName"), "", (String) content.get("emailAddress"),
+                User newUser = userService.createUser((String) content.get("name"), "",
+                    (String) content.get("displayName"), "", (String) content.get("emailAddress"), null,
                     "en");
                 return newUser;
             });
@@ -129,8 +126,6 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         }
 
     }
-
-
 
     @Override
     public boolean supports(Class<?> authentication) {
@@ -239,7 +234,4 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         }
 
     }
-
-
-
 }

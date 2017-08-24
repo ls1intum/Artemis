@@ -2,19 +2,17 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Course;
+import de.tum.in.www1.exerciseapp.repository.CourseRepository;
 import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PostFilter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -30,8 +28,15 @@ public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
 
-    @Inject
-    private CourseService courseService;
+    private static final String ENTITY_NAME = "course";
+
+    private final CourseRepository courseRepository;
+    private final CourseService courseService;
+
+    public CourseResource(CourseRepository courseRepository, CourseService courseService) {
+        this.courseRepository = courseRepository;
+        this.courseService = courseService;
+    }
 
     /**
      * POST  /courses : Create a new course.
@@ -40,18 +45,16 @@ public class CourseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/courses",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping("/courses")
     @Timed
     public ResponseEntity<Course> createCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("course", "idexists", "A new course cannot already have an ID")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new course cannot already have an ID")).body(null);
         }
         Course result = courseService.save(course);
         return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert("course", result.getId().toString()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
@@ -61,12 +64,10 @@ public class CourseResource {
      * @param course the course to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated course,
      * or with status 400 (Bad Request) if the course is not valid,
-     * or with status 500 (Internal Server Error) if the course couldnt be updated
+     * or with status 500 (Internal Server Error) if the course couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/courses",
-        method = RequestMethod.PUT,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping("/courses")
     @Timed
     public ResponseEntity<Course> updateCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to update Course : {}", course);
@@ -75,7 +76,7 @@ public class CourseResource {
         }
         Course result = courseService.save(course);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert("course", course.getId().toString()))
+            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, course.getId().toString()))
             .body(result);
     }
 
@@ -121,14 +122,11 @@ public class CourseResource {
      * @param id the id of the course to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @RequestMapping(value = "/courses/{id}",
-        method = RequestMethod.DELETE,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping("/courses/{id}")
     @Timed
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);
-        courseService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("course", id.toString())).build();
+        courseRepository.delete(id);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
-
 }

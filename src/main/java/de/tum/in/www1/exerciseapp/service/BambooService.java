@@ -23,7 +23,6 @@ import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.CliClient;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -31,7 +30,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -61,11 +63,13 @@ public class BambooService implements ContinuousIntegrationService {
     @Value("${exerciseapp.result-retrieval-delay}")
     private int RESULT_RETRIEVAL_DELAY = 10000;
 
-    @Inject
-    GitService gitService;
+    private final GitService gitService;
+    private final ResultRepository resultRepository;
 
-    @Inject
-    private ResultRepository resultRepository;
+    public BambooService(GitService gitService, ResultRepository resultRepository) {
+        this.gitService = gitService;
+        this.resultRepository = resultRepository;
+    }
 
     @Override
     public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {

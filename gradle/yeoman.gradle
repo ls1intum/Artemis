@@ -1,13 +1,16 @@
-import org.apache.tools.ant.taskdefs.condition.Os
 apply plugin: 'com.moowork.node'
-apply plugin: 'com.moowork.gulp'
 
-task bower(type: Exec) {
-    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        commandLine 'cmd', '/c', 'bower', 'install'
-    }else{
-        commandLine 'node_modules/bower/bin/bower', 'install'
-    }
+task bower(type: NodeTask) {
+    description = "Installs dependencies using Bower"
+    script = file("${project.projectDir}/node_modules/bower/bin/bower")
+    args = ['install']
 }
-processResources.dependsOn 'bower'
+
+// Workaround for https://github.com/srs/gradle-node-plugin/issues/134 doesn't work with yarn
+if (!project.hasProperty('nodeInstall')) {
+    bower.dependsOn yarn_install
+} else {
+    bower.dependsOn npm_install
+}
+processResources.dependsOn bower
 bower.onlyIf { !project.hasProperty('skipBower') }

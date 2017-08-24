@@ -3,6 +3,7 @@
     <head>
         <title th:text="#{email.activation.title}">JHipster activation</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <link rel="shortcut icon" href="${baseUrl}/favicon.ico" />
     </head>
     <body>
         <p th:text="#{email.activation.greeting(${user.login})}">
@@ -13,7 +14,7 @@
         </p>
         <p>
             <a th:href="@{|${baseUrl}/#/activate?key=${user.activationKey}|}"
-               th:text="|${user.login}|">Activation Link</a>
+               th:text="@{|${baseUrl}/#/activate?key=${user.activationKey}|}">Activation Link</a>
         </p>
         <p>
             <span th:text="#{email.activation.text2}">Regards, </span>

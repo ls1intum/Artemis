@@ -10,11 +10,15 @@ import java.util.Base64;
 
 /**
  * Utility class for HTTP headers creation.
- *
  */
-public class HeaderUtil {
+public final class HeaderUtil {
 
     private static final Logger log = LoggerFactory.getLogger(HeaderUtil.class);
+
+    private static final String APPLICATION_NAME = "exerciseApplicationApp";
+
+    private HeaderUtil() {
+    }
 
     public static HttpHeaders createAlert(String message, String param) {
         HttpHeaders headers = new HttpHeaders();
@@ -24,19 +28,19 @@ public class HeaderUtil {
     }
 
     public static HttpHeaders createEntityCreationAlert(String entityName, String param) {
-        return createAlert("exerciseApplicationApp." + entityName + ".created", param);
+        return createAlert(APPLICATION_NAME + "." + entityName + ".created", param);
     }
 
     public static HttpHeaders createEntityUpdateAlert(String entityName, String param) {
-        return createAlert("exerciseApplicationApp." + entityName + ".updated", param);
+        return createAlert(APPLICATION_NAME + "." + entityName + ".updated", param);
     }
 
     public static HttpHeaders createEntityDeletionAlert(String entityName, String param) {
-        return createAlert("exerciseApplicationApp." + entityName + ".deleted", param);
+        return createAlert(APPLICATION_NAME + "." + entityName + ".deleted", param);
     }
 
     public static HttpHeaders createFailureAlert(String entityName, String errorKey, String defaultMessage) {
-        log.error("Entity creation failed, {}", defaultMessage);
+        log.error("Entity processing failed, {}", defaultMessage);
         HttpHeaders headers = new HttpHeaders();
         headers.add("X-exerciseApplicationApp-error", "error." + errorKey);
         headers.add("X-exerciseApplicationApp-params", entityName);

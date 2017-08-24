@@ -24,7 +24,7 @@ public class Exercise implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "title")
@@ -56,6 +56,7 @@ public class Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Participation> participations = new HashSet<>();
 
+    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -135,6 +136,7 @@ public class Exercise implements Serializable {
     public void setParticipations(Set<Participation> participations) {
         this.participations = participations;
     }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     public URL getBaseRepositoryUrlAsUrl() {
         try {
@@ -154,15 +156,15 @@ public class Exercise implements Serializable {
             return false;
         }
         Exercise exercise = (Exercise) o;
-        if(exercise.id == null || id == null) {
+        if (exercise.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(id, exercise.id);
+        return Objects.equals(getId(), exercise.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(getId());
     }
 
     @Override

@@ -1,12 +1,11 @@
 package de.tum.in.www1.exerciseapp.repository;
 
 import de.tum.in.www1.exerciseapp.domain.PersistentAuditEvent;
-
-import java.time.LocalDateTime;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -16,7 +15,11 @@ public interface PersistenceAuditEventRepository extends JpaRepository<Persisten
 
     List<PersistentAuditEvent> findByPrincipal(String principal);
 
-    List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfter(String principal, LocalDateTime after);
+    List<PersistentAuditEvent> findByAuditEventDateAfter(Instant after);
 
-    Page<PersistentAuditEvent> findAllByAuditEventDateBetween(LocalDateTime fromDate, LocalDateTime toDate, Pageable pageable);
+    List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfter(String principal, Instant after);
+
+    List<PersistentAuditEvent> findByPrincipalAndAuditEventDateAfterAndAuditEventType(String principle, Instant after, String type);
+
+    Page<PersistentAuditEvent> findAllByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable);
 }

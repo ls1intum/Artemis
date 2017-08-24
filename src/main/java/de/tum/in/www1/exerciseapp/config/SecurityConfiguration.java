@@ -1,15 +1,16 @@
 package de.tum.in.www1.exerciseapp.config;
 
-
-import de.tum.in.www1.exerciseapp.security.*;
-import de.tum.in.www1.exerciseapp.web.filter.CsrfCookieGeneratorFilter;
-import de.tum.in.www1.exerciseapp.config.JHipsterProperties;
+import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.security.PBEPasswordEncoder;
-
+import io.github.jhipster.config.JHipsterProperties;
+import io.github.jhipster.security.AjaxAuthenticationFailureHandler;
+import io.github.jhipster.security.AjaxAuthenticationSuccessHandler;
+import io.github.jhipster.security.AjaxLogoutSuccessHandler;
+import io.github.jhipster.security.Http401UnauthorizedEntryPoint;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
+import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -19,14 +20,14 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.data.repository.query.SecurityEvaluationContextExtension;
-
 import org.springframework.security.web.authentication.RememberMeServices;
-import org.springframework.security.web.csrf.CsrfFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.web.filter.CorsFilter;
 
-import javax.inject.Inject;
+import javax.annotation.PostConstruct;
 import java.util.Optional;
 
 @Configuration
@@ -34,35 +35,46 @@ import java.util.Optional;
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
-    @Inject
-    private JHipsterProperties jHipsterProperties;
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final UserDetailsService userDetailsService;
+    private final JHipsterProperties jHipsterProperties;
+    private final RememberMeServices rememberMeServices;
+    private final CorsFilter corsFilter;
+    private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
-    @Inject
-    private AjaxAuthenticationSuccessHandler ajaxAuthenticationSuccessHandler;
+    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService,
+                                 JHipsterProperties jHipsterProperties, RememberMeServices rememberMeServices,
+                                 CorsFilter corsFilter, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
 
-    @Inject
-    private AjaxAuthenticationFailureHandler ajaxAuthenticationFailureHandler;
+        this.authenticationManagerBuilder = authenticationManagerBuilder;
+        this.userDetailsService = userDetailsService;
+        this.jHipsterProperties = jHipsterProperties;
+        this.rememberMeServices = rememberMeServices;
+        this.corsFilter = corsFilter;
+        this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
+    }
 
-    @Inject
-    private AjaxLogoutSuccessHandler ajaxLogoutSuccessHandler;
-
-    @Inject
-    private Http401UnauthorizedEntryPoint authenticationEntryPoint;
-
-    @Inject
-    private UserDetailsService userDetailsService;
-
-    @Inject
-    private RememberMeServices rememberMeServices;
-
-    @Inject
-    private SessionRegistry sessionRegistry;
-
-
+    @PostConstruct
+    public void init() {
+        try {
+            authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+            if(remoteUserAuthenticationProvider.isPresent()) {
+                authenticationManagerBuilder.authenticationProvider(remoteUserAuthenticationProvider.get());
+            }
+        } catch (Exception e) {
+            throw new BeanInitializationException("Security configuration failed", e);
+        }
+    }
 
     @Value("${exerciseapp.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
+    @Bean
+    public PBEPasswordEncoder passwordEncoder() {
+        PBEPasswordEncoder encoder = new PBEPasswordEncoder();
+        encoder.setPbeStringEncryptor(encryptor());
+        return encoder;
+    }
 
     @Bean
     public StandardPBEStringEncryptor encryptor() {
@@ -72,27 +84,23 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return encryptor;
     }
 
-    @Bean
-    public PBEPasswordEncoder passwordEncoder() {
-        PBEPasswordEncoder encoder = new PBEPasswordEncoder();
-        encoder.setPbeStringEncryptor(encryptor());
-
-        return encoder;
+    public AjaxAuthenticationSuccessHandler ajaxAuthenticationSuccessHandler() {
+        return new AjaxAuthenticationSuccessHandler();
     }
 
-    @Inject
-    private Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
+    @Bean
+    public AjaxAuthenticationFailureHandler ajaxAuthenticationFailureHandler() {
+        return new AjaxAuthenticationFailureHandler();
+    }
 
+    @Bean
+    public AjaxLogoutSuccessHandler ajaxLogoutSuccessHandler() {
+        return new AjaxLogoutSuccessHandler();
+    }
 
-    @Inject
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-        auth
-            .userDetailsService(userDetailsService)
-                .passwordEncoder(passwordEncoder());
-
-        if(remoteUserAuthenticationProvider.isPresent()) {
-            auth.authenticationProvider(remoteUserAuthenticationProvider.get());
-        }
+    @Bean
+    public Http401UnauthorizedEntryPoint http401UnauthorizedEntryPoint() {
+        return new Http401UnauthorizedEntryPoint();
     }
 
     @Override
@@ -113,18 +121,14 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-            .sessionManagement()
-            .maximumSessions(32) // maximum number of concurrent sessions for one user
-            .sessionRegistry(sessionRegistry)
-            .and().and()
             .csrf()
+            .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
             .ignoringAntMatchers("/websocket/**")
             .ignoringAntMatchers("/api/lti/launch/*")
         .and()
-            .addFilterAfter(new CsrfCookieGeneratorFilter(), CsrfFilter.class)
+            .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling()
-            .accessDeniedHandler(new CustomAccessDeniedHandler())
-            .authenticationEntryPoint(authenticationEntryPoint)
+            .authenticationEntryPoint(http401UnauthorizedEntryPoint())
         .and()
             .rememberMe()
             .rememberMeServices(rememberMeServices)
@@ -133,16 +137,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .formLogin()
             .loginProcessingUrl("/api/authentication")
-            .successHandler(ajaxAuthenticationSuccessHandler)
-            .failureHandler(ajaxAuthenticationFailureHandler)
+            .successHandler(ajaxAuthenticationSuccessHandler())
+            .failureHandler(ajaxAuthenticationFailureHandler())
             .usernameParameter("j_username")
             .passwordParameter("j_password")
             .permitAll()
         .and()
             .logout()
             .logoutUrl("/api/logout")
-            .logoutSuccessHandler(ajaxLogoutSuccessHandler)
-            .deleteCookies("JSESSIONID", "CSRF-TOKEN", "hazelcast.sessionId")
+            .logoutSuccessHandler(ajaxLogoutSuccessHandler())
             .permitAll()
         .and()
             .headers()
@@ -160,9 +163,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/**").authenticated()
             .antMatchers("/websocket/tracker").hasAuthority(AuthoritiesConstants.ADMIN)
             .antMatchers("/websocket/**").permitAll()
+            .antMatchers("/management/health").permitAll()
             .antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN)
             .antMatchers("/v2/api-docs/**").permitAll()
-            .antMatchers("/configuration/ui").permitAll()
+            .antMatchers("/swagger-resources/configuration/ui").permitAll()
             .antMatchers("/swagger-ui/index.html").hasAuthority(AuthoritiesConstants.ADMIN);
 
     }

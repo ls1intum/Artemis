@@ -9,7 +9,7 @@
             <div class="col-xs-4 no-padding-left" ng-hide="true">
                 <button class="btn btn-primary" ui-sref="participation.new" >
                     <span class="glyphicon glyphicon-plus"></span>
-                    <span  translate="exerciseApplicationApp.participation.home.createLabel">
+                    <span  data-translate="exerciseApplicationApp.participation.home.createLabel">
                         Create new Participation
                     </span>
                 </button>
@@ -58,19 +58,19 @@
                                     ui-sref="participation-detail({id:participation.id})"
                                     class="btn btn-info btn-sm">
                                 <span class="glyphicon glyphicon-eye-open"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.view"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="participation-for-exercise.edit({id:participation.id})"
                                     class="btn btn-warning btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.edit"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="participation-for-exercise.delete({id:participation.id})"
                                     class="btn btn-danger btn-sm">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
-                                <span class="hidden-xs hidden-sm" translate="entity.action.delete"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="instructor-dashboard.new-result({participationId:participation.id, courseId: participation.exercise.course.id, exerciseId:participation.exercise.id})"

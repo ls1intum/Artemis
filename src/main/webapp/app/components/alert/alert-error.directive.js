@@ -2,7 +2,7 @@
     'use strict';
 
     var jhiAlertError = {
-        template: '<div class="alerts" ng-cloak="">' +
+        template: '<div class="alerts" ng-cloak="" role="alert">' +
                         '<div ng-repeat="alert in $ctrl.alerts" ng-class="[alert.position, {\'toast\': alert.toast}]">' +
                             '<uib-alert ng-cloak="" type="{{alert.type}}" close="alert.close($ctrl.alerts)"><pre ng-bind-html="alert.msg"></pre></uib-alert>' +
                         '</div>' +
@@ -22,7 +22,7 @@
         vm.alerts = [];
 
         function addErrorAlert (message, key, data) {
-            key = key && key !== null ? key : message;
+            key = key ? key : message;
             vm.alerts.push(
                 AlertService.add(
                     {
@@ -48,9 +48,12 @@
                 break;
 
             case 400:
-                var errorHeader = httpResponse.headers('X-exerciseApplicationApp-error');
-                var entityKey = httpResponse.headers('X-exerciseApplicationApp-params');
-                if (errorHeader) {
+                var headers = Object.keys(httpResponse.headers()).filter(function (header) {
+                    return header.indexOf('app-error', header.length - 'app-error'.length) !== -1 || header.indexOf('app-params', header.length - 'app-params'.length) !== -1;
+                }).sort();
+                var errorHeader = httpResponse.headers(headers[0]);
+                var entityKey = httpResponse.headers(headers[1]);
+                if (angular.isString(errorHeader)) {
                     var entityName = $translate.instant('global.menu.entities.' + entityKey);
                     addErrorAlert(errorHeader, errorHeader, {entityName: entityName});
                 } else if (httpResponse.data && httpResponse.data.fieldErrors) {

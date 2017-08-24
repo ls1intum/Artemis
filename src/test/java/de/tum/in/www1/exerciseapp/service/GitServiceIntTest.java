@@ -17,18 +17,15 @@ import org.junit.runner.RunWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.test.IntegrationTest;
-import org.springframework.boot.test.SpringApplicationConfiguration;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
-
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
 import java.util.Collection;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,9 +35,9 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @ActiveProfiles(profiles = "dev,jira,bamboo,bitbucket")
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringApplicationConfiguration(classes = ExerciseApplicationApp.class)
+@ContextConfiguration(classes = ExerciseApplicationApp.class)
 @WebAppConfiguration
-@IntegrationTest
+@SpringBootTest
 @Transactional
 public class GitServiceIntTest {
 
@@ -48,15 +45,17 @@ public class GitServiceIntTest {
 
     private String remoteTestRepo = "http://127.0.0.1:7990/scm/test/testrepo.git";
 
-
-    @Inject
-    private GitService gitService;
+    private final GitService gitService;
 
     @Value("${exerciseapp.bitbucket.user}")
     private String GIT_USER;
 
     @Value("${exerciseapp.bitbucket.password}")
     private String GIT_PASSWORD;
+
+    public GitServiceIntTest(GitService gitService) {
+        this.gitService = gitService;
+    }
 
     @Test
     public void testGetOrCheckoutRepositoryForNewRepo() throws IOException, GitAPIException {
@@ -122,15 +121,10 @@ public class GitServiceIntTest {
 
         Repository repo = gitService.getOrCheckoutRepository(participation);
 
-        Collection<File> files = gitService.listFiles(repo);
-
+        Collection<de.tum.in.www1.exerciseapp.domain.File> files = gitService.listFiles(repo);
         assertThat(files.size()).isGreaterThan(0);
 
-
-
         gitService.deleteLocalRepository(repo);
-
-
     }
 
 
@@ -197,7 +191,6 @@ public class GitServiceIntTest {
         git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
 
 
-
         // pull
         PullResult pullResult = gitService.pull(repo);
 
@@ -208,13 +201,6 @@ public class GitServiceIntTest {
         RevCommit commit = walk.parseCommit(newHead.getObjectId());
         assertThat(commit.getFullMessage()).isEqualTo("a commit");
 
-
         FileUtils.deleteDirectory(tempDir);
-
-
-
     }
-
-
-
 }

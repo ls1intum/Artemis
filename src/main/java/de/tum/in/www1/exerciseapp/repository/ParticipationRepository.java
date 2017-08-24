@@ -5,13 +5,16 @@ import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+import org.springframework.data.jpa.repository.*;
 import java.util.List;
 
 /**
  * Spring Data JPA repository for the Participation entity.
  */
 @SuppressWarnings("unused")
+@Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
 
     List<Participation> findByExerciseId(@Param("exerciseId") Long exerciseId);

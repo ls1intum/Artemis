@@ -4,19 +4,13 @@ import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
-import de.tum.in.www1.exerciseapp.exception.BambooException;
-import de.tum.in.www1.exerciseapp.exception.BitbucketException;
-import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
-import de.tum.in.www1.exerciseapp.web.rest.errors.CustomParameterizedException;
-import de.tum.in.www1.exerciseapp.web.rest.errors.ErrorConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
 import java.io.IOException;
 import java.net.URL;
 import java.time.ZonedDateTime;
@@ -31,20 +25,19 @@ public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
-    @Inject
-    private ParticipationRepository participationRepository;
+    private final ParticipationRepository participationRepository;
+    private final UserRepository userRepository;
+    private Optional<GitService> gitService;
+    private Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private Optional<VersionControlService> versionControlService;
 
-    @Inject
-    private UserRepository userRepository;
-
-    @Inject
-    private GitService gitService;
-
-    @Inject
-    private ContinuousIntegrationService continuousIntegrationService;
-
-    @Inject
-    private VersionControlService versionControlService;
+    public ParticipationService(ParticipationRepository participationRepository, UserRepository userRepository, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+        this.participationRepository = participationRepository;
+        this.userRepository = userRepository;
+        this.gitService = gitService;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.versionControlService = versionControlService;
+    }
 
     /**
      * Save a participation.
@@ -55,8 +48,7 @@ public class ParticipationService {
     @Transactional
     public Participation save(Participation participation) {
         log.debug("Request to save Participation : {}", participation);
-        Participation result = participationRepository.save(participation);
-        return result;
+        return participationRepository.save(participation);
     }
 
     public Participation init(Exercise exercise, String username) {
@@ -89,7 +81,7 @@ public class ParticipationService {
 
     private Participation copyRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_COPIED)) {
-            URL repositoryUrl = versionControlService.copyRepository(
+            URL repositoryUrl = versionControlService.get().copyRepository(
                 participation.getExercise().getBaseRepositoryUrlAsUrl(),
                 participation.getStudent().getLogin());
             if (Optional.ofNullable(repositoryUrl).isPresent()) {
@@ -104,7 +96,7 @@ public class ParticipationService {
 
     private Participation configureRepository(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_CONFIGURED)) {
-            versionControlService.configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
+            versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
             participation.setInitializationState(ParticipationState.REPO_CONFIGURED);
             return save(participation);
         } else {
@@ -114,7 +106,7 @@ public class ParticipationService {
 
     private Participation copyBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.BUILD_PLAN_COPIED)) {
-            String buildPlanId = continuousIntegrationService.copyBuildPlan(
+            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(
                 participation.getExercise().getBaseBuildPlanId(),
                 participation.getStudent().getLogin());
             participation.setBuildPlanId(buildPlanId);
@@ -127,7 +119,7 @@ public class ParticipationService {
 
     private Participation configureBuildPlan(Participation participation) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.BUILD_PLAN_CONFIGURED)) {
-            continuousIntegrationService.configureBuildPlan(
+            continuousIntegrationService.get().configureBuildPlan(
                 participation.getBuildPlanId(),
                 participation.getRepositoryUrlAsUrl(),
                 participation.getStudent().getLogin());
@@ -146,8 +138,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public List<Participation> findAll() {
         log.debug("Request to get all Participations");
-        List<Participation> result = participationRepository.findAll();
-        return result;
+        return participationRepository.findAll();
     }
 
     /**
@@ -159,8 +150,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOne(Long id) {
         log.debug("Request to get Participation : {}", id);
-        Participation participation = participationRepository.findOne(id);
-        return participation;
+        return participationRepository.findOne(id);
     }
 
     /**
@@ -195,15 +185,15 @@ public class ParticipationService {
         Participation participation = participationRepository.findOne(id);
         if (Optional.ofNullable(participation).isPresent()) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
-                continuousIntegrationService.deleteBuildPlan(participation.getBuildPlanId());
+                continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             }
             if (deleteRepository && participation.getRepositoryUrl() != null) {
-                versionControlService.deleteRepository(participation.getRepositoryUrlAsUrl());
+                versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
             }
 
             // delete local repository cache
             try {
-                gitService.deleteLocalRepository(participation);
+                gitService.get().deleteLocalRepository(participation);
             } catch (IOException e) {
                 log.error("Error while deleting local repository", e);
             }
@@ -211,5 +201,4 @@ public class ParticipationService {
         }
         participationRepository.delete(id);
     }
-
 }

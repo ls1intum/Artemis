@@ -1,6 +1,5 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.config.JHipsterProperties;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.util.PatchedIMSPOXRequest;
 import de.tum.in.www1.exerciseapp.exception.JiraException;
@@ -38,10 +37,8 @@ import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -52,7 +49,6 @@ import java.util.regex.Pattern;
 public class LtiService {
 
     private final Logger log = LoggerFactory.getLogger(LtiService.class);
-
 
     @Value("${exerciseapp.lti.oauth-key}")
     private String OAUTH_KEY;
@@ -66,35 +62,27 @@ public class LtiService {
     @Value("${exerciseapp.lti.user-group-name}")
     private String USER_GROUP_NAME = "lti";
 
-
-    @Inject
     private UserService userService;
-
-    @Inject
     private UserRepository userRepository;
-
-    @Inject
     private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
-
-    @Inject
     private ResultRepository resultRepository;
-
-    @Inject
     private PasswordEncoder passwordEncoder;
-
-    @Inject
-    private JiraAuthenticationProvider jiraAuthenticationProvider;
-
-    @Inject
+    private Optional<JiraAuthenticationProvider> jiraAuthenticationProvider;
     private LtiUserIdRepository ltiUserIdRepository;
-
-
-    @Inject
     private HttpServletResponse response;
 
     public HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
-
+    public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository, PasswordEncoder passwordEncoder, Optional<JiraAuthenticationProvider> jiraAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
+        this.userService = userService;
+        this.userRepository = userRepository;
+        this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
+        this.resultRepository = resultRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jiraAuthenticationProvider = jiraAuthenticationProvider;
+        this.ltiUserIdRepository = ltiUserIdRepository;
+        this.response = response;
+    }
 
     /**
      * Handles LTI launch requests.
@@ -245,12 +233,12 @@ public class LtiService {
              */
 
             // check if an JIRA user with this email address exists
-            Optional<String> jiraLookupByEmail = jiraAuthenticationProvider.getUsernameForEmail(email);
+            Optional<String> jiraLookupByEmail = jiraAuthenticationProvider.get().getUsernameForEmail(email);
 
 
             if (jiraLookupByEmail.isPresent()) {
                 log.debug("Signing in as {}", jiraLookupByEmail.get());
-                User user = jiraAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(jiraLookupByEmail.get(), ""), true);
+                User user = jiraAuthenticationProvider.get().getOrCreateUser(new UsernamePasswordAuthenticationToken(jiraLookupByEmail.get(), ""), true);
 
                 return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
             }
@@ -266,9 +254,7 @@ public class LtiService {
 
 
             User user = userRepository.findOneByLogin(username).orElseGet(() -> {
-                User newUser = userService.createUserInformation(username, "",
-                    USER_GROUP_NAME, fullname, email,
-                    "en");
+                User newUser = userService.createUser(username, "", USER_GROUP_NAME, fullname, email, null, "en");
 
                 // add user to LTI group
                 newUser.setGroups(new ArrayList<>(Arrays.asList(USER_GROUP_NAME)));
@@ -315,7 +301,7 @@ public class LtiService {
 
             // try to sync with JIRA
             try {
-                jiraAuthenticationProvider.addUserToGroup(user.getLogin(), courseGroup);
+                jiraAuthenticationProvider.get().addUserToGroup(user.getLogin(), courseGroup);
             } catch (JiraException e) {
             /*
                 This might throw exceptions, for example if the group does not exist on JIRA.

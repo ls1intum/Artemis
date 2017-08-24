@@ -1,4 +1,8 @@
-apply plugin: 'spring-boot'
+import org.gradle.internal.os.OperatingSystem
+
+apply plugin: 'org.springframework.boot'
+apply plugin: 'com.moowork.node'
+apply plugin: 'com.moowork.gulp'
 
 ext {
     logbackLoglevel = "DEBUG"
@@ -6,27 +10,23 @@ ext {
 
 dependencies {
     compile "org.springframework.boot:spring-boot-devtools"
-    compile "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
 }
 
 def profiles = 'dev'
 if (project.hasProperty('no-liquibase')) {
     profiles += ',no-liquibase'
 }
-if (project.hasProperty('no-swagger')) {
-    profiles += ',no-swagger'
-}
 
 bootRun {
     args = []
 }
 
-war {
-    webAppDirName = 'src/main/webapp/'
-}
-
 task gulpConstantDev(type: GulpTask) {
     args = ["ngconstant:dev", "--no-notification"]
+}
+
+war {
+    webAppDirName = 'src/main/webapp/'
 }
 
 processResources {
@@ -37,10 +37,12 @@ processResources {
     }
     filesMatching('**/application.yml') {
         filter {
+            it.replace('#project.version#', version)
+        }
+        filter {
             it.replace('#spring.profiles.active#', profiles)
         }
     }
 }
-
 
 processResources.dependsOn gulpConstantDev

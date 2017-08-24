@@ -1,15 +1,13 @@
-import org.apache.tools.ant.taskdefs.condition.Os
-apply plugin: 'spring-boot'
+apply plugin: 'org.springframework.boot'
 apply plugin: 'com.moowork.node'
 apply plugin: 'com.moowork.gulp'
-
 
 ext {
     logbackLoglevel = "INFO"
 }
 
 dependencies {
-    compile "org.springframework.boot:spring-boot-starter-tomcat:${spring_boot_version}"
+
 }
 
 def profiles = 'prod'
@@ -17,8 +15,8 @@ if (project.hasProperty('no-liquibase')) {
     profiles += ',no-liquibase'
 }
 
-if (project.hasProperty('no-swagger')) {
-    profiles += ',no-swagger'
+if (project.hasProperty('swagger')) {
+    profiles += ',swagger'
 }
 
 bootRun {
@@ -41,14 +39,21 @@ processResources {
     }
     filesMatching('**/application.yml') {
         filter {
+            it.replace('#project.version#', version)
+        }
+        filter {
             it.replace('#spring.profiles.active#', profiles)
         }
     }
 }
 
-
-gulpBuildWithOpts.dependsOn 'npmInstall'
-gulpBuildWithOpts.dependsOn 'bower'
+// Workaround for https://github.com/srs/gradle-node-plugin/issues/134 doesn't work with yarn
+if (!project.hasProperty('nodeInstall')) {
+    gulpBuildWithOpts.dependsOn yarn_install
+} else {
+    gulpBuildWithOpts.dependsOn npm_install
+}
+gulpBuildWithOpts.dependsOn bower
 processResources.dependsOn gulpBuildWithOpts
 test.dependsOn gulp_test
 bootRun.dependsOn gulp_test

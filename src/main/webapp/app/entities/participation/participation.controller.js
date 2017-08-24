@@ -34,7 +34,7 @@
         function loadAll() {
             Participation.query(function(result) {
                 vm.participations = result;
-                getUniqueExercises();
+                vm.searchQuery = null;
             });
         }
 
