@@ -26,7 +26,7 @@ public class Participation implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "repository_url")
@@ -53,6 +53,7 @@ public class Participation implements Serializable {
     @ManyToOne
     private Exercise exercise;
 
+    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -116,6 +117,7 @@ public class Participation implements Serializable {
     public void setExercise(Exercise exercise) {
         this.exercise = exercise;
     }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     public URL getRepositoryUrlAsUrl() {
         try {
@@ -135,15 +137,15 @@ public class Participation implements Serializable {
             return false;
         }
         Participation participation = (Participation) o;
-        if(participation.id == null || id == null) {
+        if (participation.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(id, participation.id);
+        return Objects.equals(getId(), participation.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(getId());
     }
 
     @Override

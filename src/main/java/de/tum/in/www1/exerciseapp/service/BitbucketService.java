@@ -15,10 +15,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import javax.inject.Inject;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,9 +40,11 @@ public class BitbucketService implements VersionControlService {
     @Value("${exerciseapp.lti.user-prefix}")
     private String USER_PREFIX = "";
 
-    @Inject
-    private UserService userService;
+    private final UserService userService;
 
+    public BitbucketService(UserService userService) {
+        this.userService = userService;
+    }
 
     @Override
     public URL copyRepository(URL baseRepositoryUrl, String username) {

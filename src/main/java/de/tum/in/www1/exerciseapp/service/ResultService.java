@@ -5,7 +5,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import javax.inject.Inject;
+import java.util.Optional;
 
 /**
  * Created by Josias Montag on 06.10.16.
@@ -13,15 +13,15 @@ import javax.inject.Inject;
 @Service
 public class ResultService {
 
-    @Inject
-    private ContinuousIntegrationService continuousIntegrationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final LtiService ltiService;
+    private final SimpMessageSendingOperations messagingTemplate;
 
-    @Inject
-    private LtiService ltiService;
-
-    @Inject
-    SimpMessageSendingOperations messagingTemplate;
-
+    public ResultService(Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.ltiService = ltiService;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     /**
      * Perform async operations after we were notified about new results.
@@ -31,7 +31,7 @@ public class ResultService {
     @Async
     public void onResultNotified(Participation participation) {
         // fetches the new build result
-        continuousIntegrationService.onBuildCompleted(participation);
+        continuousIntegrationService.get().onBuildCompleted(participation);
         // notify user via websocket
         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
         // handles new results and sends them to LTI consumers

@@ -22,14 +22,18 @@ describe('Participation e2e test', function () {
 
     it('should load Participations', function () {
         entityMenu.click();
-        element(by.css('[ui-sref="participation"]')).click().then(function() {
-            expect(element.all(by.css('h2')).first().getText()).toMatch(/Participations/);
+        element.all(by.css('[ui-sref="participation"]')).first().click().then(function() {
+            element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
+                expect(value).toMatch(/exerciseApplicationApp.participation.home.title/);
+            });
         });
     });
 
     it('should load create Participation dialog', function () {
         element(by.css('[ui-sref="participation.new"]')).click().then(function() {
-            expect(element(by.css('h4.modal-title')).getText()).toMatch(/Create or edit a Participation/);
+            element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
+                expect(value).toMatch(/exerciseApplicationApp.participation.home.createOrEditLabel/);
+            });
             element(by.css('button.close')).click();
         });
     });

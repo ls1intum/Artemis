@@ -5,13 +5,14 @@
         .module('exerciseApplicationApp')
         .controller('ExerciseController', ExerciseController);
 
-    ExerciseController.$inject = ['$scope', '$state', 'Exercise', 'ParseLinks', 'AlertService', 'CourseExercises', 'courseEntity'];
+    ExerciseController.$inject = ['$scope', '$state', 'Exercise', 'ParseLinks', 'AlertService', 'CourseExercises', 'courseEntity', 'paginationConstants'];
 
-    function ExerciseController ($scope, $state, Exercise, ParseLinks, AlertService, CourseExercises ,courseEntity) {
+    function ExerciseController ($scope, $state, Exercise, ParseLinks, AlertService, CourseExercises, courseEntity, paginationConstants) {
         var vm = this;
 
         vm.exercises = [];
         vm.loadPage = loadPage;
+        vm.itemsPerPage = paginationConstants.itemsPerPage;
         vm.page = 0;
         vm.links = {
             last: 0
@@ -36,7 +37,7 @@
         function loadAll () {
             Exercise.query({
                 page: vm.page,
-                size: 20,
+                size: vm.itemsPerPage,
                 sort: sort()
             }, onSuccess, onError);
             function sort() {
@@ -46,6 +47,7 @@
                 }
                 return result;
             }
+
             function onSuccess(data, headers) {
                 vm.links = ParseLinks.parse(headers('link'));
                 vm.totalItems = headers('X-Total-Count');
@@ -54,6 +56,7 @@
                 }
                 getUniqueCourses();
             }
+
             function onError(error) {
                 AlertService.error(error.data.message);
             }

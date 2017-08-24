@@ -23,7 +23,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -42,18 +41,19 @@ public class RepositoryResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
-    @Inject
-    private GitService gitService;
+    private Optional<GitService> gitService;
 
-    @Inject
     private ParticipationService participationService;
 
-    @Inject
-    private ContinuousIntegrationService continuousIntegrationService;
+    private Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
     private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
+    public RepositoryResource(Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+        this.gitService = gitService;
+        this.continuousIntegrationService = continuousIntegrationService;
+    }
 
     /**
      * GET /repository/{id}/files: List all file names of the repository
@@ -77,8 +77,8 @@ public class RepositoryResource {
         }
 
 
-        Repository repository = gitService.getOrCheckoutRepository(participation);
-        Iterator<File> itr = gitService.listFiles(repository).iterator();
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
+        Iterator<File> itr = gitService.get().listFiles(repository).iterator();
 
         Collection<String> fileList = new LinkedList<String>();
 
@@ -116,9 +116,9 @@ public class RepositoryResource {
 
 
 
-        Repository repository = gitService.getOrCheckoutRepository(participation);
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
-        Optional<File> file = gitService.getFileByName(repository, filename);
+        Optional<File> file = gitService.get().getFileByName(repository, filename);
 
         if(!file.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -130,12 +130,8 @@ public class RepositoryResource {
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-
-
         return new ResponseEntity(out, responseHeaders,HttpStatus.OK);
-
     }
-
 
 
     /**
@@ -161,22 +157,18 @@ public class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        Repository repository = gitService.getOrCheckoutRepository(participation);
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
-
-
-        if(gitService.getFileByName(repository, filename).isPresent()) {
+        if(gitService.get().getFileByName(repository, filename).isPresent()) {
             // File already existing. Conflict.
             return new ResponseEntity<>(HttpStatus.CONFLICT);
         }
 
         File file = new File(new java.io.File(repository.getLocalPath() + File.separator + filename), repository);
 
-
         if(!repository.isValidFile(file)) {
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
-
 
         file.getParentFile().mkdirs();
 
@@ -186,11 +178,7 @@ public class RepositoryResource {
         repository.setFiles(null); // invalidate cache
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert("file", filename)).build();
-
     }
-
-
-
 
 
     /**
@@ -216,10 +204,9 @@ public class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
-        Repository repository = gitService.getOrCheckoutRepository(participation);
-
-        Optional<File> file = gitService.getFileByName(repository, filename);
+        Optional<File> file = gitService.get().getFileByName(repository, filename);
 
         if(!file.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -230,10 +217,7 @@ public class RepositoryResource {
         Files.copy(inputStream, file.get().toPath(), StandardCopyOption.REPLACE_EXISTING);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("file", filename)).build();
-
     }
-
-
 
 
 
@@ -260,9 +244,9 @@ public class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-        Repository repository = gitService.getOrCheckoutRepository(participation);
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
-        Optional<File> file = gitService.getFileByName(repository, filename);
+        Optional<File> file = gitService.get().getFileByName(repository, filename);
 
         if(!file.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -300,14 +284,12 @@ public class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
-        Repository repository = gitService.getOrCheckoutRepository(participation);
-
-        gitService.stageAllChanges(repository);
-        gitService.commitAndPush(repository, "Changes by Online Editor");
+        gitService.get().stageAllChanges(repository);
+        gitService.get().commitAndPush(repository, "Changes by Online Editor");
 
         return new ResponseEntity<>(HttpStatus.OK);
-
     }
 
 
@@ -334,22 +316,18 @@ public class RepositoryResource {
         }
 
 
-        Repository repository = gitService.getOrCheckoutRepository(participation);
+        Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
         RepositoryStatusDTO status = new RepositoryStatusDTO();
 
-        status.isClean = gitService.isClean(repository);
+        status.isClean = gitService.get().isClean(repository);
 
         if(status.isClean) {
-            gitService.pull(repository);
+            gitService.get().pull(repository);
         }
 
         return new ResponseEntity<>(status, HttpStatus.OK);
-
     }
-
-
-
 
 
     /**
@@ -371,14 +349,8 @@ public class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-
-        List<BuildLogEntry> logs = continuousIntegrationService.getLatestBuildLogs(participation);
+        List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
-
     }
-
-
-
-
 }

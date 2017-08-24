@@ -6,13 +6,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.security.Principal;
+
 
 /**
  * Spring Data JPA repository for the Exercise entity.
  */
 @SuppressWarnings("unused")
+@Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     Page<Exercise> findByCourseId(@Param("courseId") Long courseId, Pageable pageable);

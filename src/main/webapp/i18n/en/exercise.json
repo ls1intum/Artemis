@@ -4,8 +4,7 @@
             "home": {
                 "title": "Exercises",
                 "createLabel": "Create a new Exercise",
-                "createOrEditLabel": "Create or edit a Exercise",
-                "search": "Search for Exercise"
+                "createOrEditLabel": "Create or edit a Exercise"
             },
             "created": "A new Exercise is created with identifier {{ param }}",
             "updated": "A Exercise is updated with identifier {{ param }}",

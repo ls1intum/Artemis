@@ -5,11 +5,12 @@
         .module('exerciseApplicationApp')
         .controller('ResultController', ResultController);
 
-    ResultController.$inject = ['$scope', '$state', 'Result'];
+    ResultController.$inject = ['Result'];
 
-    function ResultController ($scope, $state, Result) {
+    function ResultController(Result) {
+
         var vm = this;
-        
+
         vm.results = [];
 
         loadAll();
@@ -17,6 +18,7 @@
         function loadAll() {
             Result.query(function(result) {
                 vm.results = result;
+                vm.searchQuery = null;
             });
         }
     }

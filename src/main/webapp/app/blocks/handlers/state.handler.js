@@ -33,12 +33,10 @@
                     Auth.authorize();
                 }
 
-
                 // Update the language
                 JhiLanguageService.getCurrent().then(function (language) {
                     $translate.use(language);
                 });
-
             });
 
             var stateChangeSuccess = $rootScope.$on('$stateChangeSuccess',  function(event, toState, toParams, fromState, fromParams) {

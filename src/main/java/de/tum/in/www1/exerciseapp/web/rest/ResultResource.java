@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
+
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
@@ -23,7 +24,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import javax.inject.Inject;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -38,20 +38,21 @@ public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);
 
-    @Inject
-    private ResultRepository resultRepository;
+    private static final String ENTITY_NAME = "result";
 
-    @Inject
-    private ParticipationService participationService;
+    private final ResultRepository resultRepository;
+    private final LtiService ltiService;
+    private final ParticipationService participationService;
+    private final ResultService resultService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    @Inject
-    private ContinuousIntegrationService continuousIntegrationService;
-
-    @Inject
-    private ResultService resultService;
-
-    @Inject
-    private LtiService ltiService;
+    public ResultResource(ResultRepository resultRepository, LtiService ltiService, ParticipationService participationService, ResultService resultService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+        this.resultRepository = resultRepository;
+        this.ltiService = ltiService;
+        this.participationService = participationService;
+        this.resultService = resultService;
+        this.continuousIntegrationService = continuousIntegrationService;
+    }
 
     /**
      * POST  /results : Create a new result.
@@ -68,13 +69,13 @@ public class ResultResource {
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
         if (result.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("result", "idexists", "A new result cannot already have an ID")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new result cannot already have an ID")).body(null);
         }
         Result savedResult = resultRepository.save(result);
         ltiService.onNewBuildResult(savedResult.getParticipation());
-        return ResponseEntity.created(new URI("/api/results/" + savedResult.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert("result", savedResult.getId().toString()))
-            .body(savedResult);
+        return ResponseEntity.created(new URI("/api/results/" + result.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+            .body(result);
     }
 
     /**
@@ -114,23 +115,20 @@ public class ResultResource {
      * @param result the result to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated result,
      * or with status 400 (Bad Request) if the result is not valid,
-     * or with status 500 (Internal Server Error) if the result couldnt be updated
+     * or with status 500 (Internal Server Error) if the result couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/results",
-        method = RequestMethod.PUT,
-        produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PutMapping("/results")
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
         if (result.getId() == null) {
             return createResult(result);
         }
-        Result savedResult = resultRepository.save(result);
+        resultRepository.save(result);
         return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert("result", savedResult.getId().toString()))
-            .body(savedResult);
+            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, result.getId().toString()))
+            .body(result);
     }
 
     /**
@@ -145,9 +143,8 @@ public class ResultResource {
     @Timed
     public List<Result> getAllResults() {
         log.debug("REST request to get all Results");
-        List<Result> results = resultRepository.findAll();
-        return results;
-    }
+        return resultRepository.findAll();
+        }
 
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results for "id" participation.
@@ -268,7 +265,7 @@ public class ResultResource {
         GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
         GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
         if (result.getParticipation().getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority))) {
-            Map<String, Object> details = continuousIntegrationService.getLatestBuildResultDetails(result.getParticipation());
+            Map<String, Object> details = continuousIntegrationService.get().getLatestBuildResultDetails(result.getParticipation());
             return Optional.ofNullable(details.get("details"))
                 .map(resultDetails -> new ResponseEntity<>(
                     details.get("details"),
@@ -293,7 +290,6 @@ public class ResultResource {
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);
         resultRepository.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("result", id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
-
 }

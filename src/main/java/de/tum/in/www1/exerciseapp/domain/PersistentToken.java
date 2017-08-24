@@ -1,11 +1,9 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -15,7 +13,7 @@ import java.io.Serializable;
 /**
  * Persistent tokens are used by Spring Security to automatically log in users.
  *
- * @see de.tum.in.www1.exerciseapp.security.CustomPersistentRememberMeServices
+ * @see de.tum.in.www1.exerciseapp.security.PersistentTokenRememberMeServices
  */
 @Entity
 @Table(name = "jhi_persistent_token")
@@ -23,8 +21,6 @@ import java.io.Serializable;
 public class PersistentToken implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("d MMMM yyyy");
 
     private static final int MAX_USER_AGENT_LEN = 255;
 
@@ -35,8 +31,7 @@ public class PersistentToken implements Serializable {
     @NotNull
     @Column(name = "token_value", nullable = false)
     private String tokenValue;
-
-    @JsonIgnore
+    
     @Column(name = "token_date")
     private LocalDate tokenDate;
 
@@ -74,11 +69,6 @@ public class PersistentToken implements Serializable {
 
     public void setTokenDate(LocalDate tokenDate) {
         this.tokenDate = tokenDate;
-    }
-
-    @JsonGetter
-    public String getFormattedTokenDate() {
-        return DATE_TIME_FORMATTER.format(this.tokenDate);
     }
 
     public String getIpAddress() {

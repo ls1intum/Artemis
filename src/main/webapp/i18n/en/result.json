@@ -4,8 +4,7 @@
             "home": {
                 "title": "Results",
                 "createLabel": "Create a new Result",
-                "createOrEditLabel": "Create or edit a Result",
-                "search": "Search for Result"
+                "createOrEditLabel": "Create or edit a Result"
             },
             "created": "A new Result is created with identifier {{ param }}",
             "updated": "A Result is updated with identifier {{ param }}",

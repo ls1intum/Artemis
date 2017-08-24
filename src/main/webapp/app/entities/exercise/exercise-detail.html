@@ -1,50 +1,55 @@
 
 <div>
-    <h2><span translate="exerciseApplicationApp.exercise.detail.title">Exercise</span> {{vm.exercise.id}}</h2>
+    <h2><span data-translate="exerciseApplicationApp.exercise.detail.title">Exercise</span> {{vm.exercise.id}}</h2>
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span translate="exerciseApplicationApp.exercise.title">Title</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exercise.title">Title</span></dt>
         <dd>
             <span>{{vm.exercise.title}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.exercise.baseRepositoryUrl">Base Repository Url</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exercise.baseRepositoryUrl">Base Repository Url</span></dt>
         <dd>
             <span>{{vm.exercise.baseRepositoryUrl}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.exercise.baseBuildPlanId">Base Build Plan Id</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exercise.baseBuildPlanId">Base Build Plan Id</span></dt>
         <dd>
             <span>{{vm.exercise.baseBuildPlanId}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.exercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
         <dd>
             <span>{{vm.exercise.publishBuildPlanUrl}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span></dt>
         <dd>
             <span>{{vm.exercise.releaseDate | date:'medium'}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.exercise.dueDate">Due Date</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exercise.dueDate">Due Date</span></dt>
         <dd>
             <span>{{vm.exercise.dueDate | date:'medium'}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.exercise.allowOnlineEditor">Allow Online Editor</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exercise.allowOnlineEditor">Allow Online Editor</span></dt>
         <dd>
             <span>{{vm.exercise.allowOnlineEditor}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.exercise.course">Course</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exercise.course">Course</span></dt>
         <dd>
             <a ui-sref="course-detail({id:vm.exercise.course.id})">{{vm.exercise.course.title}}</a>
         </dd>
-        <dt><span translate="exerciseApplicationApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.exerciseLtiConfiguration.lti">LTI</span></dt>
         <dd>
             <a ui-sref="exercise-detail.ltiConfiguration({id:vm.exercise.id})">LTI Configuration</a>
         </dd>
     </dl>
 
     <button type="submit"
-            onclick="window.history.back()"
+            ui-sref="{{ vm.previousState }}"
             class="btn btn-info">
-        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span translate="entity.action.back"> Back</span>
+        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button" ui-sref="exercise-detail.edit({id:vm.exercise.id})" class="btn btn-primary">
+        <span class="glyphicon glyphicon-pencil"></span>
+        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
     </button>
 </div>

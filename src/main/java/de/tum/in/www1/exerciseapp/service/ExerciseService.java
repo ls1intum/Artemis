@@ -1,6 +1,9 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.Authority;
+import de.tum.in.www1.exerciseapp.domain.Exercise;
+import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,7 +13,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -25,14 +27,15 @@ public class ExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseService.class);
 
-    @Inject
-    private ExerciseRepository exerciseRepository;
+    private final ExerciseRepository exerciseRepository;
+    private final UserService userService;
+    private final ParticipationService participationService;
 
-    @Inject
-    private UserService userService;
-
-    @Inject
-    private ParticipationService participationService;
+    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService) {
+        this.exerciseRepository = exerciseRepository;
+        this.userService = userService;
+        this.participationService = participationService;
+    }
 
     /**
      * Save a exercise.

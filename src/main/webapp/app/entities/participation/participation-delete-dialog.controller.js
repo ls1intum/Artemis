@@ -17,7 +17,7 @@
         vm.clear = clear;
         vm.confirmDelete = confirmDelete;
 
-        function clear() {
+        function clear () {
             $uibModalInstance.dismiss('cancel');
         }
 

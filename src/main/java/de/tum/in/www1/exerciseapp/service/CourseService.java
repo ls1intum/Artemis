@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -22,12 +21,13 @@ import java.util.stream.Stream;
 public class CourseService {
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
+    private final CourseRepository courseRepository;
+    private final UserService userService;
 
-    @Inject
-    private CourseRepository courseRepository;
-
-    @Inject
-    private UserService userService;
+    public CourseService(CourseRepository courseRepository, UserService userService) {
+        this.courseRepository = courseRepository;
+        this.userService = userService;
+    }
 
     /**
      * Save a course.

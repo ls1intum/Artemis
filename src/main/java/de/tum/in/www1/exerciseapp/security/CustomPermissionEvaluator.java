@@ -13,10 +13,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import javax.inject.Inject;
 import java.io.Serializable;
-
-
 
 /**
  * Created by Josias Montag on 21.12.16.
@@ -27,11 +24,15 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
 
-    @Inject @Lazy
-    private ParticipationService participationService;
+    @Lazy
+    private final ParticipationService participationService;
 
     private GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
     private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+
+    public CustomPermissionEvaluator(@Lazy ParticipationService participationService) {
+        this.participationService = participationService;
+    }
 
 
     @Override
@@ -59,9 +60,6 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
                     || auth.getAuthorities().contains(taAuthority));
             default:
                 return false;
-
         }
-
-
     }
 }
