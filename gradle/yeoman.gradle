@@ -6,11 +6,5 @@ task bower(type: NodeTask) {
     args = ['install']
 }
 
-// Workaround for https://github.com/srs/gradle-node-plugin/issues/134 doesn't work with yarn
-if (!project.hasProperty('nodeInstall')) {
-    bower.dependsOn yarn_install
-} else {
-    bower.dependsOn npm_install
-}
 processResources.dependsOn bower
 bower.onlyIf { !project.hasProperty('skipBower') }
