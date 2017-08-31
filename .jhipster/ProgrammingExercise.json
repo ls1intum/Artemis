@@ -1,0 +1,27 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "baseRepositoryUrl",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "baseBuildPlanId",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "publishBuildPlanUrl",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "allowOnlineEditor",
+            "fieldType": "Boolean"
+        }
+    ],
+    "changelogDate": "20170831094144",
+    "entityTableName": "programming_exercise",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

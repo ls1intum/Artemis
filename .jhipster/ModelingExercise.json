@@ -1,0 +1,15 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "baseFilePath",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20170831094145",
+    "entityTableName": "modeling_exercise",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

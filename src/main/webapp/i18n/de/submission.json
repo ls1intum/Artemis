@@ -1,0 +1,20 @@
+{
+    "exerciseApplicationApp": {
+        "submission" : {
+            "home": {
+                "title": "Submissions",
+                "createLabel": "Submission erstellen",
+                "createOrEditLabel": "Submission erstellen oder bearbeiten"
+            },
+            "created": "Submission erstellt mit ID {{ param }}",
+            "updated": "Submission aktualisiert mit ID {{ param }}",
+            "deleted": "Submission gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Submission"
+            }
+        }
+    }
+}

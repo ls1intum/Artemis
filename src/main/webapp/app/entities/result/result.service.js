@@ -18,7 +18,7 @@
                 transformResponse: function (data) {
                     if (data) {
                         data = angular.fromJson(data);
-                        data.buildCompletionDate = DateUtils.convertDateTimeFromServer(data.buildCompletionDate);
+                        data.completionDate = DateUtils.convertDateTimeFromServer(data.completionDate);
                     }
                     return data;
                 }

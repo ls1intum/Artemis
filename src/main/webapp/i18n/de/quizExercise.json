@@ -1,0 +1,21 @@
+{
+    "exerciseApplicationApp": {
+        "quizExercise" : {
+            "home": {
+                "title": "Quiz Exercises",
+                "createLabel": "Quiz Exercise erstellen",
+                "createOrEditLabel": "Quiz Exercise erstellen oder bearbeiten"
+            },
+            "created": "Quiz Exercise erstellt mit ID {{ param }}",
+            "updated": "Quiz Exercise aktualisiert mit ID {{ param }}",
+            "deleted": "Quiz Exercise gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Quiz Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Quiz Exercise"
+            },
+            "questions": "Questions"
+        }
+    }
+}

@@ -4,7 +4,7 @@
     angular
         .module('exerciseApplicationApp')
         .constant('VERSION', "1.3.0")
-        .constant('DEBUG_INFO_ENABLED', false)
-        .constant('BUILD_TIMESTAMP', 1504119197124)
+        .constant('DEBUG_INFO_ENABLED', true)
+        .constant('BUILD_TIMESTAMP', "")
 ;
 })();

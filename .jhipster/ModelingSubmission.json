@@ -1,0 +1,15 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "submissionPath",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20170831094200",
+    "entityTableName": "modeling_submission",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

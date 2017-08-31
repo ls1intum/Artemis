@@ -1,21 +1,22 @@
 {
+    "fluentMethods": true,
     "relationships": [
         {
-            "relationshipName": "student",
-            "otherEntityName": "user",
-            "relationshipType": "many-to-one",
-            "otherEntityField": "login"
-        },
-        {
+            "relationshipType": "one-to-many",
             "relationshipName": "results",
             "otherEntityName": "result",
-            "relationshipType": "one-to-many",
             "otherEntityRelationshipName": "participation"
         },
         {
+            "relationshipType": "many-to-one",
+            "relationshipName": "student",
+            "otherEntityName": "user",
+            "otherEntityField": "login"
+        },
+        {
+            "relationshipType": "many-to-one",
             "relationshipName": "exercise",
             "otherEntityName": "exercise",
-            "relationshipType": "many-to-one",
             "otherEntityField": "title"
         }
     ],
@@ -31,7 +32,7 @@
         {
             "fieldName": "initializationState",
             "fieldType": "ParticipationState",
-            "fieldValues": "UNINITIALIZED, REPO_COPIED, REPO_CONFIGURED, BUILD_PLAN_COPIED, BUILD_PLAN_CONFIGURED, INITIALIZED"
+            "fieldValues": "UNINITIALIZED,REPO_COPIED,REPO_CONFIGURED,BUILD_PLAN_COPIED,BUILD_PLAN_CONFIGURED,INITIALIZED"
         },
         {
             "fieldName": "initializationDate",
@@ -39,8 +40,8 @@
         }
     ],
     "changelogDate": "20160609100233",
-    "dto": "no",
-    "service": "serviceClass",
     "entityTableName": "participation",
-    "pagination": "no"
+    "dto": "no",
+    "pagination": "infinite-scroll",
+    "service": "serviceClass"
 }

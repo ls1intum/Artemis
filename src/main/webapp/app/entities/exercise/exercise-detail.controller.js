@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .controller('ExerciseDetailController', ExerciseDetailController);
 
-    ExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'Exercise', 'Course', 'Participation'];
+    ExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'Exercise', 'Participation', 'Course'];
 
-    function ExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, Exercise, Course, Participation) {
+    function ExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, Exercise, Participation, Course) {
         var vm = this;
 
         vm.exercise = entity;

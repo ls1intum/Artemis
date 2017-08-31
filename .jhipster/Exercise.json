@@ -1,16 +1,17 @@
 {
+    "fluentMethods": true,
     "relationships": [
         {
-            "relationshipName": "course",
-            "otherEntityName": "course",
-            "relationshipType": "many-to-one",
-            "otherEntityField": "title"
-        },
-        {
+            "relationshipType": "one-to-many",
             "relationshipName": "participations",
             "otherEntityName": "participation",
-            "relationshipType": "one-to-many",
             "otherEntityRelationshipName": "exercise"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "course",
+            "otherEntityName": "course",
+            "otherEntityField": "title"
         }
     ],
     "fields": [
@@ -19,33 +20,17 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "baseRepositoryUrl",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "baseBuildPlanId",
-            "fieldType": "String"
-        },
-        {
-            "fieldName": "publishBuildPlanUrl",
-            "fieldType": "Boolean"
-        },
-        {
             "fieldName": "releaseDate",
             "fieldType": "ZonedDateTime"
         },
         {
             "fieldName": "dueDate",
             "fieldType": "ZonedDateTime"
-        },
-        {
-            "fieldName": "allowOnlineEditor",
-            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20160609094621",
-    "dto": "no",
-    "service": "no",
     "entityTableName": "exercise",
-    "pagination": "infinite-scroll"
+    "dto": "no",
+    "pagination": "infinite-scroll",
+    "service": "no"
 }

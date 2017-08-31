@@ -51,12 +51,22 @@ public class Course implements Serializable {
         return title;
     }
 
+    public Course title(String title) {
+        this.title = title;
+        return this;
+    }
+
     public void setTitle(String title) {
         this.title = title;
     }
 
     public String getStudentGroupName() {
         return studentGroupName;
+    }
+
+    public Course studentGroupName(String studentGroupName) {
+        this.studentGroupName = studentGroupName;
+        return this;
     }
 
     public void setStudentGroupName(String studentGroupName) {
@@ -67,12 +77,34 @@ public class Course implements Serializable {
         return teachingAssistantGroupName;
     }
 
+    public Course teachingAssistantGroupName(String teachingAssistantGroupName) {
+        this.teachingAssistantGroupName = teachingAssistantGroupName;
+        return this;
+    }
+
     public void setTeachingAssistantGroupName(String teachingAssistantGroupName) {
         this.teachingAssistantGroupName = teachingAssistantGroupName;
     }
 
     public Set<Exercise> getExercises() {
         return exercises;
+    }
+
+    public Course exercises(Set<Exercise> exercises) {
+        this.exercises = exercises;
+        return this;
+    }
+
+    public Course addExercises(Exercise exercise) {
+        this.exercises.add(exercise);
+        exercise.setCourse(this);
+        return this;
+    }
+
+    public Course removeExercises(Exercise exercise) {
+        this.exercises.remove(exercise);
+        exercise.setCourse(null);
+        return this;
     }
 
     public void setExercises(Set<Exercise> exercises) {
@@ -103,10 +135,10 @@ public class Course implements Serializable {
     @Override
     public String toString() {
         return "Course{" +
-            "id=" + id +
-            ", title='" + title + "'" +
-            ", studentGroupName='" + studentGroupName + "'" +
-            ", teachingAssistantGroupName='" + teachingAssistantGroupName + "'" +
-            '}';
+            "id=" + getId() +
+            ", title='" + getTitle() + "'" +
+            ", studentGroupName='" + getStudentGroupName() + "'" +
+            ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" +
+            "}";
     }
 }

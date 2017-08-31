@@ -1,0 +1,43 @@
+
+<div>
+    <h2><span data-translate="exerciseApplicationApp.dragItem.detail.title">Drag Item</span> {{vm.dragItem.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="dl-horizontal jh-entity-details">
+        <dt><span data-translate="exerciseApplicationApp.dragItem.pictureFilePath">Picture File Path</span></dt>
+        <dd>
+            <span>{{vm.dragItem.pictureFilePath}}</span>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.dragItem.text">Text</span></dt>
+        <dd>
+            <span>{{vm.dragItem.text}}</span>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.dragItem.correctScore">Correct Score</span></dt>
+        <dd>
+            <span>{{vm.dragItem.correctScore}}</span>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.dragItem.incorrectScore">Incorrect Score</span></dt>
+        <dd>
+            <span>{{vm.dragItem.incorrectScore}}</span>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.dragItem.correctLocation">Correct Location</span></dt>
+        <dd>
+            <a ui-sref="drop-location-detail({id:vm.dragItem.correctLocation.id})">{{vm.dragItem.correctLocation.id}}</a>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.dragItem.question">Question</span></dt>
+        <dd>
+            <a ui-sref="drag-and-drop-question-detail({id:vm.dragItem.question.id})">{{vm.dragItem.question.id}}</a>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            ui-sref="{{ vm.previousState }}"
+            class="btn btn-info">
+        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button" ui-sref="drag-item-detail.edit({id:vm.dragItem.id})" class="btn btn-primary">
+        <span class="glyphicon glyphicon-pencil"></span>
+        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
+    </button>
+</div>

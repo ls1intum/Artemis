@@ -4,6 +4,7 @@ import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
 
 import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
+import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
 
 import org.junit.Before;
@@ -43,8 +44,14 @@ public class CourseResourceIntTest {
     private static final String DEFAULT_STUDENT_GROUP_NAME = "AAAAAAAAAA";
     private static final String UPDATED_STUDENT_GROUP_NAME = "BBBBBBBBBB";
 
+    private static final String DEFAULT_TEACHING_ASSISTANT_GROUP_NAME = "AAAAAAAAAA";
+    private static final String UPDATED_TEACHING_ASSISTANT_GROUP_NAME = "BBBBBBBBBB";
+
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private CourseService courseService;
 
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -59,17 +66,13 @@ public class CourseResourceIntTest {
     private EntityManager em;
 
     private MockMvc restCourseMockMvc;
+
     private Course course;
-
-    private final CourseResource courseResource;
-
-    public CourseResourceIntTest(CourseResource courseResource) {
-        this.courseResource = courseResource;
-    }
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
+        final CourseResource courseResource = new CourseResource(courseService);
         this.restCourseMockMvc = MockMvcBuilders.standaloneSetup(courseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -83,9 +86,10 @@ public class CourseResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static Course createEntity(EntityManager em) {
-        Course course = new Course();
-        course.setTitle(DEFAULT_TITLE);
-        course.setStudentGroupName(DEFAULT_STUDENT_GROUP_NAME);
+        Course course = new Course()
+            .title(DEFAULT_TITLE)
+            .studentGroupName(DEFAULT_STUDENT_GROUP_NAME)
+            .teachingAssistantGroupName(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME);
         return course;
     }
 
@@ -111,6 +115,7 @@ public class CourseResourceIntTest {
         Course testCourse = courseList.get(courseList.size() - 1);
         assertThat(testCourse.getTitle()).isEqualTo(DEFAULT_TITLE);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(DEFAULT_STUDENT_GROUP_NAME);
+        assertThat(testCourse.getTeachingAssistantGroupName()).isEqualTo(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME);
     }
 
     @Test
@@ -144,7 +149,8 @@ public class CourseResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(course.getId().intValue())))
             .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
-            .andExpect(jsonPath("$.[*].studentGroupName").value(hasItem(DEFAULT_STUDENT_GROUP_NAME.toString())));
+            .andExpect(jsonPath("$.[*].studentGroupName").value(hasItem(DEFAULT_STUDENT_GROUP_NAME.toString())))
+            .andExpect(jsonPath("$.[*].teachingAssistantGroupName").value(hasItem(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString())));
     }
 
     @Test
@@ -159,7 +165,8 @@ public class CourseResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(course.getId().intValue()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()))
-            .andExpect(jsonPath("$.studentGroupName").value(DEFAULT_STUDENT_GROUP_NAME.toString()));
+            .andExpect(jsonPath("$.studentGroupName").value(DEFAULT_STUDENT_GROUP_NAME.toString()))
+            .andExpect(jsonPath("$.teachingAssistantGroupName").value(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString()));
     }
 
     @Test
@@ -174,13 +181,16 @@ public class CourseResourceIntTest {
     @Transactional
     public void updateCourse() throws Exception {
         // Initialize the database
-        courseRepository.saveAndFlush(course);
+        courseService.save(course);
+
         int databaseSizeBeforeUpdate = courseRepository.findAll().size();
 
         // Update the course
         Course updatedCourse = courseRepository.findOne(course.getId());
-        updatedCourse.setTitle(UPDATED_TITLE);
-        updatedCourse.setStudentGroupName(UPDATED_STUDENT_GROUP_NAME);
+        updatedCourse
+            .title(UPDATED_TITLE)
+            .studentGroupName(UPDATED_STUDENT_GROUP_NAME)
+            .teachingAssistantGroupName(UPDATED_TEACHING_ASSISTANT_GROUP_NAME);
 
         restCourseMockMvc.perform(put("/api/courses")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -193,6 +203,7 @@ public class CourseResourceIntTest {
         Course testCourse = courseList.get(courseList.size() - 1);
         assertThat(testCourse.getTitle()).isEqualTo(UPDATED_TITLE);
         assertThat(testCourse.getStudentGroupName()).isEqualTo(UPDATED_STUDENT_GROUP_NAME);
+        assertThat(testCourse.getTeachingAssistantGroupName()).isEqualTo(UPDATED_TEACHING_ASSISTANT_GROUP_NAME);
     }
 
     @Test
@@ -217,7 +228,8 @@ public class CourseResourceIntTest {
     @Transactional
     public void deleteCourse() throws Exception {
         // Initialize the database
-        courseRepository.saveAndFlush(course);
+        courseService.save(course);
+
         int databaseSizeBeforeDelete = courseRepository.findAll().size();
 
         // Get the course

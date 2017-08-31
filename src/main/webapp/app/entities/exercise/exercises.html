@@ -28,10 +28,6 @@
                 <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.reset()">
                     <th jh-sort-by="id"><span data-translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="title"><span data-translate="exerciseApplicationApp.exercise.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="baseRepositoryUrl"><span data-translate="exerciseApplicationApp.exercise.baseRepositoryUrl">Base Repository Url</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="baseBuildPlanId"><span data-translate="exerciseApplicationApp.exercise.baseBuildPlanId">Base Build Plan Id</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="publishBuildPlanUrl"><span data-translate="exerciseApplicationApp.exercise.publishBuildPlanUrl">Publish Build Plan Url</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="allowOnlineEditor"><span data-translate="exerciseApplicationApp.exercise.allowOnlineEditor">Allow Online Editor</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="releaseDate"><span data-translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="dueDate"><span data-translate="exerciseApplicationApp.exercise.dueDate">Due Date</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="course.title" ng-hide="vm.course"><span data-translate="exerciseApplicationApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
@@ -42,10 +38,6 @@
                 <tr ng-repeat="exercise in vm.exercises  | filter:{course:{title:vm.filterCourse}} track by exercise.id">
                     <td><a ui-sref="exercise-detail({id:exercise.id})">{{exercise.id}}</a></td>
                     <td>{{exercise.title}}</td>
-                    <td>{{exercise.baseRepositoryUrl}}</td>
-                    <td>{{exercise.baseBuildPlanId}}</td>
-                    <td>{{exercise.publishBuildPlanUrl}}</td>
-                    <td>{{exercise.allowOnlineEditor}}</td>
                     <td>{{exercise.releaseDate | date:'medium'}}</td>
                     <td>{{exercise.dueDate | date:'medium'}}</td>
                     <td ng-hide="vm.course">

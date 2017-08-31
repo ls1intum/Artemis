@@ -51,7 +51,7 @@
             vm.isSaving = false;
         }
 
-        vm.datePickerOpenStatus.buildCompletionDate = false;
+        vm.datePickerOpenStatus.completionDate = false;
 
         function openCalendar(date) {
             vm.datePickerOpenStatus[date] = true;

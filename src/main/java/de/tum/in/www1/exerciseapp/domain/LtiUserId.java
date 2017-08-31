@@ -18,7 +18,7 @@ public class LtiUserId implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "lti_user_id")
@@ -28,6 +28,7 @@ public class LtiUserId implements Serializable {
     @JoinColumn(unique = true)
     private User user;
 
+    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -40,6 +41,11 @@ public class LtiUserId implements Serializable {
         return ltiUserId;
     }
 
+    public LtiUserId ltiUserId(String ltiUserId) {
+        this.ltiUserId = ltiUserId;
+        return this;
+    }
+
     public void setLtiUserId(String ltiUserId) {
         this.ltiUserId = ltiUserId;
     }
@@ -48,9 +54,15 @@ public class LtiUserId implements Serializable {
         return user;
     }
 
+    public LtiUserId user(User user) {
+        this.user = user;
+        return this;
+    }
+
     public void setUser(User user) {
         this.user = user;
     }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -61,22 +73,22 @@ public class LtiUserId implements Serializable {
             return false;
         }
         LtiUserId ltiUserId = (LtiUserId) o;
-        if(ltiUserId.id == null || id == null) {
+        if (ltiUserId.getId() == null || getId() == null) {
             return false;
         }
-        return Objects.equals(id, ltiUserId.id);
+        return Objects.equals(getId(), ltiUserId.getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(id);
+        return Objects.hashCode(getId());
     }
 
     @Override
     public String toString() {
         return "LtiUserId{" +
-            "id=" + id +
-            ", ltiUserId='" + ltiUserId + "'" +
-            '}';
+            "id=" + getId() +
+            ", ltiUserId='" + getLtiUserId() + "'" +
+            "}";
     }
 }

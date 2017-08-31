@@ -1,0 +1,17 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "questions",
+            "otherEntityName": "question",
+            "otherEntityRelationshipName": "exercise"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20170831094146",
+    "entityTableName": "quiz_exercise",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

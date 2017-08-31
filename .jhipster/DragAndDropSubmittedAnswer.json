@@ -1,0 +1,17 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "assignments",
+            "otherEntityName": "dragAndDropAssignment",
+            "otherEntityRelationshipName": "submittedAnswer"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20170831094202",
+    "entityTableName": "drag_and_drop_submitted_answer",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

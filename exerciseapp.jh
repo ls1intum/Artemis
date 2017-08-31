@@ -1,46 +1,160 @@
-
-entity Course {
-	id Long
-	courseTitle String
-    courseSlug String
-    studentGroupName String
+entity Course (course) {
+  title String,
+  studentGroupName String,
+  teachingAssistantGroupName String
 }
 
-entity Exercise {
-	id Long
-	exerciseTitle String
-    exerciseSlug String
-    baseProjectKey String
-    baseRepositorySlug String
-    baseBuildPlanSlug String
-    releaseDate ZonedDateTime
-    dueDate ZonedDateTime
+entity Exercise (exercise) {        //abstract
+  title String,
+  releaseDate ZonedDateTime,
+  dueDate ZonedDateTime
 }
 
-entity Participation {
-	id Long
-	cloneUrl String
+entity ProgrammingExercise {        //extends Exercise
+  baseRepositoryUrl String,
+  baseBuildPlanId String,
+  publishBuildPlanUrl Boolean,
+  allowOnlineEditor Boolean
 }
 
-entity Result {
-	id Long,
-    resultString String
-    completionDate ZonedDateTime
+entity ModelingExercise {           //extends Exercise
+	baseFilePath String
+}
+
+
+entity QuizExercise {               //extends Exercise
+
+}
+
+entity LtiOutcomeUrl (lti_outcome_url) {
+  url String,
+  sourcedId String
+}
+
+entity SubmittedAnswer {            //abstract
+
+}
+
+entity Question {                   //abstract
+	title String
+    text String
+    maxScore Integer
+    minScore Integer
+}
+
+entity MultipleChoiceQuestion {             //extends Question
+
+}
+
+entity AnswerOption {
+	text String
+    isCorrect Boolean
+    correctScore Integer
+    incorrectScore Integer
+}
+
+entity MultipleChoiceSubmittedAnswer {      //extends SubmittedAnswer
+
+}
+
+entity DragAndDropQuestion {          //extends Question
+	backgroundFilePath String
+}
+
+entity DropLocation {
+	posX Integer
+    posY Integer
+    width Integer
+    height Integer
+}
+
+entity DragItem {
+	pictureFilePath String
+    text String
+    correctScore Integer
+    incorrectScore Integer
+}
+
+entity Participation (participation) {
+  repositoryUrl String,
+  buildPlanId String,
+  initializationState ParticipationState,
+  initializationDate ZonedDateTime
+}
+
+entity LtiUserId (lti_user_id) {
+  ltiUserId String
+}
+
+entity Result (result) {
+  resultString String,
+  completionDate ZonedDateTime,
+  successful Boolean,
+  buildArtifact Boolean,
+  score Long
+}
+
+enum ParticipationState {
+   UNINITIALIZED,
+   REPO_COPIED,
+   REPO_CONFIGURED,
+   BUILD_PLAN_COPIED,
+   BUILD_PLAN_CONFIGURED,
+   INITIALIZED
+}
+
+entity Submission {                 //abstract
+}
+
+entity ModelingSubmission {         //extends Submission
+	submissionPath String
+}
+
+entity QuizSubmission {             //extends Submission
+}
+
+
+entity DragAndDropSubmittedAnswer {      //extends SubmittedAnswer
+
+}
+
+entity DragAndDropAssignment {
+
 }
 
 relationship OneToMany {
-	Course{exercise} to Exercise{course},
-	Exercise{participation} to Participation{exercise},
-  	Participation{result} to Result{participation}
+  Course{exercises} to Exercise{course(title)},
+  Exercise{participations} to Participation{exercise(title)},
+  Participation{results} to Result{participation},
+
+  QuizExercise{questions} to Question{exercise},
+  MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
+  DragAndDropQuestion{dropLocations} to DropLocation{question},
+  DragAndDropQuestion{dragItems} to DragItem{question},
+  QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
+  DragAndDropSubmittedAnswer{assignments} to DragAndDropAssignment{submittedAnswer}
 }
 
 relationship OneToOne {
-	Participation{student} to User
+    Result{submission} to Submission,
+    DragItem{correctLocation} to DropLocation,
+    LtiUserId{user} to User
+}
+
+relationship ManyToOne {
+  Participation{student(login)} to User,
+  LtiOutcomeUrl{user} to User,
+  LtiOutcomeUrl{exercise} to Exercise,
+
+  DragAndDropAssignment{item} to DragItem,
+  DragAndDropAssignment{location} to DropLocation
+}
+
+relationship ManyToMany {
+	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption
 }
 
 paginate Course, Exercise, Participation with infinite-scroll
 
-service Bamboo with serviceClass
-service Bitbucket with serviceClass
-
-	
+service Course with serviceClass
+service Participation with serviceClass

@@ -10,11 +10,15 @@ import de.tum.in.www1.exerciseapp.service.ExerciseService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.service.VersionControlService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
+import io.swagger.annotations.ApiParam;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
@@ -25,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.net.URL;
 import java.security.Principal;
 import java.util.List;
@@ -71,6 +76,7 @@ public class ParticipationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/participations")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> createParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to save Participation : {}", participation);
@@ -91,9 +97,7 @@ public class ParticipationResource {
      * @param principal  the current user principal
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> initParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
@@ -119,6 +123,7 @@ public class ParticipationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/participations")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> updateParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
@@ -131,18 +136,34 @@ public class ParticipationResource {
             .body(result);
     }
 
+//    /**
+//     * GET  /participations : get all the participations.
+//     *
+//     * @param pageable the pagination information
+//     * @return the ResponseEntity with status 200 (OK) and the list of participations in body
+//     */
+//    @GetMapping("/participations")
+//    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+//    @Timed
+//    public ResponseEntity<List<Participation>> getAllParticipations(@ApiParam Pageable pageable) {
+//        log.debug("REST request to get a page of Participations");
+//        Page<Participation> page = participationService.findAll(pageable);
+//        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/participations");
+//        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+//    }
+
     /**
      * GET  /participations : get all the participations.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of participations in body
      */
     @GetMapping("/participations")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Participation> getAllParticipations() {
         log.debug("REST request to get all Participations");
         return participationService.findAll();
-        }
-
+    }
 
     /**
      * GET  /exercise/{exerciseId}/participations : get all the participations for an exercise
@@ -150,9 +171,7 @@ public class ParticipationResource {
      * @param exerciseId
      * @return
      */
-    @RequestMapping(value = "/exercise/{exerciseId}/participations",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/exercise/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Participation> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
@@ -160,24 +179,19 @@ public class ParticipationResource {
         return participationRepository.findByExerciseId(exerciseId);
     }
 
-
     /**
      * GET  /course/{courseId}/participations : get all the participations for a course
      *
      * @param courseId
      * @return
      */
-    @RequestMapping(value = "/courses/{courseId}/participations",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/courses/{courseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Participation> getAllParticipationsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Participations for Course {}", courseId);
         return participationRepository.findByCourseId(courseId);
     }
-
-
 
     /**
      * GET  /participations/:id : get the "id" participation.
@@ -203,9 +217,7 @@ public class ParticipationResource {
             .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @RequestMapping(value = "/participations/{id}/repositoryWebUrl",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/participations/{id}/repositoryWebUrl")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation : {}", id);
@@ -224,9 +236,7 @@ public class ParticipationResource {
             .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
-    @RequestMapping(value = "/participations/{id}/buildPlanWebUrl",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/participations/{id}/buildPlanWebUrl")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation : {}", id);
@@ -247,9 +257,7 @@ public class ParticipationResource {
 
 
 
-    @RequestMapping(value = "/participations/{id}/buildArtifact",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/participations/{id}/buildArtifact")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation build artifact: {}", id);
@@ -267,9 +275,7 @@ public class ParticipationResource {
      * @param exerciseId the id of the exercise for which to retrieve the participation
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
@@ -288,9 +294,7 @@ public class ParticipationResource {
      * @param id   the participation id
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/participations/{id}/status",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/participations/{id}/status")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
@@ -306,14 +310,10 @@ public class ParticipationResource {
     /**
      * DELETE  /participations/:id : delete the "id" participation.
      *
-     * @param id               the id of the participation to delete
-     * @param deleteBuildPlan  true if the associated build plan should be deleted
-     * @param deleteRepository true if the associated repository should be deleted
+     * @param id the id of the participation to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @RequestMapping(value = "/participations/{id}",
-        method = RequestMethod.DELETE,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping("/participations/{id}")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long id,

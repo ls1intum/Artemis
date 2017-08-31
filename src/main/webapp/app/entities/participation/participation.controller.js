@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .controller('ParticipationController', ParticipationController);
 
-    ParticipationController.$inject = ['$scope', '$state', 'Participation', 'ExerciseParticipations', 'exerciseEntity'];
+    ParticipationController.$inject = ['Participation', 'ExerciseParticipations', 'exerciseEntity'];
 
-    function ParticipationController ($scope, $state, Participation, ExerciseParticipations,  exerciseEntity) {
+    function ParticipationController (Participation, ExerciseParticipations,  exerciseEntity) {
         var vm = this;
 
         vm.participations = [];

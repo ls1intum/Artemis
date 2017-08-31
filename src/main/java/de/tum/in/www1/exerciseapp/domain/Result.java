@@ -25,17 +25,21 @@ public class Result implements Serializable {
     @Column(name = "result_string")
     private String resultString;
 
-    @Column(name = "build_completion_date")
-    private ZonedDateTime buildCompletionDate;
+    @Column(name = "completion_date")
+    private ZonedDateTime completionDate;
 
-    @Column(name = "build_successful")
-    private Boolean buildSuccessful;
+    @Column(name = "jhi_successful")
+    private Boolean successful;
+
+    @Column(name = "build_artifact")
+    private Boolean buildArtifact;
 
     @Column(name = "score")
     private Long score;
 
-    @Column(name = "build_artifact")
-    private Boolean buildArtifact;
+    @OneToOne
+    @JoinColumn(unique = true)
+    private Submission submission;
 
     @ManyToOne
     private Participation participation;
@@ -53,50 +57,93 @@ public class Result implements Serializable {
         return resultString;
     }
 
+    public Result resultString(String resultString) {
+        this.resultString = resultString;
+        return this;
+    }
+
     public void setResultString(String resultString) {
         this.resultString = resultString;
     }
 
-    public ZonedDateTime getBuildCompletionDate() {
-        return buildCompletionDate;
+    public ZonedDateTime getCompletionDate() {
+        return completionDate;
     }
 
-    public void setBuildCompletionDate(ZonedDateTime buildCompletionDate) {
-        this.buildCompletionDate = buildCompletionDate;
+    public Result completionDate(ZonedDateTime completionDate) {
+        this.completionDate = completionDate;
+        return this;
     }
 
-    public Boolean isBuildSuccessful() {
-        return buildSuccessful;
+    public void setCompletionDate(ZonedDateTime completionDate) {
+        this.completionDate = completionDate;
     }
 
-    public void setBuildSuccessful(Boolean buildSuccessful) {
-        this.buildSuccessful = buildSuccessful;
+    public Boolean isSuccessful() {
+        return successful;
     }
 
-    public Participation getParticipation() {
-        return participation;
+    public Result successful(Boolean successful) {
+        this.successful = successful;
+        return this;
     }
 
-    public void setParticipation(Participation participation) {
-        this.participation = participation;
+    public void setSuccessful(Boolean successful) {
+        this.successful = successful;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    public Boolean isBuildArtifact() {
+        return buildArtifact;
+    }
+
+    public Result buildArtifact(Boolean buildArtifact) {
+        this.buildArtifact = buildArtifact;
+        return this;
+    }
+
+    public void setBuildArtifact(Boolean buildArtifact) {
+        this.buildArtifact = buildArtifact;
+    }
 
     public Long getScore() {
         return score;
+    }
+
+    public Result score(Long score) {
+        this.score = score;
+        return this;
     }
 
     public void setScore(Long score) {
         this.score = score;
     }
 
-    public Boolean getBuildArtifact() {
-        return buildArtifact;
+    public Submission getSubmission() {
+        return submission;
     }
 
-    public void setBuildArtifact(Boolean buildArtifact) {
-        this.buildArtifact = buildArtifact;
+    public Result submission(Submission submission) {
+        this.submission = submission;
+        return this;
     }
+
+    public void setSubmission(Submission submission) {
+        this.submission = submission;
+    }
+
+    public Participation getParticipation() {
+        return participation;
+    }
+
+    public Result participation(Participation participation) {
+        this.participation = participation;
+        return this;
+    }
+
+    public void setParticipation(Participation participation) {
+        this.participation = participation;
+    }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -121,12 +168,12 @@ public class Result implements Serializable {
     @Override
     public String toString() {
         return "Result{" +
-            "id=" + id +
-            ", resultString='" + resultString + "'" +
-            ", buildCompletionDate='" + buildCompletionDate + "'" +
-            ", buildSuccessful='" + buildSuccessful + "'" +
-            ", buildArtifact='" + buildArtifact + "'" +
-            ", score='" + score + "'" +
-            '}';
+            "id=" + getId() +
+            ", resultString='" + getResultString() + "'" +
+            ", completionDate='" + getCompletionDate() + "'" +
+            ", successful='" + isSuccessful() + "'" +
+            ", buildArtifact='" + isBuildArtifact() + "'" +
+            ", score='" + getScore() + "'" +
+            "}";
     }
 }

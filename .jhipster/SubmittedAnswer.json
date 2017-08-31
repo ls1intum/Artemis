@@ -1,0 +1,17 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "submission",
+            "otherEntityName": "quizSubmission",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20170831094148",
+    "entityTableName": "submitted_answer",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

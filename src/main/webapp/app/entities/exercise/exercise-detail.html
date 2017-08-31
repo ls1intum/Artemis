@@ -8,18 +8,6 @@
         <dd>
             <span>{{vm.exercise.title}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.exercise.baseRepositoryUrl">Base Repository Url</span></dt>
-        <dd>
-            <span>{{vm.exercise.baseRepositoryUrl}}</span>
-        </dd>
-        <dt><span data-translate="exerciseApplicationApp.exercise.baseBuildPlanId">Base Build Plan Id</span></dt>
-        <dd>
-            <span>{{vm.exercise.baseBuildPlanId}}</span>
-        </dd>
-        <dt><span data-translate="exerciseApplicationApp.exercise.publishBuildPlanUrl">Publish Build Plan Url</span></dt>
-        <dd>
-            <span>{{vm.exercise.publishBuildPlanUrl}}</span>
-        </dd>
         <dt><span data-translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span></dt>
         <dd>
             <span>{{vm.exercise.releaseDate | date:'medium'}}</span>
@@ -28,17 +16,9 @@
         <dd>
             <span>{{vm.exercise.dueDate | date:'medium'}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.exercise.allowOnlineEditor">Allow Online Editor</span></dt>
-        <dd>
-            <span>{{vm.exercise.allowOnlineEditor}}</span>
-        </dd>
         <dt><span data-translate="exerciseApplicationApp.exercise.course">Course</span></dt>
         <dd>
             <a ui-sref="course-detail({id:vm.exercise.course.id})">{{vm.exercise.course.title}}</a>
-        </dd>
-        <dt><span data-translate="exerciseApplicationApp.exerciseLtiConfiguration.lti">LTI</span></dt>
-        <dd>
-            <a ui-sref="exercise-detail.ltiConfiguration({id:vm.exercise.id})">LTI Configuration</a>
         </dd>
     </dl>
 

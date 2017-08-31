@@ -1,0 +1,70 @@
+<div>
+    <h2 data-translate="exerciseApplicationApp.dragItem.home.title">Drag Items</h2>
+    <jhi-alert></jhi-alert>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-4 no-padding-left">
+                <button class="btn btn-primary" ui-sref="drag-item.new" >
+                    <span class="glyphicon glyphicon-plus"></span>
+                    <span  data-translate="exerciseApplicationApp.dragItem.home.createLabel">
+                        Create new Drag Item
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="jh-table table table-striped">
+            <thead>
+                <tr>
+                    <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="exerciseApplicationApp.dragItem.pictureFilePath">Picture File Path</span></th>
+                    <th><span data-translate="exerciseApplicationApp.dragItem.text">Text</span></th>
+                    <th><span data-translate="exerciseApplicationApp.dragItem.correctScore">Correct Score</span></th>
+                    <th><span data-translate="exerciseApplicationApp.dragItem.incorrectScore">Incorrect Score</span></th>
+                    <th><span data-translate="exerciseApplicationApp.dragItem.correctLocation">Correct Location</span></th>
+                    <th><span data-translate="exerciseApplicationApp.dragItem.question">Question</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="dragItem in vm.dragItems track by dragItem.id">
+                    <td><a ui-sref="drag-item-detail({id:dragItem.id})">{{dragItem.id}}</a></td>
+                    <td>{{dragItem.pictureFilePath}}</td>
+                    <td>{{dragItem.text}}</td>
+                    <td>{{dragItem.correctScore}}</td>
+                    <td>{{dragItem.incorrectScore}}</td>
+                    <td>
+                        <a ui-sref="drop-location-detail({id:dragItem.correctLocation.id})">{{dragItem.correctLocation.id}}</a>
+                    </td>
+                    <td>
+                        <a ui-sref="drag-and-drop-question-detail({id:dragItem.question.id})">{{dragItem.question.id}}</a>
+                    </td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit"
+                                    ui-sref="drag-item-detail({id:dragItem.id})"
+                                    class="btn btn-info btn-sm">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="drag-item.edit({id:dragItem.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="drag-item.delete({id:dragItem.id})"
+                                    class="btn btn-danger btn-sm">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
