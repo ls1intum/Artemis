@@ -16,8 +16,11 @@
                 "title": "Result"
             },
             "resultString": "Result String",
-            "buildCompletionDate": "Build Completion Date",
-            "buildSuccessful": "Build Successful",
+            "completionDate": "Completion Date",
+            "successful": "Successful",
+            "buildArtifact": "Build Artifact",
+            "score": "Score",
+            "submission": "Submission",
             "participation": "Participation"
         }
     }

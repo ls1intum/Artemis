@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -41,12 +42,12 @@ public class ResultResource {
     private static final String ENTITY_NAME = "result";
 
     private final ResultRepository resultRepository;
-    private final LtiService ltiService;
+    private final Optional<LtiService> ltiService;
     private final ParticipationService participationService;
     private final ResultService resultService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    public ResultResource(ResultRepository resultRepository, LtiService ltiService, ParticipationService participationService, ResultService resultService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService, ResultService resultService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.participationService = participationService;
@@ -55,15 +56,13 @@ public class ResultResource {
     }
 
     /**
-     * POST  /results : Create a new result.
+     * POST  /results : Create a new manual result.
      *
      * @param result the result to create
      * @return the ResponseEntity with status 201 (Created) and with body the new result, or with status 400 (Bad Request) if the result has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/results",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping("/results")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
@@ -72,22 +71,23 @@ public class ResultResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new result cannot already have an ID")).body(null);
         }
         Result savedResult = resultRepository.save(result);
-        ltiService.onNewBuildResult(savedResult.getParticipation());
+        if(ltiService.isPresent()) {
+            ltiService.get().onNewBuildResult(savedResult.getParticipation());
+        }
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
 
     /**
-     * POST  /results/:planKey : Notify the application about a new build result.
+     * POST  /results/:planKey : Notify the application about a new build result for a programming exercise
+     * This API is invoked by the CI Server at the end of the build/test result
      *
      * @param planKey the plan key of the plan which is notifying about a new result
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the result has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/results/{planKey}",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/results/{planKey}")
     @Transactional
     public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
         if (planKey.contains("base")) {
@@ -136,9 +136,7 @@ public class ResultResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @RequestMapping(value = "/results",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/results")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Result> getAllResults() {
@@ -154,9 +152,7 @@ public class ResultResource {
      * @param participationId the id of the participation for which to retrieve the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public List<Result> getResultsForParticipation(@PathVariable Long courseId,
@@ -172,9 +168,9 @@ public class ResultResource {
         Participation participation = participationService.findOne(participationId);
         if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
             if(showAllResults) {
-                results = resultRepository.findByParticipationIdOrderByBuildCompletionDateDesc(participationId);
+                results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
             } else {
-                results = resultRepository.findFirstByParticipationIdOrderByBuildCompletionDateDesc(participationId)
+                results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId)
                 .map(result -> Arrays.asList(result))
                 .orElse(new ArrayList<Result>());
             }
@@ -189,9 +185,7 @@ public class ResultResource {
      * @param exerciseId the id of the exercise for which to retrieve the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @RequestMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Result> getResultsForExercise(@PathVariable Long courseId,
@@ -213,9 +207,7 @@ public class ResultResource {
      * @param courseId the id of the course for which to retrieve the results
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
-    @RequestMapping(value = "/courses/{courseId}/results",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/courses/{courseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Result> getResultsForCourse(@PathVariable Long courseId) {
@@ -232,9 +224,7 @@ public class ResultResource {
      * @param id the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/results/{id}",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/results/{id}")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
@@ -253,9 +243,7 @@ public class ResultResource {
      * @param id the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/results/{id}/details",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/results/{id}/details")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
@@ -282,9 +270,7 @@ public class ResultResource {
      * @param id the id of the result to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @RequestMapping(value = "/results/{id}",
-        method = RequestMethod.DELETE,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping("/results/{id}")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {

@@ -1,0 +1,19 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "many-to-many",
+            "otherEntityRelationshipName": "",
+            "relationshipName": "selectedOptions",
+            "otherEntityName": "answerOption",
+            "otherEntityField": "id",
+            "ownerSide": true
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20170831094152",
+    "entityTableName": "multiple_choice_submitted_answer",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

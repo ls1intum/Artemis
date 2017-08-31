@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .controller('ParticipationDialogController', ParticipationDialogController);
 
-    ParticipationDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'Participation', 'User', 'Result', 'Exercise'];
+    ParticipationDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'Participation', 'Result', 'User', 'Exercise'];
 
-    function ParticipationDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, Participation, User, Result, Exercise) {
+    function ParticipationDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, Participation, Result, User, Exercise) {
         var vm = this;
 
         vm.participation = entity;
@@ -15,8 +15,8 @@
         vm.datePickerOpenStatus = {};
         vm.openCalendar = openCalendar;
         vm.save = save;
-        vm.users = User.query();
         vm.results = Result.query();
+        vm.users = User.query();
         vm.exercises = Exercise.query();
 
         $timeout(function (){

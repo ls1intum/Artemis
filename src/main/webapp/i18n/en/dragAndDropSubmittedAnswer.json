@@ -1,0 +1,21 @@
+{
+    "exerciseApplicationApp": {
+        "dragAndDropSubmittedAnswer" : {
+            "home": {
+                "title": "Drag And Drop Submitted Answers",
+                "createLabel": "Create a new Drag And Drop Submitted Answer",
+                "createOrEditLabel": "Create or edit a Drag And Drop Submitted Answer"
+            },
+            "created": "A new Drag And Drop Submitted Answer is created with identifier {{ param }}",
+            "updated": "A Drag And Drop Submitted Answer is updated with identifier {{ param }}",
+            "deleted": "A Drag And Drop Submitted Answer is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Drag And Drop Submitted Answer {{ id }}?"
+            },
+            "detail": {
+                "title": "Drag And Drop Submitted Answer"
+            },
+            "assignments": "Assignments"
+        }
+    }
+}

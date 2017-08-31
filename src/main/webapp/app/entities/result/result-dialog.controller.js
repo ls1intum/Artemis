@@ -5,9 +5,9 @@
         .module('exerciseApplicationApp')
         .controller('ResultDialogController', ResultDialogController);
 
-    ResultDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'Result', 'Participation'];
+    ResultDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'Result', 'Submission', 'Participation'];
 
-    function ResultDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, Result, Participation) {
+    function ResultDialogController ($timeout, $scope, $stateParams, $uibModalInstance, $q, entity, Result, Submission, Participation) {
         var vm = this;
 
         vm.result = entity;
@@ -15,6 +15,15 @@
         vm.datePickerOpenStatus = {};
         vm.openCalendar = openCalendar;
         vm.save = save;
+        vm.submissions = Submission.query({filter: 'result-is-null'});
+        $q.all([vm.result.$promise, vm.submissions.$promise]).then(function() {
+            if (!vm.result.submission || !vm.result.submission.id) {
+                return $q.reject();
+            }
+            return Submission.get({id : vm.result.submission.id}).$promise;
+        }).then(function(submission) {
+            vm.submissions.push(submission);
+        });
         vm.participations = Participation.query();
 
         $timeout(function (){
@@ -44,7 +53,7 @@
             vm.isSaving = false;
         }
 
-        vm.datePickerOpenStatus.buildCompletionDate = false;
+        vm.datePickerOpenStatus.completionDate = false;
 
         function openCalendar (date) {
             vm.datePickerOpenStatus[date] = true;

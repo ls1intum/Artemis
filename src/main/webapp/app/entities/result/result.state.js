@@ -106,8 +106,10 @@
                         entity: function () {
                             return {
                                 resultString: null,
-                                buildCompletionDate: null,
-                                buildSuccessful: null,
+                                completionDate: null,
+                                successful: null,
+                                buildArtifact: null,
+                                score: null,
                                 id: null
                             };
                         }

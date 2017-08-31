@@ -1,14 +1,15 @@
 package de.tum.in.www1.exerciseapp.repository;
 
 import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import org.springframework.data.jpa.repository.*;
 import java.util.List;
+
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * Spring Data JPA repository for the Participation entity.
@@ -27,5 +28,8 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     Participation findOneByExerciseIdAndStudentLoginAndInitializationState(Long exerciseId, String username, ParticipationState state);
 
     Participation findOneByBuildPlanId(String buildPlanId);
+
+    @Query("select participation from Participation participation where participation.student.login = ?#{principal.username}")
+    List<Participation> findByStudentIsCurrentUser();
 
 }

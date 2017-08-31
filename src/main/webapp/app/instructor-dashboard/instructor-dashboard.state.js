@@ -76,8 +76,8 @@
                             entity: function () {
                                 return {
                                     resultString: null,
-                                    buildCompletionDate: new Date(),
-                                    buildSuccessful: true,
+                                    completionDate: new Date(),
+                                    successful: true,
                                     score: 100,
                                     id: null
                                 };

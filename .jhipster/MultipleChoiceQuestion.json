@@ -1,0 +1,17 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "answerOptions",
+            "otherEntityName": "answerOption",
+            "otherEntityRelationshipName": "question"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20170831094150",
+    "entityTableName": "multiple_choice_question",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

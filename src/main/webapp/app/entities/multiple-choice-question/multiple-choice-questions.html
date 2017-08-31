@@ -1,0 +1,54 @@
+<div>
+    <h2 data-translate="exerciseApplicationApp.multipleChoiceQuestion.home.title">Multiple Choice Questions</h2>
+    <jhi-alert></jhi-alert>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-4 no-padding-left">
+                <button class="btn btn-primary" ui-sref="multiple-choice-question.new" >
+                    <span class="glyphicon glyphicon-plus"></span>
+                    <span  data-translate="exerciseApplicationApp.multipleChoiceQuestion.home.createLabel">
+                        Create new Multiple Choice Question
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="jh-table table table-striped">
+            <thead>
+                <tr>
+                    <th><span data-translate="global.field.id">ID</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="multipleChoiceQuestion in vm.multipleChoiceQuestions track by multipleChoiceQuestion.id">
+                    <td><a ui-sref="multiple-choice-question-detail({id:multipleChoiceQuestion.id})">{{multipleChoiceQuestion.id}}</a></td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit"
+                                    ui-sref="multiple-choice-question-detail({id:multipleChoiceQuestion.id})"
+                                    class="btn btn-info btn-sm">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="multiple-choice-question.edit({id:multipleChoiceQuestion.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="multiple-choice-question.delete({id:multipleChoiceQuestion.id})"
+                                    class="btn btn-danger btn-sm">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

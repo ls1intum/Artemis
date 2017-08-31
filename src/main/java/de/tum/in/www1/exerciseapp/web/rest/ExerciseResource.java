@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 
+import de.tum.in.www1.exerciseapp.domain.ProgrammingExercise;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.ExerciseService;
@@ -39,6 +40,7 @@ import java.util.Optional;
 public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
+
     private static final String ENTITY_NAME = "exercise";
 
     private final ExerciseRepository exerciseRepository;
@@ -60,26 +62,40 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new exercise, or with status 400 (Bad Request) if the exercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/exercises",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping("/exercises")
     @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
+    //TODO: test if it still works with abstract entity in body
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to save Exercise : {}", exercise);
         if (exercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new exercise cannot already have an ID")).body(null);
         }
+        if(exercise instanceof ProgrammingExercise) {
+            ResponseEntity<Exercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) exercise);
+            if(errorResponse != null) {
+                return errorResponse;
+            }
+        }
+        Exercise result = exerciseRepository.save(exercise);
+        return ResponseEntity.created(new URI("/api/exercises/" + result.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+            .body(result);
+    }
+
+    /**
+     *
+     * @param exercise
+     * @return the error message as response or null if everything is fine
+     */
+    private ResponseEntity<Exercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
         if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
         }
         if(!versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
         }
-        Exercise result = exerciseRepository.save(exercise);
-        return ResponseEntity.created(new URI("/api/exercises/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        return null;
     }
 
     /**
@@ -91,21 +107,20 @@ public class ExerciseResource {
      * or with status 500 (Internal Server Error) if the exercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @RequestMapping(value = "/exercises",
-        method = RequestMethod.PUT,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping("/exercises")
     @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
+    //TODO: test if it still works with abstract entity in body
     public ResponseEntity<Exercise> updateExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to update Exercise : {}", exercise);
         if (exercise.getId() == null) {
             return createExercise(exercise);
         }
-        if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
-        }
-        if(!versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
+        if(exercise instanceof ProgrammingExercise) {
+            ResponseEntity<Exercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) exercise);
+            if(errorResponse != null) {
+                return errorResponse;
+            }
         }
         Exercise result = exerciseRepository.save(exercise);
         return ResponseEntity.ok()
@@ -119,14 +134,12 @@ public class ExerciseResource {
      * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
      */
-    @RequestMapping(value = "/exercises",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/exercises")
     @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<List<Exercise>> getAllExercises(@ApiParam Pageable pageable) {
         log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseService.findAll(pageable);
+        Page<Exercise> page = exerciseRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -139,9 +152,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
      * @throws URISyntaxException if there is an error to generate the pagination HTTP headers
      */
-    @RequestMapping(value = "/courses/{courseId}/exercises",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/courses/{courseId}/exercises")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
@@ -159,9 +170,7 @@ public class ExerciseResource {
      * @param id the id of the exercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/exercises/{id}",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping("/exercises/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
@@ -177,13 +186,13 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/exercises/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
-    @Transactional
     public ResponseEntity<Void> deleteExercise(@PathVariable Long id,
                                                @RequestParam(defaultValue = "false") boolean deleteParticipations) {
         log.debug("REST request to delete Exercise : {}", id);
         exerciseService.delete(id, deleteParticipations);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("exercise", id.toString())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
     /**
@@ -192,11 +201,9 @@ public class ExerciseResource {
      * @param id the id of the exercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @RequestMapping(value = "/exercises/{id}/participations",
-        method = RequestMethod.DELETE,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/exercises/{id}/participations")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
-    @Transactional
     public ResponseEntity<Void> resetExercise(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
         Exercise exercise = exerciseRepository.findOne(id);

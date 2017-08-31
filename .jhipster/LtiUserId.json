@@ -1,11 +1,13 @@
 {
+    "fluentMethods": true,
     "relationships": [
         {
+            "relationshipType": "one-to-one",
             "relationshipName": "user",
             "otherEntityName": "user",
-            "relationshipType": "one-to-one",
             "otherEntityField": "id",
-            "ownerSide": true
+            "ownerSide": true,
+            "otherEntityRelationshipName": "ltiUserId"
         }
     ],
     "fields": [
@@ -15,8 +17,8 @@
         }
     ],
     "changelogDate": "20161123125152",
-    "dto": "no",
-    "service": "no",
     "entityTableName": "lti_user_id",
-    "pagination": "no"
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
 }

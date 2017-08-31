@@ -1,9 +1,11 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -20,9 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
 import static de.tum.in.www1.exerciseapp.web.rest.TestUtil.sameInstant;
@@ -40,17 +42,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ExerciseApplicationApp.class)
 public class ResultResourceIntTest {
 
-    private static final DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneId.of("Z"));
+    private static final String DEFAULT_RESULT_STRING = "AAAAAAAAAA";
+    private static final String UPDATED_RESULT_STRING = "BBBBBBBBBB";
 
-    private static final String DEFAULT_RESULT_STRING = "AAAAA";
-    private static final String UPDATED_RESULT_STRING = "BBBBB";
+    private static final ZonedDateTime DEFAULT_COMPLETION_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneOffset.UTC);
+    private static final ZonedDateTime UPDATED_COMPLETION_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
 
-    private static final ZonedDateTime DEFAULT_BUILD_COMPLETION_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.systemDefault());
-    private static final ZonedDateTime UPDATED_BUILD_COMPLETION_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
-    private static final String DEFAULT_BUILD_COMPLETION_DATE_STR = dateTimeFormatter.format(DEFAULT_BUILD_COMPLETION_DATE);
+    private static final Boolean DEFAULT_SUCCESSFUL = false;
+    private static final Boolean UPDATED_SUCCESSFUL = true;
 
-    private static final Boolean DEFAULT_BUILD_SUCCESSFUL = false;
-    private static final Boolean UPDATED_BUILD_SUCCESSFUL = true;
+    private static final Boolean DEFAULT_BUILD_ARTIFACT = false;
+    private static final Boolean UPDATED_BUILD_ARTIFACT = true;
+
+    private static final Long DEFAULT_SCORE = 1L;
+    private static final Long UPDATED_SCORE = 2L;
 
     @Autowired
     private ResultRepository resultRepository;
@@ -93,10 +98,12 @@ public class ResultResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static Result createEntity(EntityManager em) {
-        Result result = new Result();
-        result.setResultString(DEFAULT_RESULT_STRING);
-        result.setBuildCompletionDate(DEFAULT_BUILD_COMPLETION_DATE);
-        result.setBuildSuccessful(DEFAULT_BUILD_SUCCESSFUL);
+        Result result = new Result()
+            .resultString(DEFAULT_RESULT_STRING)
+            .completionDate(DEFAULT_COMPLETION_DATE)
+            .successful(DEFAULT_SUCCESSFUL)
+            .buildArtifact(DEFAULT_BUILD_ARTIFACT)
+            .score(DEFAULT_SCORE);
         return result;
     }
 
@@ -121,8 +128,10 @@ public class ResultResourceIntTest {
         assertThat(resultList).hasSize(databaseSizeBeforeCreate + 1);
         Result testResult = resultList.get(resultList.size() - 1);
         assertThat(testResult.getResultString()).isEqualTo(DEFAULT_RESULT_STRING);
-        assertThat(testResult.getBuildCompletionDate()).isEqualTo(DEFAULT_BUILD_COMPLETION_DATE);
-        assertThat(testResult.isBuildSuccessful()).isEqualTo(DEFAULT_BUILD_SUCCESSFUL);
+        assertThat(testResult.getCompletionDate()).isEqualTo(DEFAULT_COMPLETION_DATE);
+        assertThat(testResult.isSuccessful()).isEqualTo(DEFAULT_SUCCESSFUL);
+        assertThat(testResult.isBuildArtifact()).isEqualTo(DEFAULT_BUILD_ARTIFACT);
+        assertThat(testResult.getScore()).isEqualTo(DEFAULT_SCORE);
     }
 
     @Test
@@ -156,8 +165,10 @@ public class ResultResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(result.getId().intValue())))
             .andExpect(jsonPath("$.[*].resultString").value(hasItem(DEFAULT_RESULT_STRING.toString())))
-            .andExpect(jsonPath("$.[*].buildCompletionDate").value(hasItem(sameInstant(DEFAULT_BUILD_COMPLETION_DATE))))
-            .andExpect(jsonPath("$.[*].buildSuccessful").value(hasItem(DEFAULT_BUILD_SUCCESSFUL.booleanValue())));
+            .andExpect(jsonPath("$.[*].completionDate").value(hasItem(sameInstant(DEFAULT_COMPLETION_DATE))))
+            .andExpect(jsonPath("$.[*].successful").value(hasItem(DEFAULT_SUCCESSFUL.booleanValue())))
+            .andExpect(jsonPath("$.[*].buildArtifact").value(hasItem(DEFAULT_BUILD_ARTIFACT.booleanValue())))
+            .andExpect(jsonPath("$.[*].score").value(hasItem(DEFAULT_SCORE.intValue())));
     }
 
     @Test
@@ -172,8 +183,10 @@ public class ResultResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(result.getId().intValue()))
             .andExpect(jsonPath("$.resultString").value(DEFAULT_RESULT_STRING.toString()))
-            .andExpect(jsonPath("$.buildCompletionDate").value(sameInstant(DEFAULT_BUILD_COMPLETION_DATE)))
-            .andExpect(jsonPath("$.buildSuccessful").value(DEFAULT_BUILD_SUCCESSFUL.booleanValue()));
+            .andExpect(jsonPath("$.completionDate").value(sameInstant(DEFAULT_COMPLETION_DATE)))
+            .andExpect(jsonPath("$.successful").value(DEFAULT_SUCCESSFUL.booleanValue()))
+            .andExpect(jsonPath("$.buildArtifact").value(DEFAULT_BUILD_ARTIFACT.booleanValue()))
+            .andExpect(jsonPath("$.score").value(DEFAULT_SCORE.intValue()));
     }
 
     @Test
@@ -193,9 +206,12 @@ public class ResultResourceIntTest {
 
         // Update the result
         Result updatedResult = resultRepository.findOne(result.getId());
-        updatedResult.setResultString(UPDATED_RESULT_STRING);
-        updatedResult.setBuildCompletionDate(UPDATED_BUILD_COMPLETION_DATE);
-        updatedResult.setBuildSuccessful(UPDATED_BUILD_SUCCESSFUL);
+        updatedResult
+            .resultString(UPDATED_RESULT_STRING)
+            .completionDate(UPDATED_COMPLETION_DATE)
+            .successful(UPDATED_SUCCESSFUL)
+            .buildArtifact(UPDATED_BUILD_ARTIFACT)
+            .score(UPDATED_SCORE);
 
         restResultMockMvc.perform(put("/api/results")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -207,8 +223,10 @@ public class ResultResourceIntTest {
         assertThat(resultList).hasSize(databaseSizeBeforeUpdate);
         Result testResult = resultList.get(resultList.size() - 1);
         assertThat(testResult.getResultString()).isEqualTo(UPDATED_RESULT_STRING);
-        assertThat(testResult.getBuildCompletionDate()).isEqualTo(UPDATED_BUILD_COMPLETION_DATE);
-        assertThat(testResult.isBuildSuccessful()).isEqualTo(UPDATED_BUILD_SUCCESSFUL);
+        assertThat(testResult.getCompletionDate()).isEqualTo(UPDATED_COMPLETION_DATE);
+        assertThat(testResult.isSuccessful()).isEqualTo(UPDATED_SUCCESSFUL);
+        assertThat(testResult.isBuildArtifact()).isEqualTo(UPDATED_BUILD_ARTIFACT);
+        assertThat(testResult.getScore()).isEqualTo(UPDATED_SCORE);
     }
 
     @Test

@@ -1,0 +1,21 @@
+{
+    "exerciseApplicationApp": {
+        "multipleChoiceSubmittedAnswer" : {
+            "home": {
+                "title": "Multiple Choice Submitted Answers",
+                "createLabel": "Create a new Multiple Choice Submitted Answer",
+                "createOrEditLabel": "Create or edit a Multiple Choice Submitted Answer"
+            },
+            "created": "A new Multiple Choice Submitted Answer is created with identifier {{ param }}",
+            "updated": "A Multiple Choice Submitted Answer is updated with identifier {{ param }}",
+            "deleted": "A Multiple Choice Submitted Answer is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Multiple Choice Submitted Answer {{ id }}?"
+            },
+            "detail": {
+                "title": "Multiple Choice Submitted Answer"
+            },
+            "selectedOptions": "Selected Options"
+        }
+    }
+}

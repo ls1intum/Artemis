@@ -19,8 +19,8 @@
             "buildPlanId": "Build Plan Id",
             "initializationState": "Initialization State",
             "initializationDate": "Initialization Date",
-            "student": "Student",
             "results": "Results",
+            "student": "Student",
             "exercise": "Exercise"
         }
     }

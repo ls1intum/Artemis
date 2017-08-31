@@ -62,7 +62,7 @@ public class LtiServiceIntTest {
 
         Result result = new Result();
         result.setParticipation(participation);
-        result.setBuildSuccessful(true);
+        result.setSuccessful(true);
         resultRepository.save(result);
 
 //        String score = ltiService.getScoreForParticipation(participation);
@@ -81,7 +81,7 @@ public class LtiServiceIntTest {
 
         Result result = new Result();
         result.setParticipation(participation);
-        result.setBuildSuccessful(false);
+        result.setSuccessful(false);
         resultRepository.save(result);
 
 //        String score = ltiService.getScoreForParticipation(participation);
@@ -100,7 +100,7 @@ public class LtiServiceIntTest {
 
         Result result = new Result();
         result.setParticipation(participation);
-        result.setBuildSuccessful(false);
+        result.setSuccessful(false);
         result.setResultString("2 of 3 failed");
         resultRepository.save(result);
 
@@ -121,15 +121,15 @@ public class LtiServiceIntTest {
 
         Result oldResult = new Result();
         oldResult.setParticipation(participation);
-        oldResult.setBuildSuccessful(false);
-        oldResult.setBuildCompletionDate(ZonedDateTime.now().minusHours(1));
+        oldResult.setSuccessful(false);
+        oldResult.setCompletionDate(ZonedDateTime.now().minusHours(1));
         oldResult.setResultString("2 of 4 failed");
         resultRepository.save(oldResult);
 
         Result result = new Result();
         result.setParticipation(participation);
-        result.setBuildSuccessful(false);
-        result.setBuildCompletionDate(ZonedDateTime.now());
+        result.setSuccessful(false);
+        result.setCompletionDate(ZonedDateTime.now());
         result.setResultString("1 of 4 failed");
         resultRepository.save(result);
 

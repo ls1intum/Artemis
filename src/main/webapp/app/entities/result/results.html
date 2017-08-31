@@ -18,13 +18,14 @@
         <table class="jh-table table table-striped">
             <thead>
                 <tr>
-                    <th><span translate="global.field.id">ID</span></th>
-                    <th><span translate="exerciseApplicationApp.result.resultString">Result String</span></th>
-                    <th><span translate="exerciseApplicationApp.result.buildCompletionDate">Build Completion Date</span></th>
-                    <th><span translate="exerciseApplicationApp.result.buildSuccessful">Build Successful</span></th>
-                    <th><span translate="exerciseApplicationApp.result.participation">Participation</span></th>
-                    <th>User</th>
-                    <th>Exercise</th>
+                    <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="exerciseApplicationApp.result.resultString">Result String</span></th>
+                    <th><span data-translate="exerciseApplicationApp.result.completionDate">Completion Date</span></th>
+                    <th><span data-translate="exerciseApplicationApp.result.successful">Successful</span></th>
+                    <th><span data-translate="exerciseApplicationApp.result.buildArtifact">Build Artifact</span></th>
+                    <th><span data-translate="exerciseApplicationApp.result.score">Score</span></th>
+                    <th><span data-translate="exerciseApplicationApp.result.submission">Submission</span></th>
+                    <th><span data-translate="exerciseApplicationApp.result.participation">Participation</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -32,8 +33,13 @@
                 <tr ng-repeat="result in vm.results track by result.id">
                     <td><a ui-sref="result-detail({id:result.id})">{{result.id}}</a></td>
                     <td>{{result.resultString}}</td>
-                    <td>{{result.buildCompletionDate | date:'medium'}}</td>
-                    <td>{{result.buildSuccessful}}</td>
+                    <td>{{result.completionDate | date:'medium'}}</td>
+                    <td>{{result.successful}}</td>
+                    <td>{{result.buildArtifact}}</td>
+                    <td>{{result.score}}</td>
+                    <td>
+                        <a ui-sref="submission-detail({id:result.submission.id})">{{result.submission.id}}</a>
+                    </td>
                     <td>
                         <a ui-sref="participation-detail({id:result.participation.id})">{{result.participation.id}}</a>
                     </td>

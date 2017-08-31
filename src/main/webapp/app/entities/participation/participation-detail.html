@@ -4,23 +4,23 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span translate="exerciseApplicationApp.participation.repositoryUrl">Repository Url</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.participation.repositoryUrl">Repository Url</span></dt>
         <dd>
             <span>{{vm.participation.repositoryUrl}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.participation.buildPlanId">Build Plan Id</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.participation.buildPlanId">Build Plan Id</span></dt>
         <dd>
             <span>{{vm.participation.buildPlanId}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.participation.initializationState">Initialization State</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.participation.initializationState">Initialization State</span></dt>
         <dd>
-            <span translate="{{'exerciseApplicationApp.ParticipationState.' + vm.participation.initializationState}}">{{vm.participation.initializationState}}</span>
+            <span data-translate="{{'exerciseApplicationApp.ParticipationState.' + vm.participation.initializationState}}">{{vm.participation.initializationState}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span></dt>
         <dd>
             <span>{{vm.participation.initializationDate | date:'medium'}}</span>
         </dd>
-        <dt><span translate="exerciseApplicationApp.participation.student">Student</span></dt>
+        <dt><span data-translate="exerciseApplicationApp.participation.student">Student</span></dt>
         <dd>
             {{vm.participation.student.login}}
         </dd>

@@ -399,7 +399,7 @@ public class LtiService {
             String score = "0.00";
 
             // Get the latest result
-            Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByBuildCompletionDateDesc(participation.getId());
+            Optional<Result> latestResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
             if (latestResult.isPresent() && latestResult.get().getScore() != null) {
                 // LTI scores needs to be formatted as String between "0.00" and "1.00"

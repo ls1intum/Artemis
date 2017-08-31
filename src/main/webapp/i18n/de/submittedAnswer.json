@@ -1,0 +1,21 @@
+{
+    "exerciseApplicationApp": {
+        "submittedAnswer" : {
+            "home": {
+                "title": "Submitted Answers",
+                "createLabel": "Submitted Answer erstellen",
+                "createOrEditLabel": "Submitted Answer erstellen oder bearbeiten"
+            },
+            "created": "Submitted Answer erstellt mit ID {{ param }}",
+            "updated": "Submitted Answer aktualisiert mit ID {{ param }}",
+            "deleted": "Submitted Answer gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Submitted Answer {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Submitted Answer"
+            },
+            "submission": "Submission"
+        }
+    }
+}

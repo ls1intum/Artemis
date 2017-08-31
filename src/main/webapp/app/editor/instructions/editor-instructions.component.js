@@ -238,7 +238,7 @@
                     }
                 });
 
-                done = (vm.latestResult && vm.latestResult.buildSuccessful) || failedTests == 0;
+                done = (vm.latestResult && vm.latestResult.successful) || failedTests == 0;
                 if(totalTests == 1) {
                     if(done) {
                         label = "Test passing";
@@ -253,7 +253,7 @@
                     }
                 }
 
-            } else if(vm.latestResult && vm.latestResult.buildSuccessful) {
+            } else if(vm.latestResult && vm.latestResult.successful) {
                 done = true;
                 label = "Test passing";
             }

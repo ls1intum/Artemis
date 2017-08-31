@@ -42,13 +42,13 @@ public class Participation implements Serializable {
     @Column(name = "initialization_date")
     private ZonedDateTime initializationDate;
 
-    @ManyToOne
-    private User student;
-
     @OneToMany(mappedBy = "participation", cascade = CascadeType.REMOVE)
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Result> results = new HashSet<>();
+
+    @ManyToOne
+    private User student;
 
     @ManyToOne
     private Exercise exercise;
@@ -66,12 +66,22 @@ public class Participation implements Serializable {
         return repositoryUrl;
     }
 
+    public Participation repositoryUrl(String repositoryUrl) {
+        this.repositoryUrl = repositoryUrl;
+        return this;
+    }
+
     public void setRepositoryUrl(String repositoryUrl) {
         this.repositoryUrl = repositoryUrl;
     }
 
     public String getBuildPlanId() {
         return buildPlanId;
+    }
+
+    public Participation buildPlanId(String buildPlanId) {
+        this.buildPlanId = buildPlanId;
+        return this;
     }
 
     public void setBuildPlanId(String buildPlanId) {
@@ -82,6 +92,11 @@ public class Participation implements Serializable {
         return initializationState;
     }
 
+    public Participation initializationState(ParticipationState initializationState) {
+        this.initializationState = initializationState;
+        return this;
+    }
+
     public void setInitializationState(ParticipationState initializationState) {
         this.initializationState = initializationState;
     }
@@ -90,34 +105,61 @@ public class Participation implements Serializable {
         return initializationDate;
     }
 
+    public Participation initializationDate(ZonedDateTime initializationDate) {
+        this.initializationDate = initializationDate;
+        return this;
+    }
+
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
-    }
-
-    public User getStudent() {
-        return student;
-    }
-
-    public void setStudent(User user) {
-        this.student = user;
     }
 
     public Set<Result> getResults() {
         return results;
     }
 
+    public Participation results(Set<Result> results) {
+        this.results = results;
+        return this;
+    }
+
+    public Participation addResults(Result result) {
+        this.results.add(result);
+        result.setParticipation(this);
+        return this;
+    }
+
+    public Participation removeResults(Result result) {
+        this.results.remove(result);
+        result.setParticipation(null);
+        return this;
+    }
+
     public void setResults(Set<Result> results) {
         this.results = results;
+    }
+
+    public User getStudent() {
+        return student;
+    }
+
+    public Participation student(User user) {
+        this.student = user;
+        return this;
+    }
+
+    public void setStudent(User user) {
+        this.student = user;
     }
 
     public Exercise getExercise() {
         return exercise;
     }
 
-    public void setExercise(Exercise exercise) {
+    public Participation exercise(Exercise exercise) {
         this.exercise = exercise;
+        return this;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     public URL getRepositoryUrlAsUrl() {
         try {
@@ -127,6 +169,11 @@ public class Participation implements Serializable {
         }
         return null;
     }
+
+    public void setExercise(Exercise exercise) {
+        this.exercise = exercise;
+    }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -151,11 +198,11 @@ public class Participation implements Serializable {
     @Override
     public String toString() {
         return "Participation{" +
-            "id=" + id +
-            ", repositoryUrl='" + repositoryUrl + "'" +
-            ", buildPlanId='" + buildPlanId + "'" +
-            ", initializationState='" + initializationState + "'" +
-            ", initializationDate='" + initializationDate + "'" +
-            '}';
+            "id=" + getId() +
+            ", repositoryUrl='" + getRepositoryUrl() + "'" +
+            ", buildPlanId='" + getBuildPlanId() + "'" +
+            ", initializationState='" + getInitializationState() + "'" +
+            ", initializationDate='" + getInitializationDate() + "'" +
+            "}";
     }
 }

@@ -1,0 +1,28 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "dropLocations",
+            "otherEntityName": "dropLocation",
+            "otherEntityRelationshipName": "question"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "dragItems",
+            "otherEntityName": "dragItem",
+            "otherEntityRelationshipName": "question"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "backgroundFilePath",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20170831094153",
+    "entityTableName": "drag_and_drop_question",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

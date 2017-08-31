@@ -1,0 +1,39 @@
+
+<div>
+    <h2><span data-translate="exerciseApplicationApp.question.detail.title">Question</span> {{vm.question.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="dl-horizontal jh-entity-details">
+        <dt><span data-translate="exerciseApplicationApp.question.title">Title</span></dt>
+        <dd>
+            <span>{{vm.question.title}}</span>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.question.text">Text</span></dt>
+        <dd>
+            <span>{{vm.question.text}}</span>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.question.maxScore">Max Score</span></dt>
+        <dd>
+            <span>{{vm.question.maxScore}}</span>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.question.minScore">Min Score</span></dt>
+        <dd>
+            <span>{{vm.question.minScore}}</span>
+        </dd>
+        <dt><span data-translate="exerciseApplicationApp.question.exercise">Exercise</span></dt>
+        <dd>
+            <a ui-sref="quiz-exercise-detail({id:vm.question.exercise.id})">{{vm.question.exercise.id}}</a>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            ui-sref="{{ vm.previousState }}"
+            class="btn btn-info">
+        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button" ui-sref="question-detail.edit({id:vm.question.id})" class="btn btn-primary">
+        <span class="glyphicon glyphicon-pencil"></span>
+        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
+    </button>
+</div>

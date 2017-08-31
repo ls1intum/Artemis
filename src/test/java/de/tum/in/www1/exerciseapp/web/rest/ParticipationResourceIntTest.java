@@ -1,11 +1,12 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+
 import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -22,16 +23,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
+import static de.tum.in.www1.exerciseapp.web.rest.TestUtil.sameInstant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 /**
  * Test class for the ParticipationResource REST controller.
  *
@@ -41,24 +44,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ExerciseApplicationApp.class)
 public class ParticipationResourceIntTest {
 
-    private static final DateTimeFormatter dateTimeFormatter;
+    private static final String DEFAULT_REPOSITORY_URL = "AAAAAAAAAA";
+    private static final String UPDATED_REPOSITORY_URL = "BBBBBBBBBB";
 
-    static {
-        dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'").withZone(ZoneId.of("Z"));
-    }
-
-    private static final String DEFAULT_REPOSITORY_URL = "AAAAA";
-    private static final String UPDATED_REPOSITORY_URL = "BBBBB";
-    private static final String DEFAULT_BUILD_PLAN_ID = "AAAAA";
-    private static final String UPDATED_BUILD_PLAN_ID = "BBBBB";
+    private static final String DEFAULT_BUILD_PLAN_ID = "AAAAAAAAAA";
+    private static final String UPDATED_BUILD_PLAN_ID = "BBBBBBBBBB";
 
     private static final ParticipationState DEFAULT_INITIALIZATION_STATE = ParticipationState.UNINITIALIZED;
     private static final ParticipationState UPDATED_INITIALIZATION_STATE = ParticipationState.REPO_COPIED;
 
-    private static final ZonedDateTime DEFAULT_INITIALIZATION_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneId.systemDefault());
-    private static final ZonedDateTime UPDATED_INITIALIZATION_DATE = ZonedDateTime.now(ZoneId
-        .systemDefault()).withNano(0);
-    private static final String DEFAULT_INITIALIZATION_DATE_STR = dateTimeFormatter.format(DEFAULT_INITIALIZATION_DATE);
+    private static final ZonedDateTime DEFAULT_INITIALIZATION_DATE = ZonedDateTime.ofInstant(Instant.ofEpochMilli(0L), ZoneOffset.UTC);
+    private static final ZonedDateTime UPDATED_INITIALIZATION_DATE = ZonedDateTime.now(ZoneId.systemDefault()).withNano(0);
 
     @Autowired
     private ParticipationRepository participationRepository;
@@ -104,12 +100,11 @@ public class ParticipationResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static Participation createEntity(EntityManager em) {
-        Participation participation = new Participation();
-        participation = new Participation();
-        participation.setRepositoryUrl(DEFAULT_REPOSITORY_URL);
-        participation.setBuildPlanId(DEFAULT_BUILD_PLAN_ID);
-        participation.setInitializationState(DEFAULT_INITIALIZATION_STATE);
-        participation.setInitializationDate(DEFAULT_INITIALIZATION_DATE);
+        Participation participation = new Participation()
+            .repositoryUrl(DEFAULT_REPOSITORY_URL)
+            .buildPlanId(DEFAULT_BUILD_PLAN_ID)
+            .initializationState(DEFAULT_INITIALIZATION_STATE)
+            .initializationDate(DEFAULT_INITIALIZATION_DATE);
         return participation;
     }
 
@@ -172,7 +167,7 @@ public class ParticipationResourceIntTest {
             .andExpect(jsonPath("$.[*].repositoryUrl").value(hasItem(DEFAULT_REPOSITORY_URL.toString())))
             .andExpect(jsonPath("$.[*].buildPlanId").value(hasItem(DEFAULT_BUILD_PLAN_ID.toString())))
             .andExpect(jsonPath("$.[*].initializationState").value(hasItem(DEFAULT_INITIALIZATION_STATE.toString())))
-            .andExpect(jsonPath("$.[*].initializationDate").value(hasItem(DEFAULT_INITIALIZATION_DATE_STR)));
+            .andExpect(jsonPath("$.[*].initializationDate").value(hasItem(sameInstant(DEFAULT_INITIALIZATION_DATE))));
     }
 
     @Test
@@ -189,7 +184,7 @@ public class ParticipationResourceIntTest {
             .andExpect(jsonPath("$.repositoryUrl").value(DEFAULT_REPOSITORY_URL.toString()))
             .andExpect(jsonPath("$.buildPlanId").value(DEFAULT_BUILD_PLAN_ID.toString()))
             .andExpect(jsonPath("$.initializationState").value(DEFAULT_INITIALIZATION_STATE.toString()))
-            .andExpect(jsonPath("$.initializationDate").value(DEFAULT_INITIALIZATION_DATE_STR));
+            .andExpect(jsonPath("$.initializationDate").value(sameInstant(DEFAULT_INITIALIZATION_DATE)));
     }
 
     @Test
@@ -210,10 +205,11 @@ public class ParticipationResourceIntTest {
 
         // Update the participation
         Participation updatedParticipation = participationRepository.findOne(participation.getId());
-        updatedParticipation.setRepositoryUrl(UPDATED_REPOSITORY_URL);
-        updatedParticipation.setBuildPlanId(UPDATED_BUILD_PLAN_ID);
-        updatedParticipation.setInitializationState(UPDATED_INITIALIZATION_STATE);
-        updatedParticipation.setInitializationDate(UPDATED_INITIALIZATION_DATE);
+        updatedParticipation
+            .repositoryUrl(UPDATED_REPOSITORY_URL)
+            .buildPlanId(UPDATED_BUILD_PLAN_ID)
+            .initializationState(UPDATED_INITIALIZATION_STATE)
+            .initializationDate(UPDATED_INITIALIZATION_DATE);
 
         restParticipationMockMvc.perform(put("/api/participations")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)

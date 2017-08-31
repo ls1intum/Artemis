@@ -6,8 +6,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
@@ -18,8 +16,14 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "exercise")
+@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(
+    name="discriminator",
+    discriminatorType=DiscriminatorType.STRING
+)
+@DiscriminatorValue(value="E")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class Exercise implements Serializable {
+public abstract class Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -30,31 +34,19 @@ public class Exercise implements Serializable {
     @Column(name = "title")
     private String title;
 
-    @Column(name = "base_repository_url")
-    private String baseRepositoryUrl;
-
-    @Column(name = "base_build_plan_id")
-    private String baseBuildPlanId;
-
-    @Column(name = "publish_build_plan_url")
-    private Boolean publishBuildPlanUrl;
-
     @Column(name = "release_date")
     private ZonedDateTime releaseDate;
 
     @Column(name = "due_date")
     private ZonedDateTime dueDate;
 
-    @Column(name = "allow_online_editor")
-    private Boolean allowOnlineEditor;
-
-    @ManyToOne
-    private Course course;
-
     @OneToMany(mappedBy = "exercise")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Participation> participations = new HashSet<>();
+
+    @ManyToOne
+    private Course course;
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
@@ -69,36 +61,22 @@ public class Exercise implements Serializable {
         return title;
     }
 
+    public Exercise title(String title) {
+        this.title = title;
+        return this;
+    }
+
     public void setTitle(String title) {
         this.title = title;
     }
 
-    public String getBaseRepositoryUrl() {
-        return baseRepositoryUrl;
-    }
-
-    public void setBaseRepositoryUrl(String baseRepositoryUrl) {
-        this.baseRepositoryUrl = baseRepositoryUrl;
-    }
-
-    public String getBaseBuildPlanId() {
-        return baseBuildPlanId;
-    }
-
-    public void setBaseBuildPlanId(String baseBuildPlanId) {
-        this.baseBuildPlanId = baseBuildPlanId;
-    }
-
-    public Boolean isPublishBuildPlanUrl() {
-        return publishBuildPlanUrl;
-    }
-
-    public void setPublishBuildPlanUrl(Boolean publishBuildPlanUrl) {
-        this.publishBuildPlanUrl = publishBuildPlanUrl;
-    }
-
     public ZonedDateTime getReleaseDate() {
         return releaseDate;
+    }
+
+    public Exercise releaseDate(ZonedDateTime releaseDate) {
+        this.releaseDate = releaseDate;
+        return this;
     }
 
     public void setReleaseDate(ZonedDateTime releaseDate) {
@@ -109,43 +87,53 @@ public class Exercise implements Serializable {
         return dueDate;
     }
 
+    public Exercise dueDate(ZonedDateTime dueDate) {
+        this.dueDate = dueDate;
+        return this;
+    }
+
     public void setDueDate(ZonedDateTime dueDate) {
         this.dueDate = dueDate;
-    }
-
-    public Boolean isAllowOnlineEditor() {
-        return allowOnlineEditor;
-    }
-
-    public void setAllowOnlineEditor(Boolean allowOnlineEditor) {
-        this.allowOnlineEditor = allowOnlineEditor;
-    }
-
-    public Course getCourse() {
-        return course;
-    }
-
-    public void setCourse(Course course) {
-        this.course = course;
     }
 
     public Set<Participation> getParticipations() {
         return participations;
     }
 
+    public Exercise participations(Set<Participation> participations) {
+        this.participations = participations;
+        return this;
+    }
+
+    public Exercise addParticipations(Participation participation) {
+        this.participations.add(participation);
+        participation.setExercise(this);
+        return this;
+    }
+
+    public Exercise removeParticipations(Participation participation) {
+        this.participations.remove(participation);
+        participation.setExercise(null);
+        return this;
+    }
+
     public void setParticipations(Set<Participation> participations) {
         this.participations = participations;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
-    public URL getBaseRepositoryUrlAsUrl() {
-        try {
-            return new URL(baseRepositoryUrl);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
-        return null;
+    public Course getCourse() {
+        return course;
     }
+
+    public Exercise course(Course course) {
+        this.course = course;
+        return this;
+    }
+
+    public void setCourse(Course course) {
+        this.course = course;
+    }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -170,14 +158,10 @@ public class Exercise implements Serializable {
     @Override
     public String toString() {
         return "Exercise{" +
-            "id=" + id +
-            ", title='" + title + "'" +
-            ", baseRepositoryUrl='" + baseRepositoryUrl + "'" +
-            ", baseBuildPlanId='" + baseBuildPlanId + "'" +
-            ", publishBuildPlanUrl='" + publishBuildPlanUrl + "'" +
-            ", releaseDate='" + releaseDate + "'" +
-            ", dueDate='" + dueDate + "'" +
-            ", allowOnlineEditor='" + allowOnlineEditor + "'" +
-            '}';
+            "id=" + getId() +
+            ", title='" + getTitle() + "'" +
+            ", releaseDate='" + getReleaseDate() + "'" +
+            ", dueDate='" + getDueDate() + "'" +
+            "}";
     }
 }
