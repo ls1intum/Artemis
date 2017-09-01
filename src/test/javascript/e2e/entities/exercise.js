@@ -24,7 +24,7 @@ describe('Exercise e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="exercise"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.exercise.home.title/);
+                expect(value).toMatch(/artemisApp.exercise.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('Exercise e2e test', function () {
     it('should load create Exercise dialog', function () {
         element(by.css('[ui-sref="exercise.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.exercise.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.exercise.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

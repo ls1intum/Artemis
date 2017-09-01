@@ -1,7 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import com.google.common.io.Files;
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Repository;
 import org.apache.commons.io.FileUtils;
@@ -35,7 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @ActiveProfiles(profiles = "dev,jira,bamboo,bitbucket")
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = ExerciseApplicationApp.class)
+@ContextConfiguration(classes = ArTEMiSApp.class)
 @WebAppConfiguration
 @SpringBootTest
 @Transactional
@@ -47,10 +47,10 @@ public class GitServiceIntTest {
 
     private final GitService gitService;
 
-    @Value("${exerciseapp.bitbucket.user}")
+    @Value("${artemis.bitbucket.user}")
     private String GIT_USER;
 
-    @Value("${exerciseapp.bitbucket.password}")
+    @Value("${artemis.bitbucket.password}")
     private String GIT_PASSWORD;
 
     public GitServiceIntTest(GitService gitService) {

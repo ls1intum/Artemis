@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('ActivationController', ActivationController);
 
     ActivationController.$inject = ['$stateParams', 'Auth', 'LoginService'];

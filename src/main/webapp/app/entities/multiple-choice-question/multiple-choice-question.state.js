@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .config(stateConfig);
 
     stateConfig.$inject = ['$stateProvider'];
@@ -14,7 +14,7 @@
             url: '/multiple-choice-question',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'exerciseApplicationApp.multipleChoiceQuestion.home.title'
+                pageTitle: 'artemisApp.multipleChoiceQuestion.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/multiple-choice-question/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'exerciseApplicationApp.multipleChoiceQuestion.detail.title'
+                pageTitle: 'artemisApp.multipleChoiceQuestion.detail.title'
             },
             views: {
                 'content@': {

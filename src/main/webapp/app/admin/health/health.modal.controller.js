@@ -1,7 +1,7 @@
 (function() {
     'use strict';
 
-    angular.module('exerciseApplicationApp')
+    angular.module('artemisApp')
         .controller('HealthModalController', HealthModalController);
 
     HealthModalController.$inject = ['$uibModalInstance', 'currentHealth', 'baseName', 'subSystemName'];

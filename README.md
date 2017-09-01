@@ -15,10 +15,10 @@ ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Bo
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 
-To start ArTEMiS from the development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.exerciseapp.ExerciseApplicationApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
+To start ArTEMiS from the development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.exerciseapp.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
 
 ```
-exerciseapp:
+artemis:
   repo-clone-path: ./repos/
   encryption-password: <password>
   result-retrieval-delay: 5000
@@ -43,14 +43,14 @@ exerciseapp:
     user-prefix: edx_
     user-group-name: edx
   git:
-    name: ExerciseApplication
+    name: ArTEMiS
     email: <email>
 ```
 Change the entries with <...> with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can conncet to your local JIRA, Bitbucket and Bamboo instances (see Docker Setup below). 
 
 In addition, you have to install MySQL, setup a root user without password and create an ExerciseApplication scheme.
 
-Then ArTEMiS should startup by running the main class ```de.tum.in.www1.exerciseapp.ExerciseApplicationApp``` using Spring Boot.
+Then ArTEMiS should startup by running the main class ```de.tum.in.www1.exerciseapp.ArTEMiSApp``` using Spring Boot.
 
 To access ArTEMiS in your browser, you have to install npm and execute the following commands in the terminal / command line in the ArTEMiS root folder:
 
@@ -77,7 +77,7 @@ If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can
 6. Configure JIRA/Bitbucket/Bamboo with Groups, Test Users, Plans etc. Please note that as default JIRA/Bitbucket/Bamboo do have seperate user databases and test users might need to be created on all instances.
 7. Change `application-dev.yml` to add the following elements:
     
-        exerciseapp:
+        artemis:
           repo-clone-path: ./repos/
           result-retrieval-delay: 5000
           encryption-password: X7RNnJUzeoUpB2EQsK

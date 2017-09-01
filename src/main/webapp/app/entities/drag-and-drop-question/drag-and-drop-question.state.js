@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .config(stateConfig);
 
     stateConfig.$inject = ['$stateProvider'];
@@ -14,7 +14,7 @@
             url: '/drag-and-drop-question',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'exerciseApplicationApp.dragAndDropQuestion.home.title'
+                pageTitle: 'artemisApp.dragAndDropQuestion.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/drag-and-drop-question/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'exerciseApplicationApp.dragAndDropQuestion.detail.title'
+                pageTitle: 'artemisApp.dragAndDropQuestion.detail.title'
             },
             views: {
                 'content@': {

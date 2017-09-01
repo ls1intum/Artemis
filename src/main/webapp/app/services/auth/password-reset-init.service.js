@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('PasswordResetInit', PasswordResetInit);
 
     PasswordResetInit.$inject = ['$resource'];

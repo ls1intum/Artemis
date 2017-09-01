@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.PersistentToken;
 import de.tum.in.www1.exerciseapp.domain.User;
@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @see AccountResource
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ExerciseApplicationApp.class)
+@SpringBootTest(classes = ArTEMiSApp.class)
 public class AccountResourceIntTest {
 
     @Autowired

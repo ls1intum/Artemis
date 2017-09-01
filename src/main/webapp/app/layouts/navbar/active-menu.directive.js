@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .directive('activeMenu', activeMenu);
 
     activeMenu.$inject = ['$translate', '$locale', 'tmhDynamicLocale'];

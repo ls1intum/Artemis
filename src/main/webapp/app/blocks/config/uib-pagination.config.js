@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .config(paginationConfig);
 
     paginationConfig.$inject = ['uibPaginationConfig', 'paginationConstants'];

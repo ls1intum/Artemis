@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('DropLocationDeleteController',DropLocationDeleteController);
 
     DropLocationDeleteController.$inject = ['$uibModalInstance', 'entity', 'DropLocation'];

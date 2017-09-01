@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('DropLocationController', DropLocationController);
 
     DropLocationController.$inject = ['DropLocation'];

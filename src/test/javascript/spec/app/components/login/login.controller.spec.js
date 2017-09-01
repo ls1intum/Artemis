@@ -2,7 +2,7 @@
 
 describe('Controller Tests', function () {
 
-    beforeEach(module('exerciseApplicationApp'));
+    beforeEach(module('artemisApp'));
 
     describe('LoginController', function () {
         var $scope, authService;

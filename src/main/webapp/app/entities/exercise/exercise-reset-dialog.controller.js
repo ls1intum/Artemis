@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('ExerciseResetController',ExerciseResetController);
 
     ExerciseResetController.$inject = ['$uibModalInstance', 'entity', 'Exercise'];

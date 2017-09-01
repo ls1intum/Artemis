@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('MultipleChoiceQuestionDetailController', MultipleChoiceQuestionDetailController);
 
     MultipleChoiceQuestionDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'MultipleChoiceQuestion', 'AnswerOption'];
@@ -13,7 +13,7 @@
         vm.multipleChoiceQuestion = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('exerciseApplicationApp:multipleChoiceQuestionUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:multipleChoiceQuestionUpdate', function(event, result) {
             vm.multipleChoiceQuestion = result;
         });
         $scope.$on('$destroy', unsubscribe);

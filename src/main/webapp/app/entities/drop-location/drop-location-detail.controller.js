@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('DropLocationDetailController', DropLocationDetailController);
 
     DropLocationDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'DropLocation', 'DragAndDropQuestion'];
@@ -13,7 +13,7 @@
         vm.dropLocation = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('exerciseApplicationApp:dropLocationUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:dropLocationUpdate', function(event, result) {
             vm.dropLocation = result;
         });
         $scope.$on('$destroy', unsubscribe);

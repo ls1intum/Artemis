@@ -24,7 +24,7 @@ describe('Participation e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="participation"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.participation.home.title/);
+                expect(value).toMatch(/artemisApp.participation.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('Participation e2e test', function () {
     it('should load create Participation dialog', function () {
         element(by.css('[ui-sref="participation.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.participation.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.participation.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

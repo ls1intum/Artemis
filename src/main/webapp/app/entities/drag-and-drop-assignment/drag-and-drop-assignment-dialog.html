@@ -4,7 +4,7 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 ng-click="vm.clear()">&times;</button>
-        <h4 class="modal-title" id="myDragAndDropAssignmentLabel" data-translate="exerciseApplicationApp.dragAndDropAssignment.home.createOrEditLabel">Create or edit a Drag And Drop Assignment</h4>
+        <h4 class="modal-title" id="myDragAndDropAssignmentLabel" data-translate="artemisApp.dragAndDropAssignment.home.createOrEditLabel">Create or edit a Drag And Drop Assignment</h4>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -15,19 +15,19 @@
         </div>
 
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.dragAndDropAssignment.item" for="field_item">Item</label>
+            <label data-translate="artemisApp.dragAndDropAssignment.item" for="field_item">Item</label>
             <select class="form-control" id="field_item" name="item" ng-model="vm.dragAndDropAssignment.item" ng-options="dragItem as dragItem.id for dragItem in vm.dragitems track by dragItem.id">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.dragAndDropAssignment.location" for="field_location">Location</label>
+            <label data-translate="artemisApp.dragAndDropAssignment.location" for="field_location">Location</label>
             <select class="form-control" id="field_location" name="location" ng-model="vm.dragAndDropAssignment.location" ng-options="dropLocation as dropLocation.id for dropLocation in vm.droplocations track by dropLocation.id">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.dragAndDropAssignment.submittedAnswer" for="field_submittedAnswer">Submitted Answer</label>
+            <label data-translate="artemisApp.dragAndDropAssignment.submittedAnswer" for="field_submittedAnswer">Submitted Answer</label>
             <select class="form-control" id="field_submittedAnswer" name="submittedAnswer" ng-model="vm.dragAndDropAssignment.submittedAnswer" ng-options="dragAndDropSubmittedAnswer as dragAndDropSubmittedAnswer.id for dragAndDropSubmittedAnswer in vm.draganddropsubmittedanswers track by dragAndDropSubmittedAnswer.id">
                 <option value=""></option>
             </select>

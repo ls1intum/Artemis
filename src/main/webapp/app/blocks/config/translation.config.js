@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .config(translationConfig);
 
     translationConfig.$inject = ['$translateProvider', 'tmhDynamicLocaleProvider', 'BUILD_TIMESTAMP'];

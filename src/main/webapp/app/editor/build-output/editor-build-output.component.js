@@ -5,7 +5,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .component('editorBuildOutput', {
             bindings: {
                 participation: '<',

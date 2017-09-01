@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('DragAndDropQuestionDialogController', DragAndDropQuestionDialogController);
 
     DragAndDropQuestionDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'DragAndDropQuestion', 'DropLocation', 'DragItem'];
@@ -34,7 +34,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:dragAndDropQuestionUpdate', result);
+            $scope.$emit('artemisApp:dragAndDropQuestionUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

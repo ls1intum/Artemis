@@ -45,22 +45,22 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
-    @Value("${exerciseapp.bamboo.url}")
+    @Value("${artemis.bamboo.url}")
     private URL BAMBOO_SERVER;
 
-    @Value("${exerciseapp.bamboo.bitbucket-application-link-id}")
+    @Value("${artemis.bamboo.bitbucket-application-link-id}")
     private String BITBUCKET_APPLICATION_LINK_ID;
 
-    @Value("${exerciseapp.bamboo.user}")
+    @Value("${artemis.bamboo.user}")
     private String BAMBOO_USER;
 
-    @Value("${exerciseapp.bamboo.password}")
+    @Value("${artemis.bamboo.password}")
     private String BAMBOO_PASSWORD;
 
-    @Value("${exerciseapp.bitbucket.url}")
+    @Value("${artemis.bitbucket.url}")
     private URL BITBUCKET_SERVER;
 
-    @Value("${exerciseapp.result-retrieval-delay}")
+    @Value("${artemis.result-retrieval-delay}")
     private int RESULT_RETRIEVAL_DELAY = 10000;
 
     private final GitService gitService;

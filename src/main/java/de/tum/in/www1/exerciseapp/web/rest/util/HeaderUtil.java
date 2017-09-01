@@ -15,15 +15,15 @@ public final class HeaderUtil {
 
     private static final Logger log = LoggerFactory.getLogger(HeaderUtil.class);
 
-    private static final String APPLICATION_NAME = "exerciseApplicationApp";
+    private static final String APPLICATION_NAME = "artemisApp";
 
     private HeaderUtil() {
     }
 
     public static HttpHeaders createAlert(String message, String param) {
         HttpHeaders headers = new HttpHeaders();
-        headers.add("X-exerciseApplicationApp-alert", message);
-        headers.add("X-exerciseApplicationApp-params", param);
+        headers.add("X-artemisApp-alert", message);
+        headers.add("X-artemisApp-params", param);
         return headers;
     }
 
@@ -42,8 +42,8 @@ public final class HeaderUtil {
     public static HttpHeaders createFailureAlert(String entityName, String errorKey, String defaultMessage) {
         log.error("Entity processing failed, {}", defaultMessage);
         HttpHeaders headers = new HttpHeaders();
-        headers.add("X-exerciseApplicationApp-error", "error." + errorKey);
-        headers.add("X-exerciseApplicationApp-params", entityName);
+        headers.add("X-artemisApp-error", "error." + errorKey);
+        headers.add("X-artemisApp-params", entityName);
         return headers;
     }
 

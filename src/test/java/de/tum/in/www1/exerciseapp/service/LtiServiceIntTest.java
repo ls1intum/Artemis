@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
@@ -23,7 +23,7 @@ import java.time.ZonedDateTime;
  */
 @ActiveProfiles(profiles = "dev,jira,bamboo,bitbucket")
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = ExerciseApplicationApp.class)
+@ContextConfiguration(classes = ArTEMiSApp.class)
 @WebAppConfiguration
 @SpringBootTest
 @Transactional

@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('DragItemDetailController', DragItemDetailController);
 
     DragItemDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'DragItem', 'DropLocation', 'DragAndDropQuestion'];
@@ -13,7 +13,7 @@
         vm.dragItem = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('exerciseApplicationApp:dragItemUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:dragItemUpdate', function(event, result) {
             vm.dragItem = result;
         });
         $scope.$on('$destroy', unsubscribe);

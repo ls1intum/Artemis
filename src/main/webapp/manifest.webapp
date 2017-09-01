@@ -1,6 +1,6 @@
 {
-  "name": "exerciseApplicationApp",
-  "short_name": "exerciseApplicationApp",
+  "name": "artemisApp",
+  "short_name": "artemisApp",
   "icons": [
       {
           "src": "/content/images/logo-jhipster.png",

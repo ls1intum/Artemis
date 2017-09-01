@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('CoursesController', CoursesController);
 
     CoursesController.$inject = ['$scope', '$q', '$state', 'Course', 'CourseExercises'];

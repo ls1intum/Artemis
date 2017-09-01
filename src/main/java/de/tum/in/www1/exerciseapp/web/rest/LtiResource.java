@@ -34,13 +34,13 @@ public class LtiResource {
 
     private final Logger log = LoggerFactory.getLogger(LtiResource.class);
 
-    @Value("${exerciseapp.lti.id}")
+    @Value("${artemis.lti.id}")
     private String LTI_ID;
 
-    @Value("${exerciseapp.lti.oauth-key}")
+    @Value("${artemis.lti.oauth-key}")
     private String LTI_OAUTH_KEY;
 
-    @Value("${exerciseapp.lti.oauth-secret}")
+    @Value("${artemis.lti.oauth-secret}")
     private String LTI_OAUTH_SECRET;
 
     private final LtiService ltiService;

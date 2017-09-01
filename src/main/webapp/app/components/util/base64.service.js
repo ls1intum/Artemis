@@ -3,7 +3,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('Base64', Base64);
 
     function Base64 () {

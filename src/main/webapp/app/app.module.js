@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp', [
+        .module('artemisApp', [
             'ngStorage',
             'tmh.dynamicLocale',
             'pascalprecht.translate',

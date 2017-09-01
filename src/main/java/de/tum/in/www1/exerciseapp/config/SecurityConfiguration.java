@@ -66,7 +66,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         }
     }
 
-    @Value("${exerciseapp.encryption-password}")
+    @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
     @Bean

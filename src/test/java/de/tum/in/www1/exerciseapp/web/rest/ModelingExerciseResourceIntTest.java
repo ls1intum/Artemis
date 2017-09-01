@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 
 import de.tum.in.www1.exerciseapp.domain.ModelingExercise;
 import de.tum.in.www1.exerciseapp.repository.ModelingExerciseRepository;
@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @see ModelingExerciseResource
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ExerciseApplicationApp.class)
+@SpringBootTest(classes = ArTEMiSApp.class)
 public class ModelingExerciseResourceIntTest {
 
     private static final String DEFAULT_BASE_FILE_PATH = "AAAAAAAAAA";

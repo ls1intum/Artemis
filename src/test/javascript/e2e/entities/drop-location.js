@@ -24,7 +24,7 @@ describe('DropLocation e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="drop-location"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.dropLocation.home.title/);
+                expect(value).toMatch(/artemisApp.dropLocation.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('DropLocation e2e test', function () {
     it('should load create DropLocation dialog', function () {
         element(by.css('[ui-sref="drop-location.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.dropLocation.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.dropLocation.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

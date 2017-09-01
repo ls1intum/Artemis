@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('ProgrammingExerciseDetailController', ProgrammingExerciseDetailController);
 
     ProgrammingExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'ProgrammingExercise'];
@@ -13,7 +13,7 @@
         vm.programmingExercise = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('exerciseApplicationApp:programmingExerciseUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:programmingExerciseUpdate', function(event, result) {
             vm.programmingExercise = result;
         });
         $scope.$on('$destroy', unsubscribe);

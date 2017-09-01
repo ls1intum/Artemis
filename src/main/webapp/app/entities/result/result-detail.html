@@ -1,34 +1,34 @@
 
 <div>
-    <h2><span data-translate="exerciseApplicationApp.result.detail.title">Result</span> {{vm.result.id}}</h2>
+    <h2><span data-translate="artemisApp.result.detail.title">Result</span> {{vm.result.id}}</h2>
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span data-translate="exerciseApplicationApp.result.resultString">Result String</span></dt>
+        <dt><span data-translate="artemisApp.result.resultString">Result String</span></dt>
         <dd>
             <span>{{vm.result.resultString}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.result.completionDate">Completion Date</span></dt>
+        <dt><span data-translate="artemisApp.result.completionDate">Completion Date</span></dt>
         <dd>
             <span>{{vm.result.completionDate | date:'medium'}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.result.successful">Successful</span></dt>
+        <dt><span data-translate="artemisApp.result.successful">Successful</span></dt>
         <dd>
             <span>{{vm.result.successful}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.result.buildArtifact">Build Artifact</span></dt>
+        <dt><span data-translate="artemisApp.result.buildArtifact">Build Artifact</span></dt>
         <dd>
             <span>{{vm.result.buildArtifact}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.result.score">Score</span></dt>
+        <dt><span data-translate="artemisApp.result.score">Score</span></dt>
         <dd>
             <span>{{vm.result.score}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.result.submission">Submission</span></dt>
+        <dt><span data-translate="artemisApp.result.submission">Submission</span></dt>
         <dd>
             <a ui-sref="submission-detail({id:vm.result.submission.id})">{{vm.result.submission.id}}</a>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.result.participation">Participation</span></dt>
+        <dt><span data-translate="artemisApp.result.participation">Participation</span></dt>
         <dd>
             <a ui-sref="participation-detail({id:vm.result.participation.id})">{{vm.result.participation.id}}</a>
         </dd>

@@ -53,7 +53,7 @@ liquibase:
 
 # ===================================================================
 # To enable SSL, generate a certificate using:
-# keytool -genkey -alias ExerciseApplication -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore keystore.p12 -validity 3650
+# keytool -genkey -alias ArTEMiS -storetype PKCS12 -keyalg RSA -keysize 2048 -keystore keystore.p12 -validity 3650
 #
 # You can also use Let's Encrypt:
 # https://maximilian-boehm.com/hp2121/Create-a-Java-Keystore-JKS-from-Let-s-Encrypt-Certificates.htm
@@ -66,7 +66,7 @@ liquibase:
 #        key-store: keystore.p12
 #        key-store-password: <your-password>
 #        keyStoreType: PKCS12
-#        keyAlias: ExerciseApplication
+#        keyAlias: ArTEMiS
 # ===================================================================
 server:
     port: 8080
@@ -95,7 +95,7 @@ jhipster:
             # security key (this key should be unique for your application, and kept secret)
             key: 1e8ac98bc31f6bc463c70dace796da10dba1f4f3
     mail: # specific JHipster mail property, for standard properties see MailProperties
-        from: ExerciseApplication@localhost
+        from: ArTEMiS@localhost
         base-url: http://my-server-url-to-change # Modify according to your server's URL
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         jmx.enabled: true
@@ -103,7 +103,7 @@ jhipster:
             enabled: false
             host: localhost
             port: 2003
-            prefix: ExerciseApplication
+            prefix: ArTEMiS
         prometheus:
             enabled: false
             endpoint: /prometheusMetrics

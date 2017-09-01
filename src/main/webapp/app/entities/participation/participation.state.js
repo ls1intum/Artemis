@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .config(stateConfig);
 
     stateConfig.$inject = ['$stateProvider'];
@@ -15,7 +15,7 @@
                 contentContainerClass: 'container-fluid',
                 data: {
                     authorities: ['ROLE_ADMIN', 'ROLE_TA'],
-                    pageTitle: 'exerciseApplicationApp.participation.home.title'
+                    pageTitle: 'artemisApp.participation.home.title'
                 },
                 views: {
                     'content@': {
@@ -42,7 +42,7 @@
                 contentContainerClass: 'container-fluid',
                 data: {
                     authorities: ['ROLE_ADMIN', 'ROLE_TA'],
-                    pageTitle: 'exerciseApplicationApp.participation.home.title'
+                    pageTitle: 'artemisApp.participation.home.title'
                 },
                 views: {
                     'content@': {
@@ -68,7 +68,7 @@
                 url: '/participation/{id}',
                 data: {
                     authorities: ['ROLE_ADMIN', 'ROLE_TA'],
-                    pageTitle: 'exerciseApplicationApp.participation.detail.title'
+                    pageTitle: 'artemisApp.participation.detail.title'
                 },
                 views: {
                     'content@': {

@@ -23,7 +23,7 @@ management:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
 spring:
     application:
-        name: ExerciseApplication
+        name: ArTEMiS
     profiles:
         # The commented value for `active` can be replaced with valid Spring profiles to load.
         # Otherwise, it will be filled in by gradle when building the WAR file
@@ -79,11 +79,11 @@ jhipster:
         #allow-credentials: true
         #max-age: 1800
     mail:
-        from: ExerciseApplication@localhost
+        from: ArTEMiS@localhost
     swagger:
         default-include-pattern: /api/.*
-        title: ExerciseApplication API
-        description: ExerciseApplication API documentation
+        title: ArTEMiS API
+        description: ArTEMiS API documentation
         version: 0.0.1
         terms-of-service-url:
         contact-name:

@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('AuthServerProvider', AuthServerProvider);
 
     AuthServerProvider.$inject = ['$http', '$localStorage' , 'JhiWebsocketService'];

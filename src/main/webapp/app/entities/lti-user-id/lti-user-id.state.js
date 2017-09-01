@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .config(stateConfig);
 
     stateConfig.$inject = ['$stateProvider'];
@@ -14,7 +14,7 @@
             url: '/lti-user-id',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'exerciseApplicationApp.ltiUserId.home.title'
+                pageTitle: 'artemisApp.ltiUserId.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/lti-user-id/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'exerciseApplicationApp.ltiUserId.detail.title'
+                pageTitle: 'artemisApp.ltiUserId.detail.title'
             },
             views: {
                 'content@': {

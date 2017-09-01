@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('LoginService', LoginService);
 
     LoginService.$inject = ['$uibModal'];

@@ -1,4 +1,4 @@
-# ArTEMiS Application Exercise Setup Instructions
+# ArTEMiS Application Setup Instructions
 
 Please follow these instructions carefully to set up a new exercise for the students in course. The instructions demonstrate setting up a Java exercise, however this can be adapted to any programming language supported by the build server.
 
@@ -30,7 +30,7 @@ Please follow these instructions carefully to set up a new exercise for the stud
 You will need to create a unique Bitbucket project per exercise.
 
 1. Choose an appropriate project name and key. E.g. for the exercise "*State Chart*" in the course "*Introduction to Software Engineering (Summer 2016)*" a suitable project key would be `EIST16SC`.
-2. Give the user *exerciseapp* admin permissions on the project.
+2. Give the user *artemis* admin permissions on the project.
 3. Inside the project, create two repositories:
     1. Repository containing the exercise code for the students. Since the repository contains no reference to the Bitbucket project outside of the Bitbucket UI, we recommend to name this repository with the project key. Add this repository as a remote for your local exercise repository and push.
     2. Repository containing the testing code. Choose a descriptive name, e.g. "*TEST*". Add this repository as a remote for your local exercise’s test repository and push.
@@ -44,7 +44,7 @@ You will need to create a unique Bitbucket project per exercise.
     4. Click "*Configure plan*".
     5. Click  "*Create*" (Setup will be completed in next step).
 2. Configure the plan (`Open plan` -> `Actions` -> `Configure plan`):
-    * Permissions: Remove the *View* permission for logged in and anonymous users. Add admin permissions for the user *exerciseapp*.
+    * Permissions: Remove the *View* permission for logged in and anonymous users. Add admin permissions for the user *artemis*.
     * Repositories: 
         1. Remove the repository which was linked during the initial setup.
         2. Click "*Add repository*".
@@ -56,10 +56,10 @@ You will need to create a unique Bitbucket project per exercise.
         3. Add a Maven 3.x task with goal `clean test`. Check "*This build will produce test results*". Other settings might depend on your specific code setup.
         4. Add a script task with the following (inline) content:
 
-                curl -k -X POST https://exercisebruegge.in.tum.de/api/results/${bamboo.planKey}
+                curl -k -X POST https://artemis.ase.in.tum.de/api/results/${bamboo.planKey}
         5. *Optional*: Add a requirement "*AgentType equals Amazon*" to the job if it should only be built on remote build agents.
 
-## [ArTEMiS Application Setup](https://exercisebruegge.in.tum.de)
+## [ArTEMiS Application Setup](https://artemis.ase.in.tum)
 
 Make sure you are in user group *ls1instructor* to have admin permissions in ArTEMiS.
 

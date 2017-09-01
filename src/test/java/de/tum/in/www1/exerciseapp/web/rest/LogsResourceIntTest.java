@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import de.tum.in.www1.exerciseapp.web.rest.vm.LoggerVM;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.LoggerContext;
@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @see LogsResource
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ExerciseApplicationApp.class)
+@SpringBootTest(classes = ArTEMiSApp.class)
 public class LogsResourceIntTest {
 
     private MockMvc restLogsMockMvc;

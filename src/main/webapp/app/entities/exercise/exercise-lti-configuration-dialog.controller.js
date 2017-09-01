@@ -5,7 +5,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('ExerciseLtiConfigurationDialogController', ExerciseLtiConfigurationDialogController);
 
     ExerciseLtiConfigurationDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'exercise', 'configuration', 'ExerciseLtiConfiguration'];

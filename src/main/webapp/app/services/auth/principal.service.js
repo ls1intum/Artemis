@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('Principal', Principal);
 
     Principal.$inject = ['$q', 'Account', 'JhiWebsocketService'];

@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('Activate', Activate);
 
     Activate.$inject = ['$resource'];
