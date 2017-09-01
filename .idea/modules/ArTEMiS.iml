@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="ArTEMiS" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.exerciseapp" external.system.module.version="1.3.0" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../..">
+      <excludeFolder url="file://$MODULE_DIR$/../../.gradle" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/classes" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/jacoco" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/libs" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/resources" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/test-classes" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/test-results" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/tmp" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/www" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

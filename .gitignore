@@ -62,8 +62,6 @@ local.properties
 ######################
 # Intellij
 ######################
-.idea/
-*.iml
 *.iws
 *.ipr
 *.ids
@@ -153,3 +151,6 @@ Desktop.ini
 
 vpproject
 out
+/.idea/artifacts
+/.idea/libraries
+/.idea/workspace.xml
