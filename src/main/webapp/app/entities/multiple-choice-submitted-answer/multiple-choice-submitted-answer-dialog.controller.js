@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('MultipleChoiceSubmittedAnswerDialogController', MultipleChoiceSubmittedAnswerDialogController);
 
     MultipleChoiceSubmittedAnswerDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'MultipleChoiceSubmittedAnswer', 'AnswerOption'];
@@ -33,7 +33,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:multipleChoiceSubmittedAnswerUpdate', result);
+            $scope.$emit('artemisApp:multipleChoiceSubmittedAnswerUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

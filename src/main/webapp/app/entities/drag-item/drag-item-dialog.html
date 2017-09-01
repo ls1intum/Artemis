@@ -4,7 +4,7 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 ng-click="vm.clear()">&times;</button>
-        <h4 class="modal-title" id="myDragItemLabel" data-translate="exerciseApplicationApp.dragItem.home.createOrEditLabel">Create or edit a Drag Item</h4>
+        <h4 class="modal-title" id="myDragItemLabel" data-translate="artemisApp.dragItem.home.createOrEditLabel">Create or edit a Drag Item</h4>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -14,38 +14,38 @@
                     ng-model="vm.dragItem.id" readonly />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.dragItem.pictureFilePath" for="field_pictureFilePath">Picture File Path</label>
+            <label class="control-label" data-translate="artemisApp.dragItem.pictureFilePath" for="field_pictureFilePath">Picture File Path</label>
             <input type="text" class="form-control" name="pictureFilePath" id="field_pictureFilePath"
                     ng-model="vm.dragItem.pictureFilePath"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.dragItem.text" for="field_text">Text</label>
+            <label class="control-label" data-translate="artemisApp.dragItem.text" for="field_text">Text</label>
             <input type="text" class="form-control" name="text" id="field_text"
                     ng-model="vm.dragItem.text"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.dragItem.correctScore" for="field_correctScore">Correct Score</label>
+            <label class="control-label" data-translate="artemisApp.dragItem.correctScore" for="field_correctScore">Correct Score</label>
             <input type="number" class="form-control" name="correctScore" id="field_correctScore"
                     ng-model="vm.dragItem.correctScore"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.dragItem.incorrectScore" for="field_incorrectScore">Incorrect Score</label>
+            <label class="control-label" data-translate="artemisApp.dragItem.incorrectScore" for="field_incorrectScore">Incorrect Score</label>
             <input type="number" class="form-control" name="incorrectScore" id="field_incorrectScore"
                     ng-model="vm.dragItem.incorrectScore"
                     />
         </div>
 
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.dragItem.correctLocation" for="field_correctLocation">Correct Location</label>
+            <label data-translate="artemisApp.dragItem.correctLocation" for="field_correctLocation">Correct Location</label>
             <select class="form-control" id="field_correctLocation" name="correctLocation" ng-model="vm.dragItem.correctLocation" ng-options="dropLocation as dropLocation.id for dropLocation in vm.correctlocations | orderBy:'id' track by dropLocation.id">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.dragItem.question" for="field_question">Question</label>
+            <label data-translate="artemisApp.dragItem.question" for="field_question">Question</label>
             <select class="form-control" id="field_question" name="question" ng-model="vm.dragItem.question" ng-options="dragAndDropQuestion as dragAndDropQuestion.id for dragAndDropQuestion in vm.draganddropquestions track by dragAndDropQuestion.id">
                 <option value=""></option>
             </select>

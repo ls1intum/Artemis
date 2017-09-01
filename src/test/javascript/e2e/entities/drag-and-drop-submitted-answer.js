@@ -24,7 +24,7 @@ describe('DragAndDropSubmittedAnswer e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="drag-and-drop-submitted-answer"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.dragAndDropSubmittedAnswer.home.title/);
+                expect(value).toMatch(/artemisApp.dragAndDropSubmittedAnswer.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('DragAndDropSubmittedAnswer e2e test', function () {
     it('should load create DragAndDropSubmittedAnswer dialog', function () {
         element(by.css('[ui-sref="drag-and-drop-submitted-answer.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.dragAndDropSubmittedAnswer.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.dragAndDropSubmittedAnswer.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

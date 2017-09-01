@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 
 import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestion;
 import de.tum.in.www1.exerciseapp.domain.Question;
@@ -35,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @see QuestionResource
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ExerciseApplicationApp.class)
+@SpringBootTest(classes = ArTEMiSApp.class)
 public class QuestionResourceIntTest {
 
     private static final String DEFAULT_TITLE = "AAAAAAAAAA";

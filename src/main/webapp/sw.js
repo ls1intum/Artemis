@@ -1,5 +1,5 @@
-var dataCacheName = '"exerciseApplicationApp-v1';
-var cacheName = '"exerciseApplicationApp-1';
+var dataCacheName = '"artemisApp-v1';
+var cacheName = '"artemisApp-1';
 var filesToCache = [
     '/',
     '/index.html'

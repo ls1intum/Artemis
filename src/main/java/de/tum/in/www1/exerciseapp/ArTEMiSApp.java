@@ -24,18 +24,18 @@ import java.util.Collection;
 @ComponentScan
 @EnableAutoConfiguration(exclude = {MetricFilterAutoConfiguration.class, MetricRepositoryAutoConfiguration.class})
 @EnableConfigurationProperties({LiquibaseProperties.class, ApplicationProperties.class})
-public class ExerciseApplicationApp {
+public class ArTEMiSApp {
 
-    private static final Logger log = LoggerFactory.getLogger(ExerciseApplicationApp.class);
+    private static final Logger log = LoggerFactory.getLogger(ArTEMiSApp.class);
 
     private final Environment env;
 
-    public ExerciseApplicationApp(Environment env) {
+    public ArTEMiSApp(Environment env) {
         this.env = env;
     }
 
     /**
-     * Initializes ExerciseApplication.
+     * Initializes ArTEMiSApp.
      * <p>
      * Spring profiles can be configured with a program arguments --spring.profiles.active=your-active-profile
      * <p>
@@ -61,7 +61,7 @@ public class ExerciseApplicationApp {
      * @throws UnknownHostException if the local host name could not be resolved into an address
      */
     public static void main(String[] args) throws UnknownHostException {
-        SpringApplication app = new SpringApplication(ExerciseApplicationApp.class);
+        SpringApplication app = new SpringApplication(ArTEMiSApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
         Environment env = app.run(args).getEnvironment();
         String protocol = "http";

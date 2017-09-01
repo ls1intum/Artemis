@@ -4,7 +4,7 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 ng-click="vm.clear()">&times;</button>
-        <h4 class="modal-title" id="myParticipationLabel" data-translate="exerciseApplicationApp.participation.home.createOrEditLabel">Create or edit a Participation</h4>
+        <h4 class="modal-title" id="myParticipationLabel" data-translate="artemisApp.participation.home.createOrEditLabel">Create or edit a Participation</h4>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -14,30 +14,30 @@
                     ng-model="vm.participation.id" readonly />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.participation.repositoryUrl" for="field_repositoryUrl">Repository Url</label>
+            <label class="control-label" data-translate="artemisApp.participation.repositoryUrl" for="field_repositoryUrl">Repository Url</label>
             <input type="text" class="form-control" name="repositoryUrl" id="field_repositoryUrl"
                     ng-model="vm.participation.repositoryUrl"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.participation.buildPlanId" for="field_buildPlanId">Build Plan Id</label>
+            <label class="control-label" data-translate="artemisApp.participation.buildPlanId" for="field_buildPlanId">Build Plan Id</label>
             <input type="text" class="form-control" name="buildPlanId" id="field_buildPlanId"
                     ng-model="vm.participation.buildPlanId"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.participation.initializationState" for="field_initializationState">Initialization State</label>
+            <label class="control-label" data-translate="artemisApp.participation.initializationState" for="field_initializationState">Initialization State</label>
             <select class="form-control" name="initializationState" ng-model="vm.participation.initializationState" id="field_initializationState">
-                <option value="UNINITIALIZED" data-translate="exerciseApplicationApp.ParticipationState.UNINITIALIZED">UNINITIALIZED</option>
-                <option value="REPO_COPIED" data-translate="exerciseApplicationApp.ParticipationState.REPO_COPIED">REPO_COPIED</option>
-                <option value="REPO_CONFIGURED" data-translate="exerciseApplicationApp.ParticipationState.REPO_CONFIGURED">REPO_CONFIGURED</option>
-                <option value="BUILD_PLAN_COPIED" data-translate="exerciseApplicationApp.ParticipationState.BUILD_PLAN_COPIED">BUILD_PLAN_COPIED</option>
-                <option value="BUILD_PLAN_CONFIGURED" data-translate="exerciseApplicationApp.ParticipationState.BUILD_PLAN_CONFIGURED">BUILD_PLAN_CONFIGURED</option>
-                <option value="INITIALIZED" data-translate="exerciseApplicationApp.ParticipationState.INITIALIZED">INITIALIZED</option>
+                <option value="UNINITIALIZED" data-translate="artemisApp.ParticipationState.UNINITIALIZED">UNINITIALIZED</option>
+                <option value="REPO_COPIED" data-translate="artemisApp.ParticipationState.REPO_COPIED">REPO_COPIED</option>
+                <option value="REPO_CONFIGURED" data-translate="artemisApp.ParticipationState.REPO_CONFIGURED">REPO_CONFIGURED</option>
+                <option value="BUILD_PLAN_COPIED" data-translate="artemisApp.ParticipationState.BUILD_PLAN_COPIED">BUILD_PLAN_COPIED</option>
+                <option value="BUILD_PLAN_CONFIGURED" data-translate="artemisApp.ParticipationState.BUILD_PLAN_CONFIGURED">BUILD_PLAN_CONFIGURED</option>
+                <option value="INITIALIZED" data-translate="artemisApp.ParticipationState.INITIALIZED">INITIALIZED</option>
             </select>
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.participation.initializationDate" for="field_initializationDate">Initialization Date</label>
+            <label class="control-label" data-translate="artemisApp.participation.initializationDate" for="field_initializationDate">Initialization Date</label>
                 <div class="input-group">
                     <input id="field_initializationDate" type="text" class="form-control" name="initializationDate" datetime-picker="{{dateformat}}" ng-model="vm.participation.initializationDate" is-open="vm.datePickerOpenStatus.initializationDate"
                     />
@@ -48,13 +48,13 @@
         </div>
 
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.participation.student" for="field_student">Student</label>
+            <label data-translate="artemisApp.participation.student" for="field_student">Student</label>
             <select class="form-control" id="field_student" name="student" ng-model="vm.participation.student" ng-options="user as user.login for user in vm.users track by user.id">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.participation.exercise" for="field_exercise">Exercise</label>
+            <label data-translate="artemisApp.participation.exercise" for="field_exercise">Exercise</label>
             <select class="form-control" id="field_exercise" name="exercise" ng-model="vm.participation.exercise" ng-options="exercise as exercise.title for exercise in vm.exercises track by exercise.id">
                 <option value=""></option>
             </select>

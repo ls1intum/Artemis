@@ -1,7 +1,7 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import io.github.jhipster.config.JHipsterProperties;
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @see ProfileInfoResource
  **/
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ExerciseApplicationApp.class)
+@SpringBootTest(classes = ArTEMiSApp.class)
 public class ProfileInfoResourceIntTest {
 
     @Mock

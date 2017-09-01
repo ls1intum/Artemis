@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('DragItemDeleteController',DragItemDeleteController);
 
     DragItemDeleteController.$inject = ['$uibModalInstance', 'entity', 'DragItem'];

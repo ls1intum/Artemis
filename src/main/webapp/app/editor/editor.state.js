@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .config(stateConfig);
 
     stateConfig.$inject = ['$stateProvider'];
@@ -23,7 +23,7 @@
                 bodyClass: 'editor',
                 data: {
                     authorities: ['ROLE_USER'],
-                    pageTitle: 'exerciseApplicationApp.editor.title'
+                    pageTitle: 'artemisApp.editor.title'
                 },
                 views: {
                     'content@': {

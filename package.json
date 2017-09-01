@@ -1,7 +1,7 @@
 {
-  "name": "exercise-application",
-  "version": "0.0.0",
-  "description": "Description for ExerciseApplication",
+  "name": "ArTEMiS",
+  "version": "1.3.0",
+  "description": "AuTomated assEssment Management System for Interactive Learning",
   "private": true,
   "license": "UNLICENSED",
   "cacheDirectories": [

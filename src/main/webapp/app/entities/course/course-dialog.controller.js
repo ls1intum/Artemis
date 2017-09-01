@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('CourseDialogController', CourseDialogController);
 
     CourseDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'Course', 'Exercise'];
@@ -33,7 +33,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:courseUpdate', result);
+            $scope.$emit('artemisApp:courseUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

@@ -1,7 +1,7 @@
 (function() {
     'use strict';
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('ModelingExercise', ModelingExercise);
 
     ModelingExercise.$inject = ['$resource'];

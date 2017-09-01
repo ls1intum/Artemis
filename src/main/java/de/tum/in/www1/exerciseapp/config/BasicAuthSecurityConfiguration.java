@@ -17,7 +17,7 @@ public class BasicAuthSecurityConfiguration extends WebSecurityConfigurerAdapter
             .authorizeRequests()
                 .anyRequest().authenticated()
             .and()
-                .httpBasic().realmName("ExerciseApplication")
+                .httpBasic().realmName("ArTEMiS")
             .and()
                 .sessionManagement()
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)

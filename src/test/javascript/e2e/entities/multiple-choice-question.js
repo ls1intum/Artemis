@@ -24,7 +24,7 @@ describe('MultipleChoiceQuestion e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="multiple-choice-question"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.multipleChoiceQuestion.home.title/);
+                expect(value).toMatch(/artemisApp.multipleChoiceQuestion.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('MultipleChoiceQuestion e2e test', function () {
     it('should load create MultipleChoiceQuestion dialog', function () {
         element(by.css('[ui-sref="multiple-choice-question.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.multipleChoiceQuestion.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.multipleChoiceQuestion.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

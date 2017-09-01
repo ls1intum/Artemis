@@ -24,7 +24,7 @@ describe('DragItem e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="drag-item"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.dragItem.home.title/);
+                expect(value).toMatch(/artemisApp.dragItem.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('DragItem e2e test', function () {
     it('should load create DragItem dialog', function () {
         element(by.css('[ui-sref="drag-item.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.dragItem.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.dragItem.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

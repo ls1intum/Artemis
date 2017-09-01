@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('LtiUserIdDialogController', LtiUserIdDialogController);
 
     LtiUserIdDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'LtiUserId', 'User'];
@@ -33,7 +33,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:ltiUserIdUpdate', result);
+            $scope.$emit('artemisApp:ltiUserIdUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

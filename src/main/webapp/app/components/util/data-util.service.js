@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('DataUtils', DataUtils);
 
     DataUtils.$inject = ['$window'];

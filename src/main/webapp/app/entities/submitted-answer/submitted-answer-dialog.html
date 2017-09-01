@@ -4,7 +4,7 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 ng-click="vm.clear()">&times;</button>
-        <h4 class="modal-title" id="mySubmittedAnswerLabel" data-translate="exerciseApplicationApp.submittedAnswer.home.createOrEditLabel">Create or edit a Submitted Answer</h4>
+        <h4 class="modal-title" id="mySubmittedAnswerLabel" data-translate="artemisApp.submittedAnswer.home.createOrEditLabel">Create or edit a Submitted Answer</h4>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -15,7 +15,7 @@
         </div>
 
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.submittedAnswer.submission" for="field_submission">Submission</label>
+            <label data-translate="artemisApp.submittedAnswer.submission" for="field_submission">Submission</label>
             <select class="form-control" id="field_submission" name="submission" ng-model="vm.submittedAnswer.submission" ng-options="quizSubmission as quizSubmission.id for quizSubmission in vm.quizsubmissions track by quizSubmission.id">
                 <option value=""></option>
             </select>

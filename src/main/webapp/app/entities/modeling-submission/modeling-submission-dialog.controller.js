@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('ModelingSubmissionDialogController', ModelingSubmissionDialogController);
 
     ModelingSubmissionDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'ModelingSubmission'];
@@ -32,7 +32,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:modelingSubmissionUpdate', result);
+            $scope.$emit('artemisApp:modelingSubmissionUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

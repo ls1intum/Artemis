@@ -1,7 +1,7 @@
 (function() {
     'use strict';
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('Result', Result)
         .factory('ParticipationResult', ParticipationResult)
         .factory('CourseResult', CourseResult);

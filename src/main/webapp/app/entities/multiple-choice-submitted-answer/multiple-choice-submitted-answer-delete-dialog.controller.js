@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('MultipleChoiceSubmittedAnswerDeleteController',MultipleChoiceSubmittedAnswerDeleteController);
 
     MultipleChoiceSubmittedAnswerDeleteController.$inject = ['$uibModalInstance', 'entity', 'MultipleChoiceSubmittedAnswer'];

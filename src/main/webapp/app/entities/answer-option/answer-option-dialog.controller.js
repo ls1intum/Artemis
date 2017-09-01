@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('AnswerOptionDialogController', AnswerOptionDialogController);
 
     AnswerOptionDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'AnswerOption', 'MultipleChoiceQuestion'];
@@ -33,7 +33,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:answerOptionUpdate', result);
+            $scope.$emit('artemisApp:answerOptionUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

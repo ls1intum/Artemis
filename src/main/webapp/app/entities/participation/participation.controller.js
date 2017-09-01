@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('ParticipationController', ParticipationController);
 
     ParticipationController.$inject = ['Participation', 'ExerciseParticipations', 'exerciseEntity'];

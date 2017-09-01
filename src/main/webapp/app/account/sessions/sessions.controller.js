@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('SessionsController', SessionsController);
 
     SessionsController.$inject = ['Sessions', 'Principal'];

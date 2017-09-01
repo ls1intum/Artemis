@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 
 import de.tum.in.www1.exerciseapp.domain.LtiUserId;
 import de.tum.in.www1.exerciseapp.repository.LtiUserIdRepository;
@@ -34,7 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * @see LtiUserIdResource
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ExerciseApplicationApp.class)
+@SpringBootTest(classes = ArTEMiSApp.class)
 public class LtiUserIdResourceIntTest {
 
     private static final String DEFAULT_LTI_USER_ID = "AAAAAAAAAA";

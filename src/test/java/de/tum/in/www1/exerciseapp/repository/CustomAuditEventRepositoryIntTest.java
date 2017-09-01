@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.repository;
 
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.config.audit.AuditEventConverter;
 import de.tum.in.www1.exerciseapp.domain.PersistentAuditEvent;
@@ -31,7 +31,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * @see CustomAuditEventRepository
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ExerciseApplicationApp.class)
+@SpringBootTest(classes = ArTEMiSApp.class)
 @Transactional
 public class CustomAuditEventRepositoryIntTest {
 

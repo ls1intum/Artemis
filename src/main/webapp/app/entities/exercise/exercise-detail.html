@@ -1,22 +1,22 @@
 
 <div>
-    <h2><span data-translate="exerciseApplicationApp.exercise.detail.title">Exercise</span> {{vm.exercise.id}}</h2>
+    <h2><span data-translate="artemisApp.exercise.detail.title">Exercise</span> {{vm.exercise.id}}</h2>
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span data-translate="exerciseApplicationApp.exercise.title">Title</span></dt>
+        <dt><span data-translate="artemisApp.exercise.title">Title</span></dt>
         <dd>
             <span>{{vm.exercise.title}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.exercise.releaseDate">Release Date</span></dt>
+        <dt><span data-translate="artemisApp.exercise.releaseDate">Release Date</span></dt>
         <dd>
             <span>{{vm.exercise.releaseDate | date:'medium'}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.exercise.dueDate">Due Date</span></dt>
+        <dt><span data-translate="artemisApp.exercise.dueDate">Due Date</span></dt>
         <dd>
             <span>{{vm.exercise.dueDate | date:'medium'}}</span>
         </dd>
-        <dt><span data-translate="exerciseApplicationApp.exercise.course">Course</span></dt>
+        <dt><span data-translate="artemisApp.exercise.course">Course</span></dt>
         <dd>
             <a ui-sref="course-detail({id:vm.exercise.course.id})">{{vm.exercise.course.title}}</a>
         </dd>

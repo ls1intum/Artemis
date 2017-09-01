@@ -28,16 +28,16 @@ public class BitbucketService implements VersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
-    @Value("${exerciseapp.bitbucket.url}")
+    @Value("${artemis.bitbucket.url}")
     private URL BITBUCKET_URL;
 
-    @Value("${exerciseapp.bitbucket.user}")
+    @Value("${artemis.bitbucket.user}")
     private String BITBUCKET_USER;
 
-    @Value("${exerciseapp.bitbucket.password}")
+    @Value("${artemis.bitbucket.password}")
     private String BITBUCKET_PASSWORD;
 
-    @Value("${exerciseapp.lti.user-prefix}")
+    @Value("${artemis.lti.user-prefix}")
     private String USER_PREFIX = "";
 
     private final UserService userService;

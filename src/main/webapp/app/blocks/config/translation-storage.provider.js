@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('translationStorageProvider', translationStorageProvider);
 
     translationStorageProvider.$inject = ['$cookies', '$log', 'LANGUAGES'];

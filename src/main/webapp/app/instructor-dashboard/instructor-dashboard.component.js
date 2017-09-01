@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .component('instructorDashboard', {
             bindings: {
                 courseId: '<',

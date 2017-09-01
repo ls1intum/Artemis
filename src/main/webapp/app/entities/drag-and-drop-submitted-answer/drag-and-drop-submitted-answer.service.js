@@ -1,7 +1,7 @@
 (function() {
     'use strict';
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('DragAndDropSubmittedAnswer', DragAndDropSubmittedAnswer);
 
     DragAndDropSubmittedAnswer.$inject = ['$resource'];

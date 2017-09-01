@@ -24,7 +24,7 @@ describe('QuizSubmission e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="quiz-submission"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.quizSubmission.home.title/);
+                expect(value).toMatch(/artemisApp.quizSubmission.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('QuizSubmission e2e test', function () {
     it('should load create QuizSubmission dialog', function () {
         element(by.css('[ui-sref="quiz-submission.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/exerciseApplicationApp.quizSubmission.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.quizSubmission.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

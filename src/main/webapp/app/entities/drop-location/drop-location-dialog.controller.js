@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('DropLocationDialogController', DropLocationDialogController);
 
     DropLocationDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'DropLocation', 'DragAndDropQuestion'];
@@ -33,7 +33,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:dropLocationUpdate', result);
+            $scope.$emit('artemisApp:dropLocationUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

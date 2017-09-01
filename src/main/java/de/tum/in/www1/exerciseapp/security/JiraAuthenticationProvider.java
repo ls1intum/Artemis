@@ -39,16 +39,16 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
 
     private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
-    @Value("${exerciseapp.jira.instructor-group-name}")
+    @Value("${artemis.jira.instructor-group-name}")
     private String INSTRUCTOR_GROUP_NAME;
 
-    @Value("${exerciseapp.jira.url}")
+    @Value("${artemis.jira.url}")
     private URL JIRA_URL;
 
-    @Value("${exerciseapp.jira.user}")
+    @Value("${artemis.jira.user}")
     private String JIRA_USER;
 
-    @Value("${exerciseapp.jira.password}")
+    @Value("${artemis.jira.password}")
     private String JIRA_PASSWORD;
 
     private final UserService userService;

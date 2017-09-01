@@ -3,7 +3,7 @@
     /* globals SockJS, Stomp */
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('JhiWebsocketService', JhiWebsocketService);
 
     JhiWebsocketService.$inject = ['$rootScope', '$window', '$cookies', '$http', '$q'];

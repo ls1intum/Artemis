@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('translationHandler', translationHandler);
 
     translationHandler.$inject = ['$rootScope', '$window', '$state', '$translate'];

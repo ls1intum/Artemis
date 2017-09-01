@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('QuizExerciseDialogController', QuizExerciseDialogController);
 
     QuizExerciseDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'QuizExercise', 'Question'];
@@ -33,7 +33,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:quizExerciseUpdate', result);
+            $scope.$emit('artemisApp:quizExerciseUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

@@ -11,7 +11,7 @@
     };
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .component('jhiAlert', jhiAlert);
 
     jhiAlertController.$inject = ['$scope', 'AlertService'];

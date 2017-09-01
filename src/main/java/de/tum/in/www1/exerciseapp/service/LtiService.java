@@ -50,16 +50,16 @@ public class LtiService {
 
     private final Logger log = LoggerFactory.getLogger(LtiService.class);
 
-    @Value("${exerciseapp.lti.oauth-key}")
+    @Value("${artemis.lti.oauth-key}")
     private String OAUTH_KEY;
 
-    @Value("${exerciseapp.lti.oauth-secret}")
+    @Value("${artemis.lti.oauth-secret}")
     private String OAUTH_SECRET;
 
-    @Value("${exerciseapp.lti.user-prefix}")
+    @Value("${artemis.lti.user-prefix}")
     private String USER_PREFIX = "";
 
-    @Value("${exerciseapp.lti.user-group-name}")
+    @Value("${artemis.lti.user-group-name}")
     private String USER_GROUP_NAME = "lti";
 
     private UserService userService;

@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
-import de.tum.in.www1.exerciseapp.ExerciseApplicationApp;
+import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
@@ -41,7 +41,7 @@ import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
  * @see ParticipationResource
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = ExerciseApplicationApp.class)
+@SpringBootTest(classes = ArTEMiSApp.class)
 public class ParticipationResourceIntTest {
 
     private static final String DEFAULT_REPOSITORY_URL = "AAAAAAAAAA";

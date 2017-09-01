@@ -1,7 +1,7 @@
 (function() {
     'use strict';
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .factory('MultipleChoiceQuestion', MultipleChoiceQuestion);
 
     MultipleChoiceQuestion.$inject = ['$resource'];

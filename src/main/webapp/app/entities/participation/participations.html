@@ -9,7 +9,7 @@
             <div class="col-xs-4 no-padding-left" ng-hide="true">
                 <button class="btn btn-primary" ui-sref="participation.new" >
                     <span class="glyphicon glyphicon-plus"></span>
-                    <span  data-translate="exerciseApplicationApp.participation.home.createLabel">
+                    <span  data-translate="artemisApp.participation.home.createLabel">
                         Create new Participation
                     </span>
                 </button>
@@ -30,12 +30,12 @@
             <thead>
                 <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.reset()">
                     <th jh-sort-by="id"><span data-translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="repositoryUrl"><span data-translate="exerciseApplicationApp.participation.repositoryUrl">Repository Url</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="buildPlanId"><span data-translate="exerciseApplicationApp.participation.buildPlanId">Build Plan Id</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="initializationState"><span data-translate="exerciseApplicationApp.participation.initializationState">Initialization State</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="initializationDate"><span data-translate="exerciseApplicationApp.participation.initializationDate">Initialization Date</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="student.login"><span data-translate="exerciseApplicationApp.participation.student">Student</span> <span class="glyphicon glyphicon-sort"></span></th>
-                    <th jh-sort-by="exercise.title"><span data-translate="exerciseApplicationApp.participation.exercise">Exercise</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="repositoryUrl"><span data-translate="artemisApp.participation.repositoryUrl">Repository Url</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="buildPlanId"><span data-translate="artemisApp.participation.buildPlanId">Build Plan Id</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="initializationState"><span data-translate="artemisApp.participation.initializationState">Initialization State</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="initializationDate"><span data-translate="artemisApp.participation.initializationDate">Initialization Date</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="student.login"><span data-translate="artemisApp.participation.student">Student</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="exercise.title"><span data-translate="artemisApp.participation.exercise">Exercise</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -44,7 +44,7 @@
                     <td><a ui-sref="participation-detail({id:participation.id})">{{participation.id}}</a></td>
                     <td>{{participation.repositoryUrl}}</td>
                     <td>{{participation.buildPlanId}}</td>
-                    <td data-translate="{{'exerciseApplicationApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
+                    <td data-translate="{{'artemisApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
                     <td>{{participation.initializationDate | date:'medium'}}</td>
                     <td>
                         <a ui-sref="user-management-detail({login:participation.student.login})">{{participation.student.firstName}}</a>

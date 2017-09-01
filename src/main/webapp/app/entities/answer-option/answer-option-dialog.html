@@ -4,7 +4,7 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 ng-click="vm.clear()">&times;</button>
-        <h4 class="modal-title" id="myAnswerOptionLabel" data-translate="exerciseApplicationApp.answerOption.home.createOrEditLabel">Create or edit a Answer Option</h4>
+        <h4 class="modal-title" id="myAnswerOptionLabel" data-translate="artemisApp.answerOption.home.createOrEditLabel">Create or edit a Answer Option</h4>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -14,31 +14,31 @@
                     ng-model="vm.answerOption.id" readonly />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.answerOption.text" for="field_text">Text</label>
+            <label class="control-label" data-translate="artemisApp.answerOption.text" for="field_text">Text</label>
             <input type="text" class="form-control" name="text" id="field_text"
                     ng-model="vm.answerOption.text"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.answerOption.isCorrect" for="field_isCorrect">Is Correct</label>
+            <label class="control-label" data-translate="artemisApp.answerOption.isCorrect" for="field_isCorrect">Is Correct</label>
                 <input type="checkbox" name="isCorrect" id="field_isCorrect"
                           ng-model="vm.answerOption.isCorrect"/>
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.answerOption.correctScore" for="field_correctScore">Correct Score</label>
+            <label class="control-label" data-translate="artemisApp.answerOption.correctScore" for="field_correctScore">Correct Score</label>
             <input type="number" class="form-control" name="correctScore" id="field_correctScore"
                     ng-model="vm.answerOption.correctScore"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="exerciseApplicationApp.answerOption.incorrectScore" for="field_incorrectScore">Incorrect Score</label>
+            <label class="control-label" data-translate="artemisApp.answerOption.incorrectScore" for="field_incorrectScore">Incorrect Score</label>
             <input type="number" class="form-control" name="incorrectScore" id="field_incorrectScore"
                     ng-model="vm.answerOption.incorrectScore"
                     />
         </div>
 
         <div class="form-group">
-            <label data-translate="exerciseApplicationApp.answerOption.question" for="field_question">Question</label>
+            <label data-translate="artemisApp.answerOption.question" for="field_question">Question</label>
             <select class="form-control" id="field_question" name="question" ng-model="vm.answerOption.question" ng-options="multipleChoiceQuestion as multipleChoiceQuestion.id for multipleChoiceQuestion in vm.multiplechoicequestions track by multipleChoiceQuestion.id">
                 <option value=""></option>
             </select>

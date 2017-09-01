@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('ProgrammingExerciseDeleteController',ProgrammingExerciseDeleteController);
 
     ProgrammingExerciseDeleteController.$inject = ['$uibModalInstance', 'entity', 'ProgrammingExercise'];

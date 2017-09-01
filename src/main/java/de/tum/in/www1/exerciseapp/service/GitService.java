@@ -31,19 +31,19 @@ public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
 
-    @Value("${exerciseapp.bitbucket.user}")
+    @Value("${artemis.bitbucket.user}")
     private String GIT_USER;
 
-    @Value("${exerciseapp.bitbucket.password}")
+    @Value("${artemis.bitbucket.password}")
     private String GIT_PASSWORD;
 
-    @Value("${exerciseapp.repo-clone-path}")
+    @Value("${artemis.repo-clone-path}")
     private String REPO_CLONE_PATH;
 
-    @Value("${exerciseapp.git.name}")
+    @Value("${artemis.git.name}")
     private String GIT_NAME;
 
-    @Value("${exerciseapp.git.email}")
+    @Value("${artemis.git.email}")
     private String GIT_EMAIL;
 
 

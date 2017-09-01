@@ -73,7 +73,7 @@ public class UserService {
         return encryptor;
     }
 
-    @Value("${exerciseapp.encryption-password}")
+    @Value("${artemis.encryption-password}")
     private String ENCRYPTION_PASSWORD;
 
     public Optional<User> activateRegistration(String key) {

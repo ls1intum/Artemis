@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('DragItemDialogController', DragItemDialogController);
 
     DragItemDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'DragItem', 'DropLocation', 'DragAndDropQuestion'];
@@ -42,7 +42,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('exerciseApplicationApp:dragItemUpdate', result);
+            $scope.$emit('artemisApp:dragItemUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

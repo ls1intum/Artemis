@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('ParticipationDeleteController', ParticipationDeleteController);
 
     ParticipationDeleteController.$inject = ['$uibModalInstance', 'entity', 'Participation'];
@@ -13,7 +13,7 @@
         vm.participation = entity;
         vm.deleteBuildPlan = true;
         vm.deleteRepository = true;
-        
+
         vm.clear = clear;
         vm.confirmDelete = confirmDelete;
 

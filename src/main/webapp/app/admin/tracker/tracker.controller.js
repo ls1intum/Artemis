@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .controller('JhiTrackerController', JhiTrackerController);
 
     JhiTrackerController.$inject = ['$cookies', '$http', 'JhiWebsocketService'];
