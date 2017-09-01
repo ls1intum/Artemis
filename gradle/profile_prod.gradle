@@ -47,14 +47,8 @@ processResources {
     }
 }
 
-// Workaround for https://github.com/srs/gradle-node-plugin/issues/134 doesn't work with yarn
-if (!project.hasProperty('nodeInstall')) {
-    gulpBuildWithOpts.dependsOn yarn_install
-} else {
-    gulpBuildWithOpts.dependsOn npm_install
-}
-
-gulpBuildWithOpts.dependsOn bower
+gulpBuildWithOpts.dependsOn 'npmInstall'
+gulpBuildWithOpts.dependsOn 'bower'
 processResources.dependsOn gulpBuildWithOpts
 test.dependsOn gulp_test
 bootRun.dependsOn gulp_test
