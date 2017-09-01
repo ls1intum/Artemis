@@ -1,11 +1,11 @@
 package de.tum.in.www1.exerciseapp.config;
 
 import io.github.jhipster.config.JHipsterConstants;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.core.env.Environment;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Utility class to load a Spring profile to be used as default

@@ -1,8 +1,8 @@
 package de.tum.in.www1.exerciseapp.web.rest.vm;
 
 import de.tum.in.www1.exerciseapp.service.dto.UserDTO;
-import javax.validation.constraints.Size;
 
+import javax.validation.constraints.Size;
 import java.time.Instant;
 import java.util.Set;
 

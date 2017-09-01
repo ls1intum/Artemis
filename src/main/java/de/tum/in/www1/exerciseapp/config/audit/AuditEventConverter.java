@@ -1,7 +1,6 @@
 package de.tum.in.www1.exerciseapp.config.audit;
 
 import de.tum.in.www1.exerciseapp.domain.PersistentAuditEvent;
-
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Component;

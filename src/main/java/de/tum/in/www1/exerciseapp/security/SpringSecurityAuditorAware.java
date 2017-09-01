@@ -1,7 +1,6 @@
 package de.tum.in.www1.exerciseapp.security;
 
 import de.tum.in.www1.exerciseapp.config.Constants;
-
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.stereotype.Component;
 

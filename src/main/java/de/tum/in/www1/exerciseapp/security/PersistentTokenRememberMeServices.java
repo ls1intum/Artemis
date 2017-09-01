@@ -1,22 +1,22 @@
 package de.tum.in.www1.exerciseapp.security;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import de.tum.in.www1.exerciseapp.domain.PersistentToken;
 import de.tum.in.www1.exerciseapp.repository.PersistentTokenRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.service.util.RandomUtil;
-
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-
 import io.github.jhipster.config.JHipsterProperties;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataAccessException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.web.authentication.rememberme.*;
+import org.springframework.security.web.authentication.rememberme.AbstractRememberMeServices;
+import org.springframework.security.web.authentication.rememberme.CookieTheftException;
+import org.springframework.security.web.authentication.rememberme.InvalidCookieException;
+import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,9 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.concurrent.TimeUnit;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Custom implementation of Spring Security's RememberMeServices.

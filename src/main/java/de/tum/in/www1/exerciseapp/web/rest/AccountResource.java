@@ -1,8 +1,6 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-
-import de.tum.in.www1.exerciseapp.config.SecurityConfiguration;
 import de.tum.in.www1.exerciseapp.domain.PersistentToken;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.PersistentTokenRepository;
@@ -11,12 +9,10 @@ import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.service.MailService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.service.dto.UserDTO;
+import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.exerciseapp.web.rest.vm.ManagedUserVM;
-import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
-
 import org.apache.commons.lang3.StringUtils;
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -29,7 +25,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * REST controller for managing the current user's account.
