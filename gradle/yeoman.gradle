@@ -1,10 +1,15 @@
-apply plugin: 'com.moowork.node'
+import org.gradle.internal.os.OperatingSystem
 
-task bower(type: NodeTask) {
-    description = "Installs dependencies using Bower"
-    script = file("${project.projectDir}/node_modules/bower/bin/bower")
-    args = ['install']
+apply plugin: 'com.moowork.node'
+apply plugin: 'com.moowork.gulp'
+
+task bower(type: Exec) {
+    if (OperatingSystem.current().isWindows()) {
+        commandLine 'cmd', '/c', 'bower', 'install'
+    } else {
+        commandLine 'bower', 'install'
+    }
 }
 
-processResources.dependsOn bower
+processResources.dependsOn 'bower'
 bower.onlyIf { !project.hasProperty('skipBower') }
