@@ -79,6 +79,39 @@ server:
     port: 8080
 
 # ===================================================================
+# ArTEMiS specific properties
+# ===================================================================
+
+exerciseapp:
+  repo-clone-path: ./repos/
+  encryption-password: <encryption-password>
+  result-retrieval-delay: 5000
+  jira:
+    url: https://jirabruegge.in.tum.de
+    user: <username>
+    password: <password>
+    instructor-group-name: <group>
+  bitbucket:
+    url: https://repobruegge.in.tum.de
+    user: <username>
+    password: <password>
+  bamboo:
+    url: https://bamboobruegge.in.tum.de
+    bitbucket-application-link-id: <application-link-id>
+    user: <username>
+    password: <password>
+  lti:
+    id: artemis_lti
+    oauth-key: artemis_lti_key
+    oauth-secret: <secret>
+    user-prefix: edx_
+    user-group-name: edx
+  git:
+    name: ArTEMiS
+    email: <email>
+
+
+# ===================================================================
 # JHipster specific properties
 #
 # Full reference is available at: https://jhipster.github.io/common-application-properties/
