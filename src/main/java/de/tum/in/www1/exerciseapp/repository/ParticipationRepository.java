@@ -1,15 +1,13 @@
 package de.tum.in.www1.exerciseapp.repository;
 
 import de.tum.in.www1.exerciseapp.domain.Participation;
-import org.springframework.stereotype.Repository;
-
-import org.springframework.data.jpa.repository.*;
-import java.util.List;
-
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
 
 /**
  * Spring Data JPA repository for the Participation entity.

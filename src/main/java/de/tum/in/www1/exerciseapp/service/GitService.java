@@ -1,11 +1,10 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import de.tum.in.www1.exerciseapp.domain.File;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Repository;
-import de.tum.in.www1.exerciseapp.domain.File;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.HiddenFileFilter;
-import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.Status;
@@ -15,7 +14,6 @@ import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.repository.query.parser.Part;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;

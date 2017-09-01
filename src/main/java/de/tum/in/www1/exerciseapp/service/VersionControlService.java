@@ -3,7 +3,6 @@ package de.tum.in.www1.exerciseapp.service;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 
 import java.net.URL;
-import java.util.Map;
 
 /**
  * Created by muenchdo on 07/09/16.

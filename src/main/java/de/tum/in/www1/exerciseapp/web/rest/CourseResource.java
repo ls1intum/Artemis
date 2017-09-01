@@ -2,12 +2,11 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Course;
-import de.tum.in.www1.exerciseapp.repository.CourseRepository;
 import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
-import io.swagger.annotations.ApiParam;
 import io.github.jhipster.web.util.ResponseUtil;
+import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -20,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
 

@@ -3,10 +3,11 @@ package de.tum.in.www1.exerciseapp.service.mapper;
 import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.service.dto.UserDTO;
-
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**

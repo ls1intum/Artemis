@@ -2,7 +2,6 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.service.AuditEventService;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
-
 import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 import org.springframework.boot.actuate.audit.AuditEvent;

@@ -1,8 +1,5 @@
 package de.tum.in.www1.exerciseapp.web.rest.dto;
 
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import org.springframework.beans.factory.annotation.Value;
-
 /**
  * Created by Josias Montag on 26.09.16.
  */

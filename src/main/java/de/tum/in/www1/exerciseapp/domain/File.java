@@ -1,8 +1,5 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import java.io.Serializable;
-import java.net.URI;
-
 /**
  * Created by Josias Montag on 14.10.16.
  */
