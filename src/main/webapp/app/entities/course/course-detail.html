@@ -18,11 +18,12 @@
         </dd>
     </dl>
 
-    <button type="submit"
-            ui-sref="{{ vm.previousState }}"
-            class="btn btn-info">
+    <a
+        href="{{ vm.previousState }}"
+        class="btn btn-info"
+    >
         <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
-    </button>
+    </a>
 
     <button type="button" ui-sref="course-detail.edit({id:vm.course.id})" class="btn btn-primary">
         <span class="glyphicon glyphicon-pencil"></span>

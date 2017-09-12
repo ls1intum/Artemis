@@ -37,7 +37,7 @@
                     <td>{{programmingExercise.releaseDate | date:'medium'}}</td>
                     <td>{{programmingExercise.dueDate | date:'medium'}}</td>
                     <td ng-hide="vm.course">
-                        <a ui-sref="course-detail({id:exercise.course.id})">{{programmingExercise.course.title}}</a>
+                        <a ui-sref="course-detail({id:programmingExercise.course.id})">{{programmingExercise.course.title}}</a>
                     </td>
                     <td>{{programmingExercise.baseRepositoryUrl}}</td>
                     <td>{{programmingExercise.baseBuildPlanId}}</td>
