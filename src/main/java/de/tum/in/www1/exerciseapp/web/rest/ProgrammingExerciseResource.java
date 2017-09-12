@@ -8,6 +8,8 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -39,6 +41,7 @@ public class ProgrammingExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/programming-exercises")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<ProgrammingExercise> createProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to save ProgrammingExercise : {}", programmingExercise);
@@ -61,6 +64,7 @@ public class ProgrammingExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/programming-exercises")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
@@ -79,11 +83,26 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping("/programming-exercises")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<ProgrammingExercise> getAllProgrammingExercises() {
         log.debug("REST request to get all ProgrammingExercises");
         return programmingExerciseRepository.findAll();
         }
+
+    /**
+     * GET  /courses/:courseId/exercises : get all the exercises.
+     *
+     * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
+     */
+    @GetMapping(value = "/courses/{courseId}/programming-exercises")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @Timed
+    @Transactional(readOnly = true)
+    public List<ProgrammingExercise> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get a page of Exercises");
+        return programmingExerciseRepository.findByCourseId(courseId);
+    }
 
     /**
      * GET  /programming-exercises/:id : get the "id" programmingExercise.
@@ -92,6 +111,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the programmingExercise, or with status 404 (Not Found)
      */
     @GetMapping("/programming-exercises/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to get ProgrammingExercise : {}", id);
@@ -106,6 +126,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/programming-exercises/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);

@@ -14,6 +14,38 @@
                     ng-model="vm.programmingExercise.id" readonly />
         </div>
         <div class="form-group">
+            <label class="control-label" data-translate="artemisApp.exercise.title" for="field_title">Title</label>
+            <input type="text" class="form-control" name="title" id="field_title"
+                   ng-model="vm.programmingExercise.title"
+            />
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="artemisApp.exercise.releaseDate" for="field_releaseDate">Release Date</label>
+            <div class="input-group">
+                <input id="field_releaseDate" type="text" class="form-control" name="releaseDate" datetime-picker="{{dateformat}}" ng-model="vm.programmingExercise.releaseDate" is-open="vm.datePickerOpenStatus.releaseDate"
+                />
+                <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="vm.openCalendar('releaseDate')"><i class="glyphicon glyphicon-calendar"></i></button>
+                    </span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="artemisApp.exercise.dueDate" for="field_dueDate">Due Date</label>
+            <div class="input-group">
+                <input id="field_dueDate" type="text" class="form-control" name="dueDate" datetime-picker="{{dateformat}}" ng-model="vm.programmingExercise.dueDate" is-open="vm.datePickerOpenStatus.dueDate"
+                />
+                <span class="input-group-btn">
+                        <button type="button" class="btn btn-default" ng-click="vm.openCalendar('dueDate')"><i class="glyphicon glyphicon-calendar"></i></button>
+                    </span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label data-translate="artemisApp.exercise.course" for="field_course">Course</label>
+            <select class="form-control" id="field_course" name="course" ng-model="vm.programmingExercise.course" ng-options="course as course.title for course in vm.courses track by course.id">
+                <option value=""></option>
+            </select>
+        </div>
+        <div class="form-group">
             <label class="control-label" data-translate="artemisApp.programmingExercise.baseRepositoryUrl" for="field_baseRepositoryUrl">Base Repository Url</label>
             <input type="text" class="form-control" name="baseRepositoryUrl" id="field_baseRepositoryUrl"
                     ng-model="vm.programmingExercise.baseRepositoryUrl"
