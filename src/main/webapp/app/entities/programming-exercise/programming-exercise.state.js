@@ -62,7 +62,7 @@
             }
         })
         .state('programming-exercise-detail', {
-            parent: 'programming-exercise',
+            parent: 'entity',
             url: '/programming-exercise/{id}',
             data: {
                 authorities: ['ROLE_ADMIN', 'ROLE_TA'],
