@@ -5,14 +5,17 @@
         .module('artemisApp')
         .controller('ProgrammingExerciseDialogController', ProgrammingExerciseDialogController);
 
-    ProgrammingExerciseDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'ProgrammingExercise'];
+    ProgrammingExerciseDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'ProgrammingExercise', 'Course'];
 
-    function ProgrammingExerciseDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, ProgrammingExercise) {
+    function ProgrammingExerciseDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, ProgrammingExercise, Course) {
         var vm = this;
 
         vm.programmingExercise = entity;
         vm.clear = clear;
+        vm.datePickerOpenStatus = {};
+        vm.openCalendar = openCalendar;
         vm.save = save;
+        vm.courses = Course.query();
 
         $timeout(function (){
             angular.element('.form-group:eq(1)>input').focus();
@@ -41,6 +44,12 @@
             vm.isSaving = false;
         }
 
+        vm.datePickerOpenStatus.releaseDate = false;
+        vm.datePickerOpenStatus.dueDate = false;
+
+        function openCalendar (date) {
+            vm.datePickerOpenStatus[date] = true;
+        }
 
     }
 })();
