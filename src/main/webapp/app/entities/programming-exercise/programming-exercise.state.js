@@ -29,6 +29,9 @@
                     $translatePartialLoader.addPart('exercise');
                     $translatePartialLoader.addPart('global');
                     return $translate.refresh();
+                }],
+                courseEntity: [function () {
+                    return null;
                 }]
             }
         })
@@ -174,7 +177,7 @@
                         }
                     }
                 }).result.then(function() {
-                    $state.go('programming-exercise-for-course', null, { reload: 'programming-exercise-for-course' });
+                    $state.go('programming-exercise-for-course', $state.params, {reload: true});
                 }, function() {
                     $state.go('programming-exercise-for-course');
                 });
@@ -205,6 +208,31 @@
                 });
             }]
         })
+        .state('programming-exercise-for-course.edit', {
+            parent: 'programming-exercise-for-course',
+            url: '/{id}/edit',
+            data: {
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/programming-exercise/programming-exercise-dialog.html',
+                    controller: 'ProgrammingExerciseDialogController',
+                    controllerAs: 'vm',
+                    backdrop: 'static',
+                    size: 'lg',
+                    resolve: {
+                        entity: ['ProgrammingExercise', function(ProgrammingExercise) {
+                            return ProgrammingExercise.get({id : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('programming-exercise-for-course', $state.params, {reload: true});
+                }, function() {
+                    $state.go('^');
+                });
+            }]
+        })
         .state('programming-exercise.delete', {
             parent: 'programming-exercise',
             url: '/{id}/delete',
@@ -228,7 +256,31 @@
                     $state.go('^');
                 });
             }]
-        });
-    }
+        })
+        .state('programming-exercise-for-course.delete', {
+                parent: 'programming-exercise-for-course',
+                url: '/{id}/delete',
+                data: {
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                },
+                onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                    $uibModal.open({
+                        templateUrl: 'app/entities/programming-exercise/programming-exercise-delete-dialog.html',
+                        controller: 'ProgrammingExerciseDeleteController',
+                        controllerAs: 'vm',
+                        size: 'md',
+                        resolve: {
+                            entity: ['ProgrammingExercise', function(ProgrammingExercise) {
+                                return ProgrammingExercise.get({id : $stateParams.id}).$promise;
+                            }]
+                        }
+                    }).result.then(function() {
+                        $state.go('programming-exercise-for-course', $state.params, {reload: true});
+                    }, function() {
+                        $state.go('^');
+                    });
+                }]
+            });
+        }
 
 })();
