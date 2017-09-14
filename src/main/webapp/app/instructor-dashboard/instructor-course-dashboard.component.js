@@ -13,7 +13,7 @@
 
     InstructorCourseDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal','Course', 'CourseResult', 'CourseParticipation'];
 
-    function InstructorCourseDashboardController($window, $filter, moment, $uibModal,Course, CourseResult, CourseParticipation) {
+    function InstructorCourseDashboardController($window, $filter, moment, $uibModal, Course, CourseResult, CourseParticipation) {
         var vm = this;
 
 
@@ -51,7 +51,10 @@
                        'lastName': p.student.lastName,
                        'login': p.student.login,
                        'participated': 0,
+                       'participatedPercentage': 0,
                        'successful': 0,
+                       'successfulPercentage': 0,
+                       'overallScore': 0,
                    }
                }
                rows[p.student.id].participated++;
@@ -63,6 +66,12 @@
             _.forEach(vm.results, function (r) {
                 rows[r.participation.student.id].successful++;
             });
+
+           _.forEach(vm.results, function (r) {
+                rows[r.participation.student.id].participatedPercentage = ((rows[r.participation.student.id].participated / vm.numberOfExercises)*100).toFixed(2);
+                rows[r.participation.student.id].successfulPercentage = ((rows[r.participation.student.id].successful / vm.numberOfExercises)*100).toFixed(2);
+            });
+
             vm.rows = _.values(rows);
 
         }
