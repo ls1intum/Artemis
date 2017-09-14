@@ -25,10 +25,27 @@
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'participated' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'participated' && $ctrl.sortReverse}"></i>
         </th>
 
+        <th><a class="th-link" ng-click="$ctrl.sortColumn = 'participatedPercentage'; $ctrl.sortReverse = !$ctrl.sortReverse">
+            Participated in exercises %</a>&nbsp;<i
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'participatedPercentage' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'participatedPercentage' && $ctrl.sortReverse}"></i>
+        </th>
+
         <th><a class="th-link" ng-click="$ctrl.sortColumn = 'successful'; $ctrl.sortReverse = !$ctrl.sortReverse">
             Successfully completed exercises</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'successful' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'successful' && $ctrl.sortReverse}"></i>
         </th>
+
+        <th><a class="th-link" ng-click="$ctrl.sortColumn = 'successfulPercentage'; $ctrl.sortReverse = !$ctrl.sortReverse">
+            Successfully completed %</a>&nbsp;<i
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'successfulPercentage' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'successfulPercentage' && $ctrl.sortReverse}"></i>
+        </th>
+
+        <th><a class="th-link" ng-click="$ctrl.sortColumn = 'overallScore'; $ctrl.sortReverse = !$ctrl.sortReverse">
+            Overall Score</a>&nbsp;<i
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'overallScore' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'overallScore' && $ctrl.sortReverse}"></i>
+        </th>
+
+
 
     </tr>
     </thead>
@@ -37,8 +54,10 @@
         <td>{{ row.firstName }} {{ row.lastName }}</td>
         <td>{{ row.login }}</td>
         <td>{{ row.participated }}</td>
+        <td>{{ row.participatedPercentage }}%</td>
         <td>{{ row.successful }}</td>
-
+        <td>{{ row.successfulPercentage }}%</td>
+        <td>{{ row.overallScore }}%</td>
 
     </tr>
     </tbody>
