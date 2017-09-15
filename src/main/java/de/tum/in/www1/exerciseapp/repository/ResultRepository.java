@@ -32,6 +32,9 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> findEarliestSuccessfulResultsForCourse(@Param("courseId") Long courseId);
 
 
+    @Query("select participation.id, count(id) from Result where participation.exercise.id = :exerciseId group by participation.id")
+    List<Object[]> findSubmissionCountsForStudents(@Param("exerciseId") Long exerciseId);
+
     List<Result> findByParticipationExerciseIdAndSuccessfulOrderByCompletionDateAsc(Long exerciseId, boolean successful);
 
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(Long participationId);

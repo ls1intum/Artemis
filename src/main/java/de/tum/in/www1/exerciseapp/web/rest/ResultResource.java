@@ -10,6 +10,7 @@ import de.tum.in.www1.exerciseapp.service.LtiService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.service.ResultService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import de.tum.in.www1.exerciseapp.web.rest.util.ResultWithSubmissionCount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -185,7 +186,7 @@ public class ResultResource {
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
-    public List<Result> getResultsForExercise(@PathVariable Long courseId,
+    public List<ResultWithSubmissionCount> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
                                               @RequestParam(defaultValue = "false") boolean showAllResults) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
@@ -195,7 +196,18 @@ public class ResultResource {
         } else {
             results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
         }
-        return results;
+
+        List<ResultWithSubmissionCount> resultsWithSubmissionCounts = new ArrayList<>();
+        List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
+
+        for(Result result: results) {
+            for(Object[] submissionCount: submissionCounts) {
+                if(result.getParticipation().getId().equals(submissionCount[0])) {
+                    resultsWithSubmissionCounts.add(new ResultWithSubmissionCount(result, (Long)submissionCount[1]));
+                }
+            }
+        }
+        return resultsWithSubmissionCounts;
     }
 
     /**

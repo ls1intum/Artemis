@@ -107,14 +107,16 @@
 
         function sort(item) {
             if (vm.sortColumn === 'completionDate') {
-                return item.completionDate;
+                return item.actualResult.completionDate;
             } else if (vm.sortColumn === 'studentName') {
-                return item.participation.student.firstName;
+                return item.actualResult.participation.student.firstName;
             } else if (vm.sortColumn === 'successful') {
-                return item.successful;
+                return item.actualResult.successful;
+            } else if (vm.sortColumn === 'submissionCount') {
+                return item.submissionCount;
             } else if (vm.sortColumn === 'duration') {
-                var completionDate = moment(item.completionDate);
-                var initializationDate = moment(item.participation.initializationDate);
+                var completionDate = moment(item.actualResult.completionDate);
+                var initializationDate = moment(item.actualResult.participation.initializationDate);
                 return completionDate.diff(initializationDate, 'minutes');
             }
         }

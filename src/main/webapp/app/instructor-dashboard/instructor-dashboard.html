@@ -49,6 +49,10 @@
             Result</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'successful' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'successful' && $ctrl.sortReverse}"></i>
         </th>
+        <th><a class="th-link" ng-click="$ctrl.sortColumn = 'submissionCount'; $ctrl.sortReverse = !$ctrl.sortReverse">
+            Submission count</a>&nbsp;<i
+            ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'submissionCount' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'submissionCount' && $ctrl.sortReverse}"></i>
+        </th>
         <th><a class="th-link" ng-click="$ctrl.sortColumn = 'score'; $ctrl.sortReverse = !$ctrl.sortReverse">
             Score</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'score' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'score' && $ctrl.sortReverse}"></i>
@@ -64,39 +68,40 @@
     <tbody>
     <tr ng-repeat="result in $ctrl.sortedResults = ($ctrl.results | orderBy:$ctrl.sort:$ctrl.sortReverse) track by $index">
         <td>{{ $index + 1 }}</td>
-        <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
-        <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
-        <td ng-switch on="result.successful">
+        <td>{{ result.actualResult.participation.student.firstName }} {{ result.actualResult.participation.student.lastName}}</td>
+        <td>{{ result.actualResult.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
+        <td ng-switch on="result.actualResult.successful">
         <span ng-switch-when="true">
         <span class="text-success">
-            <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;{{result.resultString}}
-        </span> (<span am-time-ago="result.completionDate"></span>)
+            <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;{{result.actualResult.resultString}}
+        </span> (<span am-time-ago="result.actualResult.completionDate"></span>)
     </span>
     <span ng-switch-when="false">
         <span class="text-danger">
             <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;<a class="text-danger"
-                                                               ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
-        </span> (<span am-time-ago="result.completionDate"></span>)
+                                                               ng-click="$ctrl.showDetails(result.actualResult)">{{result.actualResult.resultString}}</a>
+        </span> (<span am-time-ago="result.actualResult.completionDate"></span>)
     </span>
         </td>
+        <td>{{ result.submissionCount }}</td>
         <td>
-            <span ng-show="result.score != null">{{result.score}}%</span>
+            <span ng-show="result.actualResult.score != null">{{result.actualResult.score}}%</span>
         </td>
-        <td>{{$ctrl.buildDurationString(result.completionDate, result.participation.initializationDate)}} minutes
+        <td>{{$ctrl.buildDurationString(result.actualResult.completionDate, result.actualResult.participation.initializationDate)}} minutes
         </td>
         <td>
-            <button class="btn btn-default btn-xs" ng-click="$ctrl.goToRepository(result)"><i
+            <button class="btn btn-default btn-xs" ng-click="$ctrl.goToRepository(result.actualResult)"><i
                 class="fa fa-code-fork"></i>&nbsp;Repository
             </button>
-            <button class="btn btn-default btn-xs" ng-click="$ctrl.goToBuildPlan(result)">
+            <button class="btn btn-default btn-xs" ng-click="$ctrl.goToBuildPlan(result.actualResult)">
                 <i class="fa fa-file-code-o"></i>&nbsp;Build plan
             </button>
 
-            <a ui-sref="editor({participationId:result.participation.id})" class="btn btn-default btn-xs" ng-show="result.participation.exercise.allowOnlineEditor">
+            <a ui-sref="editor({participationId:result.actualResult.participation.id})" class="btn btn-default btn-xs" ng-show="result.actualResult.participation.exercise.allowOnlineEditor">
                 <i class="fa fa-folder-open fa-fw"></i>&nbsp;Online editor
             </a>
 
-            <a ui-sref="instructor-dashboard.new-result({participationId:result.participation.id})" class="btn btn-default btn-xs">
+            <a ui-sref="instructor-dashboard.new-result({participationId:result.actualResult.participation.id})" class="btn btn-default btn-xs">
                 <i class="glyphicon glyphicon-asterisk"></i>&nbsp;New result
             </a>
 
