@@ -139,7 +139,7 @@ public class ExerciseResourceIntTest {
             .content(TestUtil.convertObjectToJsonBytes(exercise)))
             .andExpect(status().isBadRequest());
 
-        // Validate the Alice in the database
+        // Validate the Exercise in the database
         List<Exercise> exerciseList = exerciseRepository.findAll();
         assertThat(exerciseList).hasSize(databaseSizeBeforeCreate);
     }
