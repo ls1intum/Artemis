@@ -132,7 +132,7 @@ public class CourseResourceIntTest {
             .content(TestUtil.convertObjectToJsonBytes(course)))
             .andExpect(status().isBadRequest());
 
-        // Validate the Alice in the database
+        // Validate the Course in the database
         List<Course> courseList = courseRepository.findAll();
         assertThat(courseList).hasSize(databaseSizeBeforeCreate);
     }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.repository;
 
 import de.tum.in.www1.exerciseapp.domain.User;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -31,6 +32,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     User findOneWithAuthoritiesById(Long id);
 
     @EntityGraph(attributePaths = "authorities")
+    @Cacheable(cacheNames="users")
     Optional<User> findOneWithAuthoritiesByLogin(String login);
 
     Page<User> findAllByLoginNot(Pageable pageable, String login);
