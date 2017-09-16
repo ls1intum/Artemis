@@ -29,6 +29,7 @@ public class ResultResource {
     private static final String ENTITY_NAME = "result";
 
     private final ResultRepository resultRepository;
+
     public ResultResource(ResultRepository resultRepository) {
         this.resultRepository = resultRepository;
     }

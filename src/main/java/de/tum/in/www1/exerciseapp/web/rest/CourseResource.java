@@ -35,6 +35,7 @@ public class CourseResource {
     private static final String ENTITY_NAME = "course";
 
     private final CourseRepository courseRepository;
+
     public CourseResource(CourseRepository courseRepository) {
         this.courseRepository = courseRepository;
     }

@@ -3,8 +3,8 @@
 #
 # This configuration overrides the application.yml file.
 #
-# More information on profiles: https://jhipster.github.io/profiles/
-# More information on configuration properties: https://jhipster.github.io/common-application-properties/
+# More information on profiles: http://www.jhipster.tech/profiles/
+# More information on configuration properties: http://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
 # ===================================================================
@@ -81,7 +81,7 @@ server:
 # ===================================================================
 # JHipster specific properties
 #
-# Full reference is available at: https://jhipster.github.io/common-application-properties/
+# Full reference is available at: http://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
 jhipster:
@@ -94,9 +94,8 @@ jhipster:
     # CORS is only enabled by default with the "dev" profile, so BrowserSync can access the API
     cors:
         allowed-origins: "*"
-        allowed-methods: GET, PUT, POST, DELETE, OPTIONS
+        allowed-methods: "*"
         allowed-headers: "*"
-        exposed-headers:
         allow-credentials: true
         max-age: 1800
     security:
@@ -132,7 +131,7 @@ jhipster:
 # to have type-safe configuration, like in the JHipsterProperties above
 #
 # More documentation is available at:
-# https://jhipster.github.io/common-application-properties/
+# http://www.jhipster.tech/common-application-properties/
 # ===================================================================
 
 application:
