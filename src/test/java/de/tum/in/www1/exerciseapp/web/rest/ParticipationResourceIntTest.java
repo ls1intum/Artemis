@@ -127,7 +127,7 @@ public class ParticipationResourceIntTest {
             .content(TestUtil.convertObjectToJsonBytes(participation)))
             .andExpect(status().isBadRequest());
 
-        // Validate the Alice in the database
+        // Validate the Participation in the database
         List<Participation> participationList = participationRepository.findAll();
         assertThat(participationList).hasSize(databaseSizeBeforeCreate);
     }

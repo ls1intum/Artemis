@@ -1,5 +1,5 @@
 # ExerciseApplication
-This application was generated using JHipster 4.7.0, you can find documentation and help at [https://jhipster.github.io/documentation-archive/v4.7.0](https://jhipster.github.io/documentation-archive/v4.7.0).
+This application was generated using JHipster 4.8.2, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.8.2](http://www.jhipster.tech/documentation-archive/v4.8.2).
 
 ## Development
 
@@ -30,6 +30,7 @@ specifying a newer version in [bower.json](bower.json). You can also run `bower 
 Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
 
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development][].
+
 
 
 ## Building for production
@@ -95,14 +96,14 @@ For more information refer to [Using Docker and Docker-Compose][], this page als
 
 To configure CI for your project, run the ci-cd sub-generator (`jhipster ci-cd`), this will let you generate configuration files for a number of Continuous Integration systems. Consult the [Setting up Continuous Integration][] page for more information.
 
-[JHipster Homepage and latest documentation]: https://jhipster.github.io
-[JHipster 4.7.0 archive]: https://jhipster.github.io/documentation-archive/v4.7.0
+[JHipster Homepage and latest documentation]: http://www.jhipster.tech
+[JHipster 4.8.2 archive]: http://www.jhipster.tech/documentation-archive/v4.8.2
 
-[Using JHipster in development]: https://jhipster.github.io/documentation-archive/v4.7.0/development/
-[Using Docker and Docker-Compose]: https://jhipster.github.io/documentation-archive/v4.7.0/docker-compose
-[Using JHipster in production]: https://jhipster.github.io/documentation-archive/v4.7.0/production/
-[Running tests page]: https://jhipster.github.io/documentation-archive/v4.7.0/running-tests/
-[Setting up Continuous Integration]: https://jhipster.github.io/documentation-archive/v4.7.0/setting-up-ci/
+[Using JHipster in development]: http://www.jhipster.tech/documentation-archive/v4.8.2/development/
+[Using Docker and Docker-Compose]: http://www.jhipster.tech/documentation-archive/v4.8.2/docker-compose
+[Using JHipster in production]: http://www.jhipster.tech/documentation-archive/v4.8.2/production/
+[Running tests page]: http://www.jhipster.tech/documentation-archive/v4.8.2/running-tests/
+[Setting up Continuous Integration]: http://www.jhipster.tech/documentation-archive/v4.8.2/setting-up-ci/
 
 [Gatling]: http://gatling.io/
 [Node.js]: https://nodejs.org/

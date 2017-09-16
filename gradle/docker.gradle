@@ -1,21 +1,30 @@
-import org.gradle.internal.os.OperatingSystem
-
-task buildDocker(type: Exec) {
-    doFirst {
-        copy {
-            from "src/main/docker/"
-            into "build/docker/"
-            include "*"
-        }
-        copy {
-            from "build/libs"
-            into "build/docker/"
-            include "*.war*"
-        }
+buildscript {
+    repositories {
+        jcenter()
     }
-    if (OperatingSystem.current().isWindows()) {
-        commandLine 'cmd', '/c', 'docker', 'image', 'build', '-f', 'build/docker/Dockerfile', '-t', 'exerciseapplication', 'build/docker/'
-    } else {
-        commandLine 'docker', 'image', 'build', '-f', 'build/docker/Dockerfile', '-t', 'exerciseapplication', 'build/docker/'
+
+    dependencies {
+        classpath 'com.bmuschko:gradle-docker-plugin:3.1.0'
     }
 }
+
+apply plugin: com.bmuschko.gradle.docker.DockerRemoteApiPlugin
+
+import com.bmuschko.gradle.docker.tasks.image.DockerBuildImage
+
+task copyDockerFiles(type: Copy) {
+    description = "Copy Dockerfile and required data to build directory"
+    from 'src/main/docker'
+    from "${project.buildDir}/libs"
+    into { "${project.buildDir}/docker" }
+    include "*"
+    exclude "**/*.yml"
+}
+
+task buildDocker(type: DockerBuildImage, dependsOn: 'copyDockerFiles') {
+    description = "Package application as Docker image"
+    group = "Docker"
+    inputDir = project.file("${project.buildDir}/docker")
+    tags = ["exerciseapplication:latest".toString(), "exerciseapplication:${project.version}".toString()]
+}
+

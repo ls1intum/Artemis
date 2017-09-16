@@ -19,6 +19,7 @@ public class ParticipationService {
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
     private final ParticipationRepository participationRepository;
+
     public ParticipationService(ParticipationRepository participationRepository) {
         this.participationRepository = participationRepository;
     }
