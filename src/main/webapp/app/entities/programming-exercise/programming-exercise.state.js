@@ -258,29 +258,105 @@
             }]
         })
         .state('programming-exercise-for-course.delete', {
-                parent: 'programming-exercise-for-course',
-                url: '/{id}/delete',
-                data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
-                },
-                onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
-                    $uibModal.open({
-                        templateUrl: 'app/entities/programming-exercise/programming-exercise-delete-dialog.html',
-                        controller: 'ProgrammingExerciseDeleteController',
-                        controllerAs: 'vm',
-                        size: 'md',
-                        resolve: {
-                            entity: ['ProgrammingExercise', function(ProgrammingExercise) {
-                                return ProgrammingExercise.get({id : $stateParams.id}).$promise;
-                            }]
-                        }
-                    }).result.then(function() {
-                        $state.go('programming-exercise-for-course', $state.params, {reload: true});
-                    }, function() {
-                        $state.go('^');
-                    });
-                }]
-            });
-        }
+            parent: 'programming-exercise-for-course',
+            url: '/{id}/delete',
+            data: {
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/programming-exercise/programming-exercise-delete-dialog.html',
+                    controller: 'ProgrammingExerciseDeleteController',
+                    controllerAs: 'vm',
+                    size: 'md',
+                    resolve: {
+                        entity: ['ProgrammingExercise', function(ProgrammingExercise) {
+                            return ProgrammingExercise.get({id : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('programming-exercise-for-course', $state.params, {reload: true});
+                }, function() {
+                    $state.go('^');
+                });
+            }]
+        })
+        .state('programming-exercise.reset', {
+            parent: 'programming-exercise',
+            url: '/{id}/reset',
+            data: {
+                authorities: ['ROLE_ADMIN']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/exercise/exercise-reset-dialog.html',
+                    controller: 'ExerciseResetController',
+                    controllerAs: 'vm',
+                    size: 'md',
+                    resolve: {
+                        entity: ['Exercise', function (Exercise) {
+                            return Exercise.get({id: $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function () {
+                    $state.go('programming-exercise', null, {reload: true});
+                }, function () {
+                    $state.go('^');
+                });
+            }]
+        })
+        .state('programming-exercise-for-course.reset', {
+            parent: 'programming-exercise-for-course',
+            url: '/{id}/reset',
+            data: {
+                authorities: ['ROLE_ADMIN']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/exercise/exercise-reset-dialog.html',
+                    controller: 'ExerciseResetController',
+                    controllerAs: 'vm',
+                    size: 'md',
+                    resolve: {
+                        entity: ['Exercise', function (Exercise) {
+                            return Exercise.get({id: $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function () {
+                    $state.go('programming-exercise-for-course', $state.params, {reload: true});
+                }, function () {
+                    $state.go('^');
+                });
+            }]
+        })
+        .state('programming-exercise-detail.ltiConfiguration', {
+            parent: 'programming-exercise-detail',
+            url: '/{id}/lticonfiguration',
+            data: {
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/exercise/exercise-lti-configuration-dialog.html',
+                    controller: 'ExerciseLtiConfigurationDialogController',
+                    controllerAs: 'vm',
+                    backdrop: 'static',
+                    size: 'lg',
+                    resolve: {
+                        exercise: ['Exercise', function (Exercise) {
+                            return Exercise.get({id: $stateParams.id}).$promise;
+                        }],
+                        configuration: ['ExerciseLtiConfiguration', function (ExerciseLtiConfiguration) {
+                            return ExerciseLtiConfiguration.get({exerciseId: $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function () {
+                    $state.go('programming-exercise-detail', null, {reload: true});
+                }, function () {
+                    $state.go('^');
+                });
+            }]
+        });
+    }
 
 })();
