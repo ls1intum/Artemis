@@ -100,7 +100,7 @@ public class QuizExerciseResource {
     @Timed
     @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get a page of Exercises");
+        log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
         return quizExerciseRepository.findByCourseId(courseId);
     }
 

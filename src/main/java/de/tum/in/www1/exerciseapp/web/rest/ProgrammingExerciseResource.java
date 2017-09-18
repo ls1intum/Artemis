@@ -130,7 +130,7 @@ public class ProgrammingExerciseResource {
     @Timed
     @Transactional(readOnly = true)
     public List<ProgrammingExercise> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get a page of Exercises");
+        log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         return programmingExerciseRepository.findByCourseId(courseId);
     }
 
