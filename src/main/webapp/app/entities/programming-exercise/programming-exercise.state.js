@@ -163,7 +163,7 @@
                     backdrop: 'static',
                     size: 'lg',
                     resolve: {
-                        entity: function () {
+                        entity: ['Course', function (Course) {
                             return {
                                 title: null,
                                 baseRepositoryUrl: null,
@@ -172,9 +172,10 @@
                                 releaseDate: null,
                                 dueDate: null,
                                 id: null,
-                                allowOnlineEditor: null
+                                allowOnlineEditor: null,
+                                course: Course.get({id: $stateParams.courseid})
                             };
-                        }
+                        }]
                     }
                 }).result.then(function() {
                     $state.go('programming-exercise-for-course', $state.params, {reload: true});
