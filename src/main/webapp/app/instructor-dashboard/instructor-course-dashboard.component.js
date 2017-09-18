@@ -65,14 +65,14 @@
             });
             _.forEach(vm.results, function (r) {
                 rows[r.participation.student.id].successful++;
-                rows[r.participation.student.id].successfulPercentage = ((rows[r.participation.student.id].successful / vm.numberOfExercises)*100).toFixed(2);
+                rows[r.participation.student.id].successfulPercentage = parseFloat(((rows[r.participation.student.id].successful / vm.numberOfExercises)*100).toFixed(2));
             });
 
             var studentSeen = {};
             _.forEach(vm.participations, function (p) {
                 if(!studentSeen[p.student.id]) {
                     studentSeen[p.student.id] = true;
-                    rows[p.student.id].participatedPercentage = ((rows[p.student.id].participated / vm.numberOfExercises) * 100).toFixed(2);
+                    rows[p.student.id].participatedPercentage = parseFloat(((rows[p.student.id].participated / vm.numberOfExercises) * 100).toFixed(2));
                 }
             });
 
