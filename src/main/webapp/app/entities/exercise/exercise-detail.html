@@ -20,16 +20,15 @@
         <dd>
             <a ui-sref="course-detail({id:vm.exercise.course.id})">{{vm.exercise.course.title}}</a>
         </dd>
+        <dt><span data-translate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+        <dd>
+            <a ui-sref="exercise-detail.ltiConfiguration({id:vm.exercise.id})">LTI Configuration</a>
+        </dd>
     </dl>
 
     <button type="submit"
             ui-sref="{{ vm.previousState }}"
             class="btn btn-info">
         <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
-    </button>
-
-    <button type="button" ui-sref="exercise-detail.edit({id:vm.exercise.id})" class="btn btn-primary">
-        <span class="glyphicon glyphicon-pencil"></span>
-        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
     </button>
 </div>

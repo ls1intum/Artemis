@@ -4,7 +4,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-4 no-padding-left">
-                <button class="btn btn-primary" ui-sref="quiz-exercise.new" >
+                <button class="btn btn-primary" onclick="alert('TODO');" >
                     <span class="glyphicon glyphicon-plus"></span>
                     <span  data-translate="artemisApp.quizExercise.home.createLabel">
                         Create new Quiz Exercise
@@ -34,13 +34,13 @@
                                 <span class="hidden-sm-down" data-translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
-                                    ui-sref="quiz-exercise.edit({id:quizExercise.id})"
+                                    onclick="alert('TODO');"
                                     class="btn btn-primary btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
                             </button>
                             <button type="submit"
-                                    ui-sref="quiz-exercise.delete({id:quizExercise.id})"
+                                    ui-sref="quiz-exercise-for-course.delete({id:quizExercise.id})"
                                     class="btn btn-danger btn-sm">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.delete"></span>

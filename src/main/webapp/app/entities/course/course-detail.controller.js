@@ -11,7 +11,7 @@
         var vm = this;
 
         vm.course = entity;
-        vm.previousState = previousState.name;
+        vm.previousState = previousState.url;
 
         var unsubscribe = $rootScope.$on('artemisApp:courseUpdate', function(event, result) {
             vm.course = result;

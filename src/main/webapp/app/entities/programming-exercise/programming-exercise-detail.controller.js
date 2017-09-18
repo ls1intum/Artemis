@@ -11,7 +11,7 @@
         var vm = this;
 
         vm.programmingExercise = entity;
-        vm.previousState = previousState.name;
+        vm.previousState = previousState.url;
 
         var unsubscribe = $rootScope.$on('artemisApp:programmingExerciseUpdate', function(event, result) {
             vm.programmingExercise = result;
