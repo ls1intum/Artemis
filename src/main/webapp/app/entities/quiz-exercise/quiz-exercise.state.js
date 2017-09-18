@@ -171,7 +171,7 @@
             parent: 'quiz-exercise',
             url: '/{id}/delete',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                authorities: ['ROLE_ADMIN']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -195,7 +195,7 @@
                 parent: 'quiz-exercise',
                 url: '/{id}/delete',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                     $uibModal.open({
