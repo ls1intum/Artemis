@@ -148,7 +148,7 @@ public class ResultResourceIntTest {
             .content(TestUtil.convertObjectToJsonBytes(result)))
             .andExpect(status().isBadRequest());
 
-        // Validate the Alice in the database
+        // Validate the Result in the database
         List<Result> resultList = resultRepository.findAll();
         assertThat(resultList).hasSize(databaseSizeBeforeCreate);
     }
