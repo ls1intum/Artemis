@@ -70,6 +70,9 @@
 
     </div>
     <div class="modal-footer">
+        <a class="btn btn-danger pull-left" ui-sref="programming-exercise-for-course.reset({id:vm.programmingExercise.id})" ng-hide="vm.programmingExercise.id == null" aria-hidden="false">
+            <span class="glyphicon glyphicon-remove-circle"></span>&nbsp;<span>Reset Exercise</span>
+        </a>
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel">Cancel</span>
         </button>

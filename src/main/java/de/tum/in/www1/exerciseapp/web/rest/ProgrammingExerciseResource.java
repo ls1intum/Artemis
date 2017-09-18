@@ -3,6 +3,8 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.ProgrammingExercise;
 import de.tum.in.www1.exerciseapp.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
+import de.tum.in.www1.exerciseapp.service.VersionControlService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -29,8 +31,28 @@ public class ProgrammingExerciseResource {
     private static final String ENTITY_NAME = "programmingExercise";
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
-    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository) {
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<VersionControlService> versionControlService;
+
+    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.continuousIntegrationService = continuousIntegrationService;
+        this.versionControlService = versionControlService;
+    }
+
+    /**
+     *
+     * @param exercise the exercise object we want to check for errors
+     * @return the error message as response or null if everything is fine
+     */
+    private ResponseEntity<ProgrammingExercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
+        if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
+        }
+        if(!versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
+        }
+        return null;
     }
 
     /**
@@ -47,6 +69,10 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to save ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new programmingExercise cannot already have an ID")).body(null);
+        }
+        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
+        if(errorResponse != null) {
+            return errorResponse;
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.created(new URI("/api/programming-exercises/" + result.getId()))
@@ -70,6 +96,10 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() == null) {
             return createProgrammingExercise(programmingExercise);
+        }
+        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) programmingExercise);
+        if(errorResponse != null) {
+            return errorResponse;
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.ok()
