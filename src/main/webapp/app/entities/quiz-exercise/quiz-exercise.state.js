@@ -13,7 +13,7 @@
             parent: 'entity',
             url: '/quiz-exercise',
             data: {
-                authorities: ['ROLE_USER'],
+                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
                 pageTitle: 'artemisApp.quizExercise.home.title'
             },
             views: {
@@ -26,8 +26,35 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('quizExercise');
+                    $translatePartialLoader.addPart('exercise');
                     $translatePartialLoader.addPart('global');
                     return $translate.refresh();
+                }]
+            }
+        })
+        .state('quiz-exercise-for-course', {
+            parent: 'entity',
+            url: '/course/{courseid}/quiz-exercise',
+            data: {
+                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                pageTitle: 'artemisApp.quizExercise.home.title'
+            },
+            views: {
+                'content@': {
+                    templateUrl: 'app/entities/quiz-exercise/quiz-exercises.html',
+                    controller: 'QuizExerciseController',
+                    controllerAs: 'vm'
+                }
+            },
+            resolve: {
+                translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                    $translatePartialLoader.addPart('quizExercise');
+                    $translatePartialLoader.addPart('exercise');
+                    $translatePartialLoader.addPart('global');
+                    return $translate.refresh();
+                }],
+                courseEntity: ['$stateParams', 'Course', function ($stateParams, Course) {
+                    return Course.get({id: $stateParams.courseid}).$promise;
                 }]
             }
         })
@@ -35,7 +62,7 @@
             parent: 'quiz-exercise',
             url: '/quiz-exercise/{id}',
             data: {
-                authorities: ['ROLE_USER'],
+                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
                 pageTitle: 'artemisApp.quizExercise.detail.title'
             },
             views: {
@@ -67,7 +94,7 @@
             parent: 'quiz-exercise-detail',
             url: '/detail/edit',
             data: {
-                authorities: ['ROLE_USER']
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -92,7 +119,7 @@
             parent: 'quiz-exercise',
             url: '/new',
             data: {
-                authorities: ['ROLE_USER']
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -119,7 +146,7 @@
             parent: 'quiz-exercise',
             url: '/{id}/edit',
             data: {
-                authorities: ['ROLE_USER']
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -144,7 +171,7 @@
             parent: 'quiz-exercise',
             url: '/{id}/delete',
             data: {
-                authorities: ['ROLE_USER']
+                authorities: ['ROLE_ADMIN']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -163,7 +190,31 @@
                     $state.go('^');
                 });
             }]
-        });
+        })
+            .state('quiz-exercise-for-course.delete', {
+                parent: 'quiz-exercise',
+                url: '/{id}/delete',
+                data: {
+                    authorities: ['ROLE_ADMIN']
+                },
+                onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                    $uibModal.open({
+                        templateUrl: 'app/entities/quiz-exercise/quiz-exercise-delete-dialog.html',
+                        controller: 'QuizExerciseDeleteController',
+                        controllerAs: 'vm',
+                        size: 'md',
+                        resolve: {
+                            entity: ['QuizExercise', function(QuizExercise) {
+                                return QuizExercise.get({id : $stateParams.id}).$promise;
+                            }]
+                        }
+                    }).result.then(function() {
+                        $state.go('quiz-exercise-for-course', $state.params, {reload: true});
+                    }, function() {
+                        $state.go('^');
+                    });
+                }]
+            });
     }
 
 })();

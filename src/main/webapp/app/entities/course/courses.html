@@ -33,12 +33,27 @@
                     <td>{{course.teachingAssistantGroupName}}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <button type="submit"
-                                    ui-sref="exercise-for-course({courseid:course.id})"
-                                    class="btn btn-primary btn-sm">
-                                <span class="fa fa-list-alt"></span>
-                                <span class="hidden-xs hidden-sm">Exercises</span>
-                            </button>
+                            <div class="btn-group">
+                                <button
+                                    type="button"
+                                    class="btn btn-primary btn-sm dropdown-toggle"
+                                    data-toggle="dropdown"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                >
+                                    <span class="fa fa-list-alt"></span>
+                                    <span class="hidden-xs hidden-sm">Exercises</span>
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a ui-sref="programming-exercise-for-course({courseid:course.id})">
+                                        Programming Exercises
+                                    </a></li>
+                                    <li><a ui-sref="quiz-exercise-for-course({courseid:course.id})">
+                                        Quiz Exercises
+                                    </a></li>
+                                </ul>
+                            </div>
 
                             <button type="submit"
                                     ui-sref="course-detail({id:course.id})"
@@ -48,7 +63,7 @@
                             </button>
                             <button type="submit"
                                     ui-sref="course.edit({id:course.id})"
-                                    class="btn btn-primary btn-sm">
+                                    class="btn btn-warning btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
                             </button>
