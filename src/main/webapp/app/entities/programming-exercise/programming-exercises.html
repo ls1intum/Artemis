@@ -1,10 +1,10 @@
 <div>
-    <h2 data-translate="artemisApp.programmingExercise.home.title">Programming Exercises</h2>
+    <h2><span ng-show="vm.course">{{vm.course.title}} - </span>Programming Exercises</h2>
     <jhi-alert></jhi-alert>
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-4 no-padding-left">
-                <button class="btn btn-primary" ui-sref="programming-exercise.new" >
+                <button class="btn btn-primary" ui-sref="programming-exercise-for-course.new" >
                     <span class="glyphicon glyphicon-plus"></span>
                     <span  data-translate="artemisApp.programmingExercise.home.createLabel">
                         Create new Programming Exercise
@@ -17,18 +17,28 @@
     <div class="table-responsive">
         <table class="jh-table table table-striped">
             <thead>
-                <tr>
-                    <th><span data-translate="global.field.id">ID</span></th>
-                    <th><span data-translate="artemisApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span></th>
-                    <th><span data-translate="artemisApp.programmingExercise.baseBuildPlanId">Base Build Plan Id</span></th>
-                    <th><span data-translate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span></th>
-                    <th><span data-translate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span></th>
+                <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.sort()">
+                    <th jh-sort-by="id"><span data-translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="title"><span data-translate="artemisApp.exercise.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="releaseDate"><span data-translate="artemisApp.exercise.releaseDate">Release Date</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="dueDate"><span data-translate="artemisApp.exercise.dueDate">Due Date</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="course.title" ng-hide="vm.course"><span data-translate="artemisApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="baseRepositoryUrl"><span data-translate="artemisApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="baseBuildPlanId"><span data-translate="artemisApp.programmingExercise.baseBuildPlanId">Base Build Plan Id</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="publishBuildPlanUrl"><span data-translate="artemisApp.programmingExercise.publishBuildPlanUrl">Publish Build Plan Url</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="allowOnlineEditor"><span data-translate="artemisApp.programmingExercise.allowOnlineEditor">Allow Online Editor</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="programmingExercise in vm.programmingExercises track by programmingExercise.id">
                     <td><a ui-sref="programming-exercise-detail({id:programmingExercise.id})">{{programmingExercise.id}}</a></td>
+                    <td>{{programmingExercise.title}}</td>
+                    <td>{{programmingExercise.releaseDate | date:'medium'}}</td>
+                    <td>{{programmingExercise.dueDate | date:'medium'}}</td>
+                    <td ng-hide="vm.course">
+                        <a ui-sref="course-detail({id:programmingExercise.course.id})">{{programmingExercise.course.title}}</a>
+                    </td>
                     <td>{{programmingExercise.baseRepositoryUrl}}</td>
                     <td>{{programmingExercise.baseBuildPlanId}}</td>
                     <td>{{programmingExercise.publishBuildPlanUrl}}</td>
@@ -36,19 +46,25 @@
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"
+                                    ui-sref="participation-for-exercise({exerciseId:programmingExercise.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="fa fa-list-alt"></span>
+                                <span class="hidden-xs hidden-sm" data-translate="artemisApp.exercise.participations"></span>
+                            </button>
+                            <button type="submit"
                                     ui-sref="programming-exercise-detail({id:programmingExercise.id})"
                                     class="btn btn-info btn-sm">
                                 <span class="glyphicon glyphicon-eye-open"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
-                                    ui-sref="programming-exercise.edit({id:programmingExercise.id})"
-                                    class="btn btn-primary btn-sm">
+                                    ui-sref="programming-exercise-for-course.edit({id:programmingExercise.id})"
+                                    class="btn btn-warning btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
                             </button>
                             <button type="submit"
-                                    ui-sref="programming-exercise.delete({id:programmingExercise.id})"
+                                    ui-sref="programming-exercise-for-course.delete({id:programmingExercise.id})"
                                     class="btn btn-danger btn-sm">
                                 <span class="glyphicon glyphicon-remove-circle"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.delete"></span>

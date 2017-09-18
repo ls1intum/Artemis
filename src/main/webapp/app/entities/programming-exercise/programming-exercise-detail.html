@@ -4,6 +4,22 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
+        <dt><span data-translate="artemisApp.exercise.title">Title</span></dt>
+        <dd>
+            <span>{{vm.programmingExercise.title}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.exercise.releaseDate">Release Date</span></dt>
+        <dd>
+            <span>{{vm.programmingExercise.releaseDate | date:'medium'}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.exercise.dueDate">Due Date</span></dt>
+        <dd>
+            <span>{{vm.programmingExercise.dueDate | date:'medium'}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.exercise.course">Course</span></dt>
+        <dd>
+            <a ui-sref="course-detail({id:vm.programmingExercise.course.id})">{{vm.programmingExercise.course.title}}</a>
+        </dd>
         <dt><span data-translate="artemisApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span></dt>
         <dd>
             <span>{{vm.programmingExercise.baseRepositoryUrl}}</span>
@@ -20,16 +36,16 @@
         <dd>
             <span>{{vm.programmingExercise.allowOnlineEditor}}</span>
         </dd>
+        <dt><span data-translate="artemisApp.exerciseLtiConfiguration.lti">LTI</span></dt>
+        <dd>
+            <a ui-sref="programming-exercise-detail.ltiConfiguration({id:vm.programmingExercise.id})">LTI Configuration</a>
+        </dd>
     </dl>
 
-    <button type="submit"
-            ui-sref="{{ vm.previousState }}"
-            class="btn btn-info">
+    <a
+        href="{{ vm.previousState }}"
+        class="btn btn-info"
+    >
         <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
-    </button>
-
-    <button type="button" ui-sref="programming-exercise-detail.edit({id:vm.programmingExercise.id})" class="btn btn-primary">
-        <span class="glyphicon glyphicon-pencil"></span>
-        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
-    </button>
+    </a>
 </div>
