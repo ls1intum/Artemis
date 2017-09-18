@@ -1,12 +1,14 @@
 package de.tum.in.www1.exerciseapp.web.rest.errors;
 
+import java.net.URI;
+
 public final class ErrorConstants {
 
     public static final String ERR_CONCURRENCY_FAILURE = "error.concurrencyFailure";
-    public static final String ERR_ACCESS_DENIED = "error.accessDenied";
     public static final String ERR_VALIDATION = "error.validation";
-    public static final String ERR_METHOD_NOT_SUPPORTED = "error.methodNotSupported";
-    public static final String ERR_INTERNAL_SERVER_ERROR = "error.internalServerError";
+    public static final URI DEFAULT_TYPE = URI.create("http://www.jhipster.tech/problem/problem-with-message");
+    public static final URI CONSTRAINT_VIOLATION_TYPE = URI.create("http://www.jhipster.tech/problem/contraint-violation");
+    public static final URI PARAMETERIZED_TYPE = URI.create("http://www.jhipster.tech/problem/parameterized");
 
     private ErrorConstants() {
     }
