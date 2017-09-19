@@ -163,9 +163,4 @@
     <changeSet author="krusche (generated)" id="1504180931627-28">
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drop_location" constraintName="FKlbu6qm8ykqhtb5xm911bg5ct7" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="question"/>
     </changeSet>
-    <changeSet author="krusche (generated)" id="1504180931627-29">
-        <addColumn tableName="jhi_user">
-            <column name="image_url" type="varchar(255)"/>
-        </addColumn>
-    </changeSet>
 </databaseChangeLog>
