@@ -33,19 +33,19 @@
                     <td>{{course.teachingAssistantGroupName}}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
-                            <div class="btn-group">
+                            <div class="btn-group" uib-dropdown>
                                 <button
                                     type="button"
-                                    class="btn btn-primary btn-sm dropdown-toggle"
-                                    data-toggle="dropdown"
+                                    class="btn btn-primary btn-sm"
                                     aria-haspopup="true"
                                     aria-expanded="false"
+                                    uib-dropdown-toggle
                                 >
                                     <span class="fa fa-list-alt"></span>
                                     <span class="hidden-xs hidden-sm">Exercises</span>
                                     <span class="caret"></span>
                                 </button>
-                                <ul class="dropdown-menu">
+                                <ul class="dropdown-menu" uib-dropdown-menu>
                                     <li><a ui-sref="programming-exercise-for-course({courseid:course.id})">
                                         Programming Exercises
                                     </a></li>
