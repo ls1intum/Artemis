@@ -101,7 +101,7 @@
         </addColumn>
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-10">
-        <renameColumn tableName="result" newColumnName="completion_date" oldColumnName="build_completion_date"/>
+        <renameColumn tableName="result" newColumnName="completion_date" oldColumnName="build_completion_date" columnDataType="timestamp"/>
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-11">
         <addColumn tableName="exercise">
@@ -111,7 +111,7 @@
         </addColumn>
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-12">
-        <renameColumn tableName="result" oldColumnName="build_successful" newColumnName="jhi_successful"/>
+        <renameColumn tableName="result" oldColumnName="build_successful" newColumnName="jhi_successful" columnDataType="bit"/>
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-13">
         <addColumn tableName="result">
