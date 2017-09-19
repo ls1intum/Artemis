@@ -101,9 +101,7 @@
         </addColumn>
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-10">
-        <addColumn tableName="result">
-            <column name="completion_date" type="datetime"/>
-        </addColumn>
+        <renameColumn tableName="result" newColumnName="completion_date" oldColumnName="build_completion_date" columnDataType="timestamp"/>
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-11">
         <addColumn tableName="exercise">
@@ -113,9 +111,7 @@
         </addColumn>
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-12">
-        <addColumn tableName="result">
-            <column name="jhi_successful" type="bit"/>
-        </addColumn>
+        <renameColumn tableName="result" oldColumnName="build_successful" newColumnName="jhi_successful" columnDataType="bit"/>
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-13">
         <addColumn tableName="result">
@@ -166,11 +162,5 @@
     </changeSet>
     <changeSet author="krusche (generated)" id="1504180931627-28">
         <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drop_location" constraintName="FKlbu6qm8ykqhtb5xm911bg5ct7" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="question"/>
-    </changeSet>
-    <changeSet author="krusche (generated)" id="1504180931627-29">
-        <dropColumn columnName="build_completion_date" tableName="result"/>
-    </changeSet>
-    <changeSet author="krusche (generated)" id="1504180931627-30">
-        <dropColumn columnName="build_successful" tableName="result"/>
     </changeSet>
 </databaseChangeLog>

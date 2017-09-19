@@ -57,7 +57,9 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     @PostConstruct
     public void init() {
         try {
-            authenticationManagerBuilder.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+            authenticationManagerBuilder
+            .userDetailsService(userDetailsService)
+            .passwordEncoder(passwordEncoder());
             if(remoteUserAuthenticationProvider.isPresent()) {
                 authenticationManagerBuilder.authenticationProvider(remoteUserAuthenticationProvider.get());
             }
@@ -157,8 +159,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
-            .antMatchers("/api/account/reset_password/init").permitAll()
-            .antMatchers("/api/account/reset_password/finish").permitAll()
+            .antMatchers("/api/account/reset-password/init").permitAll()
+            .antMatchers("/api/account/reset-password/finish").permitAll()
             .antMatchers("/api/profile-info").permitAll()
             .antMatchers("/api/**").authenticated()
             .antMatchers("/websocket/tracker").hasAuthority(AuthoritiesConstants.ADMIN)
