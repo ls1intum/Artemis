@@ -68,10 +68,15 @@ public class ProgrammingExerciseResourceIntTest {
 
     private ProgrammingExercise programmingExercise;
 
+    private final ProgrammingExerciseResource programmingExerciseResource;
+
+    public ProgrammingExerciseResourceIntTest(ProgrammingExerciseResource programmingExerciseResource) {
+        this.programmingExerciseResource = programmingExerciseResource;
+    }
+
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final ProgrammingExerciseResource programmingExerciseResource = new ProgrammingExerciseResource(programmingExerciseRepository);
         this.restProgrammingExerciseMockMvc = MockMvcBuilders.standaloneSetup(programmingExerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
