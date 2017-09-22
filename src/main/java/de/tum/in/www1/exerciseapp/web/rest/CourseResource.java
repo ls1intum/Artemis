@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -141,5 +142,57 @@ public class CourseResource {
         log.debug("REST request to delete Course : {}", id);
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+
+    /**
+     * GET /user/:courseId/courseResult
+     *
+     * @param courseID the Id of the course
+     * @return the overall Score a user achieved in a Course
+     *      Key is the userId and Value is the actual Score
+     */
+    @GetMapping("/courses/{courseID}/courseScores")
+    @Timed
+    public ResponseEntity<HashMap<Long, Long>> courseScores(@PathVariable Long courseID){
+        log.debug("REST request to get courseScores from course : {}", courseID);
+        HashMap<Long, Long> courseResults = new HashMap<Long, Long>();
+        Course course = courseService.findOne(courseID);
+        Iterable<Exercise> exercises = course.getExercises();
+
+        for (Exercise e : exercises) {
+            Iterable<Participation> participations = e.getParticipations();
+            for (Participation p : participations) {
+
+                User student = p.getStudent();
+                Iterable<Result> results = p.getResults();
+                Result bestResult = null;
+
+                for (Result r : results) {
+                    if(bestResult == null){
+                        bestResult = r;
+                    }else if(bestResult.getScore() < r.getScore()){
+                        bestResult = r;
+                    }
+                }
+
+                if(courseResults.containsKey(student.getId())){
+                    Long oldScore = courseResults.get(student.getId());
+                    courseResults.replace(student.getId(), (oldScore + bestResult.getScore())/2);
+                }else {
+                    courseResults.put(student.getId(), bestResult.getScore());
+                }
+            }
+        }
+
+        return ResponseEntity.ok(courseResults);
+    }
+
+    @GetMapping("/courses/test/courseScores")
+    @Timed
+    public ResponseEntity<HashMap<String, Integer>> test(){
+        HashMap<String, Integer> res = new HashMap<>();
+        res.put("score", 10);
+        return ResponseEntity.ok(res);
     }
 }

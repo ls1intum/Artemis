@@ -11,9 +11,9 @@
             templateUrl: 'app/instructor-dashboard/instructor-course-dashboard.html'
         });
 
-    InstructorCourseDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal','Course', 'CourseResult', 'CourseParticipation'];
+    InstructorCourseDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal','Course', 'CourseResult', 'CourseParticipation', 'CourseScores'];
 
-    function InstructorCourseDashboardController($window, $filter, moment, $uibModal, Course, CourseResult, CourseParticipation) {
+    function InstructorCourseDashboardController($window, $filter, moment, $uibModal, Course, CourseResult, CourseParticipation, CourseScores) {
         var vm = this;
 
 
@@ -34,6 +34,9 @@
                 courseId: vm.courseId
             }, groupResults);
             vm.participations = CourseParticipation.query({
+                courseId: vm.courseId
+            }, groupResults);
+            vm.courseScores = CourseScores.query({
                 courseId: vm.courseId
             }, groupResults);
         }
@@ -73,6 +76,7 @@
                 if(!studentSeen[p.student.id]) {
                     studentSeen[p.student.id] = true;
                     rows[p.student.id].participatedPercentage = parseFloat(((rows[p.student.id].participated / vm.numberOfExercises) * 100).toFixed(2));
+                    rows[p.student.id].overallScore = vm.courseScores.score;
                 }
             });
 
