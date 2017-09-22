@@ -42,7 +42,7 @@
         }
 
         function groupResults() {
-            if(!vm.results || !vm.participations || vm.participations.length == 0 || vm.results.length == 0) {
+            if(!vm.results || !vm.participations || !vm.courseScores || vm.participations.length == 0 || vm.results.length == 0 || vm.courseScores.length == 0) {
                 return
             }
             var rows = {};
@@ -76,9 +76,13 @@
                 if(!studentSeen[p.student.id]) {
                     studentSeen[p.student.id] = true;
                     rows[p.student.id].participatedPercentage = parseFloat(((rows[p.student.id].participated / vm.numberOfExercises) * 100).toFixed(2));
-                    rows[p.student.id].overallScore = vm.courseScores.score;
                 }
             });
+
+            _.forEach(vm.courseScores, function (s) {
+               rows[s.id].overallScore = s.score;
+            })
+
 
             vm.rows = _.values(rows);
 

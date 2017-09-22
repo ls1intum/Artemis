@@ -139,7 +139,7 @@
     CourseScores.$inject = ['$resource'];
 
     function CourseScores($resource) {
-        var resourceUrl =  'api/courses/test/courseScores';
+        var resourceUrl =  'api/courses/:courseId/courseScores';
 
         return $resource(resourceUrl, {}, {
             'query': { method: 'GET', isArray: true},
@@ -150,7 +150,8 @@
                         data = angular.fromJson(data);
                     }
                     return data;
-                }
+                },
+                ignoreLoadingBar: true
             }
         });
     }

@@ -1,7 +1,7 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.exerciseapp.domain.Course;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
@@ -15,13 +15,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * REST controller for managing Course.
@@ -154,9 +154,10 @@ public class CourseResource {
      */
     @GetMapping("/courses/{courseID}/courseScores")
     @Timed
-    public ResponseEntity<HashMap<Long, Long>> courseScores(@PathVariable Long courseID){
+    @Transactional
+    public ResponseEntity<List<studentScore>> courseScores(@PathVariable("courseID") Long courseID){
         log.debug("REST request to get courseScores from course : {}", courseID);
-        HashMap<Long, Long> courseResults = new HashMap<Long, Long>();
+        HashMap<Long, Long> courseResults = new HashMap<>();
         Course course = courseService.findOne(courseID);
         Iterable<Exercise> exercises = course.getExercises();
 
@@ -171,9 +172,16 @@ public class CourseResource {
                 for (Result r : results) {
                     if(bestResult == null){
                         bestResult = r;
+                    }else if(bestResult.getScore() == null || r.getScore() == null){
+                        continue;
                     }else if(bestResult.getScore() < r.getScore()){
                         bestResult = r;
                     }
+                }
+
+                if(bestResult == null || bestResult.getScore() == null){
+                    bestResult = new Result();
+                    bestResult.setScore( (long) 0);
                 }
 
                 if(courseResults.containsKey(student.getId())){
@@ -185,14 +193,36 @@ public class CourseResource {
             }
         }
 
-        return ResponseEntity.ok(courseResults);
+        List<studentScore> formatedCourseResults = new ArrayList<>();
+        for(long k : courseResults.keySet()){
+            studentScore s = new studentScore();
+            s.id = k;
+            s.score = courseResults.get(k);
+            formatedCourseResults.add(s);
+        }
+
+        return ResponseEntity.ok(formatedCourseResults);
     }
 
-    @GetMapping("/courses/test/courseScores")
-    @Timed
-    public ResponseEntity<HashMap<String, Integer>> test(){
-        HashMap<String, Integer> res = new HashMap<>();
-        res.put("score", 10);
-        return ResponseEntity.ok(res);
+    public class studentScore implements Serializable{
+        private long id;
+        private long score;
+
+        public long getId() {
+            return id;
+        }
+
+        public void setId(long id) {
+            this.id = id;
+        }
+
+        public long getScore() {
+            return score;
+        }
+
+        public void setScore(long score) {
+            this.score = score;
+        }
     }
+
 }
