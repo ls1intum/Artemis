@@ -159,7 +159,7 @@ public class CourseResource {
         log.debug("REST request to get courseScores from course : {}", courseID);
         HashMap<Long, Long> courseResults = new HashMap<>();
         Course course = courseService.findOne(courseID);
-        Iterable<Exercise> exercises = course.getExercises();
+        Set<Exercise> exercises = course.getExercises();
 
         for (Exercise e : exercises) {
             Iterable<Participation> participations = e.getParticipations();
@@ -186,7 +186,7 @@ public class CourseResource {
 
                 if(courseResults.containsKey(student.getId())){
                     Long oldScore = courseResults.get(student.getId());
-                    courseResults.replace(student.getId(), (oldScore + bestResult.getScore())/2);
+                    courseResults.replace(student.getId(), oldScore + bestResult.getScore());
                 }else {
                     courseResults.put(student.getId(), bestResult.getScore());
                 }
@@ -197,7 +197,7 @@ public class CourseResource {
         for(long k : courseResults.keySet()){
             studentScore s = new studentScore();
             s.id = k;
-            s.score = courseResults.get(k);
+            s.score = courseResults.get(k)/exercises.size();
             formatedCourseResults.add(s);
         }
 
