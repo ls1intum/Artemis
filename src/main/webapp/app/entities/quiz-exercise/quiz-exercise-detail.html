@@ -1,19 +1,53 @@
-
-<div>
-    <h2><span data-translate="artemisApp.quizExercise.detail.title">Quiz Exercise</span> {{vm.quizExercise.id}}</h2>
-    <hr>
-    <jhi-alert-error></jhi-alert-error>
-    <dl class="dl-horizontal jh-entity-details">
-    </dl>
-
-    <button type="submit"
-            ui-sref="{{ vm.previousState }}"
-            class="btn btn-info">
-        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
-    </button>
-
-    <button type="button" ui-sref="quiz-exercise-detail.edit({id:vm.quizExercise.id})" class="btn btn-primary">
-        <span class="glyphicon glyphicon-pencil"></span>
-        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
-    </button>
+<div class="container">
+    <h1>
+        {{vm.quizExercise.id ? "Edit Quiz Exercise" : "New Quiz Exercise for \"" + vm.quizExercise.course.title + "\""}}
+    </h1>
+    <hr/>
+    <div>
+        <input
+            type="text"
+            ng-bind="vm.quizExercise.title"
+            placeholder="Quiz Title"
+        />
+        <div
+            class="quiz-options"
+        >
+            <div>
+                <span>Duration: </span>
+                <input
+                    title="Duration"
+                    type="number"
+                    min="1"
+                    max="240"
+                    ng-bind="vm.quizExercise.duration"
+                />
+                <span>minutes</span>
+            </div>
+            <div>
+                <label>
+                    <input
+                        type="checkbox"
+                        ng-checked="vm.quizExercise.plannedStart"
+                    />
+                    Planned Start:
+                </label>
+                <input
+                    title="Planned Start"
+                    type="datetime-local"
+                    ng-bind="vm.quizExercise.plannedStartDateTime"
+                />
+            </div>
+        </div>
+        <ul class="quiz-questions">
+            <li
+                class="quiz-question"
+                ng-repeat="quiz in vm.quizExercise.questions"
+            >
+                {{quiz.title}}
+            </li>
+        </ul>
+        <button>
+            Add Question
+        </button>
+    </div>
 </div>
