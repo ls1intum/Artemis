@@ -54,10 +54,10 @@
         <td>{{ row.firstName }} {{ row.lastName }}</td>
         <td>{{ row.login }}</td>
         <td>{{ row.participated }}</td>
-        <td>{{ row.participatedPercentage }}%</td>
+        <td>{{ row.participatedPercentage | number: 0}}%</td>
         <td>{{ row.successful }}</td>
-        <td>{{ row.successfulPercentage }}%</td>
-        <td>{{ row.overallScore }}%</td>
+        <td>{{ row.successfulPercentage | number: 0}}%</td>
+        <td>{{ row.overallScore | number: 0}}%</td>
 
     </tr>
     </tbody>

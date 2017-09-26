@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.service.CourseService;
+import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -148,81 +149,15 @@ public class CourseResource {
     /**
      * GET /user/:courseId/courseResult
      *
-     * @param courseID the Id of the course
-     * @return the overall Score a user achieved in a Course
-     *      Key is the userId and Value is the actual Score
+     * @param courseId the Id of the course
+     * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:
+     *  ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
      */
-    @GetMapping("/courses/{courseID}/courseScores")
+    @GetMapping("/courses/{courseId}/getAllSummedScoresOfCourseUsers")
     @Timed
-    @Transactional
-    public ResponseEntity<List<studentScore>> courseScores(@PathVariable("courseID") Long courseID){
-        log.debug("REST request to get courseScores from course : {}", courseID);
-        HashMap<Long, Long> courseResults = new HashMap<>();
-        Course course = courseService.findOne(courseID);
-        Set<Exercise> exercises = course.getExercises();
-
-        for (Exercise e : exercises) {
-            Iterable<Participation> participations = e.getParticipations();
-            for (Participation p : participations) {
-
-                User student = p.getStudent();
-                Iterable<Result> results = p.getResults();
-                Result bestResult = null;
-
-                for (Result r : results) {
-                    if(bestResult == null){
-                        bestResult = r;
-                    }else if(bestResult.getScore() == null || r.getScore() == null){
-                        continue;
-                    }else if(bestResult.getScore() < r.getScore()){
-                        bestResult = r;
-                    }
-                }
-
-                if(bestResult == null || bestResult.getScore() == null){
-                    bestResult = new Result();
-                    bestResult.setScore( (long) 0);
-                }
-
-                if(courseResults.containsKey(student.getId())){
-                    Long oldScore = courseResults.get(student.getId());
-                    courseResults.replace(student.getId(), oldScore + bestResult.getScore());
-                }else {
-                    courseResults.put(student.getId(), bestResult.getScore());
-                }
-            }
-        }
-
-        List<studentScore> formatedCourseResults = new ArrayList<>();
-        for(long k : courseResults.keySet()){
-            studentScore s = new studentScore();
-            s.id = k;
-            s.score = courseResults.get(k)/exercises.size();
-            formatedCourseResults.add(s);
-        }
-
-        return ResponseEntity.ok(formatedCourseResults);
-    }
-
-    public class studentScore implements Serializable{
-        private long id;
-        private long score;
-
-        public long getId() {
-            return id;
-        }
-
-        public void setId(long id) {
-            this.id = id;
-        }
-
-        public long getScore() {
-            return score;
-        }
-
-        public void setScore(long score) {
-            this.score = score;
-        }
+    public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId){
+        log.debug("REST request to get courseScores from course : {}", courseId);
+        return ResponseEntity.ok(courseService.getAllSummedOverallScoresOfCourse(courseId));
     }
 
 }

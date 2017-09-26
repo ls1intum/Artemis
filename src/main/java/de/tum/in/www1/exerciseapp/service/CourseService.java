@@ -1,8 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Authority;
-import de.tum.in.www1.exerciseapp.domain.Course;
-import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -104,5 +102,69 @@ public class CourseService {
     public List<String> getAllTeachingAssistantGroupNames() {
         List<Course> courses = courseRepository.findAll();
         return courses.stream().map(c -> c.getTeachingAssistantGroupName()).collect(Collectors.toList());
+    }
+
+    /**
+     * Getting a Collection of Results in which the average Score of all taken Exercises, is mapped to a userId for the instructor dashboard
+     *
+     * @param id the courseId
+     *
+     * @return The resultId refers in this case to the UserID to whom the overallScore belongsTo
+     */
+    @Transactional(readOnly = true)
+    public Collection<Result> getAllSummedOverallScoresOfCourse(Long id){
+        Course course = findOne(id);
+        Set<Exercise> exercisesOfCourse = course.getExercises();
+        HashMap<Long, Result> allOverallScoresOfCourse = new HashMap<>();
+
+        for(Exercise exercise : exercisesOfCourse){
+            Set<Participation> participations = exercise.getParticipations();
+            for (Participation participation : participations) {
+
+                long studentID = participation.getStudent().getId();
+                Result bestResult = bestResultScoreInParticipation(participation);
+                //setting student id in Result to refer to the student later in the webapp
+                bestResult.setId(studentID);
+
+                //if student already appeared once
+                if(allOverallScoresOfCourse.containsKey(studentID)){
+                    long oldScore = allOverallScoresOfCourse.get(studentID).getScore();
+                    bestResult.setScore(oldScore+bestResult.getScore());
+                    allOverallScoresOfCourse.remove(studentID);
+                }
+
+                allOverallScoresOfCourse.put(studentID, bestResult);
+            }
+        }
+        return allOverallScoresOfCourse.values();
+    }
+
+
+    /**
+     * Find the best Result in a Participation
+     *
+     * @param participation the participation you want the best result from
+     */
+    @Transactional(readOnly = true)
+    public Result bestResultScoreInParticipation(Participation participation) {
+        Set<Result> results = participation.getResults();
+
+        Result bestResult = null;
+        for (Result result : results) {
+            if (bestResult == null) {
+                bestResult = new Result();
+                bestResult.setScore(result.getScore());
+            } else if (bestResult.getScore() == null || result.getScore() == null) {
+                continue;
+            } else if (bestResult.getScore() < result.getScore()) {
+                bestResult.setScore(result.getScore());
+            }
+        }
+
+        if (bestResult == null) {
+            bestResult = new Result();
+            bestResult.setScore((long) 0);
+        }
+        return bestResult;
     }
 }
