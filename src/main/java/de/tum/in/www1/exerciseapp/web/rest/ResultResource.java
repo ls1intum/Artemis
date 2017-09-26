@@ -196,8 +196,11 @@ public class ResultResource {
             results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
         }
 
+        // Each object array in the list contains two Long values, participation id (index 0) and
+        // number of results for this participation (index 1)
         List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
 
+        // Matches each result with the number of results in corresponding participation
         for(Result result: results) {
             for(Object[] submissionCount: submissionCounts) {
                 if(result.getParticipation().getId().equals(submissionCount[0])) {
