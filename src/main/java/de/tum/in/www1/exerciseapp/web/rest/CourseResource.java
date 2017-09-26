@@ -151,6 +151,7 @@ public class CourseResource {
      *  ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
      */
     @GetMapping("/courses/{courseId}/getAllSummedScoresOfCourseUsers")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId){
         log.debug("REST request to get courseScores from course : {}", courseId);
