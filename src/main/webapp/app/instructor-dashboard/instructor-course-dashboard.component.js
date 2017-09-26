@@ -54,9 +54,9 @@
                        'lastName': p.student.lastName,
                        'login': p.student.login,
                        'participated': 0,
-                       'participatedPercentage': 0,
+                       "participationInPercent": 0,
                        'successful': 0,
-                       'successfulPercentage': 0,
+                       "successfullyCompletedInPercent": 0,
                        'overallScore': 0,
                    }
                }
@@ -70,7 +70,7 @@
             //succesfull Participations total amount and a relative value to all Exercises
             _.forEach(vm.results, function (r) {
                 rows[r.participation.student.id].successful++;
-                rows[r.participation.student.id].successfulPercentage = (rows[r.participation.student.id].successful / vm.numberOfExercises)*100;
+                rows[r.participation.student.id].successfullyCompletedInPercent = (rows[r.participation.student.id].successful / vm.numberOfExercises)*100;
             });
 
             //relative amount of participation in all exercises
@@ -78,7 +78,7 @@
             _.forEach(vm.participations, function (p) {
                 if(!studentSeen[p.student.id]) {
                     studentSeen[p.student.id] = true;
-                    rows[p.student.id].participatedPercentage = (rows[p.student.id].participated / vm.numberOfExercises) * 100;
+                    rows[p.student.id].participationInPercent = (rows[p.student.id].participated / vm.numberOfExercises) * 100;
                 }
             });
 
