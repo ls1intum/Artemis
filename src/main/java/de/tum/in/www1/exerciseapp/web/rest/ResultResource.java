@@ -201,13 +201,13 @@ public class ResultResource {
         List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
 
         // Matches each result with the number of results in corresponding participation
-        for(Result result: results) {
-            for(Object[] submissionCount: submissionCounts) {
-                if(result.getParticipation().getId().equals(submissionCount[0])) {
-                    result.setSubmissionCount((Long)submissionCount[1]);
-                }
-            }
-        }
+        results.stream().forEach(result ->
+                submissionCounts.stream().forEach(submissionCount -> {
+                    if (result.getParticipation().getId().equals(submissionCount[0])) {
+                        result.setSubmissionCount((Long) submissionCount[1]);
+                    }
+                }));
+
         return results;
     }
 
