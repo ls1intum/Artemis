@@ -66,21 +66,25 @@
                    vm.numberOfExercises++;
                }
             });
+
+            //succesfull Participations total amount and a relative value to all Exercises
             _.forEach(vm.results, function (r) {
                 rows[r.participation.student.id].successful++;
-                rows[r.participation.student.id].successfulPercentage = parseFloat((rows[r.participation.student.id].successful / vm.numberOfExercises)*100);
+                rows[r.participation.student.id].successfulPercentage = (rows[r.participation.student.id].successful / vm.numberOfExercises)*100;
             });
 
+            //relative amount of participation in all exercises
             var studentSeen = {};
             _.forEach(vm.participations, function (p) {
                 if(!studentSeen[p.student.id]) {
                     studentSeen[p.student.id] = true;
-                    rows[p.student.id].participatedPercentage = parseFloat((rows[p.student.id].participated / vm.numberOfExercises) * 100);
+                    rows[p.student.id].participatedPercentage = (rows[p.student.id].participated / vm.numberOfExercises) * 100;
                 }
             });
 
+            //the total score of all Exercises (as mentioned on the RESTapi division by amount of exercises
             _.forEach(vm.courseScores, function (s) {
-               rows[s.id].overallScore = parseFloat(s.score / vm.numberOfExercises);
+               rows[s.id].overallScore = s.score / vm.numberOfExercises;
             })
 
 
