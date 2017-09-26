@@ -1,5 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -43,6 +46,20 @@ public class Result implements Serializable {
 
     @ManyToOne
     private Participation participation;
+
+    // number of results in the participation this result belongs to
+    @Transient
+    @JsonProperty
+    private Long submissionCount;
+
+    public Long getSubmissionCount() {
+        return submissionCount;
+    }
+
+    public void setSubmissionCount(Long submissionCount) {
+        this.submissionCount = submissionCount;
+    }
+
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
