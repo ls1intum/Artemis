@@ -105,17 +105,17 @@ public class CourseService {
     }
 
     /**
-     * Getting a Collection of Results in which the average Score of all taken Exercises, is mapped to a userId for the instructor dashboard
+     * Getting a Collection of Results in which the average Score of a course is returned as a result
      *
      * @param courseId the courseId
-     * @return The resultId refers in this case to the UserID to whom the overallScore belongsTo
+     * @return the collection of results in the result score the average score is saved, which contains the participation and the user
      */
     @Transactional(readOnly = true)
-    public Collection<Result> getAllSummedOverallScoresOfCourse(Long courseId) {
+    public Collection<Result> getAllOverallScoresOfCourse(Long courseId) {
         Course course = findOne(courseId);
         Set<Exercise> exercisesOfCourse = course.getExercises();
         //key stores the userId to identify if he already got a score, value contains the Result itself with the score of the user
-        HashMap<Long, Result> allOverallScoresOfCourse = new HashMap<>();
+        HashMap<Long, Result> allOverallSummedScoresOfCourse = new HashMap<>();
 
         for (Exercise exercise : exercisesOfCourse) {
             Set<Participation> participations = exercise.getParticipations();
@@ -126,15 +126,23 @@ public class CourseService {
                 Result bestResult = bestResultScoreInParticipation(participation);
 
                 //if student already appeared, once add the new score to the old one
-                if (allOverallScoresOfCourse.containsKey(userID)) {
-                    long oldScore = allOverallScoresOfCourse.get(userID).getScore();
+                if (allOverallSummedScoresOfCourse.containsKey(userID)) {
+                    long oldScore = allOverallSummedScoresOfCourse.get(userID).getScore();
                     bestResult.setScore(oldScore + bestResult.getScore());
-                    allOverallScoresOfCourse.remove(userID);
+                    allOverallSummedScoresOfCourse.remove(userID);
                 }
-                allOverallScoresOfCourse.put(userID, bestResult);
+                allOverallSummedScoresOfCourse.put(userID, bestResult);
             }
         }
-        return allOverallScoresOfCourse.values();
+
+        //divide the scores by the amount of exercises to get the average Score of all Exercises
+        Collection<Result> allOverallScores = allOverallSummedScoresOfCourse.values();
+        int numberOfExercises = exercisesOfCourse.size();
+        for (Result result : allOverallScores) {
+            result.setScore(result.getScore() / (long) numberOfExercises);
+        }
+
+        return allOverallScores;
     }
 
     /**
