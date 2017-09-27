@@ -43,9 +43,9 @@ public class CourseService {
     }
 
     /**
-     *  Get all the courses.
+     * Get all the courses.
      *
-     *  @return the list of entities
+     * @return the list of entities
      */
     @Transactional(readOnly = true)
     public List<Course> findAll() {
@@ -66,10 +66,10 @@ public class CourseService {
     }
 
     /**
-     *  Get all the courses.
+     * Get all the courses.
      *
-     *  @param pageable the pagination information
-     *  @return the list of entities
+     * @param pageable the pagination information
+     * @return the list of entities
      */
     @Transactional(readOnly = true)
     public Page<Course> findAll(Pageable pageable) {
@@ -78,10 +78,10 @@ public class CourseService {
     }
 
     /**
-     *  Get one course by id.
+     * Get one course by id.
      *
-     *  @param id the id of the entity
-     *  @return the entity
+     * @param id the id of the entity
+     * @return the entity
      */
     @Transactional(readOnly = true)
     public Course findOne(Long id) {
@@ -90,9 +90,9 @@ public class CourseService {
     }
 
     /**
-     *  Delete the  course by id.
+     * Delete the  course by id.
      *
-     *  @param id the id of the entity
+     * @param id the id of the entity
      */
     public void delete(Long id) {
         log.debug("Request to delete Course : {}", id);
@@ -108,17 +108,16 @@ public class CourseService {
      * Getting a Collection of Results in which the average Score of all taken Exercises, is mapped to a userId for the instructor dashboard
      *
      * @param courseId the courseId
-     *
      * @return The resultId refers in this case to the UserID to whom the overallScore belongsTo
      */
     @Transactional(readOnly = true)
-    public Collection<Result> getAllSummedOverallScoresOfCourse(Long courseId){
+    public Collection<Result> getAllSummedOverallScoresOfCourse(Long courseId) {
         Course course = findOne(courseId);
         Set<Exercise> exercisesOfCourse = course.getExercises();
         //key stores the userId to identify if he already got a score, value contains the Result itself with the score of the user
         HashMap<Long, Result> allOverallScoresOfCourse = new HashMap<>();
 
-        for(Exercise exercise : exercisesOfCourse){
+        for (Exercise exercise : exercisesOfCourse) {
             Set<Participation> participations = exercise.getParticipations();
             for (Participation participation : participations) {
 
@@ -127,9 +126,9 @@ public class CourseService {
                 Result bestResult = bestResultScoreInParticipation(participation);
 
                 //if student already appeared, once add the new score to the old one
-                if(allOverallScoresOfCourse.containsKey(userID)){
+                if (allOverallScoresOfCourse.containsKey(userID)) {
                     long oldScore = allOverallScoresOfCourse.get(userID).getScore();
-                    bestResult.setScore(oldScore+bestResult.getScore());
+                    bestResult.setScore(oldScore + bestResult.getScore());
                     allOverallScoresOfCourse.remove(userID);
                 }
                 allOverallScoresOfCourse.put(userID, bestResult);
@@ -137,7 +136,6 @@ public class CourseService {
         }
         return allOverallScoresOfCourse.values();
     }
-
 
     /**
      * Find the best Result in a Participation
@@ -149,16 +147,15 @@ public class CourseService {
     public Result bestResultScoreInParticipation(Participation participation) {
         Set<Result> results = participation.getResults();
 
-        //score can be stored as null in the DB therefore check if the score is null to avoid Exception
         Result bestResult = null;
         for (Result result : results) {
             if (bestResult == null) {
                 bestResult = new Result();
                 bestResult.setScore(result.getScore());
             } else if (bestResult.getScore() != null
-                        && result.getScore() != null
-                        && bestResult.getScore() < result.getScore()
-                        && participation.getExercise().getDueDate().isBefore(result.getCompletionDate())
+                && result.getScore() != null //score can be stored as null in the DB
+                && bestResult.getScore() < result.getScore()
+                && participation.getExercise().getDueDate().isBefore(result.getCompletionDate())//only use results which are completed before the dueDate
                 ) {
                 bestResult.setScore(result.getScore());
             }
@@ -169,9 +166,9 @@ public class CourseService {
             bestResult = new Result();
             bestResult.setScore((long) 0);
         }
-
         //setting participation in result to have student id later
         bestResult.setParticipation(participation);
+
         return bestResult;
     }
 }
