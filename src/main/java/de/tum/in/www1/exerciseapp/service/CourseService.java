@@ -122,16 +122,17 @@ public class CourseService {
             Set<Participation> participations = exercise.getParticipations();
             for (Participation participation : participations) {
 
-                long studentID = participation.getStudent().getId();
+                //id of user in the datbase to reference to the user
+                long userID = participation.getStudent().getId();
                 Result bestResult = bestResultScoreInParticipation(participation);
 
                 //if student already appeared, once add the new score to the old one
-                if(allOverallScoresOfCourse.containsKey(studentID)){
-                    long oldScore = allOverallScoresOfCourse.get(studentID).getScore();
+                if(allOverallScoresOfCourse.containsKey(userID)){
+                    long oldScore = allOverallScoresOfCourse.get(userID).getScore();
                     bestResult.setScore(oldScore+bestResult.getScore());
-                    allOverallScoresOfCourse.remove(studentID);
+                    allOverallScoresOfCourse.remove(userID);
                 }
-                allOverallScoresOfCourse.put(studentID, bestResult);
+                allOverallScoresOfCourse.put(userID, bestResult);
             }
         }
         return allOverallScoresOfCourse.values();
@@ -148,14 +149,17 @@ public class CourseService {
     public Result bestResultScoreInParticipation(Participation participation) {
         Set<Result> results = participation.getResults();
 
+        //score can be stored as null in the DB therefore check if the score is null to avoid Exception
         Result bestResult = null;
         for (Result result : results) {
             if (bestResult == null) {
                 bestResult = new Result();
                 bestResult.setScore(result.getScore());
-            } else if (bestResult.getScore() == null || result.getScore() == null) {
-                continue;
-            } else if (bestResult.getScore() < result.getScore() && participation.getExercise().getDueDate().isBefore(result.getCompletionDate())) {
+            } else if (bestResult.getScore() != null
+                        && result.getScore() != null
+                        && bestResult.getScore() < result.getScore()
+                        && participation.getExercise().getDueDate().isBefore(result.getCompletionDate())
+                ) {
                 bestResult.setScore(result.getScore());
             }
         }
