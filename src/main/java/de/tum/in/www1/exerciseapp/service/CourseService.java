@@ -107,14 +107,15 @@ public class CourseService {
     /**
      * Getting a Collection of Results in which the average Score of all taken Exercises, is mapped to a userId for the instructor dashboard
      *
-     * @param id the courseId
+     * @param courseId the courseId
      *
      * @return The resultId refers in this case to the UserID to whom the overallScore belongsTo
      */
     @Transactional(readOnly = true)
-    public Collection<Result> getAllSummedOverallScoresOfCourse(Long id){
-        Course course = findOne(id);
+    public Collection<Result> getAllSummedOverallScoresOfCourse(Long courseId){
+        Course course = findOne(courseId);
         Set<Exercise> exercisesOfCourse = course.getExercises();
+        //key stores the userId to identify if he already got a score, value contains the Result itself with the score of the user
         HashMap<Long, Result> allOverallScoresOfCourse = new HashMap<>();
 
         for(Exercise exercise : exercisesOfCourse){
@@ -123,16 +124,13 @@ public class CourseService {
 
                 long studentID = participation.getStudent().getId();
                 Result bestResult = bestResultScoreInParticipation(participation);
-                //setting student id in Result to refer to the student later in the webapp
-                bestResult.setId(studentID);
 
-                //if student already appeared once
+                //if student already appeared, once add the new score to the old one
                 if(allOverallScoresOfCourse.containsKey(studentID)){
                     long oldScore = allOverallScoresOfCourse.get(studentID).getScore();
                     bestResult.setScore(oldScore+bestResult.getScore());
                     allOverallScoresOfCourse.remove(studentID);
                 }
-
                 allOverallScoresOfCourse.put(studentID, bestResult);
             }
         }
@@ -144,6 +142,7 @@ public class CourseService {
      * Find the best Result in a Participation
      *
      * @param participation the participation you want the best result from
+     * @return the best result a student had within the time of the exercise
      */
     @Transactional(readOnly = true)
     public Result bestResultScoreInParticipation(Participation participation) {
@@ -156,15 +155,19 @@ public class CourseService {
                 bestResult.setScore(result.getScore());
             } else if (bestResult.getScore() == null || result.getScore() == null) {
                 continue;
-            } else if (bestResult.getScore() < result.getScore()) {
+            } else if (bestResult.getScore() < result.getScore() && participation.getExercise().getDueDate().isBefore(result.getCompletionDate())) {
                 bestResult.setScore(result.getScore());
             }
         }
 
-        if (bestResult == null) {
+        //edge case of no result submitted to a participation or in case the db has stored null for score
+        if (bestResult == null || bestResult.getScore() == null) {
             bestResult = new Result();
             bestResult.setScore((long) 0);
         }
+
+        //setting participation in result to have student id later
+        bestResult.setParticipation(participation);
         return bestResult;
     }
 }
