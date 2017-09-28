@@ -150,12 +150,12 @@ public class CourseResource {
      * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:
      *  ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
      */
-    @GetMapping("/courses/{courseId}/getAllSummedScoresOfCourseUsers")
+    @GetMapping("/courses/{courseId}/getAllCourseScoresOfCourseUsers")
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId){
         log.debug("REST request to get courseScores from course : {}", courseId);
-        return ResponseEntity.ok(courseService.getAllSummedOverallScoresOfCourse(courseId));
+        return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
 
 }
