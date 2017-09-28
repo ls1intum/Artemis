@@ -45,7 +45,11 @@ public class Result implements Serializable {
     @ManyToOne
     private Participation participation;
 
-    // number of results in the participation this result belongs to
+    /**
+     * This property stores the total number of results in the participation this result belongs to.
+     * Not stored in the database, computed dynamically and used in showing statistics to the user
+     * in the exercise view.
+     */
     @Transient
     @JsonProperty
     private Long submissionCount;

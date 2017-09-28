@@ -31,7 +31,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select r from Result r where r.completionDate = (select min(rr.completionDate) from Result rr where rr.participation.exercise.id = r.participation.exercise.id and rr.participation.student.id = r.participation.student.id and rr.successful = true) and r.participation.exercise.course.id = :courseId and r.successful = true order by r.completionDate asc")
     List<Result> findEarliestSuccessfulResultsForCourse(@Param("courseId") Long courseId);
 
-    // Hibernate returns List<Object[]> when selecting multiple columns
+
+    /**
+     * Custom query that counts the number of results for each participation of a particular exercise
+     * @param exerciseId id of exercise for which the number of results in participations is aggregated
+     * @return list of object arrays, where each object array contains two Long values, participation id (index 0) and
+     * number of results for this participation (index 1)
+     */
     @Query("select participation.id, count(id) from Result where participation.exercise.id = :exerciseId group by participation.id")
     List<Object[]> findSubmissionCountsForStudents(@Param("exerciseId") Long exerciseId);
 
