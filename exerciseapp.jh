@@ -94,6 +94,10 @@ entity Result (result) {
   score Long
 }
 
+entity Feedback(feedback) {
+	feedback String
+}
+
 enum ParticipationState {
    UNINITIALIZED,
    REPO_COPIED,
@@ -126,6 +130,7 @@ relationship OneToMany {
   Course{exercises} to Exercise{course(title)},
   Exercise{participations} to Participation{exercise(title)},
   Participation{results} to Result{participation},
+  Result{feedbacks} to Feedback{result},
 
   QuizExercise{questions} to Question{exercise},
   MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
