@@ -139,7 +139,7 @@
     CourseScores.$inject = ['$resource'];
 
     function CourseScores($resource) {
-        var resourceUrl =  'api/courses/:courseId/getAllSummedScoresOfCourseUsers';
+        var resourceUrl =  'api/courses/:courseId/getAllCourseScoresOfCourseUsers';
 
         return $resource(resourceUrl, {}, {
             'query': { method: 'GET', isArray: true},

@@ -85,7 +85,7 @@
 
             //set the total score of all Exercises (as mentioned on the RESTapi division by amount of exercises)
             _.forEach(vm.courseScores, function (s) {
-               rows[s.participation.student.id].overallScore = s.score / vm.numberOfExercises;
+               rows[s.participation.student.id].overallScore = s.score;
             })
 
 
