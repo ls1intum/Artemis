@@ -186,8 +186,8 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Result> getResultsForExercise(@PathVariable Long courseId,
-                                              @PathVariable Long exerciseId,
-                                              @RequestParam(defaultValue = "false") boolean showAllResults) {
+                                                @PathVariable Long exerciseId,
+                                                @RequestParam(defaultValue = "false") boolean showAllResults) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
         List<Result> results;
         if (showAllResults) {
@@ -195,6 +195,23 @@ public class ResultResource {
         } else {
             results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
         }
+
+        /**
+         *  Each object array in the list contains two Long values, participation id (index 0) and
+         *  number of results for this participation (index 1)
+         */
+        List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
+
+        /**
+         *  Matches each result with the number of results in corresponding participation
+         */
+        results.stream().forEach(result ->
+                submissionCounts.stream().forEach(submissionCount -> {
+                    if (result.getParticipation().getId().equals(submissionCount[0])) {
+                        result.setSubmissionCount((Long) submissionCount[1]);
+                    }
+                }));
+
         return results;
     }
 
