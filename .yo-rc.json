@@ -1,6 +1,6 @@
 {
   "generator-jhipster": {
-    "jhipsterVersion": "4.8.2",
+    "jhipsterVersion": "4.9.0",
     "baseName": "ArTEMiSApp",
     "packageName": "de.tum.in.www1.exerciseapp",
     "packageFolder": "de/tum/in/www1/exerciseapp",

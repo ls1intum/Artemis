@@ -159,3 +159,12 @@ jhipster:
             queue-size: 512
 
 
+# ===================================================================
+# Application specific properties
+# Add your own application properties here, see the ApplicationProperties class
+# to have type-safe configuration, like in the JHipsterProperties above
+#
+# More documentation is available at:
+# http://www.jhipster.tech/common-application-properties/
+# ===================================================================
+
