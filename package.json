@@ -60,7 +60,7 @@
     "protractor": "5.1.2",
     "protractor-jasmine2-screenshot-reporter": "0.4.1",
     "proxy-middleware": "0.15.0",
-    "puppeteer": "0.10.2",    
+    "puppeteer": "0.10.2",
     "run-sequence": "1.2.2",
     "yargs": "5.0.0"
   },
