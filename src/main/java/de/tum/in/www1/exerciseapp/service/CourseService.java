@@ -119,11 +119,13 @@ public class CourseService {
 
         for (Exercise exercise : exercisesOfCourse) {
             Set<Participation> participations = exercise.getParticipations();
+            boolean exerciseHasDueDate = exercise.getDueDate() != null;
+
             for (Participation participation : participations) {
 
                 //id of user in the datbase to reference to the user
                 long userID = participation.getStudent().getId();
-                Result bestResult = bestResultScoreInParticipation(participation);
+                Result bestResult = bestResultScoreInParticipation(participation, exerciseHasDueDate);
 
                 //if student already appeared, once add the new score to the old one
                 if (allOverallSummedScoresOfCourse.containsKey(userID)) {
@@ -149,29 +151,39 @@ public class CourseService {
      * Find the best Result in a Participation
      *
      * @param participation the participation you want the best result from
+     * @param hasDueDate if the participation has a duedate take last result before the due date if not take the overall last result
      * @return the best result a student had within the time of the exercise
      */
     @Transactional(readOnly = true)
-    public Result bestResultScoreInParticipation(Participation participation) {
+    public Result bestResultScoreInParticipation(Participation participation, boolean hasDueDate) {
         Set<Result> results = participation.getResults();
 
-        Result bestResult = null;
+        Result bestResult;
+
+        //edge case of no result submitted to a participation
+        if(results.size() <= 0){
+            bestResult = new Result();
+            bestResult.setScore((long) 0);
+            bestResult.setParticipation(participation);
+            return bestResult;
+        }
+
+        bestResult = results.iterator().next();
         for (Result result : results) {
-            if (bestResult == null) {
-                bestResult = new Result();
-                bestResult.setScore(result.getScore());
-            } else if (bestResult.getScore() != null
-                && result.getScore() != null //score can be stored as null in the DB
-                && bestResult.getScore() < result.getScore()
-                && participation.getExercise().getDueDate().isBefore(result.getCompletionDate())//only use results which are completed before the dueDate
-                ) {
-                bestResult.setScore(result.getScore());
+            // the participation has a due date take last result before the due date
+            if(hasDueDate
+                && bestResult.getCompletionDate().isBefore(result.getCompletionDate())
+                && result.getCompletionDate().isBefore(participation.getExercise().getDueDate())
+                ){
+                bestResult = result;
+            }else if( bestResult.getCompletionDate().isBefore(result.getCompletionDate()) // take the overall last submitted result
+                ){
+                bestResult=result;
             }
         }
 
-        //edge case of no result submitted to a participation or in case the db has stored null for score
-        if (bestResult == null || bestResult.getScore() == null) {
-            bestResult = new Result();
+        //edge case where the db has stored null for score
+        if (bestResult.getScore() == null) {
             bestResult.setScore((long) 0);
         }
         //setting participation in result to have student id later
