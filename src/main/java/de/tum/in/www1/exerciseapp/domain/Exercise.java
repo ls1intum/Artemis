@@ -48,7 +48,7 @@ public abstract class Exercise implements Serializable {
     @ManyToOne
     private Course course;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
+    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -133,7 +133,7 @@ public abstract class Exercise implements Serializable {
     public void setCourse(Course course) {
         this.course = course;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
