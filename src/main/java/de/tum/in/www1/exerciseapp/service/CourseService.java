@@ -156,10 +156,9 @@ public class CourseService {
      */
     @Transactional(readOnly = true)
     public Result bestResultScoreInParticipation(Participation participation, boolean hasDueDate) {
-        Set<Result> results = participation.getResults();
+        List<Result> results = new ArrayList<Result>(participation.getResults());
 
         Result bestResult;
-
         //edge case of no result submitted to a participation
         if(results.size() <= 0){
             bestResult = new Result();
@@ -168,18 +167,17 @@ public class CourseService {
             return bestResult;
         }
 
-        bestResult = results.iterator().next();
-        for (Result result : results) {
-            // the participation has a due date take last result before the due date
-            if(hasDueDate
-                && bestResult.getCompletionDate().isBefore(result.getCompletionDate())
-                && result.getCompletionDate().isBefore(participation.getExercise().getDueDate())
-                ){
-                bestResult = result;
-            }else if( bestResult.getCompletionDate().isBefore(result.getCompletionDate()) // take the overall last submitted result
-                ){
-                bestResult=result;
-            }
+        //sorting in descending order to have the last result at the beginning
+        results.sort(Comparator.comparing(Result::getCompletionDate).reversed());
+
+        if(hasDueDate){
+            //find the first result that is before the due date otherwise handles the case where all results were submitted after the due date,
+            bestResult = results.stream()
+                .filter(x -> x.getCompletionDate().isBefore(participation.getExercise().getDueDate()))
+                .findFirst()
+                .orElse(new Result());
+        }else{
+            bestResult = results.remove(0); //no due date use last result
         }
 
         //edge case where the db has stored null for score
