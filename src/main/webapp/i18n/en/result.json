@@ -21,6 +21,7 @@
             "buildArtifact": "Build Artifact",
             "score": "Score",
             "submission": "Submission",
+            "feedbacks": "Feedbacks",
             "participation": "Participation"
         }
     }
