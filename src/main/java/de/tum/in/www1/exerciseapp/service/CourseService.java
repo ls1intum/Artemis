@@ -125,7 +125,7 @@ public class CourseService {
 
                 //id of user in the datbase to reference to the user
                 long userID = participation.getStudent().getId();
-                Result bestResult = bestResultScoreInParticipation(participation, exerciseHasDueDate);
+                Result bestResult = choseResultInParticipation(participation, exerciseHasDueDate);
 
                 //if student already appeared, once add the new score to the old one
                 if (allOverallSummedScoresOfCourse.containsKey(userID)) {
@@ -155,16 +155,16 @@ public class CourseService {
      * @return the best result a student had within the time of the exercise
      */
     @Transactional(readOnly = true)
-    public Result bestResultScoreInParticipation(Participation participation, boolean hasDueDate) {
+    public Result choseResultInParticipation(Participation participation, boolean hasDueDate) {
         List<Result> results = new ArrayList<Result>(participation.getResults());
 
-        Result bestResult;
+        Result chosenResult;
         //edge case of no result submitted to a participation
         if(results.size() <= 0){
-            bestResult = new Result();
-            bestResult.setScore((long) 0);
-            bestResult.setParticipation(participation);
-            return bestResult;
+            chosenResult = new Result();
+            chosenResult.setScore((long) 0);
+            chosenResult.setParticipation(participation);
+            return chosenResult;
         }
 
         //sorting in descending order to have the last result at the beginning
@@ -172,21 +172,21 @@ public class CourseService {
 
         if(hasDueDate){
             //find the first result that is before the due date otherwise handles the case where all results were submitted after the due date,
-            bestResult = results.stream()
+            chosenResult = results.stream()
                 .filter(x -> x.getCompletionDate().isBefore(participation.getExercise().getDueDate()))
                 .findFirst()
                 .orElse(new Result());
         }else{
-            bestResult = results.remove(0); //no due date use last result
+            chosenResult = results.remove(0); //no due date use last result
         }
 
         //edge case where the db has stored null for score
-        if (bestResult.getScore() == null) {
-            bestResult.setScore((long) 0);
+        if (chosenResult.getScore() == null) {
+            chosenResult.setScore((long) 0);
         }
         //setting participation in result to have student id later
-        bestResult.setParticipation(participation);
+        chosenResult.setParticipation(participation);
 
-        return bestResult;
+        return chosenResult;
     }
 }
