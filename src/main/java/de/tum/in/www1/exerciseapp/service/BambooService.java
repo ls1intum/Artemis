@@ -1,9 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.Repository;
-import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
@@ -30,10 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -261,6 +255,8 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param participation
      */
+
+    //ToDo configure saving of the feedback
     @Override
     public void onBuildCompleted(Participation participation) {
         log.info("Retrieving build result...");
@@ -291,7 +287,39 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation(participation);
+
+        //insert feedback here
+        result.setFeedbacks(createFeedbacksForResult(retrieveLatestBuildResultDetails(participation.getBuildPlanId())));
+
         resultRepository.save(result);
+    }
+
+
+    /*
+    * Uses the returned Map of the request to the bamboo api to transform all the failed tests into feedbacks for a result
+    *
+    *@param buildResultDetails returned build result details from the rest api of bamboo (call url:
+    *   BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors")
+     */
+    private HashSet<Feedback> createFeedbacksForResult(Map<String, Object> buildResultDetails){
+        if(buildResultDetails == null){
+            return null;
+        }
+        HashSet<Feedback> feedbacks = new HashSet<>();
+
+        for(String key : buildResultDetails.keySet()) {
+            Feedback feedback = new Feedback();
+
+            //converting build results from bamboo api call to feedbacks
+            //in Text both class name and method name is stored
+            //detail text will have the stored error message
+            feedback.setText((String)((Map)buildResultDetails.get(key)).get("className")
+                + "\\" + (String)((Map)buildResultDetails.get(key)).get("methodName"));
+            feedback.setDetailText((String) ((Map)((Map)buildResultDetails.get(key)).get("error")).get("message"));
+
+            feedbacks.add(feedback);
+        }
+        return feedbacks;
     }
 
     /**
