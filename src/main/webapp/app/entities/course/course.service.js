@@ -5,7 +5,8 @@
         .factory('Course', Course)
         .factory('CourseExercises', CourseExercises)
         .factory('CourseProgrammingExercises', CourseProgrammingExercises)
-        .factory('CourseQuizExercises', CourseQuizExercises);
+        .factory('CourseQuizExercises', CourseQuizExercises)
+        .factory('CourseScores', CourseScores);
 
     Course.$inject = ['$resource'];
 
@@ -127,6 +128,26 @@
                             console.log(exercise);
                             return exercise;
                         }
+                    }
+                    return data;
+                },
+                ignoreLoadingBar: true
+            }
+        });
+    }
+
+    CourseScores.$inject = ['$resource'];
+
+    function CourseScores($resource) {
+        var resourceUrl =  'api/courses/:courseId/getAllCourseScoresOfCourseUsers';
+
+        return $resource(resourceUrl, {}, {
+            'query': { method: 'GET', isArray: true},
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
                     }
                     return data;
                 },
