@@ -21,12 +21,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
+import org.swift.common.cli.AbstractRemoteClient;
 import org.swift.common.cli.CliClient;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.rmi.RemoteException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -74,21 +76,25 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
         wantedPlanKey = cleanPlanKey(wantedPlanKey);
-        clonePlan(
-            getProjectKeyFromBuildPlanId(baseBuildPlanId),
-            getPlanKeyFromBuildPlanId(baseBuildPlanId),
-            wantedPlanKey);
-        // TODO: This should be returned by clone method instead of being built here
-        return getProjectKeyFromBuildPlanId(baseBuildPlanId) + "-" + wantedPlanKey;
+        try {
+            String toPlan = clonePlan(getProjectKeyFromBuildPlanId(baseBuildPlanId), getPlanKeyFromBuildPlanId(baseBuildPlanId), wantedPlanKey);
+            return toPlan;
+        }
+        catch(BambooException bambooException) {
+            if (bambooException.getMessage().contains("already exists")) {
+                log.info("Build Plan already exists. Going to recover build plan information...");
+                return getProjectKeyFromBuildPlanId(baseBuildPlanId) + "-" + wantedPlanKey;
+            }
+            else throw bambooException;
+        }
     }
 
     @Override
     public void configureBuildPlan(String buildPlanId, URL repositoryUrl, String planKey) {
-        // TODO: planKey not needed - remove from method signature?
         updatePlanRepository(
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
-            "Assignment", // TODO
+            "Assignment",
             getProjectKeyFromUrl(repositoryUrl),
             getRepositorySlugFromUrl(repositoryUrl)
         );
@@ -157,24 +163,32 @@ public class BambooService implements ContinuousIntegrationService {
      * @param basePlan    The plan's name.
      * @param name        The name to give the cloned plan.
      */
-    public CliClient.ExitCode clonePlan(String baseProject, String basePlan, String name) throws BambooException {
-        final BambooClient client = new BambooClient();
-        String[] args = new String[]{"--action", "clonePlan",
-            "--plan", baseProject + "-" + basePlan,
-            "--toPlan", baseProject + "-" + name,
-            "--name", baseProject + "-" + name,
-            "--disable",
+    public String clonePlan(String baseProject, String basePlan, String name) throws BambooException {
+
+        String[] args = new String[]{
             "-s", BAMBOO_SERVER.toString(),
             "--user", BAMBOO_USER,
             "--password", BAMBOO_PASSWORD,
         };
-        CliClient.ExitCode exitCode = client.doWork(args);
-        log.info("Cloning plan exited with code " + exitCode);
-        if (!exitCode.equals(CliClient.ExitCode.SUCCESS)) {
-            log.error("Error while cloning plan");
+
+        final BambooClient client = new BambooClient();
+        client.doWork(args); //only invoke this to set server address, username and password so that the following action will work
+        String toPlan = baseProject + "-" + name;
+        try {
+            client.getPlanHelper().clonePlan(baseProject + "-" + basePlan, toPlan, toPlan, "", "", true);
+        } catch (CliClient.ClientException clientException) {
+            log.error(clientException.getMessage(), clientException);
+            if (clientException.getMessage().contains("already exists")) {
+                throw new BambooException(clientException.getMessage());
+            }
+        } catch (RemoteException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while cloning build plan");
+        } catch (AbstractRemoteClient.RemoteRestException e) {
+            log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while cloning build plan");
         }
-        return exitCode;
+        return toPlan;
     }
 
     /**
