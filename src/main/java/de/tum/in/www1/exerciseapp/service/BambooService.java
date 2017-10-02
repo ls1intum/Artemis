@@ -48,7 +48,7 @@ public class BambooService implements ContinuousIntegrationService {
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
     @Value("${artemis.bamboo.url}")
-    private URL BAMBOO_SERVER;
+    private URL BAMBOO_SERVER_URL;
 
     @Value("${artemis.bamboo.bitbucket-application-link-id}")
     private String BITBUCKET_APPLICATION_LINK_ID;
@@ -65,12 +65,31 @@ public class BambooService implements ContinuousIntegrationService {
     @Value("${artemis.result-retrieval-delay}")
     private int RESULT_RETRIEVAL_DELAY = 10000;
 
+    //Never use this field directly, always call getBambooClient()
+    private BambooClient bambooClient;
+
     private final GitService gitService;
     private final ResultRepository resultRepository;
 
     public BambooService(GitService gitService, ResultRepository resultRepository) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
+    }
+
+    private BambooClient getBambooClient() {
+        if (bambooClient == null) {
+            bambooClient = new BambooClient();
+            //setup the Bamboo Client to use the correct username and password
+
+            String[] args = new String[]{
+                "-s", BAMBOO_SERVER_URL.toString(),
+                "--user", BAMBOO_USER,
+                "--password", BAMBOO_PASSWORD,
+            };
+
+            bambooClient.doWork(args); //only invoke this to set server address, username and password so that the following action will work
+        }
+        return bambooClient;
     }
 
     @Override
@@ -113,8 +132,6 @@ public class BambooService implements ContinuousIntegrationService {
             e.printStackTrace();
             throw new GitException("IOError while doing empty commit");
         }
-
-
     }
 
     @Override
@@ -149,11 +166,11 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public URL getBuildPlanWebUrl(Participation participation) {
         try {
-            return new URL(BAMBOO_SERVER + "/browse/" + participation.getBuildPlanId().toUpperCase());
+            return new URL(BAMBOO_SERVER_URL + "/browse/" + participation.getBuildPlanId().toUpperCase());
         } catch (MalformedURLException e) {
             log.error("Couldn't construct build plan web URL");
         }
-        return BAMBOO_SERVER;
+        return BAMBOO_SERVER_URL;
     }
 
     /**
@@ -162,20 +179,15 @@ public class BambooService implements ContinuousIntegrationService {
      * @param baseProject The Bamboo project in which the plan is contained.
      * @param basePlan    The plan's name.
      * @param name        The name to give the cloned plan.
+     * @return            The name of the new build plan
      */
     public String clonePlan(String baseProject, String basePlan, String name) throws BambooException {
 
-        String[] args = new String[]{
-            "-s", BAMBOO_SERVER.toString(),
-            "--user", BAMBOO_USER,
-            "--password", BAMBOO_PASSWORD,
-        };
-
-        final BambooClient client = new BambooClient();
-        client.doWork(args); //only invoke this to set server address, username and password so that the following action will work
         String toPlan = baseProject + "-" + name;
         try {
-            client.getPlanHelper().clonePlan(baseProject + "-" + basePlan, toPlan, toPlan, "", "", true);
+            log.info("Clone build plan " + baseProject + "-" + basePlan + " to " + toPlan);
+            getBambooClient().getPlanHelper().clonePlan(baseProject + "-" + basePlan, toPlan, toPlan, "", "", true);
+            log.info("Clone build plan " + toPlan + " was successful");
         } catch (CliClient.ClientException clientException) {
             log.error(clientException.getMessage(), clientException);
             if (clientException.getMessage().contains("already exists")) {
@@ -183,10 +195,10 @@ public class BambooService implements ContinuousIntegrationService {
             }
         } catch (RemoteException e) {
             log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while cloning build plan");
+            throw new BambooException("Something went wrong while cloning build plan", e);
         } catch (AbstractRemoteClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while cloning build plan");
+            throw new BambooException("Something went wrong while cloning build plan", e);
         }
         return toPlan;
     }
@@ -198,20 +210,20 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
-    public CliClient.ExitCode enablePlan(String projectKey, String planKey) throws BambooException {
-        final BambooClient client = new BambooClient();
-        String[] args = new String[]{"--action", "enablePlan",
-            "--plan", projectKey + "-" + planKey,
-            "-s", BAMBOO_SERVER.toString(),
-            "--user", BAMBOO_USER,
-            "--password", BAMBOO_PASSWORD,
-        };
-        CliClient.ExitCode exitCode = client.doWork(args);
-        if (!exitCode.equals(CliClient.ExitCode.SUCCESS)) {
-            log.error("Error while enabling plan");
-            throw new BambooException("Something went wrong while enabling build plan");
+    public String enablePlan(String projectKey, String planKey) throws BambooException {
+
+        try {
+            log.info("Enable build plan " + projectKey + "-" + planKey);
+            String message = getBambooClient().getPlanHelper().enablePlan(projectKey + "-" + planKey, true);
+            log.info("Enable build plan " + projectKey + "-" + planKey + " was successful");
+            return message;
+        } catch (CliClient.ClientException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while enabling the build plan", e);
+        } catch (AbstractRemoteClient.RemoteRestException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while enabling the build plan", e);
         }
-        return exitCode;
     }
 
     /**
@@ -223,29 +235,37 @@ public class BambooService implements ContinuousIntegrationService {
      * @param bitbucketProject     The key for the Bitbucket Server (formerly Stash) project to which we want to update the plan.
      * @param bitbucketRepository  The name/slug for the Bitbucket Server (formerly Stash) repository to which we want to update the plan.
      */
-    public CliClient.ExitCode updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) throws BambooException {
-        final BambooClient client = new BambooClient();
+    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) throws BambooException {
+
         String[] args = new String[]{
-            "--action", "updateRepository",
-            "--plan", bambooProject + "-" + bambooPlan,
-            "--repository", bambooRepositoryName,
-            "--repositoryKey", "STASH",
             "--field1", "repository.stash.projectKey", "--value1", bitbucketProject,
             "--field2", "repository.stash.repositoryId", "--value2", "2499", // Doesn't seem to be required
             "--field3", "repository.stash.repositorySlug", "--value3", bitbucketRepository,
             "--field4", "repository.stash.repositoryUrl", "--value4", buildSshRepositoryUrl(bitbucketProject, bitbucketRepository), // e.g. "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
             "--field5", "repository.stash.server", "--value5", BITBUCKET_APPLICATION_LINK_ID,
             "--field6", "repository.stash.branch", "--value6", "master",
-            "-s", BAMBOO_SERVER.toString(),
+            "-s", BAMBOO_SERVER_URL.toString(),
             "--user", BAMBOO_USER,
             "--password", BAMBOO_PASSWORD
         };
-        CliClient.ExitCode exitCode = client.doWork(args);
-        if (!exitCode.equals(CliClient.ExitCode.SUCCESS)) {
-            log.error("Error while updating build plan repository");
-            throw new BambooException("Something went wrong while updating build plan repository");
+        //workaround to pass additional fields
+        getBambooClient().doWork(args);
+
+        try {
+            log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
+            String message = getBambooClient().getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, bambooProject + "-" + bambooPlan, "STASH", false, true);
+            log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful");
+            return message;
+        } catch (CliClient.ClientException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while updating the plan repository", e);
+        } catch (AbstractRemoteClient.RemoteRestException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while updating the plan repository", e);
+        } catch (RemoteException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while updating the plan repository", e);
         }
-        return exitCode;
     }
 
     /**
@@ -255,18 +275,19 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
-    public CliClient.ExitCode deletePlan(String projectKey, String planKey) {
-        final BambooClient client = new BambooClient();
-        String[] args = new String[]{
-            "--action", "deletePlan",
-            "--plan", projectKey + "-" + planKey,
-            "-s", BAMBOO_SERVER.toString(),
-            "--user", BAMBOO_USER,
-            "--password", BAMBOO_PASSWORD
-        };
-        CliClient.ExitCode exitCode = client.doWork(args);
-        log.info("Deleting plan exited with code " + exitCode);
-        return exitCode;
+    public String deletePlan(String projectKey, String planKey) {
+        try {
+            log.info("Delete build plan " + projectKey + "-" + planKey);
+            String message = getBambooClient().getPlanHelper().deletePlan(projectKey + "-" + planKey);
+            log.info("Delete build plan was successful");
+            return message;
+        } catch (CliClient.ClientException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while deleting the build plan", e);
+        } catch (AbstractRemoteClient.RemoteRestException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while deleting the build plan", e);
+        }
     }
 
     /**
@@ -354,7 +375,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "/latest.json?expand=testResults,artifacts",
+                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "/latest.json?expand=testResults,artifacts",
                 HttpMethod.GET,
                 entity,
                 Map.class);
@@ -401,7 +422,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             // https://bamboobruegge.in.tum.de/rest/api/latest/result/EIST16W1-TESTEXERCISEAPP-JOB1/latest.json?expand=testResults.failedTests.testResult.errors
             response = restTemplate.exchange(
-                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors",
+                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors",
                 HttpMethod.GET,
                 entity,
                 Map.class);
@@ -431,7 +452,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries",
+                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries",
                 HttpMethod.GET,
                 entity,
                 Map.class);
@@ -508,7 +529,7 @@ public class BambooService implements ContinuousIntegrationService {
             if (m.find()) {
                 url = m.group(1);
                 // Recursively walk through the responses until we get the actual artifact.
-                return retrievArtifactPage(BAMBOO_SERVER + url);
+                return retrievArtifactPage(BAMBOO_SERVER_URL + url);
             } else {
                 throw new BambooException("No artifact link found on artifact page");
             }
@@ -535,7 +556,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER + "/rest/api/latest/plan/" + planKey.toUpperCase() + ".json",
+                BAMBOO_SERVER_URL + "/rest/api/latest/plan/" + planKey.toUpperCase() + ".json",
                 HttpMethod.GET,
                 entity,
                 Map.class);
@@ -567,7 +588,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER + "/rest/api/latest/plan/" + buildPlanId.toUpperCase(),
+                BAMBOO_SERVER_URL + "/rest/api/latest/plan/" + buildPlanId.toUpperCase(),
                 HttpMethod.GET,
                 entity,
                 Map.class);
