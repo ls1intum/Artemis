@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
-import org.swift.common.cli.AbstractRemoteClient;
 import org.swift.common.cli.CliClient;
 
 import java.io.IOException;
@@ -186,17 +185,14 @@ public class BambooService implements ContinuousIntegrationService {
         String toPlan = baseProject + "-" + name;
         try {
             log.info("Clone build plan " + baseProject + "-" + basePlan + " to " + toPlan);
-            getBambooClient().getPlanHelper().clonePlan(baseProject + "-" + basePlan, toPlan, toPlan, "", "", true);
-            log.info("Clone build plan " + toPlan + " was successful");
+            String message = getBambooClient().getPlanHelper().clonePlan(baseProject + "-" + basePlan, toPlan, toPlan, "", "", true);
+            log.info("Clone build plan " + toPlan + " was successful." + message);
         } catch (CliClient.ClientException clientException) {
             log.error(clientException.getMessage(), clientException);
             if (clientException.getMessage().contains("already exists")) {
                 throw new BambooException(clientException.getMessage());
             }
-        } catch (RemoteException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while cloning build plan", e);
-        } catch (AbstractRemoteClient.RemoteRestException e) {
+        } catch (CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while cloning build plan", e);
         }
@@ -215,12 +211,12 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.info("Enable build plan " + projectKey + "-" + planKey);
             String message = getBambooClient().getPlanHelper().enablePlan(projectKey + "-" + planKey, true);
-            log.info("Enable build plan " + projectKey + "-" + planKey + " was successful");
+            log.info("Enable build plan " + projectKey + "-" + planKey + " was successful. " + message);
             return message;
         } catch (CliClient.ClientException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while enabling the build plan", e);
-        } catch (AbstractRemoteClient.RemoteRestException e) {
+        } catch (CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while enabling the build plan", e);
         }
@@ -254,15 +250,12 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
             String message = getBambooClient().getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, bambooProject + "-" + bambooPlan, "STASH", false, true);
-            log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful");
+            log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful." + message);
             return message;
         } catch (CliClient.ClientException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while updating the plan repository", e);
-        } catch (AbstractRemoteClient.RemoteRestException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while updating the plan repository", e);
-        } catch (RemoteException e) {
+        } catch (CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while updating the plan repository", e);
         }
@@ -279,12 +272,12 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             log.info("Delete build plan " + projectKey + "-" + planKey);
             String message = getBambooClient().getPlanHelper().deletePlan(projectKey + "-" + planKey);
-            log.info("Delete build plan was successful");
+            log.info("Delete build plan was successful. " + message);
             return message;
         } catch (CliClient.ClientException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while deleting the build plan", e);
-        } catch (AbstractRemoteClient.RemoteRestException e) {
+        } catch (CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while deleting the build plan", e);
         }
