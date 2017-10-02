@@ -137,9 +137,7 @@ public class AccountResource {
      *
      * @return the ResponseEntity with status 200 (OK) and the current user password in body, or status 500 (Internal Server Error) if the user couldn't be returned
      */
-    @RequestMapping(value = "/account/password",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/account/password", produces = MediaType.APPLICATION_JSON_VALUE)
     @Timed
     public ResponseEntity<?> getPassword() {
 

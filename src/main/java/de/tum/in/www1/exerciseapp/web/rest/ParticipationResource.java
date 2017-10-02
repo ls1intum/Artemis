@@ -38,17 +38,20 @@ public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
-    private ParticipationService participationService;
+    private final ParticipationService participationService;
 
-    private ParticipationRepository participationRepository;
+    private final ParticipationRepository participationRepository;
 
-    private ExerciseService exerciseService;
+    private final ExerciseService exerciseService;
 
-    private Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private Optional<VersionControlService> versionControlService;
+    private final Optional<VersionControlService> versionControlService;
 
     private static final String ENTITY_NAME = "participation";
+
+    private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
+    private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
     public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationService = participationService;
@@ -57,9 +60,6 @@ public class ParticipationResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
     }
-
-    private GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-    private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
     /**
      * POST  /participations : Create a new participation.
