@@ -349,7 +349,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
         if (response != null) {
             Map<String, Object> result = new HashMap<>();
-            boolean successful = (boolean) response.getBody().get("buildSuccessful");
+            boolean successful = (boolean) response.getBody().get("successful");
             result.put("successful", successful);
             String buildTestSummary = (String) response.getBody().get("buildTestSummary");
             result.put("buildTestSummary", buildTestSummary);
