@@ -115,7 +115,9 @@
                         title: "",
                         duration: 10,
                         plannedStart: false,
-                        plannedStartDateTime: new Date()
+                        plannedStartDateTime: new Date(),
+                        status: 1,
+                        questions: []
                     };
                 },
                 courseEntity: ['$stateParams', 'Course', function ($stateParams, Course) {
