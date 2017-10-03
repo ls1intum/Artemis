@@ -69,13 +69,48 @@
         <ul class="quiz-questions">
             <li
                 class="quiz-question"
-                ng-repeat="quiz in vm.quizExercise.questions"
+                ng-repeat="question in vm.quizExercise.questions"
             >
-                {{quiz.title}}
+                {{question.title}}
             </li>
         </ul>
-        <button class="btn btn-default">
+        <button
+            class="btn btn-default"
+            ng-click="vm.addQuestion()"
+        >
             Add Question
         </button>
+    </div>
+    <div class="edit-quiz-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div class="form-group">
+                    <span>
+                        Status:
+                    </span>
+                    <select
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptions"
+                        ng-model="vm.quizExercise.status"
+                    >
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button
+                        class="btn btn-default"
+                        ng-click="vm.goBack()"
+                    >
+                        {{vm.pendingChanges() ? "Cancel" : "Back"}}
+                    </button>
+                    <button
+                        class="btn btn-success"
+                        ng-click="vm.save()"
+                        ng-disabled="!vm.pendingChanges() || !vm.validQuiz()"
+                    >
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
