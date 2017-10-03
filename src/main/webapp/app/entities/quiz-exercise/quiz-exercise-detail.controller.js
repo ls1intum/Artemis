@@ -1,4 +1,4 @@
-(function() {
+(function () {
     'use strict';
 
     angular
@@ -13,12 +13,20 @@
         vm.quizExercise = entity;
         vm.previousState = previousState.name;
         vm.quizExercise.course = courseEntity;
+        vm.datePickerOpenStatus = {
+            plannedStartDateTime: false
+        };
+        vm.openCalendar = openCalendar;
 
         console.log(vm.quizExercise);
 
-        var unsubscribe = $rootScope.$on('artemisApp:quizExerciseUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:quizExerciseUpdate', function (event, result) {
             vm.quizExercise = result;
         });
         $scope.$on('$destroy', unsubscribe);
+
+        function openCalendar(date) {
+            vm.datePickerOpenStatus[date] = true;
+        }
     }
 })();

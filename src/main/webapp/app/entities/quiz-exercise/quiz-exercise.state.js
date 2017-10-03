@@ -111,7 +111,12 @@
                     return $translate.refresh();
                 }],
                 entity: function() {
-                    return {};
+                    return {
+                        title: "",
+                        duration: 10,
+                        plannedStart: false,
+                        plannedStartDateTime: new Date()
+                    };
                 },
                 courseEntity: ['$stateParams', 'Course', function ($stateParams, Course) {
                     console.log($stateParams);

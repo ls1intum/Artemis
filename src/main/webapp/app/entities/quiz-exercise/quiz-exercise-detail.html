@@ -3,39 +3,67 @@
         {{vm.quizExercise.id ? "Edit Quiz Exercise" : "New Quiz Exercise for \"" + vm.quizExercise.course.title + "\""}}
     </h1>
     <hr/>
-    <div>
+    <div class="edit-quiz">
         <input
+            class="form-control"
             type="text"
-            ng-bind="vm.quizExercise.title"
+            ng-model="vm.quizExercise.title"
             placeholder="Quiz Title"
         />
         <div
             class="quiz-options"
         >
-            <div>
-                <span>Duration: </span>
+            <div class="form-group">
+                <span>
+                    Duration:
+                </span>
                 <input
+                    class="form-control"
                     title="Duration"
                     type="number"
                     min="1"
                     max="240"
-                    ng-bind="vm.quizExercise.duration"
+                    ng-model="vm.quizExercise.duration"
                 />
-                <span>minutes</span>
+                <span>
+                    minutes
+                </span>
             </div>
-            <div>
-                <label>
+            <div class="form-group">
+                <div
+                    class="checkbox"
+                >
+                    <label>
+                        <input
+                            type="checkbox"
+                            ng-model="vm.quizExercise.plannedStart"
+                        />
+                        Planned Start:
+                    </label>
+                </div>
+                <div
+                    class="input-group"
+                >
                     <input
-                        type="checkbox"
-                        ng-checked="vm.quizExercise.plannedStart"
+                        ng-disabled="!vm.quizExercise.plannedStart"
+                        class="form-control"
+                        title="Planned Start"
+                        type="text"
+                        datetime-picker="{{dateformat}}"
+                        is-open="vm.datePickerOpenStatus.plannedStartDateTime"
+                        ng-model="vm.quizExercise.plannedStartDateTime"
                     />
-                    Planned Start:
-                </label>
-                <input
-                    title="Planned Start"
-                    type="datetime-local"
-                    ng-bind="vm.quizExercise.plannedStartDateTime"
-                />
+                    <span class="input-group-btn">
+                        <button
+                            type="button"
+                            class="btn btn-default"
+                            ng-click="vm.openCalendar('plannedStartDateTime')"
+                            ng-disabled="!vm.quizExercise.plannedStart"
+                        >
+                            <i class="glyphicon glyphicon-calendar"></i>
+                        </button>
+                    </span>
+                </div>
             </div>
         </div>
         <ul class="quiz-questions">
@@ -46,7 +74,7 @@
                 {{quiz.title}}
             </li>
         </ul>
-        <button>
+        <button class="btn btn-default">
             Add Question
         </button>
     </div>
