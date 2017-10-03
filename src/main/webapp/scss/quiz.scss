@@ -1,0 +1,39 @@
+
+.edit-quiz {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 30px;
+
+    .quiz-options {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        margin: 8px 0;
+
+        input,
+        .input-group-btn {
+            display: inline-block;
+            width: auto;
+        }
+
+        .checkbox,
+        .input-group {
+            display: inline-block;
+        }
+
+        .input-group > input {
+            height: 100%;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+
+            > * {
+                margin: 0 4px;
+            }
+        }
+    }
+}
