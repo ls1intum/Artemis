@@ -17,7 +17,7 @@ import java.util.Set;
  */
 @Entity
 @DiscriminatorValue(value="MC")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class MultipleChoiceQuestion extends Question implements Serializable {
 
     private static final long serialVersionUID = 1L;

@@ -105,7 +105,6 @@ public class ParticipationResource {
         }
     }
 
-
     /**
      * PUT  /participations : Updates an existing participation.
      *
@@ -128,22 +127,6 @@ public class ParticipationResource {
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
             .body(result);
     }
-
-//    /**
-//     * GET  /participations : get all the participations.
-//     *
-//     * @param pageable the pagination information
-//     * @return the ResponseEntity with status 200 (OK) and the list of participations in body
-//     */
-//    @GetMapping("/participations")
-//    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
-//    @Timed
-//    public ResponseEntity<List<Participation>> getAllParticipations(@ApiParam Pageable pageable) {
-//        log.debug("REST request to get a page of Participations");
-//        Page<Participation> page = participationService.findAll(pageable);
-//        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/participations");
-//        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-//    }
 
     /**
      * GET  /participations : get all the participations.

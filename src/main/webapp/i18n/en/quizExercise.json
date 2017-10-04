@@ -15,6 +15,10 @@
             "detail": {
                 "title": "Quiz Exercise"
             },
+            "isVisibleBeforeStart": "Is Visible Before Start",
+            "isOpenForPractice": "Is Open For Practice",
+            "isPlannedToStart": "Is Planned To Start",
+            "duration": "Duration",
             "questions": "Questions"
         }
     }
