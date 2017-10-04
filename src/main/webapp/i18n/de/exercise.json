@@ -19,7 +19,12 @@
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
             "participations": "Participations",
-            "course": "Course"
+            "course": "Course",
+            "buildPlans": {
+                "delete": {
+                    "question": "Sollen build plans für Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                }
+            }
         }
     }
 }

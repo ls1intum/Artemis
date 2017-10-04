@@ -4,7 +4,8 @@
 
 <div>
     <div class="button-toolbar pull-right">
-        <button class="btn btn-primary btn-sm" ng-click="$ctrl.buildPlanCleanup()">
+        <!--ng-click="$ctrl.buildPlanCleanup()"-->
+        <button class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.buildplans-delete({id:$ctrl.exercise.id})">
             <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;Build plans cleanup
         </button>
         <button type="submit"

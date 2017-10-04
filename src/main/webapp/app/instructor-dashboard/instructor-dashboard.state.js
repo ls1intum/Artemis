@@ -89,6 +89,38 @@
                         $state.go('instructor-dashboard', $state.params);
                     });
                 }]
+            })
+            .state('instructor-dashboard.buildplans-delete', {
+                parent: 'instructor-dashboard',
+                url: '/{id}/delete',
+                //should be inherited from parent via prototypal inheritance
+                //check auth.service.js
+                //TODO check whether something changes for user and admin
+                /*data: {
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                },*/
+                onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                    console.log("state entered");
+                    $uibModal.open({
+                        templateUrl: 'app/instructor-dashboard/instructor-dashboard-buildplans-delete-dialog.html',
+                        controller: 'BuildPlansDeleteController',
+                        // can work with $ctrl?
+                        //controllerAs: 'vm',
+                        size: 'md',
+                        resolve: {
+                            entity: ['Exercise', function (Exercise) {
+                                // service call
+                                //return Exercise.get({id: $stateParams.id}).$promise;
+                            }]
+                        }
+                    }).result.then(function () {
+                        // do i need to pass $state.params? reload true?
+                        console.log(JSON.stringify($state.params));
+                        $state.go('instructor-dashboard', $state.params, {reload: true});
+                    }, function () {
+                        $state.go('^');
+                    });
+                }]
             });
     }
 
