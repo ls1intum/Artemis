@@ -36,7 +36,7 @@
                     <label>
                         <input
                             type="checkbox"
-                            ng-model="vm.quizExercise.plannedStart"
+                            ng-model="vm.quizExercise.isPlannedToStart"
                         />
                         Planned Start:
                     </label>
@@ -45,20 +45,20 @@
                     class="input-group"
                 >
                     <input
-                        ng-disabled="!vm.quizExercise.plannedStart"
+                        ng-disabled="!vm.quizExercise.isPlannedToStart"
                         class="form-control"
                         title="Planned Start"
                         type="text"
                         datetime-picker="{{dateformat}}"
-                        is-open="vm.datePickerOpenStatus.plannedStartDateTime"
-                        ng-model="vm.quizExercise.plannedStartDateTime"
+                        is-open="vm.datePickerOpenStatus.releaseDate"
+                        ng-model="vm.quizExercise.releaseDate"
                     />
                     <span class="input-group-btn">
                         <button
                             type="button"
                             class="btn btn-default"
-                            ng-click="vm.openCalendar('plannedStartDateTime')"
-                            ng-disabled="!vm.quizExercise.plannedStart"
+                            ng-click="vm.openCalendar('releaseDate')"
+                            ng-disabled="!vm.quizExercise.isPlannedToStart"
                         >
                             <i class="glyphicon glyphicon-calendar"></i>
                         </button>
@@ -89,23 +89,39 @@
                         Status:
                     </span>
                     <select
+                        ng-if="vm.showDropdown() === 'isOpenForPractice'"
                         class="form-control"
-                        ng-options="option.key as option.label for option in vm.statusOptions"
-                        ng-model="vm.quizExercise.status"
+                        ng-options="option.key as option.label for option in vm.statusOptionsPractice"
+                        ng-model="vm.quizExercise.isOpenForPractice"
+                    >
+                    </select>
+                    <select
+                        ng-if="vm.showDropdown() === 'isVisibleBeforeStart'"
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptionsVisible"
+                        ng-model="vm.quizExercise.isVisibleBeforeStart"
+                    >
+                    </select>
+                    <select
+                        ng-if="vm.showDropdown() === 'active'"
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptionsActive"
+                        ng-model="vm.true"
+                        disabled
                     >
                     </select>
                 </div>
                 <div class="form-group">
                     <button
                         class="btn btn-default"
-                        ng-click="vm.goBack()"
+                        ui-sref="quiz-exercise-for-course({courseid:vm.quizExercise.course.id})"
                     >
                         {{vm.pendingChanges() ? "Cancel" : "Back"}}
                     </button>
                     <button
                         class="btn btn-success"
                         ng-click="vm.save()"
-                        ng-disabled="!vm.pendingChanges() || !vm.validQuiz()"
+                        ng-disabled="!vm.pendingChanges() || !vm.validQuiz() || vm.isSaving"
                     >
                         Save
                     </button>
