@@ -114,8 +114,10 @@
                     return {
                         title: "",
                         duration: 10,
-                        plannedStart: false,
-                        plannedStartDateTime: new Date(),
+                        isVisibleBeforeStart: false,
+                        isOpenForPractice: false,
+                        isPlannedToStart: false,
+                        releaseDate: new Date(),
                         status: 1,
                         questions: []
                     };

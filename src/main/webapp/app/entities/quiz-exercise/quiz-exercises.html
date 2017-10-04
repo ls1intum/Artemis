@@ -19,6 +19,8 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="artemisApp.exercise.title">Title</span></th>
+                    <th><span data-translate="artemisApp.exercise.releaseDate">Release Date</span></th>
                     <th><span data-translate="artemisApp.quizExercise.isVisibleBeforeStart">Is Visible Before Start</span></th>
                     <th><span data-translate="artemisApp.quizExercise.isOpenForPractice">Is Open For Practice</span></th>
                     <th><span data-translate="artemisApp.quizExercise.isPlannedToStart">Is Planned To Start</span></th>
@@ -29,6 +31,8 @@
             <tbody>
                 <tr ng-repeat="quizExercise in vm.quizExercises track by quizExercise.id">
                     <td><a ui-sref="quiz-exercise-detail({id:quizExercise.id})">{{quizExercise.id}}</a></td>
+                    <td>{{quizExercise.title}}</td>
+                    <td>{{quizExercise.releaseDate | date:'medium'}}</td>
                     <td>{{quizExercise.isVisibleBeforeStart}}</td>
                     <td>{{quizExercise.isOpenForPractice}}</td>
                     <td>{{quizExercise.isPlannedToStart}}</td>
