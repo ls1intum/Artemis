@@ -17,7 +17,7 @@ import java.util.Set;
  */
 @Entity
 @DiscriminatorValue(value="Q")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class QuizSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
