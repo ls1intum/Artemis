@@ -107,13 +107,11 @@
                         size: 'md',
                         resolve: {
                             entity: ['Exercise', function (Exercise) {
-                                // service call
-                                //return Exercise.get({id: $stateParams.id}).$promise;
+                                return Exercise.get({id: $stateParams.exerciseId}).$promise;
                             }]
                         }
                     }).result.then(function () {
                         // do i need to pass $state.params? reload true?
-                        console.log(JSON.stringify($state.params));
                         $state.go('instructor-dashboard', $state.params, {reload: true});
                     }, function () {
                         $state.go('^');

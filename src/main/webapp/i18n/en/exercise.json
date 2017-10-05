@@ -19,12 +19,7 @@
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
             "participations": "Participations",
-            "course": "Course",
-            "buildPlans": {
-                "delete": {
-                    "question": "Are you sure you want to delete build plans for Exercise {{ id }}?"
-                }
-            }
+            "course": "Course"
         },
         "exerciseLtiConfiguration" : {
             "lti": "LTI",
