@@ -29,7 +29,7 @@ public class BitbucketService implements VersionControlService {
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
     @Value("${artemis.bitbucket.url}")
-    private URL BITBUCKET_URL;
+    private URL BITBUCKET_SERVER_URL;
 
     @Value("${artemis.bitbucket.user}")
     private String BITBUCKET_USER;
@@ -97,13 +97,13 @@ public class BitbucketService implements VersionControlService {
     @Override
     public URL getRepositoryWebUrl(Participation participation) {
         try {
-            return new URL(BITBUCKET_URL +
+            return new URL(BITBUCKET_SERVER_URL +
                 "/projects/" + getProjectKeyFromUrl(participation.getRepositoryUrlAsUrl()) +
                 "/repos/" + getRepositorySlugFromUrl(participation.getRepositoryUrlAsUrl()) + "/browse");
         } catch (MalformedURLException e) {
             log.error("Couldn't construct repository web URL");
         }
-        return BITBUCKET_URL;
+        return BITBUCKET_SERVER_URL;
     }
 
     private String getProjectKeyFromUrl(URL repositoryUrl) {
@@ -140,7 +140,7 @@ public class BitbucketService implements VersionControlService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BITBUCKET_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug,
+                BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug,
                 HttpMethod.POST,
                 entity,
                 Map.class);
@@ -183,7 +183,7 @@ public class BitbucketService implements VersionControlService {
         RestTemplate restTemplate = new RestTemplate();
         try {
             restTemplate.exchange(
-                BITBUCKET_URL + "/rest/api/1.0/users/" + username,
+                BITBUCKET_SERVER_URL + "/rest/api/1.0/users/" + username,
                 HttpMethod.GET,
                 entity,
                 Map.class);
@@ -210,7 +210,7 @@ public class BitbucketService implements VersionControlService {
     public void createUser(String username, String password, String emailAddress, String displayName) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
 
-        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(BITBUCKET_URL + "/rest/api/1.0/admin/users")
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(BITBUCKET_SERVER_URL + "/rest/api/1.0/admin/users")
             .queryParam("name", username)
             .queryParam("email", emailAddress)
             .queryParam("emailAddress", emailAddress)
@@ -257,7 +257,7 @@ public class BitbucketService implements VersionControlService {
 
         try {
             restTemplate.exchange(
-                BITBUCKET_URL + "/rest/api/1.0/admin/users/add-groups",
+                BITBUCKET_SERVER_URL + "/rest/api/1.0/admin/users/add-groups",
                 HttpMethod.POST,
                 entity,
                 Map.class);
@@ -276,7 +276,7 @@ public class BitbucketService implements VersionControlService {
      * @param username       The user whom to give write permissions.
      */
     private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
-        String baseUrl = BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";//NAME&PERMISSION
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/permissions/users?name=";//NAME&PERMISSION
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -299,7 +299,7 @@ public class BitbucketService implements VersionControlService {
      * @param repositorySlug The repository's slug.
      */
     private void deleteRepositoryImpl(String projectKey, String repositorySlug) {
-        String baseUrl = BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug;
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug;
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -323,7 +323,7 @@ public class BitbucketService implements VersionControlService {
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         try {
-            restTemplate.exchange(BITBUCKET_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, entity, Map.class);
+            restTemplate.exchange(BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, entity, Map.class);
         } catch (Exception e) {
             return false;
         }
@@ -333,7 +333,7 @@ public class BitbucketService implements VersionControlService {
     private URL buildCloneUrl(String projectKey, String repositorySlug, String username) {
         URL cloneUrl = null;
         try {
-            cloneUrl = new URL(BITBUCKET_URL.getProtocol() + "://" + username + "@" + BITBUCKET_URL.getAuthority() + BITBUCKET_URL.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git");
+            cloneUrl = new URL(BITBUCKET_SERVER_URL.getProtocol() + "://" + username + "@" + BITBUCKET_SERVER_URL.getAuthority() + BITBUCKET_SERVER_URL.getPath() + "/scm/" + projectKey + "/" + repositorySlug + ".git");
         } catch (MalformedURLException e) {
             log.error("Could not build clone URL", e);
         }

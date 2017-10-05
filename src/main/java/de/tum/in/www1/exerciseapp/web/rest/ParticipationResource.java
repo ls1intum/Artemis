@@ -38,17 +38,20 @@ public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
-    private ParticipationService participationService;
+    private final ParticipationService participationService;
 
-    private ParticipationRepository participationRepository;
+    private final ParticipationRepository participationRepository;
 
-    private ExerciseService exerciseService;
+    private final ExerciseService exerciseService;
 
-    private Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    private Optional<VersionControlService> versionControlService;
+    private final Optional<VersionControlService> versionControlService;
 
     private static final String ENTITY_NAME = "participation";
+
+    private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
+    private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
     public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationService = participationService;
@@ -57,9 +60,6 @@ public class ParticipationResource {
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
     }
-
-    private GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-    private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
     /**
      * POST  /participations : Create a new participation.
@@ -105,7 +105,6 @@ public class ParticipationResource {
         }
     }
 
-
     /**
      * PUT  /participations : Updates an existing participation.
      *
@@ -128,22 +127,6 @@ public class ParticipationResource {
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
             .body(result);
     }
-
-//    /**
-//     * GET  /participations : get all the participations.
-//     *
-//     * @param pageable the pagination information
-//     * @return the ResponseEntity with status 200 (OK) and the list of participations in body
-//     */
-//    @GetMapping("/participations")
-//    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
-//    @Timed
-//    public ResponseEntity<List<Participation>> getAllParticipations(@ApiParam Pageable pageable) {
-//        log.debug("REST request to get a page of Participations");
-//        Page<Participation> page = participationService.findAll(pageable);
-//        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/participations");
-//        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-//    }
 
     /**
      * GET  /participations : get all the participations.

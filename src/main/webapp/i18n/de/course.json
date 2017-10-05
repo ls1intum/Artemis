@@ -2,23 +2,26 @@
     "artemisApp": {
         "course" : {
             "home": {
-                "title": "Courses",
-                "createLabel": "Course erstellen",
-                "createOrEditLabel": "Course erstellen oder bearbeiten"
+                "title": "Kurse",
+                "createLabel": "Kurs erstellen",
+                "createOrEditLabel": "Kurs erstellen oder bearbeiten"
             },
-            "created": "Course erstellt mit ID {{ param }}",
-            "updated": "Course aktualisiert mit ID {{ param }}",
-            "deleted": "Course gelöscht mit ID {{ param }}",
+            "created": "Kurs erstellt mit ID {{ param }}",
+            "updated": "Kurs aktualisiert mit ID {{ param }}",
+            "deleted": "Kurs gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Course {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll der Kurs {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Course"
+                "title": "Kurs"
             },
-            "title": "Title",
-            "studentGroupName": "Student Group Name",
-            "teachingAssistantGroupName": "Teaching Assistant Group Name",
-            "exercises": "Exercises"
+            "title": "Titel",
+            "studentGroupName": "Studenten Gruppen Name",
+            "teachingAssistantGroupName": "Tutor Gruppen Name",
+            "exercises": "Aufgaben",
+            "programmingExercises": "Programmieraufgaben",
+            "quizExercises": "Quizaufgaben (Beta)",
+            "modelingExercises": "Modellierungsaufgaben (Beta)"
         }
     }
 }

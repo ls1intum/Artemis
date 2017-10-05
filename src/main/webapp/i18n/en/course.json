@@ -18,7 +18,10 @@
             "title": "Title",
             "studentGroupName": "Student Group Name",
             "teachingAssistantGroupName": "Teaching Assistant Group Name",
-            "exercises": "Exercises"
+            "exercises": "Exercises",
+            "programmingExercises": "Programming Exercises",
+            "quizExercises": "Quiz Exercises (Beta)",
+            "modelingExercises": "Modeling Exercises (Beta)"
         }
     }
 }
