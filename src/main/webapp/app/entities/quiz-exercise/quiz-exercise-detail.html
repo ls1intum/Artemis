@@ -1,19 +1,163 @@
-
-<div>
-    <h2><span data-translate="artemisApp.quizExercise.detail.title">Quiz Exercise</span> {{vm.quizExercise.id}}</h2>
-    <hr>
-    <jhi-alert-error></jhi-alert-error>
-    <dl class="dl-horizontal jh-entity-details">
-    </dl>
-
-    <button type="submit"
-            ui-sref="{{ vm.previousState }}"
-            class="btn btn-info">
-        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
-    </button>
-
-    <button type="button" ui-sref="quiz-exercise-detail.edit({id:vm.quizExercise.id})" class="btn btn-primary">
-        <span class="glyphicon glyphicon-pencil"></span>
-        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
-    </button>
+<div class="container">
+    <h1>
+        <span
+            ng-if="vm.quizExercise.id"
+            data-translate="artemisApp.quizExercise.edit.title"
+            data-translate-values="{param: vm.quizExercise.course.title}"
+        ></span>
+        <span
+            ng-if="!vm.quizExercise.id"
+            data-translate="artemisApp.quizExercise.new.title"
+            data-translate-values="{param: vm.quizExercise.course.title}"
+        ></span>
+    </h1>
+    <hr/>
+    <div class="edit-quiz">
+        <input
+            class="form-control"
+            type="text"
+            ng-model="vm.quizExercise.title"
+            placeholder="Quiz Title"
+        />
+        <div
+            class="quiz-options"
+        >
+            <div class="form-group">
+                <span
+                    data-translate="artemisApp.quizExercise.duration"
+                    class="colon-suffix"
+                ></span>
+                <input
+                    class="form-control"
+                    title="Duration"
+                    type="number"
+                    min="1"
+                    max="600"
+                    ng-model="vm.quizExercise.duration"
+                />
+                <span
+                    data-translate="artemisApp.quizExercise.durationUnit"
+                ></span>
+            </div>
+            <div class="form-group">
+                <div
+                    class="checkbox"
+                >
+                    <label>
+                        <input
+                            type="checkbox"
+                            ng-model="vm.quizExercise.isPlannedToStart"
+                        />
+                        <span
+                            data-translate="artemisApp.quizExercise.startTime"
+                            class="colon-suffix"
+                        ></span>
+                    </label>
+                </div>
+                <div
+                    class="input-group"
+                >
+                    <input
+                        ng-disabled="!vm.quizExercise.isPlannedToStart"
+                        class="form-control"
+                        title="Planned Start"
+                        type="text"
+                        datetime-picker="{{dateformat}}"
+                        is-open="vm.datePickerOpenStatus.releaseDate"
+                        ng-model="vm.quizExercise.releaseDate"
+                    />
+                    <span class="input-group-btn">
+                        <button
+                            type="button"
+                            class="btn btn-default"
+                            ng-click="vm.openCalendar('releaseDate')"
+                            ng-disabled="!vm.quizExercise.isPlannedToStart"
+                        >
+                            <i class="glyphicon glyphicon-calendar"></i>
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+        <ul class="quiz-questions">
+            <li
+                class="quiz-question"
+                ng-repeat="question in vm.quizExercise.questions"
+            >
+                {{question.title}}
+            </li>
+        </ul>
+        <button
+            class="btn btn-default"
+            ng-click="vm.addQuestion()"
+            data-translate="artemisApp.quizExercise.edit.addQuestion"
+        ></button>
+    </div>
+    <div class="edit-quiz-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div class="form-group">
+                    <span
+                        data-translate="artemisApp.quizExercise.status"
+                        class="colon-suffix"
+                    ></span>
+                    <select
+                        ng-if="vm.showDropdown() === 'isOpenForPractice'"
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptionsPractice"
+                        ng-model="vm.quizExercise.isOpenForPractice"
+                    >
+                    </select>
+                    <select
+                        ng-if="vm.showDropdown() === 'isVisibleBeforeStart'"
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptionsVisible"
+                        ng-model="vm.quizExercise.isVisibleBeforeStart"
+                    >
+                    </select>
+                    <select
+                        ng-if="vm.showDropdown() === 'active'"
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptionsActive"
+                        ng-model="vm.true"
+                        disabled
+                    >
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span
+                        ng-if="!vm.pendingChanges() && !vm.isSaving"
+                        data-translate="artemisApp.quizExercise.edit.saved"
+                        class="label label-success"
+                    ></span>
+                    <span
+                        ng-if="vm.pendingChanges() && vm.validQuiz() && !vm.isSaving"
+                        data-translate="artemisApp.quizExercise.edit.pendingChanges"
+                        class="label label-default"
+                    ></span>
+                    <span
+                        ng-if="vm.isSaving"
+                        data-translate="artemisApp.quizExercise.edit.saving"
+                        class="label label-default"
+                    ></span>
+                    <span
+                        ng-if="!vm.validQuiz()"
+                        data-translate="artemisApp.quizExercise.edit.invalidInput"
+                        class="label label-danger"
+                    ></span>
+                    <button
+                        class="btn btn-default"
+                        ui-sref="quiz-exercise-for-course({courseid:vm.quizExercise.course.id})"
+                        data-translate="{{vm.pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}"
+                    ></button>
+                    <button
+                        class="btn btn-success"
+                        ng-click="vm.save()"
+                        ng-disabled="!vm.pendingChanges() || !vm.validQuiz() || vm.isSaving"
+                        data-translate="entity.action.save"
+                    ></button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>

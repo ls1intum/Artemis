@@ -16,7 +16,7 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="P")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class ProgrammingExercise extends Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;

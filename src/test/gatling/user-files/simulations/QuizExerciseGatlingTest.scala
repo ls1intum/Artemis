@@ -67,7 +67,7 @@ class QuizExerciseGatlingTest extends Simulation {
             .exec(http("Create new quizExercise")
             .post("/api/quiz-exercises")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null}""")).asJSON
+            .body(StringBody("""{"id":null, "isVisibleBeforeStart":null, "isOpenForPractice":null, "isPlannedToStart":null, "duration":"0"}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_quizExercise_url"))).exitHereIfFailed
             .pause(10)
