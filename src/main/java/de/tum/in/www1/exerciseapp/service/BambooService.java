@@ -287,41 +287,9 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation(participation);
-
-        //insert feedback here
-        result.setFeedbacks(createFeedbacksForResult(retrieveLatestBuildResultDetails(participation.getBuildPlanId())));
-
         resultRepository.save(result);
     }
-
-
-    /*
-    * Uses the returned Map of the request to the bamboo api to transform all the failed tests into feedbacks for a result
-    *
-    *@param buildResultDetails returned build result details from the rest api of bamboo (call url:
-    *   BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors")
-     */
-    private HashSet<Feedback> createFeedbacksForResult(Map<String, Object> buildResultDetails){
-        if(buildResultDetails == null){
-            return null;
-        }
-        HashSet<Feedback> feedbacks = new HashSet<>();
-
-        for(String key : buildResultDetails.keySet()) {
-            Feedback feedback = new Feedback();
-
-            //converting build results from bamboo api call to feedbacks
-            //in Text both class name and method name is stored
-            //detail text will have the stored error message
-            feedback.setText((String)((Map)buildResultDetails.get(key)).get("className")
-                + "\\" + (String)((Map)buildResultDetails.get(key)).get("methodName"));
-            feedback.setDetailText((String) ((Map)((Map)buildResultDetails.get(key)).get("error")).get("message"));
-
-            feedbacks.add(feedback);
-        }
-        return feedbacks;
-    }
-
+    
     /**
      * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.
      *
