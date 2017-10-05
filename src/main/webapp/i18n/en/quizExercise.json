@@ -19,7 +19,9 @@
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
             "duration": "Duration",
-            "questions": "Questions"
+            "questions": "Questions",
+            "status": "Status",
+            "startTime": "Start Time"
         }
     }
 }

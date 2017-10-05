@@ -16,6 +16,7 @@
         vm.predicate = 'id';
         vm.reverse = true;
         vm.course = courseEntity;
+        vm.statusForQuiz = statusForQuiz;
 
         function load() {
             if (vm.course) {
@@ -50,6 +51,18 @@
                 );
                 return result * (vm.reverse ? -1 : 1);
             });
+        }
+
+        function statusForQuiz(quizExercise) {
+            if (quizExercise.isPlannedToStart) {
+                var plannedEndMoment = moment(quizExercise.releaseDate).add(quizExercise.duration, "minutes");
+                if (plannedEndMoment.isBefore(moment())) {
+                    return quizExercise.isOpenForPractice ? "Open for Practice" : "Closed";
+                } else if(moment(quizExercise.releaseDate).isBefore(moment())) {
+                    return "Active";
+                }
+            }
+            return quizExercise.isVisibleBeforeStart ? "Visible" : "Hidden";
         }
     }
 })();
