@@ -8,10 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,8 +31,7 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException
      */
-    @RequestMapping(value = "/plantuml/png",
-        method = RequestMethod.GET)
+    @GetMapping(value = "/plantuml/png")
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml) throws IOException {
 
         // Create PNG output stream
@@ -47,13 +43,9 @@ public class PlantUmlResource {
         // Create PNG
         String dest = reader.generateImage(png);
 
-
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.IMAGE_PNG);
 
         return new ResponseEntity(png.toByteArray(), responseHeaders, HttpStatus.OK);
-
-
     }
-
 }

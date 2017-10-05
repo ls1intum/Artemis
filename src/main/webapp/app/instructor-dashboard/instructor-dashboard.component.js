@@ -112,6 +112,8 @@
                 return item.participation.student.firstName;
             } else if (vm.sortColumn === 'successful') {
                 return item.successful;
+            } else if (vm.sortColumn === 'submissionCount') {
+                return item.submissionCount;
             } else if (vm.sortColumn === 'duration') {
                 var completionDate = moment(item.completionDate);
                 var initializationDate = moment(item.participation.initializationDate);

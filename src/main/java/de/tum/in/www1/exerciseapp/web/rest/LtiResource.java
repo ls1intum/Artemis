@@ -61,13 +61,10 @@ public class LtiResource {
      * @param request       HTTP request
      * @param response      HTTP response
      */
-    @RequestMapping(value = "/lti/launch/{exerciseId}",
-        method = RequestMethod.POST,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/lti/launch/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void launch(@ModelAttribute LtiLaunchRequestDTO launchRequest, @PathVariable("exerciseId") Long exerciseId, HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         log.debug("Launch request : {}", launchRequest);
-
 
         // Verify request
         if (!ltiService.verifyRequest(request)) {
@@ -116,9 +113,7 @@ public class LtiResource {
      * @param request    HTTP request
      * @return the ResponseEntity with status 200 (OK) and with body the LTI configuration, or with status 404 (Not Found)
      */
-    @RequestMapping(value = "/lti/configuration/{exerciseId}",
-        method = RequestMethod.GET,
-        produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/lti/configuration/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ExerciseLtiConfigurationDTO> exerciseLtiConfiguration(@PathVariable("exerciseId") Long exerciseId, HttpServletRequest request) {
         Exercise exercise = exerciseRepository.findOne(exerciseId);

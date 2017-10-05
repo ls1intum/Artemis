@@ -11,6 +11,35 @@ While ArTEMiS includes generic adapters to these three external systems with a d
 3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
 
 ## Development Setup
+
+Before you can build this project, you must install and configure the following dependencies on your machine:
+
+1. [Node.js](https://nodejs.org): We use Node to run a development web server and build the project.
+Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+2. [Yarn](https://yarnpkg.com): We use Yarn to manage Node dependencies.
+Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
+
+After installing Node, you should be able to run the following command to install development tools.
+You will only need to run this command when dependencies change in [package.json](package.json).
+```
+yarn install
+```
+We use [Gulp](https://gulpjs.com) as our build system. Install the Gulp command-line tool globally with:
+```
+yarn global add gulp-cli
+```
+Run the following commands in two separate terminals to create a blissful development experience where your browser
+auto-refreshes when files change on your hard drive.
+```
+./gradlew
+gulp
+```
+[Bower](https://bower.io) is used to manage CSS and JavaScript dependencies used in this application. You can upgrade dependencies by
+specifying a newer version in [bower.json](bower.json). You can also run `bower update` and `bower install` to manage dependencies.
+Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
+
+For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
+
 ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Boot](http://projects.spring.io/spring-boot) development on the application server and Javascript ([Angular 1](https://angularjs.org)) development on the application client in the browser. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
@@ -104,6 +133,21 @@ If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can
 ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
 
     --spring.profiles.active=dev,bamboo,bitbucket,jira 
+
+## Building for production
+
+To optimize the ExerciseApplication application for production, run:
+```
+./gradlew -Pprod clean bootRepackage
+```
+This will concatenate and minify the client CSS and JavaScript files. It will also modify `index.html` so it references these new files.
+To ensure everything worked, run:
+```
+java -jar build/libs/*.war
+```
+Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
+
+Refer to [Using JHipster in production](http://www.jhipster.tech/production) for more details.
 
 ## Deployment
 
