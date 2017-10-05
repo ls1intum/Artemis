@@ -12,13 +12,22 @@
             "delete": {
                 "question": "Are you sure you want to delete Quiz Exercise {{ id }}?"
             },
-            "detail": {
-                "title": "Quiz Exercise"
+            "edit": {
+                "title": "Edit Quiz Exercise for {{ param }}",
+                "addQuestion": "Add Question",
+                "invalidInput": "Invalid Input!",
+                "pendingChanges": "Unsaved Changes",
+                "saving": "Saving…",
+                "saved": "Saved!"
+            },
+            "new": {
+                "title": "New Quiz Exercise for {{ param }}"
             },
             "isVisibleBeforeStart": "Is Visible Before Start",
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
             "duration": "Duration",
+            "durationUnit": "minutes",
             "questions": "Questions",
             "status": "Status",
             "startTime": "Start Time"

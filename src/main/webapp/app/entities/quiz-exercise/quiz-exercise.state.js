@@ -186,7 +186,7 @@
             }]
         })
             .state('quiz-exercise-for-course.delete', {
-                parent: 'quiz-exercise',
+                parent: 'quiz-exercise-for-course',
                 url: '/{id}/delete',
                 data: {
                     authorities: ['ROLE_ADMIN']

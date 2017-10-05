@@ -9,6 +9,9 @@
 
     function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, courseEntity) {
         var vm = this;
+
+        prepareEntity(entity);
+
         var savedEntity = entity.id ? Object.assign({}, entity) : {};
 
         vm.quizExercise = entity;
@@ -19,6 +22,8 @@
         };
         vm.isSaving = false;
         vm.true = true;
+
+        // status options depending on relationship between start time, end time, and current time
         vm.statusOptionsVisible = [
             {
                 key: false,
@@ -45,6 +50,8 @@
                 label: "Active"
             }
         ];
+
+        // make functions available to html
         vm.showDropdown = showDropdown;
         vm.pendingChanges = pendingChanges;
         vm.validQuiz = validQuiz;
@@ -61,6 +68,10 @@
             vm.datePickerOpenStatus[date] = true;
         }
 
+        /**
+         * Determine which dropdown to display depending on the relationship between start time, end time, and current time
+         * @returns {string} the name of the dropdown to show
+         */
         function showDropdown() {
             if (vm.quizExercise.isPlannedToStart) {
                 var plannedEndMoment = moment(vm.quizExercise.releaseDate).add(vm.quizExercise.duration, "minutes");
@@ -73,28 +84,43 @@
             return "isVisibleBeforeStart";
         }
 
+        /**
+         * Add a question to the quiz (TODO)
+         */
         function addQuestion() {
             // TODO
             alert("TODO");
         }
 
+        /**
+         * Determine if there are any changes waiting to be saved
+         * @returns {boolean} true if there are any pending changes, false otherwise
+         */
         function pendingChanges() {
             return [
                 "title",
                 "duration",
                 "isPlannedToStart",
                 "releaseDate",
-                "status",
+                "isVisibleBeforeStart",
+                "isOpenForPractice",
                 "questions"
             ].some(function (key) {
                 return vm.quizExercise[key] !== savedEntity[key];
             });
         }
 
+        /**
+         * Check if the current inputs are valid
+         * @returns {boolean} true if valid, false otherwise
+         */
         function validQuiz() {
             return vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration;
         }
 
+        /**
+         * Save the quiz to the server
+         */
         function save() {
             vm.isSaving = true;
             if (vm.quizExercise.id) {
@@ -104,13 +130,24 @@
             }
         }
         function onSaveSuccess(result) {
-            vm.isSaveing = false;
+            vm.isSaving = false;
+            prepareEntity(result);
             savedEntity = Object.assign({}, result);
             vm.quizExercise = result;
         }
         function onSaveError() {
             alert("Saving Quiz Failed! Please try again later.");
-            vm.isSaveing = false;
+            vm.isSaving = false;
+        }
+
+        /**
+         * Makes sure the entity is well formed and its fields are of the correct types
+         * @param entity
+         */
+        function prepareEntity(entity) {
+            entity.releaseDate = entity.releaseDate ? new Date(entity.releaseDate) : new Date();
+            entity.duration = Number(entity.duration);
+            entity.duration = isNaN(entity.duration) ? 10 : entity.duration;
         }
     }
 })();
