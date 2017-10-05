@@ -99,19 +99,6 @@ public class CourseResource {
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
-//    /**
-//     * GET  /courses : get all the courses.
-//     *
-//     * @return the ResponseEntity with status 200 (OK) and the list of courses in body
-//     */
-//    @GetMapping("/courses")
-//    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
-//    @Timed
-//    public List<Course> getAllCourses() {
-//        log.debug("REST request to get all Courses");
-//        return courseService.findAll();
-//    }
-
     /**
      * GET  /courses/:id : get the "id" course.
      *
