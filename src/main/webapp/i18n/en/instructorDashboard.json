@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "instructorDashboard": {
+            "buildPlans": {
+                "delete": {
+                    "question": "Are you sure you want to delete build plans for Exercise {{ id }}?"
+                }
+            }
+        }
+    }
+}

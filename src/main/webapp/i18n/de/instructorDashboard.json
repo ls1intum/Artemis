@@ -1,0 +1,11 @@
+{
+    "artemisApp": {
+        "instructorDashboard": {
+            "buildPlans": {
+                "delete": {
+                    "question": "Sollen build plans für Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                }
+            }
+        }
+    }
+}

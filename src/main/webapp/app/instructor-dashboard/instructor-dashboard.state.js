@@ -27,8 +27,8 @@
                 },
                 resolve: {
                     translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
-                        // TODO: Create partial for instructor dashboard
                         $translatePartialLoader.addPart('global');
+                        $translatePartialLoader.addPart('instructorDashboard');
                         return $translate.refresh();
                     }]
                 }
@@ -50,7 +50,6 @@
                 },
                 resolve: {
                     translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
-                        // TODO: Create partial for instructor dashboard
                         $translatePartialLoader.addPart('global');
                         return $translate.refresh();
                     }]
@@ -95,7 +94,7 @@
                 url: '/{id}/delete',
                 //should be inherited from parent via prototypal inheritance
                 //check auth.service.js
-                //TODO check whether something changes for user and admin
+                //TODO check whether something changes when logged in as user/admin
                 /*data: {
                     authorities: ['ROLE_ADMIN', 'ROLE_TA']
                 },*/
@@ -104,8 +103,7 @@
                     $uibModal.open({
                         templateUrl: 'app/instructor-dashboard/instructor-dashboard-buildplans-delete-dialog.html',
                         controller: 'BuildPlansDeleteController',
-                        // can work with $ctrl?
-                        //controllerAs: 'vm',
+                        controllerAs: '$ctrl',
                         size: 'md',
                         resolve: {
                             entity: ['Exercise', function (Exercise) {

@@ -22,6 +22,7 @@
         }
 
         function confirmDelete(id) {
+            console.log("inside confirm delete");
             //here come service call/s to delete build plans
         }
     }
