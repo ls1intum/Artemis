@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
@@ -98,9 +99,7 @@ public class ParticipationService {
 
     private Participation copyRepository(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_COPIED)) {
-            URL repositoryUrl = versionControlService.get().copyRepository(
-                exercise.getBaseRepositoryUrlAsUrl(),
-                participation.getStudent().getLogin());
+            URL repositoryUrl = versionControlService.get().copyRepository(exercise.getBaseRepositoryUrlAsUrl(), participation.getStudent().getLogin());
             if (Optional.ofNullable(repositoryUrl).isPresent()) {
                 participation.setRepositoryUrl(repositoryUrl.toString());
                 participation.setInitializationState(ParticipationState.REPO_COPIED);
@@ -123,9 +122,7 @@ public class ParticipationService {
 
     private Participation copyBuildPlan(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.BUILD_PLAN_COPIED)) {
-            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(
-                exercise.getBaseBuildPlanId(),
-                participation.getStudent().getLogin());
+            String buildPlanId = continuousIntegrationService.get().copyBuildPlan(exercise.getBaseBuildPlanId(), participation.getStudent().getLogin());
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(ParticipationState.BUILD_PLAN_COPIED);
             return save(participation);

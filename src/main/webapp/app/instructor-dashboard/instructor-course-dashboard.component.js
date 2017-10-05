@@ -11,9 +11,9 @@
             templateUrl: 'app/instructor-dashboard/instructor-course-dashboard.html'
         });
 
-    InstructorCourseDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal','Course', 'CourseResult', 'CourseParticipation'];
+    InstructorCourseDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal','Course', 'CourseResult', 'CourseParticipation', 'CourseScores'];
 
-    function InstructorCourseDashboardController($window, $filter, moment, $uibModal,Course, CourseResult, CourseParticipation) {
+    function InstructorCourseDashboardController($window, $filter, moment, $uibModal, Course, CourseResult, CourseParticipation, CourseScores) {
         var vm = this;
 
 
@@ -36,10 +36,13 @@
             vm.participations = CourseParticipation.query({
                 courseId: vm.courseId
             }, groupResults);
+            vm.courseScores = CourseScores.query({
+                courseId: vm.courseId
+            }, groupResults);
         }
 
         function groupResults() {
-            if(!vm.results || !vm.participations || vm.participations.length == 0 || vm.results.length == 0) {
+            if(!vm.results || !vm.participations || !vm.courseScores || vm.participations.length == 0 || vm.results.length == 0 || vm.courseScores.length == 0) {
                 return
             }
             var rows = {};
@@ -51,7 +54,10 @@
                        'lastName': p.student.lastName,
                        'login': p.student.login,
                        'participated': 0,
+                       "participationInPercent": 0,
                        'successful': 0,
+                       "successfullyCompletedInPercent": 0,
+                       'overallScore': 0,
                    }
                }
                rows[p.student.id].participated++;
@@ -60,9 +66,29 @@
                    vm.numberOfExercises++;
                }
             });
+
+            //succesfull Participations as the total amount and a relative value to all Exercises
             _.forEach(vm.results, function (r) {
                 rows[r.participation.student.id].successful++;
+                rows[r.participation.student.id].successfullyCompletedInPercent = (rows[r.participation.student.id].successful / vm.numberOfExercises)*100;
             });
+
+            //relative amount of participation in all exercises
+            //since 1 user can have multiple participations studentSeen makes sure each student is only calculated once
+            var studentSeen = {};
+            _.forEach(vm.participations, function (p) {
+                if(!studentSeen[p.student.id]) {
+                    studentSeen[p.student.id] = true;
+                    rows[p.student.id].participationInPercent = (rows[p.student.id].participated / vm.numberOfExercises) * 100;
+                }
+            });
+
+            //set the total score of all Exercises (as mentioned on the RESTapi division by amount of exercises)
+            _.forEach(vm.courseScores, function (s) {
+               rows[s.participation.student.id].overallScore = s.score;
+            })
+
+
             vm.rows = _.values(rows);
 
         }

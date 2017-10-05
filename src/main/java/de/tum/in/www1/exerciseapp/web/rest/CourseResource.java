@@ -1,7 +1,7 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.exerciseapp.domain.Course;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
@@ -19,8 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * REST controller for managing Course.
@@ -142,4 +141,21 @@ public class CourseResource {
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
+
+
+    /**
+     * GET /user/:courseId/courseResult
+     *
+     * @param courseId the Id of the course
+     * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:
+     *  ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
+     */
+    @GetMapping("/courses/{courseId}/getAllCourseScoresOfCourseUsers")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId){
+        log.debug("REST request to get courseScores from course : {}", courseId);
+        return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
+    }
+
 }
