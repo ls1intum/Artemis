@@ -18,7 +18,7 @@ import java.util.Set;
  */
 @Entity
 @DiscriminatorValue(value="DD")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class DragAndDropQuestion extends Question implements Serializable {
 
     private static final long serialVersionUID = 1L;

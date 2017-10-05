@@ -42,16 +42,18 @@
                                     uib-dropdown-toggle
                                 >
                                     <span class="fa fa-list-alt"></span>
-                                    <span class="hidden-xs hidden-sm">Exercises</span>
+                                    <span class="hidden-xs hidden-sm" data-translate="artemisApp.course.exercises"></span>
                                     <span class="caret"></span>
                                 </button>
                                 <ul class="dropdown-menu" uib-dropdown-menu>
-                                    <li><a ui-sref="programming-exercise-for-course({courseid:course.id})">
-                                        Programming Exercises
-                                    </a></li>
-                                    <li><a ui-sref="quiz-exercise-for-course({courseid:course.id})">
-                                        Quiz Exercises
-                                    </a></li>
+                                    <li><a
+                                        ui-sref="programming-exercise-for-course({courseid:course.id})"
+                                        data-translate="artemisApp.course.programmingExercises"
+                                    ></a></li>
+                                    <li><a
+                                        ui-sref="quiz-exercise-for-course({courseid:course.id})"
+                                        data-translate="artemisApp.course.quizExercises"
+                                    ></a></li>
                                 </ul>
                             </div>
 

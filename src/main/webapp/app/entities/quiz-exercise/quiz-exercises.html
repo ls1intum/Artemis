@@ -4,7 +4,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-4 no-padding-left">
-                <button class="btn btn-primary" onclick="alert('TODO');" >
+                <button class="btn btn-primary" ui-sref=".new({courseid:vm.course.id})" >
                     <span class="glyphicon glyphicon-plus"></span>
                     <span  data-translate="artemisApp.quizExercise.home.createLabel">
                         Create new Quiz Exercise
@@ -19,22 +19,30 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="artemisApp.exercise.title">Title</span></th>
+                    <th><span data-translate="artemisApp.quizExercise.status">Status</span></th>
+                    <th><span data-translate="artemisApp.quizExercise.startTime">Start Time</span></th>
+                    <th><span data-translate="artemisApp.quizExercise.duration">Duration</span></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="quizExercise in vm.quizExercises track by quizExercise.id">
                     <td><a ui-sref="quiz-exercise-detail({id:quizExercise.id})">{{quizExercise.id}}</a></td>
+                    <td>{{quizExercise.title}}</td>
+                    <td>{{vm.statusForQuiz(quizExercise)}}</td>
+                    <td>{{quizExercise.isPlannedToStart ? (quizExercise.releaseDate | date:'medium') : "-"}}</td>
+                    <td>{{quizExercise.duration}} <span data-translate="artemisApp.quizExercise.durationUnit"></span></td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"
-                                    ui-sref="quiz-exercise-detail({id:quizExercise.id})"
+                                    onclick="alert('TODO');"
                                     class="btn btn-info btn-sm">
                                 <span class="glyphicon glyphicon-eye-open"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
-                                    onclick="alert('TODO');"
+                                    ui-sref="quiz-exercise-for-course-detail({id:quizExercise.id, courseid:vm.course.id})"
                                     class="btn btn-primary btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.edit"></span>

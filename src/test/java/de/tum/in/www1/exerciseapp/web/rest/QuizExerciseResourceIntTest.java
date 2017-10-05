@@ -37,6 +37,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTEMiSApp.class)
 public class QuizExerciseResourceIntTest {
 
+    private static final Boolean DEFAULT_IS_VISIBLE_BEFORE_START = false;
+    private static final Boolean UPDATED_IS_VISIBLE_BEFORE_START = true;
+
+    private static final Boolean DEFAULT_IS_OPEN_FOR_PRACTICE = false;
+    private static final Boolean UPDATED_IS_OPEN_FOR_PRACTICE = true;
+
+    private static final Boolean DEFAULT_IS_PLANNED_TO_START = false;
+    private static final Boolean UPDATED_IS_PLANNED_TO_START = true;
+
+    private static final Integer DEFAULT_DURATION = 1;
+    private static final Integer UPDATED_DURATION = 2;
+
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
 
@@ -59,7 +71,7 @@ public class QuizExerciseResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository);
+        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository);
         this.restQuizExerciseMockMvc = MockMvcBuilders.standaloneSetup(quizExerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -73,7 +85,11 @@ public class QuizExerciseResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static QuizExercise createEntity(EntityManager em) {
-        QuizExercise quizExercise = new QuizExercise();
+        QuizExercise quizExercise = new QuizExercise()
+            .isVisibleBeforeStart(DEFAULT_IS_VISIBLE_BEFORE_START)
+            .isOpenForPractice(DEFAULT_IS_OPEN_FOR_PRACTICE)
+            .isPlannedToStart(DEFAULT_IS_PLANNED_TO_START)
+            .duration(DEFAULT_DURATION);
         return quizExercise;
     }
 
@@ -97,6 +113,10 @@ public class QuizExerciseResourceIntTest {
         List<QuizExercise> quizExerciseList = quizExerciseRepository.findAll();
         assertThat(quizExerciseList).hasSize(databaseSizeBeforeCreate + 1);
         QuizExercise testQuizExercise = quizExerciseList.get(quizExerciseList.size() - 1);
+        assertThat(testQuizExercise.isIsVisibleBeforeStart()).isEqualTo(DEFAULT_IS_VISIBLE_BEFORE_START);
+        assertThat(testQuizExercise.isIsOpenForPractice()).isEqualTo(DEFAULT_IS_OPEN_FOR_PRACTICE);
+        assertThat(testQuizExercise.isIsPlannedToStart()).isEqualTo(DEFAULT_IS_PLANNED_TO_START);
+        assertThat(testQuizExercise.getDuration()).isEqualTo(DEFAULT_DURATION);
     }
 
     @Test
@@ -128,7 +148,11 @@ public class QuizExerciseResourceIntTest {
         restQuizExerciseMockMvc.perform(get("/api/quiz-exercises?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(quizExercise.getId().intValue())));
+            .andExpect(jsonPath("$.[*].id").value(hasItem(quizExercise.getId().intValue())))
+            .andExpect(jsonPath("$.[*].isVisibleBeforeStart").value(hasItem(DEFAULT_IS_VISIBLE_BEFORE_START.booleanValue())))
+            .andExpect(jsonPath("$.[*].isOpenForPractice").value(hasItem(DEFAULT_IS_OPEN_FOR_PRACTICE.booleanValue())))
+            .andExpect(jsonPath("$.[*].isPlannedToStart").value(hasItem(DEFAULT_IS_PLANNED_TO_START.booleanValue())))
+            .andExpect(jsonPath("$.[*].duration").value(hasItem(DEFAULT_DURATION)));
     }
 
     @Test
@@ -141,7 +165,11 @@ public class QuizExerciseResourceIntTest {
         restQuizExerciseMockMvc.perform(get("/api/quiz-exercises/{id}", quizExercise.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(quizExercise.getId().intValue()));
+            .andExpect(jsonPath("$.id").value(quizExercise.getId().intValue()))
+            .andExpect(jsonPath("$.isVisibleBeforeStart").value(DEFAULT_IS_VISIBLE_BEFORE_START.booleanValue()))
+            .andExpect(jsonPath("$.isOpenForPractice").value(DEFAULT_IS_OPEN_FOR_PRACTICE.booleanValue()))
+            .andExpect(jsonPath("$.isPlannedToStart").value(DEFAULT_IS_PLANNED_TO_START.booleanValue()))
+            .andExpect(jsonPath("$.duration").value(DEFAULT_DURATION));
     }
 
     @Test
@@ -161,6 +189,11 @@ public class QuizExerciseResourceIntTest {
 
         // Update the quizExercise
         QuizExercise updatedQuizExercise = quizExerciseRepository.findOne(quizExercise.getId());
+        updatedQuizExercise
+            .isVisibleBeforeStart(UPDATED_IS_VISIBLE_BEFORE_START)
+            .isOpenForPractice(UPDATED_IS_OPEN_FOR_PRACTICE)
+            .isPlannedToStart(UPDATED_IS_PLANNED_TO_START)
+            .duration(UPDATED_DURATION);
 
         restQuizExerciseMockMvc.perform(put("/api/quiz-exercises")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -171,6 +204,10 @@ public class QuizExerciseResourceIntTest {
         List<QuizExercise> quizExerciseList = quizExerciseRepository.findAll();
         assertThat(quizExerciseList).hasSize(databaseSizeBeforeUpdate);
         QuizExercise testQuizExercise = quizExerciseList.get(quizExerciseList.size() - 1);
+        assertThat(testQuizExercise.isIsVisibleBeforeStart()).isEqualTo(UPDATED_IS_VISIBLE_BEFORE_START);
+        assertThat(testQuizExercise.isIsOpenForPractice()).isEqualTo(UPDATED_IS_OPEN_FOR_PRACTICE);
+        assertThat(testQuizExercise.isIsPlannedToStart()).isEqualTo(UPDATED_IS_PLANNED_TO_START);
+        assertThat(testQuizExercise.getDuration()).isEqualTo(UPDATED_DURATION);
     }
 
     @Test
