@@ -15,12 +15,10 @@
         vm.confirmDelete = confirmDelete;
 
         function clear () {
-            console.log("inside clear function");
             $uibModalInstance.dismiss('cancel');
         }
 
         function confirmDelete(id) {
-            console.log("inside confirm delete");
             Exercise.deleteBuildPlans({
                     id: id
                 },

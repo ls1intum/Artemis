@@ -5,11 +5,11 @@
 <div>
     <div class="button-toolbar pull-right">
         <!--ng-click="$ctrl.buildPlanCleanup()"-->
-        <button class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.buildplans-delete({id:$ctrl.exercise.id})">
+        <button class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.buildplans-delete">
             <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;Build plans cleanup
         </button>
         <button type="submit"
-                ui-sref="participation-for-exercise"
+                ui-sref="participation-for-exercise({exerciseId:$ctrl.exerciseId})"
                 class="btn btn-primary btn-sm">
             <span class="fa fa-list-alt"></span>
             <span>Participations</span>

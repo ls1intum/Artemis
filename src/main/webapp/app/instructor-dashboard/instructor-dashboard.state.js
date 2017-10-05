@@ -92,14 +92,7 @@
             .state('instructor-dashboard.buildplans-delete', {
                 parent: 'instructor-dashboard',
                 url: '/{id}/delete',
-                //should be inherited from parent via prototypal inheritance
-                //check auth.service.js
-                //TODO check whether something changes when logged in as user/admin
-                /*data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
-                },*/
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
-                    console.log("state entered");
                     $uibModal.open({
                         templateUrl: 'app/instructor-dashboard/instructor-dashboard-buildplans-delete-dialog.html',
                         controller: 'BuildPlansDeleteController',
@@ -111,8 +104,7 @@
                             }]
                         }
                     }).result.then(function () {
-                        // do i need to pass $state.params? reload true?
-                        $state.go('instructor-dashboard', $state.params, {reload: true});
+                        $state.go('instructor-dashboard');
                     }, function () {
                         $state.go('^');
                     });
