@@ -1,6 +1,15 @@
 <div class="container">
     <h1>
-        {{vm.quizExercise.id ? "Edit Quiz Exercise" : "New Quiz Exercise for \"" + vm.quizExercise.course.title + "\""}}
+        <span
+            ng-if="vm.quizExercise.id"
+            data-translate="artemisApp.quizExercise.edit.title"
+            data-translate-values="{param: vm.quizExercise.course.title}"
+        ></span>
+        <span
+            ng-if="!vm.quizExercise.id"
+            data-translate="artemisApp.quizExercise.new.title"
+            data-translate-values="{param: vm.quizExercise.course.title}"
+        ></span>
     </h1>
     <hr/>
     <div class="edit-quiz">
@@ -14,20 +23,21 @@
             class="quiz-options"
         >
             <div class="form-group">
-                <span>
-                    Duration:
-                </span>
+                <span
+                    data-translate="artemisApp.quizExercise.duration"
+                    class="colon-suffix"
+                ></span>
                 <input
                     class="form-control"
                     title="Duration"
                     type="number"
                     min="1"
-                    max="240"
+                    max="600"
                     ng-model="vm.quizExercise.duration"
                 />
-                <span>
-                    minutes
-                </span>
+                <span
+                    data-translate="artemisApp.quizExercise.durationUnit"
+                ></span>
             </div>
             <div class="form-group">
                 <div
@@ -38,7 +48,10 @@
                             type="checkbox"
                             ng-model="vm.quizExercise.isPlannedToStart"
                         />
-                        Planned Start:
+                        <span
+                            data-translate="artemisApp.quizExercise.startTime"
+                            class="colon-suffix"
+                        ></span>
                     </label>
                 </div>
                 <div
@@ -77,17 +90,17 @@
         <button
             class="btn btn-default"
             ng-click="vm.addQuestion()"
-        >
-            Add Question
-        </button>
+            data-translate="artemisApp.quizExercise.edit.addQuestion"
+        ></button>
     </div>
     <div class="edit-quiz-footer">
         <div class="container">
             <div class="edit-quiz-footer-content">
                 <div class="form-group">
-                    <span>
-                        Status:
-                    </span>
+                    <span
+                        data-translate="artemisApp.quizExercise.status"
+                        class="colon-suffix"
+                    ></span>
                     <select
                         ng-if="vm.showDropdown() === 'isOpenForPractice'"
                         class="form-control"
@@ -112,19 +125,37 @@
                     </select>
                 </div>
                 <div class="form-group">
+                    <span
+                        ng-if="!vm.pendingChanges() && !vm.isSaving"
+                        data-translate="artemisApp.quizExercise.edit.saved"
+                        class="label label-success"
+                    ></span>
+                    <span
+                        ng-if="vm.pendingChanges() && vm.validQuiz() && !vm.isSaving"
+                        data-translate="artemisApp.quizExercise.edit.pendingChanges"
+                        class="label label-default"
+                    ></span>
+                    <span
+                        ng-if="vm.isSaving"
+                        data-translate="artemisApp.quizExercise.edit.saving"
+                        class="label label-default"
+                    ></span>
+                    <span
+                        ng-if="!vm.validQuiz()"
+                        data-translate="artemisApp.quizExercise.edit.invalidInput"
+                        class="label label-danger"
+                    ></span>
                     <button
                         class="btn btn-default"
                         ui-sref="quiz-exercise-for-course({courseid:vm.quizExercise.course.id})"
-                    >
-                        {{vm.pendingChanges() ? "Cancel" : "Back"}}
-                    </button>
+                        data-translate="{{vm.pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}"
+                    ></button>
                     <button
                         class="btn btn-success"
                         ng-click="vm.save()"
                         ng-disabled="!vm.pendingChanges() || !vm.validQuiz() || vm.isSaving"
-                    >
-                        Save
-                    </button>
+                        data-translate="entity.action.save"
+                    ></button>
                 </div>
             </div>
         </div>

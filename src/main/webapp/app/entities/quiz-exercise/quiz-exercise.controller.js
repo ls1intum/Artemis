@@ -53,15 +53,23 @@
             });
         }
 
+        /**
+         * Method for determining the current status of a quiz exercise
+         * @param quizExercise The quiz exercise we want to determine the status of
+         * @returns {string} The status as a string
+         */
         function statusForQuiz(quizExercise) {
             if (quizExercise.isPlannedToStart) {
                 var plannedEndMoment = moment(quizExercise.releaseDate).add(quizExercise.duration, "minutes");
                 if (plannedEndMoment.isBefore(moment())) {
+                    // the quiz is over
                     return quizExercise.isOpenForPractice ? "Open for Practice" : "Closed";
                 } else if(moment(quizExercise.releaseDate).isBefore(moment())) {
+                    // the quiz has started, but not finished yet
                     return "Active";
                 }
             }
+            // the quiz hasn't started yet
             return quizExercise.isVisibleBeforeStart ? "Visible" : "Hidden";
         }
     }
