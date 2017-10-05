@@ -185,30 +185,30 @@
                 });
             }]
         })
-            .state('quiz-exercise-for-course.delete', {
-                parent: 'quiz-exercise-for-course',
-                url: '/{id}/delete',
-                data: {
-                    authorities: ['ROLE_ADMIN']
-                },
-                onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
-                    $uibModal.open({
-                        templateUrl: 'app/entities/quiz-exercise/quiz-exercise-delete-dialog.html',
-                        controller: 'QuizExerciseDeleteController',
-                        controllerAs: 'vm',
-                        size: 'md',
-                        resolve: {
-                            entity: ['QuizExercise', function(QuizExercise) {
-                                return QuizExercise.get({id : $stateParams.id}).$promise;
-                            }]
-                        }
-                    }).result.then(function() {
-                        $state.go('quiz-exercise-for-course', $state.params, {reload: true});
-                    }, function() {
-                        $state.go('^');
-                    });
-                }]
-            });
+        .state('quiz-exercise-for-course.delete', {
+            parent: 'quiz-exercise-for-course',
+            url: '/{id}/delete',
+            data: {
+                authorities: ['ROLE_ADMIN']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/entities/quiz-exercise/quiz-exercise-delete-dialog.html',
+                    controller: 'QuizExerciseDeleteController',
+                    controllerAs: 'vm',
+                    size: 'md',
+                    resolve: {
+                        entity: ['QuizExercise', function(QuizExercise) {
+                            return QuizExercise.get({id : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('quiz-exercise-for-course', $state.params, {reload: true});
+                }, function() {
+                    $state.go('^');
+                });
+            }]
+        });
     }
 
 })();
