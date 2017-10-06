@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
@@ -102,6 +103,32 @@ public class ParticipationResource {
                 .body(participation);
         } else {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "exerciseNotFound", "No exercise was found for the given ID")).body(null);
+        }
+    }
+
+    /**
+     * POST  /courses/:courseId/exercises/:exerciseId/resume-participation: resume the participation of the current user in the exercise identified by id
+     *
+     * @param courseId   only included for API consistency, not actually used
+     * @param exerciseId id of the exercise for which to resume participation
+     * @param principal  current user principal
+     * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
+     */
+    @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-participation")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
+        log.debug("REST request to resume Exercise : {}", exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAndInactive(exerciseId, principal.getName());
+
+        if(Optional.ofNullable(exercise).isPresent() && Optional.ofNullable(participation).isPresent()) {
+            participation = participationService.resume(exercise, participation);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
+                .body(participation);
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "notFoundOrNotInactive",
+                "No exercise / no participation was found or participation not inactive")).body(null);
         }
     }
 
@@ -256,7 +283,7 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAndInitialized(exerciseId, principal.getName());
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(
                 result,
