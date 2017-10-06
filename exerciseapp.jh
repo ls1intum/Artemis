@@ -23,7 +23,10 @@ entity ModelingExercise {           //extends Exercise
 
 
 entity QuizExercise {               //extends Exercise
-
+	isVisibleBeforeStart Boolean,
+    isOpenForPractice Boolean,
+    isPlannedToStart Boolean,
+    duration Integer
 }
 
 entity LtiOutcomeUrl (lti_outcome_url) {
@@ -154,7 +157,7 @@ relationship ManyToMany {
 	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption
 }
 
-paginate Course, Exercise, Participation with infinite-scroll
+paginate Course, Exercise with infinite-scroll
 
 service Course with serviceClass
 service Participation with serviceClass

@@ -2,6 +2,7 @@
 # Project Specific
 ######################
 /src/main/webapp/content/css/main.css
+/src/main/webapp/content/css/quiz.css
 /build/www/**
 !/libs/*.jar
 /repos

@@ -8,7 +8,24 @@
             "otherEntityRelationshipName": "exercise"
         }
     ],
-    "fields": [],
+    "fields": [
+        {
+            "fieldName": "isVisibleBeforeStart",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "isOpenForPractice",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "isPlannedToStart",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "duration",
+            "fieldType": "Integer"
+        }
+    ],
     "changelogDate": "20170831094146",
     "entityTableName": "quiz_exercise",
     "dto": "no",
