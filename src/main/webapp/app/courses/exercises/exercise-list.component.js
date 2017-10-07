@@ -29,9 +29,10 @@
 
         vm.getClonePopoverTemplate = getClonePopoverTemplate;
         vm.goToBuildPlan = goToBuildPlan;
-        vm.hasParticipation = hasParticipation;
+        vm.participationStatus = participationStatus;
         vm.isReleased = isReleased;
         vm.start = start;
+        vm.resume = resume;
         vm.now = Date.now();
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
@@ -110,8 +111,13 @@
             });
         }
 
-        function hasParticipation(exercise) {
-            return !angular.equals({}, exercise.participation.toJSON());
+        function participationStatus(exercise) {
+            if(angular.equals({}, exercise.participation.toJSON())) {
+                return "uninitialized";
+            } else if(exercise.participation.initializationState === "INITIALIZED") {
+                return "initialized";
+            }
+            return "inactive";
         }
 
         function isReleased(exercise) {
@@ -163,6 +169,10 @@
             }).finally(function () {
                 vm.loading[exercise.id.toString()] = false;
             });
+        }
+
+        function resume(exercise) {
+            vm.loading[exercise.id] = true;
         }
 
         function toggleShowOverdueExercises() {
