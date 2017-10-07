@@ -112,7 +112,7 @@
         }
 
         function participationStatus(exercise) {
-            if(angular.equals({}, exercise.participation.toJSON())) {
+            if(angular.equals({}, exercise.participation)) {
                 return "uninitialized";
             } else if(exercise.participation.initializationState === "INITIALIZED") {
                 return "initialized";
@@ -173,6 +173,14 @@
 
         function resume(exercise) {
             vm.loading[exercise.id] = true;
+            exercise.$resume({
+                courseId: exercise.course.id,
+                exerciseId: exercise.id
+            }).catch(function(errorResponse) {
+                alert(errorResponse.data.status + " " + errorResponse.data.detail);
+            }).finally(function() {
+                vm.loading[exercise.id] = false;
+            });
         }
 
         function toggleShowOverdueExercises() {
