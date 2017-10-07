@@ -121,15 +121,9 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-
-        if(Optional.ofNullable(exercise).isPresent() && Optional.ofNullable(participation).isPresent()) {
-            participation = participationService.resume(exercise, participation);
-            return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
+        participation = participationService.resume(exercise, participation);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
                 .body(participation);
-        } else {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "notFoundOrNotInactive",
-                "No exercise / no participation was found or participation not inactive")).body(null);
-        }
     }
 
     /**
