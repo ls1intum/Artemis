@@ -120,7 +120,7 @@ public class ParticipationResource {
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAndInactive(exerciseId, principal.getName());
+        Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
 
         if(Optional.ofNullable(exercise).isPresent() && Optional.ofNullable(participation).isPresent()) {
             participation = participationService.resume(exercise, participation);
@@ -283,7 +283,7 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLoginAndInitialized(exerciseId, principal.getName());
+        Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(
                 result,

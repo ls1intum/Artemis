@@ -197,36 +197,21 @@ public class ParticipationService {
     }
 
     /**
-     * Get one initialized participation by its student and exercise.
+     * Get one initialized/inactive participation by its student and exercise.
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Participation findOneByExerciseIdAndStudentLoginAndInitialized(Long exerciseId, String username) {
-        log.debug("Request to get initialized Participation for User {} for Exercise with id: {}", username, exerciseId);
+    public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
+        log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
-
+        if(!Optional.ofNullable(participation).isPresent()) {
+            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
+        }
         return participation;
     }
-
-    /**
-     * Get one resumed participation by its student and exercise.
-     *
-     * @param exerciseId id of the exercise
-     * @param username   username of the student
-     * @return participation entity
-     */
-    @Transactional(readOnly = true)
-    public Participation findOneByExerciseIdAndStudentLoginAndInactive(Long exerciseId, String username) {
-        log.debug("Request to get inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
-        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
-
-        return participation;
-    }
-
-
 
     @Transactional(readOnly = true)
     public Participation findOneByBuildPlanId(String buildPlanId) {
