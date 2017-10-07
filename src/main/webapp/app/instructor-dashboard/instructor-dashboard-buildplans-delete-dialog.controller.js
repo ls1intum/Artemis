@@ -23,7 +23,6 @@
                     id: id
                 },
                 function () {
-                    alert("Successfully removed build plans");
                     $uibModalInstance.close(true);
                 });
         }
