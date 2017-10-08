@@ -208,4 +208,20 @@ public class ExerciseResource {
         exerciseService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
     }
+
+
+    /**
+     * DELETE  /exercises/:id/buildplans : delete all build plans (except BASE) of all participations belonging to this exercise.
+     *
+     * @param id the id of the exercise to delete build plans for
+     * @return ResponseEntity with status
+     */
+    @DeleteMapping(value = "/exercises/{id}/buildplans")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @Timed
+    public ResponseEntity<Void> deleteBuildPlansForExercise(@PathVariable Long id) {
+        log.debug("REST request to delete build plans for Exercise : {}", id);
+        exerciseService.deleteBuildPlans(id);
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
+    }
 }

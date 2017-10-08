@@ -1,9 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Authority;
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,11 +28,13 @@ public class ExerciseService {
     private final ExerciseRepository exerciseRepository;
     private final UserService userService;
     private final ParticipationService participationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService) {
+    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
+        this.continuousIntegrationService = continuousIntegrationService;
     }
 
     /**
@@ -85,6 +85,21 @@ public class ExerciseService {
         return exercise;
     }
 
+    /**
+     * Find exercise by id and load participations in this exercise.
+     *
+     * @param id the id of the exercise entity
+     * @return the exercise entity
+     */
+    @Transactional(readOnly = true)
+    public Exercise findOneLoadParticipations(Long id) {
+        log.debug("Request to find Exercise with participations loaded: {}", id);
+        Exercise exercise = findOne(id);
+        if(Optional.ofNullable(exercise).isPresent()) {
+            exercise.getParticipations();
+        }
+        return exercise;
+    }
 
     /**
      * Resets an Exercise by deleting all its Participations
@@ -118,4 +133,26 @@ public class ExerciseService {
         exerciseRepository.delete(id);
     }
 
+    /**
+     * Delete build plans (except BASE) of all exercise participations.
+     *
+     * @param id id of the exercise for which build plans in respective participations are deleted
+     */
+    @Transactional
+    public void deleteBuildPlans(Long id) {
+        log.debug("Request to delete build plans for Exercise : {}", id);
+        Exercise exercise = findOneLoadParticipations(id);
+        if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
+            exercise.getParticipations().forEach(participation -> {
+                if (participation.getBuildPlanId() != null) {
+                    continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+                    participation.setInitializationState(ParticipationState.INACTIVE);
+                    participation.setBuildPlanId(null);
+                    participationService.save(participation);
+                }
+            });
+        } else {
+            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to delete build plans", id);
+        }
+    }
 }
