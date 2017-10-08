@@ -10,6 +10,31 @@ While ArTEMiS includes generic adapters to these three external systems with a d
 2. **CIS:** Atlassian Bamboo Server
 3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
 
+## Exercise Workflow
+
+Conducting a programming exercise consists of 7 steps distributed among instructor, \system{} and students:
+
+1. **Instructor prepares exercise:** Set up a repository containing the exercise code and test cases, build instructions on the CI server, and configures the exercise in ArTEMiS.
+2. **Student starts exercise:** Click on start exercise on ArTEMiS which automatically generates a copy of the repository with the exercise code and configures a build plan accordingly.
+3. **Optional: Student clones repository:** Clone the personalized repository from the remote VCS to the local machine.
+4. **Student solves exercise:** Solve the exercise with an IDE of choice on the local computer or in the online editor.
+5. **Student uploads solution:** Upload changes of the source code to the VCS by committing and pushing them to the remote server (or by clicking submit in the online editor).
+6. **CI server verifies solution:** verify the student's submission by executing the test cases (see step 1) and provide feedback which parts are correct or wrong.
+7. **Student reviews personal result:** Reviews build result and feedback using ArTEMiS. In case of a failed build, reattempt to solve the exercise (step 4).
+8. **Instructor reviews course results:** Review overall results of all students, and react to common errors and problems.
+
+The following activity diagram shows this exercise workflow. 
+
+![Exercise Workflow](doc/ExerciseWorkflow.png "Exercise Workflow")
+
+## Online Editor
+
+The following screenshot shows the online editor with interactive and dynamic exercise instructions on the right side.
+Tasks and UML diagram elements are referenced by test cases and update their color from red to green after students submit a new version and all test cases associated with a task or diagram element pass.
+This allows the students to immediately recognize which tasks are already fulfilled and is particularly helpful for programming beginners.
+
+![Online Editor](doc/OnlineEditor.png "Online Editor****")
+
 ## Development Setup
 
 Before you can build this project, you must install and configure the following dependencies on your machine:
@@ -21,19 +46,25 @@ Depending on your system, you can install Yarn either from source or as a pre-pa
 
 After installing Node, you should be able to run the following command to install development tools.
 You will only need to run this command when dependencies change in [package.json](package.json).
+
 ```
 yarn install
 ```
+
 We use [Gulp](https://gulpjs.com) as our build system. Install the Gulp command-line tool globally with:
+
 ```
 yarn global add gulp-cli
 ```
+
 Run the following commands in two separate terminals to create a blissful development experience where your browser
 auto-refreshes when files change on your hard drive.
+
 ```
 ./gradlew
 gulp
 ```
+
 [Bower](https://bower.io) is used to manage CSS and JavaScript dependencies used in this application. You can upgrade dependencies by
 specifying a newer version in [bower.json](bower.json). You can also run `bower update` and `bower install` to manage dependencies.
 Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
@@ -75,7 +106,7 @@ artemis:
     name: ArTEMiS
     email: <email>
 ```
-Change the entries with <...> with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can conncet to your local JIRA, Bitbucket and Bamboo instances (see Docker Setup below). 
+Change the entries with ```<...>``` with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can conncet to your local JIRA, Bitbucket and Bamboo instances (see Docker Setup below). 
 
 In addition, you have to install MySQL, setup a root user without password and create an ExerciseApplication scheme.
 
@@ -137,14 +168,18 @@ ArTEMiS uses Spring profiles to segregate parts of the application configuration
 ## Building for production
 
 To optimize the ExerciseApplication application for production, run:
+
 ```
 ./gradlew -Pprod clean bootRepackage
 ```
+
 This will concatenate and minify the client CSS and JavaScript files. It will also modify `index.html` so it references these new files.
 To ensure everything worked, run:
+
 ```
 java -jar build/libs/*.war
 ```
+
 Then navigate to [http://localhost:8080](http://localhost:8080) in your browser.
 
 Refer to [Using JHipster in production](http://www.jhipster.tech/production) for more details.
