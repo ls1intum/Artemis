@@ -151,9 +151,8 @@ public class ExerciseService {
                     participationService.save(participation);
                 }
             });
+        } else {
+            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to delete build plans", id);
         }
-        log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to delete build plans", id);
     }
-
-
 }
