@@ -3,7 +3,8 @@
         "instructorDashboard": {
             "buildPlans": {
                 "delete": {
-                    "question": "Are you sure you want to delete build plans for Exercise {{ id }}?"
+                    "title": "Cleanup build plans",
+                    "question": "Are you sure you want to delete all student build plans for the programming exercise {{ exerciseTitle }} ({{courseTitle}})?"
                 }
             }
         }

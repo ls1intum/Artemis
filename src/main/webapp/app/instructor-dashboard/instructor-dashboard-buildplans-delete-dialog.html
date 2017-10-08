@@ -6,7 +6,9 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p data-translate="artemisApp.instructorDashboard.buildPlans.delete.question" translate-values="{id: '{{$ctrl.exercise.id}}'}">CONFIRM_DELETE</p>
+        <p data-translate="artemisApp.instructorDashboard.buildPlans.delete.question"
+           translate-values="{exerciseTitle: '{{$ctrl.exercise.title}}', courseTitle: '{{$ctrl.exercise.course.title}}'}">CONFIRM_DELETE
+        </p>
         <p></p>
     </div>
     <div class="modal-footer">

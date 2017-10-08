@@ -4,8 +4,9 @@
 <div>
     <div class="button-toolbar pull-right">
         <!--ng-click="$ctrl.buildPlanCleanup()"-->
-        <button class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.buildplans-delete">
-            <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;Build plans cleanup
+        <button class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.buildplans-delete"
+                data-translate="artemisApp.instructorDashboard.buildPlans.delete.title">
+            <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;CLEANUP_BUILD_PLANS
         </button>
         <button type="submit"
                 ui-sref="participation-for-exercise({exerciseId:$ctrl.exerciseId})"

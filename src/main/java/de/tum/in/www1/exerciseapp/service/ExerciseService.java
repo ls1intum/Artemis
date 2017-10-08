@@ -1,9 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Authority;
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import org.slf4j.Logger;
@@ -31,8 +28,7 @@ public class ExerciseService {
     private final ExerciseRepository exerciseRepository;
     private final UserService userService;
     private final ParticipationService participationService;
-
-    private Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.exerciseRepository = exerciseRepository;
@@ -146,7 +142,7 @@ public class ExerciseService {
     public void deleteBuildPlans(Long id) {
         log.debug("Request to delete build plans for Exercise : {}", id);
         Exercise exercise = findOneLoadParticipations(id);
-        if (Optional.ofNullable(exercise).isPresent()) {
+        if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
             exercise.getParticipations().forEach(participation -> {
                 if (participation.getBuildPlanId() != null) {
                     continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
@@ -156,6 +152,7 @@ public class ExerciseService {
                 }
             });
         }
+        log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to delete build plans", id);
     }
 
 
