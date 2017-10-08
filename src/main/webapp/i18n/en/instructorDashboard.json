@@ -1,0 +1,12 @@
+{
+    "artemisApp": {
+        "instructorDashboard": {
+            "buildPlans": {
+                "delete": {
+                    "title": "Cleanup build plans",
+                    "question": "Are you sure you want to delete all student build plans for the programming exercise {{ exerciseTitle }} ({{courseTitle}})?"
+                }
+            }
+        }
+    }
+}

@@ -7,7 +7,8 @@
             "REPO_CONFIGURED": "REPO_CONFIGURED",
             "BUILD_PLAN_COPIED": "BUILD_PLAN_COPIED",
             "BUILD_PLAN_CONFIGURED": "BUILD_PLAN_CONFIGURED",
-            "INITIALIZED": "INITIALIZED"
+            "INITIALIZED": "INITIALIZED",
+            "INACTIVE": "INACTIVE"
         }
     }
 }

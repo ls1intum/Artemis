@@ -27,8 +27,9 @@
                 },
                 resolve: {
                     translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
-                        // TODO: Create partial for instructor dashboard
                         $translatePartialLoader.addPart('global');
+                        $translatePartialLoader.addPart('instructorDashboard');
+                        $translatePartialLoader.addPart('exercise');
                         return $translate.refresh();
                     }]
                 }
@@ -50,7 +51,6 @@
                 },
                 resolve: {
                     translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
-                        // TODO: Create partial for instructor dashboard
                         $translatePartialLoader.addPart('global');
                         return $translate.refresh();
                     }]
@@ -87,6 +87,27 @@
                         $state.go('instructor-dashboard', $state.params, {reload: true});
                     }, function () {
                         $state.go('instructor-dashboard', $state.params);
+                    });
+                }]
+            })
+            .state('instructor-dashboard.buildplans-delete', {
+                parent: 'instructor-dashboard',
+                url: '/{id}/delete',
+                onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                    $uibModal.open({
+                        templateUrl: 'app/instructor-dashboard/instructor-dashboard-buildplans-delete-dialog.html',
+                        controller: 'BuildPlansDeleteController',
+                        controllerAs: '$ctrl',
+                        size: 'md',
+                        resolve: {
+                            entity: ['Exercise', function (Exercise) {
+                                return Exercise.get({id: $stateParams.exerciseId}).$promise;
+                            }]
+                        }
+                    }).result.then(function () {
+                        $state.go('instructor-dashboard');
+                    }, function () {
+                        $state.go('^');
                     });
                 }]
             });
