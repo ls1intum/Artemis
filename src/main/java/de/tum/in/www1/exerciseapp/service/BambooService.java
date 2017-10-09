@@ -249,7 +249,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         try {
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-            String message = getBambooClient().getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, bambooProject + "-" + bambooPlan, "STASH", false, true);
+            String message = getBambooClient().getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, bambooProject + "-" + bambooPlan, "STASH", null, false, true);
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful." + message);
             return message;
         } catch (CliClient.ClientException e) {
