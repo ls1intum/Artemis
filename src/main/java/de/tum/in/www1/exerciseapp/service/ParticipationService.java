@@ -227,7 +227,7 @@ public class ParticipationService {
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         log.debug("Request to delete Participation : {}", id);
         Participation participation = participationRepository.findOne(id);
-        if (Optional.ofNullable(participation).isPresent()) {
+        if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             }
@@ -238,7 +238,7 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 gitService.get().deleteLocalRepository(participation);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error("Error while deleting local repository", e);
             }
 
