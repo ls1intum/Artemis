@@ -97,7 +97,7 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getId() == null) {
             return createProgrammingExercise(programmingExercise);
         }
-        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) programmingExercise);
+        ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
         if(errorResponse != null) {
             return errorResponse;
         }

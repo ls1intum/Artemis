@@ -79,7 +79,7 @@ public class RepositoryResource {
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Iterator<File> itr = gitService.get().listFiles(repository).iterator();
 
-        Collection<String> fileList = new LinkedList<String>();
+        Collection<String> fileList = new LinkedList<>();
 
         while (itr.hasNext()) {
             fileList.add(itr.next().toString());

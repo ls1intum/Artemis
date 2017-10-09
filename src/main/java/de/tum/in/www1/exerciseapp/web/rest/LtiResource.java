@@ -87,10 +87,8 @@ public class LtiResource {
             return;
         }
 
-        /**
-         * If the current user was created within the last 15 seconds, we just created the user
-         * Display a welcome message to the user
-         **/
+        //If the current user was created within the last 15 seconds, we just created the user
+        //Display a welcome message to the user
         Boolean isNewUser = SecurityUtils.isAuthenticated() && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
 
 

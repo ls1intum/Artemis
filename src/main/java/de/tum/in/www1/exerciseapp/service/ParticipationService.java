@@ -28,9 +28,9 @@ public class ParticipationService {
 
     private final ParticipationRepository participationRepository;
     private final UserRepository userRepository;
-    private Optional<GitService> gitService;
-    private Optional<ContinuousIntegrationService> continuousIntegrationService;
-    private Optional<VersionControlService> versionControlService;
+    private final Optional<GitService> gitService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<VersionControlService> versionControlService;
 
     public ParticipationService(ParticipationRepository participationRepository, UserRepository userRepository, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationRepository = participationRepository;
@@ -215,8 +215,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneByBuildPlanId(String buildPlanId) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        Participation participation = participationRepository.findOneByBuildPlanId(buildPlanId);
-        return participation;
+        return participationRepository.findOneByBuildPlanId(buildPlanId);
     }
 
     /**

@@ -101,7 +101,7 @@ public class CourseService {
 
     public List<String> getAllTeachingAssistantGroupNames() {
         List<Course> courses = courseRepository.findAll();
-        return courses.stream().map(c -> c.getTeachingAssistantGroupName()).collect(Collectors.toList());
+        return courses.stream().map(Course::getTeachingAssistantGroupName).collect(Collectors.toList());
     }
 
     /**
@@ -156,7 +156,7 @@ public class CourseService {
      */
     @Transactional(readOnly = true)
     public Result choseResultInParticipation(Participation participation, boolean hasDueDate) {
-        List<Result> results = new ArrayList<Result>(participation.getResults());
+        List<Result> results = new ArrayList<>(participation.getResults());
 
         Result chosenResult;
         //edge case of no result submitted to a participation

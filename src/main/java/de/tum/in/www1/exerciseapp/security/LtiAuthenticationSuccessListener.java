@@ -27,11 +27,8 @@ public class LtiAuthenticationSuccessListener implements ApplicationListener<Int
     @Override
     public void onApplicationEvent(InteractiveAuthenticationSuccessEvent event)
     {
-        /**
-         * The InteractiveAuthenticationSuccessEvent is fired on manual logins and remember-me logins.
-         * Not fired on programmatic logins!
-         *
-         */
+        //The InteractiveAuthenticationSuccessEvent is fired on manual logins and remember-me logins.
+        //Not fired on programmatic logins!
         if (event instanceof InteractiveAuthenticationSuccessEvent)
         {
             AbstractAuthenticationToken token = (AbstractAuthenticationToken) event.getSource();

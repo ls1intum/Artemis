@@ -45,8 +45,7 @@ public class ExerciseService {
      */
     public Exercise save(Exercise exercise) {
         log.debug("Request to save Exercise : {}", exercise);
-        Exercise result = exerciseRepository.save(exercise);
-        return result;
+        return exerciseRepository.save(exercise);
     }
 
     /**
@@ -81,8 +80,7 @@ public class ExerciseService {
     @Transactional(readOnly = true)
     public Exercise findOne(Long id) {
         log.debug("Request to get Exercise : {}", id);
-        Exercise exercise = exerciseRepository.findOne(id);
-        return exercise;
+        return exerciseRepository.findOne(id);
     }
 
     /**

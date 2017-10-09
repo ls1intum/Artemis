@@ -14,7 +14,7 @@ import org.springframework.security.config.annotation.method.configuration.Globa
 @ComponentScan("de.tum.in.www1.exerciseapp.security.*")
 public class MethodSecurityConfig extends GlobalMethodSecurityConfiguration {
 
-    private CustomPermissionEvaluator customPermissionEvaluator;
+    private final CustomPermissionEvaluator customPermissionEvaluator;
 
     public MethodSecurityConfig(CustomPermissionEvaluator customPermissionEvaluator) {
         this.customPermissionEvaluator = customPermissionEvaluator;
