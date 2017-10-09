@@ -4,7 +4,7 @@
             "buildPlans": {
                 "delete": {
                     "title": "Build Pläne löschen",
-                    "question": "Sollen alle Studierenden Build Pläne für Programmieraufgabe {{ exerciseTitle }} ({{ courseTitle }}) wirklich dauerhaft gelöscht werden?"
+                    "question": "Sollen wirklich alle Studierenden Build Pläne für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} dauerhaft gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden!"
                 }
             }
         }
