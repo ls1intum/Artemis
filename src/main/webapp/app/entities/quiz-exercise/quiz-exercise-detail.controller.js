@@ -22,6 +22,10 @@
         };
         vm.isSaving = false;
         vm.true = true;
+        vm.duration = {
+            minutes: 0,
+            seconds: 0
+        };
 
         // status options depending on relationship between start time, end time, and current time
         vm.statusOptionsVisible = [
@@ -58,6 +62,7 @@
         vm.openCalendar = openCalendar;
         vm.addQuestion = addQuestion;
         vm.save = save;
+        vm.onDurationChange = onDurationChange;
 
         var unsubscribe = $rootScope.$on('artemisApp:quizExerciseUpdate', function (event, result) {
             vm.quizExercise = result;
@@ -77,7 +82,7 @@
                 var plannedEndMoment = moment(vm.quizExercise.releaseDate).add(vm.quizExercise.duration, "minutes");
                 if (plannedEndMoment.isBefore(moment())) {
                     return "isOpenForPractice";
-                } else if(moment(vm.quizExercise.releaseDate).isBefore(moment())) {
+                } else if (moment(vm.quizExercise.releaseDate).isBefore(moment())) {
                     return "active";
                 }
             }
@@ -129,12 +134,14 @@
                 QuizExercise.save(vm.quizExercise, onSaveSuccess, onSaveError);
             }
         }
+
         function onSaveSuccess(result) {
             vm.isSaving = false;
             prepareEntity(result);
             savedEntity = Object.assign({}, result);
             vm.quizExercise = result;
         }
+
         function onSaveError() {
             alert("Saving Quiz Failed! Please try again later.");
             vm.isSaving = false;
@@ -148,6 +155,29 @@
             entity.releaseDate = entity.releaseDate ? new Date(entity.releaseDate) : new Date();
             entity.duration = Number(entity.duration);
             entity.duration = isNaN(entity.duration) ? 10 : entity.duration;
+        }
+
+        // keep ui up to date when duration changes
+        $scope.$watch(vm.quizExercise.duration, function() {
+            updateDuration();
+        });
+
+        /**
+         * Reach to changes of duration inputs by updating model and ui
+         */
+        function onDurationChange() {
+            var duration = moment.duration(vm.duration);
+            vm.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10*60*60);
+            updateDuration();
+        }
+
+        /**
+         * update ui to current value of duration
+         */
+        function updateDuration() {
+            var duration = moment.duration(vm.quizExercise.duration, "seconds");
+            vm.duration.minutes = 60 * duration.hours() + duration.minutes();
+            vm.duration.seconds = duration.seconds();
         }
     }
 })();

@@ -113,7 +113,7 @@
                 entity: function() {
                     return {
                         title: "",
-                        duration: 10,
+                        duration: 600,
                         isVisibleBeforeStart: false,
                         isOpenForPractice: false,
                         isPlannedToStart: false,

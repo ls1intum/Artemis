@@ -31,12 +31,25 @@
                     class="form-control"
                     title="Duration"
                     type="number"
-                    min="1"
-                    max="600"
-                    ng-model="vm.quizExercise.duration"
+                    min="0"
+                    max="99999"
+                    ng-model="vm.duration.minutes"
+                    ng-blur="vm.onDurationChange()"
                 />
                 <span
-                    data-translate="artemisApp.quizExercise.durationUnit"
+                    data-translate="artemisApp.quizExercise.minutes"
+                ></span>
+                <input
+                    class="form-control"
+                    title="Duration"
+                    type="number"
+                    max="99999"
+                    min="-9999"
+                    ng-model="vm.duration.seconds"
+                    ng-blur="vm.onDurationChange()"
+                />
+                <span
+                    data-translate="artemisApp.quizExercise.seconds"
                 ></span>
             </div>
             <div class="form-group">

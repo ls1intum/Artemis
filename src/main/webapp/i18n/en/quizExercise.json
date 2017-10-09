@@ -27,7 +27,10 @@
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
             "duration": "Duration",
-            "durationUnit": "minutes",
+            "minutes": "minutes",
+            "seconds": "seconds",
+            "minutesShort": "min",
+            "secondsShort": "s",
             "questions": "Questions",
             "status": "Status",
             "startTime": "Start Time"

@@ -32,6 +32,9 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "is_planned_to_start")
     private Boolean isPlannedToStart;
 
+    /**
+     * The duration of the quiz exercise in seconds
+     */
     @Column(name = "duration")
     private Integer duration;
 
