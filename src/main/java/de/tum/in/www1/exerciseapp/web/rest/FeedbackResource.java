@@ -3,7 +3,9 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Feedback;
 
+import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
+import de.tum.in.www1.exerciseapp.service.FeedbackService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -14,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -30,8 +34,11 @@ public class FeedbackResource {
 
     private final FeedbackRepository feedbackRepository;
 
-    public FeedbackResource(FeedbackRepository feedbackRepository) {
+    private final FeedbackService feedbackService;
+
+    public FeedbackResource(FeedbackRepository feedbackRepository, FeedbackService feedbackService) {
         this.feedbackRepository = feedbackRepository;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -114,5 +121,26 @@ public class FeedbackResource {
         log.debug("REST request to delete Feedback : {}", id);
         feedbackRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     *  GET /feedbacks/forResult/:id
+     *
+     *  @param resultId the ID of the result
+     *  @return all feedbacks for that result if no feedbacks are stored try to connect to the bamboo service directly and retreive data from there
+     */
+    @GetMapping("/feedbacks/forResult/{id}")
+    @Timed
+    public ResponseEntity<List<Feedback>> getFeedbacksForResult(@PathVariable Long resultId){
+        log.debug("REST request to GET all Feedbacks for one Result");
+
+        List<Feedback> feedbacks = feedbackRepository.findByResult(resultId);
+
+        //Provide access to old implementation for old classes with no results
+        if(feedbacks == null || feedbacks.size() == 0){
+            Result result = feedbackService.retreiveBuildDetailsFromBambooAndStoreThem(resultId);
+            feedbacks = new ArrayList<>(result.getFeedbacks());
+        }
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(feedbacks));
     }
 }

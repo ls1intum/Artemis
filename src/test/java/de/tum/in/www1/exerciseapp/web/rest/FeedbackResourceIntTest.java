@@ -65,11 +65,11 @@ public class FeedbackResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final FeedbackResource feedbackResource = new FeedbackResource(feedbackRepository);
-        this.restFeedbackMockMvc = MockMvcBuilders.standaloneSetup(feedbackResource)
-            .setCustomArgumentResolvers(pageableArgumentResolver)
-            .setControllerAdvice(exceptionTranslator)
-            .setMessageConverters(jacksonMessageConverter).build();
+//        final FeedbackResource feedbackResource = new FeedbackResource(feedbackRepository);
+//        this.restFeedbackMockMvc = MockMvcBuilders.standaloneSetup(feedbackResource)
+//            .setCustomArgumentResolvers(pageableArgumentResolver)
+//            .setControllerAdvice(exceptionTranslator)
+//            .setMessageConverters(jacksonMessageConverter).build();
     }
 
     /**

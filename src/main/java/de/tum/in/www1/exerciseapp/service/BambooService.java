@@ -301,11 +301,45 @@ public class BambooService implements ContinuousIntegrationService {
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
         result.setScore(calculateScoreForResult(result));
+
+        Map buildResultDetails = retrieveLatestBuildResultDetails(participation.getBuildPlanId());
+        result.setFeedbacks(createFeedbacksForResult(buildResultDetails));
+
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation(participation);
         resultRepository.save(result);
     }
-    
+
+    /*
+   * Uses the returned Map of the request to the bamboo api to transform all the failed tests into feedbacks for a result
+   *
+   *@param buildResultDetails returned build result details from the rest api of bamboo (call url:
+   *   BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors")
+    */
+    public HashSet<Feedback> createFeedbacksForResult(Map<String, Object> buildResultDetails){
+        if(buildResultDetails == null){
+            return null;
+        }
+        HashSet<Feedback> feedbacks = new HashSet<>();
+
+        for(String key : buildResultDetails.keySet()) {
+            Feedback feedback = new Feedback();
+
+            //converting build results from bamboo api call to feedbacks
+            //in Text both class name and method name is stored
+            //detail text will have the stored error message
+            String className = (String)((Map)buildResultDetails.get(key)).get("className");
+            String methodName = (String)((Map)buildResultDetails.get(key)).get("methodName");
+            String errorMessage = (String) ((Map)((Map)buildResultDetails.get(key)).get("error")).get("message");
+
+            feedback.setText("In the class: " + className + ",in method: " + methodName + " the following error occured:");
+            feedback.setDetailText(errorMessage);
+
+            feedbacks.add(feedback);
+        }
+        return feedbacks;
+    }
+
     /**
      * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.
      *
