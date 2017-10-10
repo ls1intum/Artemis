@@ -10,6 +10,12 @@
             "otherEntityRelationshipName": "result"
         },
         {
+            "relationshipType": "one-to-many",
+            "relationshipName": "feedbacks",
+            "otherEntityName": "feedback",
+            "otherEntityRelationshipName": "result"
+        },
+        {
             "relationshipType": "many-to-one",
             "relationshipName": "participation",
             "otherEntityName": "participation",

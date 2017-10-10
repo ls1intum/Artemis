@@ -1,9 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.Repository;
-import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
@@ -30,10 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -277,6 +271,8 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param participation
      */
+
+    //ToDo configure saving of the feedback
     @Override
     public void onBuildCompleted(Participation participation) {
         log.info("Retrieving build result...");
@@ -309,7 +305,7 @@ public class BambooService implements ContinuousIntegrationService {
         result.setParticipation(participation);
         resultRepository.save(result);
     }
-
+    
     /**
      * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.
      *
