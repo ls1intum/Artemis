@@ -68,7 +68,7 @@ public class PersistentTokenRememberMeServices extends
 
     private static final int UPGRADED_TOKEN_VALIDITY_SECONDS = 5;
 
-    private Cache<String, UpgradedRememberMeToken> upgradedTokenCache = CacheBuilder.newBuilder()
+    private final Cache<String, UpgradedRememberMeToken> upgradedTokenCache = CacheBuilder.newBuilder()
             .expireAfterWrite(UPGRADED_TOKEN_VALIDITY_SECONDS, TimeUnit.SECONDS)
             .build();
 
@@ -212,11 +212,11 @@ public class PersistentTokenRememberMeServices extends
 
         private static final long serialVersionUID = 1L;
 
-        private String[] upgradedToken;
+        private final String[] upgradedToken;
 
-        private Date upgradeTime;
+        private final Date upgradeTime;
 
-        private String userLogin;
+        private final String userLogin;
 
         UpgradedRememberMeToken(String[] upgradedToken, String userLogin) {
             this.upgradedToken = upgradedToken;

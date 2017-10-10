@@ -2,7 +2,6 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
-import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
@@ -29,9 +28,9 @@ public class ParticipationService {
 
     private final ParticipationRepository participationRepository;
     private final UserRepository userRepository;
-    private Optional<GitService> gitService;
-    private Optional<ContinuousIntegrationService> continuousIntegrationService;
-    private Optional<VersionControlService> versionControlService;
+    private final Optional<GitService> gitService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<VersionControlService> versionControlService;
 
     public ParticipationService(ParticipationRepository participationRepository, UserRepository userRepository, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationRepository = participationRepository;
@@ -92,6 +91,23 @@ public class ParticipationService {
             //TODO: Valentin implement
         }
 
+
+        save(participation);
+        return participation;
+    }
+
+    /**
+     * Service method to resume inactive participation (with previously deleted build plan)
+     * @param exercise exercise to which the inactive participation belongs
+
+     * @return resumed participation
+     */
+    public Participation resume(Exercise exercise, Participation participation) {
+        ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
+        participation = copyBuildPlan(participation, programmingExercise);
+        participation = configureBuildPlan(participation, programmingExercise);
+        participation.setInitializationState(ParticipationState.INITIALIZED);
+        participation.setInitializationDate(ZonedDateTime.now());
 
         save(participation);
         return participation;
@@ -180,7 +196,7 @@ public class ParticipationService {
     }
 
     /**
-     * Get one participation by its student and exercise.
+     * Get one initialized/inactive participation by its student and exercise.
      *
      * @param exerciseId the project key of the exercise
      * @param username   the username of the student
@@ -188,16 +204,18 @@ public class ParticipationService {
      */
     @Transactional(readOnly = true)
     public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
-        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
+        log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
+        if(!Optional.ofNullable(participation).isPresent()) {
+            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
+        }
         return participation;
     }
 
     @Transactional(readOnly = true)
     public Participation findOneByBuildPlanId(String buildPlanId) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        Participation participation = participationRepository.findOneByBuildPlanId(buildPlanId);
-        return participation;
+        return participationRepository.findOneByBuildPlanId(buildPlanId);
     }
 
     /**
@@ -209,7 +227,7 @@ public class ParticipationService {
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         log.debug("Request to delete Participation : {}", id);
         Participation participation = participationRepository.findOne(id);
-        if (Optional.ofNullable(participation).isPresent()) {
+        if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
                 continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
             }
@@ -220,7 +238,7 @@ public class ParticipationService {
             // delete local repository cache
             try {
                 gitService.get().deleteLocalRepository(participation);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 log.error("Error while deleting local repository", e);
             }
 

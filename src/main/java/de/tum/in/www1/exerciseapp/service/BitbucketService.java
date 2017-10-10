@@ -137,7 +137,7 @@ public class BitbucketService implements VersionControlService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(body, headers);
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<Map> response = null;
+        ResponseEntity<Map> response;
         try {
             response = restTemplate.exchange(
                 BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + baseProjectKey + "/repos/" + baseRepositorySlug,

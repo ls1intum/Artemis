@@ -49,9 +49,9 @@ public class ProfileInfoResource {
 
     class ProfileInfoVM {
 
-        private String[] activeProfiles;
+        private final String[] activeProfiles;
 
-        private String ribbonEnv;
+        private final String ribbonEnv;
 
         ProfileInfoVM(String[] activeProfiles, String ribbonEnv) {
             this.activeProfiles = activeProfiles;

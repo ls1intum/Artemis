@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.rmi.RemoteException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -89,8 +88,7 @@ public class BambooService implements ContinuousIntegrationService {
     public String copyBuildPlan(String baseBuildPlanId, String wantedPlanKey) {
         wantedPlanKey = cleanPlanKey(wantedPlanKey);
         try {
-            String toPlan = clonePlan(getProjectKeyFromBuildPlanId(baseBuildPlanId), getPlanKeyFromBuildPlanId(baseBuildPlanId), wantedPlanKey);
-            return toPlan;
+            return clonePlan(getProjectKeyFromBuildPlanId(baseBuildPlanId), getPlanKeyFromBuildPlanId(baseBuildPlanId), wantedPlanKey);
         }
         catch(BambooException bambooException) {
             if (bambooException.getMessage().contains("already exists")) {
@@ -146,8 +144,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public Map<String, Object> getLatestBuildResultDetails(Participation participation) {
-        Map<String, Object> details = retrieveLatestBuildResultDetails(participation.getBuildPlanId());
-        return details;
+        return retrieveLatestBuildResultDetails(participation.getBuildPlanId());
     }
 
     @Override
@@ -207,10 +204,7 @@ public class BambooService implements ContinuousIntegrationService {
             String message = getBambooClient().getPlanHelper().enablePlan(projectKey + "-" + planKey, true);
             log.info("Enable build plan " + projectKey + "-" + planKey + " was successful. " + message);
             return message;
-        } catch (CliClient.ClientException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while enabling the build plan", e);
-        } catch (CliClient.RemoteRestException e) {
+        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while enabling the build plan", e);
         }
@@ -243,13 +237,10 @@ public class BambooService implements ContinuousIntegrationService {
 
         try {
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-            String message = getBambooClient().getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, bambooProject + "-" + bambooPlan, "STASH", false, true);
+            String message = getBambooClient().getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, bambooProject + "-" + bambooPlan, "STASH", null, false, true);
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful." + message);
             return message;
-        } catch (CliClient.ClientException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while updating the plan repository", e);
-        } catch (CliClient.RemoteRestException e) {
+        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while updating the plan repository", e);
         }
@@ -268,10 +259,7 @@ public class BambooService implements ContinuousIntegrationService {
             String message = getBambooClient().getPlanHelper().deletePlan(projectKey + "-" + planKey);
             log.info("Delete build plan was successful. " + message);
             return message;
-        } catch (CliClient.ClientException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while deleting the build plan", e);
-        } catch (CliClient.RemoteRestException e) {
+        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
             log.error(e.getMessage(), e);
             throw new BambooException("Something went wrong while deleting the build plan", e);
         }
@@ -496,19 +484,14 @@ public class BambooService implements ContinuousIntegrationService {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<byte[]> response = null;
+        ResponseEntity<byte[]> response;
 
         try {
-            response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                entity,
-                byte[].class);
+            response = restTemplate.exchange(url, HttpMethod.GET, entity, byte[].class);
         } catch (Exception e) {
             log.error("HttpError while retrieving build artifact", e);
             throw new BambooException("HttpError while retrieving build artifact");
         }
-
 
         if(response.getHeaders().containsKey("Content-Type") && response.getHeaders().get("Content-Type").get(0).equals("text/html")) {
             // This is an "Index of" HTML page.

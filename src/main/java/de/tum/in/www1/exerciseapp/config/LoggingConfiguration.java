@@ -29,7 +29,7 @@ public class LoggingConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(LoggingConfiguration.class);
 
-    private LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    private final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 
     private final String appName;
 

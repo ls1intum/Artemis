@@ -18,7 +18,7 @@
         </td>
     </tr>
 
-    <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch on="$ctrl.hasParticipation(exercise)">
+    <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch on="$ctrl.participationStatus(exercise)">
         <td>
             <span has-authority="ROLE_USER">{{exercise.title}}</span>
             <a class="text-primary" has-any-authority="ROLE_ADMIN, ROLE_TA"><i class="fa fa-info-circle fa-fw"
@@ -37,13 +37,21 @@
         </td>
         <td class="text-center">
             <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
-                    ng-switch-when="false"
+                    ng-switch-when="uninitialized"
                     ng-click="$ctrl.start(exercise)"
                     ng-disabled="$ctrl.loading[exercise.id.toString()]">
                 <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
                 <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
             </button>
-            <div ng-switch-when="true">
+            <button class="btn btn-primary btn-sm btn-block"
+                    ng-switch-when="inactive"
+                    ng-click="$ctrl.resume(exercise)"
+                    ng-disabled="$ctrl.loading[exercise.id]"
+                    >
+                <span ng-hide="$ctrl.loading[exercise.id]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume exercise</span>
+                <i ng-show="$ctrl.loading[exercise.id]" class="fa fa-circle-o-notch fa-spin"></i>
+            </button>
+            <div ng-switch-when="initialized">
                 <a ui-sref="editor({participationId:exercise.participation.id})" class="btn btn-primary btn-sm btn-block" id="btn-online-editor" ng-if="exercise.allowOnlineEditor"><i class="fa fa-folder-open fa-fw"></i>&nbsp;Open exercise</a>
                 <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"
                         popover-placement="{{$ctrl.clonePopover.placement}}"

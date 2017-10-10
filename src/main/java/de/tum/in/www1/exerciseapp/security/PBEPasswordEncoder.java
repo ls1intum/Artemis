@@ -30,7 +30,7 @@ public class PBEPasswordEncoder implements PasswordEncoder {
     @Override
     public boolean matches(CharSequence rawPassword, String encodedPassword) {
         checkInitialization();
-        String decPassword = null;
+        String decPassword;
 
         decPassword = this.pbeStringEncryptor.decrypt(encodedPassword);
 

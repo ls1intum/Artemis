@@ -102,10 +102,9 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         if (authenticationResponse != null) {
             Map content = authenticationResponse.getBody();
             User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() -> {
-                User newUser = userService.createUser((String) content.get("name"), "",
+                return userService.createUser((String) content.get("name"), "",
                     (String) content.get("displayName"), "", (String) content.get("emailAddress"), null,
                     "en");
-                return newUser;
             });
             user.setGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items")));
             user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));

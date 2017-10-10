@@ -26,7 +26,8 @@
                         return data;
                     }
                 },
-                'update': {method: 'PUT'}
+                'update': {method: 'PUT'},
+                'deleteBuildPlans': {method: 'DELETE', url: resourceUrl + '/buildplans'}
             });
         }
 
