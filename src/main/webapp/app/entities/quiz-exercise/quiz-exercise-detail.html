@@ -14,8 +14,8 @@
     <hr/>
     <div class="edit-quiz">
         <input
+            id="quiz-title"
             class="form-control"
-            type="text"
             ng-model="vm.quizExercise.title"
             placeholder="Quiz Title"
         />
@@ -74,7 +74,6 @@
                         ng-disabled="!vm.quizExercise.isPlannedToStart"
                         class="form-control"
                         title="Planned Start"
-                        type="text"
                         datetime-picker="{{dateformat}}"
                         is-open="vm.datePickerOpenStatus.releaseDate"
                         ng-model="vm.quizExercise.releaseDate"
@@ -92,14 +91,12 @@
                 </div>
             </div>
         </div>
-        <ul class="quiz-questions">
-            <li
-                class="quiz-question"
-                ng-repeat="question in vm.quizExercise.questions"
-            >
-                {{question.title}}
-            </li>
-        </ul>
+        <multiple-choice-question
+            class="question"
+            ng-repeat="question in vm.quizExercise.questions"
+            question="question"
+            on-delete="vm.deleteQuestion(question)"
+        ></multiple-choice-question>
         <button
             class="btn btn-default"
             ng-click="vm.addQuestion()"
@@ -119,6 +116,7 @@
                         class="form-control"
                         ng-options="option.key as option.label for option in vm.statusOptionsPractice"
                         ng-model="vm.quizExercise.isOpenForPractice"
+                        title="status"
                     >
                     </select>
                     <select
@@ -126,6 +124,7 @@
                         class="form-control"
                         ng-options="option.key as option.label for option in vm.statusOptionsVisible"
                         ng-model="vm.quizExercise.isVisibleBeforeStart"
+                        title="status"
                     >
                     </select>
                     <select
@@ -133,6 +132,7 @@
                         class="form-control"
                         ng-options="option.key as option.label for option in vm.statusOptionsActive"
                         ng-model="vm.true"
+                        title="status"
                         disabled
                     >
                     </select>

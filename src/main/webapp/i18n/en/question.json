@@ -19,7 +19,9 @@
             "text": "Text",
             "maxScore": "Max Score",
             "minScore": "Min Score",
-            "exercise": "Exercise"
+            "exercise": "Exercise",
+            "score": "Score",
+            "randomizeOrder": "Present Answers in Random Order"
         }
     }
 }

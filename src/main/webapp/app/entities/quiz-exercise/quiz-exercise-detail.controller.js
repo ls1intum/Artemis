@@ -61,6 +61,7 @@
         vm.validQuiz = validQuiz;
         vm.openCalendar = openCalendar;
         vm.addQuestion = addQuestion;
+        vm.deleteQuestion = deleteQuestion;
         vm.save = save;
         vm.onDurationChange = onDurationChange;
 
@@ -90,11 +91,25 @@
         }
 
         /**
-         * Add a question to the quiz (TODO)
+         * Add an empty question to the quiz
          */
         function addQuestion() {
-            // TODO
-            alert("TODO");
+            vm.quizExercise.questions.push({
+                title: "",
+                scoringType: 1,
+                randomizeOrder: false,
+                score: 1
+            });
+        }
+
+        /**
+         * Remove question from the quiz
+         * @param question {Question} the question to remove
+         */
+        function deleteQuestion(question) {
+            vm.quizExercise.questions = vm.quizExercise.questions.filter(function(q) {
+                return q !== question;
+            });
         }
 
         /**
