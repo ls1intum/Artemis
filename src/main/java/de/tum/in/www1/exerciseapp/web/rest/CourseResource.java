@@ -89,17 +89,14 @@ public class CourseResource {
     /**
      * GET  /courses : get all the courses.
      *
-     * @param pageable the pagination information
-     * @return the ResponseEntity with status 200 (OK) and the list of courses in body
+     * @return  the list of courses (the user has access to)
      */
     @GetMapping("/courses")
     @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
     @Timed
-    public ResponseEntity<List<Course>> getAllCourses(@ApiParam Pageable pageable) {
-        log.debug("REST request to get a page of Courses");
-        Page<Course> page = courseService.findAll(pageable);
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    public List<Course> getAllCourses() {
+        log.debug("REST request to get all Courses the user has access to");
+        return courseService.findAll();
     }
 
     /**
