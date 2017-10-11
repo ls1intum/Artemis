@@ -62,6 +62,7 @@
         vm.openCalendar = openCalendar;
         vm.addQuestion = addQuestion;
         vm.deleteQuestion = deleteQuestion;
+        vm.onQuestionUpdated = onQuestionUpdated;
         vm.save = save;
         vm.onDurationChange = onDurationChange;
 
@@ -94,12 +95,13 @@
          * Add an empty question to the quiz
          */
         function addQuestion() {
-            vm.quizExercise.questions.push({
+            vm.quizExercise.questions = vm.quizExercise.questions.concat([{
                 title: "",
-                scoringType: 1,
+                scoringType: "ALL_OR_NOTHING",
                 randomizeOrder: false,
-                score: 1
-            });
+                score: 1,
+                type: "multiple-choice"
+            }]);
         }
 
         /**
@@ -107,9 +109,16 @@
          * @param question {Question} the question to remove
          */
         function deleteQuestion(question) {
-            vm.quizExercise.questions = vm.quizExercise.questions.filter(function(q) {
+            vm.quizExercise.questions = vm.quizExercise.questions.filter(function (q) {
                 return q !== question;
             });
+        }
+
+        /**
+         * Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
+         */
+        function onQuestionUpdated() {
+            vm.quizExercise.questions = Array.from(vm.quizExercise.questions);
         }
 
         /**
@@ -173,7 +182,7 @@
         }
 
         // keep ui up to date when duration changes
-        $scope.$watch(vm.quizExercise.duration, function() {
+        $scope.$watch(vm.quizExercise.duration, function () {
             updateDuration();
         });
 
@@ -182,7 +191,7 @@
          */
         function onDurationChange() {
             var duration = moment.duration(vm.duration);
-            vm.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10*60*60);
+            vm.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
             updateDuration();
         }
 

@@ -96,6 +96,7 @@
             ng-repeat="question in vm.quizExercise.questions"
             question="question"
             on-delete="vm.deleteQuestion(question)"
+            on-updated="vm.onQuestionUpdated()"
         ></multiple-choice-question>
         <button
             class="btn btn-default"
