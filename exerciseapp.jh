@@ -41,8 +41,17 @@ entity SubmittedAnswer {            //abstract
 entity Question {                   //abstract
 	title String
     text String
-    maxScore Integer
-    minScore Integer
+    hint String
+    explanation String
+    score Integer
+    scoringType ScoringType
+    randomizeOrder Boolean
+}
+
+enum ScoringType {
+	ALL_OR_NOTHING,
+    PROPORTIONAL_CORRECT_OPTIONS,
+    TRUE_FALSE_NEUTRAL
 }
 
 entity MultipleChoiceQuestion {             //extends Question
@@ -51,9 +60,9 @@ entity MultipleChoiceQuestion {             //extends Question
 
 entity AnswerOption {
 	text String
+    hint String
+    explanation String
     isCorrect Boolean
-    correctScore Integer
-    incorrectScore Integer
 }
 
 entity MultipleChoiceSubmittedAnswer {      //extends SubmittedAnswer

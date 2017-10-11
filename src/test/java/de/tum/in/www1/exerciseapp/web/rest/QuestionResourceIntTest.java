@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
 /**
  * Test class for the QuestionResource REST controller.
  *
@@ -44,11 +45,20 @@ public class QuestionResourceIntTest {
     private static final String DEFAULT_TEXT = "AAAAAAAAAA";
     private static final String UPDATED_TEXT = "BBBBBBBBBB";
 
-    private static final Integer DEFAULT_MAX_SCORE = 1;
-    private static final Integer UPDATED_MAX_SCORE = 2;
+    private static final String DEFAULT_HINT = "AAAAAAAAAA";
+    private static final String UPDATED_HINT = "BBBBBBBBBB";
 
-    private static final Integer DEFAULT_MIN_SCORE = 1;
-    private static final Integer UPDATED_MIN_SCORE = 2;
+    private static final String DEFAULT_EXPLANATION = "AAAAAAAAAA";
+    private static final String UPDATED_EXPLANATION = "BBBBBBBBBB";
+
+    private static final Integer DEFAULT_SCORE = 1;
+    private static final Integer UPDATED_SCORE = 2;
+
+    private static final ScoringType DEFAULT_SCORING_TYPE = ScoringType.ALL_OR_NOTHING;
+    private static final ScoringType UPDATED_SCORING_TYPE = ScoringType.PROPORTIONAL_CORRECT_OPTIONS;
+
+    private static final Boolean DEFAULT_RANDOMIZE_ORDER = false;
+    private static final Boolean UPDATED_RANDOMIZE_ORDER = true;
 
     @Autowired
     private QuestionRepository questionRepository;
@@ -72,7 +82,7 @@ public class QuestionResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final QuestionResource questionResource = new QuestionResource(questionRepository);
+        QuestionResource questionResource = new QuestionResource(questionRepository);
         this.restQuestionMockMvc = MockMvcBuilders.standaloneSetup(questionResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -89,8 +99,11 @@ public class QuestionResourceIntTest {
         Question question = new MultipleChoiceQuestion()
             .title(DEFAULT_TITLE)
             .text(DEFAULT_TEXT)
-            .maxScore(DEFAULT_MAX_SCORE)
-            .minScore(DEFAULT_MIN_SCORE);
+            .hint(DEFAULT_HINT)
+            .explanation(DEFAULT_EXPLANATION)
+            .score(DEFAULT_SCORE)
+            .scoringType(DEFAULT_SCORING_TYPE)
+            .randomizeOrder(DEFAULT_RANDOMIZE_ORDER);
         return question;
     }
 
@@ -116,8 +129,11 @@ public class QuestionResourceIntTest {
         Question testQuestion = questionList.get(questionList.size() - 1);
         assertThat(testQuestion.getTitle()).isEqualTo(DEFAULT_TITLE);
         assertThat(testQuestion.getText()).isEqualTo(DEFAULT_TEXT);
-        assertThat(testQuestion.getMaxScore()).isEqualTo(DEFAULT_MAX_SCORE);
-        assertThat(testQuestion.getMinScore()).isEqualTo(DEFAULT_MIN_SCORE);
+        assertThat(testQuestion.getHint()).isEqualTo(DEFAULT_HINT);
+        assertThat(testQuestion.getExplanation()).isEqualTo(DEFAULT_EXPLANATION);
+        assertThat(testQuestion.getScore()).isEqualTo(DEFAULT_SCORE);
+        assertThat(testQuestion.getScoringType()).isEqualTo(DEFAULT_SCORING_TYPE);
+        assertThat(testQuestion.isRandomizeOrder()).isEqualTo(DEFAULT_RANDOMIZE_ORDER);
     }
 
     @Test
@@ -152,8 +168,11 @@ public class QuestionResourceIntTest {
             .andExpect(jsonPath("$.[*].id").value(hasItem(question.getId().intValue())))
             .andExpect(jsonPath("$.[*].title").value(hasItem(DEFAULT_TITLE.toString())))
             .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())))
-            .andExpect(jsonPath("$.[*].maxScore").value(hasItem(DEFAULT_MAX_SCORE)))
-            .andExpect(jsonPath("$.[*].minScore").value(hasItem(DEFAULT_MIN_SCORE)));
+            .andExpect(jsonPath("$.[*].hint").value(hasItem(DEFAULT_HINT.toString())))
+            .andExpect(jsonPath("$.[*].explanation").value(hasItem(DEFAULT_EXPLANATION.toString())))
+            .andExpect(jsonPath("$.[*].score").value(hasItem(DEFAULT_SCORE)))
+            .andExpect(jsonPath("$.[*].scoringType").value(hasItem(DEFAULT_SCORING_TYPE.toString())))
+            .andExpect(jsonPath("$.[*].randomizeOrder").value(hasItem(DEFAULT_RANDOMIZE_ORDER.booleanValue())));
     }
 
     @Test
@@ -169,8 +188,11 @@ public class QuestionResourceIntTest {
             .andExpect(jsonPath("$.id").value(question.getId().intValue()))
             .andExpect(jsonPath("$.title").value(DEFAULT_TITLE.toString()))
             .andExpect(jsonPath("$.text").value(DEFAULT_TEXT.toString()))
-            .andExpect(jsonPath("$.maxScore").value(DEFAULT_MAX_SCORE))
-            .andExpect(jsonPath("$.minScore").value(DEFAULT_MIN_SCORE));
+            .andExpect(jsonPath("$.hint").value(DEFAULT_HINT.toString()))
+            .andExpect(jsonPath("$.explanation").value(DEFAULT_EXPLANATION.toString()))
+            .andExpect(jsonPath("$.score").value(DEFAULT_SCORE))
+            .andExpect(jsonPath("$.scoringType").value(DEFAULT_SCORING_TYPE.toString()))
+            .andExpect(jsonPath("$.randomizeOrder").value(DEFAULT_RANDOMIZE_ORDER.booleanValue()));
     }
 
     @Test
@@ -193,8 +215,11 @@ public class QuestionResourceIntTest {
         updatedQuestion
             .title(UPDATED_TITLE)
             .text(UPDATED_TEXT)
-            .maxScore(UPDATED_MAX_SCORE)
-            .minScore(UPDATED_MIN_SCORE);
+            .hint(UPDATED_HINT)
+            .explanation(UPDATED_EXPLANATION)
+            .score(UPDATED_SCORE)
+            .scoringType(UPDATED_SCORING_TYPE)
+            .randomizeOrder(UPDATED_RANDOMIZE_ORDER);
 
         restQuestionMockMvc.perform(put("/api/questions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -207,8 +232,11 @@ public class QuestionResourceIntTest {
         Question testQuestion = questionList.get(questionList.size() - 1);
         assertThat(testQuestion.getTitle()).isEqualTo(UPDATED_TITLE);
         assertThat(testQuestion.getText()).isEqualTo(UPDATED_TEXT);
-        assertThat(testQuestion.getMaxScore()).isEqualTo(UPDATED_MAX_SCORE);
-        assertThat(testQuestion.getMinScore()).isEqualTo(UPDATED_MIN_SCORE);
+        assertThat(testQuestion.getHint()).isEqualTo(UPDATED_HINT);
+        assertThat(testQuestion.getExplanation()).isEqualTo(UPDATED_EXPLANATION);
+        assertThat(testQuestion.getScore()).isEqualTo(UPDATED_SCORE);
+        assertThat(testQuestion.getScoringType()).isEqualTo(UPDATED_SCORING_TYPE);
+        assertThat(testQuestion.isRandomizeOrder()).isEqualTo(UPDATED_RANDOMIZE_ORDER);
     }
 
     @Test

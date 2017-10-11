@@ -105,9 +105,9 @@
                         entity: function () {
                             return {
                                 text: null,
+                                hint: null,
+                                explanation: null,
                                 isCorrect: null,
-                                correctScore: null,
-                                incorrectScore: null,
                                 id: null
                             };
                         }

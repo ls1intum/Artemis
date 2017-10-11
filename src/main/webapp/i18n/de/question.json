@@ -17,11 +17,12 @@
             },
             "title": "Title",
             "text": "Text",
-            "maxScore": "Max Score",
-            "minScore": "Min Score",
-            "exercise": "Exercise",
+            "hint": "Hint",
+            "explanation": "Explanation",
             "score": "Score",
             "randomizeOrder": "Present Answers in Random Order"
+            "scoringType": "Scoring Type",
+            "exercise": "Exercise"
         }
     }
 }

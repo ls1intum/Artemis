@@ -14,16 +14,16 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "hint",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "explanation",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "isCorrect",
             "fieldType": "Boolean"
-        },
-        {
-            "fieldName": "correctScore",
-            "fieldType": "Integer"
-        },
-        {
-            "fieldName": "incorrectScore",
-            "fieldType": "Integer"
         }
     ],
     "changelogDate": "20170831094151",

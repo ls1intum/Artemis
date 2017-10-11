@@ -16,9 +16,9 @@
                 "title": "Answer Option"
             },
             "text": "Text",
+            "hint": "Hint",
+            "explanation": "Explanation",
             "isCorrect": "Is Correct",
-            "correctScore": "Correct Score",
-            "incorrectScore": "Incorrect Score",
             "question": "Question"
         }
     }
