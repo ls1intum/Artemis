@@ -1,17 +1,13 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Set;
+import java.util.List;
 
 /**
  * A QuizExercise.
@@ -38,12 +34,14 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
-    @OneToMany(mappedBy = "exercise")
-    @JsonIgnore
+    @ManyToMany
+    @OrderColumn
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<Question> questions = new HashSet<>();
+    @JoinTable(name = "quiz_exercise_questions",
+               joinColumns = @JoinColumn(name="quiz_exercises_id", referencedColumnName="id"),
+               inverseJoinColumns = @JoinColumn(name="questions_id", referencedColumnName="id"))
+    private List<Question> questions = new ArrayList<>();
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Boolean isIsVisibleBeforeStart() {
         return isVisibleBeforeStart;
     }
@@ -96,31 +94,30 @@ public class QuizExercise extends Exercise implements Serializable {
         this.duration = duration;
     }
 
-    public Set<Question> getQuestions() {
+    public List<Question> getQuestions() {
         return questions;
     }
 
-    public QuizExercise questions(Set<Question> questions) {
+    public QuizExercise questions(List<Question> questions) {
         this.questions = questions;
         return this;
     }
 
     public QuizExercise addQuestions(Question question) {
         this.questions.add(question);
-        question.setExercise(this);
+        question.getQuizExercises().add(this);
         return this;
     }
 
     public QuizExercise removeQuestions(Question question) {
         this.questions.remove(question);
-        question.setExercise(null);
+        question.getQuizExercises().remove(this);
         return this;
     }
 
-    public void setQuestions(Set<Question> questions) {
+    public void setQuestions(List<Question> questions) {
         this.questions = questions;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {

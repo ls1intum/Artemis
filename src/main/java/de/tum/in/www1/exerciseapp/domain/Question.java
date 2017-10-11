@@ -1,10 +1,13 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Objects;
 
 import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
@@ -51,8 +54,10 @@ public abstract class Question implements Serializable {
     @Column(name = "randomize_order")
     private Boolean randomizeOrder;
 
-    @ManyToOne
-    private QuizExercise exercise;
+    @ManyToMany(mappedBy = "questions")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<QuizExercise> quizExercises = new HashSet<>();
 
     public Long getId() {
         return id;
@@ -153,17 +158,29 @@ public abstract class Question implements Serializable {
         this.randomizeOrder = randomizeOrder;
     }
 
-    public QuizExercise getExercise() {
-        return exercise;
+    public Set<QuizExercise> getQuizExercises() {
+        return quizExercises;
     }
 
-    public Question exercise(QuizExercise quizExercise) {
-        this.exercise = quizExercise;
+    public Question quizExercises(Set<QuizExercise> quizExercises) {
+        this.quizExercises = quizExercises;
         return this;
     }
 
-    public void setExercise(QuizExercise quizExercise) {
-        this.exercise = quizExercise;
+    public Question addQuizExercises(QuizExercise quizExercise) {
+        this.quizExercises.add(quizExercise);
+        quizExercise.getQuestions().add(this);
+        return this;
+    }
+
+    public Question removeQuizExercises(QuizExercise quizExercise) {
+        this.quizExercises.remove(quizExercise);
+        quizExercise.getQuestions().remove(this);
+        return this;
+    }
+
+    public void setQuizExercises(Set<QuizExercise> quizExercises) {
+        this.quizExercises = quizExercises;
     }
 
     @Override

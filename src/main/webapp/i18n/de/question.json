@@ -22,7 +22,7 @@
             "score": "Score",
             "randomizeOrder": "Present Answers in Random Order",
             "scoringType": "Scoring Type",
-            "exercise": "Exercise"
+            "quizExercises": "Quiz Exercises"
         }
     }
 }

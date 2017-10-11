@@ -138,8 +138,6 @@ relationship OneToMany {
   Course{exercises} to Exercise{course(title)},
   Exercise{participations} to Participation{exercise(title)},
   Participation{results} to Result{participation},
-
-  QuizExercise{questions} to Question{exercise},
   MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
   DragAndDropQuestion{dropLocations} to DropLocation{question},
   DragAndDropQuestion{dragItems} to DragItem{question},
@@ -163,7 +161,8 @@ relationship ManyToOne {
 }
 
 relationship ManyToMany {
-	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption
+	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption,
+    QuizExercise{questions} to Question{quizExercises}
 }
 
 paginate Course, Exercise with infinite-scroll

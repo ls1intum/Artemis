@@ -26,7 +26,6 @@
                     <th><span data-translate="arTeMiSApp.question.score">Score</span></th>
                     <th><span data-translate="arTeMiSApp.question.scoringType">Scoring Type</span></th>
                     <th><span data-translate="arTeMiSApp.question.randomizeOrder">Randomize Order</span></th>
-                    <th><span data-translate="arTeMiSApp.question.exercise">Exercise</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -40,9 +39,6 @@
                     <td>{{question.score}}</td>
                     <td data-translate="{{'arTeMiSApp.ScoringType.' + question.scoringType}}">{{question.scoringType}}</td>
                     <td>{{question.randomizeOrder}}</td>
-                    <td>
-                        <a ui-sref="quiz-exercise-detail({id:question.exercise.id})">{{question.exercise.id}}</a>
-                    </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"

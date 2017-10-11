@@ -87,7 +87,7 @@ public class QuizExerciseResource {
     @Timed
     public List<QuizExercise> getAllQuizExercises() {
         log.debug("REST request to get all QuizExercises");
-        return quizExerciseRepository.findAll();
+        return quizExerciseRepository.findAllWithEagerRelationships();
     }
 
     /**
@@ -115,7 +115,7 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        QuizExercise quizExercise = quizExerciseRepository.findOneWithEagerRelationships(id);
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
     }
 
