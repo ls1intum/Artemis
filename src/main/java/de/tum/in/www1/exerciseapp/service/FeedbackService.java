@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -19,14 +20,14 @@ public class FeedbackService {
 
     private final Logger log = LoggerFactory.getLogger(FeedbackService.class);
 
-    private final BambooService bambooService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final FeedbackRepository feedbackRepository;
     private final ResultRepository resultRepository;
 
     //need bamboo service and resultrepository to create and store from old feedbacks
-    public FeedbackService (ResultRepository resultService, BambooService bambooService, FeedbackRepository feedbackRepository){
+    public FeedbackService (ResultRepository resultService,  Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackRepository feedbackRepository){
         this.resultRepository = resultService;
-        this.bambooService = bambooService;
+        this.continuousIntegrationService = continuousIntegrationService;
         this.feedbackRepository = feedbackRepository;
     }
 
@@ -41,8 +42,8 @@ public class FeedbackService {
         Result result = resultRepository.findOne(resultId);
         Participation participation = result.getParticipation();
 
-        Map buildDetails = bambooService.retrieveLatestBuildResultDetails(participation.getBuildPlanId());
-        HashSet<Feedback> feedbacks = bambooService.createFeedbacksForResult(buildDetails);
+        Map buildDetails = continuousIntegrationService.get().getLatestBuildResultDetails(participation);
+        HashSet<Feedback> feedbacks = continuousIntegrationService.get().createFeedbacksForResult(buildDetails);
 
         result.setFeedbacks(feedbacks);
         resultRepository.save(result);

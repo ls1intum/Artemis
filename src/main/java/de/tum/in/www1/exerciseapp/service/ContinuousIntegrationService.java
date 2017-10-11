@@ -1,10 +1,12 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
+import de.tum.in.www1.exerciseapp.domain.Feedback;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import org.springframework.http.ResponseEntity;
 
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -117,5 +119,14 @@ public interface ContinuousIntegrationService {
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
     ResponseEntity retrieveLatestArtifact(Participation participation);
+
+    /**
+      * Uses the retreiveLatestBuildResultDetails in order to create feebacks from the error to give the user preciser error messages
+      *
+      *@param buildResultDetails returned build result details from the rest api of bamboo
+       *
+       * @return a Set of feedbacks which can directly be stored int a result
+       */
+    public HashSet<Feedback> createFeedbacksForResult(Map<String, Object> buildResultDetails);
 
 }

@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.repository;
 
 import de.tum.in.www1.exerciseapp.domain.Feedback;
+import de.tum.in.www1.exerciseapp.domain.Result;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
@@ -16,5 +17,5 @@ import java.util.List;
 @Repository
 public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
-    List<Feedback>findByResult(Long resultId);
+    List<Feedback>findByResult(Result result);
 }

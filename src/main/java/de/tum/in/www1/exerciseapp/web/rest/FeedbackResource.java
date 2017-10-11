@@ -5,6 +5,7 @@ import de.tum.in.www1.exerciseapp.domain.Feedback;
 
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.FeedbackService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -33,11 +34,14 @@ public class FeedbackResource {
     private static final String ENTITY_NAME = "feedback";
 
     private final FeedbackRepository feedbackRepository;
+    private final ResultRepository resultRepository;
 
     private final FeedbackService feedbackService;
 
-    public FeedbackResource(FeedbackRepository feedbackRepository, FeedbackService feedbackService) {
+    public FeedbackResource(FeedbackRepository feedbackRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
         this.feedbackRepository = feedbackRepository;
+        this.resultRepository = resultRepository;
+
         this.feedbackService = feedbackService;
     }
 
@@ -129,17 +133,24 @@ public class FeedbackResource {
      *  @param resultId the ID of the result
      *  @return all feedbacks for that result if no feedbacks are stored try to connect to the bamboo service directly and retreive data from there
      */
-    @GetMapping("/feedbacks/forResult/{id}")
+    @GetMapping("/feedbacks/forResult/{resultId}")
     @Timed
     public ResponseEntity<List<Feedback>> getFeedbacksForResult(@PathVariable Long resultId){
         log.debug("REST request to GET all Feedbacks for one Result");
 
-        List<Feedback> feedbacks = feedbackRepository.findByResult(resultId);
+        Result result = resultRepository.findOne(resultId);
+
+        List<Feedback> feedbacks = feedbackRepository.findByResult(result);
 
         //Provide access to old implementation for old classes with no results
         if(feedbacks == null || feedbacks.size() == 0){
-            Result result = feedbackService.retreiveBuildDetailsFromBambooAndStoreThem(resultId);
-            feedbacks = new ArrayList<>(result.getFeedbacks());
+            result = feedbackService.retreiveBuildDetailsFromBambooAndStoreThem(resultId);
+
+            if(result.getFeedbacks() != null) {
+                feedbacks = new ArrayList<>(result.getFeedbacks());
+            }else{
+                feedbacks = null;
+            }
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(feedbacks));
     }

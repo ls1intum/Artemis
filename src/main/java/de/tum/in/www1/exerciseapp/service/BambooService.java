@@ -311,11 +311,13 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     /*
-   * Uses the returned Map of the request to the bamboo api to transform all the failed tests into feedbacks for a result
+   * Uses the retreiveLatestBuildResultDetails in order to create feebacks from the error to give the user preciser error messages
    *
-   *@param buildResultDetails returned build result details from the rest api of bamboo (call url:
-   *   BAMBOO_SERVER + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors")
+   *@param buildResultDetails returned build result details from the rest api of bamboo
+    *
+    * @return a Set of feedbacks which can directly be stored int a result
     */
+    @Override
     public HashSet<Feedback> createFeedbacksForResult(Map<String, Object> buildResultDetails){
         if(buildResultDetails == null){
             return null;
