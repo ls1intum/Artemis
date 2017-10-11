@@ -68,9 +68,7 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         List<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream()
             .map(authority -> new SimpleGrantedAuthority(authority.getName()))
             .collect(Collectors.toList());
-        UsernamePasswordAuthenticationToken token;
-        token = new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
-        return token;
+        return new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), grantedAuthorities);
     }
 
     /**
