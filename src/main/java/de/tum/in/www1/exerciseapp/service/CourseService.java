@@ -62,7 +62,8 @@ public class CourseService {
                 || (user.getAuthorities().contains(taAuthority) && c.getTitle().equals("Archive"))
                 || user.getAuthorities().contains(adminAuthority)
         );
-        return userCourses.collect(Collectors.toList());
+        List<Course> userAuthorizedCourses = userCourses.collect(Collectors.toList());
+        return userAuthorizedCourses;
     }
 
     /**
