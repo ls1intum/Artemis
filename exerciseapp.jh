@@ -163,7 +163,7 @@ relationship ManyToMany {
 	MultipleChoiceSubmittedAnswer{selectedOptions} to AnswerOption
 }
 
-paginate Course, Exercise with infinite-scroll
+paginate Exercise with infinite-scroll
 
 service Course with serviceClass
 service Participation with serviceClass
