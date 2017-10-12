@@ -330,7 +330,7 @@ public class BambooService implements ContinuousIntegrationService {
         //in Text both class name and method name is stored
         //detail text will have the stored error message
         try {
-            JSONArray buildDetailsJSON = new JSONArray(buildResultDetails);
+            JSONArray buildDetailsJSON = new JSONArray(buildResultDetails.values());
 
             for (int i = 0; i < buildDetailsJSON.length(); i++) {
                 Feedback feedback = new Feedback();
