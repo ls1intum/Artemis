@@ -6,6 +6,8 @@ import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
 import org.swift.common.cli.CliClient;
+import springfox.documentation.spring.web.json.Json;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -323,24 +326,30 @@ public class BambooService implements ContinuousIntegrationService {
             return null;
         }
         HashSet<Feedback> feedbacks = new HashSet<>();
+        //converting build results from bamboo api call to feedbacks
+        //in Text both class name and method name is stored
+        //detail text will have the stored error message
+        try {
+            JSONArray buildDetailsJSON = new JSONArray(buildResultDetails);
 
-        for(Object buildError : buildResultDetails.values()) {
-            Feedback feedback = new Feedback();
+            for (int i = 0; i < buildDetailsJSON.length(); i++) {
+                Feedback feedback = new Feedback();
 
-            //converting build results from bamboo api call to feedbacks
-            //in Text both class name and method name is stored
-            //detail text will have the stored error message
-            String className = (String)((Map)buildError).get("className");
-            String methodName = (String)((Map)buildError).get("methodName");
-            String errorMessage = (String)((Map)(((Map)(((Map)buildError).get("errors"))).get("error"))).get("message");
+                JSONObject testResult = buildDetailsJSON.getJSONObject(i);
+                JSONObject errors = testResult.getJSONObject("errors");
+                JSONObject error = errors.getJSONObject("error");
 
-            //Splitting string at the first linebreak to only get the first line of the Exception
-            errorMessage = errorMessage.split("\\n", 2)[0];
+                String className = testResult.getString("className");
+                String methodName = testResult.getString("methodName");
+                //Splitting string at the first linebreak to only get the first line of the Exception
+                String errorMessage = error.getString("message").split("\\n", 2)[0];
 
-            feedback.setText("In the class: " + className + ",in method: " + methodName + " the following error occured:");
-            feedback.setDetailText(errorMessage);
+                feedback.setText(className + ",in method: " + methodName + " the following error occured:");
+                feedback.setDetailText(errorMessage);
+                feedbacks.add(feedback);
+            }
+        } catch (Exception JSONException) {
 
-            feedbacks.add(feedback);
         }
         return feedbacks;
     }
