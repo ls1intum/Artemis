@@ -123,7 +123,6 @@
                     };
                 },
                 courseEntity: ['$stateParams', 'Course', function ($stateParams, Course) {
-                    console.log($stateParams);
                     return Course.get({id: $stateParams.courseid}).$promise;
                 }],
                 previousState: ["$state", function ($state) {

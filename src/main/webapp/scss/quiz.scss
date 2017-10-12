@@ -113,6 +113,10 @@
 
     .question-content {
         margin: 0 4px;
+
+        > div {
+            height: 12em;
+        }
     }
 }
 
