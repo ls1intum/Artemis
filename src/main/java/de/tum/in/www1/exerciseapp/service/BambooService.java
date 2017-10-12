@@ -324,15 +324,18 @@ public class BambooService implements ContinuousIntegrationService {
         }
         HashSet<Feedback> feedbacks = new HashSet<>();
 
-        for(String key : buildResultDetails.keySet()) {
+        for(Object buildError : buildResultDetails.values()) {
             Feedback feedback = new Feedback();
 
             //converting build results from bamboo api call to feedbacks
             //in Text both class name and method name is stored
             //detail text will have the stored error message
-            String className = (String)((Map)buildResultDetails.get(key)).get("className");
-            String methodName = (String)((Map)buildResultDetails.get(key)).get("methodName");
-            String errorMessage = (String) ((Map)((Map)buildResultDetails.get(key)).get("error")).get("message");
+            String className = (String)((Map)buildError).get("className");
+            String methodName = (String)((Map)buildError).get("methodName");
+            String errorMessage = (String)((Map)(((Map)(((Map)buildError).get("errors"))).get("error"))).get("message");
+
+            //Splitting string at the first linebreak to only get the first line of the Exception
+            errorMessage = errorMessage.split("\\n", 2)[0];
 
             feedback.setText("In the class: " + className + ",in method: " + methodName + " the following error occured:");
             feedback.setDetailText(errorMessage);
