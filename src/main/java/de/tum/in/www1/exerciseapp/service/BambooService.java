@@ -337,12 +337,12 @@ public class BambooService implements ContinuousIntegrationService {
 
                 JSONObject testResult = buildDetailsJSON.getJSONObject(i);
                 JSONObject errors = testResult.getJSONObject("errors");
-                JSONObject error = errors.getJSONObject("error");
+                JSONArray error = errors.getJSONArray("error");
 
                 String className = testResult.getString("className");
                 String methodName = testResult.getString("methodName");
                 //Splitting string at the first linebreak to only get the first line of the Exception
-                String errorMessage = error.getString("message").split("\\n", 2)[0];
+                String errorMessage = error.getJSONObject(0).getString("message").split("\\n", 2)[0];
 
                 feedback.setText(className + ",in method: " + methodName + " the following error occured:");
                 feedback.setDetailText(errorMessage);
