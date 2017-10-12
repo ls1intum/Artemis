@@ -62,19 +62,8 @@ public class CourseService {
                 || (user.getAuthorities().contains(taAuthority) && c.getTitle().equals("Archive"))
                 || user.getAuthorities().contains(adminAuthority)
         );
-        return userCourses.collect(Collectors.toList());
-    }
-
-    /**
-     * Get all the courses.
-     *
-     * @param pageable the pagination information
-     * @return the list of entities
-     */
-    @Transactional(readOnly = true)
-    public Page<Course> findAll(Pageable pageable) {
-        log.debug("Request to get all Courses");
-        return courseRepository.findAll(pageable);
+        List<Course> userAuthorizedCourses = userCourses.collect(Collectors.toList());
+        return userAuthorizedCourses;
     }
 
     /**
