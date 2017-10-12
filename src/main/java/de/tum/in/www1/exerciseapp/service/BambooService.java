@@ -326,31 +326,58 @@ public class BambooService implements ContinuousIntegrationService {
             return null;
         }
         HashSet<Feedback> feedbacks = new HashSet<>();
+
+        List<Object> failedTestResults = (List) buildResultDetails.get("details");
         //converting build results from bamboo api call to feedbacks
         //in Text both class name and method name is stored
         //detail text will have the stored error message
+
         try {
-            JSONArray buildDetailsJSON = new JSONArray(buildResultDetails.values());
+            for (Object failedTest : failedTestResults) {
+                JSONObject failedTestJSON = new JSONObject(failedTest);
+                String className = failedTestJSON.getString("className");
+                String methodName = failedTestJSON.getString("methodName");
 
-            for (int i = 0; i < buildDetailsJSON.length(); i++) {
+                JSONObject errors = failedTestJSON.getJSONObject("errors");
+                JSONArray message = errors.getJSONArray("error");
+
+
+                String detailText = "";
+                for(int i=0; i<message.length(); i++){
+                    JSONObject errorMessage = message.getJSONObject(i);
+                    //Splitting string at the first linebreak to only get the first line of the Exception
+                    detailText += errorMessage.getString("message").split("\\n", 2)[0];
+                }
+
+
                 Feedback feedback = new Feedback();
-
-                JSONObject testResult = buildDetailsJSON.getJSONObject(i);
-                JSONObject errors = testResult.getJSONObject("errors");
-                JSONArray error = errors.getJSONArray("error");
-
-                String className = testResult.getString("className");
-                String methodName = testResult.getString("methodName");
-                //Splitting string at the first linebreak to only get the first line of the Exception
-                String errorMessage = error.getJSONObject(0).getString("message").split("\\n", 2)[0];
-
-                feedback.setText(className + ",in method: " + methodName + " the following error occured:");
-                feedback.setDetailText(errorMessage);
+                feedback.setText(className + " in method: " + methodName);
+                feedback.setDetailText(detailText);
                 feedbacks.add(feedback);
             }
-        } catch (Exception JSONException) {
+        }catch(Exception failedToParse){
 
         }
+//            JSONArray buildDetailsJSON = new JSONArray(buildResultDetails.values());
+//
+//            for (int i = 0; i < buildDetailsJSON.length(); i++) {
+//                Feedback feedback = new Feedback();
+//
+//                JSONObject testResult = buildDetailsJSON.getJSONObject(i);
+//                JSONObject errors = testResult.getJSONObject("errors");
+//                JSONArray error = errors.getJSONArray("error");
+//
+//                String className = testResult.getString("className");
+//                String methodName = testResult.getString("methodName");
+//                //Splitting string at the first linebreak to only get the first line of the Exception
+//                String errorMessage = error.getJSONObject(0).getString("message").split("\\n", 2)[0];
+//
+//                feedback.setText(className + " in method: " + methodName);
+//                feedback.setDetailText(errorMessage);
+//                feedbacks.add(feedback);
+//            }
+
+
         return feedbacks;
     }
 
