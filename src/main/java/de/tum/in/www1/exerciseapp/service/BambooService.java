@@ -327,14 +327,15 @@ public class BambooService implements ContinuousIntegrationService {
         }
         HashSet<Feedback> feedbacks = new HashSet<>();
 
-        List<Object> failedTestResults = (List) buildResultDetails.get("details");
-        //converting build results from bamboo api call to feedbacks
-        //in Text both class name and method name is stored
-        //detail text will have the stored error message
 
         try {
-            for (Object failedTest : failedTestResults) {
-                JSONObject failedTestJSON = new JSONObject(failedTest);
+            JSONArray failedTestResults = new JSONArray(buildResultDetails.get("details"));
+            //converting build results from bamboo api call to feedbacks
+            //in Text both class name and method name is stored
+            //detail text will have the stored error message
+
+            for (int j=0; j<failedTestResults.length(); j++) {
+                JSONObject failedTestJSON = failedTestResults.getJSONObject(j);
                 String className = failedTestJSON.getString("className");
                 String methodName = failedTestJSON.getString("methodName");
 
