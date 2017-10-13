@@ -18,12 +18,25 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "maxScore",
+            "fieldName": "hint",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "explanation",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "score",
             "fieldType": "Integer"
         },
         {
-            "fieldName": "minScore",
-            "fieldType": "Integer"
+            "fieldName": "scoringType",
+            "fieldType": "ScoringType",
+            "fieldValues": "ALL_OR_NOTHING,PROPORTIONAL_CORRECT_OPTIONS,TRUE_FALSE_NEUTRAL"
+        },
+        {
+            "fieldName": "randomizeOrder",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20170831094149",

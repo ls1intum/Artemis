@@ -113,7 +113,7 @@
                 entity: function() {
                     return {
                         title: "",
-                        duration: 10,
+                        duration: 600,
                         isVisibleBeforeStart: false,
                         isOpenForPractice: false,
                         isPlannedToStart: false,
@@ -123,7 +123,6 @@
                     };
                 },
                 courseEntity: ['$stateParams', 'Course', function ($stateParams, Course) {
-                    console.log($stateParams);
                     return Course.get({id: $stateParams.courseid}).$promise;
                 }],
                 previousState: ["$state", function ($state) {

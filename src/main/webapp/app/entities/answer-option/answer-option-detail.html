@@ -1,26 +1,26 @@
 
 <div>
-    <h2><span data-translate="artemisApp.answerOption.detail.title">Answer Option</span> {{vm.answerOption.id}}</h2>
+    <h2><span data-translate="arTeMiSApp.answerOption.detail.title">Answer Option</span> {{vm.answerOption.id}}</h2>
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span data-translate="artemisApp.answerOption.text">Text</span></dt>
+        <dt><span data-translate="arTeMiSApp.answerOption.text">Text</span></dt>
         <dd>
             <span>{{vm.answerOption.text}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.answerOption.isCorrect">Is Correct</span></dt>
+        <dt><span data-translate="arTeMiSApp.answerOption.hint">Hint</span></dt>
+        <dd>
+            <span>{{vm.answerOption.hint}}</span>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.answerOption.explanation">Explanation</span></dt>
+        <dd>
+            <span>{{vm.answerOption.explanation}}</span>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.answerOption.isCorrect">Is Correct</span></dt>
         <dd>
             <span>{{vm.answerOption.isCorrect}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.answerOption.correctScore">Correct Score</span></dt>
-        <dd>
-            <span>{{vm.answerOption.correctScore}}</span>
-        </dd>
-        <dt><span data-translate="artemisApp.answerOption.incorrectScore">Incorrect Score</span></dt>
-        <dd>
-            <span>{{vm.answerOption.incorrectScore}}</span>
-        </dd>
-        <dt><span data-translate="artemisApp.answerOption.question">Question</span></dt>
+        <dt><span data-translate="arTeMiSApp.answerOption.question">Question</span></dt>
         <dd>
             <a ui-sref="multiple-choice-question-detail({id:vm.answerOption.question.id})">{{vm.answerOption.question.id}}</a>
         </dd>

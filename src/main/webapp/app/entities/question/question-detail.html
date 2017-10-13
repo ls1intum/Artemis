@@ -1,26 +1,38 @@
 
 <div>
-    <h2><span data-translate="artemisApp.question.detail.title">Question</span> {{vm.question.id}}</h2>
+    <h2><span data-translate="arTeMiSApp.question.detail.title">Question</span> {{vm.question.id}}</h2>
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span data-translate="artemisApp.question.title">Title</span></dt>
+        <dt><span data-translate="arTeMiSApp.question.title">Title</span></dt>
         <dd>
             <span>{{vm.question.title}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.question.text">Text</span></dt>
+        <dt><span data-translate="arTeMiSApp.question.text">Text</span></dt>
         <dd>
             <span>{{vm.question.text}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.question.maxScore">Max Score</span></dt>
+        <dt><span data-translate="arTeMiSApp.question.hint">Hint</span></dt>
         <dd>
-            <span>{{vm.question.maxScore}}</span>
+            <span>{{vm.question.hint}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.question.minScore">Min Score</span></dt>
+        <dt><span data-translate="arTeMiSApp.question.explanation">Explanation</span></dt>
         <dd>
-            <span>{{vm.question.minScore}}</span>
+            <span>{{vm.question.explanation}}</span>
         </dd>
-        <dt><span data-translate="artemisApp.question.exercise">Exercise</span></dt>
+        <dt><span data-translate="arTeMiSApp.question.score">Score</span></dt>
+        <dd>
+            <span>{{vm.question.score}}</span>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.question.scoringType">Scoring Type</span></dt>
+        <dd>
+            <span data-translate="{{'arTeMiSApp.ScoringType.' + vm.question.scoringType}}">{{vm.question.scoringType}}</span>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.question.randomizeOrder">Randomize Order</span></dt>
+        <dd>
+            <span>{{vm.question.randomizeOrder}}</span>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.question.exercise">Exercise</span></dt>
         <dd>
             <a ui-sref="quiz-exercise-detail({id:vm.question.exercise.id})">{{vm.question.exercise.id}}</a>
         </dd>

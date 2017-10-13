@@ -29,6 +29,7 @@ public class QuizExerciseResource {
     private static final String ENTITY_NAME = "quizExercise";
 
     private final QuizExerciseRepository quizExerciseRepository;
+
     public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
     }

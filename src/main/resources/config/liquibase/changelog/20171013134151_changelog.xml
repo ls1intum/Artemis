@@ -1,0 +1,45 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="Vale (generated)" id="1507894928662-2">
+        <addColumn tableName="exercise">
+            <column name="allowed_number_of_attempts" type="integer"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-3">
+        <addColumn tableName="exercise">
+            <column name="description" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-4">
+        <addColumn tableName="question">
+            <column name="exercise_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-5">
+        <addColumn tableName="exercise">
+            <column name="explanation" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-6">
+        <addColumn tableName="question">
+            <column name="questions_order" type="integer"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-7">
+        <addColumn tableName="exercise">
+            <column name="randomize_question_order" type="bit"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-8">
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="question" constraintName="FKcw89k10abejup8p3hif0kjpw" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-10">
+        <dropForeignKeyConstraint baseTableName="quiz_exercise_questions" constraintName="FKewh5i6ujecvx9j1q8mhj7fuw4"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-11">
+        <dropForeignKeyConstraint baseTableName="quiz_exercise_questions" constraintName="FKrf15kpj6sgj6li2ir1l4y0ddw"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1507894928662-12">
+        <dropTable tableName="quiz_exercise_questions"/>
+    </changeSet>
+</databaseChangeLog>

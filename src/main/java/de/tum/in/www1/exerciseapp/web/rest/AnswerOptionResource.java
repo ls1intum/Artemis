@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.AnswerOption;
+
 import de.tum.in.www1.exerciseapp.repository.AnswerOptionRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +29,7 @@ public class AnswerOptionResource {
     private static final String ENTITY_NAME = "answerOption";
 
     private final AnswerOptionRepository answerOptionRepository;
+
     public AnswerOptionResource(AnswerOptionRepository answerOptionRepository) {
         this.answerOptionRepository = answerOptionRepository;
     }
@@ -83,7 +86,7 @@ public class AnswerOptionResource {
     public List<AnswerOption> getAllAnswerOptions() {
         log.debug("REST request to get all AnswerOptions");
         return answerOptionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /answer-options/:id : get the "id" answerOption.

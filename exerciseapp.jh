@@ -23,6 +23,10 @@ entity ModelingExercise {           //extends Exercise
 
 
 entity QuizExercise {               //extends Exercise
+    description String,
+    explanation String,
+    randomizeQuestionOrder Boolean,
+    allowedNumberOfAttempts Integer,
 	isVisibleBeforeStart Boolean,
     isOpenForPractice Boolean,
     isPlannedToStart Boolean,
@@ -41,8 +45,17 @@ entity SubmittedAnswer {            //abstract
 entity Question {                   //abstract
 	title String
     text String
-    maxScore Integer
-    minScore Integer
+    hint String
+    explanation String
+    score Integer
+    scoringType ScoringType
+    randomizeOrder Boolean
+}
+
+enum ScoringType {
+	ALL_OR_NOTHING,
+    PROPORTIONAL_CORRECT_OPTIONS,
+    TRUE_FALSE_NEUTRAL
 }
 
 entity MultipleChoiceQuestion {             //extends Question
@@ -51,9 +64,9 @@ entity MultipleChoiceQuestion {             //extends Question
 
 entity AnswerOption {
 	text String
+    hint String
+    explanation String
     isCorrect Boolean
-    correctScore Integer
-    incorrectScore Integer
 }
 
 entity MultipleChoiceSubmittedAnswer {      //extends SubmittedAnswer
@@ -135,7 +148,6 @@ relationship OneToMany {
   Exercise{participations} to Participation{exercise(title)},
   Participation{results} to Result{participation},
   Result{feedbacks} to Feedback{result},
-
   QuizExercise{questions} to Question{exercise},
   MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
   DragAndDropQuestion{dropLocations} to DropLocation{question},

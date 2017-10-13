@@ -23,11 +23,18 @@
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
             },
+            "description": "Description",
+            "explanation": "Explanation",
+            "randomizeQuestionOrder": "Randomize Question Order",
+            "allowedNumberOfAttempts": "Allowed Number Of Attempts",
             "isVisibleBeforeStart": "Is Visible Before Start",
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
             "duration": "Duration",
-            "durationUnit": "minutes",
+            "minutes": "minutes",
+            "seconds": "seconds",
+            "minutesShort": "min",
+            "secondsShort": "s",
             "questions": "Questions",
             "status": "Status",
             "startTime": "Start Time"
