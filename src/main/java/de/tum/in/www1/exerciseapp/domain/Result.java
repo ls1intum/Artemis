@@ -1,12 +1,15 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Objects;
 
 /**
@@ -41,6 +44,11 @@ public class Result implements Serializable {
     @OneToOne
     @JoinColumn(unique = true)
     private Submission submission;
+
+    @OneToMany(mappedBy = "result")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<Feedback> feedbacks = new HashSet<>();
 
     @ManyToOne
     private Participation participation;
@@ -148,6 +156,31 @@ public class Result implements Serializable {
 
     public void setSubmission(Submission submission) {
         this.submission = submission;
+    }
+
+    public Set<Feedback> getFeedbacks() {
+        return feedbacks;
+    }
+
+    public Result feedbacks(Set<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
+        return this;
+    }
+
+    public Result addFeedbacks(Feedback feedback) {
+        this.feedbacks.add(feedback);
+        feedback.setResult(this);
+        return this;
+    }
+
+    public Result removeFeedbacks(Feedback feedback) {
+        this.feedbacks.remove(feedback);
+        feedback.setResult(null);
+        return this;
+    }
+
+    public void setFeedbacks(Set<Feedback> feedbacks) {
+        this.feedbacks = feedbacks;
     }
 
     public Participation getParticipation() {

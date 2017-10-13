@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "feedback" : {
+            "home": {
+                "title": "Feedbacks",
+                "createLabel": "Feedback erstellen",
+                "createOrEditLabel": "Feedback erstellen oder bearbeiten"
+            },
+            "created": "Feedback erstellt mit ID {{ param }}",
+            "updated": "Feedback aktualisiert mit ID {{ param }}",
+            "deleted": "Feedback gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Feedback {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Feedback"
+            },
+            "text": "Text",
+            "detailText": "Detail Text",
+            "result": "Result"
+        }
+    }
+}
