@@ -150,10 +150,12 @@ repositories {
 dependencies {
 
     compile fileTree(dir: 'libs', include: '*.jar')
-    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.5.0.201609210915-r'
+    // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
+    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.9.0.201710071750-r'
+
 
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
-    compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8051'
+    compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
 
     compile "org.imsglobal:basiclti-util:1.1.2"
     compile "org.jasypt:jasypt:1.9.2"
@@ -248,6 +250,9 @@ dependencies {
 
 clean {
     delete "target"
+    delete "build"
+    delete "out"
+    delete "node_modules"
 }
 
 task cleanResources(type: Delete) {
@@ -255,7 +260,7 @@ task cleanResources(type: Delete) {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.1'
+    gradleVersion = '4.2.1'
 }
 
 task stage(dependsOn: 'bootRepackage') {
