@@ -26,6 +26,7 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('question');
+                    $translatePartialLoader.addPart('scoringType');
                     $translatePartialLoader.addPart('global');
                     return $translate.refresh();
                 }]
@@ -48,6 +49,7 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('question');
+                    $translatePartialLoader.addPart('scoringType');
                     return $translate.refresh();
                 }],
                 entity: ['$stateParams', 'Question', function($stateParams, Question) {
@@ -106,8 +108,11 @@
                             return {
                                 title: null,
                                 text: null,
-                                maxScore: null,
-                                minScore: null,
+                                hint: null,
+                                explanation: null,
+                                score: null,
+                                scoringType: null,
+                                randomizeOrder: null,
                                 id: null
                             };
                         }

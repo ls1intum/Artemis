@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Question;
+
 import de.tum.in.www1.exerciseapp.repository.QuestionRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +29,7 @@ public class QuestionResource {
     private static final String ENTITY_NAME = "question";
 
     private final QuestionRepository questionRepository;
+
     public QuestionResource(QuestionRepository questionRepository) {
         this.questionRepository = questionRepository;
     }
@@ -83,7 +86,7 @@ public class QuestionResource {
     public List<Question> getAllQuestions() {
         log.debug("REST request to get all Questions");
         return questionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /questions/:id : get the "id" question.

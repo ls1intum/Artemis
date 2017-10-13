@@ -13,6 +13,50 @@
             <input type="text" class="form-control" id="id" name="id"
                     ng-model="vm.quizExercise.id" readonly />
         </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.quizExercise.description" for="field_description">Description</label>
+            <input type="text" class="form-control" name="description" id="field_description"
+                    ng-model="vm.quizExercise.description"
+                    />
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.quizExercise.explanation" for="field_explanation">Explanation</label>
+            <input type="text" class="form-control" name="explanation" id="field_explanation"
+                    ng-model="vm.quizExercise.explanation"
+                    />
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.quizExercise.randomizeQuestionOrder" for="field_randomizeQuestionOrder">Randomize Question Order</label>
+                <input type="checkbox" name="randomizeQuestionOrder" id="field_randomizeQuestionOrder"
+                          ng-model="vm.quizExercise.randomizeQuestionOrder"/>
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.quizExercise.allowedNumberOfAttempts" for="field_allowedNumberOfAttempts">Allowed Number Of Attempts</label>
+            <input type="number" class="form-control" name="allowedNumberOfAttempts" id="field_allowedNumberOfAttempts"
+                    ng-model="vm.quizExercise.allowedNumberOfAttempts"
+                    />
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.quizExercise.isVisibleBeforeStart" for="field_isVisibleBeforeStart">Is Visible Before Start</label>
+                <input type="checkbox" name="isVisibleBeforeStart" id="field_isVisibleBeforeStart"
+                          ng-model="vm.quizExercise.isVisibleBeforeStart"/>
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.quizExercise.isOpenForPractice" for="field_isOpenForPractice">Is Open For Practice</label>
+                <input type="checkbox" name="isOpenForPractice" id="field_isOpenForPractice"
+                          ng-model="vm.quizExercise.isOpenForPractice"/>
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.quizExercise.isPlannedToStart" for="field_isPlannedToStart">Is Planned To Start</label>
+                <input type="checkbox" name="isPlannedToStart" id="field_isPlannedToStart"
+                          ng-model="vm.quizExercise.isPlannedToStart"/>
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.quizExercise.duration" for="field_duration">Duration</label>
+            <input type="number" class="form-control" name="duration" id="field_duration"
+                    ng-model="vm.quizExercise.duration"
+                    />
+        </div>
 
     </div>
     <div class="modal-footer">

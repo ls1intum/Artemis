@@ -19,11 +19,11 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
-                    <th><span data-translate="artemisApp.answerOption.text">Text</span></th>
-                    <th><span data-translate="artemisApp.answerOption.isCorrect">Is Correct</span></th>
-                    <th><span data-translate="artemisApp.answerOption.correctScore">Correct Score</span></th>
-                    <th><span data-translate="artemisApp.answerOption.incorrectScore">Incorrect Score</span></th>
-                    <th><span data-translate="artemisApp.answerOption.question">Question</span></th>
+                    <th><span data-translate="arTeMiSApp.answerOption.text">Text</span></th>
+                    <th><span data-translate="arTeMiSApp.answerOption.hint">Hint</span></th>
+                    <th><span data-translate="arTeMiSApp.answerOption.explanation">Explanation</span></th>
+                    <th><span data-translate="arTeMiSApp.answerOption.isCorrect">Is Correct</span></th>
+                    <th><span data-translate="arTeMiSApp.answerOption.question">Question</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -31,9 +31,9 @@
                 <tr ng-repeat="answerOption in vm.answerOptions track by answerOption.id">
                     <td><a ui-sref="answer-option-detail({id:answerOption.id})">{{answerOption.id}}</a></td>
                     <td>{{answerOption.text}}</td>
+                    <td>{{answerOption.hint}}</td>
+                    <td>{{answerOption.explanation}}</td>
                     <td>{{answerOption.isCorrect}}</td>
-                    <td>{{answerOption.correctScore}}</td>
-                    <td>{{answerOption.incorrectScore}}</td>
                     <td>
                         <a ui-sref="multiple-choice-question-detail({id:answerOption.question.id})">{{answerOption.question.id}}</a>
                     </td>

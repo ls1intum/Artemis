@@ -25,6 +25,6 @@
     "changelogDate": "20160609093907",
     "entityTableName": "course",
     "dto": "no",
-    "pagination": "infinite-scroll",
+    "pagination": "no",
     "service": "serviceClass"
 }

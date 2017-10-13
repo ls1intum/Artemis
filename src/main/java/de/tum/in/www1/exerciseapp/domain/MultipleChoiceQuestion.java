@@ -1,16 +1,15 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.io.Serializable;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Objects;
-import java.util.Set;
+import java.util.List;
 
 /**
  * A MultipleChoiceQuestion.
@@ -18,22 +17,24 @@ import java.util.Set;
 @Entity
 @DiscriminatorValue(value="MC")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeName("multiple-choice")
 public class MultipleChoiceQuestion extends Question implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(mappedBy = "question")
-    @JsonIgnore
+    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
+    @OrderColumn
+    @JoinColumn(name="question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<AnswerOption> answerOptions = new HashSet<>();
+    private List<AnswerOption> answerOptions = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
 
-    public Set<AnswerOption> getAnswerOptions() {
+    public List<AnswerOption> getAnswerOptions() {
         return answerOptions;
     }
 
-    public MultipleChoiceQuestion answerOptions(Set<AnswerOption> answerOptions) {
+    public MultipleChoiceQuestion answerOptions(List<AnswerOption> answerOptions) {
         this.answerOptions = answerOptions;
         return this;
     }
@@ -50,7 +51,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         return this;
     }
 
-    public void setAnswerOptions(Set<AnswerOption> answerOptions) {
+    public void setAnswerOptions(List<AnswerOption> answerOptions) {
         this.answerOptions = answerOptions;
     }
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
