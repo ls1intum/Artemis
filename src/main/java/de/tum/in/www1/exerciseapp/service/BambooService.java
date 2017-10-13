@@ -5,6 +5,7 @@ import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import net.sourceforge.plantuml.Log;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -325,8 +326,8 @@ public class BambooService implements ContinuousIntegrationService {
         if(buildResultDetails == null){
             return null;
         }
-        HashSet<Feedback> feedbacks = new HashSet<>();
 
+        HashSet<Feedback> feedbacks = new HashSet<>();
 
         try {
             JSONArray failedTestResults = new JSONArray(buildResultDetails.get("details"));
@@ -357,27 +358,8 @@ public class BambooService implements ContinuousIntegrationService {
                 feedbacks.add(feedback);
             }
         }catch(Exception failedToParse){
-
+                log.error("Parsing from bamboo to feedback failed");
         }
-//            JSONArray buildDetailsJSON = new JSONArray(buildResultDetails.values());
-//
-//            for (int i = 0; i < buildDetailsJSON.length(); i++) {
-//                Feedback feedback = new Feedback();
-//
-//                JSONObject testResult = buildDetailsJSON.getJSONObject(i);
-//                JSONObject errors = testResult.getJSONObject("errors");
-//                JSONArray error = errors.getJSONArray("error");
-//
-//                String className = testResult.getString("className");
-//                String methodName = testResult.getString("methodName");
-//                //Splitting string at the first linebreak to only get the first line of the Exception
-//                String errorMessage = error.getJSONObject(0).getString("message").split("\\n", 2)[0];
-//
-//                feedback.setText(className + " in method: " + methodName);
-//                feedback.setDetailText(errorMessage);
-//                feedbacks.add(feedback);
-//            }
-
 
         return feedbacks;
     }
