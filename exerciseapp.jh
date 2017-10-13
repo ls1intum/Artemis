@@ -23,6 +23,10 @@ entity ModelingExercise {           //extends Exercise
 
 
 entity QuizExercise {               //extends Exercise
+    description String,
+    explanation String,
+    randomizeQuestionOrder Boolean,
+    allowedNumberOfAttempts Integer,
 	isVisibleBeforeStart Boolean,
     isOpenForPractice Boolean,
     isPlannedToStart Boolean,

@@ -2,11 +2,10 @@
     "fluentMethods": true,
     "relationships": [
         {
-            "relationshipType": "many-to-many",
-            "relationshipName": "quizExercises",
+            "relationshipType": "many-to-one",
+            "relationshipName": "exercise",
             "otherEntityName": "quizExercise",
-            "ownerSide": false,
-            "otherEntityRelationshipName": "questions"
+            "otherEntityField": "id"
         }
     ],
     "fields": [

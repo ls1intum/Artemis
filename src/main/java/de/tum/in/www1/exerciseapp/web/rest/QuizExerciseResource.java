@@ -29,6 +29,7 @@ public class QuizExerciseResource {
     private static final String ENTITY_NAME = "quizExercise";
 
     private final QuizExerciseRepository quizExerciseRepository;
+
     public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
     }
@@ -87,7 +88,7 @@ public class QuizExerciseResource {
     @Timed
     public List<QuizExercise> getAllQuizExercises() {
         log.debug("REST request to get all QuizExercises");
-        return quizExerciseRepository.findAllWithEagerRelationships();
+        return quizExerciseRepository.findAll();
     }
 
     /**
@@ -115,7 +116,7 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseRepository.findOneWithEagerRelationships(id);
+        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
     }
 

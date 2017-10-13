@@ -14,13 +14,7 @@ import java.util.List;
 @Repository
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long> {
 
-    @Query("SELECT distinct e FROM QuizExercise e left join fetch e.questions WHERE e.course.id = :#{#courseId}")
+    @Query("SELECT distinct e FROM QuizExercise e WHERE e.course.id = :#{#courseId}")
     List<QuizExercise> findByCourseId(@Param("courseId") Long courseId);
-
-    @Query("select distinct quiz_exercise from QuizExercise quiz_exercise left join fetch quiz_exercise.questions")
-    List<QuizExercise> findAllWithEagerRelationships();
-
-    @Query("select quiz_exercise from QuizExercise quiz_exercise left join fetch quiz_exercise.questions where quiz_exercise.id =:id")
-    QuizExercise findOneWithEagerRelationships(@Param("id") Long id);
 
 }

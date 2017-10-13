@@ -22,8 +22,9 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(cascade=CascadeType.ALL, mappedBy = "question", fetch=FetchType.EAGER)
+    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
     @OrderColumn
+    @JoinColumn(name="question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 

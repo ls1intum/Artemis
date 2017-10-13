@@ -2,15 +2,29 @@
     "fluentMethods": true,
     "relationships": [
         {
-            "relationshipType": "many-to-many",
-            "otherEntityRelationshipName": "quizExercises",
+            "relationshipType": "one-to-many",
             "relationshipName": "questions",
             "otherEntityName": "question",
-            "otherEntityField": "id",
-            "ownerSide": true
+            "otherEntityRelationshipName": "exercise"
         }
     ],
     "fields": [
+        {
+            "fieldName": "description",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "explanation",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "randomizeQuestionOrder",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "allowedNumberOfAttempts",
+            "fieldType": "Integer"
+        },
         {
             "fieldName": "isVisibleBeforeStart",
             "fieldType": "Boolean"

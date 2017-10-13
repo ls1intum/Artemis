@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -34,6 +35,7 @@ public class AnswerOption implements Serializable {
     private Boolean isCorrect;
 
     @ManyToOne
+    @JsonIgnore
     private MultipleChoiceQuestion question;
 
     public Long getId() {

@@ -37,6 +37,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTEMiSApp.class)
 public class QuizExerciseResourceIntTest {
 
+    private static final String DEFAULT_DESCRIPTION = "AAAAAAAAAA";
+    private static final String UPDATED_DESCRIPTION = "BBBBBBBBBB";
+
+    private static final String DEFAULT_EXPLANATION = "AAAAAAAAAA";
+    private static final String UPDATED_EXPLANATION = "BBBBBBBBBB";
+
+    private static final Boolean DEFAULT_RANDOMIZE_QUESTION_ORDER = false;
+    private static final Boolean UPDATED_RANDOMIZE_QUESTION_ORDER = true;
+
+    private static final Integer DEFAULT_ALLOWED_NUMBER_OF_ATTEMPTS = 1;
+    private static final Integer UPDATED_ALLOWED_NUMBER_OF_ATTEMPTS = 2;
+
     private static final Boolean DEFAULT_IS_VISIBLE_BEFORE_START = false;
     private static final Boolean UPDATED_IS_VISIBLE_BEFORE_START = true;
 
@@ -86,6 +98,10 @@ public class QuizExerciseResourceIntTest {
      */
     public static QuizExercise createEntity(EntityManager em) {
         QuizExercise quizExercise = new QuizExercise()
+            .description(DEFAULT_DESCRIPTION)
+            .explanation(DEFAULT_EXPLANATION)
+            .randomizeQuestionOrder(DEFAULT_RANDOMIZE_QUESTION_ORDER)
+            .allowedNumberOfAttempts(DEFAULT_ALLOWED_NUMBER_OF_ATTEMPTS)
             .isVisibleBeforeStart(DEFAULT_IS_VISIBLE_BEFORE_START)
             .isOpenForPractice(DEFAULT_IS_OPEN_FOR_PRACTICE)
             .isPlannedToStart(DEFAULT_IS_PLANNED_TO_START)
@@ -113,6 +129,10 @@ public class QuizExerciseResourceIntTest {
         List<QuizExercise> quizExerciseList = quizExerciseRepository.findAll();
         assertThat(quizExerciseList).hasSize(databaseSizeBeforeCreate + 1);
         QuizExercise testQuizExercise = quizExerciseList.get(quizExerciseList.size() - 1);
+        assertThat(testQuizExercise.getDescription()).isEqualTo(DEFAULT_DESCRIPTION);
+        assertThat(testQuizExercise.getExplanation()).isEqualTo(DEFAULT_EXPLANATION);
+        assertThat(testQuizExercise.isRandomizeQuestionOrder()).isEqualTo(DEFAULT_RANDOMIZE_QUESTION_ORDER);
+        assertThat(testQuizExercise.getAllowedNumberOfAttempts()).isEqualTo(DEFAULT_ALLOWED_NUMBER_OF_ATTEMPTS);
         assertThat(testQuizExercise.isIsVisibleBeforeStart()).isEqualTo(DEFAULT_IS_VISIBLE_BEFORE_START);
         assertThat(testQuizExercise.isIsOpenForPractice()).isEqualTo(DEFAULT_IS_OPEN_FOR_PRACTICE);
         assertThat(testQuizExercise.isIsPlannedToStart()).isEqualTo(DEFAULT_IS_PLANNED_TO_START);
@@ -149,6 +169,10 @@ public class QuizExerciseResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(quizExercise.getId().intValue())))
+            .andExpect(jsonPath("$.[*].description").value(hasItem(DEFAULT_DESCRIPTION.toString())))
+            .andExpect(jsonPath("$.[*].explanation").value(hasItem(DEFAULT_EXPLANATION.toString())))
+            .andExpect(jsonPath("$.[*].randomizeQuestionOrder").value(hasItem(DEFAULT_RANDOMIZE_QUESTION_ORDER.booleanValue())))
+            .andExpect(jsonPath("$.[*].allowedNumberOfAttempts").value(hasItem(DEFAULT_ALLOWED_NUMBER_OF_ATTEMPTS)))
             .andExpect(jsonPath("$.[*].isVisibleBeforeStart").value(hasItem(DEFAULT_IS_VISIBLE_BEFORE_START.booleanValue())))
             .andExpect(jsonPath("$.[*].isOpenForPractice").value(hasItem(DEFAULT_IS_OPEN_FOR_PRACTICE.booleanValue())))
             .andExpect(jsonPath("$.[*].isPlannedToStart").value(hasItem(DEFAULT_IS_PLANNED_TO_START.booleanValue())))
@@ -166,6 +190,10 @@ public class QuizExerciseResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(quizExercise.getId().intValue()))
+            .andExpect(jsonPath("$.description").value(DEFAULT_DESCRIPTION.toString()))
+            .andExpect(jsonPath("$.explanation").value(DEFAULT_EXPLANATION.toString()))
+            .andExpect(jsonPath("$.randomizeQuestionOrder").value(DEFAULT_RANDOMIZE_QUESTION_ORDER.booleanValue()))
+            .andExpect(jsonPath("$.allowedNumberOfAttempts").value(DEFAULT_ALLOWED_NUMBER_OF_ATTEMPTS))
             .andExpect(jsonPath("$.isVisibleBeforeStart").value(DEFAULT_IS_VISIBLE_BEFORE_START.booleanValue()))
             .andExpect(jsonPath("$.isOpenForPractice").value(DEFAULT_IS_OPEN_FOR_PRACTICE.booleanValue()))
             .andExpect(jsonPath("$.isPlannedToStart").value(DEFAULT_IS_PLANNED_TO_START.booleanValue()))
@@ -190,6 +218,10 @@ public class QuizExerciseResourceIntTest {
         // Update the quizExercise
         QuizExercise updatedQuizExercise = quizExerciseRepository.findOne(quizExercise.getId());
         updatedQuizExercise
+            .description(UPDATED_DESCRIPTION)
+            .explanation(UPDATED_EXPLANATION)
+            .randomizeQuestionOrder(UPDATED_RANDOMIZE_QUESTION_ORDER)
+            .allowedNumberOfAttempts(UPDATED_ALLOWED_NUMBER_OF_ATTEMPTS)
             .isVisibleBeforeStart(UPDATED_IS_VISIBLE_BEFORE_START)
             .isOpenForPractice(UPDATED_IS_OPEN_FOR_PRACTICE)
             .isPlannedToStart(UPDATED_IS_PLANNED_TO_START)
@@ -204,6 +236,10 @@ public class QuizExerciseResourceIntTest {
         List<QuizExercise> quizExerciseList = quizExerciseRepository.findAll();
         assertThat(quizExerciseList).hasSize(databaseSizeBeforeUpdate);
         QuizExercise testQuizExercise = quizExerciseList.get(quizExerciseList.size() - 1);
+        assertThat(testQuizExercise.getDescription()).isEqualTo(UPDATED_DESCRIPTION);
+        assertThat(testQuizExercise.getExplanation()).isEqualTo(UPDATED_EXPLANATION);
+        assertThat(testQuizExercise.isRandomizeQuestionOrder()).isEqualTo(UPDATED_RANDOMIZE_QUESTION_ORDER);
+        assertThat(testQuizExercise.getAllowedNumberOfAttempts()).isEqualTo(UPDATED_ALLOWED_NUMBER_OF_ATTEMPTS);
         assertThat(testQuizExercise.isIsVisibleBeforeStart()).isEqualTo(UPDATED_IS_VISIBLE_BEFORE_START);
         assertThat(testQuizExercise.isIsOpenForPractice()).isEqualTo(UPDATED_IS_OPEN_FOR_PRACTICE);
         assertThat(testQuizExercise.isIsPlannedToStart()).isEqualTo(UPDATED_IS_PLANNED_TO_START);

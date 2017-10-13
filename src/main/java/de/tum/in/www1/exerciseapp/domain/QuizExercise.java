@@ -19,6 +19,18 @@ public class QuizExercise extends Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "explanation")
+    private String explanation;
+
+    @Column(name = "randomize_question_order")
+    private Boolean randomizeQuestionOrder;
+
+    @Column(name = "allowed_number_of_attempts")
+    private Integer allowedNumberOfAttempts;
+
     @Column(name = "is_visible_before_start")
     private Boolean isVisibleBeforeStart;
 
@@ -34,13 +46,63 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
+    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
     @OrderColumn
+    @JoinColumn(name="exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JoinTable(name = "quiz_exercise_questions",
-               joinColumns = @JoinColumn(name="quiz_exercises_id", referencedColumnName="id"),
-               inverseJoinColumns = @JoinColumn(name="questions_id", referencedColumnName="id"))
     private List<Question> questions = new ArrayList<>();
+
+    public String getDescription() {
+        return description;
+    }
+
+    public QuizExercise description(String description) {
+        this.description = description;
+        return this;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
+
+    public QuizExercise explanation(String explanation) {
+        this.explanation = explanation;
+        return this;
+    }
+
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
+    }
+
+    public Boolean isRandomizeQuestionOrder() {
+        return randomizeQuestionOrder;
+    }
+
+    public QuizExercise randomizeQuestionOrder(Boolean randomizeQuestionOrder) {
+        this.randomizeQuestionOrder = randomizeQuestionOrder;
+        return this;
+    }
+
+    public void setRandomizeQuestionOrder(Boolean randomizeQuestionOrder) {
+        this.randomizeQuestionOrder = randomizeQuestionOrder;
+    }
+
+    public Integer getAllowedNumberOfAttempts() {
+        return allowedNumberOfAttempts;
+    }
+
+    public QuizExercise allowedNumberOfAttempts(Integer allowedNumberOfAttempts) {
+        this.allowedNumberOfAttempts = allowedNumberOfAttempts;
+        return this;
+    }
+
+    public void setAllowedNumberOfAttempts(Integer allowedNumberOfAttempts) {
+        this.allowedNumberOfAttempts = allowedNumberOfAttempts;
+    }
 
     public Boolean isIsVisibleBeforeStart() {
         return isVisibleBeforeStart;
@@ -105,13 +167,13 @@ public class QuizExercise extends Exercise implements Serializable {
 
     public QuizExercise addQuestions(Question question) {
         this.questions.add(question);
-        question.getQuizExercises().add(this);
+        question.setExercise(this);
         return this;
     }
 
     public QuizExercise removeQuestions(Question question) {
         this.questions.remove(question);
-        question.getQuizExercises().remove(this);
+        question.setExercise(null);
         return this;
     }
 
@@ -143,6 +205,10 @@ public class QuizExercise extends Exercise implements Serializable {
     public String toString() {
         return "QuizExercise{" +
             "id=" + getId() +
+            ", description='" + getDescription() + "'" +
+            ", explanation='" + getExplanation() + "'" +
+            ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" +
+            ", allowedNumberOfAttempts='" + getAllowedNumberOfAttempts() + "'" +
             ", isVisibleBeforeStart='" + isIsVisibleBeforeStart() + "'" +
             ", isOpenForPractice='" + isIsOpenForPractice() + "'" +
             ", isPlannedToStart='" + isIsPlannedToStart() + "'" +
