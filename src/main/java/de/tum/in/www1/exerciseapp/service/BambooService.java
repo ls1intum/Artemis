@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.service;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
+import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import net.sourceforge.plantuml.Log;
@@ -66,10 +67,12 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final GitService gitService;
     private final ResultRepository resultRepository;
+    private final FeedbackRepository feedbackRepository;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository) {
+    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     private BambooClient getBambooClient() {
@@ -305,13 +308,14 @@ public class BambooService implements ContinuousIntegrationService {
         result.setResultString((String) buildResults.get("buildTestSummary"));
         result.setCompletionDate((ZonedDateTime) buildResults.get("buildCompletedDate"));
         result.setScore(calculateScoreForResult(result));
+        result.setBuildArtifact(buildResults.containsKey("artifact"));
+        result.setParticipation(participation);
 
         Map buildResultDetails = retrieveLatestBuildResultDetails(participation.getBuildPlanId());
         result.setFeedbacks(createFeedbacksForResult(buildResultDetails));
-
-        result.setBuildArtifact(buildResults.containsKey("artifact"));
-        result.setParticipation(participation);
         resultRepository.save(result);
+
+
     }
 
     /*
@@ -354,7 +358,7 @@ public class BambooService implements ContinuousIntegrationService {
                 feedback.setText(className + " : " + methodName);
                 feedback.setDetailText(errorMessageString);
                 feedbacks.add(feedback);
-
+                feedbackRepository.save(feedback);
             }
         }catch(Exception failedToParse){
                 log.error("Parsing from bamboo to feedback failed");
