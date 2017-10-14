@@ -330,32 +330,31 @@ public class BambooService implements ContinuousIntegrationService {
         HashSet<Feedback> feedbacks = new HashSet<>();
 
         try {
-            JSONArray failedTestResults = new JSONArray(buildResultDetails.get("details"));
-            //converting build results from bamboo api call to feedbacks
-            //in Text both class name and method name is stored
-            //detail text will have the stored error message
+            JSONObject buildResultDetailsJSON = new JSONObject(buildResultDetails);
+            JSONArray details = buildResultDetailsJSON.getJSONArray("details");
 
-            for (int j=0; j<failedTestResults.length(); j++) {
-                JSONObject failedTestJSON = failedTestResults.getJSONObject(j);
-                String className = failedTestJSON.getString("className");
-                String methodName = failedTestJSON.getString("methodName");
+            //breaking down the original JSON file o get all the relevant details
+            for(int i=0; i<details.length(); i++){
+                JSONObject detail = details.getJSONObject(i);
 
-                JSONObject errors = failedTestJSON.getJSONObject("errors");
-                JSONArray message = errors.getJSONArray("error");
+                String className = detail.getString("className");
+                String methodName = detail.getString("methodName");
 
+                JSONObject errors = detail.getJSONObject("errors");
+                JSONArray error = errors.getJSONArray("error");
 
-                String detailText = "";
-                for(int i=0; i<message.length(); i++){
-                    JSONObject errorMessage = message.getJSONObject(i);
+                String errorMessageString = "";
+                for(int j=0;j<error.length();j++){
+                    JSONObject errorMessage = error.getJSONObject(j);
                     //Splitting string at the first linebreak to only get the first line of the Exception
-                    detailText += errorMessage.getString("message").split("\\n", 2)[0];
+                    errorMessageString += errorMessage.getString("message").split("\\n", 2)[0] + "\n";
                 }
 
-
                 Feedback feedback = new Feedback();
-                feedback.setText(className + " in method: " + methodName);
-                feedback.setDetailText(detailText);
+                feedback.setText(className + " : " + methodName);
+                feedback.setDetailText(errorMessageString);
                 feedbacks.add(feedback);
+
             }
         }catch(Exception failedToParse){
                 log.error("Parsing from bamboo to feedback failed");
