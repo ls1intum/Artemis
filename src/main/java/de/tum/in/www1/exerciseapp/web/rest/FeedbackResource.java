@@ -127,31 +127,4 @@ public class FeedbackResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
-    /**
-     *  GET /feedbacks/forResult/:id
-     *
-     *  @param resultId the ID of the result
-     *  @return all feedbacks for that result if no feedbacks are stored try to connect to the bamboo service directly and retreive data from there
-     */
-    @GetMapping("/feedbacks/forResult/{resultId}")
-    @Timed
-    public ResponseEntity<List<Feedback>> getFeedbacksForResult(@PathVariable Long resultId){
-        log.debug("REST request to GET all Feedbacks for one Result");
-
-        Result result = resultRepository.findOne(resultId);
-
-        List<Feedback> feedbacks = feedbackRepository.findByResult(result);
-
-        //Provide access to old implementation for old classes with no results
-        if(feedbacks == null || feedbacks.size() == 0){
-            result = feedbackService.retreiveBuildDetailsFromBambooAndStoreThem(resultId);
-
-            if(result.getFeedbacks() != null) {
-                feedbacks = new ArrayList<>(result.getFeedbacks());
-            }else{
-                feedbacks = null;
-            }
-        }
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(feedbacks));
-    }
 }

@@ -5,11 +5,11 @@ import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
-import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
-import de.tum.in.www1.exerciseapp.service.LtiService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
-import de.tum.in.www1.exerciseapp.service.ResultService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -43,13 +43,21 @@ public class ResultResource {
     private final ParticipationService participationService;
     private final ResultService resultService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final FeedbackService feedbackService;
 
-    public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService, ResultService resultService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public ResultResource(ResultRepository resultRepository,
+                          Optional<LtiService> ltiService,
+                          ParticipationService participationService,
+                          ResultService resultService,
+                          Optional<ContinuousIntegrationService> continuousIntegrationService,
+                          FeedbackService feedbackService) {
+
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.participationService = participationService;
         this.resultService = resultService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -263,12 +271,18 @@ public class ResultResource {
         GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
         GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
         if (result.getParticipation().getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority))) {
-            Map<String, Object> details = continuousIntegrationService.get().getLatestBuildResultDetails(result.getParticipation());
-            return Optional.ofNullable(details.get("details"))
-                .map(resultDetails -> new ResponseEntity<>(
-                    details.get("details"),
-                    HttpStatus.OK))
-                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+            try {
+            JSONObject feedbackBuiltDetails = feedbackService.reteiveFeedbackForResultBuild(result).getJSONObject("details");
+            JSONArray details = feedbackBuiltDetails.getJSONArray("details");
+                return Optional.ofNullable(details)
+                    .map(resultDetails -> new ResponseEntity<>(
+                        details,
+                        HttpStatus.OK))
+                    .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+            } catch (JSONException e) {
+                log.debug("REST request to get Result failed : {}", id);
+                return  new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         } else {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
