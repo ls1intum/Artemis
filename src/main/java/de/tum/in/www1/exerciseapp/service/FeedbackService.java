@@ -38,7 +38,8 @@ public class FeedbackService {
     * @param resultId: the id of the result to whom the feedback belongs to
     * @return the newly saved result with the feedbacks
     */
-    private Result retreiveBuildDetailsFromBambooAndStoreThem(Result result){
+    @Transactional
+    public Result retreiveBuildDetailsFromBambooAndStoreThem(Result result){
         Participation participation = result.getParticipation();
 
         Map buildDetails = continuousIntegrationService.get().getLatestBuildResultDetails(participation);
