@@ -109,6 +109,7 @@ public class FeedbackService {
      * @param result for which the feedback is supposed to be retreived
      * @return a JSONObject which contains only the key details, which holds all feedbacks in the original bamboo format
      */
+    @Transactional
     public JSONObject reteiveFeedbackForResultBuild(Result result){
 
         Set<Feedback> feedbacks = result.getFeedbacks();
