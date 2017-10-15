@@ -278,8 +278,6 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param participation
      */
-
-    //ToDo configure saving of the feedback
     @Override
     public void onBuildCompleted(Participation participation) {
         log.info("Retrieving build result...");
@@ -357,8 +355,8 @@ public class BambooService implements ContinuousIntegrationService {
                 Feedback feedback = new Feedback();
                 feedback.setText(className + " : " + methodName);
                 feedback.setDetailText(errorMessageString);
+                feedback = feedbackRepository.save(feedback);
                 feedbacks.add(feedback);
-                feedbackRepository.save(feedback);
             }
         }catch(Exception failedToParse){
                 log.error("Parsing from bamboo to feedback failed");

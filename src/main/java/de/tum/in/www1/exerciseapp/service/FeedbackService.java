@@ -46,7 +46,7 @@ public class FeedbackService {
         HashSet<Feedback> feedbacks = continuousIntegrationService.get().createFeedbacksForResult(buildDetails);
 
         result.setFeedbacks(feedbacks);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
 
         return result;
     }
