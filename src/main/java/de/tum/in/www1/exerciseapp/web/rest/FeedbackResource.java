@@ -2,8 +2,6 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Feedback;
-
-import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.FeedbackService;
@@ -17,9 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 

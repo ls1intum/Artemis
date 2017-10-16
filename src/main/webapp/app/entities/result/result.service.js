@@ -47,7 +47,6 @@
         });
     }
 
-
     CourseResult.$inject = ['$resource'];
     function CourseResult($resource) {
         var resourceUrl = 'api/courses/:courseId/results';
@@ -56,8 +55,4 @@
             'query': {method: 'GET', isArray: true}
         });
     }
-
-
-
-
 })();

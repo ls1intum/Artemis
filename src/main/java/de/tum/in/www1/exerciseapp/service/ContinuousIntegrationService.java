@@ -3,19 +3,21 @@ package de.tum.in.www1.exerciseapp.service;
 import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
 import de.tum.in.www1.exerciseapp.domain.Feedback;
 import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.Result;
 import org.springframework.http.ResponseEntity;
 
 import java.net.URL;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by muenchdo on 07/09/16.
  */
 public interface ContinuousIntegrationService {
 
-    enum BuildStatus {
+    public enum BuildStatus {
         INACTIVE, QUEUED, BUILDING
     }
 
@@ -26,7 +28,7 @@ public interface ContinuousIntegrationService {
      * @param username        username of user for whom to copy build plan
      * @return unique identifier of the copied build plan
      */
-    String copyBuildPlan(String baseBuildPlanId, String username);
+    public String copyBuildPlan(String baseBuildPlanId, String username);
 
     /**
      * Configure the build plan with the given identifier on the CI system. Common configurations:
@@ -37,14 +39,14 @@ public interface ContinuousIntegrationService {
      * @param repositoryUrl url of user's personal repository copy
      * @param username      username of  user for whom to configure build plan
      */
-    void configureBuildPlan(String buildPlanId, URL repositoryUrl, String username);
+    public void configureBuildPlan(String buildPlanId, URL repositoryUrl, String username);
 
     /**
      * Delete build plan with given identifier from CI system.
      *
      * @param buildPlanId unique identifier for build plan on CI system
      */
-    void deleteBuildPlan(String buildPlanId);
+    public void deleteBuildPlan(String buildPlanId);
 
     /**
      * Will be called when a POST request is sent to the '/results/{buildPlanId}'.
@@ -54,7 +56,7 @@ public interface ContinuousIntegrationService {
      *
      * @param participation participation for which build has completed
      */
-    void onBuildCompleted(Participation participation);
+    public void onBuildCompleted(Participation participation);
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
@@ -62,7 +64,7 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get status
      * @return build status
      */
-    BuildStatus getBuildStatus(Participation participation);
+    public BuildStatus getBuildStatus(Participation participation);
 
     /**
      * Check if the given build plan ID is valid and accessible.
@@ -70,31 +72,19 @@ public interface ContinuousIntegrationService {
      * @param buildPlanId   unique identifier for build plan on CI system
      * @return
      */
-    Boolean buildPlanIdIsValid(String buildPlanId);
+    public Boolean buildPlanIdIsValid(String buildPlanId);
 
+    //TODO: this should rather return a List instead of a Set
     /**
      * Get details about the latest build result.
      *
      * Used to display the results of the test cases to the student: webapp/app/courses/results/result-deatil.html
      * Used to generate the interactive exercise instructions: webapp/app/editor/instructions/editor-instructions.components.js
      *
-     * @param participation participation for which to get details
-     * @return The details map. contains the test methods and their results:
-     *  {
-        "details": {
-            "className": "edu.tum.cs.i1.ease.DiscussionTestTest",
-            "methodName": "testTestStartCourseDiscussionWithBrokenClass",
-            "error": [
-                    {
-                        "message": "java.lang.AssertionError: ..."
-                    }
-                ]
-            }
-        }
-     *
+     * @param result the result for which to get details
+     * @return List of automatic feedback by the continuous integration server. contains the test methods and their results:
      */
-    // TODO: Change the return type to a CI system independent return type.
-    Map<String, Object> getLatestBuildResultDetails(Participation participation);
+    public Set<Feedback> getLatestBuildResultDetails(Result result);
 
     /**
      * Get the build logs of the latest CI build.
@@ -102,7 +92,7 @@ public interface ContinuousIntegrationService {
      * @param participation  participation for which to get the build logs
      * @return  list of build log entries
      */
-    List<BuildLogEntry> getLatestBuildLogs(Participation participation);
+    public List<BuildLogEntry> getLatestBuildLogs(Participation participation);
 
     /**
      * Get the public URL to the build plan. Used for the "Go to Build Plan" button, if this feature is enabled for the exercise.
@@ -110,7 +100,7 @@ public interface ContinuousIntegrationService {
      * @param participation  participation for which to get the build plan URL
      * @return
      */
-    URL getBuildPlanWebUrl(Participation participation);
+    public URL getBuildPlanWebUrl(Participation participation);
 
     /**
      * Get the build artifact (JAR/WAR), if any, of the latest build
@@ -118,15 +108,5 @@ public interface ContinuousIntegrationService {
      * @param participation participation for which to get the build artifact
      * @return the binary build artifact. Typically a JAR/WAR ResponseEntity.
      */
-    ResponseEntity retrieveLatestArtifact(Participation participation);
-
-    /**
-      * Uses the retreiveLatestBuildResultDetails in order to create feebacks from the error to give the user preciser error messages
-      *
-      *@param buildResultDetails returned build result details from the rest api of bamboo
-       *
-       * @return a Set of feedbacks which can directly be stored int a result
-       */
-    public HashSet<Feedback> createFeedbacksForResult(Map<String, Object> buildResultDetails);
-
+    public ResponseEntity retrieveLatestArtifact(Participation participation);
 }
