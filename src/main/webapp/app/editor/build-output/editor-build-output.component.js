@@ -35,7 +35,6 @@
             }
         };
 
-
         function getBuildLogs() {
             Repository.buildlogs({
                 participationId: vm.participation.id
@@ -47,10 +46,6 @@
                 $(".buildoutput").scrollTop($(".buildoutput")[0].scrollHeight);
             });
         }
-
-
-
-
 
     }
 })();
