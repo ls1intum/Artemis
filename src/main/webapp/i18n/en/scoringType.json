@@ -1,5 +1,5 @@
 {
-    "arTeMiSApp": {
+    "artemisApp": {
         "ScoringType" : {
             "null": "",
             "ALL_OR_NOTHING": "ALL_OR_NOTHING",
