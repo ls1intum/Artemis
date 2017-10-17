@@ -14,51 +14,51 @@
                     ng-model="vm.question.id" readonly />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.question.title" for="field_title">Title</label>
+            <label class="control-label" data-translate="artemisApp.question.title" for="field_title">Title</label>
             <input type="text" class="form-control" name="title" id="field_title"
                     ng-model="vm.question.title"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.question.text" for="field_text">Text</label>
+            <label class="control-label" data-translate="artemisApp.question.text" for="field_text">Text</label>
             <input type="text" class="form-control" name="text" id="field_text"
                     ng-model="vm.question.text"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.question.hint" for="field_hint">Hint</label>
+            <label class="control-label" data-translate="artemisApp.question.hint" for="field_hint">Hint</label>
             <input type="text" class="form-control" name="hint" id="field_hint"
                     ng-model="vm.question.hint"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.question.explanation" for="field_explanation">Explanation</label>
+            <label class="control-label" data-translate="artemisApp.question.explanation" for="field_explanation">Explanation</label>
             <input type="text" class="form-control" name="explanation" id="field_explanation"
                     ng-model="vm.question.explanation"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.question.score" for="field_score">Score</label>
+            <label class="control-label" data-translate="artemisApp.question.score" for="field_score">Score</label>
             <input type="number" class="form-control" name="score" id="field_score"
                     ng-model="vm.question.score"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.question.scoringType" for="field_scoringType">Scoring Type</label>
+            <label class="control-label" data-translate="artemisApp.question.scoringType" for="field_scoringType">Scoring Type</label>
             <select class="form-control" name="scoringType" ng-model="vm.question.scoringType" id="field_scoringType">
-                <option value="ALL_OR_NOTHING" data-translate="arTeMiSApp.ScoringType.ALL_OR_NOTHING">ALL_OR_NOTHING</option>
-                <option value="PROPORTIONAL_CORRECT_OPTIONS" data-translate="arTeMiSApp.ScoringType.PROPORTIONAL_CORRECT_OPTIONS">PROPORTIONAL_CORRECT_OPTIONS</option>
-                <option value="TRUE_FALSE_NEUTRAL" data-translate="arTeMiSApp.ScoringType.TRUE_FALSE_NEUTRAL">TRUE_FALSE_NEUTRAL</option>
+                <option value="ALL_OR_NOTHING" data-translate="artemisApp.ScoringType.ALL_OR_NOTHING">ALL_OR_NOTHING</option>
+                <option value="PROPORTIONAL_CORRECT_OPTIONS" data-translate="artemisApp.ScoringType.PROPORTIONAL_CORRECT_OPTIONS">PROPORTIONAL_CORRECT_OPTIONS</option>
+                <option value="TRUE_FALSE_NEUTRAL" data-translate="artemisApp.ScoringType.TRUE_FALSE_NEUTRAL">TRUE_FALSE_NEUTRAL</option>
             </select>
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.question.randomizeOrder" for="field_randomizeOrder">Randomize Order</label>
+            <label class="control-label" data-translate="artemisApp.question.randomizeOrder" for="field_randomizeOrder">Randomize Order</label>
                 <input type="checkbox" name="randomizeOrder" id="field_randomizeOrder"
                           ng-model="vm.question.randomizeOrder"/>
         </div>
 
         <div class="form-group">
-            <label data-translate="arTeMiSApp.question.exercise" for="field_exercise">Exercise</label>
+            <label data-translate="artemisApp.question.exercise" for="field_exercise">Exercise</label>
             <select class="form-control" id="field_exercise" name="exercise" ng-model="vm.question.exercise" ng-options="quizExercise as quizExercise.id for quizExercise in vm.quizexercises track by quizExercise.id">
                 <option value=""></option>
             </select>
