@@ -70,5 +70,8 @@
   "scripts": {
     "test": "gulp test",
     "postinstall": "webdriver-manager update"
+  },
+  "dependencies": {
+    "tc-angular-chartjs": "^2.1.4"
   }
 }

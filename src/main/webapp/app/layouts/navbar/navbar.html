@@ -15,6 +15,14 @@
         </div>
         <div class="navbar-collapse" uib-collapse="vm.isNavbarCollapsed" ng-switch="vm.isAuthenticated()">
             <ul class="nav navbar-nav navbar-right">
+                <!-- Hier Kommt der Link zur Test Statistis hin -->
+                <li ui-sref-active="active" ng-switch-when="true">
+                    <a ui-sref="statistic" ng-click="vm.collapseNavbar()">
+                        <i class="fa fa-signal"></i>&nbsp;
+                        <span class="hidden-sm">Test-Statistic</span>
+                    </a>
+                </li>
+                <!-- Ende  des temporären Links -->
                 <li ui-sref-active="active" ng-switch-when="true">
                     <a ui-sref="courses" ng-click="vm.collapseNavbar()">
                         <i class="fa fa-graduation-cap fa-lg"></i>&nbsp;

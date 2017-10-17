@@ -1,0 +1,145 @@
+    <div class="row">
+        <!--<div class="col-md-4">
+            <span class="hipster img-responsive img-rounded"></span>
+        </div>-->
+        <div class="col-md-8 col-md-offset-2 text-center">
+            <h3>Quiz-Statistik!</h3>
+            <div class="row">
+                <div class="col-md-4 text-left">
+                    <h3>Hier kann die Frage stehen, auf welche sich die Statistik bezieht.</h3>
+                    <p style="font-size: large"><span>a)   Text von Antwortmöglichkeit A</span></p>
+                    <p style="font-size: large"><span>b)   Anderer Text von Antwortmöglichkeit B</span></p>
+                    <p style="font-size: large"><span>c)   Hier ist auch noch Antwort C</span></p>
+                    <p style="font-size: large"><span>d)   Und die letzte Möglichkeit D wird auch noch erwähnt</span></p>
+                    <button ng-click="vm.plusB()" type="button" class="btn btn-default">+1 auf Antwort B</button>
+
+
+                </div>
+                <div class="col-md-8 text-center">
+                    <p>&nbsp</p>
+                    <div class="col-md-8 text-left"><p id="text" style="font-size: large">Antwortenverteilung (bewertet)</p></div>
+                    <div class="col-md-3 text-right"><p style="font-size: large">213 Teilnehmer</p></div>
+                    <canvas id="myChart"></canvas>
+                    <!--<div ng-controller="StatisticController">
+                        <canvas tc-chartjs-bar
+                                chart-data="data"
+                                chart-options="options">
+                    </canvas></div>-->
+
+
+                    <div class="col-md-4 text-centert" >
+                            <button id="solutionButton" ng-click="vm.switchSolution()" type="button" class="btn btn-primary"><span class="glyphicon glyphicon-ok-circle"></span>&nbsp;Zeige Lösung</button>
+
+                    </div>
+                    <div class="col-md-4 text-center">
+                            <button id="ratedButton" ng-click="vm.unratedSolutions()" type="button" class="btn btn-primary"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Zeige unbewertete Antworten</button>
+                    </div>
+                    <div class="col-md-4 text-center">
+                            <button type="button" class="btn btn-success"><span class="glyphicon glyphicon-eye-open"></span>&nbsp;Freigeben</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+<script>
+
+
+    // Define a plugin to provide data labels
+    Chart.plugins.register({
+        afterDatasetsDraw: function(chart, easing) {
+            // To only draw at the end of animation, check for easing === 1
+            var ctx = chart.ctx;
+
+            chart.data.datasets.forEach(function (dataset, i) {
+                var meta = chart.getDatasetMeta(i);
+                if (!meta.hidden) {
+                    meta.data.forEach(function(element, index) {
+                        // Draw the text in black, with the specified font
+                        ctx.fillStyle = 'black';
+
+                        var fontSize = 12;
+                        var fontStyle = 'normal';
+                        var fontFamily = 'Arial';
+                        ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+
+                        // Just naively convert to string for now
+
+
+                        var dataString = dataset.data[index].toString();
+                        var dataPersentageString = (Math.round((dataset.data[index] /213) *1000)/10).toString() + "%";
+
+                        // Make sure alignment settings are correct
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        var padding = 5;
+                        var position = element.tooltipPosition();
+                        ctx.fillText(dataString, position.x, position.y - (fontSize / 2) - padding);
+
+                        ctx.fillStyle = 'white';
+                        ctx.fillText(dataPersentageString, position.x, position.y + (fontSize / 2) + padding);
+                    });
+                }
+            });
+        }
+    });
+    var barChartData = {
+        labels: ["A", "B", "C", "D", ["Richte", " Antwortkombination"]], // Array ermöglicht Zeilenumbruch
+        datasets: [{
+            //label: 'Anzahl der Antwort',
+            display: false,
+            data: [],
+            backgroundColor: ["#428bca", "#428bca", "#428bca", "#428bca", "#428bca"],
+            borderWidth: 0
+        }]
+    }
+
+
+    var ctx = document.getElementById("myChart").getContext('2d');
+    window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: barChartData,
+        options: {
+            layout: {
+                padding: {
+                    left: 50,
+                    right: 50,
+                    top: 0,
+                    bottom: 30
+                }
+            },
+            legend: {
+                display: false
+            },
+            title: {
+                display: false,
+                text: "Antwortenverteilung bei 213 Teilnehmern",
+                position: "top",
+                fontSize: "16",
+                padding: 20
+            },
+            tooltips: {
+                enabled: false
+            },
+            scales: {
+                yAxes: [{
+                    scaleLabel: {
+                        labelString: 'Häufigkeit der Antwort',
+                        display: true,
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        labelString: 'Antwortmöglichkeiten',
+                        display: true,
+                    },
+                }]
+            },
+        }
+    });
+
+</script>
