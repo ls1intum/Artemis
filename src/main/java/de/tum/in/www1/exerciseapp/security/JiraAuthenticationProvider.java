@@ -2,7 +2,7 @@ package de.tum.in.www1.exerciseapp.security;
 
 import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.User;
-import de.tum.in.www1.exerciseapp.exception.JiraException;
+import de.tum.in.www1.exerciseapp.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.service.UserService;
@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 @Component
 @Profile("jira")
 @ComponentScan("de.tum.in.www1.exerciseapp.*")
-public class JiraAuthenticationProvider implements AuthenticationProvider {
+public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider {
 
     private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
@@ -78,6 +78,7 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
      * @param skipPasswordCheck     Skip checking the password
      * @return
      */
+    @Override
     public User getOrCreateUser(Authentication authentication, Boolean skipPasswordCheck) {
         String username = authentication.getName().toLowerCase();
         String password = authentication.getCredentials().toString();
@@ -121,7 +122,6 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         } else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed");
         }
-
     }
 
     @Override
@@ -167,16 +167,15 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
         return authorities;
     }
 
-
-
     /**
      * Adds a JIRA user to a JIRA group. Ignores "user is already a member of" errors.
      *
      * @param username The JIRA username
      * @param group The JIRA group name
-     * @throws JiraException if JIRA returns an error
+     * @throws ArtemisAuthenticationException if JIRA returns an error
      */
-    public void addUserToGroup(String username, String group) throws JiraException {
+    @Override
+    public void addUserToGroup(String username, String group) throws ArtemisAuthenticationException {
         HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
         Map<String, Object> body = new HashMap<>();
         body.put("name", username);
@@ -195,7 +194,7 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
                 return;
             }
             log.error("Could not add JIRA user to group " + group, e);
-            throw new JiraException("Error while adding user to JIRA group");
+            throw new ArtemisAuthenticationException("Error while adding user to JIRA group");
         }
     }
 
@@ -204,9 +203,10 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
      *
      * @param email The JIRA user email address
      * @return Optional String of JIRA username
-     * @throws JiraException
+     * @throws ArtemisAuthenticationException
      */
-    public Optional<String> getUsernameForEmail(String email) throws JiraException {
+    @Override
+    public Optional<String> getUsernameForEmail(String email) throws ArtemisAuthenticationException {
         HttpHeaders headers = HeaderUtil.createAuthorization(JIRA_USER, JIRA_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -227,7 +227,7 @@ public class JiraAuthenticationProvider implements AuthenticationProvider {
             return Optional.of((String) firstResult.get("name"));
         } catch (HttpClientErrorException e) {
             log.error("Could not get JIRA username for email address " + email, e);
-            throw new JiraException("Error while checking eMail address");
+            throw new ArtemisAuthenticationException("Error while checking eMail address");
         }
 
     }

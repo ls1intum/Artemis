@@ -2,13 +2,13 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.util.PatchedIMSPOXRequest;
-import de.tum.in.www1.exerciseapp.exception.JiraException;
+import de.tum.in.www1.exerciseapp.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.exerciseapp.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.exerciseapp.repository.LtiUserIdRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
-import de.tum.in.www1.exerciseapp.security.JiraAuthenticationProvider;
+import de.tum.in.www1.exerciseapp.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.service.util.RandomUtil;
 import de.tum.in.www1.exerciseapp.web.rest.dto.LtiLaunchRequestDTO;
@@ -67,19 +67,19 @@ public class LtiService {
     private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
     private final ResultRepository resultRepository;
     private final PasswordEncoder passwordEncoder;
-    private final Optional<JiraAuthenticationProvider> jiraAuthenticationProvider;
+    private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
     private final LtiUserIdRepository ltiUserIdRepository;
     private final HttpServletResponse response;
 
     public final HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
-    public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository, PasswordEncoder passwordEncoder, Optional<JiraAuthenticationProvider> jiraAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
+    public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository, PasswordEncoder passwordEncoder, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.resultRepository = resultRepository;
         this.passwordEncoder = passwordEncoder;
-        this.jiraAuthenticationProvider = jiraAuthenticationProvider;
+        this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiUserIdRepository = ltiUserIdRepository;
         this.response = response;
     }
@@ -89,10 +89,10 @@ public class LtiService {
      *
      * @param launchRequest The launch request, sent by LTI consumer
      * @param exercise      Exercise to launch
-     * @throws JiraException
+     * @throws ArtemisAuthenticationException
      * @throws AuthenticationException
      */
-    public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws JiraException, AuthenticationException {
+    public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws ArtemisAuthenticationException, AuthenticationException {
 
 
         // Authenticate the the LTI user
@@ -175,10 +175,10 @@ public class LtiService {
      *
      * @param launchRequest The launch request, sent by LTI consumer
      * @return
-     * @throws JiraException
+     * @throws ArtemisAuthenticationException
      * @throws AuthenticationException
      */
-    private Optional<Authentication> authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws JiraException, AuthenticationException {
+    private Optional<Authentication> authenticateLtiUser(LtiLaunchRequestDTO launchRequest) throws ArtemisAuthenticationException, AuthenticationException {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -203,7 +203,7 @@ public class LtiService {
         Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
 
         if(ltiUserId.isPresent()) {
-            //2. Case:Existing mapping for LTI user id
+            //2. Case: Existing mapping for LTI user id
             User user = ltiUserId.get().getUser();
             // Authenticate
             return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
@@ -213,15 +213,14 @@ public class LtiService {
         // Check if lookup by email is enabled
         if (launchRequest.getCustom_lookup_user_by_email()) {
 
-            //3. Case: Lookup JIRA user with the LTI email address. Sign in as this user.
+            //3. Case: Lookup user with the LTI email address. Sign in as this user.
 
-            // check if an JIRA user with this email address exists
-            Optional<String> jiraLookupByEmail = jiraAuthenticationProvider.get().getUsernameForEmail(email);
+            // check if an user with this email address exists
+            Optional<String> usernameLookupByEmail = artemisAuthenticationProvider.get().getUsernameForEmail(email);
 
-
-            if (jiraLookupByEmail.isPresent()) {
-                log.debug("Signing in as {}", jiraLookupByEmail.get());
-                User user = jiraAuthenticationProvider.get().getOrCreateUser(new UsernamePasswordAuthenticationToken(jiraLookupByEmail.get(), ""), true);
+            if (usernameLookupByEmail.isPresent()) {
+                log.debug("Signing in as {}", usernameLookupByEmail.get());
+                User user = artemisAuthenticationProvider.get().getOrCreateUser(new UsernamePasswordAuthenticationToken(usernameLookupByEmail.get(), ""), true);
 
                 return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
             }
@@ -276,16 +275,17 @@ public class LtiService {
             user.setGroups(groups);
             userRepository.save(user);
 
-            // try to sync with JIRA
-            try {
-                jiraAuthenticationProvider.get().addUserToGroup(user.getLogin(), courseGroup);
-            } catch (JiraException e) {
-            /*
-                This might throw exceptions, for example if the group does not exist on JIRA.
-                We can safely ignore them.
-            */
+            if (!user.getLogin().startsWith("edx")) {
+                // try to sync with authentication service for actual users (not for edx users)
+                try {
+                    artemisAuthenticationProvider.get().addUserToGroup(user.getLogin(), courseGroup);
+                } catch (ArtemisAuthenticationException e) {
+                /*
+                    This might throw exceptions, for example if the group does not exist on the authentication service.
+                    We can safely ignore them.
+                */
+                }
             }
-
         }
     }
 
