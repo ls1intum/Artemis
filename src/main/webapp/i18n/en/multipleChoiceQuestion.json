@@ -15,7 +15,8 @@
             "detail": {
                 "title": "Multiple Choice Question"
             },
-            "answerOptions": "Answer Options"
+            "answerOptions": "Answer Options",
+            "scoringType": "Type / Scoring"
         }
     }
 }

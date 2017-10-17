@@ -4,6 +4,22 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
+        <dt><span data-translate="artemisApp.exercise.title">Title</span></dt>
+        <dd>
+            <span>{{vm.modelingExercise.title}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.exercise.releaseDate">Release Date</span></dt>
+        <dd>
+            <span>{{vm.modelingExercise.releaseDate | date:'medium'}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.exercise.dueDate">Due Date</span></dt>
+        <dd>
+            <span>{{vm.modelingExercise.dueDate | date:'medium'}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.exercise.course">Course</span></dt>
+        <dd>
+            <a ui-sref="course-detail({id:vm.modelingExercise.course.id})">{{vm.modelingExercise.course.title}}</a>
+        </dd>
         <dt><span data-translate="artemisApp.modelingExercise.baseFilePath">Base File Path</span></dt>
         <dd>
             <span>{{vm.modelingExercise.baseFilePath}}</span>

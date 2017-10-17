@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ResultDialogController', ResultDialogController);
 
-    ResultDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'Result', 'Submission', 'Participation'];
+    ResultDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'Result', 'Submission', 'Feedback', 'Participation'];
 
-    function ResultDialogController ($timeout, $scope, $stateParams, $uibModalInstance, $q, entity, Result, Submission, Participation) {
+    function ResultDialogController ($timeout, $scope, $stateParams, $uibModalInstance, $q, entity, Result, Submission, Feedback, Participation) {
         var vm = this;
 
         vm.result = entity;
@@ -24,6 +24,7 @@
         }).then(function(submission) {
             vm.submissions.push(submission);
         });
+        vm.feedbacks = Feedback.query();
         vm.participations = Participation.query();
 
         $timeout(function (){

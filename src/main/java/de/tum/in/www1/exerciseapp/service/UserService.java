@@ -289,15 +289,12 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public User getUser() {
-        User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
-        return user;
+        return userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
     }
 
     @Transactional(readOnly = true)
     public Optional<User> getUserByLogin(String login) {
-        return userRepository.findOneByLogin(login).map(user -> {
-            return user;
-        });
+        return userRepository.findOneByLogin(login);
     }
 
     @Transactional(readOnly = true)

@@ -40,14 +40,14 @@ public class AnswerOptionResourceIntTest {
     private static final String DEFAULT_TEXT = "AAAAAAAAAA";
     private static final String UPDATED_TEXT = "BBBBBBBBBB";
 
+    private static final String DEFAULT_HINT = "AAAAAAAAAA";
+    private static final String UPDATED_HINT = "BBBBBBBBBB";
+
+    private static final String DEFAULT_EXPLANATION = "AAAAAAAAAA";
+    private static final String UPDATED_EXPLANATION = "BBBBBBBBBB";
+
     private static final Boolean DEFAULT_IS_CORRECT = false;
     private static final Boolean UPDATED_IS_CORRECT = true;
-
-    private static final Integer DEFAULT_CORRECT_SCORE = 1;
-    private static final Integer UPDATED_CORRECT_SCORE = 2;
-
-    private static final Integer DEFAULT_INCORRECT_SCORE = 1;
-    private static final Integer UPDATED_INCORRECT_SCORE = 2;
 
     @Autowired
     private AnswerOptionRepository answerOptionRepository;
@@ -71,7 +71,7 @@ public class AnswerOptionResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final AnswerOptionResource answerOptionResource = new AnswerOptionResource(answerOptionRepository);
+        AnswerOptionResource answerOptionResource = new AnswerOptionResource(answerOptionRepository);
         this.restAnswerOptionMockMvc = MockMvcBuilders.standaloneSetup(answerOptionResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -87,9 +87,9 @@ public class AnswerOptionResourceIntTest {
     public static AnswerOption createEntity(EntityManager em) {
         AnswerOption answerOption = new AnswerOption()
             .text(DEFAULT_TEXT)
-            .isCorrect(DEFAULT_IS_CORRECT)
-            .correctScore(DEFAULT_CORRECT_SCORE)
-            .incorrectScore(DEFAULT_INCORRECT_SCORE);
+            .hint(DEFAULT_HINT)
+            .explanation(DEFAULT_EXPLANATION)
+            .isCorrect(DEFAULT_IS_CORRECT);
         return answerOption;
     }
 
@@ -114,9 +114,9 @@ public class AnswerOptionResourceIntTest {
         assertThat(answerOptionList).hasSize(databaseSizeBeforeCreate + 1);
         AnswerOption testAnswerOption = answerOptionList.get(answerOptionList.size() - 1);
         assertThat(testAnswerOption.getText()).isEqualTo(DEFAULT_TEXT);
+        assertThat(testAnswerOption.getHint()).isEqualTo(DEFAULT_HINT);
+        assertThat(testAnswerOption.getExplanation()).isEqualTo(DEFAULT_EXPLANATION);
         assertThat(testAnswerOption.isIsCorrect()).isEqualTo(DEFAULT_IS_CORRECT);
-        assertThat(testAnswerOption.getCorrectScore()).isEqualTo(DEFAULT_CORRECT_SCORE);
-        assertThat(testAnswerOption.getIncorrectScore()).isEqualTo(DEFAULT_INCORRECT_SCORE);
     }
 
     @Test
@@ -150,9 +150,9 @@ public class AnswerOptionResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(answerOption.getId().intValue())))
             .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())))
-            .andExpect(jsonPath("$.[*].isCorrect").value(hasItem(DEFAULT_IS_CORRECT.booleanValue())))
-            .andExpect(jsonPath("$.[*].correctScore").value(hasItem(DEFAULT_CORRECT_SCORE)))
-            .andExpect(jsonPath("$.[*].incorrectScore").value(hasItem(DEFAULT_INCORRECT_SCORE)));
+            .andExpect(jsonPath("$.[*].hint").value(hasItem(DEFAULT_HINT.toString())))
+            .andExpect(jsonPath("$.[*].explanation").value(hasItem(DEFAULT_EXPLANATION.toString())))
+            .andExpect(jsonPath("$.[*].isCorrect").value(hasItem(DEFAULT_IS_CORRECT.booleanValue())));
     }
 
     @Test
@@ -167,9 +167,9 @@ public class AnswerOptionResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(answerOption.getId().intValue()))
             .andExpect(jsonPath("$.text").value(DEFAULT_TEXT.toString()))
-            .andExpect(jsonPath("$.isCorrect").value(DEFAULT_IS_CORRECT.booleanValue()))
-            .andExpect(jsonPath("$.correctScore").value(DEFAULT_CORRECT_SCORE))
-            .andExpect(jsonPath("$.incorrectScore").value(DEFAULT_INCORRECT_SCORE));
+            .andExpect(jsonPath("$.hint").value(DEFAULT_HINT.toString()))
+            .andExpect(jsonPath("$.explanation").value(DEFAULT_EXPLANATION.toString()))
+            .andExpect(jsonPath("$.isCorrect").value(DEFAULT_IS_CORRECT.booleanValue()));
     }
 
     @Test
@@ -191,9 +191,9 @@ public class AnswerOptionResourceIntTest {
         AnswerOption updatedAnswerOption = answerOptionRepository.findOne(answerOption.getId());
         updatedAnswerOption
             .text(UPDATED_TEXT)
-            .isCorrect(UPDATED_IS_CORRECT)
-            .correctScore(UPDATED_CORRECT_SCORE)
-            .incorrectScore(UPDATED_INCORRECT_SCORE);
+            .hint(UPDATED_HINT)
+            .explanation(UPDATED_EXPLANATION)
+            .isCorrect(UPDATED_IS_CORRECT);
 
         restAnswerOptionMockMvc.perform(put("/api/answer-options")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -205,9 +205,9 @@ public class AnswerOptionResourceIntTest {
         assertThat(answerOptionList).hasSize(databaseSizeBeforeUpdate);
         AnswerOption testAnswerOption = answerOptionList.get(answerOptionList.size() - 1);
         assertThat(testAnswerOption.getText()).isEqualTo(UPDATED_TEXT);
+        assertThat(testAnswerOption.getHint()).isEqualTo(UPDATED_HINT);
+        assertThat(testAnswerOption.getExplanation()).isEqualTo(UPDATED_EXPLANATION);
         assertThat(testAnswerOption.isIsCorrect()).isEqualTo(UPDATED_IS_CORRECT);
-        assertThat(testAnswerOption.getCorrectScore()).isEqualTo(UPDATED_CORRECT_SCORE);
-        assertThat(testAnswerOption.getIncorrectScore()).isEqualTo(UPDATED_INCORRECT_SCORE);
     }
 
     @Test

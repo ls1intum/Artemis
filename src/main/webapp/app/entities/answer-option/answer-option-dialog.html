@@ -14,31 +14,31 @@
                     ng-model="vm.answerOption.id" readonly />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="artemisApp.answerOption.text" for="field_text">Text</label>
+            <label class="control-label" data-translate="arTeMiSApp.answerOption.text" for="field_text">Text</label>
             <input type="text" class="form-control" name="text" id="field_text"
                     ng-model="vm.answerOption.text"
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="artemisApp.answerOption.isCorrect" for="field_isCorrect">Is Correct</label>
+            <label class="control-label" data-translate="arTeMiSApp.answerOption.hint" for="field_hint">Hint</label>
+            <input type="text" class="form-control" name="hint" id="field_hint"
+                    ng-model="vm.answerOption.hint"
+                    />
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.answerOption.explanation" for="field_explanation">Explanation</label>
+            <input type="text" class="form-control" name="explanation" id="field_explanation"
+                    ng-model="vm.answerOption.explanation"
+                    />
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.answerOption.isCorrect" for="field_isCorrect">Is Correct</label>
                 <input type="checkbox" name="isCorrect" id="field_isCorrect"
                           ng-model="vm.answerOption.isCorrect"/>
         </div>
-        <div class="form-group">
-            <label class="control-label" data-translate="artemisApp.answerOption.correctScore" for="field_correctScore">Correct Score</label>
-            <input type="number" class="form-control" name="correctScore" id="field_correctScore"
-                    ng-model="vm.answerOption.correctScore"
-                    />
-        </div>
-        <div class="form-group">
-            <label class="control-label" data-translate="artemisApp.answerOption.incorrectScore" for="field_incorrectScore">Incorrect Score</label>
-            <input type="number" class="form-control" name="incorrectScore" id="field_incorrectScore"
-                    ng-model="vm.answerOption.incorrectScore"
-                    />
-        </div>
 
         <div class="form-group">
-            <label data-translate="artemisApp.answerOption.question" for="field_question">Question</label>
+            <label data-translate="arTeMiSApp.answerOption.question" for="field_question">Question</label>
             <select class="form-control" id="field_question" name="question" ng-model="vm.answerOption.question" ng-options="multipleChoiceQuestion as multipleChoiceQuestion.id for multipleChoiceQuestion in vm.multiplechoicequestions track by multipleChoiceQuestion.id">
                 <option value=""></option>
             </select>

@@ -62,16 +62,16 @@ public class LtiService {
     @Value("${artemis.lti.user-group-name}")
     private String USER_GROUP_NAME = "lti";
 
-    private UserService userService;
-    private UserRepository userRepository;
-    private LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
-    private ResultRepository resultRepository;
-    private PasswordEncoder passwordEncoder;
-    private Optional<JiraAuthenticationProvider> jiraAuthenticationProvider;
-    private LtiUserIdRepository ltiUserIdRepository;
-    private HttpServletResponse response;
+    private final UserService userService;
+    private final UserRepository userRepository;
+    private final LtiOutcomeUrlRepository ltiOutcomeUrlRepository;
+    private final ResultRepository resultRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final Optional<JiraAuthenticationProvider> jiraAuthenticationProvider;
+    private final LtiUserIdRepository ltiUserIdRepository;
+    private final HttpServletResponse response;
 
-    public HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
+    public final HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
     public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository, PasswordEncoder passwordEncoder, Optional<JiraAuthenticationProvider> jiraAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
         this.userService = userService;
@@ -184,24 +184,16 @@ public class LtiService {
 
 
         if (SecurityUtils.isAuthenticated()) {
-            /**
-             * 1. Case:
-             * User is already signed in. We are done here.
-             *
-             */
+            //1. Case: User is already signed in. We are done here.
             return Optional.of(auth);
         }
 
 
-        /**
-         * If the LTI launch is used from edX studio, edX sends dummy data. (id="student")
-         * Catch this case here.
-         */
+        //If the LTI launch is used from edX studio, edX sends dummy data. (id="student")
+        //Catch this case here.
         if(launchRequest.getUser_id().equals("student")) {
             throw new InternalAuthenticationServiceException("Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.");
         }
-
-
 
         String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
         String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
@@ -211,26 +203,17 @@ public class LtiService {
         Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id());
 
         if(ltiUserId.isPresent()) {
-            /*
-             * 2. Case:
-             * Existing mapping for LTI user id
-             *
-             */
+            //2. Case:Existing mapping for LTI user id
             User user = ltiUserId.get().getUser();
             // Authenticate
-            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
         }
 
 
         // Check if lookup by email is enabled
-        if (launchRequest.getCustom_lookup_user_by_email() == true) {
+        if (launchRequest.getCustom_lookup_user_by_email()) {
 
-            /*
-             * 3. Case:
-             * Lookup JIRA user with the LTI email address.
-             * Sign in as this user.
-             *
-             */
+            //3. Case: Lookup JIRA user with the LTI email address. Sign in as this user.
 
             // check if an JIRA user with this email address exists
             Optional<String> jiraLookupByEmail = jiraAuthenticationProvider.get().getUsernameForEmail(email);
@@ -240,24 +223,18 @@ public class LtiService {
                 log.debug("Signing in as {}", jiraLookupByEmail.get());
                 User user = jiraAuthenticationProvider.get().getOrCreateUser(new UsernamePasswordAuthenticationToken(jiraLookupByEmail.get(), ""), true);
 
-                return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+                return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
             }
         }
         // Check if an existing user is required
-        if (launchRequest.getCustom_require_existing_user() == false) {
+        if (!launchRequest.getCustom_require_existing_user()) {
 
-            /*
-             * 4. Case:
-             * Create new user
-             *
-             */
-
-
+            //4. Case: Create new user
             User user = userRepository.findOneByLogin(username).orElseGet(() -> {
                 User newUser = userService.createUser(username, "", USER_GROUP_NAME, fullname, email, null, "en");
 
                 // add user to LTI group
-                newUser.setGroups(new ArrayList<>(Arrays.asList(USER_GROUP_NAME)));
+                newUser.setGroups(new ArrayList<>(Collections.singletonList(USER_GROUP_NAME)));
 
                 // set random password
                 String randomEncryptedPassword = passwordEncoder.encode(RandomUtil.generatePassword());
@@ -276,7 +253,7 @@ public class LtiService {
             }
 
             log.debug("Signing in as {}", username);
-            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Arrays.asList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
+            return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
 
         }
 
@@ -394,7 +371,7 @@ public class LtiService {
         // Get the LTI outcome URL
         Optional<LtiOutcomeUrl> ltiOutcomeUrl = ltiOutcomeUrlRepository.findByUserAndExercise(participation.getStudent(), participation.getExercise());
 
-        if (ltiOutcomeUrl.isPresent()) {
+        ltiOutcomeUrl.ifPresent(ltiOutcomeUrl1 -> {
 
             String score = "0.00";
 
@@ -411,7 +388,7 @@ public class LtiService {
 
             try {
                 // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
-                HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl.get().getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl.get().getSourcedId(), score, null, false);
+                HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl1.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl1.getSourcedId(), score, null, false);
                 HttpClient client = HttpClientBuilder.create().build();
                 HttpResponse response = client.execute(request);
                 String responseString = new BasicResponseHandler().handleResponse(response);
@@ -425,7 +402,7 @@ public class LtiService {
             }
 
 
-        }
+        });
 
     }
 

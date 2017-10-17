@@ -1,0 +1,12 @@
+{
+    "artemisApp": {
+        "instructorDashboard": {
+            "buildPlans": {
+                "delete": {
+                    "title": "Build Pläne löschen",
+                    "question": "Sollen wirklich alle Studierenden Build Pläne für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} dauerhaft gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden!"
+                }
+            }
+        }
+    }
+}

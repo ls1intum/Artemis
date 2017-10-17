@@ -67,7 +67,7 @@ class AnswerOptionGatlingTest extends Simulation {
             .exec(http("Create new answerOption")
             .post("/api/answer-options")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "text":"SAMPLE_TEXT", "isCorrect":null, "correctScore":"0", "incorrectScore":"0"}""")).asJSON
+            .body(StringBody("""{"id":null, "text":"SAMPLE_TEXT", "hint":"SAMPLE_TEXT", "explanation":"SAMPLE_TEXT", "isCorrect":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_answerOption_url"))).exitHereIfFailed
             .pause(10)

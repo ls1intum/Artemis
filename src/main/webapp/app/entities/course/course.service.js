@@ -60,6 +60,20 @@
                     return data;
                 },
                 ignoreLoadingBar: true
+            },
+            'resume': {
+                url: resourceUrl + '/resume-participation',
+                method: 'PUT',
+                transformResponse: function(data) {
+                    data = angular.fromJson(data);
+                    if(data.exercise) {
+                        var exercise = data.exercise;
+                        delete(data.exercise);
+                        exercise.participation = data;
+                        return exercise;
+                    }
+                    return data;
+                }
             }
         });
     }

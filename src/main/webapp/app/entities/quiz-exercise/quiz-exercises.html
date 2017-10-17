@@ -32,7 +32,14 @@
                     <td>{{quizExercise.title}}</td>
                     <td>{{vm.statusForQuiz(quizExercise)}}</td>
                     <td>{{quizExercise.isPlannedToStart ? (quizExercise.releaseDate | date:'medium') : "-"}}</td>
-                    <td>{{quizExercise.duration}} <span data-translate="artemisApp.quizExercise.durationUnit"></span></td>
+                    <td>
+                        {{vm.fullMinutesForSeconds(quizExercise.duration)}}
+                        <span data-translate="{{quizExercise.duration % 60 ? 'artemisApp.quizExercise.minutesShort' : 'artemisApp.quizExercise.minutes'}}"></span>
+                        <span ng-if="quizExercise.duration % 60">
+                            {{quizExercise.duration % 60}}
+                            <span data-translate="artemisApp.quizExercise.secondsShort"></span>
+                        </span>
+                    </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"

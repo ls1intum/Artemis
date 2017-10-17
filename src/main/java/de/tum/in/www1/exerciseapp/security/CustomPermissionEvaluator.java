@@ -27,8 +27,8 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
     @Lazy
     private final ParticipationService participationService;
 
-    private GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-    private GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+    private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
+    private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
     public CustomPermissionEvaluator(@Lazy ParticipationService participationService) {
         this.participationService = participationService;

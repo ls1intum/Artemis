@@ -17,6 +17,7 @@
         vm.reverse = true;
         vm.course = courseEntity;
         vm.statusForQuiz = statusForQuiz;
+        vm.fullMinutesForSeconds = fullMinutesForSeconds;
 
         function load() {
             if (vm.course) {
@@ -71,6 +72,15 @@
             }
             // the quiz hasn't started yet
             return quizExercise.isVisibleBeforeStart ? "Visible" : "Hidden";
+        }
+
+        /**
+         * Convert seconds to full minutes
+         * @param seconds {number} the number of seconds
+         * @returns {number} the number of full minutes
+         */
+        function fullMinutesForSeconds(seconds) {
+            return Math.floor(seconds / 60);
         }
     }
 })();

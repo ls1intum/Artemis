@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -24,19 +25,19 @@ public class AnswerOption implements Serializable {
     @Column(name = "text")
     private String text;
 
+    @Column(name = "hint")
+    private String hint;
+
+    @Column(name = "explanation")
+    private String explanation;
+
     @Column(name = "is_correct")
     private Boolean isCorrect;
 
-    @Column(name = "correct_score")
-    private Integer correctScore;
-
-    @Column(name = "incorrect_score")
-    private Integer incorrectScore;
-
     @ManyToOne
+    @JsonIgnore
     private MultipleChoiceQuestion question;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -58,6 +59,32 @@ public class AnswerOption implements Serializable {
         this.text = text;
     }
 
+    public String getHint() {
+        return hint;
+    }
+
+    public AnswerOption hint(String hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    public void setHint(String hint) {
+        this.hint = hint;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
+
+    public AnswerOption explanation(String explanation) {
+        this.explanation = explanation;
+        return this;
+    }
+
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
+    }
+
     public Boolean isIsCorrect() {
         return isCorrect;
     }
@@ -69,32 +96,6 @@ public class AnswerOption implements Serializable {
 
     public void setIsCorrect(Boolean isCorrect) {
         this.isCorrect = isCorrect;
-    }
-
-    public Integer getCorrectScore() {
-        return correctScore;
-    }
-
-    public AnswerOption correctScore(Integer correctScore) {
-        this.correctScore = correctScore;
-        return this;
-    }
-
-    public void setCorrectScore(Integer correctScore) {
-        this.correctScore = correctScore;
-    }
-
-    public Integer getIncorrectScore() {
-        return incorrectScore;
-    }
-
-    public AnswerOption incorrectScore(Integer incorrectScore) {
-        this.incorrectScore = incorrectScore;
-        return this;
-    }
-
-    public void setIncorrectScore(Integer incorrectScore) {
-        this.incorrectScore = incorrectScore;
     }
 
     public MultipleChoiceQuestion getQuestion() {
@@ -109,7 +110,6 @@ public class AnswerOption implements Serializable {
     public void setQuestion(MultipleChoiceQuestion multipleChoiceQuestion) {
         this.question = multipleChoiceQuestion;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -136,9 +136,9 @@ public class AnswerOption implements Serializable {
         return "AnswerOption{" +
             "id=" + getId() +
             ", text='" + getText() + "'" +
+            ", hint='" + getHint() + "'" +
+            ", explanation='" + getExplanation() + "'" +
             ", isCorrect='" + isIsCorrect() + "'" +
-            ", correctScore='" + getCorrectScore() + "'" +
-            ", incorrectScore='" + getIncorrectScore() + "'" +
             "}";
     }
 }

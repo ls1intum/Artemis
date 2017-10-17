@@ -20,7 +20,8 @@
             "teachingAssistantGroupName": "Teaching Assistant Group Name",
             "exercises": "Exercises",
             "programmingExercises": "Programming Exercises",
-            "quizExercises": "Quiz Exercises"
+            "quizExercises": "Quiz Exercises (Beta)",
+            "modelingExercises": "Modeling Exercises (Beta)"
         }
     }
 }

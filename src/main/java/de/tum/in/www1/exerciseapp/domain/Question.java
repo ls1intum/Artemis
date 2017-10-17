@@ -1,11 +1,16 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
+
+import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
 
 /**
  * A Question.
@@ -19,6 +24,11 @@ import java.util.Objects;
 )
 @DiscriminatorValue(value="Q")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, property="type")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value=MultipleChoiceQuestion.class, name="multiple-choice"),
+    @JsonSubTypes.Type(value=DragAndDropQuestion.class, name="drag-and-drop")
+})
 public abstract class Question implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -33,16 +43,26 @@ public abstract class Question implements Serializable {
     @Column(name = "text")
     private String text;
 
-    @Column(name = "max_score")
-    private Integer maxScore;
+    @Column(name = "hint")
+    private String hint;
 
-    @Column(name = "min_score")
-    private Integer minScore;
+    @Column(name = "explanation")
+    private String explanation;
+
+    @Column(name = "score")
+    private Integer score;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "scoring_type")
+    private ScoringType scoringType;
+
+    @Column(name = "randomize_order")
+    private Boolean randomizeOrder;
 
     @ManyToOne
+    @JsonIgnore
     private QuizExercise exercise;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -77,30 +97,69 @@ public abstract class Question implements Serializable {
         this.text = text;
     }
 
-    public Integer getMaxScore() {
-        return maxScore;
+    public String getHint() {
+        return hint;
     }
 
-    public Question maxScore(Integer maxScore) {
-        this.maxScore = maxScore;
+    public Question hint(String hint) {
+        this.hint = hint;
         return this;
     }
 
-    public void setMaxScore(Integer maxScore) {
-        this.maxScore = maxScore;
+    public void setHint(String hint) {
+        this.hint = hint;
     }
 
-    public Integer getMinScore() {
-        return minScore;
+    public String getExplanation() {
+        return explanation;
     }
 
-    public Question minScore(Integer minScore) {
-        this.minScore = minScore;
+    public Question explanation(String explanation) {
+        this.explanation = explanation;
         return this;
     }
 
-    public void setMinScore(Integer minScore) {
-        this.minScore = minScore;
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
+    }
+
+    public Integer getScore() {
+        return score;
+    }
+
+    public Question score(Integer score) {
+        this.score = score;
+        return this;
+    }
+
+    public void setScore(Integer score) {
+        this.score = score;
+    }
+
+    public ScoringType getScoringType() {
+        return scoringType;
+    }
+
+    public Question scoringType(ScoringType scoringType) {
+        this.scoringType = scoringType;
+        return this;
+    }
+
+    public void setScoringType(ScoringType scoringType) {
+        this.scoringType = scoringType;
+    }
+
+    public Boolean isRandomizeOrder() {
+        return randomizeOrder;
+    }
+
+    public Question randomizeOrder(Boolean randomizeOrder) {
+        this.randomizeOrder = randomizeOrder;
+        return this;
+    }
+
+    public void setRandomizeOrder(Boolean randomizeOrder) {
+        this.randomizeOrder = randomizeOrder;
     }
 
     public QuizExercise getExercise() {
@@ -115,7 +174,6 @@ public abstract class Question implements Serializable {
     public void setExercise(QuizExercise quizExercise) {
         this.exercise = quizExercise;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -143,8 +201,11 @@ public abstract class Question implements Serializable {
             "id=" + getId() +
             ", title='" + getTitle() + "'" +
             ", text='" + getText() + "'" +
-            ", maxScore='" + getMaxScore() + "'" +
-            ", minScore='" + getMinScore() + "'" +
+            ", hint='" + getHint() + "'" +
+            ", explanation='" + getExplanation() + "'" +
+            ", score='" + getScore() + "'" +
+            ", scoringType='" + getScoringType() + "'" +
+            ", randomizeOrder='" + isRandomizeOrder() + "'" +
             "}";
     }
 }

@@ -68,9 +68,7 @@ public class ResultResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new result cannot already have an ID")).body(null);
         }
         Result savedResult = resultRepository.save(result);
-        if(ltiService.isPresent()) {
-            ltiService.get().onNewBuildResult(savedResult.getParticipation());
-        }
+        ltiService.ifPresent(ltiService -> ltiService.onNewBuildResult(savedResult.getParticipation()));
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
@@ -168,8 +166,8 @@ public class ResultResource {
                 results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
             } else {
                 results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId)
-                .map(result -> Arrays.asList(result))
-                .orElse(new ArrayList<Result>());
+                .map(Arrays::asList)
+                .orElse(new ArrayList<>());
             }
         }
         return results;
@@ -196,17 +194,15 @@ public class ResultResource {
             results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
         }
 
-        /**
-         *  Each object array in the list contains two Long values, participation id (index 0) and
-         *  number of results for this participation (index 1)
-         */
+
+        //Each object array in the list contains two Long values, participation id (index 0) and
+        //number of results for this participation (index 1)
+
         List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
 
-        /**
-         *  Matches each result with the number of results in corresponding participation
-         */
-        results.stream().forEach(result ->
-                submissionCounts.stream().forEach(submissionCount -> {
+        //Matches each result with the number of results in corresponding participation
+        results.forEach(result ->
+                submissionCounts.forEach(submissionCount -> {
                     if (result.getParticipation().getId().equals(submissionCount[0])) {
                         result.setSubmissionCount((Long) submissionCount[1]);
                     }

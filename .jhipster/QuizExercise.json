@@ -10,6 +10,22 @@
     ],
     "fields": [
         {
+            "fieldName": "description",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "explanation",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "randomizeQuestionOrder",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "allowedNumberOfAttempts",
+            "fieldType": "Integer"
+        },
+        {
             "fieldName": "isVisibleBeforeStart",
             "fieldType": "Boolean"
         },

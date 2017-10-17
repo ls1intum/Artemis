@@ -1,0 +1,26 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "result",
+            "otherEntityName": "result",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "text",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "detailText",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20170930120856",
+    "entityTableName": "feedback",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

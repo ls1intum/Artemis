@@ -45,7 +45,7 @@ public class GitService {
     private String GIT_EMAIL;
 
 
-    private HashMap<Path, Repository> cachedRepositories = new HashMap<>();
+    private final HashMap<Path, Repository> cachedRepositories = new HashMap<>();
 
 
     /**
@@ -198,11 +198,8 @@ public class GitService {
         // Makes sure the requested file is part of the scanned list of files.
         // Ensures that it is not possible to do bad things like filename="../../passwd"
 
-        Iterator<File> itr = listFiles(repo).iterator();
-
-        while (itr.hasNext()) {
-            File file = itr.next();
-            if(file.toString().equals(filename)) {
+        for (File file : listFiles(repo)) {
+            if (file.toString().equals(filename)) {
                 return Optional.of(file);
             }
         }
@@ -255,16 +252,13 @@ public class GitService {
         }
     }
 
-
-
     /**
      * Generates the unique local folder name for a given remote repository URL.
      *
      * @param repoUrl URL of the remote repository.
      * @return
-     * @throws MalformedURLException
      */
-    public String folderNameForRepositoryUrl(URL repoUrl) throws MalformedURLException {
+    public String folderNameForRepositoryUrl(URL repoUrl) {
         String path = repoUrl.getPath();
         path = path.replaceAll(".git$", "");
         path = path.replaceAll("/$", "");
@@ -272,6 +266,4 @@ public class GitService {
         path = path.replaceAll("^scm/", "");
         return path;
     }
-
-
 }

@@ -4,8 +4,6 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,19 +60,8 @@ public class CourseService {
                 || (user.getAuthorities().contains(taAuthority) && c.getTitle().equals("Archive"))
                 || user.getAuthorities().contains(adminAuthority)
         );
-        return userCourses.collect(Collectors.toList());
-    }
-
-    /**
-     * Get all the courses.
-     *
-     * @param pageable the pagination information
-     * @return the list of entities
-     */
-    @Transactional(readOnly = true)
-    public Page<Course> findAll(Pageable pageable) {
-        log.debug("Request to get all Courses");
-        return courseRepository.findAll(pageable);
+        List<Course> userAuthorizedCourses = userCourses.collect(Collectors.toList());
+        return userAuthorizedCourses;
     }
 
     /**
@@ -101,7 +88,7 @@ public class CourseService {
 
     public List<String> getAllTeachingAssistantGroupNames() {
         List<Course> courses = courseRepository.findAll();
-        return courses.stream().map(c -> c.getTeachingAssistantGroupName()).collect(Collectors.toList());
+        return courses.stream().map(Course::getTeachingAssistantGroupName).collect(Collectors.toList());
     }
 
     /**
@@ -156,7 +143,7 @@ public class CourseService {
      */
     @Transactional(readOnly = true)
     public Result choseResultInParticipation(Participation participation, boolean hasDueDate) {
-        List<Result> results = new ArrayList<Result>(participation.getResults());
+        List<Result> results = new ArrayList<>(participation.getResults());
 
         Result chosenResult;
         //edge case of no result submitted to a participation
