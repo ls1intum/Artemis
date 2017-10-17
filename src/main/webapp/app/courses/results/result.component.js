@@ -68,7 +68,6 @@
             });
         }
 
-
         function buildResultString(result) {
             if (result.resultString === 'No tests found') {
                 return 'Build failed';
