@@ -324,17 +324,10 @@ public class BambooService implements ContinuousIntegrationService {
     /**
      * Converts build result details into feedback and stores it in the result object
      * @param
-     * @param buildResultDetails returned build result details from the rest api of bamboo
+     * @param buildResultDetails returned build result details from the rest API of bamboo
      *
      * @return a Set of feedbacks stored in a result
      */
-    /*
-    * Uses the retreiveLatestBuildResultDetails in order to create feebacks from the error to give the user preciser error messages
-    *
-    *@param buildResultDetails returned build result details from the rest api of bamboo
-    *
-    * @return a Set of feedbacks which can directly be stored int a result
-    */
     public Set<Feedback> addFeedbackToResult(Result result, Map<String, Object> buildResultDetails) {
         if(buildResultDetails == null) {
             return null;
@@ -345,7 +338,7 @@ public class BambooService implements ContinuousIntegrationService {
         try {
             List<Map<String, Object>> details = (List<Map<String, Object>>)buildResultDetails.get("details");
 
-            //breaking down the original JSON file o get all the relevant details
+            //breaking down the Bamboo API answer to get all the relevant details
             for(Map<String, Object> detail : details) {
                 String className = (String)detail.get("className");
                 String methodName = (String)detail.get("methodName");
@@ -395,12 +388,9 @@ public class BambooService implements ContinuousIntegrationService {
                 float score = (totalTests - failedTests) / totalTests;
                 return (long) (score * 100);
             }
-
         }
-
         return (long) 0;
     }
-
 
     /**
      * Performs a request to the Bamboo REST API to retrive the latest result for the given plan.
