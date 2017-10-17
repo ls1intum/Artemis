@@ -2,18 +2,19 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Feedback;
-
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
+import de.tum.in.www1.exerciseapp.service.FeedbackService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ import java.util.Optional;
  */
 @RestController
 @RequestMapping("/api")
+@Transactional
 public class FeedbackResource {
 
     private final Logger log = LoggerFactory.getLogger(FeedbackResource.class);
@@ -29,9 +31,15 @@ public class FeedbackResource {
     private static final String ENTITY_NAME = "feedback";
 
     private final FeedbackRepository feedbackRepository;
+    private final ResultRepository resultRepository;
 
-    public FeedbackResource(FeedbackRepository feedbackRepository) {
+    private final FeedbackService feedbackService;
+
+    public FeedbackResource(FeedbackRepository feedbackRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
         this.feedbackRepository = feedbackRepository;
+        this.resultRepository = resultRepository;
+
+        this.feedbackService = feedbackService;
     }
 
     /**
@@ -115,4 +123,5 @@ public class FeedbackResource {
         feedbackRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
+
 }

@@ -6,11 +6,9 @@
 <div class="modal-body" id="result-detail-body" style="position: relative;" ng-switch on="$ctrl.loading">
     <div class="text-muted" id="result-detail-spinner" ng-switch-when="true"><i
         class="fa fa-circle-o-notch fa-lg fa-spin "></i></div>
-    <div ng-switch-when="false" ng-repeat="detail in $ctrl.details track by $index" ng-init="lastDetail = $last">
-        <p>Error in method <code>{{detail.methodName}}</code>:</p>
-        <div ng-repeat="error in detail.errors.error">
-            <pre ng-bind="error.message.split('\n')[0]"></pre>
-        </div>
+    <div ng-switch-when="false" ng-repeat="feedback in $ctrl.details track by $index" ng-init="lastDetail = $last">
+        <p>Error in method <code-error>{{feedback.text}}</code-error>:</p>
+        <pre ng-bind="feedback.detailText"></pre>
         <hr ng-if="!lastDetail">
     </div>
     <div ng-switch-when="false" ng-if="$ctrl.details.length == 0">

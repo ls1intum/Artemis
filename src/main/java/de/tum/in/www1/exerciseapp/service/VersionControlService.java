@@ -9,13 +9,13 @@ import java.net.URL;
  */
 public interface VersionControlService {
 
-    URL copyRepository(URL baseRepositoryUrl, String username);
+    public URL copyRepository(URL baseRepositoryUrl, String username);
 
-    void configureRepository(URL repositoryUrl, String username);
+    public void configureRepository(URL repositoryUrl, String username);
 
-    void deleteRepository(URL repositoryUrl);
+    public void deleteRepository(URL repositoryUrl);
 
-    URL getRepositoryWebUrl(Participation participation);
+    public URL getRepositoryWebUrl(Participation participation);
 
     /**
      * Check if the given repository url is valid and accessible.
@@ -23,6 +23,5 @@ public interface VersionControlService {
      * @param repositoryUrl   repository URL
      * @return
      */
-    Boolean repositoryUrlIsValid(URL repositoryUrl);
-
+    public Boolean repositoryUrlIsValid(URL repositoryUrl);
 }

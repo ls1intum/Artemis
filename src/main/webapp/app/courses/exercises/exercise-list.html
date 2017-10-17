@@ -32,8 +32,9 @@
                   tooltip-placement="right"></span>
         </td>
         <td>
-            <span class="text-muted" ng-switch-when="false">You have not started this exercise yet.</span>
-            <span ng-switch-when="true"><result participation="exercise.participation"></result></span>
+            <span class="text-muted" ng-switch-when="uninitialized">You have not started this exercise yet.</span>
+            <span ng-switch-when="initialized"><result participation="exercise.participation"></result></span>
+            <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
         </td>
         <td class="text-center">
             <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"

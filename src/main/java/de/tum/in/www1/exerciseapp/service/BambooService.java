@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.service;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
+import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -62,10 +63,12 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final GitService gitService;
     private final ResultRepository resultRepository;
+    private final FeedbackRepository feedbackRepository;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository) {
+    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
+        this.feedbackRepository = feedbackRepository;
     }
 
     private BambooClient getBambooClient() {
@@ -135,16 +138,20 @@ public class BambooService implements ContinuousIntegrationService {
         Map<String, Boolean> status = retrieveBuildStatus(participation.getBuildPlanId());
         if (status.get("isActive") && !status.get("isBuilding")) {
             return BuildStatus.QUEUED;
-        } else if (status.get("isActive") && status.get("isBuilding")) {
+        }
+        else if (status.get("isActive") && status.get("isBuilding")) {
             return BuildStatus.BUILDING;
-        } else {
+        }
+        else {
             return BuildStatus.INACTIVE;
         }
     }
 
     @Override
-    public Map<String, Object> getLatestBuildResultDetails(Participation participation) {
-        return retrieveLatestBuildResultDetails(participation.getBuildPlanId());
+    public Set<Feedback> getLatestBuildResultDetails(Result result) {
+        Map<String, Object> buildResultDetails = retrieveLatestBuildResultDetails(result.getParticipation().getBuildPlanId());
+        addFeedbackToResult(result, buildResultDetails);
+        return result.getFeedbacks();
     }
 
     @Override
@@ -271,8 +278,6 @@ public class BambooService implements ContinuousIntegrationService {
      *
      * @param participation
      */
-
-    //ToDo configure saving of the feedback
     @Override
     public void onBuildCompleted(Participation participation) {
         log.info("Retrieving build result...");
@@ -290,7 +295,7 @@ public class BambooService implements ContinuousIntegrationService {
             try {
                 Thread.sleep(RESULT_RETRIEVAL_DELAY);
             } catch (InterruptedException e) {
-                e.printStackTrace();
+                log.error("Sleep error", e);
             }
             log.info("Retrieving build result (second try)...");
             buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
@@ -303,9 +308,63 @@ public class BambooService implements ContinuousIntegrationService {
         result.setScore(calculateScoreForResult(result));
         result.setBuildArtifact(buildResults.containsKey("artifact"));
         result.setParticipation(participation);
+
+        Map buildResultDetails = retrieveLatestBuildResultDetails(participation.getBuildPlanId());
+        if (result.getFeedbacks() != null && result.getFeedbacks().size() > 0) {
+            //cleanup
+            for(Feedback feedback : new ArrayList<Feedback>(result.getFeedbacks())) {
+                result.removeFeedbacks(feedback);
+                feedbackRepository.delete(feedback);
+            }
+        }
+        addFeedbackToResult(result, buildResultDetails);
         resultRepository.save(result);
     }
-    
+
+    /**
+     * Converts build result details into feedback and stores it in the result object
+     * @param
+     * @param buildResultDetails returned build result details from the rest API of bamboo
+     *
+     * @return a Set of feedbacks stored in a result
+     */
+    public Set<Feedback> addFeedbackToResult(Result result, Map<String, Object> buildResultDetails) {
+        if(buildResultDetails == null) {
+            return null;
+        }
+
+        HashSet<Feedback> feedbacks = new HashSet<>();
+
+        try {
+            List<Map<String, Object>> details = (List<Map<String, Object>>)buildResultDetails.get("details");
+
+            //breaking down the Bamboo API answer to get all the relevant details
+            for(Map<String, Object> detail : details) {
+                String className = (String)detail.get("className");
+                String methodName = (String)detail.get("methodName");
+
+                HashMap<String, Object> errorsMap = (HashMap<String, Object>) detail.get("errors");
+                List<HashMap<String, Object>> errors = (List<HashMap<String, Object>>)errorsMap.get("error");
+
+                String errorMessageString = "";
+                for(HashMap<String, Object> error : errors) {
+                    //Splitting string at the first linebreak to only get the first line of the Exception
+                    errorMessageString += ((String)error.get("message")).split("\\n", 2)[0] + "\n";
+                }
+
+                Feedback feedback = new Feedback();
+                feedback.setText(methodName);
+                feedback.setDetailText(errorMessageString);
+                feedback = feedbackRepository.save(feedback);
+                result.addFeedbacks(feedback);
+            }
+        } catch(Exception failedToParse) {
+            log.error("Parsing from bamboo to feedback failed" + failedToParse);
+        }
+
+        return result.getFeedbacks();
+    }
+
     /**
      * Calculates the score for a result. Therefore is uses the number of successful tests in the latest build.
      *
@@ -329,12 +388,9 @@ public class BambooService implements ContinuousIntegrationService {
                 float score = (totalTests - failedTests) / totalTests;
                 return (long) (score * 100);
             }
-
         }
-
         return (long) 0;
     }
-
 
     /**
      * Performs a request to the Bamboo REST API to retrive the latest result for the given plan.
@@ -391,7 +447,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey the key of the plan for which to retrieve the details
      * @return
      */
-    public Map<String, Object> retrieveLatestBuildResultDetails(String planKey) {
+    private Map<String, Object> retrieveLatestBuildResultDetails(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -422,6 +478,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param planKey
      * @return
      */
+    //TODO: save this in the result class so that ArTEMiS does not need to retrieve it everytime
     public List<BuildLogEntry> retrieveLatestBuildLogs(String planKey) {
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
