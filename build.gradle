@@ -18,6 +18,7 @@ plugins {
     id "org.sonarqube" version "2.5"
     id "net.ltgt.apt" version "0.11"
     id "io.spring.dependency-management" version "1.0.3.RELEASE"
+    id "com.github.lkishalmi.gatling" version "0.7.1"
     id "com.moowork.node" version "1.2.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
@@ -82,8 +83,7 @@ if (OperatingSystem.current().isWindows()) {
 }
 
 test {
-    include '**/*UnitTest*'
-    include '**/*IntTest*'
+    exclude '**/CucumberTest*'
 
     // uncomment if the tests reports are not generated
     // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
@@ -92,6 +92,8 @@ test {
 }
 
 task cucumberTest(type: Test) {
+    description = "Execute cucumber BDD tests."
+    group = "verification"
     include '**/CucumberTest*'
 
     // uncomment if the tests reports are not generated
@@ -100,15 +102,16 @@ task cucumberTest(type: Test) {
     reports.html.enabled = false
 }
 
-test.finalizedBy(cucumberTest)
-
+check.dependsOn cucumberTest
 task testReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn test
-    reportOn cucumberTest
 }
 
-cucumberTest.finalizedBy(testReport)
+task cucumberTestReport(type: TestReport) {
+    destinationDir = file("$buildDir/reports/tests")
+    reportOn cucumberTest
+}
 
 apply from: 'gradle/yeoman.gradle'
 apply from: 'gradle/docker.gradle'
@@ -213,7 +216,6 @@ dependencies {
     testCompile "org.mockito:mockito-core"
     testCompile "com.mattbertolini:liquibase-slf4j:${liquibase_slf4j_version}"
     testCompile "org.hamcrest:hamcrest-library"
-    testCompile "io.gatling.highcharts:gatling-charts-highcharts:${gatling_version}"
     testCompile "com.h2database:h2"
     optional ("org.springframework.boot:spring-boot-configuration-processor:${spring_boot_version}") {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
@@ -221,16 +223,12 @@ dependencies {
     //jhipster-needle-gradle-dependency - JHipster will add additional dependencies here
 }
 
-clean {
-    delete "target"
-}
-
 task cleanResources(type: Delete) {
     delete 'build/resources'
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.1'
+    gradleVersion = '4.2.1'
 }
 
 task stage(dependsOn: 'bootRepackage') {

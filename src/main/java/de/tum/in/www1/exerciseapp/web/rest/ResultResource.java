@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Result;
 
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
+import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -46,7 +47,7 @@ public class ResultResource {
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
         if (result.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new result cannot already have an ID")).body(null);
+            throw new BadRequestAlertException("A new result cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Result result = resultRepository.save(result);
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))

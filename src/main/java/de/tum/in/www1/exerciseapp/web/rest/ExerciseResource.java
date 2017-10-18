@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
+import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import io.swagger.annotations.ApiParam;
@@ -52,7 +53,7 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to save Exercise : {}", exercise);
         if (exercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new exercise cannot already have an ID")).body(null);
+            throw new BadRequestAlertException("A new exercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Exercise result = exerciseRepository.save(exercise);
         return ResponseEntity.created(new URI("/api/exercises/" + result.getId()))
