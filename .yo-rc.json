@@ -1,6 +1,6 @@
 {
   "generator-jhipster": {
-    "jhipsterVersion": "4.9.0",
+    "jhipsterVersion": "4.10.0",
     "baseName": "ExerciseApplication",
     "packageName": "de.tum.in.www1.exerciseapp",
     "packageFolder": "de/tum/in/www1/exerciseapp",
