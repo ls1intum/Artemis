@@ -17,7 +17,7 @@ class ExerciseGatlingTest extends Simulation {
     // Log failed HTTP requests
     //context.getLogger("io.gatling.http").setLevel(Level.valueOf("DEBUG"))
 
-    val baseURL = Option(System.getProperty("baseURL")) getOrElse """http://127.0.0.1:8080"""
+    val baseURL = Option(System.getProperty("baseURL")) getOrElse """http://localhost:8080"""
 
     val httpConf = http
         .baseURL(baseURL)
@@ -35,6 +35,11 @@ class ExerciseGatlingTest extends Simulation {
     val headers_http_authenticated = Map(
         "Accept" -> """application/json""",
         "X-XSRF-TOKEN" -> "${xsrf_token}"
+    )
+
+    val keycloakHeaders = Map(
+        "Accept" -> "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Upgrade-Insecure-Requests" -> "1"
     )
 
     val scn = scenario("Test the Exercise entity")
