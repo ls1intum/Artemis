@@ -43,6 +43,7 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         });
         editor.on("blur", function () {
             editor.renderer.$cursorLayer.element.style.display = "none";
+            parseMarkdown(editor.getValue());
         });
     });
 
@@ -51,22 +52,19 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
             vm.question.answerOptions = [
                 {
                     isCorrect: true,
-                    text: "Enter a correct answer option here",
-                    hint: "Enter a hint here",
-                    explanation: "Enter an explanation here"
+                    text: "Enter a correct answer option here"
                 },
                 {
                     isCorrect: false,
-                    text: "Enter an incorrect answer option here",
-                    hint: "Enter a hint here",
-                    explanation: "Enter an explanation here"
+                    text: "Enter an incorrect answer option here"
                 }
             ];
         }
         var markdownText = (
             (vm.question.text || "Enter your question text here") + "\n" +
-            "[-h] " + (vm.question.hint || "Enter a hint here (can be accessed during quiz by clicking \"?\"-Button)") + "\n" +
-            "[-e] " + (vm.question.explanation || "Enter an explanation here (only visible in feedback)") + "\n\n" +
+            (vm.question.hint ? "[-h] " + vm.question.hint + "\n" : "") +
+            (vm.question.explanation ? "[-e] " + vm.question.explanation + "\n" : "") +
+            "\n" +
             vm.question.answerOptions.map(function (answerOption) {
                 return (
                     (answerOption.isCorrect ? "[x]" : "[ ]") + " " +
@@ -79,6 +77,72 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         );
         editor.setValue(markdownText);
         editor.clearSelection();
+    }
+
+    /**
+     * Parse the markdown and apply the result to the question's data
+     * @param text {string} the markdown text to parse
+     */
+    function parseMarkdown(text) {
+        // first split by [], [ ], [x] and [X]
+        var questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
+        var questionText = questionParts[0];
+
+        // split question into main text, hint and explanation
+        var questionTextParts = questionText.split(/\[\-e\]|\[\-h\]/g);
+        vm.question.text = questionTextParts[0].trim();
+        if (questionText.indexOf("[-h]") !== -1 && questionText.indexOf("[-e]") !== -1) {
+            if (questionText.indexOf("[-h]") < questionText.indexOf("[-e]")) {
+                vm.question.hint = questionTextParts[1].trim();
+                vm.question.explanation = questionTextParts[2].trim();
+            } else {
+                vm.question.hint = questionTextParts[2].trim();
+                vm.question.explanation = questionTextParts[1].trim();
+            }
+        } else if (questionText.indexOf("[-h]") !== -1) {
+            vm.question.hint = questionTextParts[1].trim();
+            vm.question.explanation = null;
+        } else if (questionText.indexOf("[-e]") !== -1) {
+            vm.question.hint = null;
+            vm.question.explanation = questionTextParts[1].trim();
+        }
+
+        vm.question.answerOptions = [];
+        // work on answer options
+        var endOfPreviusPart = text.indexOf(questionText) + questionText.length;;
+        for(var i = 1; i < questionParts.length; i++) {
+            // find the box (text in-between the parts)
+            var answerOption = {};
+            var answerOptionText = questionParts[i];
+            var startOfThisPart = text.indexOf(answerOptionText, endOfPreviusPart);
+            var box = text.substring(endOfPreviusPart, startOfThisPart);
+            // check if box says this answer option is correct or not
+            answerOption.isCorrect = (box === "[x]" || box === "[X]");
+            // update endOfPreviousPart for next loop
+            endOfPreviusPart = startOfThisPart + answerOptionText.length;
+
+            // parse this answerOption
+            var answerOptionParts = answerOptionText.split(/\[\-e\]|\[\-h\]/g);
+            answerOption.text = answerOptionParts[0].trim();
+            if (answerOptionText.indexOf("[-h]") !== -1 && answerOptionText.indexOf("[-e]") !== -1) {
+                if (answerOptionText.indexOf("[-h]") < answerOptionText.indexOf("[-e]")) {
+                    answerOption.hint = answerOptionParts[1].trim();
+                    answerOption.explanation = answerOptionParts[2].trim();
+                } else {
+                    answerOption.hint = answerOptionParts[2].trim();
+                    answerOption.explanation = answerOptionParts[1].trim();
+                }
+            } else if (answerOptionText.indexOf("[-h]") !== -1) {
+                answerOption.hint = answerOptionParts[1].trim();
+                answerOption.expalanation = null;
+            } else if (answerOptionText.indexOf("[-e]") !== -1) {
+                answerOption.hint = null;
+                answerOption.explanation = answerOptionParts[1].trim();
+            }
+
+            vm.question.answerOptions.push(answerOption);
+        }
+        console.log(vm.question);
     }
 
     /**
