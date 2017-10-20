@@ -6,12 +6,12 @@ import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.security.AjaxAuthenticationFailureHandler;
 import io.github.jhipster.security.AjaxAuthenticationSuccessHandler;
 import io.github.jhipster.security.AjaxLogoutSuccessHandler;
-import io.github.jhipster.security.Http401UnauthorizedEntryPoint;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -26,10 +26,12 @@ import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.filter.CorsFilter;
+import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import javax.annotation.PostConstruct;
 import java.util.Optional;
 
+@Import(SecurityProblemSupport.class)
 @Configuration
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
@@ -40,11 +42,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private final JHipsterProperties jHipsterProperties;
     private final RememberMeServices rememberMeServices;
     private final CorsFilter corsFilter;
+    private final SecurityProblemSupport problemSupport;
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService,
                                  JHipsterProperties jHipsterProperties, RememberMeServices rememberMeServices,
-                                 CorsFilter corsFilter, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+                                 CorsFilter corsFilter, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, SecurityProblemSupport problemSupport) {
 
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
@@ -52,6 +55,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         this.rememberMeServices = rememberMeServices;
         this.corsFilter = corsFilter;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
+        this.problemSupport = problemSupport;
     }
 
     @PostConstruct
@@ -100,11 +104,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return new AjaxLogoutSuccessHandler();
     }
 
-    @Bean
-    public Http401UnauthorizedEntryPoint http401UnauthorizedEntryPoint() {
-        return new Http401UnauthorizedEntryPoint();
-    }
-
     @Override
     public void configure(WebSecurity web) throws Exception {
         web.ignoring()
@@ -114,6 +113,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/i18n/**")
             .antMatchers("/content/**")
             .antMatchers("/swagger-ui/index.html")
+            .antMatchers("/api/register")
+            .antMatchers("/api/activate")
+            .antMatchers("/api/account/reset-password/init")
+            .antMatchers("/api/account/reset-password/finish")
             .antMatchers("/test/**");
 
         web.ignoring()
@@ -130,7 +133,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             .exceptionHandling()
-            .authenticationEntryPoint(http401UnauthorizedEntryPoint())
+            .authenticationEntryPoint(problemSupport)
+            .accessDeniedHandler(problemSupport)
         .and()
             .rememberMe()
             .rememberMeServices(rememberMeServices)

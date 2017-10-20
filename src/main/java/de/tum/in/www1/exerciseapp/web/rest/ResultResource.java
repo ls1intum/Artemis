@@ -7,6 +7,7 @@ import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.*;
+import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +70,7 @@ public class ResultResource {
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
         if (result.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new result cannot already have an ID")).body(null);
+            throw new BadRequestAlertException("A new result cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Result savedResult = resultRepository.save(result);
         ltiService.ifPresent(ltiService -> ltiService.onNewBuildResult(savedResult.getParticipation()));

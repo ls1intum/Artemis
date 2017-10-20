@@ -7,6 +7,7 @@ import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.ExerciseService;
 import de.tum.in.www1.exerciseapp.service.VersionControlService;
+import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -67,7 +68,7 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to save Exercise : {}", exercise);
         if (exercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new exercise cannot already have an ID")).body(null);
+            throw new BadRequestAlertException("A new exercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
         if(exercise instanceof ProgrammingExercise) {
             ResponseEntity<Exercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) exercise);
