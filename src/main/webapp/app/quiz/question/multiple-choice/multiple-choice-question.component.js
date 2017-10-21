@@ -142,7 +142,7 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
 
             vm.question.answerOptions.push(answerOption);
         }
-        console.log(vm.question);
+        vm.onUpdated();
     }
 
     /**
