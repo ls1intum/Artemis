@@ -97,10 +97,21 @@
         function addQuestion() {
             vm.quizExercise.questions = vm.quizExercise.questions.concat([{
                 title: "",
+                text: "Enter your question text here",
                 scoringType: "ALL_OR_NOTHING",
                 randomizeOrder: false,
                 score: 1,
-                type: "multiple-choice"
+                type: "multiple-choice",
+                answerOptions: [
+                    {
+                        isCorrect: true,
+                        text: "Enter a correct answer option here"
+                    },
+                    {
+                        isCorrect: false,
+                        text: "Enter an incorrect answer option here"
+                    }
+                ]
             }]);
         }
 
@@ -182,7 +193,7 @@
         }
 
         // keep ui up to date when duration changes
-        $scope.$watch(vm.quizExercise.duration, function () {
+        $scope.$watch("vm.quizExercise.duration", function () {
             updateDuration();
         });
 

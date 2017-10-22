@@ -48,20 +48,8 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     });
 
     function generateMarkdown() {
-        if (!vm.question.answerOptions || vm.question.answerOptions.length === 0) {
-            vm.question.answerOptions = [
-                {
-                    isCorrect: true,
-                    text: "Enter a correct answer option here"
-                },
-                {
-                    isCorrect: false,
-                    text: "Enter an incorrect answer option here"
-                }
-            ];
-        }
         var markdownText = (
-            (vm.question.text || "Enter your question text here") + "\n" +
+            vm.question.text + "\n" +
             (vm.question.hint ? "[-h] " + vm.question.hint + "\n" : "") +
             (vm.question.explanation ? "[-e] " + vm.question.explanation + "\n" : "") +
             "\n" +
@@ -69,9 +57,8 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
                 return (
                     (answerOption.isCorrect ? "[x]" : "[ ]") + " " +
                     answerOption.text +
-                    (answerOption.hint ? "\t[-h] " + (answerOption.hint) : "") +
-                    (answerOption.explanation ? "\t[-e] " + (answerOption.explanation) : "")
-
+                    (answerOption.hint ? "\t[-h] " + answerOption.hint : "") +
+                    (answerOption.explanation ? "\t[-e] " + answerOption.explanation : "")
                 );
             }).join("\n")
         );
@@ -105,6 +92,9 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         } else if (questionText.indexOf("[-e]") !== -1) {
             vm.question.hint = null;
             vm.question.explanation = questionTextParts[1].trim();
+        } else {
+            vm.question.hint = null;
+            vm.question.explanation = null;
         }
 
         vm.question.answerOptions = [];
@@ -138,11 +128,15 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
             } else if (answerOptionText.indexOf("[-e]") !== -1) {
                 answerOption.hint = null;
                 answerOption.explanation = answerOptionParts[1].trim();
+            } else {
+                answerOption.hint = null;
+                answerOption.explanation = null;
             }
 
             vm.question.answerOptions.push(answerOption);
         }
         vm.onUpdated();
+        $scope.$apply();
     }
 
     /**
