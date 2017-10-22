@@ -59,6 +59,39 @@
         />
     </div>
 </div>
-<div class="question-content">
-    <div id="{{'question-content-editor-' + vm.random}}" class="form-control"></div>
+<div class="markupEditorArea">
+    <div class="toolbar">
+        <div class="btn-group">
+            <div
+                class="btn btn-default"
+                data-translate="artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption"
+                ng-click="vm.addCorrectAnswerOption()"
+            >
+            </div>
+            <div
+                class="btn btn-default"
+                data-translate="artemisApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption"
+                ng-click="vm.addIncorrectAnswerOption()"
+            >
+            </div>
+        </div>
+        &nbsp;
+        <div class="btn-group">
+            <div
+                class="btn btn-default"
+                data-translate="artemisApp.multipleChoiceQuestion.editor.addHint"
+                ng-click="vm.addHintAtCursor()"
+            >
+            </div>
+            <div
+                class="btn btn-default"
+                data-translate="artemisApp.multipleChoiceQuestion.editor.addExplanation"
+                ng-click="vm.addExplanationAtCursor()"
+            >
+            </div>
+        </div>
+    </div>
+    <div class="question-content">
+        <div id="{{'question-content-editor-' + vm.random}}" class="form-control"></div>
+    </div>
 </div>

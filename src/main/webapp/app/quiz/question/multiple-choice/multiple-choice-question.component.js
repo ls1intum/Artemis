@@ -21,6 +21,10 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
             label: "True / False / No Answer"
         }
     ];
+    vm.addCorrectAnswerOption = addCorrectAnswerOption;
+    vm.addIncorrectAnswerOption = addIncorrectAnswerOption;
+    vm.addHintAtCursor = addHintAtCursor;
+    vm.addExplanationAtCursor = addExplanationAtCursor;
 
     // set up editor
     vm.random = Math.random();
@@ -37,28 +41,28 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
 
         generateMarkdown();
 
-        editor.renderer.$cursorLayer.element.style.display = "none";
-        editor.on("focus", function () {
-            editor.renderer.$cursorLayer.element.style.display = "";
-        });
         editor.on("blur", function () {
-            editor.renderer.$cursorLayer.element.style.display = "none";
             parseMarkdown(editor.getValue());
+            vm.onUpdated();
+            $scope.$apply();
         });
     });
 
+    /**
+     * generate the markdown text for this question
+     */
     function generateMarkdown() {
         var markdownText = (
-            vm.question.text + "\n" +
-            (vm.question.hint ? "[-h] " + vm.question.hint + "\n" : "") +
-            (vm.question.explanation ? "[-e] " + vm.question.explanation + "\n" : "") +
-            "\n" +
+            vm.question.text +
+            (vm.question.hint ? "\n\t[-h] " + vm.question.hint : "") +
+            (vm.question.explanation ? "\n\t[-e] " + vm.question.explanation : "") +
+            "\n\n" +
             vm.question.answerOptions.map(function (answerOption) {
                 return (
                     (answerOption.isCorrect ? "[x]" : "[ ]") + " " +
                     answerOption.text +
-                    (answerOption.hint ? "\t[-h] " + answerOption.hint : "") +
-                    (answerOption.explanation ? "\t[-e] " + answerOption.explanation : "")
+                    (answerOption.hint ? "\n\t[-h] " + answerOption.hint : "") +
+                    (answerOption.explanation ? "\n\t[-e] " + answerOption.explanation : "")
                 );
             }).join("\n")
         );
@@ -135,8 +139,63 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
 
             vm.question.answerOptions.push(answerOption);
         }
-        vm.onUpdated();
-        $scope.$apply();
+    }
+
+    /**
+     * add the markdown for a correct answerOption at the end of the current markdown text
+     */
+    function addCorrectAnswerOption() {
+        var currentText = editor.getValue();
+        var addedText = "\n[x] Enter a correct answer option here";
+        currentText += addedText;
+        editor.setValue(currentText);
+        editor.focus();
+        var lines = currentText.split("\n").length;
+        var range = editor.selection.getRange();
+        range.setStart(lines-1, 4);
+        range.setEnd(lines-1, addedText.length - 1);
+        console.log(range);
+        editor.selection.setRange(range);
+    }
+
+    /**
+     * add the markdown for an incorrect answerOption at the end of the current markdown text
+     */
+    function addIncorrectAnswerOption() {
+        var currentText = editor.getValue();
+        var addedText = "\n[ ] Enter an incorrect answer option here";
+        currentText += addedText;
+        editor.setValue(currentText);
+        editor.focus();
+        var lines = currentText.split("\n").length;
+        var range = editor.selection.getRange();
+        range.setStart(lines-1, 4);
+        range.setEnd(lines-1, addedText.length - 1);
+        editor.selection.setRange(range);
+    }
+
+    /**
+     * add the markdown for a hint at the current cursor location
+     */
+    function addHintAtCursor() {
+        var addedText = "\n\t[-h] Add a hint here (visible during the quiz via \"?\"-Button)";
+        editor.focus();
+        editor.insert(addedText);
+        var range = editor.selection.getRange();
+        range.setStart(range.start.row, range.start.column - addedText.length + 7);
+        editor.selection.setRange(range);
+    }
+
+    /**
+     * add the markdown for an explanation at the current cursor location
+     */
+    function addExplanationAtCursor() {
+        var addedText = "\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)";
+        editor.focus();
+        editor.insert(addedText);
+        var range = editor.selection.getRange();
+        range.setStart(range.start.row, range.start.column - addedText.length + 7);
+        editor.selection.setRange(range);
     }
 
     /**
@@ -153,6 +212,9 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         vm.onUpdated();
     });
 
+    /**
+     * delete this question from the quiz
+     */
     vm.delete = function () {
         vm.onDelete();
     };

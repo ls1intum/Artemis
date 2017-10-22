@@ -8417,10 +8417,10 @@ body.editor .navbar-brand span {
     flex: 1; }
     .question .question-title input.form-control {
       width: 100%; }
-  .question .question-content {
+  .question .markupEditorArea {
     margin: 0 4px; }
-    .question .question-content > div {
-      height: 12em; }
+  .question .question-content > div {
+    height: 12em; }
 
 .colon-suffix:after {
   content: ":"; }
