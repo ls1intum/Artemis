@@ -39,7 +39,8 @@
     "ace-builds": "1.2.8",
     "angular-ui-ace": "bower",
     "remarkable": "^1.7.1",
-    "angular-resizable": "https://github.com/Reklino/angular-resizable.git#bd77750c910f0cc85a774fba4f6df433a97fc53d"
+    "angular-resizable": "https://github.com/Reklino/angular-resizable.git#bd77750c910f0cc85a774fba4f6df433a97fc53d",
+    "showdown": "^1.7.6"
   },
   "devDependencies": {
     "angular-mocks": "1.5.8"

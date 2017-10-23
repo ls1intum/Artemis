@@ -1,6 +1,6 @@
-MultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope'];
+EditMultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope'];
 
-function MultipleChoiceQuestionController($translate, $translatePartialLoader, $scope) {
+function EditMultipleChoiceQuestionController($translate, $translatePartialLoader, $scope) {
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('multipleChoiceQuestion');
@@ -25,6 +25,8 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     vm.addIncorrectAnswerOption = addIncorrectAnswerOption;
     vm.addHintAtCursor = addHintAtCursor;
     vm.addExplanationAtCursor = addExplanationAtCursor;
+    vm.showPreview = false;
+    vm.togglePreview = togglePreview;
 
     // set up editor
     vm.random = Math.random();
@@ -198,6 +200,10 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         editor.selection.setRange(range);
     }
 
+    function togglePreview() {
+        vm.showPreview = !vm.showPreview;
+    }
+
     /**
      * watch for any changes to the question model and notify listener
      *
@@ -220,9 +226,9 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     };
 }
 
-angular.module('artemisApp').component('multipleChoiceQuestion', {
-    templateUrl: 'app/quiz/question/multiple-choice/multiple-choice-question.html',
-    controller: MultipleChoiceQuestionController,
+angular.module('artemisApp').component('editMultipleChoiceQuestion', {
+    templateUrl: 'app/quiz/edit/multiple-choice-question/edit-multiple-choice-question.html',
+    controller: EditMultipleChoiceQuestionController,
     controllerAs: 'vm',
     bindings: {
         question: '=',
