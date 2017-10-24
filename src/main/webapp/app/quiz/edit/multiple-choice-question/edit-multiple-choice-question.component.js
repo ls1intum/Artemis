@@ -103,10 +103,19 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
             vm.question.explanation = null;
         }
 
+        // extract existing answer option IDs
+        var existingAnswerOptionIDs = vm.question.answerOptions
+            .filter(function (answerOption) {
+                return answerOption.id !== undefined && answerOption.id !== null;
+            })
+            .map(function(answerOption) {
+                return answerOption.id;
+            });
         vm.question.answerOptions = [];
+
         // work on answer options
-        var endOfPreviusPart = text.indexOf(questionText) + questionText.length;;
-        for(var i = 1; i < questionParts.length; i++) {
+        var endOfPreviusPart = text.indexOf(questionText) + questionText.length;
+        for (var i = 1; i < questionParts.length; i++) {
             // find the box (text in-between the parts)
             var answerOption = {};
             var answerOptionText = questionParts[i];
@@ -139,6 +148,11 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
                 answerOption.explanation = null;
             }
 
+            // assign existing ID if available
+            if (vm.question.answerOptions.length < existingAnswerOptionIDs.length) {
+                answerOption.id = existingAnswerOptionIDs[vm.question.answerOptions.length];
+            }
+
             vm.question.answerOptions.push(answerOption);
         }
     }
@@ -154,8 +168,8 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
         editor.focus();
         var lines = currentText.split("\n").length;
         var range = editor.selection.getRange();
-        range.setStart(lines-1, 4);
-        range.setEnd(lines-1, addedText.length - 1);
+        range.setStart(lines - 1, 4);
+        range.setEnd(lines - 1, addedText.length - 1);
         console.log(range);
         editor.selection.setRange(range);
     }
@@ -171,8 +185,8 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
         editor.focus();
         var lines = currentText.split("\n").length;
         var range = editor.selection.getRange();
-        range.setStart(lines-1, 4);
-        range.setEnd(lines-1, addedText.length - 1);
+        range.setStart(lines - 1, 4);
+        range.setEnd(lines - 1, addedText.length - 1);
         editor.selection.setRange(range);
     }
 
