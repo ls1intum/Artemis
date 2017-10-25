@@ -22,7 +22,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
     @OrderColumn
     @JoinColumn(name="question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -80,6 +80,14 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     public String toString() {
         return "MultipleChoiceQuestion{" +
             "id=" + getId() +
+            ", title='" + getTitle() + "'" +
+            ", text='" + getText() + "'" +
+            ", hint='" + getHint() + "'" +
+            ", explanation='" + getExplanation() + "'" +
+            ", score='" + getScore() + "'" +
+            ", scoringType='" + getScoringType() + "'" +
+            ", randomizeOrder='" + isRandomizeOrder() + "'" +
+            ", exerciseTitle='" + ((getExercise() == null) ? null : getExercise().getTitle()) + "'" +
             "}";
     }
 }
