@@ -1,6 +1,9 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.tum.in.www1.exerciseapp.domain.AnswerOption;
+import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestion;
+import de.tum.in.www1.exerciseapp.domain.Question;
 import de.tum.in.www1.exerciseapp.domain.QuizExercise;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -72,6 +75,29 @@ public class QuizExerciseResource {
         if (quizExercise.getId() == null) {
             return createQuizExercise(quizExercise);
         }
+
+        // iterate through questions to add missing pointer back to quizExercise
+        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
+        //       that prevents infinite recursive JSON serialization.
+        for (Question question : quizExercise.getQuestions()) {
+            if (question.getId() != null) {
+                question.setExercise(quizExercise);
+                // do the same for answerOptions (if question is multiple choice)
+                if (question instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                        if (answerOption.getId() != null) {
+                            answerOption.setQuestion(mcQuestion);
+                        }
+                    }
+                }
+                // TODO: do the same for dragItems and dropLocations (if question is drag and drop)
+            }
+        }
+
+        // save result
+        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
+        //       and delete the now orphaned entries from the database
         QuizExercise result = quizExerciseRepository.save(quizExercise);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
