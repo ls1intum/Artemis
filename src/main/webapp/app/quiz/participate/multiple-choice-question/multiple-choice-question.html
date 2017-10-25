@@ -1,40 +1,22 @@
 <div class="mc-question">
     <h2>{{vm.question.title}}</h2>
-    <p ng-bind-html="vm.rendered.text">
-    </p>
+    <p ng-bind-html="vm.rendered.text"></p>
     <h4>
-        <span
-            class="label label-info"
-            uib-popover-html="vm.rendered.hint"
-            popover-placement="right-top"
-            popover-trigger="mouseenter"
-            ng-if="vm.question.hint"
-        >
+        <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
             <i class="fa fa-question-circle-o"></i>
             <span data-translate="artemisApp.question.hint"></span>
         </span>
     </h4>
     <div class="answer-options">
-        <div
-            ng-repeat="answerOption in vm.question.answerOptions"
-            class="answer-option"
-            ng-click="vm.toggleSelection(answerOption)"
-        >
+        <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-click="vm.toggleSelection(answerOption)">
             <div class="selection">
                 <i class="fa fa-2x fa-check-square-o" ng-if="vm.selectedAnswerOptions.indexOf(answerOption) !== -1"></i>
                 <i class="fa fa-2x fa-square-o" ng-if="vm.selectedAnswerOptions.indexOf(answerOption) === -1"></i>
             </div>
             <div class="content">
-                <div class="text" ng-bind-html="vm.rendered.answerOptions[$index].text">
-                </div>
+                <div class="text" ng-bind-html="vm.rendered.answerOptions[$index].text"></div>
                 <div class="hint">
-                    <span
-                        class="label label-info"
-                        uib-popover-html="vm.rendered.answerOptions[$index].hint"
-                        popover-placement="left-top"
-                        popover-trigger="mouseenter"
-                        ng-if="answerOption.hint"
-                    >
+                    <span class="label label-info" uib-popover-html="vm.rendered.answerOptions[$index].hint" popover-placement="left-top" popover-trigger="mouseenter" ng-if="answerOption.hint">
                         <i class="fa fa-question-circle-o"></i>
                         <span data-translate="artemisApp.question.hint"></span>
                     </span>

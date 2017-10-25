@@ -52,6 +52,14 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
 
     /**
      * generate the markdown text for this question
+     *
+     * The markdown is generated according to these rules:
+     *
+     * 1. First the question text is inserted
+     * 2. If hint and/or explanation exist, they are added after the text with a linebreak and tab in front of them
+     * 3. After an empty line, the answer options are inserted
+     * 4. For each answer option, hint and explanation are added (see 2.)
+     *
      */
     function generateMarkdown() {
         var markdownText = (
@@ -74,6 +82,19 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
 
     /**
      * Parse the markdown and apply the result to the question's data
+     *
+     * The markdown rules are as follows:
+     *
+     * 1. Text is split at [x] and [ ] (also accepts [X] and [])
+     *    => The first part (any text before the first [x] or [ ]) is the question text
+     * 2. The question text is split at [-h] and [-e] tags.
+     *    => First part is text. Everything after [-h] is Hint, anything after [-e] is explanation
+     * 3. Every answer option (Parts after each [x] or [ ]) is also split at [-h] and [-e]
+     *    => Same treatment as the question text for text, hint, and explanation
+     *    => Answer options are marked as isCorrect depending on [ ] or [x]
+     *
+     * Note: Existing IDs for answer options are reused in the original order.
+     *
      * @param text {string} the markdown text to parse
      */
     function parseMarkdown(text) {

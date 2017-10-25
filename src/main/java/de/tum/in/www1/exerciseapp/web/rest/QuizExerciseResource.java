@@ -77,6 +77,8 @@ public class QuizExerciseResource {
         }
 
         // iterate through questions to add missing pointer back to quizExercise
+        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
+        //       that prevents infinite recursive JSON serialization.
         for (Question question : quizExercise.getQuestions()) {
             if (question.getId() != null) {
                 question.setExercise(quizExercise);
@@ -94,6 +96,8 @@ public class QuizExerciseResource {
         }
 
         // save result
+        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
+        //       and delete the now orphaned entries from the database
         QuizExercise result = quizExerciseRepository.save(quizExercise);
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
