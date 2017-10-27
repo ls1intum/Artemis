@@ -3,11 +3,11 @@
 
     angular
         .module('artemisApp')
-        .controller('StatisticController', StatisticController);
+        .controller('TestStatisticController', TestStatisticController);
 
-    StatisticController.$inject = ['$scope', '$state', 'Principal'];
+    TestStatisticController.$inject = ['$scope', '$state', 'Principal'];
 
-    function StatisticController ( $state, $scope, Principal) {
+    function TestStatisticController ( $state, $scope, Principal) {
 
         var vm = this;
 

@@ -5,8 +5,6 @@ entity Statistic (statistic) {      //abstract
 }
 
 entity QuizPointStatistic (quizPointStatistic){ //extends Statistic
-    ratedPointCounter Integer[],
-    unRatedPointCounter Integer[],
 }
 
 entity QuestionStatistic (questionStatistic){   //extends Statistic, abstract
@@ -23,7 +21,7 @@ entity DragAndDropStatistic (dragAndDropStatistic){   //extends QuestionStatisti
 entity AnswerCounter(answerCounter){
     counter Integer,
 }
-entity AnswerCounter(DropLocationCounter){
+entity DropLocationCounter(dropLocationCounter){
     counter Integer,
 }
 

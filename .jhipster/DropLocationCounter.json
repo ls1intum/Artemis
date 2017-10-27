@@ -1,0 +1,36 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipName": "dragAndDropStatistic",
+            "otherEntityName": "dragAndDropStatistic",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipName": "dragAndDropStatistic",
+            "otherEntityName": "dragAndDropStatistic",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "dropLocation",
+            "otherEntityName": "dropLocation",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "dropLocationCounter"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "counter",
+            "fieldType": "Integer"
+        }
+    ],
+    "changelogDate": "20171026164305",
+    "entityTableName": "drop_location_counter",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

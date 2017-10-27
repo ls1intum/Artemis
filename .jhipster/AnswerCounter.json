@@ -1,0 +1,36 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipName": "multipleChoiceStatistic",
+            "otherEntityName": "multipleChoiceStatistic",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipName": "multipleChoiceStatistic",
+            "otherEntityName": "multipleChoiceStatistic",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "answer",
+            "otherEntityName": "answerOption",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "answerCounter"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "counter",
+            "fieldType": "Integer"
+        }
+    ],
+    "changelogDate": "20171026164304",
+    "entityTableName": "answer_counter",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

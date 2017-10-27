@@ -1,0 +1,18 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "quiz",
+            "otherEntityName": "quizExercise",
+            "ownerSide": false,
+            "otherEntityRelationshipName": "quizPointStatistic"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20171026164300",
+    "entityTableName": "quiz_point_statistic",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

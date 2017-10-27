@@ -1,0 +1,68 @@
+<div>
+    <h2 data-translate="arTeMiSApp.dropLocationCounter.home.title">Drop Location Counters</h2>
+    <jhi-alert></jhi-alert>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-4 no-padding-left">
+                <button class="btn btn-primary" ui-sref="drop-location-counter.new" >
+                    <span class="glyphicon glyphicon-plus"></span>
+                    <span  data-translate="arTeMiSApp.dropLocationCounter.home.createLabel">
+                        Create new Drop Location Counter
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="jh-table table table-striped">
+            <thead>
+                <tr>
+                    <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="arTeMiSApp.dropLocationCounter.counter">Counter</span></th>
+                    <th><span data-translate="arTeMiSApp.dropLocationCounter.dragAndDropStatistic">Drag And Drop Statistic</span></th>
+                    <th><span data-translate="arTeMiSApp.dropLocationCounter.dragAndDropStatistic">Drag And Drop Statistic</span></th>
+                    <th><span data-translate="arTeMiSApp.dropLocationCounter.dropLocation">Drop Location</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="dropLocationCounter in vm.dropLocationCounters track by dropLocationCounter.id">
+                    <td><a ui-sref="drop-location-counter-detail({id:dropLocationCounter.id})">{{dropLocationCounter.id}}</a></td>
+                    <td>{{dropLocationCounter.counter}}</td>
+                    <td>
+                        <a ui-sref="drag-and-drop-statistic-detail({id:dropLocationCounter.dragAndDropStatistic.id})">{{dropLocationCounter.dragAndDropStatistic.id}}</a>
+                    </td>
+                    <td>
+                        <a ui-sref="drag-and-drop-statistic-detail({id:dropLocationCounter.dragAndDropStatistic.id})">{{dropLocationCounter.dragAndDropStatistic.id}}</a>
+                    </td>
+                    <td>
+                        <a ui-sref="drop-location-detail({id:dropLocationCounter.dropLocation.id})">{{dropLocationCounter.dropLocation.id}}</a>
+                    </td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit"
+                                    ui-sref="drop-location-counter-detail({id:dropLocationCounter.id})"
+                                    class="btn btn-info btn-sm">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="drop-location-counter.edit({id:dropLocationCounter.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="drop-location-counter.delete({id:dropLocationCounter.id})"
+                                    class="btn btn-danger btn-sm">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

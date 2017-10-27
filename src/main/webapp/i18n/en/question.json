@@ -22,6 +22,7 @@
             "score": "Score",
             "randomizeOrder": "Present Answers in Random Order",
             "scoringType": "Scoring Type",
+            "questionStatistic": "Question Statistic",
             "exercise": "Exercise"
         }
     }

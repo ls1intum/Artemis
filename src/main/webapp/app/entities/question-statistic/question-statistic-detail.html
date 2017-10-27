@@ -1,0 +1,27 @@
+
+<div>
+    <h2><span data-translate="arTeMiSApp.questionStatistic.detail.title">Question Statistic</span> {{vm.questionStatistic.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="dl-horizontal jh-entity-details">
+        <dt><span data-translate="arTeMiSApp.questionStatistic.ratedCorrectCounter">Rated Correct Counter</span></dt>
+        <dd>
+            <span>{{vm.questionStatistic.ratedCorrectCounter}}</span>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.questionStatistic.unRatedCorrectCounter">Un Rated Correct Counter</span></dt>
+        <dd>
+            <span>{{vm.questionStatistic.unRatedCorrectCounter}}</span>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            ui-sref="{{ vm.previousState }}"
+            class="btn btn-info">
+        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button" ui-sref="question-statistic-detail.edit({id:vm.questionStatistic.id})" class="btn btn-primary">
+        <span class="glyphicon glyphicon-pencil"></span>
+        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
+    </button>
+</div>

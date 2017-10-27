@@ -46,6 +46,10 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
+    @OneToOne
+    @JoinColumn(unique = true)
+    private QuizPointStatistic quizPointStatistic;
+
     @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
     @OrderColumn
     @JoinColumn(name="exercise_id")
@@ -154,6 +158,19 @@ public class QuizExercise extends Exercise implements Serializable {
 
     public void setDuration(Integer duration) {
         this.duration = duration;
+    }
+
+    public QuizPointStatistic getQuizPointStatistic() {
+        return quizPointStatistic;
+    }
+
+    public QuizExercise quizPointStatistic(QuizPointStatistic quizPointStatistic) {
+        this.quizPointStatistic = quizPointStatistic;
+        return this;
+    }
+
+    public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
+        this.quizPointStatistic = quizPointStatistic;
     }
 
     public List<Question> getQuestions() {

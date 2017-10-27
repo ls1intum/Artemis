@@ -1,0 +1,21 @@
+{
+    "arTeMiSApp": {
+        "quizPointStatistic" : {
+            "home": {
+                "title": "Quiz Point Statistics",
+                "createLabel": "Quiz Point Statistic erstellen",
+                "createOrEditLabel": "Quiz Point Statistic erstellen oder bearbeiten"
+            },
+            "created": "Quiz Point Statistic erstellt mit ID {{ param }}",
+            "updated": "Quiz Point Statistic aktualisiert mit ID {{ param }}",
+            "deleted": "Quiz Point Statistic gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Quiz Point Statistic {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Quiz Point Statistic"
+            },
+            "quiz": "Quiz"
+        }
+    }
+}

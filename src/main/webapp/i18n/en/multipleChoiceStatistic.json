@@ -1,0 +1,22 @@
+{
+    "arTeMiSApp": {
+        "multipleChoiceStatistic" : {
+            "home": {
+                "title": "Multiple Choice Statistics",
+                "createLabel": "Create a new Multiple Choice Statistic",
+                "createOrEditLabel": "Create or edit a Multiple Choice Statistic"
+            },
+            "created": "A new Multiple Choice Statistic is created with identifier {{ param }}",
+            "updated": "A Multiple Choice Statistic is updated with identifier {{ param }}",
+            "deleted": "A Multiple Choice Statistic is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Multiple Choice Statistic {{ id }}?"
+            },
+            "detail": {
+                "title": "Multiple Choice Statistic"
+            },
+            "ratedAnswerCounter": "Rated Answer Counter",
+            "unRatedAnswerCounter": "Un Rated Answer Counter"
+        }
+    }
+}
