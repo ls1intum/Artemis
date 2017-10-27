@@ -44,6 +44,24 @@
                    ng-model="vm.result.score"
             />
         </div>
+        <br/>
+        <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
+        <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
+            <div class="form-group">
+                <label class="control-label">Feedback #{{index + 1}} Text</label>
+                <input class="form-control" ng-model="vm.feedbacks[index].text"/>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Feedback #{{index + 1}} Detail Text</label>
+                <input class="form-control" ng-model="vm.feedbacks[index].detailText"/>
+            </div>
+            <br/>
+        </div>
+        <span ng-show="vm.addFeedbackClicked">
+            <a ng-click="vm.pushFeedback()">More feedback</a>
+            &nbsp;
+            <a ng-click="vm.popFeedback()">Less feedback</a>
+        </span>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">

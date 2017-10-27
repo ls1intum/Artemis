@@ -15,6 +15,11 @@
         vm.datePickerOpenStatus = {};
         vm.openCalendar = openCalendar;
         vm.save = save;
+        vm.addFeedbackClicked = false;
+        vm.feedbackIndices = [0];
+        vm.feedbacks = [];
+        vm.pushFeedback = pushFeedback;
+        vm.popFeedback = popFeedback;
 
         if(participationEntity) {
             entity.participation = participationEntity;
@@ -55,6 +60,22 @@
 
         function openCalendar(date) {
             vm.datePickerOpenStatus[date] = true;
+        }
+
+        function pushFeedback() {
+            vm.feedbackIndices.push(vm.feedbackIndices.length);
+        }
+
+        function popFeedback() {
+            if(vm.feedbackIndices.length == 1) {
+                vm.addFeedbackClicked = false;
+            }
+            if(vm.feedbackIndices.length === vm.feedbacks.length) {
+                vm.feedbacks.pop();
+            }
+            if(vm.feedbackIndices.length > 1) {
+                vm.feedbackIndices.pop();
+            }
         }
     }
 })();
