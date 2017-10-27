@@ -3,16 +3,14 @@
 <jhi-alert></jhi-alert>
 <div>
     <div class="button-toolbar pull-right">
-        <!--ng-click="$ctrl.buildPlanCleanup()"-->
-        <button class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.buildplans-delete"
-                data-translate="artemisApp.instructorDashboard.buildPlans.delete.title">
-            <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;CLEANUP_BUILD_PLANS
+        <button class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.buildplans-delete">
+            <i class="fa fa-eraser"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.buildPlans.delete.title">CLEANUP_BUILD_PLANS</span>
         </button>
         <button type="submit"
                 ui-sref="participation-for-exercise({exerciseId:$ctrl.exerciseId})"
                 class="btn btn-primary btn-sm">
-            <span class="fa fa-list-alt"></span>
-            <span>Participations</span>
+            <span ></span>
+            <span class="fa fa-list-alt">&nbsp;Participations</span>
         </button>
 
         <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Export

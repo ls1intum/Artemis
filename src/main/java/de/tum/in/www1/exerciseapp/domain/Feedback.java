@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -26,6 +27,10 @@ public class Feedback implements Serializable {
 
     @Column(name = "detail_text")
     private String detailText;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private FeedbackType type;
 
     @ManyToOne
     private Result result;
@@ -63,6 +68,14 @@ public class Feedback implements Serializable {
 
     public void setDetailText(String detailText) {
         this.detailText = detailText;
+    }
+
+    public FeedbackType getType() {
+        return type;
+    }
+
+    public void setType(FeedbackType type) {
+        this.type = type;
     }
 
     public Result getResult() {
