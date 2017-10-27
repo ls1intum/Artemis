@@ -37,7 +37,7 @@
             "secondsShort": "s",
             "questions": "Questions",
             "status": "Status",
-            "startTime": "Start Time"
+            "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic"
         }
     }

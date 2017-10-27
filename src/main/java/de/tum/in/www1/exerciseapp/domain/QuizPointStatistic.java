@@ -15,7 +15,7 @@ import java.util.Objects;
 @DiscriminatorValue(value="QP")
 //@Table(name = "quiz_point_statistic")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class QuizPointStatistic implements Serializable {
+public class QuizPointStatistic extends Statistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
