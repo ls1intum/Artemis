@@ -41,11 +41,10 @@ public class RepositoryResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
-    private final Optional<GitService> gitService;
-
     private final ParticipationService participationService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<GitService> gitService;
 
     private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
     private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
@@ -75,7 +74,6 @@ public class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
         Iterator<File> itr = gitService.get().listFiles(repository).iterator();
 
@@ -85,9 +83,7 @@ public class RepositoryResource {
             fileList.add(itr.next().toString());
         }
 
-        return new ResponseEntity<>(
-            fileList,
-            HttpStatus.OK);
+        return new ResponseEntity<>(fileList, HttpStatus.OK);
     }
 
 
@@ -111,8 +107,6 @@ public class RepositoryResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
 
-
-
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
         Optional<File> file = gitService.get().getFileByName(repository, filename);
@@ -127,7 +121,7 @@ public class RepositoryResource {
 
         HttpHeaders responseHeaders = new HttpHeaders();
         responseHeaders.setContentType(MediaType.TEXT_PLAIN);
-        return new ResponseEntity(out, responseHeaders,HttpStatus.OK);
+        return new ResponseEntity(out, responseHeaders, HttpStatus.OK);
     }
 
 

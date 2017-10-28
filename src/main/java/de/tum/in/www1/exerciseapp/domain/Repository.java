@@ -15,7 +15,6 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     private Path localPath;
     private Collection<File> files;
 
-
     public Repository(File gitDir) throws IOException {
         super(gitDir);
     }
@@ -27,7 +26,6 @@ public class Repository extends org.eclipse.jgit.internal.storage.file.FileRepos
     public Repository(BaseRepositoryBuilder options) throws IOException {
         super(options);
     }
-
 
     /**
      * Check if the file is allowed in this repository.

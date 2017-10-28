@@ -2,7 +2,10 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
+import org.apache.commons.io.FileUtils;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -11,10 +14,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * Service Implementation for managing Exercise.
@@ -29,12 +41,16 @@ public class ExerciseService {
     private final UserService userService;
     private final ParticipationService participationService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
+    private final Optional<VersionControlService> versionControlService;
+    private final Optional<GitService> gitService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
         this.continuousIntegrationService = continuousIntegrationService;
+        this.versionControlService = versionControlService;
+        this.gitService = gitService;
     }
 
     /**
@@ -121,36 +137,205 @@ public class ExerciseService {
      * @param id the id of the entity
      */
     @Transactional
-    public void delete(Long id, boolean deleteParticipations) {
+    public void delete(Long id) {
         log.debug("Request to delete Exercise : {}", id);
         Exercise exercise = exerciseRepository.findOne(id);
 
-        if (deleteParticipations && Optional.ofNullable(exercise).isPresent()) {
+        if (Optional.ofNullable(exercise).isPresent()) {
             reset(exercise);
         }
         exerciseRepository.delete(id);
     }
 
     /**
-     * Delete build plans (except BASE) of all exercise participations.
+     * Delete build plans (except BASE) and optionally repositores of all exercise participations.
      *
      * @param id id of the exercise for which build plans in respective participations are deleted
      */
     @Transactional
-    public void deleteBuildPlans(Long id) {
-        log.debug("Request to delete build plans for Exercise : {}", id);
+    public java.io.File cleanup(Long id, boolean deleteRepositories) throws java.io.IOException {
         Exercise exercise = findOneLoadParticipations(id);
+        log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
+        List<Repository> studentRepositories = new ArrayList<>();
+        Path finalZipFilePath = null;
+
         if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
             exercise.getParticipations().forEach(participation -> {
-                if (participation.getBuildPlanId() != null) {
-                    continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+                if (participation.getBuildPlanId() != null) {     //ignore participations without build plan id
+                    try {
+                        continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+                    }
+                    catch(BambooException ex) {
+                        log.error(ex.getMessage());
+                        if (ex.getCause() != null) {
+                            log.error(ex.getCause().getMessage());
+                        }
+                    }
+
                     participation.setInitializationState(ParticipationState.INACTIVE);
                     participation.setBuildPlanId(null);
                     participationService.save(participation);
                 }
+                if (deleteRepositories == true && participation.getRepositoryUrl() != null) {     //ignore participations without repository URL
+                    try {
+                        //1. clone the repository
+                        Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                        //2. collect the repo file
+                        studentRepositories.add(repo);
+                    } catch (GitAPIException | IOException ex) {
+                        log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected", ex);
+                    }
+                }
+            });
+
+            if (deleteRepositories == false) {
+                return null;    //in this case, we are done
+            }
+
+            //from here on, deleteRepositories is true and does not need to be evaluated again
+            log.info("Create zip file for all repositories");
+            Files.createDirectories(Paths.get("zippedRepos"));
+            finalZipFilePath = Paths.get("zippedRepos", exercise.getCourse().getTitle() + " " + exercise.getTitle() + " Student Repositories.zip");
+            zipAllRepositories(studentRepositories, finalZipFilePath);
+            scheduleForDeletion(finalZipFilePath, 60);
+
+            exercise.getParticipations().forEach(participation -> {
+                if (participation.getRepositoryUrl() != null) {      //ignore participations without repository URL
+                    try {
+                        //3. delete the locally cloned repo again
+                        gitService.get().deleteLocalRepository(participation);
+                    } catch (IOException e) {
+                        log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected", e);
+                    }
+                    //4. finally delete the repository on the VC Server
+                    versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
+                    participation.setRepositoryUrl(null);
+                    participation.setInitializationState(ParticipationState.FINISHED);
+                    participationService.save(participation);
+                }
             });
         } else {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to delete build plans", id);
+            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
+            return null;
         }
+
+        return new java.io.File(finalZipFilePath.toString());
+    }
+
+
+    public Path zipAllRepositories(List<Repository> repositories, Path zipFilePath) throws IOException {
+
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
+
+            repositories.forEach(repository -> {
+                Path repoPath = repository.getLocalPath();
+                Path parentRepoPath = repoPath.getParent();
+                try {
+                    Files.walk(repoPath)
+                        .filter(path -> !Files.isDirectory(path))
+                        .forEach(path -> {
+                            ZipEntry zipEntry = new ZipEntry(parentRepoPath.relativize(path).toString());
+                            try {
+                                zipOutputStream.putNextEntry(zipEntry);
+                                Files.copy(path, zipOutputStream);
+                                zipOutputStream.closeEntry();
+                            } catch (Exception e) {
+                                log.error("Create zip file error", e);
+                            }
+                        });
+                } catch (IOException e) {
+                    log.error("Create zip file error", e);
+                }
+            });
+
+        }
+        return zipFilePath;
+    }
+
+
+    //does not delete anything
+    @Transactional
+    public java.io.File archive(Long id) {
+        Exercise exercise = findOneLoadParticipations(id);
+        log.info("Request to archive all participations repositories for Exercise : {}", exercise.getTitle());
+        List<Path> zippedRepoFiles = new ArrayList<>();
+        Path finalZipFilePath = null;
+        if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
+            exercise.getParticipations().forEach(participation -> {
+                try {
+                    if (participation.getRepositoryUrl() != null) {     //ignore participations without repository URL
+                        //1. clone the repository
+                        Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                        //2. zip repository and collect the zip file
+                        log.info("Create temporary zip file for repository " + repo.getLocalPath().toString());
+                        Path zippedRepoFile = gitService.get().zipRepository(repo);
+                        zippedRepoFiles.add(zippedRepoFile);
+                        //3. delete the locally cloned repo again
+                        gitService.get().deleteLocalRepository(participation);
+                    }
+                } catch (IOException | GitAPIException ex) {
+                    log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected");
+                }
+            });
+
+
+            if (!exercise.getParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
+                try {
+                    // create a large zip file with all zipped repos and provide it for download
+                    log.info("Create zip file for all repositories");
+                    finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() + " Student Repositories.zip");
+                    createZipFile(finalZipFilePath, zippedRepoFiles);
+                    scheduleForDeletion(finalZipFilePath, 60);
+
+                    log.info("Delete all temporary zip repo files");
+                    //delete the temporary zipped repo files
+                    for (Path zippedRepoFile : zippedRepoFiles) {
+                        Files.delete(zippedRepoFile);
+                    }
+                } catch (IOException ex) {
+                    log.error("Archiving and deleting the local repositories did not work as expected");
+                }
+            }
+        }
+        return new java.io.File(finalZipFilePath.toString());
+    }
+
+
+    private void createZipFile(Path zipFilePath, List<Path> paths) throws IOException {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
+            paths.stream()
+                .filter(path -> !Files.isDirectory(path))
+                .forEach(path -> {
+                    ZipEntry zipEntry = new ZipEntry(path.toString());
+                    try {
+                        zipOutputStream.putNextEntry(zipEntry);
+                        Files.copy(path, zipOutputStream);
+                        zipOutputStream.closeEntry();
+                    } catch (Exception e) {
+                        log.error("Create zip file error", e);
+                    }
+                });
+        }
+    }
+
+
+    private Map<Path, ScheduledFuture> futures = new HashMap<>();
+
+    private ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    private static final TimeUnit UNITS = TimeUnit.SECONDS; // your time unit
+
+    private void scheduleForDeletion(Path path, long delay) {
+        ScheduledFuture future = executor.schedule(() -> {
+            try {
+                log.info("Delete file " + path);
+                Files.delete(path);
+                futures.remove(path);
+            } catch (IOException e) {
+                log.error("Deleting the file " + path + " did not work", e);
+            }
+        }, delay, UNITS);
+
+        futures.put(path, future);
     }
 }

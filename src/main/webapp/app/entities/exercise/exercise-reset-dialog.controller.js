@@ -33,8 +33,5 @@
                     vm.resetInProgress = false;
                 });
         }
-
-
-
     }
 })();

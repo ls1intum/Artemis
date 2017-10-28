@@ -1,11 +1,13 @@
 {
     "artemisApp": {
         "instructorDashboard": {
-            "buildPlans": {
-                "delete": {
-                    "title": "Cleanup build plans",
-                    "question": "Are you sure you want to delete all student build plans for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}? This action CANNOT be undone!"
-                }
+            "cleanup": {
+                "title": "Cleanup",
+                "question": "Are you sure you want to delete ALL student build plans for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}? This action can NOT be undone!"
+            },
+            "archive": {
+                "title": "Archive",
+                "question": "Are you sure you want to archive ALL student repositories for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}?"
             }
         }
     }

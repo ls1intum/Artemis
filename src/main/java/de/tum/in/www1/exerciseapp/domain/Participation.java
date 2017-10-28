@@ -161,6 +161,10 @@ public class Participation implements Serializable {
     }
 
     public URL getRepositoryUrlAsUrl() {
+        if (repositoryUrl == null) {
+            return null;
+        }
+
         try {
             return new URL(repositoryUrl);
         } catch (MalformedURLException e) {

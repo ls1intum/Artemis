@@ -14,18 +14,30 @@ import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
@@ -187,10 +199,9 @@ public class ExerciseResource {
     @DeleteMapping("/exercises/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
-    public ResponseEntity<Void> deleteExercise(@PathVariable Long id,
-                                               @RequestParam(defaultValue = "false") boolean deleteParticipations) {
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
-        exerciseService.delete(id, deleteParticipations);
+        exerciseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
@@ -203,7 +214,7 @@ public class ExerciseResource {
     @DeleteMapping(value = "/exercises/{id}/participations")
     @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
-    public ResponseEntity<Void> resetExercise(@PathVariable Long id) {
+    public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
         Exercise exercise = exerciseRepository.findOne(id);
         exerciseService.reset(exercise);
@@ -212,17 +223,54 @@ public class ExerciseResource {
 
 
     /**
-     * DELETE  /exercises/:id/buildplans : delete all build plans (except BASE) of all participations belonging to this exercise.
+     * GET  /exercises/:id/cleanup : delete all build plans (except BASE) of all participations belonging to this exercise. Optionally delete and archive all repositories
      *
      * @param id the id of the exercise to delete build plans for
+     * @param deleteRepositories whether repositories should be deleted or not
      * @return ResponseEntity with status
      */
-    @DeleteMapping(value = "/exercises/{id}/buildplans")
+    @DeleteMapping(value = "/exercises/{id}/cleanup")
     @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
-    public ResponseEntity<Void> deleteBuildPlansForExercise(@PathVariable Long id) {
-        log.debug("REST request to delete build plans for Exercise : {}", id);
-        exerciseService.deleteBuildPlans(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
+    public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
+        log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
+        if (deleteRepositories) {
+            File zipFile = exerciseService.cleanup(id, deleteRepositories);
+            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+            log.info("Cleanup build plans and archive repositories was successful for Exercise : {}", id);
+            return ResponseEntity.ok()
+                .contentLength(zipFile.length())
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header("filename", zipFile.getName())
+                .body(resource);
+        }
+        else {
+            exerciseService.cleanup(id, deleteRepositories);
+            log.info("Cleanup build plans was successful for Exercise : {}", id);
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert("Cleanup was successful.", "")).build();
+        }
     }
+
+
+    /**
+     * GET  /exercises/:id/archive : archive all repositories (except BASE) of all participations belonging to this exercise into a zip file and provide a downloadable link.
+     *
+     * @param id the id of the exercise to delete and archive the repositories
+     * @return ResponseEntity with status
+     */
+    @GetMapping(value = "/exercises/{id}/archive")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @Timed
+    public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
+        log.info("Start to archive repositories for Exercise : {}", id);
+        File zipFile = exerciseService.archive(id);
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+        log.info("Archive repositories was successful for Exercise : {}", id);
+        return ResponseEntity.ok()
+            .contentLength(zipFile.length())
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header("filename", zipFile.getName())
+            .body(resource);
+    }
+
 }

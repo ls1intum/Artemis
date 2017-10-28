@@ -7,14 +7,14 @@
             .factory('ExerciseLtiConfiguration', ExerciseLtiConfiguration)
             .factory('ExerciseParticipations', ExerciseParticipations);
 
-        Exercise.$inject = ['$resource', 'DateUtils'];
+        Exercise.$inject = ['$resource', 'DateUtils', 'FileSaver', 'Blob'];
 
-        function Exercise($resource, DateUtils) {
+        function Exercise($resource, DateUtils, FileSaver, Blob) {
             var resourceUrl = 'api/exercises/:id';
 
             return $resource(resourceUrl, {}, {
                 'query': {method: 'GET', isArray: true},
-                'reset': {method: 'DELETE', url: 'api/exercises/:id/participations'},
+                'reset': {method: 'DELETE', url: resourceUrl + '/participations'},
                 'get': {
                     method: 'GET',
                     transformResponse: function (data) {
@@ -27,7 +27,32 @@
                     }
                 },
                 'update': {method: 'PUT'},
-                'deleteBuildPlans': {method: 'DELETE', url: resourceUrl + '/buildplans'}
+                'cleanupExercise': {
+                    method: 'DELETE',
+                    url: resourceUrl + '/cleanup',
+                    responseType: 'blob',
+                    transformResponse: function (data, headersGetter) {
+                        if (data) {
+                            var headers = headersGetter()
+                            if(headers['filename']) {
+                                FileSaver.saveAs(data, headers['filename'])
+                            }
+                        }
+                        return data;
+                    }
+                },
+                'archiveExercise': {
+                    method: 'GET',
+                    url: resourceUrl + '/archive',
+                    responseType: 'blob',
+                    transformResponse: function (data, headersGetter) {
+                        if (data) {
+                            var headers = headersGetter()
+                            FileSaver.saveAs(data, headers['filename'])
+                        }
+                        return data;
+                    }
+                },
             });
         }
 
@@ -61,7 +86,5 @@
             return $resource(resourceUrl, {}, {
                 'query': {method: 'GET', isArray: true}
             });
-
-
         }
     })();

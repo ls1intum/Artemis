@@ -2,24 +2,31 @@
     "artemisApp": {
         "exercise" : {
             "home": {
-                "title": "Exercises",
-                "createLabel": "Exercise erstellen",
-                "createOrEditLabel": "Exercise erstellen oder bearbeiten"
+                "title": "Übung",
+                "createLabel": "Übung erstellen",
+                "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
-            "created": "Exercise erstellt mit ID {{ param }}",
-            "updated": "Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "Exercise gelöscht mit ID {{ param }}",
+            "created": "Übung erstellt mit ID {{ param }}",
+            "updated": "Übung aktualisiert mit ID {{ param }}",
+            "deleted": "Übung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll die Übung {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "reset": {
+                "question": "Soll die Übung {{ id }} wirklich komplett zurückgesetzt werden?"
             },
             "detail": {
-                "title": "Exercise"
+                "title": "Übung"
             },
-            "title": "Title",
-            "releaseDate": "Release Date",
-            "dueDate": "Due Date",
-            "participations": "Participations",
-            "course": "Course"
+            "title": "Titel",
+            "releaseDate": "Veröffentlichungsdatum",
+            "dueDate": "Abgabe Datum",
+            "participations": "Teilnahmen",
+            "course": "Kurs"
+        },
+        "exerciseLtiConfiguration" : {
+            "lti": "LTI",
+            "configurationForExercise": "LTI Konfiguration der Übung {{ title }}"
         }
     }
 }

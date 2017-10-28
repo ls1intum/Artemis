@@ -109,10 +109,13 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
+            "reset": "Zurücksetzen",
             "edit": "Bearbeiten",
             "open": "Open",
             "save": "Speichern",
-            "view": "Details"
+            "view": "Details",
+            "cleanup": "Aufräumen",
+            "archive": "Archivieren"
         },
         "detail": {
             "field": "Feld",
@@ -120,6 +123,12 @@
         },
         "delete": {
             "title": "Löschen bestätigen"
+        },
+        "cleanup": {
+            "title": "Aufräumen bestätigen"
+        },
+        "archive": {
+            "title": "Archivieren bestätigen"
         },
         "validation": {
             "required": "Dieses Feld wird benötigt.",
