@@ -1,11 +1,13 @@
 {
     "artemisApp": {
         "instructorDashboard": {
-            "buildPlans": {
-                "delete": {
-                    "title": "Build Pläne löschen",
-                    "question": "Sollen wirklich alle Studierenden Build Pläne für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} dauerhaft gelöscht werden? Diese Aktion kann nicht rückgängig gemacht werden!"
-                }
+            "cleanup": {
+                "title": "Aufräumen",
+                "question": "Sollen wirklich ALLE Studierenden Build Pläne für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+            },
+            "archive": {
+                "title": "Archivieren",
+                "question": "Sollen wirklich ALLE Studierenden Repositories für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} archiviert werden?"
             }
         }
     }

@@ -2,7 +2,7 @@
     'use strict';
 
     angular
-        .module('exerciseApplicationApp')
+        .module('artemisApp')
         .constant('errorConstants', (function() {
             var problemBaseUrl = 'http://www.jhipster.tech/problem';
             return {

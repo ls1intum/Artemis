@@ -264,9 +264,7 @@ public class ParticipationResource {
     public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation build artifact: {}", id);
         Participation participation = participationService.findOne(id);
-
         return continuousIntegrationService.get().retrieveLatestArtifact(participation);
-
     }
 
 

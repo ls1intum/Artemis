@@ -109,10 +109,13 @@
             "back": "Back",
             "cancel": "Cancel",
             "delete": "Delete",
+            "reset" : "Reset",
             "edit": "Edit",
             "open": "Open",
             "save": "Save",
-            "view": "View"
+            "view": "View",
+            "cleanup": "Cleanup",
+            "archive": "Archive"
         },
         "detail": {
             "field": "Field",
@@ -120,6 +123,12 @@
         },
         "delete": {
             "title": "Confirm delete operation"
+        },
+        "cleanup": {
+            "title": "Confirm cleanup operation"
+        },
+        "archive": {
+            "title": "Confirm archive operation"
         },
         "validation": {
             "required": "This field is required.",
