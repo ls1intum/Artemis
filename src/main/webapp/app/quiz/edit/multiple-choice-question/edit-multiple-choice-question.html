@@ -1,0 +1,60 @@
+<div class="edit-mc-question" ng-hide="vm.showPreview">
+    <div class="question-options">
+        <div class="form-group question-title">
+            <input class="form-control" ng-model="vm.question.title" placeholder="Question Title"/>
+        </div>
+        <div class="form-group">
+            <div class="delete-button" ng-click="vm.delete()">
+                <i class="fa fa-trash fa-2x"></i>
+            </div>
+
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+        <span data-translate="artemisApp.multipleChoiceQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+            <select class="form-control" ng-options="option.key as option.label for option in vm.scoringTypeOptions" ng-model="vm.question.scoringType" title="scoring type"></select>
+        </div>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" ng-model="vm.question.randomizeOrder"/>
+                    <span data-translate="artemisApp.question.randomizeOrder"></span>
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+        <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
+            <input class="form-control" title="score" type="number" min="0" max="9999" ng-model="vm.question.score"/>
+        </div>
+    </div>
+    <div class="markupEditorArea">
+        <div class="toolbar">
+            <div class="btn-group">
+                <div class="btn btn-default" data-translate="artemisApp.multipleChoiceQuestion.editor.addCorrectAnswerOption" ng-click="vm.addCorrectAnswerOption()"></div>
+                <div class="btn btn-default" data-translate="artemisApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption" ng-click="vm.addIncorrectAnswerOption()"></div>
+            </div> &nbsp;
+            <div class="btn-group">
+                <div class="btn btn-default" data-translate="artemisApp.multipleChoiceQuestion.editor.addHint" ng-click="vm.addHintAtCursor()"></div>
+                <div class="btn btn-default" data-translate="artemisApp.multipleChoiceQuestion.editor.addExplanation" ng-click="vm.addExplanationAtCursor()"></div>
+            </div>
+        </div>
+        <div class="question-content">
+            <div id="{{'question-content-editor-' + vm.random}}" class="form-control"></div>
+        </div>
+        <div class="toolbar">
+            <div class="btn btn-default" ng-click="vm.togglePreview()">
+                <i class="fa fa-eye"></i>
+                <span data-translate="entity.action.preview"></span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="preview-mc-question" ng-if="vm.showPreview">
+    <multiple-choice-question question="vm.question"></multiple-choice-question>
+    <hr/>
+    <div class="btn btn-default" ng-click="vm.togglePreview()">
+        <i class="fa fa-pencil"></i>
+        <span data-translate="entity.action.edit"></span>
+    </div>
+</div>
