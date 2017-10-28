@@ -17,7 +17,8 @@
             hasAuthority: hasAuthority,
             identity: identity,
             isAuthenticated: isAuthenticated,
-            isIdentityResolved: isIdentityResolved
+            isIdentityResolved: isIdentityResolved,
+            hasGroup: hasGroup
         };
 
         return service;
@@ -38,6 +39,13 @@
                 }
             }
 
+            return false;
+        }
+
+        function hasGroup (group) {
+            if (_identity.groups.indexOf(group) !== -1) {
+                return true;
+            }
             return false;
         }
 

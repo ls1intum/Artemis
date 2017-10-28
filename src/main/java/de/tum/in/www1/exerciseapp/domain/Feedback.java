@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -28,6 +29,7 @@ public class Feedback implements Serializable {
     private String detailText;
 
     @ManyToOne
+    @JsonIgnore
     private Result result;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

@@ -167,10 +167,13 @@ public class ExerciseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
-    public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, @PageableDefault(value = 100)  Pageable pageable, Principal principal)
+    public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, @PageableDefault(value = 100) Pageable pageable, Principal principal)
         throws URISyntaxException {
         log.debug("REST request to get a page of Exercises");
         Page<Exercise> page = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal, pageable) : exerciseRepository.findByCourseId(courseId, pageable);
+
+        //TODO: filter exercises where the user does not have access, but where he might see the course
+
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -236,6 +239,11 @@ public class ExerciseResource {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         if (deleteRepositories) {
             File zipFile = exerciseService.cleanup(id, deleteRepositories);
+            if (zipFile == null) {
+                return ResponseEntity.ok()
+                    .headers(HeaderUtil.createAlert("The zip file could not be created, possibly because all repositories have already been deleted or this is not a programming exercise.", ""))
+                    .build();
+            }
             InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
             log.info("Cleanup build plans and archive repositories was successful for Exercise : {}", id);
             return ResponseEntity.ok()
@@ -264,6 +272,11 @@ public class ExerciseResource {
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);
         File zipFile = exerciseService.archive(id);
+        if (zipFile == null) {
+            return ResponseEntity.noContent()
+                .headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created, possibly because all repositories have already been deleted or this is not a programming exercise.", ""))
+                .build();
+        }
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         log.info("Archive repositories was successful for Exercise : {}", id);
         return ResponseEntity.ok()

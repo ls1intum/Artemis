@@ -55,9 +55,9 @@ public class CourseService {
         Authority taAuthority = new Authority();
         taAuthority.setName("ROLE_TA");
         Stream<Course> userCourses = result.stream().filter(
-            c -> user.getGroups().contains(c.getStudentGroupName())
-                || user.getGroups().contains(c.getTeachingAssistantGroupName())
-                || (user.getAuthorities().contains(taAuthority) && c.getTitle().equals("Archive"))
+            course -> user.getGroups().contains(course.getStudentGroupName())
+                || user.getGroups().contains(course.getTeachingAssistantGroupName())
+                || (user.getAuthorities().contains(taAuthority) && course.getTitle().equals("Archive"))
                 || user.getAuthorities().contains(adminAuthority)
         );
         List<Course> userAuthorizedCourses = userCourses.collect(Collectors.toList());

@@ -78,10 +78,10 @@ public class ExerciseService {
         Authority adminAuthority = new Authority();
         adminAuthority.setName("ROLE_ADMIN");
         Stream<Exercise> userExercises = result.stream().filter(
-            e -> user.getGroups().contains(e.getCourse().getStudentGroupName())
-                || user.getGroups().contains(e.getCourse().getTeachingAssistantGroupName())
+            exercise -> user.getGroups().contains(exercise.getCourse().getStudentGroupName())
+                || user.getGroups().contains(exercise.getCourse().getTeachingAssistantGroupName())
                 || user.getAuthorities().contains(adminAuthority)
-                || e.getCourse().getTitle().equals("Archive") // TODO: Maybe we want to externalize the configuration of the "Archive" course name
+                || exercise.getCourse().getTitle().equals("Archive") // TODO: Maybe we want to externalize the configuration of the "Archive" course name
         );
         List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
         return new PageImpl<>(filteredExercises, pageable, filteredExercises.size());
@@ -192,6 +192,11 @@ public class ExerciseService {
                 return null;    //in this case, we are done
             }
 
+            if (studentRepositories.isEmpty()) {
+                log.info("No student repositories have been found.");
+                return null;
+            }
+
             //from here on, deleteRepositories is true and does not need to be evaluated again
             log.info("Create zip file for all repositories");
             Files.createDirectories(Paths.get("zippedRepos"));
@@ -215,7 +220,7 @@ public class ExerciseService {
                 }
             });
         } else {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
+            log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
             return null;
         }
 
@@ -296,6 +301,14 @@ public class ExerciseService {
                     log.error("Archiving and deleting the local repositories did not work as expected");
                 }
             }
+            else {
+                log.info("The zip file could not be created. Ignoring the request to archive repositories", id);
+                return null;
+            }
+        }
+        else {
+            log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to archive repositories", id);
+            return null;
         }
         return new java.io.File(finalZipFilePath.toString());
     }

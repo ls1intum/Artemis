@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
@@ -45,6 +46,7 @@ public class ParticipationService {
      * @param participation the entity to save
      * @return the persisted entity
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Participation save(Participation participation) {
         log.debug("Request to save Participation : {}", participation);
         return participationRepository.saveAndFlush(participation);
@@ -56,6 +58,7 @@ public class ParticipationService {
      * @param username
      * @return
      */
+    @Transactional
     public Participation init(Exercise exercise, String username) {
 
         // common for all exercises
