@@ -46,7 +46,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
-    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
     @OrderColumn
     @JoinColumn(name="exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -205,6 +205,7 @@ public class QuizExercise extends Exercise implements Serializable {
     public String toString() {
         return "QuizExercise{" +
             "id=" + getId() +
+            ", title='" + getTitle() + "'" +
             ", description='" + getDescription() + "'" +
             ", explanation='" + getExplanation() + "'" +
             ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" +
@@ -213,6 +214,7 @@ public class QuizExercise extends Exercise implements Serializable {
             ", isOpenForPractice='" + isIsOpenForPractice() + "'" +
             ", isPlannedToStart='" + isIsPlannedToStart() + "'" +
             ", duration='" + getDuration() + "'" +
+            ", questions='" + getQuestions() + "'" +
             "}";
     }
 }

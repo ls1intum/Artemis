@@ -16,7 +16,13 @@
                 "title": "Multiple Choice Question"
             },
             "answerOptions": "Answer Options",
-            "scoringType": "Type / Scoring"
+            "scoringType": "Type / Scoring",
+            "editor": {
+                "addCorrectAnswerOption": "[X] Correct Option",
+                "addIncorrectAnswerOption": "[ ] Incorrect Option",
+                "addHint": "[-h] Hint",
+                "addExplanation": "[-e] Explanation"
+            }
         }
     }
 }
