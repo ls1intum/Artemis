@@ -18,7 +18,7 @@ import java.util.Set;
  * A Participation.
  */
 @Entity
-@Table(name = "participation")
+@Table(name = "participation", uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "exercise_id", "initialization_state"}))
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Participation implements Serializable {
 

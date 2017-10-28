@@ -37,9 +37,6 @@
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
 
-
-
-
         function init() {
 
             if($location.search().welcome) {
@@ -50,27 +47,31 @@
                 vm.repositoryPassword = password;
             });
 
-
-
             CourseExercises.query({courseId: vm.course.id, withLtiOutcomeUrlExisting: true}).$promise.then(function (exercises) {
 
                 if (vm.filterByExerciseId) {
                     exercises = _.filter(exercises, {id: vm.filterByExerciseId})
                 }
 
-
                 vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
                     return !isNotOverdue(exercise);
                 }).length;
 
-                // hide not released exercises
-                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
-                    exercises = _.filter(exercises, function (exercise) {
+
+                exercises = _.filter(exercises, function (exercise) {
+                    if(Principal.hasGroup(exercise.course.teachingAssistantGroupName)) {
+                        return true;
+                    }
+                    else if(Principal.hasGroup(exercise.course.studentGroupName)) {
                         return vm.isReleased(exercise);
-                    });
-                }
-
-
+                    }
+                    if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_STUDENT'])) {        //== only ROLE_TA
+                        // hide exercises of other courses for TAs who are not TAs in the specific course (except Archive)
+                        return exercise.course.title === 'Archive';
+                    }
+                    return true;
+                    //TODO: test the case with LTI users from edX
+                });
 
                 angular.forEach(exercises, function (exercise) {
                     exercise['participation'] = ExerciseParticipation.get({
@@ -79,9 +80,6 @@
                     });
                 });
                 vm.exercises = exercises;
-
-
-
             });
         }
 

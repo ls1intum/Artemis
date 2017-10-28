@@ -117,8 +117,7 @@ public class AccountResource {
             .map(UserDTO::new)
             .orElseThrow(() -> new InternalServerErrorException("User could not be found"));
     }
-
-
+    
     /**
      * GET  /account/password : get the current users password.
      *
@@ -130,11 +129,8 @@ public class AccountResource {
 
         Map<String, String> body = new HashMap<>();
         body.put("password", userService.decryptPassword());
-
         return new ResponseEntity<>(body, HttpStatus.OK);
-
     }
-
 
     /**
      * POST  /account : update the current user information.
