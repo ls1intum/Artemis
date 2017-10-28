@@ -28,8 +28,8 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import javax.annotation.PostConstruct;
 
-@Import(SecurityProblemSupport.class)
 @Configuration
+@Import(SecurityProblemSupport.class)
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
@@ -96,10 +96,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/i18n/**")
             .antMatchers("/content/**")
             .antMatchers("/swagger-ui/index.html")
-            .antMatchers("/api/register")
-            .antMatchers("/api/activate")
-            .antMatchers("/api/account/reset-password/init")
-            .antMatchers("/api/account/reset-password/finish")
             .antMatchers("/test/**");
     }
 
