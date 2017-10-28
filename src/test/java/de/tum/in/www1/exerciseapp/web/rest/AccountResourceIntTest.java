@@ -1,4 +1,5 @@
 package de.tum.in.www1.exerciseapp.web.rest;
+
 import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import de.tum.in.www1.exerciseapp.domain.Authority;
@@ -15,6 +16,7 @@ import de.tum.in.www1.exerciseapp.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.exerciseapp.web.rest.vm.ManagedUserVM;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import org.apache.commons.lang3.RandomStringUtils;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,10 +32,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.time.Instant;
 import java.time.LocalDate;
+
 import java.util.*;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.Matchers.anyObject;
@@ -86,9 +89,9 @@ public class AccountResourceIntTest {
     public void setup() {
         MockitoAnnotations.initMocks(this);
         doNothing().when(mockMailService).sendActivationEmail(anyObject());
-
         AccountResource accountResource =
             new AccountResource(userRepository, userService, mockMailService, persistentTokenRepository);
+
         AccountResource accountUserMockResource =
             new AccountResource(userRepository, mockUserService, mockMailService, persistentTokenRepository);
         this.restMvc = MockMvcBuilders.standaloneSetup(accountResource)
