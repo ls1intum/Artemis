@@ -130,7 +130,6 @@ public class ExerciseService {
         }
     }
 
-
     /**
      * Delete the  exercise by id.
      *
@@ -202,7 +201,6 @@ public class ExerciseService {
             Files.createDirectories(Paths.get("zippedRepos"));
             finalZipFilePath = Paths.get("zippedRepos", exercise.getCourse().getTitle() + " " + exercise.getTitle() + " Student Repositories.zip");
             zipAllRepositories(studentRepositories, finalZipFilePath);
-            scheduleForDeletion(finalZipFilePath, 60);
 
             exercise.getParticipations().forEach(participation -> {
                 if (participation.getRepositoryUrl() != null) {      //ignore participations without repository URL
@@ -219,6 +217,9 @@ public class ExerciseService {
                     participationService.save(participation);
                 }
             });
+
+            scheduleForDeletion(finalZipFilePath, 300);
+
         } else {
             log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
             return null;
@@ -290,7 +291,7 @@ public class ExerciseService {
                     log.info("Create zip file for all repositories");
                     finalZipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() + " Student Repositories.zip");
                     createZipFile(finalZipFilePath, zippedRepoFiles);
-                    scheduleForDeletion(finalZipFilePath, 60);
+                    scheduleForDeletion(finalZipFilePath, 300);
 
                     log.info("Delete all temporary zip repo files");
                     //delete the temporary zipped repo files
