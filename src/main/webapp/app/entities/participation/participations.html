@@ -1,7 +1,7 @@
 <div>
     <h2>
         <span ng-show="vm.exercise">{{vm.exercise.title}} - </span>
-        Participations
+        {{vm.participations.length}} Participations
     </h2>
     <jhi-alert></jhi-alert>
     <div class="container-fluid">
@@ -28,7 +28,7 @@
     <div class="table-responsive">
         <table class="jh-table table table-striped">
             <thead>
-                <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.reset()">
+                <tr jh-sort="vm.predicate" ascending="vm.reverse" callback="vm.sort()">
                     <th jh-sort-by="id"><span data-translate="global.field.id">ID</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="repositoryUrl"><span data-translate="artemisApp.participation.repositoryUrl">Repository Url</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="buildPlanId"><span data-translate="artemisApp.participation.buildPlanId">Build Plan Id</span> <span class="glyphicon glyphicon-sort"></span></th>
@@ -47,7 +47,7 @@
                     <td data-translate="{{'artemisApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
                     <td>{{participation.initializationDate | date:'medium'}}</td>
                     <td>
-                        <a ui-sref="user-management-detail({login:participation.student.login})">{{participation.student.firstName}}</a>
+                        <a ui-sref="user-management-detail({login:participation.student.login})">{{participation.student.firstName}} {{participation.student.lastName}}</a>
                     </td>
                     <td ng-hide="vm.exercise">
                         <a ui-sref="exercise-detail({id:participation.exercise.id})">{{participation.exercise.title}}</a>

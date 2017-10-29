@@ -154,18 +154,19 @@ public class ParticipationResource {
             .body(result);
     }
 
-    /**
-     * GET  /participations : get all the participations.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of participations in body
-     */
-    @GetMapping("/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
-    @Timed
-    public List<Participation> getAllParticipations() {
-        log.debug("REST request to get all Participations");
-        return participationService.findAll();
-    }
+    //Deactivated because it would load all (thousands) participations and completely overload the server
+//    /**
+//     * GET  /participations : get all the participations.
+//     *
+//     * @return the ResponseEntity with status 200 (OK) and the list of participations in body
+//     */
+//    @GetMapping("/participations")
+//    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+//    @Timed
+//    public List<Participation> getAllParticipations() {
+//        log.debug("REST request to get all Participations");
+//        return participationService.findAll();
+//    }
 
     /**
      * GET  /exercise/{exerciseId}/participations : get all the participations for an exercise
