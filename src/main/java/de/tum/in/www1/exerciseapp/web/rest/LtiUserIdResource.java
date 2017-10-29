@@ -74,17 +74,19 @@ public class LtiUserIdResource {
             .body(result);
     }
 
-    /**
-     * GET  /lti-user-ids : get all the ltiUserIds.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of ltiUserIds in body
-     */
-    @GetMapping("/lti-user-ids")
-    @Timed
-    public List<LtiUserId> getAllLtiUserIds() {
-        log.debug("REST request to get all LtiUserIds");
-        return ltiUserIdRepository.findAll();
-        }
+    //Deactivated because it would load all lti user ids and overload the server
+    //TODO: activate this call again using the infinite scroll page mechanism
+//    /**
+//     * GET  /lti-user-ids : get all the ltiUserIds.
+//     *
+//     * @return the ResponseEntity with status 200 (OK) and the list of ltiUserIds in body
+//     */
+//    @GetMapping("/lti-user-ids")
+//    @Timed
+//    public List<LtiUserId> getAllLtiUserIds() {
+//        log.debug("REST request to get all LtiUserIds");
+//        return ltiUserIdRepository.findAll();
+//    }
 
     /**
      * GET  /lti-user-ids/:id : get the "id" ltiUserId.

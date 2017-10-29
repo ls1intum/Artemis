@@ -117,7 +117,7 @@ public class AccountResource {
             .map(UserDTO::new)
             .orElseThrow(() -> new InternalServerErrorException("User could not be found"));
     }
-    
+
     /**
      * GET  /account/password : get the current users password.
      *

@@ -11,7 +11,7 @@
         var vm = this;
 
         vm.participations = [];
-
+        vm.sort = sort;
         vm.exercise = exerciseEntity;
 
         load();
@@ -44,5 +44,13 @@
             });
         }
 
+        function sort() {
+            vm.participations.sort(function (a, b) {
+                var result = (a[vm.predicate] < b[vm.predicate]) ? -1 : (a[vm.predicate] > b[vm.predicate]) ? 1 : (
+                    (a.id < b.id) ? -1 : (a.id > b.id) ? 1 : 0
+                );
+                return result * (vm.reverse ? -1 : 1);
+            });
+        }
     }
 })();
