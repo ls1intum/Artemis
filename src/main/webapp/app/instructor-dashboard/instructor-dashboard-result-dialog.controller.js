@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('InstructorDashboardResultDialogController', InstructorDashboardResultDialogController);
 
-    InstructorDashboardResultDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'participationEntity', 'Result', 'AlertService'];
+    InstructorDashboardResultDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'participationEntity', 'Result', 'AlertService', 'Feedback'];
 
-    function InstructorDashboardResultDialogController($timeout, $scope, $stateParams, $uibModalInstance, entity, participationEntity, Result, AlertService) {
+    function InstructorDashboardResultDialogController($timeout, $scope, $stateParams, $uibModalInstance, entity, participationEntity, Result, AlertService, Feedback) {
         var vm = this;
 
         vm.result = entity;
@@ -38,6 +38,7 @@
         }
 
         function save() {
+            console.log('saving');
             vm.isSaving = true;
             if (vm.result.id !== null) {
                 Result.update(vm.result, onSaveSuccess, onSaveError);
@@ -47,9 +48,19 @@
         }
 
         function onSaveSuccess(result) {
-            $scope.$emit('artemisApp:resultUpdate', result);
-            $uibModalInstance.close(result);
-            vm.isSaving = false;
+            for(var i = 0; i < vm.feedbacks.length; i++) {
+                var currentFeedback = vm.feedbacks[i];
+                currentFeedback.result = result;
+                currentFeedback.type = 'MANUAL';
+                Feedback.save(currentFeedback, function(feedback) {
+                    $scope.$emit('artemisApp:resultUpdate', result);
+                    $uibModalInstance.close(result);
+                    vm.isSaving = false;
+                }, function(error) {
+                    vm.isSaving = false;
+                });
+            }
+
         }
 
         function onSaveError() {
