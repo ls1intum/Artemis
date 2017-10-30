@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Feedback;
+
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.FeedbackService;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -38,9 +40,9 @@ public class FeedbackResource {
     public FeedbackResource(FeedbackRepository feedbackRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
         this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
-
         this.feedbackService = feedbackService;
     }
+
 
     /**
      * POST  /feedbacks : Create a new feedback.
@@ -123,5 +125,4 @@ public class FeedbackResource {
         feedbackRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
-
 }

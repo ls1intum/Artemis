@@ -1,12 +1,13 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
+
+import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 
 /**
  * A Feedback.
@@ -35,7 +36,7 @@ public class Feedback implements Serializable {
     @ManyToOne
     private Result result;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -74,6 +75,11 @@ public class Feedback implements Serializable {
         return type;
     }
 
+    public Feedback type(FeedbackType type) {
+        this.type = type;
+        return this;
+    }
+
     public void setType(FeedbackType type) {
         this.type = type;
     }
@@ -90,7 +96,7 @@ public class Feedback implements Serializable {
     public void setResult(Result result) {
         this.result = result;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -118,6 +124,7 @@ public class Feedback implements Serializable {
             "id=" + getId() +
             ", text='" + getText() + "'" +
             ", detailText='" + getDetailText() + "'" +
+            ", type='" + getType() + "'" +
             "}";
     }
 }

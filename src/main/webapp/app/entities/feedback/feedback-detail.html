@@ -12,6 +12,10 @@
         <dd>
             <span>{{vm.feedback.detailText}}</span>
         </dd>
+        <dt><span data-translate="artemisApp.feedback.type">Type</span></dt>
+        <dd>
+            <span data-translate="{{'artemisApp.FeedbackType.' + vm.feedback.type}}">{{vm.feedback.type}}</span>
+        </dd>
         <dt><span data-translate="artemisApp.feedback.result">Result</span></dt>
         <dd>
             <a ui-sref="result-detail({id:vm.feedback.result.id})">{{vm.feedback.result.id}}</a>
