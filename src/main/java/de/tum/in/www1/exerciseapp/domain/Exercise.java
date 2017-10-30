@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -16,13 +18,19 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "exercise")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@Inheritance(strategy= InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(
     name="discriminator",
     discriminatorType=DiscriminatorType.STRING
 )
 @DiscriminatorValue(value="E")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ProgrammingExercise.class),
+    @JsonSubTypes.Type(value = ModelingExercise.class),
+    @JsonSubTypes.Type(value = QuizExercise.class)
+})
 public abstract class Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
