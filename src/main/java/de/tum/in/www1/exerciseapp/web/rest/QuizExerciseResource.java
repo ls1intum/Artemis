@@ -1,10 +1,8 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.exerciseapp.domain.AnswerOption;
-import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestion;
-import de.tum.in.www1.exerciseapp.domain.Question;
-import de.tum.in.www1.exerciseapp.domain.QuizExercise;
+import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.repository.MultipleChoiceQuestionRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -18,6 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.Optional;
 
 /**
@@ -52,7 +52,22 @@ public class QuizExerciseResource {
         if (quizExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
+        // creating the Statistics for each Question
+        for (Question question : quizExercise.getQuestions()) {
+            // do the same for answerOptions (if question is multiple choice)
+                if (question instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    MultipleChoiceStatistic mcStatistic = new MultipleChoiceStatistic();
+                    mcQuestion.setQuestionStatistic(mcStatistic);
+                    mcStatistic.setQuestion(mcQuestion);
+                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                        mcStatistic.addAnswerOption(answerOption);
+                    }
+                }
+            // TODO: do the same for dragItems and dropLocations (if question is drag and drop)
+        }
         QuizExercise result = quizExerciseRepository.save(quizExercise);
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
@@ -85,20 +100,55 @@ public class QuizExerciseResource {
                 // do the same for answerOptions (if question is multiple choice)
                 if (question instanceof MultipleChoiceQuestion) {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    MultipleChoiceStatistic mcStatistic = (MultipleChoiceStatistic) mcQuestion.getQuestionStatistic();
+                    mcStatistic.setQuestion(mcQuestion);
+                    //delete and reconnect answerCounter-entities
+                    Set<AnswerCounter> delete = new HashSet<>();
+                    for (AnswerCounter answerCounter : mcStatistic.getRatedAnswerCounters()) {
+                        if (answerCounter.getId() != null) {
+                            if(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer())){
+                                answerCounter.setMultipleChoiceStatistic(mcStatistic);
+                            }
+                            else{
+                                delete.add(answerCounter);
+                                answerCounter.setAnswer(null);
+
+                            }
+                        }
+                    }
+                    mcStatistic.getRatedAnswerCounters().removeAll(delete);
+                    // reconnect answerOptions and add new answerCounter
                     for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
                         if (answerOption.getId() != null) {
                             answerOption.setQuestion(mcQuestion);
                         }
+                        else{
+                            ((MultipleChoiceStatistic) mcQuestion.getQuestionStatistic()).addAnswerOption(answerOption);
+                        }
                     }
                 }
-                // TODO: do the same for dragItems and dropLocations (if question is drag and drop)
             }
+            // add Statistic for new Question
+            else{
+                if (question instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    MultipleChoiceStatistic mcStatistic = new MultipleChoiceStatistic();
+                    mcQuestion.setQuestionStatistic(mcStatistic);
+                    mcStatistic.setQuestion(mcQuestion);
+                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                        //if (answerOption.getId() != null) {
+                        mcStatistic.addAnswerOption(answerOption);
+                        //}
+                    }
+                }
+            }
+            // TODO: do the same for dragItems and dropLocations (if question is drag and drop)
         }
-
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         //       and delete the now orphaned entries from the database
         QuizExercise result = quizExerciseRepository.save(quizExercise);
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);

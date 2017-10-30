@@ -30,13 +30,13 @@ public abstract class Statistic implements Serializable {
     private Long id;
 
     @Column(name = "released")
-    private Boolean released;
+    private Boolean released = false;
 
     @Column(name = "participants_rated")
-    private Integer participantsRated;
+    private Integer participantsRated = 0;
 
     @Column(name = "participants_unrated")
-    private Integer participantsUnrated;
+    private Integer participantsUnrated = 0;
 
     public Long getId() {
         return id;

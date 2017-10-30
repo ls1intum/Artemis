@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -22,13 +23,15 @@ public class AnswerCounter implements Serializable {
     private Long id;
 
     @Column(name = "counter")
-    private Integer counter;
+    private Integer counter = 0;
 
     @ManyToOne
+    @JsonIgnore
     private MultipleChoiceStatistic multipleChoiceStatistic;
 
-    @OneToOne
+    @OneToOne//(cascade = {CascadeType.PERSIST})
     @JoinColumn(unique = true)
+    //@JsonIgnore
     private AnswerOption answer;
 
     public Long getId() {

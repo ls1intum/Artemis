@@ -37,6 +37,7 @@
             <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
         </td>
         <td class="text-center">
+            <div class="btn-group flex-btn-group-container">
             <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
                     ng-switch-when="uninitialized"
                     ng-click="$ctrl.start(exercise)"
@@ -62,6 +63,13 @@
                     repository
                 </button>
                 <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan" ng-if="exercise.publishBuildPlanUrl" ng-click="$ctrl.goToBuildPlan(exercise)"><i class="fa fa-external-link fa-fw"></i>&nbsp;Go to build plan</button>
+            </div>
+                <button type="submit"
+                        ui-sref=""
+                        class="btn btn-success btn-sm">
+                    <span class="fa fa-signal"></span>
+                    <span class="hidden-sm-down">Statistic</span>
+                </button>
             </div>
         </td>
     </tr>

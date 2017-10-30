@@ -59,7 +59,7 @@ public abstract class Question implements Serializable {
     @Column(name = "randomize_order")
     private Boolean randomizeOrder;
 
-    @OneToOne
+    @OneToOne(cascade=CascadeType.ALL)
     @JoinColumn(unique = true)
     private QuestionStatistic questionStatistic;
 

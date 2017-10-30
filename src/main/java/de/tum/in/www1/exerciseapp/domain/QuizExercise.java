@@ -46,7 +46,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
-    @OneToOne
+    @OneToOne(cascade=CascadeType.ALL)
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 

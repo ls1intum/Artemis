@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -15,18 +16,18 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="MC")
-//@Table(name = "multiple_choice_statistic")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeName("multiple-choice")
 public class MultipleChoiceStatistic extends QuestionStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(mappedBy = "multipleChoiceStatistic")
-    @JsonIgnore
+    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true, mappedBy = "multipleChoiceStatistic")
+    //@JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerCounter> ratedAnswerCounters = new HashSet<>();
 
-    @OneToMany(mappedBy = "multipleChoiceStatistic")
+    @OneToMany(cascade=CascadeType.ALL, mappedBy = "multipleChoiceStatistic")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerCounter> unRatedAnswerCounters = new HashSet<>();
@@ -107,4 +108,17 @@ public class MultipleChoiceStatistic extends QuestionStatistic implements Serial
             "id=" + getId() +
             "}";
     }
+
+    public void addAnswerOption(AnswerOption answer){
+        AnswerCounter ratedCounter = new AnswerCounter();
+        ratedCounter.setAnswer(answer);
+        addRatedAnswerCounter(ratedCounter);
+
+        // TO-DO solve Problem with same IDs for different CounterSets
+        //AnswerCounter unRatedCounter = new AnswerCounter();
+        //unRatedCounter.setAnswer(answer);
+        //addUnRatedAnswerCounter(unRatedCounter);
+
+    }
+
 }

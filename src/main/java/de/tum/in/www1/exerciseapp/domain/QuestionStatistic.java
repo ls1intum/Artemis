@@ -1,6 +1,9 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -15,15 +18,21 @@ import java.util.Objects;
 @DiscriminatorValue(value="Q")
 //@Table(name = "question_statistic")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property="type")
+
+@JsonSubTypes({
+    @JsonSubTypes.Type(value=MultipleChoiceStatistic.class, name="multiple-choice"),
+    @JsonSubTypes.Type(value=DragAndDropStatistic.class, name="drag-and-drop")
+})
 public abstract class QuestionStatistic extends Statistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @Column(name = "rated_correct_counter")
-    private Integer ratedCorrectCounter;
+    private Integer ratedCorrectCounter = 0;
 
     @Column(name = "un_rated_correct_counter")
-    private Integer unRatedCorrectCounter;
+    private Integer unRatedCorrectCounter = 0;
 
     @OneToOne(mappedBy = "questionStatistic")
     @JsonIgnore
