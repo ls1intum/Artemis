@@ -150,7 +150,6 @@
             if (exercise.type && exercise.type === "quiz") {
                 // start the quiz
                 $location.url("/quiz/" + exercise.id);
-                console.log(exercise);
                 return;
             }
 

@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Exercise;
 import de.tum.in.www1.exerciseapp.domain.ProgrammingExercise;
+import de.tum.in.www1.exerciseapp.domain.QuizExercise;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.ExerciseService;
@@ -174,7 +175,15 @@ public class ExerciseResource {
 
         //TODO: filter exercises where the user does not have access, but where he might see the course
 
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "exercises");
+        // filter out questions from quizExercises (so users can't see which answer options are correct)
+        for (Exercise exercise : page) {
+            if (exercise instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) exercise;
+                quizExercise.setQuestions(null);
+            }
+        }
+
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "/exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
 
