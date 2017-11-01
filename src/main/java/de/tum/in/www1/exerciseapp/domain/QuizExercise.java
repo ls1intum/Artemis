@@ -156,6 +156,8 @@ public class QuizExercise extends Exercise implements Serializable {
         this.duration = duration;
     }
 
+    public String getType() { return "quiz"; }
+
     public List<Question> getQuestions() {
         return questions;
     }

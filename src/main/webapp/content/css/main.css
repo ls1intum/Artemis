@@ -8369,7 +8369,8 @@ body.editor .navbar-brand span {
     .question-options .form-group > * {
       margin: 0 4px; }
 
-.edit-quiz-footer {
+.edit-quiz-footer,
+.quiz-footer {
   position: fixed;
   height: 100px;
   bottom: 0;
@@ -8378,22 +8379,28 @@ body.editor .navbar-brand span {
   z-index: 10;
   box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
   background: white; }
-  .edit-quiz-footer .container {
+  .edit-quiz-footer .container,
+  .quiz-footer .container {
     height: 100%; }
 
-.edit-quiz-footer-content {
+.edit-quiz-footer-content,
+.quiz-footer-content {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between; }
   .edit-quiz-footer-content .form-control,
-  .edit-quiz-footer-content .input-group-btn {
+  .edit-quiz-footer-content .input-group-btn,
+  .quiz-footer-content .form-control,
+  .quiz-footer-content .input-group-btn {
     display: inline-block;
     width: auto; }
-  .edit-quiz-footer-content .form-group {
+  .edit-quiz-footer-content .form-group,
+  .quiz-footer-content .form-group {
     display: flex;
     align-items: center; }
-    .edit-quiz-footer-content .form-group > * {
+    .edit-quiz-footer-content .form-group > *,
+    .quiz-footer-content .form-group > * {
       margin: 0 4px; }
 
 .question:first-of-type {
@@ -8469,6 +8476,9 @@ body.editor .navbar-brand span {
         font-size: 18px; }
     .mc-question .answer-option:hover {
       background: #fafafa; }
+
+.quiz-header h3 {
+  margin: 0; }
 
 .colon-suffix:after {
   content: ":"; }

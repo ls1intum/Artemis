@@ -146,6 +146,14 @@
 
         function start(exercise) {
             vm.loading[exercise.id.toString()] = true;
+
+            if (exercise.type && exercise.type === "quiz") {
+                // start the quiz
+                $location.url("/quiz/" + exercise.id);
+                console.log(exercise);
+                return;
+            }
+
             exercise.$start({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id

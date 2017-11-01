@@ -42,7 +42,8 @@
     }
 }
 
-.edit-quiz-footer {
+.edit-quiz-footer,
+.quiz-footer {
     position: fixed;
     height: 100px;
     bottom: 0;
@@ -59,7 +60,8 @@
     }
 }
 
-.edit-quiz-footer-content {
+.edit-quiz-footer-content,
+.quiz-footer-content {
     height: 100%;
     display: flex;
     align-items: center;
@@ -194,7 +196,12 @@
             background: #fafafa;
         }
     }
+}
 
+.quiz-header {
+    h3 {
+        margin: 0;
+    }
 }
 
 .colon-suffix:after {
