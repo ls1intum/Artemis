@@ -242,13 +242,13 @@
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
-                    templateUrl: 'app/entities/programming-exercise/programming-exercise-delete-dialog.html',
-                    controller: 'ProgrammingExerciseDeleteController',
+                    templateUrl: 'app/entities/exercise/exercise-delete-dialog.html',
+                    controller: 'ExerciseDeleteController',
                     controllerAs: 'vm',
                     size: 'md',
                     resolve: {
-                        entity: ['ProgrammingExercise', function(ProgrammingExercise) {
-                            return ProgrammingExercise.get({id : $stateParams.id}).$promise;
+                        entity: ['Exercise', function(Exercise) {
+                            return Exercise.get({id : $stateParams.id}).$promise;
                         }]
                     }
                 }).result.then(function() {
@@ -266,13 +266,13 @@
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
-                    templateUrl: 'app/entities/programming-exercise/programming-exercise-delete-dialog.html',
-                    controller: 'ProgrammingExerciseDeleteController',
+                    templateUrl: 'app/entities/exercise/exercise-delete-dialog.html',
+                    controller: 'ExerciseDeleteController',
                     controllerAs: 'vm',
                     size: 'md',
                     resolve: {
-                        entity: ['ProgrammingExercise', function(ProgrammingExercise) {
-                            return ProgrammingExercise.get({id : $stateParams.id}).$promise;
+                        entity: ['Exercise', function(Exercise) {
+                            return Exercise.get({id : $stateParams.id}).$promise;
                         }]
                     }
                 }).result.then(function() {

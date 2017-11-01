@@ -1,5 +1,5 @@
 <div>
-    <h2><span ng-show="vm.course">{{vm.course.title}} - </span>Programming Exercises</h2>
+    <h2><span ng-show="vm.course">{{vm.course.title}} - </span> {{vm.programmingExercises.length}} Programming Exercises</h2>
     <jhi-alert></jhi-alert>
     <div class="container-fluid">
         <div class="row">
@@ -62,6 +62,12 @@
                                     class="btn btn-warning btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="programming-exercise-for-course.reset({id:programmingExercise.id})"
+                                    class="btn btn-danger btn-sm">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.reset"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="programming-exercise-for-course.delete({id:programmingExercise.id})"

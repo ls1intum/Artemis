@@ -19,7 +19,7 @@
 
     EditorFileBrowserController.$inject = ['Participation', 'RepositoryFile', '$state','$uibModal'];
 
-    function EditorFileBrowserController(Participation, RepositoryFile, $state,$uibModal) {
+    function EditorFileBrowserController(Participation, RepositoryFile, $state, $uibModal) {
         var vm = this;
 
 

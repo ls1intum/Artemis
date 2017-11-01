@@ -32,18 +32,11 @@
             vm.loadReadme();
             vm.md = new Remarkable();
 
-
             vm.md.inline.ruler.before("text","testsStatus", vm.remarkableTestsStatusParser);
-
             vm.md.block.ruler.before("paragraph","plantUml", vm.remarkablePlantUmlParser);
-
-
             vm.md.renderer.rules["testsStatus"] = vm.remarkableTestsStatusRenderer;
             vm.md.renderer.rules["plantUml"] = vm.remarkablePlantUmlRenderer;
-
-
         };
-
 
         vm.$onChanges = function (changes) {
             if (changes.latestResult && changes.latestResult.currentValue && !vm.loading) {
@@ -51,9 +44,6 @@
                 vm.loadResultsDetails();
             }
         };
-
-
-
 
         vm.loadReadme = function () {
             RepositoryFile.get({
@@ -76,28 +66,20 @@
             vm.loading = false;
         };
 
-
-
         vm.renderReadme = function () {
             vm.loading = true;
-
             vm.steps = [];
-
             vm.readmeRendered = $compile(vm.md.render(vm.readme))($scope);
 
             $('.instructions').html(vm.readmeRendered);
 
             vm.loading = false;
 
-
             if($('.editor-sidebar-right .panel').height() > $('.editor-sidebar-right').height()) {
                 // Safari bug workaround
                 $('.editor-sidebar-right .panel').height($('.editor-sidebar-right').height() - 2);
             }
-
-
         };
-
 
         vm.remarkablePlantUmlParser = function (state, startLine, endLine, silent) {
 
@@ -107,7 +89,6 @@
                 shift = state.tShift[startLine];
 
             pos += shift;
-
 
             if (shift > 3 || pos + 2 >= max) { return false; }
 
@@ -136,7 +117,6 @@
                 nextLine++;
             }
 
-
             state.line = nextLine + 1;
             state.tokens.push({
                 type: 'plantUml',
@@ -146,8 +126,6 @@
             });
 
             return true;
-
-
         };
 
         vm.remarkablePlantUmlRenderer = function (tokens, id, options, en) {
@@ -164,12 +142,9 @@
             });
 
             return "<img src='/api/plantuml/png?plantuml=" + encodeURIComponent(plantUml) +" '/>";
-
         };
 
-
         vm.remarkableTestsStatusParser = function (state, silent) {
-
 
             var reg = /^✅\[([^\]]*)\]\s*\(([^)]+)\)/;
 
@@ -204,13 +179,9 @@
             var text = "<strong>";
 
             text += status.done ? '<i class="fa fa-lg fa-check-circle-o text-success" style="font-size: 1.7em;"></i>' : '<i class="fa fa-lg fa-times-circle-o text-danger" style="font-size: 1.7em;"></i>';
-
             text += ' ' + tokens[0].title;
-
             text += "</strong>: ";
-
             text += status.done ? ' <span class="text-success">' + status.label + '</span>' : '<a ng-click="$ctrl.showDetailsForTests($ctrl.latestResult,\'' + tests.toString() + '\')"><span class="text-danger">' + status.label + '</span></a>';
-
             text += "<br />";
 
             vm.steps.push({
@@ -219,7 +190,6 @@
             });
 
             return text;
-
         };
 
 
@@ -229,11 +199,10 @@
             var label = "No results";
             var totalTests = tests.length;
 
-
             if(vm.resultDetails && vm.resultDetails.length > 0) {
                 var failedTests = 0;
                 _.forEach(tests, function (test) {
-                    if(_.some(vm.resultDetails, {'methodName' : test})) {
+                    if(_.some(vm.resultDetails, {'text' : test})) {
                         failedTests++;
                     }
                 });
@@ -262,9 +231,7 @@
                 done: done,
                 label: label
             }
-
         };
-
 
         vm.showDetailsForTests = function(result, tests) {
             $uibModal.open({
@@ -282,7 +249,7 @@
                             id: result.id
                         }, function (details) {
                             vm.details = _.filter(details, function (detail) {
-                                return vm.filterTests.indexOf(detail.methodName) != -1;
+                                return vm.filterTests.indexOf(detail.text) != -1;
                             });
                             vm.loading = false;
                         });
@@ -297,9 +264,5 @@
                 controllerAs: '$ctrl'
             });
         }
-
-
-
-
     }
 })();

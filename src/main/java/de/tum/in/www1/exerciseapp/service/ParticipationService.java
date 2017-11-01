@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.io.IOException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -46,9 +46,10 @@ public class ParticipationService {
      * @param participation the entity to save
      * @return the persisted entity
      */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Participation save(Participation participation) {
         log.debug("Request to save Participation : {}", participation);
-        return participationRepository.save(participation);
+        return participationRepository.saveAndFlush(participation);
     }
 
     /**
@@ -57,12 +58,13 @@ public class ParticipationService {
      * @param username
      * @return
      */
+    @Transactional
     public Participation init(Exercise exercise, String username) {
 
         // common for all exercises
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (!Optional.ofNullable(participation).isPresent()) {
+        if (!Optional.ofNullable(participation).isPresent() || participation.getInitializationState() == ParticipationState.FINISHED) { //create a new participation only if it was finished before
             participation = new Participation();
             participation.setExercise(exercise);
 
@@ -74,7 +76,7 @@ public class ParticipationService {
         }
 
 
-        // specific to programming exericses
+        // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(ParticipationState.UNINITIALIZED);
@@ -107,8 +109,10 @@ public class ParticipationService {
         participation = copyBuildPlan(participation, programmingExercise);
         participation = configureBuildPlan(participation, programmingExercise);
         participation.setInitializationState(ParticipationState.INITIALIZED);
-        participation.setInitializationDate(ZonedDateTime.now());
-
+        if (participation.getInitializationDate() == null) {
+            //only set the date if it was not set before (which should NOT be the case)
+            participation.setInitializationDate(ZonedDateTime.now());
+        }
         save(participation);
         return participation;
     }

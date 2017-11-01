@@ -21,7 +21,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 
 @Service
@@ -44,9 +47,7 @@ public class GitService {
     @Value("${artemis.git.email}")
     private String GIT_EMAIL;
 
-
     private final HashMap<Path, Repository> cachedRepositories = new HashMap<>();
-
 
     /**
      * Get the local repository for a given participation.
@@ -59,14 +60,10 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(Participation participation) throws IOException, GitAPIException {
         URL repoUrl = participation.getRepositoryUrlAsUrl();
-
         Repository repository = getOrCheckoutRepository(repoUrl);
-
         repository.setParticipation(participation);
-
         return repository;
     }
-
 
     /**
      * Get the local repository for a given remote repository URL.
@@ -88,15 +85,16 @@ public class GitService {
         // Check if the repository is already checked out on the server
         if (!Files.exists(localPath)) {
             // Repository is not yet available on the server
-            // We need to check it out from the remote repositroy
-            log.debug("Cloning from " + repoUrl + " to " + localPath);
+            // We need to check it out from the remote repository
+            log.info("Cloning from " + repoUrl + " to " + localPath);
             Git.cloneRepository()
                 .setURI(repoUrl.toString())
                 .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
                 .setDirectory(localPath.toFile())
                 .call();
-        } else {
-            log.debug("Repository at " + localPath + " already exists");
+        }
+        else {
+            log.info("Repository at " + localPath + " already exists");
         }
 
         // Open the repository from the filesystem
@@ -117,7 +115,6 @@ public class GitService {
         return repository;
     }
 
-
     /**
      * Commits with the given message into the repository and pushes it to the remote.
      *
@@ -130,7 +127,6 @@ public class GitService {
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(GIT_NAME, GIT_EMAIL).call();
         git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
     }
-
 
     /**
      * Stage all files in the repo including new files.
@@ -146,7 +142,6 @@ public class GitService {
         git.add().addFilepattern(".").call();
     }
 
-
     /**
      * Pulls from remote repository.
      *
@@ -160,7 +155,6 @@ public class GitService {
         repo.setFiles(null);
         return git.pull().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
     }
-
 
     /**
      * List all files in the repository
@@ -204,7 +198,6 @@ public class GitService {
             }
         }
         return Optional.empty();
-
     }
 
 
@@ -248,8 +241,30 @@ public class GitService {
         cachedRepositories.remove(repoPath);
         if (Files.exists(repoPath)) {
             FileUtils.deleteDirectory(repoPath.toFile());
-            log.debug("Deleted Repository at " + repoPath);
+            log.info("Deleted Repository at " + repoPath);
         }
+    }
+
+    public Path zipRepository(Repository repo) throws IOException {
+        String zipRepoName = repo.getParticipation().getExercise().getCourse().getTitle() + "-" + repo.getParticipation().getExercise().getTitle() + "-" + repo.getParticipation().getStudent().getLogin() + ".zip";
+        Path repoPath = repo.getLocalPath();
+        Path zipFilePath = Paths.get(REPO_CLONE_PATH, "zippedRepos", zipRepoName);
+        Files.createDirectories(Paths.get(REPO_CLONE_PATH, "zippedRepos"));
+        try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
+            Files.walk(repoPath)
+                .filter(path -> !Files.isDirectory(path))
+                .forEach(path -> {
+                    ZipEntry zipEntry = new ZipEntry(repoPath.relativize(path).toString());
+                    try {
+                        zs.putNextEntry(zipEntry);
+                        Files.copy(path, zs);
+                        zs.closeEntry();
+                    } catch (Exception e) {
+                        log.error("Create zip file error", e);
+                    }
+                });
+        }
+        return zipFilePath;
     }
 
     /**

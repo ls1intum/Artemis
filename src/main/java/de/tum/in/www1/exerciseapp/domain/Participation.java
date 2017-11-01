@@ -18,7 +18,7 @@ import java.util.Set;
  * A Participation.
  */
 @Entity
-@Table(name = "participation")
+@Table(name = "participation", uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "exercise_id", "initialization_state"}))
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Participation implements Serializable {
 
@@ -161,6 +161,10 @@ public class Participation implements Serializable {
     }
 
     public URL getRepositoryUrlAsUrl() {
+        if (repositoryUrl == null) {
+            return null;
+        }
+
         try {
             return new URL(repositoryUrl);
         } catch (MalformedURLException e) {

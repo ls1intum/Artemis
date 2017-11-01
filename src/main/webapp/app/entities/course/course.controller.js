@@ -12,6 +12,7 @@
         var vm = this;
 
         vm.courses = [];
+        vm.sort = sort;
 
         loadAll();
 
@@ -22,5 +23,13 @@
             });
         }
 
+        function sort() {
+            vm.courses.sort(function (a, b) {
+                var result = (a[vm.predicate] < b[vm.predicate]) ? -1 : (a[vm.predicate] > b[vm.predicate]) ? 1 : (
+                    (a.id < b.id) ? -1 : (a.id > b.id) ? 1 : 0
+                );
+                return result * (vm.reverse ? -1 : 1);
+            });
+        }
     }
 })();

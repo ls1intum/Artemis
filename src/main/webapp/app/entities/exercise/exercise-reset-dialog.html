@@ -6,7 +6,7 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p>Are you sure you want to reset the Exercise {{vm.exercise.title}}?</p>
+        <p>Are you sure you want to reset the Exercise {{vm.exercise.title}}? This action can NOT be undone!</p>
         <p></p>
         <div class="checkbox">
             <label class="control-label text-danger">
@@ -24,10 +24,10 @@
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
-            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span translate="entity.action.cancel">Cancel</span>
+            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" class="btn btn-danger" ng-disabled="deleteForm.$invalid || vm.resetInProgress || !vm.deleteParticipations || (vm.confirmExerciseName != vm.exercise.title)">
-            <span class="glyphicon glyphicon-remove-circle"></span>&nbsp;<span>Reset</span>
+            <span class="glyphicon glyphicon-remove-circle"></span>&nbsp;<span data-translate="entity.action.delete">Reset</span>
         </button>
     </div>
 </form>

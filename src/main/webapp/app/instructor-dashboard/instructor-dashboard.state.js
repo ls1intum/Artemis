@@ -90,14 +90,17 @@
                     });
                 }]
             })
-            .state('instructor-dashboard.buildplans-delete', {
+            .state('instructor-dashboard.cleanup', {
                 parent: 'instructor-dashboard',
-                url: '/{id}/delete',
+                url: '/cleanup',
+                data: {
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
-                        templateUrl: 'app/instructor-dashboard/instructor-dashboard-buildplans-delete-dialog.html',
-                        controller: 'BuildPlansDeleteController',
-                        controllerAs: '$ctrl',
+                        templateUrl: 'app/instructor-dashboard/instructor-dashboard-cleanup-dialog.html',
+                        controller: 'CleanupController',
+                        controllerAs: 'vm',
                         size: 'md',
                         resolve: {
                             entity: ['Exercise', function (Exercise) {
@@ -110,7 +113,31 @@
                         $state.go('^');
                     });
                 }]
-            });
+            })
+            .state('instructor-dashboard.archive', {
+            parent: 'instructor-dashboard',
+            url: '/archive',
+            data: {
+                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/instructor-dashboard/instructor-dashboard-archive-dialog.html',
+                    controller: 'ArchiveController',
+                    controllerAs: 'vm',
+                    size: 'md',
+                    resolve: {
+                        entity: ['Exercise', function (Exercise) {
+                            return Exercise.get({id: $stateParams.exerciseId}).$promise;
+                        }]
+                    }
+                }).result.then(function () {
+                    $state.go('instructor-dashboard');
+                }, function () {
+                    $state.go('^');
+                });
+            }]
+        });
     }
 
 })();

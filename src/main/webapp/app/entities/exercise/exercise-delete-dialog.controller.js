@@ -3,7 +3,7 @@
 
     angular
         .module('artemisApp')
-        .controller('ExerciseDeleteController',ExerciseDeleteController);
+        .controller('ExerciseDeleteController', ExerciseDeleteController);
 
     ExerciseDeleteController.$inject = ['$uibModalInstance', 'entity', 'Exercise'];
 
@@ -24,8 +24,7 @@
         function confirmDelete (id) {
             vm.deleteInProgress = true;
             Exercise.delete({
-                    id: id,
-                    deleteParticipations: vm.deleteParticipations
+                    id: id
                 },
                 function () {
                     $uibModalInstance.close(true);
@@ -34,8 +33,5 @@
                     vm.deleteInProgress = false;
                 });
         }
-
-
-
     }
 })();

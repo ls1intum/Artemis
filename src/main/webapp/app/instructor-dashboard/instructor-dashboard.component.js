@@ -29,7 +29,7 @@
         vm.showDetails = showDetails;
         vm.sort = sort;
         vm.toggleShowAllResults = toggleShowAllResults;
-        vm.buildPlanCleanup = buildPlanCleanup;
+        vm.cleanup = cleanup;
         vm.exercise = Exercise.get({id : vm.exerciseId});
 
         function init() {
@@ -40,7 +40,7 @@
             return $filter('amDifference')(completionDate, initializationDate, 'minutes');
         }
 
-        function buildPlanCleanup() {
+        function cleanup() {
             console.log("cleanup called");
         }
 

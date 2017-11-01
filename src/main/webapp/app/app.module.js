@@ -11,6 +11,7 @@
             'ngAria',
             'ngCacheBuster',
             'ngFileUpload',
+            'ngFileSaver',
             'ui.bootstrap',
             'ui.bootstrap.datetimepicker',
             'ui.router',
@@ -37,8 +38,4 @@
         });
 
     }
-
-
-
-
 })();
