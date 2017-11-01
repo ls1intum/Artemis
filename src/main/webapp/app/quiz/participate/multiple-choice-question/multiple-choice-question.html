@@ -7,6 +7,10 @@
             <span data-translate="artemisApp.question.hint"></span>
         </span>
     </h4>
+    <div class="question-score">
+        <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
+        <span>{{vm.question.score}}</span>
+    </div>
     <div class="answer-options">
         <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-click="vm.toggleSelection(answerOption)">
             <div class="selection">

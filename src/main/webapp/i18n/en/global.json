@@ -116,7 +116,8 @@
             "view": "View",
             "preview": "Preview",
             "cleanup": "Cleanup",
-            "archive": "Archive"
+            "archive": "Archive",
+            "submit": "Submit"
         },
         "detail": {
             "field": "Field",

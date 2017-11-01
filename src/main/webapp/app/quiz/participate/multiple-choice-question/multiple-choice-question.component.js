@@ -19,7 +19,6 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         })
     };
 
-    vm.selectedAnswerOptions = [];
     vm.toggleSelection = toggleSelection;
 
     function toggleSelection(answerOption) {
@@ -59,6 +58,7 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
     controller: MultipleChoiceQuestionController,
     controllerAs: 'vm',
     bindings: {
-        question: '='
+        question: '=',
+        selectedAnswerOptions: '='
     }
 });

@@ -1,17 +1,39 @@
 <div class="quiz-header container">
-    <h3>Course: {{vm.quizExercise.course.title}}</h3>
-    <h1>Quiz: {{vm.quizExercise.title}}</h1>
-    <p>Mark the correct answers for each question and click the "Submit" button, when you're done.</p>
+    <h3>
+        <span class="colon-suffix" data-translate="artemisApp.exercise.course"></span>
+        {{vm.quizExercise.course.title}} </h3>
+    <h1>
+        <span class="colon-suffix" data-translate="artemisApp.quizExercise.quiz"></span>
+        {{vm.quizExercise.title}} </h1>
+    <p data-translate="artemisApp.quizExercise.quizInstructions"></p>
 </div>
 <div class="quiz-content container">
     <div ng-repeat="question in vm.quizExercise.questions">
-        <multiple-choice-question question="question"></multiple-choice-question>
+        <div class="question-index">
+            <span data-translate="artemisApp.question.detail.title"></span>
+            <span>{{$index+1}}:</span>
+        </div>
+        <multiple-choice-question question="question" selected-answer-options="vm.selectedAnswerOptions" total-score="vm.totalScore"></multiple-choice-question>
     </div>
 </div>
 <div class="quiz-footer">
     <div class="container">
         <div class="quiz-footer-content">
-            TODO: Footer with remaining time, submit button, socket state
+            <div>
+                <div>
+                    <span data-translate="artemisApp.quizExercise.questions" class="colon-suffix"></span>
+                    {{vm.quizExercise.questions.length}}
+                </div>
+                <div>
+                    <span data-translate="artemisApp.question.totalScore" class="colon-suffix"></span>
+                    {{vm.totalScore}}
+                </div>
+            </div>
+            <div id="remaining-time">
+                <span data-translate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                <span id="remaining-time-value">{{vm.remainingTime}}</span>
+            </div>
+            <div class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></div>
         </div>
     </div>
 </div>

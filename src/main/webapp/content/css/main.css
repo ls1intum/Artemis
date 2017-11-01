@@ -8438,6 +8438,7 @@ body.editor .navbar-brand span {
     height: 12em; }
 
 .mc-question {
+  position: relative;
   width: 100%;
   box-sizing: border-box;
   border: 1px solid lightgrey;
@@ -8449,6 +8450,10 @@ body.editor .navbar-brand span {
   .mc-question p {
     margin: 10px 0;
     font-size: 16px; }
+  .mc-question .question-score {
+    position: absolute;
+    top: 20px;
+    right: 20px; }
   .mc-question .label {
     cursor: pointer; }
   .mc-question .answer-options {
@@ -8479,6 +8484,19 @@ body.editor .navbar-brand span {
 
 .quiz-header h3 {
   margin: 0; }
+
+.quiz-content {
+  margin-top: 20px;
+  margin-bottom: 120px; }
+  .quiz-content .question-index {
+    padding: 2px 6px; }
+
+.quiz-footer-content #remaining-time {
+  font-size: 16px; }
+
+.quiz-footer-content #remaining-time-value {
+  font-weight: bold;
+  color: red; }
 
 .colon-suffix:after {
   content: ":"; }
