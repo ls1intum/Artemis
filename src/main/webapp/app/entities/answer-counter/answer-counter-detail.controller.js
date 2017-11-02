@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('AnswerCounterDetailController', AnswerCounterDetailController);
 
-    AnswerCounterDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'AnswerCounter', 'MultipleChoiceStatistic', 'AnswerOption'];
+    AnswerCounterDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'AnswerCounter', 'MultipleChoiceQuestionStatistic', 'AnswerOption'];
 
-    function AnswerCounterDetailController($scope, $rootScope, $stateParams, previousState, entity, AnswerCounter, MultipleChoiceStatistic, AnswerOption) {
+    function AnswerCounterDetailController($scope, $rootScope, $stateParams, previousState, entity, AnswerCounter, MultipleChoiceQuestionStatistic, AnswerOption) {
         var vm = this;
 
         vm.answerCounter = entity;

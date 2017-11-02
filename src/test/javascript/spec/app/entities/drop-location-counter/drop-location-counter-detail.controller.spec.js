@@ -4,7 +4,7 @@ describe('Controller Tests', function() {
 
     describe('DropLocationCounter Management Detail Controller', function() {
         var $scope, $rootScope;
-        var MockEntity, MockPreviousState, MockDropLocationCounter, MockDragAndDropStatistic, MockDropLocation;
+        var MockEntity, MockPreviousState, MockDropLocationCounter, MockDragAndDropQuestionStatistic, MockDropLocation;
         var createController;
 
         beforeEach(inject(function($injector) {
@@ -13,7 +13,7 @@ describe('Controller Tests', function() {
             MockEntity = jasmine.createSpy('MockEntity');
             MockPreviousState = jasmine.createSpy('MockPreviousState');
             MockDropLocationCounter = jasmine.createSpy('MockDropLocationCounter');
-            MockDragAndDropStatistic = jasmine.createSpy('MockDragAndDropStatistic');
+            MockDragAndDropQuestionStatistic = jasmine.createSpy('MockDragAndDropQuestionStatistic');
             MockDropLocation = jasmine.createSpy('MockDropLocation');
             
 
@@ -23,7 +23,7 @@ describe('Controller Tests', function() {
                 'entity': MockEntity,
                 'previousState': MockPreviousState,
                 'DropLocationCounter': MockDropLocationCounter,
-                'DragAndDropStatistic': MockDragAndDropStatistic,
+                'DragAndDropQuestionStatistic': MockDragAndDropQuestionStatistic,
                 'DropLocation': MockDropLocation
             };
             createController = function() {

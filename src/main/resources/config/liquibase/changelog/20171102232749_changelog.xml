@@ -1,0 +1,24 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="Mo (generated)" id="1509661679450-1">
+        <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509661679450-2">
+        <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="statistic_counter" constraintName="FK3bqk45run356e20sqmf3sak1o" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509661679450-3">
+        <addForeignKeyConstraint baseColumnNames="drag_and_drop_question_statistic_id" baseTableName="drop_location_counter" constraintName="FKfvvawhdm4hs5mf4wbcx33aitc" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="dd_question_statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509661679450-4">
+        <addForeignKeyConstraint baseColumnNames="answer_id" baseTableName="statistic_counter" constraintName="FKg7hjug3wu6icklf6gbiqs4n18" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="answer_option"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509661679450-5">
+        <addForeignKeyConstraint baseColumnNames="multiple_choice_question_statistic_id" baseTableName="statistic_counter" constraintName="FKoh69hhnfcimvw7i1cwhepvt5g" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509661679450-6">
+        <addForeignKeyConstraint baseColumnNames="question_statistic_id" baseTableName="question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509661679450-7">
+        <addForeignKeyConstraint baseColumnNames="drop_location_id" baseTableName="drop_location_counter" constraintName="FKqm9orjkjap1qbdyjsndsgysel" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="drop_location"/>
+    </changeSet>
+</databaseChangeLog>

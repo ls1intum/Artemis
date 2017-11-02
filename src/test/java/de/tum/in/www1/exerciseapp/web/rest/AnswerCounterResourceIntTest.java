@@ -37,9 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTEMiSApp.class)
 public class AnswerCounterResourceIntTest {
 
-    private static final Integer DEFAULT_COUNTER = 1;
-    private static final Integer UPDATED_COUNTER = 2;
-
     @Autowired
     private AnswerCounterRepository answerCounterRepository;
 
@@ -76,8 +73,7 @@ public class AnswerCounterResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static AnswerCounter createEntity(EntityManager em) {
-        AnswerCounter answerCounter = new AnswerCounter()
-            .counter(DEFAULT_COUNTER);
+        AnswerCounter answerCounter = new AnswerCounter();
         return answerCounter;
     }
 
@@ -101,7 +97,6 @@ public class AnswerCounterResourceIntTest {
         List<AnswerCounter> answerCounterList = answerCounterRepository.findAll();
         assertThat(answerCounterList).hasSize(databaseSizeBeforeCreate + 1);
         AnswerCounter testAnswerCounter = answerCounterList.get(answerCounterList.size() - 1);
-        assertThat(testAnswerCounter.getCounter()).isEqualTo(DEFAULT_COUNTER);
     }
 
     @Test
@@ -133,8 +128,7 @@ public class AnswerCounterResourceIntTest {
         restAnswerCounterMockMvc.perform(get("/api/answer-counters?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(answerCounter.getId().intValue())))
-            .andExpect(jsonPath("$.[*].counter").value(hasItem(DEFAULT_COUNTER)));
+            .andExpect(jsonPath("$.[*].id").value(hasItem(answerCounter.getId().intValue())));
     }
 
     @Test
@@ -147,8 +141,7 @@ public class AnswerCounterResourceIntTest {
         restAnswerCounterMockMvc.perform(get("/api/answer-counters/{id}", answerCounter.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(answerCounter.getId().intValue()))
-            .andExpect(jsonPath("$.counter").value(DEFAULT_COUNTER));
+            .andExpect(jsonPath("$.id").value(answerCounter.getId().intValue()));
     }
 
     @Test
@@ -168,8 +161,6 @@ public class AnswerCounterResourceIntTest {
 
         // Update the answerCounter
         AnswerCounter updatedAnswerCounter = answerCounterRepository.findOne(answerCounter.getId());
-        updatedAnswerCounter
-            .counter(UPDATED_COUNTER);
 
         restAnswerCounterMockMvc.perform(put("/api/answer-counters")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -180,7 +171,6 @@ public class AnswerCounterResourceIntTest {
         List<AnswerCounter> answerCounterList = answerCounterRepository.findAll();
         assertThat(answerCounterList).hasSize(databaseSizeBeforeUpdate);
         AnswerCounter testAnswerCounter = answerCounterList.get(answerCounterList.size() - 1);
-        assertThat(testAnswerCounter.getCounter()).isEqualTo(UPDATED_COUNTER);
     }
 
     @Test

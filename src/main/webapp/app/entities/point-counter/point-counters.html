@@ -1,0 +1,64 @@
+<div>
+    <h2 data-translate="arTeMiSApp.pointCounter.home.title">Point Counters</h2>
+    <jhi-alert></jhi-alert>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-4 no-padding-left">
+                <button class="btn btn-primary" ui-sref="point-counter.new" >
+                    <span class="glyphicon glyphicon-plus"></span>
+                    <span  data-translate="arTeMiSApp.pointCounter.home.createLabel">
+                        Create new Point Counter
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="jh-table table table-striped">
+            <thead>
+                <tr>
+                    <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="arTeMiSApp.pointCounter.points">Points</span></th>
+                    <th><span data-translate="arTeMiSApp.pointCounter.quizPointStatistic">Quiz Point Statistic</span></th>
+                    <th><span data-translate="arTeMiSApp.pointCounter.quizPointStatistic">Quiz Point Statistic</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="pointCounter in vm.pointCounters track by pointCounter.id">
+                    <td><a ui-sref="point-counter-detail({id:pointCounter.id})">{{pointCounter.id}}</a></td>
+                    <td>{{pointCounter.points}}</td>
+                    <td>
+                        <a ui-sref="quiz-point-statistic-detail({id:pointCounter.quizPointStatistic.id})">{{pointCounter.quizPointStatistic.id}}</a>
+                    </td>
+                    <td>
+                        <a ui-sref="quiz-point-statistic-detail({id:pointCounter.quizPointStatistic.id})">{{pointCounter.quizPointStatistic.id}}</a>
+                    </td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit"
+                                    ui-sref="point-counter-detail({id:pointCounter.id})"
+                                    class="btn btn-info btn-sm">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="point-counter.edit({id:pointCounter.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="point-counter.delete({id:pointCounter.id})"
+                                    class="btn btn-danger btn-sm">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

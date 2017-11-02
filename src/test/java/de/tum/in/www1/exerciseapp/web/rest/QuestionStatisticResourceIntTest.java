@@ -2,7 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 
-import de.tum.in.www1.exerciseapp.domain.MultipleChoiceStatistic;
+import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic;
 import de.tum.in.www1.exerciseapp.domain.QuestionStatistic;
 import de.tum.in.www1.exerciseapp.repository.QuestionStatisticRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
@@ -80,7 +80,7 @@ public class QuestionStatisticResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static QuestionStatistic createEntity(EntityManager em) {
-        QuestionStatistic questionStatistic = new MultipleChoiceStatistic()
+        QuestionStatistic questionStatistic = new MultipleChoiceQuestionStatistic()
             .ratedCorrectCounter(DEFAULT_RATED_CORRECT_COUNTER)
             .unRatedCorrectCounter(DEFAULT_UN_RATED_CORRECT_COUNTER);
         return questionStatistic;
@@ -232,9 +232,9 @@ public class QuestionStatisticResourceIntTest {
     @Transactional
     public void equalsVerifier() throws Exception {
         TestUtil.equalsVerifier(QuestionStatistic.class);
-        QuestionStatistic questionStatistic1 = new MultipleChoiceStatistic();
+        QuestionStatistic questionStatistic1 = new MultipleChoiceQuestionStatistic();
         questionStatistic1.setId(1L);
-        QuestionStatistic questionStatistic2 = new MultipleChoiceStatistic();
+        QuestionStatistic questionStatistic2 = new MultipleChoiceQuestionStatistic();
         questionStatistic2.setId(questionStatistic1.getId());
         assertThat(questionStatistic1).isEqualTo(questionStatistic2);
         questionStatistic2.setId(2L);

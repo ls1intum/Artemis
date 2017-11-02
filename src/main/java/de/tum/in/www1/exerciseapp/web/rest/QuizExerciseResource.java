@@ -57,7 +57,7 @@ public class QuizExerciseResource {
             // do the same for answerOptions (if question is multiple choice)
                 if (question instanceof MultipleChoiceQuestion) {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceStatistic mcStatistic = new MultipleChoiceStatistic();
+                    MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();
                     mcQuestion.setQuestionStatistic(mcStatistic);
                     mcStatistic.setQuestion(mcQuestion);
                     for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
@@ -100,14 +100,14 @@ public class QuizExerciseResource {
                 // do the same for answerOptions (if question is multiple choice)
                 if (question instanceof MultipleChoiceQuestion) {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceStatistic mcStatistic = (MultipleChoiceStatistic) mcQuestion.getQuestionStatistic();
+                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
                     mcStatistic.setQuestion(mcQuestion);
                     //delete and reconnect answerCounter-entities
                     Set<AnswerCounter> delete = new HashSet<>();
                     for (AnswerCounter answerCounter : mcStatistic.getRatedAnswerCounters()) {
                         if (answerCounter.getId() != null) {
                             if(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer())){
-                                answerCounter.setMultipleChoiceStatistic(mcStatistic);
+                                answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
                             }
                             else{
                                 delete.add(answerCounter);
@@ -123,7 +123,7 @@ public class QuizExerciseResource {
                             answerOption.setQuestion(mcQuestion);
                         }
                         else{
-                            ((MultipleChoiceStatistic) mcQuestion.getQuestionStatistic()).addAnswerOption(answerOption);
+                            ((MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic()).addAnswerOption(answerOption);
                         }
                     }
                 }
@@ -132,7 +132,7 @@ public class QuizExerciseResource {
             else{
                 if (question instanceof MultipleChoiceQuestion) {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceStatistic mcStatistic = new MultipleChoiceStatistic();
+                    MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();
                     mcQuestion.setQuestionStatistic(mcStatistic);
                     mcStatistic.setQuestion(mcQuestion);
                     for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {

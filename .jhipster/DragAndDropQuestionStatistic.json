@@ -1,0 +1,23 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "ratedDropLocationCounter",
+            "otherEntityName": "dropLocationCounter",
+            "otherEntityRelationshipName": "dragAndDropQuestionStatistic"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "unRatedDropLocationCounter",
+            "otherEntityName": "dropLocationCounter",
+            "otherEntityRelationshipName": "dragAndDropQuestionStatistic"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20171102180814",
+    "entityTableName": "drag_and_drop_question_statistic",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

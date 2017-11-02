@@ -12,61 +12,33 @@ import java.util.Objects;
  * A AnswerCounter.
  */
 @Entity
-@Table(name = "answer_counter")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class AnswerCounter implements Serializable {
+@DiscriminatorValue(value="AC")
+//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class AnswerCounter extends StatisticCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(name = "counter")
-    private Integer counter = 0;
-
     @ManyToOne
     @JsonIgnore
-    private MultipleChoiceStatistic multipleChoiceStatistic;
+    private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
 
     @OneToOne//(cascade = {CascadeType.PERSIST})
     @JoinColumn(unique = true)
     //@JsonIgnore
     private AnswerOption answer;
 
-    public Long getId() {
-        return id;
-    }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Integer getCounter() {
-        return counter;
-    }
-
-    public AnswerCounter counter(Integer counter) {
-        this.counter = counter;
+    public AnswerCounter multipleChoiceQuestionStatistic(MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic) {
+        this.multipleChoiceQuestionStatistic = multipleChoiceQuestionStatistic;
         return this;
     }
 
-    public void setCounter(Integer counter) {
-        this.counter = counter;
+    public MultipleChoiceQuestionStatistic getMultipleChoiceQuestionStatistic() {
+        return multipleChoiceQuestionStatistic;
     }
 
-
-    public MultipleChoiceStatistic getMultipleChoiceStatistic() {
-        return multipleChoiceStatistic;
-    }
-
-    public AnswerCounter multipleChoiceStatistic(MultipleChoiceStatistic multipleChoiceStatistic) {
-        this.multipleChoiceStatistic = multipleChoiceStatistic;
-        return this;
-    }
-
-    public void setMultipleChoiceStatistic(MultipleChoiceStatistic multipleChoiceStatistic) {
-        this.multipleChoiceStatistic = multipleChoiceStatistic;
+    public void setMultipleChoiceQuestionStatistic(MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic) {
+        this.multipleChoiceQuestionStatistic = multipleChoiceQuestionStatistic;
     }
 
     public AnswerOption getAnswer() {
@@ -106,7 +78,6 @@ public class AnswerCounter implements Serializable {
     public String toString() {
         return "AnswerCounter{" +
             "id=" + getId() +
-            ", counter='" + getCounter() + "'" +
             "}";
     }
 }

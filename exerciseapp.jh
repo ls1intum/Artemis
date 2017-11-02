@@ -12,17 +12,24 @@ entity QuestionStatistic (questionStatistic){   //extends Statistic, abstract
     unRatedCorrectCounter Integer,
 }
 
-entity MultipleChoiceStatistic (multipleChoiceStatistic){   //extends QuestionStatistic
+entity MultipleChoiceQuestionStatistic (multipleChoiceQuestionStatistic){   //extends QuestionStatistic
 }
 
-entity DragAndDropStatistic (dragAndDropStatistic){   //extends QuestionStatistic
+entity DragAndDropQuestionStatistic (dragAndDropQuestionStatistic){   //extends QuestionStatistic
 }
 
-entity AnswerCounter(answerCounter){
-    counter Integer,
+entity StatisticCounter(statisticCounter){ //abstract
+    counter Integer
 }
-entity DropLocationCounter(dropLocationCounter){
-    counter Integer,
+
+entity PointCounter(pointCounter){         //extends PointCounter
+    points Double
+}
+
+entity AnswerCounter(answerCounter){       //extends StatisticCounter
+}
+
+entity DropLocationCounter(dropLocationCounter){    //extends StatisticCounter
 }
 
 entity Course (course) {
@@ -171,10 +178,12 @@ entity DragAndDropAssignment {
 }
 
 relationship OneToMany {
-  MultipleChoiceStatistic{ratedAnswerCounter} to AnswerCounter,
-  MultipleChoiceStatistic{unRatedAnswerCounter} to AnswerCounter,
-  DragAndDropStatistic{ratedDropLocationCounter} to DropLocationCounter,
-  DragAndDropStatistic{unRatedDropLocationCounter} to DropLocationCounter,
+  QuizPointStatistic{ratedPointCounter} to PointCounter,
+  QuizPointStatistic{unRatedPointCounter} to PointCounter,
+  MultipleChoiceQuestionStatistic{ratedAnswerCounter} to AnswerCounter,
+  MultipleChoiceQuestionStatistic{unRatedAnswerCounter} to AnswerCounter,
+  DragAndDropQuestionStatistic{ratedDropLocationCounter} to DropLocationCounter,
+  DragAndDropQuestionStatistic{unRatedDropLocationCounter} to DropLocationCounter,
   Course{exercises} to Exercise{course(title)},
   Exercise{participations} to Participation{exercise(title)},
   Participation{results} to Result{participation},

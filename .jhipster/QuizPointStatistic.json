@@ -2,6 +2,18 @@
     "fluentMethods": true,
     "relationships": [
         {
+            "relationshipType": "one-to-many",
+            "relationshipName": "ratedPointCounter",
+            "otherEntityName": "pointCounter",
+            "otherEntityRelationshipName": "quizPointStatistic"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "unRatedPointCounter",
+            "otherEntityName": "pointCounter",
+            "otherEntityRelationshipName": "quizPointStatistic"
+        },
+        {
             "relationshipType": "one-to-one",
             "relationshipName": "quiz",
             "otherEntityName": "quizExercise",

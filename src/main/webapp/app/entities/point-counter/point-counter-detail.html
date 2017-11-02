@@ -1,0 +1,31 @@
+
+<div>
+    <h2><span data-translate="arTeMiSApp.pointCounter.detail.title">Point Counter</span> {{vm.pointCounter.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="dl-horizontal jh-entity-details">
+        <dt><span data-translate="arTeMiSApp.pointCounter.points">Points</span></dt>
+        <dd>
+            <span>{{vm.pointCounter.points}}</span>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.pointCounter.quizPointStatistic">Quiz Point Statistic</span></dt>
+        <dd>
+            <a ui-sref="quiz-point-statistic-detail({id:vm.pointCounter.quizPointStatistic.id})">{{vm.pointCounter.quizPointStatistic.id}}</a>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.pointCounter.quizPointStatistic">Quiz Point Statistic</span></dt>
+        <dd>
+            <a ui-sref="quiz-point-statistic-detail({id:vm.pointCounter.quizPointStatistic.id})">{{vm.pointCounter.quizPointStatistic.id}}</a>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            ui-sref="{{ vm.previousState }}"
+            class="btn btn-info">
+        <span class="glyphicon glyphicon-arrow-left"></span>&nbsp;<span data-translate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button" ui-sref="point-counter-detail.edit({id:vm.pointCounter.id})" class="btn btn-primary">
+        <span class="glyphicon glyphicon-pencil"></span>
+        <span class="hidden-sm-down" data-translate="entity.action.edit"> Edit</span>
+    </button>
+</div>

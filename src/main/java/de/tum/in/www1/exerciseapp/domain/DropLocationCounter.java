@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -11,8 +12,8 @@ import java.util.Objects;
  * A DropLocationCounter.
  */
 @Entity
-@Table(name = "drop_location_counter")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@DiscriminatorValue(value="DD")
+//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class DropLocationCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -21,11 +22,8 @@ public class DropLocationCounter implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "counter")
-    private Integer counter;
-
     @ManyToOne
-    private DragAndDropStatistic dragAndDropStatistic;
+    private DragAndDropQuestionStatistic dragAndDropQuestionStatistic;
 
     @OneToOne
     @JoinColumn(unique = true)
@@ -39,30 +37,17 @@ public class DropLocationCounter implements Serializable {
         this.id = id;
     }
 
-    public Integer getCounter() {
-        return counter;
+    public DragAndDropQuestionStatistic getDragAndDropQuestionStatistic() {
+        return dragAndDropQuestionStatistic;
     }
 
-    public DropLocationCounter counter(Integer counter) {
-        this.counter = counter;
+    public DropLocationCounter dragAndDropQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
+        this.dragAndDropQuestionStatistic = dragAndDropQuestionStatistic;
         return this;
     }
 
-    public void setCounter(Integer counter) {
-        this.counter = counter;
-    }
-
-    public DragAndDropStatistic getDragAndDropStatistic() {
-        return dragAndDropStatistic;
-    }
-
-    public DropLocationCounter dragAndDropStatistic(DragAndDropStatistic dragAndDropStatistic) {
-        this.dragAndDropStatistic = dragAndDropStatistic;
-        return this;
-    }
-
-    public void setDragAndDropStatistic(DragAndDropStatistic dragAndDropStatistic) {
-        this.dragAndDropStatistic = dragAndDropStatistic;
+    public void setDragAndDropQuestionStatistic(DragAndDropQuestionStatistic dragAndDropQuestionStatistic) {
+        this.dragAndDropQuestionStatistic = dragAndDropQuestionStatistic;
     }
 
     public DropLocation getDropLocation() {
@@ -102,7 +87,6 @@ public class DropLocationCounter implements Serializable {
     public String toString() {
         return "DropLocationCounter{" +
             "id=" + getId() +
-            ", counter='" + getCounter() + "'" +
             "}";
     }
 }

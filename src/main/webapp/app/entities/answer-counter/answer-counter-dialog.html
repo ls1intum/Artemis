@@ -13,22 +13,16 @@
             <input type="text" class="form-control" id="id" name="id"
                     ng-model="vm.answerCounter.id" readonly />
         </div>
-        <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.answerCounter.counter" for="field_counter">Counter</label>
-            <input type="number" class="form-control" name="counter" id="field_counter"
-                    ng-model="vm.answerCounter.counter"
-                    />
-        </div>
 
         <div class="form-group">
-            <label data-translate="arTeMiSApp.answerCounter.multipleChoiceStatistic" for="field_multipleChoiceStatistic">Multiple Choice Statistic</label>
-            <select class="form-control" id="field_multipleChoiceStatistic" name="multipleChoiceStatistic" ng-model="vm.answerCounter.multipleChoiceStatistic" ng-options="multipleChoiceStatistic as multipleChoiceStatistic.id for multipleChoiceStatistic in vm.multiplechoicestatistics track by multipleChoiceStatistic.id">
+            <label data-translate="arTeMiSApp.answerCounter.multipleChoiceQuestionStatistic" for="field_multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</label>
+            <select class="form-control" id="field_multipleChoiceQuestionStatistic" name="multipleChoiceQuestionStatistic" ng-model="vm.answerCounter.multipleChoiceQuestionStatistic" ng-options="multipleChoiceQuestionStatistic as multipleChoiceQuestionStatistic.id for multipleChoiceQuestionStatistic in vm.multiplechoicequestionstatistics track by multipleChoiceQuestionStatistic.id">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
-            <label data-translate="arTeMiSApp.answerCounter.multipleChoiceStatistic" for="field_multipleChoiceStatistic">Multiple Choice Statistic</label>
-            <select class="form-control" id="field_multipleChoiceStatistic" name="multipleChoiceStatistic" ng-model="vm.answerCounter.multipleChoiceStatistic" ng-options="multipleChoiceStatistic as multipleChoiceStatistic.id for multipleChoiceStatistic in vm.multiplechoicestatistics track by multipleChoiceStatistic.id">
+            <label data-translate="arTeMiSApp.answerCounter.multipleChoiceQuestionStatistic" for="field_multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</label>
+            <select class="form-control" id="field_multipleChoiceQuestionStatistic" name="multipleChoiceQuestionStatistic" ng-model="vm.answerCounter.multipleChoiceQuestionStatistic" ng-options="multipleChoiceQuestionStatistic as multipleChoiceQuestionStatistic.id for multipleChoiceQuestionStatistic in vm.multiplechoicequestionstatistics track by multipleChoiceQuestionStatistic.id">
                 <option value=""></option>
             </select>
         </div>

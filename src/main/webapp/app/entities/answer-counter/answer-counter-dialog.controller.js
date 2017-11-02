@@ -5,15 +5,15 @@
         .module('artemisApp')
         .controller('AnswerCounterDialogController', AnswerCounterDialogController);
 
-    AnswerCounterDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'AnswerCounter', 'MultipleChoiceStatistic', 'AnswerOption'];
+    AnswerCounterDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'AnswerCounter', 'MultipleChoiceQuestionStatistic', 'AnswerOption'];
 
-    function AnswerCounterDialogController ($timeout, $scope, $stateParams, $uibModalInstance, $q, entity, AnswerCounter, MultipleChoiceStatistic, AnswerOption) {
+    function AnswerCounterDialogController ($timeout, $scope, $stateParams, $uibModalInstance, $q, entity, AnswerCounter, MultipleChoiceQuestionStatistic, AnswerOption) {
         var vm = this;
 
         vm.answerCounter = entity;
         vm.clear = clear;
         vm.save = save;
-        vm.multiplechoicestatistics = MultipleChoiceStatistic.query();
+        vm.multiplechoicequestionstatistics = MultipleChoiceQuestionStatistic.query();
         vm.answers = AnswerOption.query({filter: 'answercounter-is-null'});
         $q.all([vm.answerCounter.$promise, vm.answers.$promise]).then(function() {
             if (!vm.answerCounter.answer || !vm.answerCounter.answer.id) {

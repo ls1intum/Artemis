@@ -5,15 +5,15 @@
         .module('artemisApp')
         .controller('DropLocationCounterDialogController', DropLocationCounterDialogController);
 
-    DropLocationCounterDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'DropLocationCounter', 'DragAndDropStatistic', 'DropLocation'];
+    DropLocationCounterDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', '$q', 'entity', 'DropLocationCounter', 'DragAndDropQuestionStatistic', 'DropLocation'];
 
-    function DropLocationCounterDialogController ($timeout, $scope, $stateParams, $uibModalInstance, $q, entity, DropLocationCounter, DragAndDropStatistic, DropLocation) {
+    function DropLocationCounterDialogController ($timeout, $scope, $stateParams, $uibModalInstance, $q, entity, DropLocationCounter, DragAndDropQuestionStatistic, DropLocation) {
         var vm = this;
 
         vm.dropLocationCounter = entity;
         vm.clear = clear;
         vm.save = save;
-        vm.draganddropstatistics = DragAndDropStatistic.query();
+        vm.draganddropquestionstatistics = DragAndDropQuestionStatistic.query();
         vm.droplocations = DropLocation.query({filter: 'droplocationcounter-is-null'});
         $q.all([vm.dropLocationCounter.$promise, vm.droplocations.$promise]).then(function() {
             if (!vm.dropLocationCounter.dropLocation || !vm.dropLocationCounter.dropLocation.id) {

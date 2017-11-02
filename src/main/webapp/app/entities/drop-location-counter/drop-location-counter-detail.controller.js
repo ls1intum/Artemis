@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('DropLocationCounterDetailController', DropLocationCounterDetailController);
 
-    DropLocationCounterDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'DropLocationCounter', 'DragAndDropStatistic', 'DropLocation'];
+    DropLocationCounterDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'DropLocationCounter', 'DragAndDropQuestionStatistic', 'DropLocation'];
 
-    function DropLocationCounterDetailController($scope, $rootScope, $stateParams, previousState, entity, DropLocationCounter, DragAndDropStatistic, DropLocation) {
+    function DropLocationCounterDetailController($scope, $rootScope, $stateParams, previousState, entity, DropLocationCounter, DragAndDropQuestionStatistic, DropLocation) {
         var vm = this;
 
         vm.dropLocationCounter = entity;

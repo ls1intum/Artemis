@@ -19,9 +19,8 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
-                    <th><span data-translate="arTeMiSApp.dropLocationCounter.counter">Counter</span></th>
-                    <th><span data-translate="arTeMiSApp.dropLocationCounter.dragAndDropStatistic">Drag And Drop Statistic</span></th>
-                    <th><span data-translate="arTeMiSApp.dropLocationCounter.dragAndDropStatistic">Drag And Drop Statistic</span></th>
+                    <th><span data-translate="arTeMiSApp.dropLocationCounter.dragAndDropQuestionStatistic">Drag And Drop Question Statistic</span></th>
+                    <th><span data-translate="arTeMiSApp.dropLocationCounter.dragAndDropQuestionStatistic">Drag And Drop Question Statistic</span></th>
                     <th><span data-translate="arTeMiSApp.dropLocationCounter.dropLocation">Drop Location</span></th>
                     <th></th>
                 </tr>
@@ -29,12 +28,11 @@
             <tbody>
                 <tr ng-repeat="dropLocationCounter in vm.dropLocationCounters track by dropLocationCounter.id">
                     <td><a ui-sref="drop-location-counter-detail({id:dropLocationCounter.id})">{{dropLocationCounter.id}}</a></td>
-                    <td>{{dropLocationCounter.counter}}</td>
                     <td>
-                        <a ui-sref="drag-and-drop-statistic-detail({id:dropLocationCounter.dragAndDropStatistic.id})">{{dropLocationCounter.dragAndDropStatistic.id}}</a>
+                        <a ui-sref="drag-and-drop-question-statistic-detail({id:dropLocationCounter.dragAndDropQuestionStatistic.id})">{{dropLocationCounter.dragAndDropQuestionStatistic.id}}</a>
                     </td>
                     <td>
-                        <a ui-sref="drag-and-drop-statistic-detail({id:dropLocationCounter.dragAndDropStatistic.id})">{{dropLocationCounter.dragAndDropStatistic.id}}</a>
+                        <a ui-sref="drag-and-drop-question-statistic-detail({id:dropLocationCounter.dragAndDropQuestionStatistic.id})">{{dropLocationCounter.dragAndDropQuestionStatistic.id}}</a>
                     </td>
                     <td>
                         <a ui-sref="drop-location-detail({id:dropLocationCounter.dropLocation.id})">{{dropLocationCounter.dropLocation.id}}</a>

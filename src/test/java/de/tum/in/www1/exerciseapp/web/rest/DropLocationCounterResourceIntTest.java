@@ -37,9 +37,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTEMiSApp.class)
 public class DropLocationCounterResourceIntTest {
 
-    private static final Integer DEFAULT_COUNTER = 1;
-    private static final Integer UPDATED_COUNTER = 2;
-
     @Autowired
     private DropLocationCounterRepository dropLocationCounterRepository;
 
@@ -76,8 +73,7 @@ public class DropLocationCounterResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static DropLocationCounter createEntity(EntityManager em) {
-        DropLocationCounter dropLocationCounter = new DropLocationCounter()
-            .counter(DEFAULT_COUNTER);
+        DropLocationCounter dropLocationCounter = new DropLocationCounter();
         return dropLocationCounter;
     }
 
@@ -101,7 +97,6 @@ public class DropLocationCounterResourceIntTest {
         List<DropLocationCounter> dropLocationCounterList = dropLocationCounterRepository.findAll();
         assertThat(dropLocationCounterList).hasSize(databaseSizeBeforeCreate + 1);
         DropLocationCounter testDropLocationCounter = dropLocationCounterList.get(dropLocationCounterList.size() - 1);
-        assertThat(testDropLocationCounter.getCounter()).isEqualTo(DEFAULT_COUNTER);
     }
 
     @Test
@@ -133,8 +128,7 @@ public class DropLocationCounterResourceIntTest {
         restDropLocationCounterMockMvc.perform(get("/api/drop-location-counters?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(dropLocationCounter.getId().intValue())))
-            .andExpect(jsonPath("$.[*].counter").value(hasItem(DEFAULT_COUNTER)));
+            .andExpect(jsonPath("$.[*].id").value(hasItem(dropLocationCounter.getId().intValue())));
     }
 
     @Test
@@ -147,8 +141,7 @@ public class DropLocationCounterResourceIntTest {
         restDropLocationCounterMockMvc.perform(get("/api/drop-location-counters/{id}", dropLocationCounter.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(dropLocationCounter.getId().intValue()))
-            .andExpect(jsonPath("$.counter").value(DEFAULT_COUNTER));
+            .andExpect(jsonPath("$.id").value(dropLocationCounter.getId().intValue()));
     }
 
     @Test
@@ -168,8 +161,6 @@ public class DropLocationCounterResourceIntTest {
 
         // Update the dropLocationCounter
         DropLocationCounter updatedDropLocationCounter = dropLocationCounterRepository.findOne(dropLocationCounter.getId());
-        updatedDropLocationCounter
-            .counter(UPDATED_COUNTER);
 
         restDropLocationCounterMockMvc.perform(put("/api/drop-location-counters")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -180,7 +171,6 @@ public class DropLocationCounterResourceIntTest {
         List<DropLocationCounter> dropLocationCounterList = dropLocationCounterRepository.findAll();
         assertThat(dropLocationCounterList).hasSize(databaseSizeBeforeUpdate);
         DropLocationCounter testDropLocationCounter = dropLocationCounterList.get(dropLocationCounterList.size() - 1);
-        assertThat(testDropLocationCounter.getCounter()).isEqualTo(UPDATED_COUNTER);
     }
 
     @Test

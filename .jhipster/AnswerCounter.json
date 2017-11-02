@@ -2,14 +2,14 @@
     "fluentMethods": true,
     "relationships": [
         {
-            "relationshipName": "multipleChoiceStatistic",
-            "otherEntityName": "multipleChoiceStatistic",
+            "relationshipName": "multipleChoiceQuestionStatistic",
+            "otherEntityName": "multipleChoiceQuestionStatistic",
             "relationshipType": "many-to-one",
             "otherEntityField": "id"
         },
         {
-            "relationshipName": "multipleChoiceStatistic",
-            "otherEntityName": "multipleChoiceStatistic",
+            "relationshipName": "multipleChoiceQuestionStatistic",
+            "otherEntityName": "multipleChoiceQuestionStatistic",
             "relationshipType": "many-to-one",
             "otherEntityField": "id"
         },
@@ -22,12 +22,7 @@
             "otherEntityRelationshipName": "answerCounter"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "counter",
-            "fieldType": "Integer"
-        }
-    ],
+    "fields": [],
     "changelogDate": "20171026164304",
     "entityTableName": "answer_counter",
     "dto": "no",

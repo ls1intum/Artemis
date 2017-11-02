@@ -13,22 +13,16 @@
             <input type="text" class="form-control" id="id" name="id"
                     ng-model="vm.dropLocationCounter.id" readonly />
         </div>
-        <div class="form-group">
-            <label class="control-label" data-translate="arTeMiSApp.dropLocationCounter.counter" for="field_counter">Counter</label>
-            <input type="number" class="form-control" name="counter" id="field_counter"
-                    ng-model="vm.dropLocationCounter.counter"
-                    />
-        </div>
 
         <div class="form-group">
-            <label data-translate="arTeMiSApp.dropLocationCounter.dragAndDropStatistic" for="field_dragAndDropStatistic">Drag And Drop Statistic</label>
-            <select class="form-control" id="field_dragAndDropStatistic" name="dragAndDropStatistic" ng-model="vm.dropLocationCounter.dragAndDropStatistic" ng-options="dragAndDropStatistic as dragAndDropStatistic.id for dragAndDropStatistic in vm.draganddropstatistics track by dragAndDropStatistic.id">
+            <label data-translate="arTeMiSApp.dropLocationCounter.dragAndDropQuestionStatistic" for="field_dragAndDropQuestionStatistic">Drag And Drop Question Statistic</label>
+            <select class="form-control" id="field_dragAndDropQuestionStatistic" name="dragAndDropQuestionStatistic" ng-model="vm.dropLocationCounter.dragAndDropQuestionStatistic" ng-options="dragAndDropQuestionStatistic as dragAndDropQuestionStatistic.id for dragAndDropQuestionStatistic in vm.draganddropquestionstatistics track by dragAndDropQuestionStatistic.id">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
-            <label data-translate="arTeMiSApp.dropLocationCounter.dragAndDropStatistic" for="field_dragAndDropStatistic">Drag And Drop Statistic</label>
-            <select class="form-control" id="field_dragAndDropStatistic" name="dragAndDropStatistic" ng-model="vm.dropLocationCounter.dragAndDropStatistic" ng-options="dragAndDropStatistic as dragAndDropStatistic.id for dragAndDropStatistic in vm.draganddropstatistics track by dragAndDropStatistic.id">
+            <label data-translate="arTeMiSApp.dropLocationCounter.dragAndDropQuestionStatistic" for="field_dragAndDropQuestionStatistic">Drag And Drop Question Statistic</label>
+            <select class="form-control" id="field_dragAndDropQuestionStatistic" name="dragAndDropQuestionStatistic" ng-model="vm.dropLocationCounter.dragAndDropQuestionStatistic" ng-options="dragAndDropQuestionStatistic as dragAndDropQuestionStatistic.id for dragAndDropQuestionStatistic in vm.draganddropquestionstatistics track by dragAndDropQuestionStatistic.id">
                 <option value=""></option>
             </select>
         </div>

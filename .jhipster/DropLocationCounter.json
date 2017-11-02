@@ -2,14 +2,14 @@
     "fluentMethods": true,
     "relationships": [
         {
-            "relationshipName": "dragAndDropStatistic",
-            "otherEntityName": "dragAndDropStatistic",
+            "relationshipName": "dragAndDropQuestionStatistic",
+            "otherEntityName": "dragAndDropQuestionStatistic",
             "relationshipType": "many-to-one",
             "otherEntityField": "id"
         },
         {
-            "relationshipName": "dragAndDropStatistic",
-            "otherEntityName": "dragAndDropStatistic",
+            "relationshipName": "dragAndDropQuestionStatistic",
+            "otherEntityName": "dragAndDropQuestionStatistic",
             "relationshipType": "many-to-one",
             "otherEntityField": "id"
         },
@@ -22,12 +22,7 @@
             "otherEntityRelationshipName": "dropLocationCounter"
         }
     ],
-    "fields": [
-        {
-            "fieldName": "counter",
-            "fieldType": "Integer"
-        }
-    ],
+    "fields": [],
     "changelogDate": "20171026164305",
     "entityTableName": "drop_location_counter",
     "dto": "no",

@@ -4,17 +4,13 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span data-translate="arTeMiSApp.answerCounter.counter">Counter</span></dt>
+        <dt><span data-translate="arTeMiSApp.answerCounter.multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</span></dt>
         <dd>
-            <span>{{vm.answerCounter.counter}}</span>
+            <a ui-sref="multiple-choice-question-statistic-detail({id:vm.answerCounter.multipleChoiceQuestionStatistic.id})">{{vm.answerCounter.multipleChoiceQuestionStatistic.id}}</a>
         </dd>
-        <dt><span data-translate="arTeMiSApp.answerCounter.multipleChoiceStatistic">Multiple Choice Statistic</span></dt>
+        <dt><span data-translate="arTeMiSApp.answerCounter.multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</span></dt>
         <dd>
-            <a ui-sref="multiple-choice-statistic-detail({id:vm.answerCounter.multipleChoiceStatistic.id})">{{vm.answerCounter.multipleChoiceStatistic.id}}</a>
-        </dd>
-        <dt><span data-translate="arTeMiSApp.answerCounter.multipleChoiceStatistic">Multiple Choice Statistic</span></dt>
-        <dd>
-            <a ui-sref="multiple-choice-statistic-detail({id:vm.answerCounter.multipleChoiceStatistic.id})">{{vm.answerCounter.multipleChoiceStatistic.id}}</a>
+            <a ui-sref="multiple-choice-question-statistic-detail({id:vm.answerCounter.multipleChoiceQuestionStatistic.id})">{{vm.answerCounter.multipleChoiceQuestionStatistic.id}}</a>
         </dd>
         <dt><span data-translate="arTeMiSApp.answerCounter.answer">Answer</span></dt>
         <dd>

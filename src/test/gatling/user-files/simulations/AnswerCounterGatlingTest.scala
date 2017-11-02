@@ -67,7 +67,7 @@ class AnswerCounterGatlingTest extends Simulation {
             .exec(http("Create new answerCounter")
             .post("/api/answer-counters")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "counter":"0"}""")).asJSON
+            .body(StringBody("""{"id":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_answerCounter_url"))).exitHereIfFailed
             .pause(10)

@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizPointStatisticDetailController', QuizPointStatisticDetailController);
 
-    QuizPointStatisticDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizPointStatistic', 'QuizExercise'];
+    QuizPointStatisticDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizPointStatistic', 'PointCounter', 'QuizExercise'];
 
-    function QuizPointStatisticDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizPointStatistic, QuizExercise) {
+    function QuizPointStatisticDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizPointStatistic, PointCounter, QuizExercise) {
         var vm = this;
 
         vm.quizPointStatistic = entity;

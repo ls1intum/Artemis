@@ -5,14 +5,15 @@
         .module('artemisApp')
         .controller('QuizPointStatisticDialogController', QuizPointStatisticDialogController);
 
-    QuizPointStatisticDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'QuizPointStatistic', 'QuizExercise'];
+    QuizPointStatisticDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'QuizPointStatistic', 'PointCounter', 'QuizExercise'];
 
-    function QuizPointStatisticDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, QuizPointStatistic, QuizExercise) {
+    function QuizPointStatisticDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, QuizPointStatistic, PointCounter, QuizExercise) {
         var vm = this;
 
         vm.quizPointStatistic = entity;
         vm.clear = clear;
         vm.save = save;
+        vm.pointcounters = PointCounter.query();
         vm.quizexercises = QuizExercise.query();
 
         $timeout(function (){

@@ -67,7 +67,7 @@ class DropLocationCounterGatlingTest extends Simulation {
             .exec(http("Create new dropLocationCounter")
             .post("/api/drop-location-counters")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "counter":"0"}""")).asJSON
+            .body(StringBody("""{"id":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_dropLocationCounter_url"))).exitHereIfFailed
             .pause(10)

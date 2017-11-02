@@ -1,0 +1,23 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "ratedAnswerCounter",
+            "otherEntityName": "answerCounter",
+            "otherEntityRelationshipName": "multipleChoiceQuestionStatistic"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "unRatedAnswerCounter",
+            "otherEntityName": "answerCounter",
+            "otherEntityRelationshipName": "multipleChoiceQuestionStatistic"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20171102180813",
+    "entityTableName": "multiple_choice_question_statistic",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}
