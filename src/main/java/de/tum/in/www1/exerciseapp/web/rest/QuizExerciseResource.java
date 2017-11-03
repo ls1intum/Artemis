@@ -104,7 +104,7 @@ public class QuizExerciseResource {
                     mcStatistic.setQuestion(mcQuestion);
                     //delete and reconnect answerCounter-entities
                     Set<AnswerCounter> delete = new HashSet<>();
-                    for (AnswerCounter answerCounter : mcStatistic.getRatedAnswerCounters()) {
+                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
                         if (answerCounter.getId() != null) {
                             if(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer())){
                                 answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
@@ -116,7 +116,7 @@ public class QuizExerciseResource {
                             }
                         }
                     }
-                    mcStatistic.getRatedAnswerCounters().removeAll(delete);
+                    mcStatistic.getAnswerCounters().removeAll(delete);
                     // reconnect answerOptions and add new answerCounter
                     for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
                         if (answerOption.getId() != null) {

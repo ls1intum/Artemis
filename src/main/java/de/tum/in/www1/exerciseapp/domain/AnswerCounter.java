@@ -22,7 +22,7 @@ public class AnswerCounter extends StatisticCounter implements Serializable {
     @JsonIgnore
     private MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic;
 
-    @OneToOne//(cascade = {CascadeType.PERSIST})
+    @OneToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(unique = true)
     //@JsonIgnore
     private AnswerOption answer;

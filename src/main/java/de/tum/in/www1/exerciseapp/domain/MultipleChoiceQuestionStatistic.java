@@ -23,7 +23,7 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
     private static final long serialVersionUID = 1L;
 
 
-    @OneToMany(cascade=CascadeType.ALL, mappedBy = "multipleChoiceQuestionStatistic")
+    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true, mappedBy = "multipleChoiceQuestionStatistic")
     //@JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerCounter> answerCounters = new HashSet<>();
