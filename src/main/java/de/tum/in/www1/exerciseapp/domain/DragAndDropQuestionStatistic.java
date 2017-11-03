@@ -22,64 +22,36 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(mappedBy = "dragAndDropQuestionStatistic")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DropLocationCounter> ratedDropLocationCounters = new HashSet<>();
 
     @OneToMany(mappedBy = "dragAndDropQuestionStatistic")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DropLocationCounter> unRatedDropLocationCounters = new HashSet<>();
+    private Set<DropLocationCounter> dropLocationCounters = new HashSet<>();
 
-    public Set<DropLocationCounter> getRatedDropLocationCounters() {
-        return ratedDropLocationCounters;
+
+    public Set<DropLocationCounter> getDropLocationCounters() {
+        return dropLocationCounters;
     }
 
-    public DragAndDropQuestionStatistic ratedDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
-        this.ratedDropLocationCounters = dropLocationCounters;
+    public DragAndDropQuestionStatistic dropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
+        this.dropLocationCounters = dropLocationCounters;
         return this;
     }
 
-    public DragAndDropQuestionStatistic addRatedDropLocationCounter(DropLocationCounter dropLocationCounter) {
-        this.ratedDropLocationCounters.add(dropLocationCounter);
+    public DragAndDropQuestionStatistic addDropLocationCounters(DropLocationCounter dropLocationCounter) {
+        this.dropLocationCounters.add(dropLocationCounter);
         dropLocationCounter.setDragAndDropQuestionStatistic(this);
         return this;
     }
 
-    public DragAndDropQuestionStatistic removeRatedDropLocationCounter(DropLocationCounter dropLocationCounter) {
-        this.ratedDropLocationCounters.remove(dropLocationCounter);
+    public DragAndDropQuestionStatistic removeDropLocationCounters(DropLocationCounter dropLocationCounter) {
+        this.dropLocationCounters.remove(dropLocationCounter);
         dropLocationCounter.setDragAndDropQuestionStatistic(null);
         return this;
     }
 
-    public void setRatedDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
-        this.ratedDropLocationCounters = dropLocationCounters;
-    }
-
-    public Set<DropLocationCounter> getUnRatedDropLocationCounters() {
-        return unRatedDropLocationCounters;
-    }
-
-    public DragAndDropQuestionStatistic unRatedDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
-        this.unRatedDropLocationCounters = dropLocationCounters;
-        return this;
-    }
-
-    public DragAndDropQuestionStatistic addUnRatedDropLocationCounter(DropLocationCounter dropLocationCounter) {
-        this.unRatedDropLocationCounters.add(dropLocationCounter);
-        dropLocationCounter.setDragAndDropQuestionStatistic(this);
-        return this;
-    }
-
-    public DragAndDropQuestionStatistic removeUnRatedDropLocationCounter(DropLocationCounter dropLocationCounter) {
-        this.unRatedDropLocationCounters.remove(dropLocationCounter);
-        dropLocationCounter.setDragAndDropQuestionStatistic(null);
-        return this;
-    }
-
-    public void setUnRatedDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
-        this.unRatedDropLocationCounters = dropLocationCounters;
+    public void setDropLocationCounters(Set<DropLocationCounter> dropLocationCounters) {
+        this.dropLocationCounters = dropLocationCounters;
     }
 
     @Override

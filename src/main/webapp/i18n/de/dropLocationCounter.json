@@ -15,9 +15,8 @@
             "detail": {
                 "title": "Drop Location Counter"
             },
-            "dragAndDropQuestionStatistic": "Drag And Drop Question Statistic",
-            "dragAndDropQuestionStatistic": "Drag And Drop Question Statistic",
-            "dropLocation": "Drop Location"
+            "dropLocation": "Drop Location",
+            "dragAndDropQuestionStatistic": "Drag And Drop Question Statistic"
         }
     }
 }

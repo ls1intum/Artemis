@@ -38,8 +38,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTEMiSApp.class)
 public class StatisticCounterResourceIntTest {
 
-    private static final Integer DEFAULT_COUNTER = 1;
-    private static final Integer UPDATED_COUNTER = 2;
+    private static final Integer DEFAULT_RATED_COUNTER = 1;
+    private static final Integer UPDATED_RATED_COUNTER = 2;
+
+    private static final Integer DEFAULT_UN_RATED_COUNTER = 1;
+    private static final Integer UPDATED_UN_RATED_COUNTER = 2;
 
     @Autowired
     private StatisticCounterRepository statisticCounterRepository;
@@ -78,7 +81,8 @@ public class StatisticCounterResourceIntTest {
      */
     public static StatisticCounter createEntity(EntityManager em) {
         StatisticCounter statisticCounter = new AnswerCounter()
-            .counter(DEFAULT_COUNTER);
+            .ratedCounter(DEFAULT_RATED_COUNTER)
+            .unRatedCounter(DEFAULT_UN_RATED_COUNTER);
         return statisticCounter;
     }
 
@@ -102,7 +106,8 @@ public class StatisticCounterResourceIntTest {
         List<StatisticCounter> statisticCounterList = statisticCounterRepository.findAll();
         assertThat(statisticCounterList).hasSize(databaseSizeBeforeCreate + 1);
         StatisticCounter testStatisticCounter = statisticCounterList.get(statisticCounterList.size() - 1);
-        assertThat(testStatisticCounter.getCounter()).isEqualTo(DEFAULT_COUNTER);
+        assertThat(testStatisticCounter.getRatedCounter()).isEqualTo(DEFAULT_RATED_COUNTER);
+        assertThat(testStatisticCounter.getUnRatedCounter()).isEqualTo(DEFAULT_UN_RATED_COUNTER);
     }
 
     @Test
@@ -135,7 +140,8 @@ public class StatisticCounterResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(statisticCounter.getId().intValue())))
-            .andExpect(jsonPath("$.[*].counter").value(hasItem(DEFAULT_COUNTER)));
+            .andExpect(jsonPath("$.[*].ratedCounter").value(hasItem(DEFAULT_RATED_COUNTER)))
+            .andExpect(jsonPath("$.[*].unRatedCounter").value(hasItem(DEFAULT_UN_RATED_COUNTER)));
     }
 
     @Test
@@ -149,7 +155,8 @@ public class StatisticCounterResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(statisticCounter.getId().intValue()))
-            .andExpect(jsonPath("$.counter").value(DEFAULT_COUNTER));
+            .andExpect(jsonPath("$.ratedCounter").value(DEFAULT_RATED_COUNTER))
+            .andExpect(jsonPath("$.unRatedCounter").value(DEFAULT_UN_RATED_COUNTER));
     }
 
     @Test
@@ -170,7 +177,8 @@ public class StatisticCounterResourceIntTest {
         // Update the statisticCounter
         StatisticCounter updatedStatisticCounter = statisticCounterRepository.findOne(statisticCounter.getId());
         updatedStatisticCounter
-            .counter(UPDATED_COUNTER);
+            .ratedCounter(UPDATED_RATED_COUNTER)
+            .unRatedCounter(UPDATED_UN_RATED_COUNTER);
 
         restStatisticCounterMockMvc.perform(put("/api/statistic-counters")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -181,7 +189,8 @@ public class StatisticCounterResourceIntTest {
         List<StatisticCounter> statisticCounterList = statisticCounterRepository.findAll();
         assertThat(statisticCounterList).hasSize(databaseSizeBeforeUpdate);
         StatisticCounter testStatisticCounter = statisticCounterList.get(statisticCounterList.size() - 1);
-        assertThat(testStatisticCounter.getCounter()).isEqualTo(UPDATED_COUNTER);
+        assertThat(testStatisticCounter.getRatedCounter()).isEqualTo(UPDATED_RATED_COUNTER);
+        assertThat(testStatisticCounter.getUnRatedCounter()).isEqualTo(UPDATED_UN_RATED_COUNTER);
     }
 
     @Test

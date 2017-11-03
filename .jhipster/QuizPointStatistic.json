@@ -3,13 +3,7 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "ratedPointCounter",
-            "otherEntityName": "pointCounter",
-            "otherEntityRelationshipName": "quizPointStatistic"
-        },
-        {
-            "relationshipType": "one-to-many",
-            "relationshipName": "unRatedPointCounter",
+            "relationshipName": "pointCounters",
             "otherEntityName": "pointCounter",
             "otherEntityRelationshipName": "quizPointStatistic"
         },

@@ -13,7 +13,6 @@
         vm.answerCounter = entity;
         vm.clear = clear;
         vm.save = save;
-        vm.multiplechoicequestionstatistics = MultipleChoiceQuestionStatistic.query();
         vm.answers = AnswerOption.query({filter: 'answercounter-is-null'});
         $q.all([vm.answerCounter.$promise, vm.answers.$promise]).then(function() {
             if (!vm.answerCounter.answer || !vm.answerCounter.answer.id) {
@@ -23,6 +22,7 @@
         }).then(function(answer) {
             vm.answers.push(answer);
         });
+        vm.multiplechoicequestionstatistics = MultipleChoiceQuestionStatistic.query();
 
         $timeout(function (){
             angular.element('.form-group:eq(1)>input').focus();

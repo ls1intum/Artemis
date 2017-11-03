@@ -19,7 +19,8 @@ entity DragAndDropQuestionStatistic (dragAndDropQuestionStatistic){   //extends 
 }
 
 entity StatisticCounter(statisticCounter){ //abstract
-    counter Integer
+    ratedCounter Integer,
+    UnRatedCounter Integer
 }
 
 entity PointCounter(pointCounter){         //extends PointCounter
@@ -178,12 +179,9 @@ entity DragAndDropAssignment {
 }
 
 relationship OneToMany {
-  QuizPointStatistic{ratedPointCounter} to PointCounter,
-  QuizPointStatistic{unRatedPointCounter} to PointCounter,
-  MultipleChoiceQuestionStatistic{ratedAnswerCounter} to AnswerCounter,
-  MultipleChoiceQuestionStatistic{unRatedAnswerCounter} to AnswerCounter,
-  DragAndDropQuestionStatistic{ratedDropLocationCounter} to DropLocationCounter,
-  DragAndDropQuestionStatistic{unRatedDropLocationCounter} to DropLocationCounter,
+  QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
+  MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
+  DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
   Course{exercises} to Exercise{course(title)},
   Exercise{participations} to Participation{exercise(title)},
   Participation{results} to Result{participation},

@@ -3,13 +3,7 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "ratedDropLocationCounter",
-            "otherEntityName": "dropLocationCounter",
-            "otherEntityRelationshipName": "dragAndDropQuestionStatistic"
-        },
-        {
-            "relationshipType": "one-to-many",
-            "relationshipName": "unRatedDropLocationCounter",
+            "relationshipName": "dropLocationCounters",
             "otherEntityName": "dropLocationCounter",
             "otherEntityRelationshipName": "dragAndDropQuestionStatistic"
         }

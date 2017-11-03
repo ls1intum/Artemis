@@ -19,14 +19,16 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
-                    <th><span data-translate="arTeMiSApp.statisticCounter.counter">Counter</span></th>
+                    <th><span data-translate="arTeMiSApp.statisticCounter.ratedCounter">Rated Counter</span></th>
+                    <th><span data-translate="arTeMiSApp.statisticCounter.unRatedCounter">Un Rated Counter</span></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="statisticCounter in vm.statisticCounters track by statisticCounter.id">
                     <td><a ui-sref="statistic-counter-detail({id:statisticCounter.id})">{{statisticCounter.id}}</a></td>
-                    <td>{{statisticCounter.counter}}</td>
+                    <td>{{statisticCounter.ratedCounter}}</td>
+                    <td>{{statisticCounter.unRatedCounter}}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"

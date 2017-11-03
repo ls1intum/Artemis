@@ -2,24 +2,18 @@
     "fluentMethods": true,
     "relationships": [
         {
-            "relationshipName": "multipleChoiceQuestionStatistic",
-            "otherEntityName": "multipleChoiceQuestionStatistic",
-            "relationshipType": "many-to-one",
-            "otherEntityField": "id"
-        },
-        {
-            "relationshipName": "multipleChoiceQuestionStatistic",
-            "otherEntityName": "multipleChoiceQuestionStatistic",
-            "relationshipType": "many-to-one",
-            "otherEntityField": "id"
-        },
-        {
             "relationshipType": "one-to-one",
             "relationshipName": "answer",
             "otherEntityName": "answerOption",
             "otherEntityField": "id",
             "ownerSide": true,
             "otherEntityRelationshipName": "answerCounter"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "multipleChoiceQuestionStatistic",
+            "otherEntityName": "multipleChoiceQuestionStatistic",
+            "otherEntityField": "id"
         }
     ],
     "fields": [],

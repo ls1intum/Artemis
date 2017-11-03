@@ -104,7 +104,8 @@
                     resolve: {
                         entity: function () {
                             return {
-                                counter: null,
+                                ratedCounter: null,
+                                unRatedCounter: null,
                                 id: null
                             };
                         }

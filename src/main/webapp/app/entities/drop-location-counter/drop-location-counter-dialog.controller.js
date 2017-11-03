@@ -13,7 +13,6 @@
         vm.dropLocationCounter = entity;
         vm.clear = clear;
         vm.save = save;
-        vm.draganddropquestionstatistics = DragAndDropQuestionStatistic.query();
         vm.droplocations = DropLocation.query({filter: 'droplocationcounter-is-null'});
         $q.all([vm.dropLocationCounter.$promise, vm.droplocations.$promise]).then(function() {
             if (!vm.dropLocationCounter.dropLocation || !vm.dropLocationCounter.dropLocation.id) {
@@ -23,6 +22,7 @@
         }).then(function(dropLocation) {
             vm.droplocations.push(dropLocation);
         });
+        vm.draganddropquestionstatistics = DragAndDropQuestionStatistic.query();
 
         $timeout(function (){
             angular.element('.form-group:eq(1)>input').focus();

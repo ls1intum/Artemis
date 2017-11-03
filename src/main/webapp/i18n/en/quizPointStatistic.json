@@ -15,8 +15,7 @@
             "detail": {
                 "title": "Quiz Point Statistic"
             },
-            "ratedPointCounter": "Rated Point Counter",
-            "unRatedPointCounter": "Un Rated Point Counter",
+            "pointCounters": "Point Counters",
             "quiz": "Quiz"
         }
     }

@@ -2,24 +2,18 @@
     "fluentMethods": true,
     "relationships": [
         {
-            "relationshipName": "dragAndDropQuestionStatistic",
-            "otherEntityName": "dragAndDropQuestionStatistic",
-            "relationshipType": "many-to-one",
-            "otherEntityField": "id"
-        },
-        {
-            "relationshipName": "dragAndDropQuestionStatistic",
-            "otherEntityName": "dragAndDropQuestionStatistic",
-            "relationshipType": "many-to-one",
-            "otherEntityField": "id"
-        },
-        {
             "relationshipType": "one-to-one",
             "relationshipName": "dropLocation",
             "otherEntityName": "dropLocation",
             "otherEntityField": "id",
             "ownerSide": true,
             "otherEntityRelationshipName": "dropLocationCounter"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "dragAndDropQuestionStatistic",
+            "otherEntityName": "dragAndDropQuestionStatistic",
+            "otherEntityField": "id"
         }
     ],
     "fields": [],

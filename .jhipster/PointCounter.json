@@ -6,12 +6,6 @@
             "otherEntityName": "quizPointStatistic",
             "relationshipType": "many-to-one",
             "otherEntityField": "id"
-        },
-        {
-            "relationshipName": "quizPointStatistic",
-            "otherEntityName": "quizPointStatistic",
-            "relationshipType": "many-to-one",
-            "otherEntityField": "id"
         }
     ],
     "fields": [

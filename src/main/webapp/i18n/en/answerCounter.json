@@ -15,9 +15,8 @@
             "detail": {
                 "title": "Answer Counter"
             },
-            "multipleChoiceQuestionStatistic": "Multiple Choice Question Statistic",
-            "multipleChoiceQuestionStatistic": "Multiple Choice Question Statistic",
-            "answer": "Answer"
+            "answer": "Answer",
+            "multipleChoiceQuestionStatistic": "Multiple Choice Question Statistic"
         }
     }
 }

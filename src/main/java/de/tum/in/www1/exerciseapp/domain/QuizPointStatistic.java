@@ -21,69 +21,39 @@ public class QuizPointStatistic extends Statistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(mappedBy = "quizPointStatistic")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<PointCounter> ratedPointCounters = new HashSet<>();
 
     @OneToMany(mappedBy = "quizPointStatistic")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<PointCounter> unRatedPointCounters = new HashSet<>();
+    private Set<PointCounter> pointCounters = new HashSet<>();
 
     @OneToOne(mappedBy = "quizPointStatistic")
     @JsonIgnore
     private QuizExercise quiz;
 
-
-    public Set<PointCounter> getRatedPointCounters() {
-        return ratedPointCounters;
+    public Set<PointCounter> getPointCounters() {
+        return pointCounters;
     }
 
-    public QuizPointStatistic ratedPointCounters(Set<PointCounter> pointCounters) {
-        this.ratedPointCounters = pointCounters;
+    public QuizPointStatistic pointCounters(Set<PointCounter> pointCounters) {
+        this.pointCounters = pointCounters;
         return this;
     }
 
-    public QuizPointStatistic addRatedPointCounter(PointCounter pointCounter) {
-        this.ratedPointCounters.add(pointCounter);
+    public QuizPointStatistic addPointCounters(PointCounter pointCounter) {
+        this.pointCounters.add(pointCounter);
         pointCounter.setQuizPointStatistic(this);
         return this;
     }
 
-    public QuizPointStatistic removeRatedPointCounter(PointCounter pointCounter) {
-        this.ratedPointCounters.remove(pointCounter);
+    public QuizPointStatistic removePointCounters(PointCounter pointCounter) {
+        this.pointCounters.remove(pointCounter);
         pointCounter.setQuizPointStatistic(null);
         return this;
     }
 
-    public void setRatedPointCounters(Set<PointCounter> pointCounters) {
-        this.ratedPointCounters = pointCounters;
-    }
-
-    public Set<PointCounter> getUnRatedPointCounters() {
-        return unRatedPointCounters;
-    }
-
-    public QuizPointStatistic unRatedPointCounters(Set<PointCounter> pointCounters) {
-        this.unRatedPointCounters = pointCounters;
-        return this;
-    }
-
-    public QuizPointStatistic addUnRatedPointCounter(PointCounter pointCounter) {
-        this.unRatedPointCounters.add(pointCounter);
-        pointCounter.setQuizPointStatistic(this);
-        return this;
-    }
-
-    public QuizPointStatistic removeUnRatedPointCounter(PointCounter pointCounter) {
-        this.unRatedPointCounters.remove(pointCounter);
-        pointCounter.setQuizPointStatistic(null);
-        return this;
-    }
-
-    public void setUnRatedPointCounters(Set<PointCounter> pointCounters) {
-        this.unRatedPointCounters = pointCounters;
+    public void setPointCounters(Set<PointCounter> pointCounters) {
+        this.pointCounters = pointCounters;
     }
 
     public QuizExercise getQuiz() {

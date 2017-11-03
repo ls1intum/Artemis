@@ -3,7 +3,11 @@
     "relationships": [],
     "fields": [
         {
-            "fieldName": "counter",
+            "fieldName": "ratedCounter",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "unRatedCounter",
             "fieldType": "Integer"
         }
     ],

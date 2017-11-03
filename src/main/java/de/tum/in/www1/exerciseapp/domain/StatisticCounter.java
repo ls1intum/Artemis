@@ -27,8 +27,11 @@ public abstract class StatisticCounter implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "counter")
-    private Integer counter;
+    @Column(name = "rated_counter")
+    private Integer ratedCounter = 0;
+
+    @Column(name = "un_rated_counter")
+    private Integer unRatedCounter = 0;
 
     public Long getId() {
         return id;
@@ -38,17 +41,30 @@ public abstract class StatisticCounter implements Serializable {
         this.id = id;
     }
 
-    public Integer getCounter() {
-        return counter;
+    public Integer getRatedCounter() {
+        return ratedCounter;
     }
 
-    public StatisticCounter counter(Integer counter) {
-        this.counter = counter;
+    public StatisticCounter ratedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
         return this;
     }
 
-    public void setCounter(Integer counter) {
-        this.counter = counter;
+    public void setRatedCounter(Integer ratedCounter) {
+        this.ratedCounter = ratedCounter;
+    }
+
+    public Integer getUnRatedCounter() {
+        return unRatedCounter;
+    }
+
+    public StatisticCounter unRatedCounter(Integer unRatedCounter) {
+        this.unRatedCounter = unRatedCounter;
+        return this;
+    }
+
+    public void setUnRatedCounter(Integer unRatedCounter) {
+        this.unRatedCounter = unRatedCounter;
     }
 
     @Override
@@ -75,7 +91,8 @@ public abstract class StatisticCounter implements Serializable {
     public String toString() {
         return "StatisticCounter{" +
             "id=" + getId() +
-            ", counter='" + getCounter() + "'" +
+            ", ratedCounter='" + getRatedCounter() + "'" +
+            ", unRatedCounter='" + getUnRatedCounter() + "'" +
             "}";
     }
 }

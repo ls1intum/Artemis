@@ -26,12 +26,6 @@
                 <option value=""></option>
             </select>
         </div>
-        <div class="form-group">
-            <label data-translate="arTeMiSApp.pointCounter.quizPointStatistic" for="field_quizPointStatistic">Quiz Point Statistic</label>
-            <select class="form-control" id="field_quizPointStatistic" name="quizPointStatistic" ng-model="vm.pointCounter.quizPointStatistic" ng-options="quizPointStatistic as quizPointStatistic.id for quizPointStatistic in vm.quizpointstatistics track by quizPointStatistic.id">
-                <option value=""></option>
-            </select>
-        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">

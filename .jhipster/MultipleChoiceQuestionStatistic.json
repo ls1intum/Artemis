@@ -3,13 +3,7 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "ratedAnswerCounter",
-            "otherEntityName": "answerCounter",
-            "otherEntityRelationshipName": "multipleChoiceQuestionStatistic"
-        },
-        {
-            "relationshipType": "one-to-many",
-            "relationshipName": "unRatedAnswerCounter",
+            "relationshipName": "answerCounters",
             "otherEntityName": "answerCounter",
             "otherEntityRelationshipName": "multipleChoiceQuestionStatistic"
         }

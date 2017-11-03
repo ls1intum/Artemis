@@ -110,14 +110,10 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
             "}";
     }
     public void addAnswerOption(AnswerOption answer){
-        AnswerCounter ratedCounter = new AnswerCounter();
-        ratedCounter.setAnswer(answer);
-        addRatedAnswerCounter(ratedCounter);
 
-        // TO-DO solve Problem with same IDs for different CounterSets
-        //AnswerCounter unRatedCounter = new AnswerCounter();
-        //unRatedCounter.setAnswer(answer);
-        //addUnRatedAnswerCounter(unRatedCounter);
+        AnswerCounter answerCounter = new AnswerCounter();
+        answerCounter.setAnswer(answer);
+        addAnswerCounters(answerCounter);
 
     }
 }

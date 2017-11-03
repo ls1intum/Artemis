@@ -15,7 +15,8 @@
             "detail": {
                 "title": "Statistic Counter"
             },
-            "counter": "Counter"
+            "ratedCounter": "Rated Counter",
+            "unRatedCounter": "Un Rated Counter"
         }
     }
 }

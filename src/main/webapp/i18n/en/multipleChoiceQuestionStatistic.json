@@ -15,8 +15,7 @@
             "detail": {
                 "title": "Multiple Choice Question Statistic"
             },
-            "ratedAnswerCounter": "Rated Answer Counter",
-            "unRatedAnswerCounter": "Un Rated Answer Counter"
+            "answerCounters": "Answer Counters"
         }
     }
 }

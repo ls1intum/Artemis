@@ -15,8 +15,7 @@
             "detail": {
                 "title": "Drag And Drop Question Statistic"
             },
-            "ratedDropLocationCounter": "Rated Drop Location Counter",
-            "unRatedDropLocationCounter": "Un Rated Drop Location Counter"
+            "dropLocationCounters": "Drop Location Counters"
         }
     }
 }

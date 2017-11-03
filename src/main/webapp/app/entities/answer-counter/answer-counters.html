@@ -19,9 +19,8 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
-                    <th><span data-translate="arTeMiSApp.answerCounter.multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</span></th>
-                    <th><span data-translate="arTeMiSApp.answerCounter.multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</span></th>
                     <th><span data-translate="arTeMiSApp.answerCounter.answer">Answer</span></th>
+                    <th><span data-translate="arTeMiSApp.answerCounter.multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -29,13 +28,10 @@
                 <tr ng-repeat="answerCounter in vm.answerCounters track by answerCounter.id">
                     <td><a ui-sref="answer-counter-detail({id:answerCounter.id})">{{answerCounter.id}}</a></td>
                     <td>
-                        <a ui-sref="multiple-choice-question-statistic-detail({id:answerCounter.multipleChoiceQuestionStatistic.id})">{{answerCounter.multipleChoiceQuestionStatistic.id}}</a>
-                    </td>
-                    <td>
-                        <a ui-sref="multiple-choice-question-statistic-detail({id:answerCounter.multipleChoiceQuestionStatistic.id})">{{answerCounter.multipleChoiceQuestionStatistic.id}}</a>
-                    </td>
-                    <td>
                         <a ui-sref="answer-option-detail({id:answerCounter.answer.id})">{{answerCounter.answer.id}}</a>
+                    </td>
+                    <td>
+                        <a ui-sref="multiple-choice-question-statistic-detail({id:answerCounter.multipleChoiceQuestionStatistic.id})">{{answerCounter.multipleChoiceQuestionStatistic.id}}</a>
                     </td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">

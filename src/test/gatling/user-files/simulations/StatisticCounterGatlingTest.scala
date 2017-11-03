@@ -67,7 +67,7 @@ class StatisticCounterGatlingTest extends Simulation {
             .exec(http("Create new statisticCounter")
             .post("/api/statistic-counters")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "counter":"0"}""")).asJSON
+            .body(StringBody("""{"id":null, "ratedCounter":"0", "unRatedCounter":"0"}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_statisticCounter_url"))).exitHereIfFailed
             .pause(10)
