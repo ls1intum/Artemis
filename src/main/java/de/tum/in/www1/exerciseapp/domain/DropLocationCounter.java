@@ -14,13 +14,9 @@ import java.util.Objects;
 @Entity
 @DiscriminatorValue(value="DD")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class DropLocationCounter implements Serializable {
+public class DropLocationCounter extends StatisticCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @ManyToOne
     private DragAndDropQuestionStatistic dragAndDropQuestionStatistic;
@@ -28,14 +24,6 @@ public class DropLocationCounter implements Serializable {
     @OneToOne
     @JoinColumn(unique = true)
     private DropLocation dropLocation;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public DragAndDropQuestionStatistic getDragAndDropQuestionStatistic() {
         return dragAndDropQuestionStatistic;

@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -14,15 +15,12 @@ import java.util.Objects;
  * A DragAndDropQuestionStatistic.
  */
 @Entity
-@Table(name = "dd_question_statistic")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class DragAndDropQuestionStatistic implements Serializable {
+@DiscriminatorValue(value="DD")
+//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeName("drag-and-drop")
+public class DragAndDropQuestionStatistic extends QuestionStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
     @OneToMany(mappedBy = "dragAndDropQuestionStatistic")
     @JsonIgnore
@@ -33,14 +31,6 @@ public class DragAndDropQuestionStatistic implements Serializable {
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DropLocationCounter> unRatedDropLocationCounters = new HashSet<>();
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public Set<DropLocationCounter> getRatedDropLocationCounters() {
         return ratedDropLocationCounters;

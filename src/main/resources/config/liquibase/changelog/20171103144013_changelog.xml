@@ -1,0 +1,37 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="Mo (generated)" id="1509716422350-1">
+        <addColumn tableName="statistic_counter">
+            <column name="drag_and_drop_question_statistic_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-2">
+        <addColumn tableName="statistic_counter">
+            <column name="drop_location_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-3">
+        <addUniqueConstraint columnNames="drop_location_id" constraintName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL" tableName="statistic_counter"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-4">
+        <addForeignKeyConstraint baseColumnNames="drag_and_drop_question_statistic_id" baseTableName="statistic_counter" constraintName="FK11jgyics37wyibhhpp866exa8" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-5">
+        <addForeignKeyConstraint baseColumnNames="drop_location_id" baseTableName="statistic_counter" constraintName="FK2bses6ev8komaj0jw4gcyl8te" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="drop_location"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-6">
+        <dropForeignKeyConstraint baseTableName="drop_location_counter" constraintName="FKfvvawhdm4hs5mf4wbcx33aitc"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-7">
+        <dropForeignKeyConstraint baseTableName="drop_location_counter" constraintName="FKqm9orjkjap1qbdyjsndsgysel"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-8">
+        <dropUniqueConstraint constraintName="UC_DROP_LOCATION_COUNTERDROP_LOCATION_ID_COL" tableName="drop_location_counter"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-9">
+        <dropTable tableName="dd_question_statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1509716422350-10">
+        <dropTable tableName="drop_location_counter"/>
+    </changeSet>
+</databaseChangeLog>
