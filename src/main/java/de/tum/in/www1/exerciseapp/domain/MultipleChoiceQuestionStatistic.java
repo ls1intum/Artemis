@@ -23,64 +23,35 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
     private static final long serialVersionUID = 1L;
 
 
-    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true, mappedBy = "multipleChoiceQuestionStatistic")
+    @OneToMany(cascade=CascadeType.ALL, mappedBy = "multipleChoiceQuestionStatistic")
     //@JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<AnswerCounter> ratedAnswerCounters = new HashSet<>();
+    private Set<AnswerCounter> answerCounters = new HashSet<>();
 
-    @OneToMany(cascade=CascadeType.ALL, mappedBy = "multipleChoiceQuestionStatistic")
-    @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<AnswerCounter> unRatedAnswerCounters = new HashSet<>();
 
-    public Set<AnswerCounter> getRatedAnswerCounters() {
-        return ratedAnswerCounters;
+    public Set<AnswerCounter> getAnswerCounters() {
+        return answerCounters;
     }
 
-    public MultipleChoiceQuestionStatistic ratedAnswerCounters(Set<AnswerCounter> answerCounters) {
-        this.ratedAnswerCounters = answerCounters;
+    public MultipleChoiceQuestionStatistic answerCounters(Set<AnswerCounter> answerCounters) {
+        this.answerCounters = answerCounters;
         return this;
     }
 
-    public MultipleChoiceQuestionStatistic addRatedAnswerCounter(AnswerCounter answerCounter) {
-        this.ratedAnswerCounters.add(answerCounter);
+    public MultipleChoiceQuestionStatistic addAnswerCounters(AnswerCounter answerCounter) {
+        this.answerCounters.add(answerCounter);
         answerCounter.setMultipleChoiceQuestionStatistic(this);
         return this;
     }
 
-    public MultipleChoiceQuestionStatistic removeRatedAnswerCounter(AnswerCounter answerCounter) {
-        this.ratedAnswerCounters.remove(answerCounter);
+    public MultipleChoiceQuestionStatistic removeAnswerCounters(AnswerCounter answerCounter) {
+        this.answerCounters.remove(answerCounter);
         answerCounter.setMultipleChoiceQuestionStatistic(null);
         return this;
     }
 
-    public void setRatedAnswerCounters(Set<AnswerCounter> answerCounters) {
-        this.ratedAnswerCounters = answerCounters;
-    }
-
-    public Set<AnswerCounter> getUnRatedAnswerCounters() {
-        return unRatedAnswerCounters;
-    }
-
-    public MultipleChoiceQuestionStatistic unRatedAnswerCounters(Set<AnswerCounter> answerCounters) {
-        this.unRatedAnswerCounters = answerCounters;
-        return this;
-    }
-
-    public MultipleChoiceQuestionStatistic addUnRatedAnswerCounter(AnswerCounter answerCounter) {
-        this.unRatedAnswerCounters.add(answerCounter);
-        answerCounter.setMultipleChoiceQuestionStatistic(this);
-        return this;
-    }
-
-    public MultipleChoiceQuestionStatistic removeUnRatedAnswerCounter(AnswerCounter answerCounter) {
-        this.unRatedAnswerCounters.remove(answerCounter);
-        answerCounter.setMultipleChoiceQuestionStatistic(null);
-        return this;
-    }
-
-    public void setUnRatedAnswerCounters(Set<AnswerCounter> answerCounters) {
-        this.unRatedAnswerCounters = answerCounters;
+    public void setAnswerCounters(Set<AnswerCounter> answerCounters) {
+        this.answerCounters = answerCounters;
     }
 
     @Override
