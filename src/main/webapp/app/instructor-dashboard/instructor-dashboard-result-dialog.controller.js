@@ -47,9 +47,7 @@
         }
 
         function onSaveSuccess(result) {
-
             if(vm.feedbacks.length > 0) {
-                console.log('there is feedback');
                 for (var i = 0; i < vm.feedbacks.length; i++) {
                     var currentFeedback = vm.feedbacks[i];
                     currentFeedback.result = result;
@@ -62,7 +60,6 @@
                     });
                 }
             } else {
-                console.log('there is no feedback');
                 $uibModalInstance.close(result);
                 vm.isSaving = false;
             }
