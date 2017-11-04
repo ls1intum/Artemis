@@ -1,10 +1,5 @@
 <div class="quiz-header container">
-    <h3>
-        <span class="colon-suffix" data-translate="artemisApp.exercise.course"></span>
-        {{vm.quizExercise.course.title}} </h3>
-    <h1>
-        <span class="colon-suffix" data-translate="artemisApp.quizExercise.quiz"></span>
-        {{vm.quizExercise.title}} </h1>
+    <h1>{{vm.quizExercise.course.title}} - {{vm.quizExercise.title}}</h1>
     <p data-translate="artemisApp.quizExercise.quizInstructions"></p>
 </div>
 <div class="quiz-content container">
@@ -31,7 +26,9 @@
             </div>
             <div id="remaining-time">
                 <span data-translate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
-                <span id="remaining-time-value">{{vm.remainingTime}}</span>
+                <span id="remaining-time-value" ng-class="{'time-critical': vm.remainingTimeSeconds < 60 || vm.remainingTimeSeconds < vm.quizExercise.duration / 4, 'time-warning': vm.remainingTimeSeconds < 120 || vm.remainingTimeSeconds < vm.quizExercise.duration / 2}">
+                    {{vm.remainingTime}}
+                </span>
             </div>
             <div class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></div>
         </div>

@@ -5,6 +5,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.List;
@@ -157,6 +159,15 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     public String getType() { return "quiz"; }
+
+    @Override
+    public ZonedDateTime getDueDate() {
+        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : null;
+    }
+
+    public Long getRemainingTime() {
+        return isPlannedToStart ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+    }
 
     public List<Question> getQuestions() {
         return questions;

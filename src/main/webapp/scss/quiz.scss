@@ -205,15 +205,14 @@
     }
 }
 
-.quiz-header {
-    h3 {
-        margin: 0;
-    }
+.quiz-header,
+.quiz-content,
+.quiz-footer-content {
+    font-size: 16px;
 }
 
 .quiz-content {
-
-    margin-top: 20px;
+    margin-top: 6px;
     margin-bottom: 120px;
 
     .question-index {
@@ -222,12 +221,15 @@
 }
 
 .quiz-footer-content {
-    #remaining-time {
-        font-size: 16px;
-    }
-
     #remaining-time-value {
         font-weight: bold;
+    }
+
+    .time-warning {
+        color: orange;
+    }
+
+    .time-critical {
         color: red;
     }
 }

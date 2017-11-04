@@ -8482,20 +8482,24 @@ body.editor .navbar-brand span {
     .mc-question .answer-option:hover {
       background: #fafafa; }
 
-.quiz-header h3 {
-  margin: 0; }
+.quiz-header,
+.quiz-content,
+.quiz-footer-content {
+  font-size: 16px; }
 
 .quiz-content {
-  margin-top: 20px;
+  margin-top: 6px;
   margin-bottom: 120px; }
   .quiz-content .question-index {
     padding: 2px 6px; }
 
-.quiz-footer-content #remaining-time {
-  font-size: 16px; }
-
 .quiz-footer-content #remaining-time-value {
-  font-weight: bold;
+  font-weight: bold; }
+
+.quiz-footer-content .time-warning {
+  color: orange; }
+
+.quiz-footer-content .time-critical {
   color: red; }
 
 .colon-suffix:after {

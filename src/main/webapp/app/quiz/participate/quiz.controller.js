@@ -11,18 +11,27 @@
         var vm = this;
 
         vm.remainingTime = "?";
+        vm.remainingTimeSeconds = 0;
         $interval(function() {
-            if (vm.quizExercise && vm.quizExercise.isPlannedToStart && vm.quizExercise.releaseDate && vm.quizExercise.duration) {
-                var endDate = moment(vm.quizExercise.releaseDate).add(vm.quizExercise.duration, "seconds");
+            vm.remainingTimeSeconds = 0;
+            if (vm.quizExercise && vm.quizExercise.adjustedDueDate) {
+                var endDate = vm.quizExercise.adjustedDueDate;
                 if (endDate.isAfter(moment())) {
-                    vm.remainingTime = endDate.fromNow(true);
+                    vm.remainingTimeSeconds = endDate.diff(moment(), "seconds");
+                    if (vm.remainingTimeSeconds > 90) {
+                        vm.remainingTime = Math.ceil(vm.remainingTimeSeconds / 60) + " minutes";
+                    } else if (vm.remainingTimeSeconds > 4){
+                        vm.remainingTime = vm.remainingTimeSeconds + " seconds";
+                    } else {
+                        vm.remainingTime = "< 5 seconds";
+                    }
                 } else {
-                    vm.remainingTime = "Time over!";
+                    vm.remainingTime = "Quiz has ended!";
                 }
             } else {
                 vm.remainingTime = "?";
             }
-        }, 1000);
+        }, 100);
 
         vm.onSubmit = onSubmit;
 
@@ -35,6 +44,7 @@
                 vm.totalScore = quizExercise.questions.reduce(function (score, question) {
                     return score + question.score;
                 }, 0);
+                vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
             });
         }
 
