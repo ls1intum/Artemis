@@ -15,6 +15,7 @@
         vm.datePickerOpenStatus = {};
         vm.openCalendar = openCalendar;
         vm.save = save;
+        vm.openForSubmission = openForSubmission;
         vm.addFeedbackClicked = false;
         vm.feedbackIndices = [0];
         vm.feedbacks = [];
@@ -27,7 +28,12 @@
             clear();
         }
 
-
+        function openForSubmission() {
+            if(vm.result.participation.exercise.dueDate == null || Date.now() < Date.parse(vm.result.participation.exercise.dueDate)) {
+                return true;
+            }
+            return false;
+        }
 
         $timeout(function () {
             angular.element('.form-group:eq(1)>input').focus();
