@@ -24,10 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * REST controller for managing Result.
@@ -265,7 +262,7 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     @Transactional
-    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
+    public ResponseEntity<Set<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
         AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
@@ -273,7 +270,7 @@ public class ResultResource {
         GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
         if (result.getParticipation().getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority))) {
             try {
-            List<Feedback> feedbacks = new ArrayList<Feedback>(feedbackService.getFeedbackForBuildResult(result));
+                Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
                 return Optional.ofNullable(feedbacks)
                     .map(resultDetails -> new ResponseEntity<>(feedbacks, HttpStatus.OK))
                     .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));

@@ -35,7 +35,7 @@ public class Feedback implements Serializable {
     private FeedbackType type;
 
     @ManyToOne
-    @JsonIgnore
+    //@JsonIgnore
     private Result result;
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove

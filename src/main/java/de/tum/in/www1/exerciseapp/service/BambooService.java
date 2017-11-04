@@ -154,8 +154,8 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public Set<Feedback> getLatestBuildResultDetails(Result result) {
         Map<String, Object> buildResultDetails = retrieveLatestBuildResultDetails(result.getParticipation().getBuildPlanId());
-        addFeedbackToResult(result, buildResultDetails);
-        return result.getFeedbacks();
+        Set<Feedback> feedbacks = addFeedbackToResult(result, buildResultDetails);
+        return feedbacks;
     }
 
     @Override
