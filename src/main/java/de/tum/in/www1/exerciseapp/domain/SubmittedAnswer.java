@@ -28,15 +28,30 @@ public abstract class SubmittedAnswer implements Serializable {
     private Long id;
 
     @ManyToOne
+    private Question question;
+
+    @ManyToOne
     private QuizSubmission submission;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Question getQuestion() {
+        return question;
+    }
+
+    public SubmittedAnswer question(Question question) {
+        this.question = question;
+        return this;
+    }
+
+    public void setQuestion(Question question) {
+        this.question = question;
     }
 
     public QuizSubmission getSubmission() {
@@ -51,7 +66,6 @@ public abstract class SubmittedAnswer implements Serializable {
     public void setSubmission(QuizSubmission quizSubmission) {
         this.submission = quizSubmission;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {

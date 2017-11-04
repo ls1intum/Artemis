@@ -19,13 +19,17 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
-                    <th><span data-translate="artemisApp.submittedAnswer.submission">Submission</span></th>
+                    <th><span data-translate="arTeMiSApp.submittedAnswer.question">Question</span></th>
+                    <th><span data-translate="arTeMiSApp.submittedAnswer.submission">Submission</span></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="submittedAnswer in vm.submittedAnswers track by submittedAnswer.id">
                     <td><a ui-sref="submitted-answer-detail({id:submittedAnswer.id})">{{submittedAnswer.id}}</a></td>
+                    <td>
+                        <a ui-sref="question-detail({id:submittedAnswer.question.id})">{{submittedAnswer.question.id}}</a>
+                    </td>
                     <td>
                         <a ui-sref="quiz-submission-detail({id:submittedAnswer.submission.id})">{{submittedAnswer.submission.id}}</a>
                     </td>

@@ -4,7 +4,11 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
-        <dt><span data-translate="artemisApp.submittedAnswer.submission">Submission</span></dt>
+        <dt><span data-translate="arTeMiSApp.submittedAnswer.question">Question</span></dt>
+        <dd>
+            <a ui-sref="question-detail({id:vm.submittedAnswer.question.id})">{{vm.submittedAnswer.question.id}}</a>
+        </dd>
+        <dt><span data-translate="arTeMiSApp.submittedAnswer.submission">Submission</span></dt>
         <dd>
             <a ui-sref="quiz-submission-detail({id:vm.submittedAnswer.submission.id})">{{vm.submittedAnswer.submission.id}}</a>
         </dd>

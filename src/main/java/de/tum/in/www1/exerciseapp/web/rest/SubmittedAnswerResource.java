@@ -83,7 +83,7 @@ public class SubmittedAnswerResource {
     public List<SubmittedAnswer> getAllSubmittedAnswers() {
         log.debug("REST request to get all SubmittedAnswers");
         return submittedAnswerRepository.findAll();
-        }
+    }
 
     /**
      * GET  /submitted-answers/:id : get the "id" submittedAnswer.
