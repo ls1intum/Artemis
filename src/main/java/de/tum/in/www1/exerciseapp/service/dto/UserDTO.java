@@ -9,6 +9,7 @@ import org.hibernate.validator.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -52,6 +53,8 @@ public class UserDTO {
 
     private Set<String> authorities;
 
+    private List<String> groups;
+
     public UserDTO() {
         // Empty constructor needed for Jackson.
     }
@@ -60,13 +63,14 @@ public class UserDTO {
         this(user.getId(), user.getLogin(), user.getFirstName(), user.getLastName(),
             user.getEmail(), user.getActivated(), user.getImageUrl(), user.getLangKey(),
             user.getCreatedBy(), user.getCreatedDate(), user.getLastModifiedBy(), user.getLastModifiedDate(),
-            user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()));
+            user.getAuthorities().stream().map(Authority::getName).collect(Collectors.toSet()),
+            user.getGroups());
     }
 
     public UserDTO(Long id, String login, String firstName, String lastName,
         String email, boolean activated, String imageUrl, String langKey,
         String createdBy, Instant createdDate, String lastModifiedBy, Instant lastModifiedDate,
-        Set<String> authorities) {
+        Set<String> authorities, List<String> groups) {
 
         this.id = id;
         this.login = login;
@@ -81,6 +85,7 @@ public class UserDTO {
         this.lastModifiedBy = lastModifiedBy;
         this.lastModifiedDate = lastModifiedDate;
         this.authorities = authorities;
+        this.groups = groups;
     }
 
     public Long getId() {
@@ -146,6 +151,8 @@ public class UserDTO {
     public Set<String> getAuthorities() {
         return authorities;
     }
+
+    public List<String> getGroups() { return groups; }
 
     @Override
     public String toString() {

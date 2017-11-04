@@ -80,13 +80,45 @@
                 resolve: {
                     translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                         $translatePartialLoader.addPart('participation');
-                        $translatePartialLoader.addPart('participationState');
                         return $translate.refresh();
                     }],
                     entity: ['$stateParams', 'Participation', function ($stateParams, Participation) {
                         return Participation.get({id: $stateParams.id}).$promise;
+                    }],
+                    previousState: ["$state", function ($state) {
+                        var currentStateData = {
+                            name: $state.current.name || 'participation',
+                            params: $state.params,
+                            url: $state.href($state.current.name, $state.params)
+                        };
+                        return currentStateData;
                     }]
                 }
+            })
+            .state('participation-detail.edit', {
+                parent: 'participation-detail',
+                url: '/detail/edit',
+                data: {
+                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                },
+                onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                    $uibModal.open({
+                        templateUrl: 'app/entities/participation/participation-dialog.html',
+                        controller: 'ParticipationDialogController',
+                        controllerAs: 'vm',
+                        backdrop: 'static',
+                        size: 'lg',
+                        resolve: {
+                            entity: ['Participation', function(Participation) {
+                                return Participation.get({id : $stateParams.id}).$promise;
+                            }]
+                        }
+                    }).result.then(function() {
+                        $state.go('^', {}, { reload: false });
+                    }, function() {
+                        $state.go('^');
+                    });
+                }]
             })
             .state('participation.new', {
                 parent: 'participation',

@@ -1,10 +1,15 @@
 
-<h2>{{$ctrl.exercise.title}} <small>{{$ctrl.results.length}} results</small></h2>
+<h2>{{$ctrl.exercise.course.title}} - {{$ctrl.exercise.title}} <small>{{$ctrl.results.length}} results</small></h2>
 <jhi-alert></jhi-alert>
 <div>
     <div class="button-toolbar pull-right">
-        <button class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.buildplans-delete">
-            <i class="fa fa-eraser"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.buildPlans.delete.title">CLEANUP_BUILD_PLANS</span>
+        <button class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive"
+                data-translate="artemisApp.instructorDashboard.archive.title">
+            <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;Archive
+        </button>
+        <button class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup"
+                data-translate="artemisApp.instructorDashboard.cleanup.title">
+            <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.buildPlans.delete.title">CLEANUP_BUILD_PLANS</span>
         </button>
         <button type="submit"
                 ui-sref="participation-for-exercise({exerciseId:$ctrl.exerciseId})"

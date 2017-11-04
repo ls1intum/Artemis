@@ -47,7 +47,7 @@ public class CourseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @Timed
     public ResponseEntity<Course> createCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
@@ -70,7 +70,7 @@ public class CourseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @Timed
     public ResponseEntity<Course> updateCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to update Course : {}", course);
@@ -103,7 +103,7 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
@@ -118,7 +118,7 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{id}")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);

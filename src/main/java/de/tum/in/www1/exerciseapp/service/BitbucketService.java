@@ -291,7 +291,6 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
-
     /**
      * Deletes the given repository from Bitbucket.
      *
@@ -300,6 +299,7 @@ public class BitbucketService implements VersionControlService {
      */
     private void deleteRepositoryImpl(String projectKey, String repositorySlug) {
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug;
+        log.info("Delete repository " + baseUrl);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();

@@ -65,20 +65,15 @@ public class UserResource {
 
     private final Logger log = LoggerFactory.getLogger(UserResource.class);
 
-    private static final String ENTITY_NAME = "userManagement";
-
     private final UserRepository userRepository;
-
+    private final UserService userService;
     private final MailService mailService;
 
-    private final UserService userService;
-
-    public UserResource(UserRepository userRepository, MailService mailService,
-            UserService userService) {
+    public UserResource(UserRepository userRepository, UserService userService, MailService mailService) {
 
         this.userRepository = userRepository;
-        this.mailService = mailService;
         this.userService = userService;
+        this.mailService = mailService;
     }
 
     /**
@@ -96,11 +91,11 @@ public class UserResource {
     @PostMapping("/users")
     @Timed
     @Secured(AuthoritiesConstants.ADMIN)
-    public ResponseEntity createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
+    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
         log.debug("REST request to save User : {}", managedUserVM);
 
         if (managedUserVM.getId() != null) {
-            throw new BadRequestAlertException("A new user cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");
         // Lowercase the user login before comparing with database
         } else if (userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();

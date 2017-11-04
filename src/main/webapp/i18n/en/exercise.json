@@ -3,27 +3,30 @@
         "exercise" : {
             "home": {
                 "title": "Exercises",
-                "createLabel": "Create a new Exercise",
-                "createOrEditLabel": "Create or edit a Exercise"
+                "createLabel": "Create a new exercise",
+                "createOrEditLabel": "Create or edit a exercise"
             },
-            "created": "A new Exercise is created with identifier {{ param }}",
-            "updated": "A Exercise is updated with identifier {{ param }}",
-            "deleted": "A Exercise is deleted with identifier {{ param }}",
+            "created": "A new exercise is created with identifier {{ param }}",
+            "updated": "An exercise is updated with identifier {{ param }}",
+            "deleted": "An exercise is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Exercise {{ id }}?"
+                "question": "Are you sure you want to delete exercise {{ id }}?"
+            },
+            "reset": {
+                "question": "Are you sure you want to reset exercise {{ id }}?"
             },
             "detail": {
                 "title": "Exercise"
             },
             "title": "Title",
-            "releaseDate": "Release Date",
-            "dueDate": "Due Date",
+            "releaseDate": "Release date",
+            "dueDate": "Due date",
             "participations": "Participations",
             "course": "Course"
         },
         "exerciseLtiConfiguration" : {
             "lti": "LTI",
-            "configurationForExercise": "LTI Configuration for Exercise {{ title }}"
+            "configurationForExercise": "LTI configuration for exercise {{ title }}"
         }
     }
 }

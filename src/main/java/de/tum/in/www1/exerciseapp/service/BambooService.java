@@ -137,6 +137,9 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public BuildStatus getBuildStatus(Participation participation) {
         Map<String, Boolean> status = retrieveBuildStatus(participation.getBuildPlanId());
+        if (status == null) {
+            return BuildStatus.INACTIVE;
+        }
         if (status.get("isActive") && !status.get("isBuilding")) {
             return BuildStatus.QUEUED;
         }
@@ -519,17 +522,16 @@ public class BambooService implements ContinuousIntegrationService {
     public ResponseEntity retrieveLatestArtifact(Participation participation) {
         String planKey = participation.getBuildPlanId();
         Map<String, Object> latestResult = retrieveLatestBuildResult(planKey);
-        // If the build has an artifact, the resppnse contains an artifact key.
+        // If the build has an artifact, the response contains an artifact key.
         // It seems this key is only available if the "Share" checkbox in Bamboo was used.
         if(latestResult.containsKey("artifact")) {
             // The URL points to the directory. Bamboo returns an "Index of" page.
             // Recursively walk through the responses until we get the actual artifact.
             return retrievArtifactPage((String)latestResult.get("artifact"));
-        } else {
+        }
+        else {
             throw new BambooException("No build artifact available for this plan");
         }
-
-
     }
 
     /**
@@ -564,12 +566,11 @@ public class BambooService implements ContinuousIntegrationService {
             } else {
                 throw new BambooException("No artifact link found on artifact page");
             }
-
-        } else {
+        }
+        else {
             // Actual artifact file
             return response;
         }
-
     }
 
     /**
@@ -592,7 +593,7 @@ public class BambooService implements ContinuousIntegrationService {
                 entity,
                 Map.class);
         } catch (Exception e) {
-            log.error("HttpError while retrieving build status", e);
+            log.error("Bamboo HttpError '" + e.getMessage() + "' while retrieving build status for plan " + planKey, e);
         }
         if (response != null) {
             Map<String, Boolean> result = new HashMap<>();

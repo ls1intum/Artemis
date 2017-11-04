@@ -8,7 +8,8 @@
             "BUILD_PLAN_COPIED": "BUILD_PLAN_COPIED",
             "BUILD_PLAN_CONFIGURED": "BUILD_PLAN_CONFIGURED",
             "INITIALIZED": "INITIALIZED",
-            "INACTIVE": "INACTIVE"
+            "INACTIVE": "INACTIVE",
+            "FINISHED": "FINISHED"
         }
     }
 }

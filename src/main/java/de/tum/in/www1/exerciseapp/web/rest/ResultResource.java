@@ -132,18 +132,20 @@ public class ResultResource {
             .body(result);
     }
 
-    /**
-     * GET  /results : get all the results.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping("/results")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
-    @Timed
-    public List<Result> getAllResults() {
-        log.debug("REST request to get all Results");
-        return resultRepository.findAll();
-        }
+    //Deactivated because it would load all (thousands) results and completely overload the server
+    //TODO: activate this call again using the infinite scroll page mechanism
+//    /**
+//     * GET  /results : get all the results.
+//     *
+//     * @return the ResponseEntity with status 200 (OK) and the list of results in body
+//     */
+//    @GetMapping("/results")
+//    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+//    @Timed
+//    public List<Result> getAllResults() {
+//        log.debug("REST request to get all Results");
+//        return resultRepository.findAll();
+//    }
 
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results for "id" participation.
