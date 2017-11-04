@@ -27,6 +27,7 @@
 
         function save () {
             vm.isSaving = true;
+            vm.programmingExercise.type = 'de.tum.in.www1.exerciseapp.domain.ProgrammingExercise';
             if (vm.programmingExercise.id !== null) {
                 ProgrammingExercise.update(vm.programmingExercise, onSaveSuccess, onSaveError);
             } else {
