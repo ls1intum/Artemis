@@ -108,7 +108,7 @@ artemis:
     user-group-name: edx
   git:
     name: ArTEMiS
-email: <email>
+    email: <email>
 
 # ===================================================================
 # JHipster specific properties
