@@ -38,7 +38,6 @@
         }
 
         function save() {
-            console.log('saving');
             vm.isSaving = true;
             if (vm.result.id !== null) {
                 Result.update(vm.result, onSaveSuccess, onSaveError);
@@ -48,17 +47,24 @@
         }
 
         function onSaveSuccess(result) {
-            for(var i = 0; i < vm.feedbacks.length; i++) {
-                var currentFeedback = vm.feedbacks[i];
-                currentFeedback.result = result;
-                currentFeedback.type = 'MANUAL';
-                Feedback.save(currentFeedback, function(feedback) {
-                    $scope.$emit('artemisApp:resultUpdate', result);
-                    $uibModalInstance.close(result);
-                    vm.isSaving = false;
-                }, function(error) {
-                    vm.isSaving = false;
-                });
+
+            if(vm.feedbacks.length > 0) {
+                console.log('there is feedback');
+                for (var i = 0; i < vm.feedbacks.length; i++) {
+                    var currentFeedback = vm.feedbacks[i];
+                    currentFeedback.result = result;
+                    currentFeedback.type = 'MANUAL';
+                    Feedback.save(currentFeedback, function () {
+                        $uibModalInstance.close(result);
+                        vm.isSaving = false;
+                    }, function () {
+                        vm.isSaving = false;
+                    });
+                }
+            } else {
+                console.log('there is no feedback');
+                $uibModalInstance.close(result);
+                vm.isSaving = false;
             }
 
         }
