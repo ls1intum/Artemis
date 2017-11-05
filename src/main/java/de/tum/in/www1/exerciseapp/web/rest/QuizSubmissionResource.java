@@ -51,7 +51,6 @@ public class QuizSubmissionResource {
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to init a participation
      * @param principal  the current user principal
-     *
      * @return the ResponseEntity with status 200 (OK) and the quizSubmission in body, or with status 400 (Bad Request) if the exercise doesn't exist
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
@@ -59,8 +58,8 @@ public class QuizSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public ResponseEntity<QuizSubmission> getLatestQuizSubmissionForExercise(@PathVariable Long courseId,
-                                                                       @PathVariable Long exerciseId,
-                                                                       Principal principal) throws URISyntaxException {
+                                                                             @PathVariable Long exerciseId,
+                                                                             Principal principal) throws URISyntaxException {
         log.debug("REST request to get QuizSubmission for QuizExercise: {}", exerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findOne(exerciseId);
         if (Optional.ofNullable(quizExercise).isPresent()) {
@@ -90,13 +89,15 @@ public class QuizSubmissionResource {
     @Timed
     public ResponseEntity<QuizSubmission> createQuizSubmission(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
         log.debug("REST request to save QuizSubmission : {}", quizSubmission);
-        if (quizSubmission.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
-        }
-        QuizSubmission result = quizSubmissionRepository.save(quizSubmission);
-        return ResponseEntity.created(new URI("/api/quiz-submissions/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        return ResponseEntity.notFound().headers(HeaderUtil.createAlert("Unsupported Operation", "")).build();
+        // TODO: Valentin: implement for starting practice quiz
+//        if (quizSubmission.getId() != null) {
+//            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
+//        }
+//        QuizSubmission result = quizSubmissionRepository.save(quizSubmission);
+//        return ResponseEntity.created(new URI("/api/quiz-submissions/" + result.getId()))
+//            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
+//            .body(result);
     }
 
     /**
@@ -109,16 +110,30 @@ public class QuizSubmissionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/quiz-submissions")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public ResponseEntity<QuizSubmission> updateQuizSubmission(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
         log.debug("REST request to update QuizSubmission : {}", quizSubmission);
+
+        //TODO: check if submission belongs to user
+
         if (quizSubmission.getId() == null) {
             return createQuizSubmission(quizSubmission);
         }
-        QuizSubmission result = quizSubmissionRepository.save(quizSubmission);
+        quizSubmission = quizSubmissionRepository.save(quizSubmission);
+
+        // update corresponding result
+        Optional<Result> resultOptional = resultRepository.findDistinctBySubmissionId(quizSubmission.getId());
+        if (resultOptional.isPresent()) {
+            Result result = resultOptional.get();
+            // TODO update result
+        } else {
+            // TODO: return error
+        }
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
-            .body(result);
+            .body(quizSubmission);
     }
 
     /**
@@ -131,7 +146,7 @@ public class QuizSubmissionResource {
     public List<QuizSubmission> getAllQuizSubmissions() {
         log.debug("REST request to get all QuizSubmissions");
         return quizSubmissionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /quiz-submissions/:id : get the "id" quizSubmission.
