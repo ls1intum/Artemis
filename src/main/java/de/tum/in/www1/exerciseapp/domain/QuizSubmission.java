@@ -23,7 +23,6 @@ public class QuizSubmission extends Submission implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @OneToMany(mappedBy = "submission")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
 

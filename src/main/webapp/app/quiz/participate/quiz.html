@@ -8,7 +8,7 @@
             <span data-translate="artemisApp.question.detail.title"></span>
             <span>{{$index+1}}:</span>
         </div>
-        <multiple-choice-question question="question" selected-answer-options="vm.selectedAnswerOptions" total-score="vm.totalScore"></multiple-choice-question>
+        <multiple-choice-question question="question" selected-answer-options="vm.selectedAnswerOptions[question.id]" total-score="vm.totalScore"></multiple-choice-question>
     </div>
 </div>
 <div class="quiz-footer">

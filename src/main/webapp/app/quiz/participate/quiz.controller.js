@@ -40,17 +40,31 @@
         function load() {
             QuizExerciseForStudent.get({id : $stateParams.id}).$promise.then(function (quizExercise) {
                 vm.quizExercise = quizExercise;
-                vm.selectedAnswerOptions = []; // TODO: load existing submission
                 vm.totalScore = quizExercise.questions.reduce(function (score, question) {
                     return score + question.score;
                 }, 0);
                 vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
+
+                // prepare answers for submission
+                vm.selectedAnswerOptions = {};
+                vm.quizExercise.questions.forEach(function(question) {
+                    vm.selectedAnswerOptions[question.id] = []; // TODO: Load from existing submission, if quiz was resumed
+                });
             });
         }
 
         function onSubmit() {
-            // TODO
-            console.log(vm.selectedAnswerOptions);
+            var submission = {
+                submittedAnswers: Object.keys(vm.selectedAnswerOptions).map(function(questionID) {
+                    return {
+                        question: vm.quizExercise.questions.find(function(question) {
+                            return question.id === Number(questionID);
+                        }),
+                        selectedOptions: vm.selectedAnswerOptions[questionID]
+                    };
+                })
+            };
+            console.log(submission);
         }
     }
 })();
