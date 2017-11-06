@@ -5,15 +5,17 @@
         .module('artemisApp')
         .controller('TestStatisticController', TestStatisticController);
 
-    TestStatisticController.$inject = ['$scope', '$state', 'Principal'];
+    TestStatisticController.$inject = [ '$rootScope','$scope', '$state', 'Principal', 'JhiWebsocketService', 'TestStatistic'];
 
-    function TestStatisticController ( $state, $scope, Principal) {
+    function TestStatisticController ( rootScope, $scope, $state, Principal, JhiWebsocketService, TestStatistic) {
 
         var vm = this;
 
+        vm.$onInit = init;
+        vm.notifyWebsocket = notifyWebsocket;
         vm.switchSolution = switchSolution;
         vm.unratedSolutions = unratedSolutions;
-        vm.plusB =plusB;  //temporär
+        vm.plusB = plusB;  //temporär
 
         var unratedData = [166, 23, 100, 144];
         var ratedData = [156, 43, 80, 166];
@@ -31,6 +33,27 @@
         })
         window.myChart.update();
 
+
+        function init() {
+
+            var websocketChannel = '/topic/statistic/test/plusB';
+
+            JhiWebsocketService.subscribe(websocketChannel);
+
+            JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
+                plusB();
+            });
+
+            $scope.$on('$destroy', function() {
+                JhiWebsocketService.unsubscribe(websocketChannel);
+            })
+
+        }
+
+        function notifyWebsocket(){
+            TestStatistic.plusB();
+
+        }
 
         function plusB() {
             barChartData.datasets.forEach(function (dataset) {

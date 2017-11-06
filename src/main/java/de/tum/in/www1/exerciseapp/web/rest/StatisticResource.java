@@ -4,6 +4,9 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Statistic;
 
 import de.tum.in.www1.exerciseapp.repository.StatisticRepository;
+import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
+import de.tum.in.www1.exerciseapp.service.LtiService;
+import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -29,9 +32,15 @@ public class StatisticResource {
     private static final String ENTITY_NAME = "statistic";
 
     private final StatisticRepository statisticRepository;
+    private final Optional<LtiService> ltiService;
+    private final StatisticService statisticService;
+    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    public StatisticResource(StatisticRepository statisticRepository) {
+    public StatisticResource(StatisticRepository statisticRepository, Optional<LtiService> ltiService, StatisticService statisticService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.statisticRepository = statisticRepository;
+        this.ltiService =ltiService;
+        this.statisticService = statisticService;
+        this.continuousIntegrationService =continuousIntegrationService;
     }
 
     /**
@@ -114,5 +123,16 @@ public class StatisticResource {
         log.debug("REST request to delete Statistic : {}", id);
         statisticRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    //Temporär
+
+    @PostMapping("/test-statistic")
+    @Timed
+    public ResponseEntity<Statistic> plusB() throws URISyntaxException {
+        System.out.println("--------------------------------add One to B----------------------------------");
+        statisticService.plusOneToB();
+
+        return null;
     }
 }
