@@ -52,20 +52,7 @@ public class QuizExerciseResource {
         if (quizExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
-        // creating the Statistics for each Question
-        for (Question question : quizExercise.getQuestions()) {
-            // do the same for answerOptions (if question is multiple choice)
-                if (question instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();
-                    mcQuestion.setQuestionStatistic(mcStatistic);
-                    mcStatistic.setQuestion(mcQuestion);
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        mcStatistic.addAnswerOption(answerOption);
-                    }
-                }
-            // TODO: do the same for dragItems and dropLocations (if question is drag and drop)
-        }
+
         QuizExercise result = quizExerciseRepository.save(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
@@ -102,43 +89,17 @@ public class QuizExerciseResource {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
                     MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
                     mcStatistic.setQuestion(mcQuestion);
-                    //delete and reconnect answerCounter-entities
-                    Set<AnswerCounter> delete = new HashSet<>();
+                    //reconnect answerCounter-entities
                     for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
                         if (answerCounter.getId() != null) {
-                            if(mcQuestion.getAnswerOptions().contains(answerCounter.getAnswer())){
-                                answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
-                            }
-                            else{
-                                delete.add(answerCounter);
-                                answerCounter.setAnswer(null);
-
-                            }
+                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
                         }
                     }
-                    mcStatistic.getAnswerCounters().removeAll(delete);
-                    // reconnect answerOptions and add new answerCounter
+                    // reconnect answerOptions
                     for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
                         if (answerOption.getId() != null) {
                             answerOption.setQuestion(mcQuestion);
                         }
-                        else{
-                            ((MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic()).addAnswerOption(answerOption);
-                        }
-                    }
-                }
-            }
-            // add Statistic for new Question
-            else{
-                if (question instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();
-                    mcQuestion.setQuestionStatistic(mcStatistic);
-                    mcStatistic.setQuestion(mcQuestion);
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        //if (answerOption.getId() != null) {
-                        mcStatistic.addAnswerOption(answerOption);
-                        //}
                     }
                 }
             }
