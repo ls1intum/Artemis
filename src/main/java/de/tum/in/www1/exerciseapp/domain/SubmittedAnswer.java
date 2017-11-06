@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -20,6 +22,11 @@ import java.util.Objects;
 )
 @DiscriminatorValue(value="S")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, property="type")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value=MultipleChoiceSubmittedAnswer.class, name="multiple-choice"),
+    @JsonSubTypes.Type(value=DragAndDropSubmittedAnswer.class, name="drag-and-drop")
+})
 public abstract class SubmittedAnswer implements Serializable {
 
     private static final long serialVersionUID = 1L;

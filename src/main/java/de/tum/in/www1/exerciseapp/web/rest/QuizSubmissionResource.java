@@ -68,7 +68,9 @@ public class QuizSubmissionResource {
             Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
             if (result == null) {
                 // no result exists yet => create a new one
-                result = new Result().participation(participation).submission(new QuizSubmission().submittedAnswers(new HashSet<>()));
+                QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
+                newSubmission = quizSubmissionRepository.save(newSubmission);
+                result = new Result().participation(participation).submission(newSubmission);
                 result = resultRepository.save(result);
             }
             QuizSubmission submission = (QuizSubmission) result.getSubmission();
@@ -116,6 +118,11 @@ public class QuizSubmissionResource {
         log.debug("REST request to update QuizSubmission : {}", quizSubmission);
 
         //TODO: check if submission belongs to user
+
+        // recreate pointers back to submission in each submitted answer
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(quizSubmission);
+        }
 
         if (quizSubmission.getId() == null) {
             return createQuizSubmission(quizSubmission);

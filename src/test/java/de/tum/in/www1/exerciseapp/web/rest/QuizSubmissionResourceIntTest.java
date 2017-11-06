@@ -3,7 +3,10 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 
 import de.tum.in.www1.exerciseapp.domain.QuizSubmission;
+import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
+import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
 
 import org.junit.Before;
@@ -41,6 +44,15 @@ public class QuizSubmissionResourceIntTest {
     private QuizSubmissionRepository quizSubmissionRepository;
 
     @Autowired
+    private QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
+
+    @Autowired
+    private ParticipationService participationService;
+
+    @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
 
     @Autowired
@@ -59,7 +71,7 @@ public class QuizSubmissionResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final QuizSubmissionResource quizSubmissionResource = new QuizSubmissionResource(quizSubmissionRepository);
+        final QuizSubmissionResource quizSubmissionResource = new QuizSubmissionResource(quizSubmissionRepository, quizExerciseRepository, resultRepository, participationService);
         this.restQuizSubmissionMockMvc = MockMvcBuilders.standaloneSetup(quizSubmissionResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)

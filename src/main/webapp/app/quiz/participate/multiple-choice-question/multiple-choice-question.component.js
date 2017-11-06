@@ -22,13 +22,21 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     vm.toggleSelection = toggleSelection;
 
     function toggleSelection(answerOption) {
-        if (vm.selectedAnswerOptions.indexOf(answerOption) !== -1) {
+        if (isAnswerOptionSelected(answerOption)) {
             vm.selectedAnswerOptions = vm.selectedAnswerOptions.filter(function(ao) {
-                return ao !== answerOption;
+                return ao.id !== answerOption.id;
             });
         } else {
             vm.selectedAnswerOptions.push(answerOption);
         }
+    }
+
+    vm.isAnswerOptionSelected = isAnswerOptionSelected;
+
+    function isAnswerOptionSelected(answerOption) {
+        return vm.selectedAnswerOptions.findIndex(function(selected) {
+            return selected.id === answerOption.id;
+        }) !== -1;
     }
 
     /**

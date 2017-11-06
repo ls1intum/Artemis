@@ -30,7 +30,10 @@
                     {{vm.remainingTime}}
                 </span>
             </div>
-            <div class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></div>
+            <div ng-if="!vm.isSubmitting" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></div>
+            <div ng-if="vm.isSubmitting" class="btn btn-success btn-lg" disabled>
+                <i class="fa fa-circle-o-notch fa-spin"></i>
+            </div>
         </div>
     </div>
 </div>
