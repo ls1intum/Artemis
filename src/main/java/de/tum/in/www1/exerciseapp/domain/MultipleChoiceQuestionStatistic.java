@@ -100,6 +100,37 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
         }
     }
 
+    @Override
+    public void addResult(SubmittedAnswer submittedAnswer, boolean rated){
+        MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
+
+        if(rated){
+            setParticipantsRated(getParticipantsRated()+1);
+
+            for (AnswerCounter answerCounter: answerCounters){
+                if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
+                        answerCounter.setRatedCounter(answerCounter.getRatedCounter()+1);
+                }
+            }
+                // TO-DO isAnswerPerfect() must be defiend by Valentin
+//            if(getQuestion().isAnswerPerfect(mcSubmittedAnswer)){
+//                setRatedCorrectCounter(getRatedCorrectCounter()+1);
+//            }
+        }
+        else{
+            setParticipantsUnrated(getParticipantsUnrated()+1);
+
+            for (AnswerCounter answerCounter: answerCounters){
+                if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
+                    answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()+1);
+                }
+            }
+            // TO-DO isAnswerPerfect() must be defiend by Valentin
+//            if(getQuestion().isAnswerPerfect(mcSubmittedAnswer)){
+//                setUnRatedCorrectCounter(getUnRatedCorrectCounter()+1);
+//            }
+        }
+    }
 
 
 }

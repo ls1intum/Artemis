@@ -80,4 +80,8 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
             "id=" + getId() +
             "}";
     }
+    @Override
+    public void addResult(SubmittedAnswer submittedAnswer, boolean rated){
+        //TO-DO
+    }
 }

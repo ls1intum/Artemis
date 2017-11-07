@@ -105,4 +105,9 @@ public abstract class QuestionStatistic extends Statistic implements Serializabl
             ", unRatedCorrectCounter='" + getUnRatedCorrectCounter() + "'" +
             "}";
     }
+
+    public abstract void addResult(SubmittedAnswer submittedAnswer, boolean rated);
+
+
+
 }
