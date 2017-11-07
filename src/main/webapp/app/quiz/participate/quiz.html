@@ -33,7 +33,7 @@
                 </div>
                 <div>
                     <span ng-if="vm.isSubmitting">Submitting Answers...</span>
-                    <span ng-if="!vm.isSubmitting" uib-tooltip="{{vm.submission.submissionDate | date:'MMM d, y HH:mm:ss'}}" tooltip-placement="right">Last Submission: {{vm.lastSubmissionTime}}</span>
+                    <span ng-if="!vm.isSubmitting" uib-tooltip="{{vm.submission.adjustedSubmissionDate | date:'MMM d, y HH:mm:ss'}}" tooltip-placement="right">Last Submission: {{vm.lastSubmissionTimeText}}</span>
                 </div>
             </div>
             <button ng-disabled="vm.isSubmitting || vm.remainingTimeSeconds < 0" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></button>

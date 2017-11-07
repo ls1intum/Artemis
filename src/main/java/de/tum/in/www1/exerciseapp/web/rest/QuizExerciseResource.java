@@ -91,7 +91,7 @@ public class QuizExerciseResource {
                         }
                     }
                 }
-                // TODO: do the same for dragItems and dropLocations (if question is drag and drop)
+                // TODO: Valentin: do the same for dragItems and dropLocations (if question is drag and drop)
             }
         }
 

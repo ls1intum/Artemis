@@ -10,13 +10,16 @@
     function QuizController($scope, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise) {
         var vm = this;
 
+        var timeDifference = 0;
+
         vm.isSubmitting = false;
-        vm.lastSubmissionTime = "never";
+        vm.lastSubmissionTimeText = "never";
 
         vm.remainingTime = "?";
         vm.remainingTimeSeconds = 0;
-        $interval(function () {
 
+        // update displayed times in UI regularly
+        $interval(function () {
             // update remaining time
             if (vm.quizExercise && vm.quizExercise.adjustedDueDate) {
                 var endDate = vm.quizExercise.adjustedDueDate;
@@ -39,9 +42,8 @@
             }
 
             // update submission time
-            if (vm.submission.submissionDate) {
-                moment.relativeTimeThreshold('ss', 3);  //TODO: figure out why this doesn't work
-                vm.lastSubmissionTime = moment(vm.submission.submissionDate).fromNow();
+            if (vm.submission && vm.submission.adjustedSubmissionDate) {
+                vm.lastSubmissionTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
             }
         }, 100);
 
@@ -55,15 +57,19 @@
                 exerciseId: $stateParams.id
             }).$promise.then(function (quizSubmission) {
                 vm.submission = quizSubmission;
-                if (vm.submission.submissionDate) {
-                    vm.lastSubmissionTime = moment(vm.submission.submissionDate).fromNow();
-                }
                 QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
                     vm.quizExercise = quizExercise;
                     vm.totalScore = quizExercise.questions.reduce(function (score, question) {
                         return score + question.score;
                     }, 0);
                     vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
+                    timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
+
+                    // update submission time
+                    if (vm.submission.submissionDate) {
+                        vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                        vm.lastSubmissionTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
+                    }
 
                     // prepare answers for submission
                     vm.selectedAnswerOptions = {};
@@ -77,6 +83,9 @@
             });
         }
 
+        /**
+         * This function is called when the user clicks the "Submit" button
+         */
         function onSubmit() {
             vm.submission.submittedAnswers = Object.keys(vm.selectedAnswerOptions).map(function (questionID) {
                 var question = vm.quizExercise.questions.find(function (question) {
@@ -96,15 +105,23 @@
             QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError)
         }
 
+        /**
+         * Callback function for handling response after sending submission to server
+         * @param quizSubmission The response data from the server
+         */
         function onSubmitSuccess(quizSubmission) {
             vm.isSubmitting = false;
             vm.submission = quizSubmission;
-            console.log(vm.submission);
             if (vm.submission.submissionDate) {
-                vm.lastSubmissionTime = moment(vm.submission.submissionDate).fromNow();
+                vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                vm.lastSubmissionTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
             }
         }
 
+        /**
+         * Callback function for handling error when sending submission to server
+         * @param error
+         */
         function onSubmitError(error) {
             console.log(error);
             alert("Submitting answers failed! Please try again later.");

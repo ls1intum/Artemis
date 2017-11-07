@@ -119,7 +119,7 @@ public class QuizSubmissionResource {
     public ResponseEntity<QuizSubmission> updateQuizSubmission(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
         log.debug("REST request to update QuizSubmission : {}", quizSubmission);
 
-        //TODO: check if submission belongs to user
+        //TODO: Valentin: check if submission belongs to user
 
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
@@ -139,8 +139,7 @@ public class QuizSubmissionResource {
             if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
                 result.setCompletionDate(ZonedDateTime.now());
                 resultRepository.save(result);
-                // TODO calculate score and update result accordingly
-
+                // TODO Valentin: calculate score and update result accordingly (do this only when actual submission is made <- "Final Submission" or "Out of time")
                 quizSubmission.setSubmissionDate(result.getCompletionDate());
 
                 return ResponseEntity.ok()
