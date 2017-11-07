@@ -87,11 +87,12 @@ public class GitService {
             // Repository is not yet available on the server
             // We need to check it out from the remote repository
             log.info("Cloning from " + repoUrl + " to " + localPath);
-            Git.cloneRepository()
+            Git result = Git.cloneRepository()
                 .setURI(repoUrl.toString())
                 .setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD))
                 .setDirectory(localPath.toFile())
                 .call();
+            result.close();
         }
         else {
             log.info("Repository at " + localPath + " already exists");
@@ -103,6 +104,7 @@ public class GitService {
             .readEnvironment() // scan environment GIT_* variables
             .findGitDir()
             .setup();
+
 
         // Create the JGit repository object
         Repository repository = new Repository(builder);
@@ -126,6 +128,7 @@ public class GitService {
         Git git = new Git(repo);
         git.commit().setMessage(message).setAllowEmpty(true).setCommitter(GIT_NAME, GIT_EMAIL).call();
         git.push().setCredentialsProvider(new UsernamePasswordCredentialsProvider(GIT_USER, GIT_PASSWORD)).call();
+        git.close();
     }
 
     /**
@@ -140,6 +143,7 @@ public class GitService {
         git.add().setUpdate(true).addFilepattern(".").call();
         // stage new files
         git.add().addFilepattern(".").call();
+        git.close();
     }
 
     /**
@@ -224,6 +228,7 @@ public class GitService {
     public void deleteLocalRepository(Repository repo) throws IOException {
         Path repoPath = repo.getLocalPath();
         cachedRepositories.remove(repoPath);
+        repo.close();
         FileUtils.deleteDirectory(repoPath.toFile());
         repo.setFiles(null);
         log.debug("Deleted Repository at " + repoPath);
