@@ -25,15 +25,18 @@
                 </div>
             </div>
             <div id="remaining-time">
-                <span data-translate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
-                <span id="remaining-time-value" ng-class="{'time-critical': vm.remainingTimeSeconds < 60 || vm.remainingTimeSeconds < vm.quizExercise.duration / 4, 'time-warning': vm.remainingTimeSeconds < 120 || vm.remainingTimeSeconds < vm.quizExercise.duration / 2}">
-                    {{vm.remainingTime}}
-                </span>
+                <div>
+                    <span data-translate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                    <span id="remaining-time-value" ng-class="{'time-critical': vm.remainingTimeSeconds < 60 || vm.remainingTimeSeconds < vm.quizExercise.duration / 4, 'time-warning': vm.remainingTimeSeconds < 120 || vm.remainingTimeSeconds < vm.quizExercise.duration / 2}">
+                        {{vm.remainingTime}}
+                    </span>
+                </div>
+                <div>
+                    <span ng-if="vm.isSubmitting">Submitting Answers...</span>
+                    <span ng-if="!vm.isSubmitting" uib-tooltip="{{vm.submission.submissionDate | date:'MMM d, y HH:mm:ss'}}" tooltip-placement="right">Last Submission: {{vm.lastSubmissionTime}}</span>
+                </div>
             </div>
-            <div ng-if="!vm.isSubmitting" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></div>
-            <div ng-if="vm.isSubmitting" class="btn btn-success btn-lg" disabled>
-                <i class="fa fa-circle-o-notch fa-spin"></i>
-            </div>
+            <button ng-disabled="vm.isSubmitting || vm.remainingTimeSeconds < 0" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></button>
         </div>
     </div>
 </div>

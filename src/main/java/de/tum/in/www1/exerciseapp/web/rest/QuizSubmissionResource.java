@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -74,6 +75,7 @@ public class QuizSubmissionResource {
                 result = resultRepository.save(result);
             }
             QuizSubmission submission = (QuizSubmission) result.getSubmission();
+            submission.setSubmissionDate(result.getCompletionDate());
             return ResponseEntity.ok(submission);
         } else {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID")).body(null);
@@ -133,14 +135,23 @@ public class QuizSubmissionResource {
         Optional<Result> resultOptional = resultRepository.findDistinctBySubmissionId(quizSubmission.getId());
         if (resultOptional.isPresent()) {
             Result result = resultOptional.get();
-            // TODO update result
-        } else {
-            // TODO: return error
-        }
+            Exercise exercise = result.getParticipation().getExercise();
+            if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                result.setCompletionDate(ZonedDateTime.now());
+                resultRepository.save(result);
+                // TODO calculate score and update result accordingly
 
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
-            .body(quizSubmission);
+                quizSubmission.setSubmissionDate(result.getCompletionDate());
+
+                return ResponseEntity.ok()
+                    .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
+                    .body(quizSubmission);
+            } else {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The exercise for this submission has already ended.")).body(null);
+            }
+        } else {
+            return ResponseEntity.status(500).headers(HeaderUtil.createFailureAlert("submission", "resultNotFound", "No result was found for the given submission")).body(null);
+        }
     }
 
     /**

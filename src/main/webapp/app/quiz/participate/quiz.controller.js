@@ -11,11 +11,13 @@
         var vm = this;
 
         vm.isSubmitting = false;
+        vm.lastSubmissionTime = "never";
 
         vm.remainingTime = "?";
         vm.remainingTimeSeconds = 0;
         $interval(function () {
-            vm.remainingTimeSeconds = 0;
+
+            // update remaining time
             if (vm.quizExercise && vm.quizExercise.adjustedDueDate) {
                 var endDate = vm.quizExercise.adjustedDueDate;
                 if (endDate.isAfter(moment())) {
@@ -28,10 +30,18 @@
                         vm.remainingTime = "< 5 seconds";
                     }
                 } else {
+                    vm.remainingTimeSeconds = -1;
                     vm.remainingTime = "Quiz has ended!";
                 }
             } else {
+                vm.remainingTimeSeconds = 0;
                 vm.remainingTime = "?";
+            }
+
+            // update submission time
+            if (vm.submission.submissionDate) {
+                moment.relativeTimeThreshold('ss', 3);  //TODO: figure out why this doesn't work
+                vm.lastSubmissionTime = moment(vm.submission.submissionDate).fromNow();
             }
         }, 100);
 
@@ -45,6 +55,9 @@
                 exerciseId: $stateParams.id
             }).$promise.then(function (quizSubmission) {
                 vm.submission = quizSubmission;
+                if (vm.submission.submissionDate) {
+                    vm.lastSubmissionTime = moment(vm.submission.submissionDate).fromNow();
+                }
                 QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
                     vm.quizExercise = quizExercise;
                     vm.totalScore = quizExercise.questions.reduce(function (score, question) {
@@ -83,12 +96,17 @@
             QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError)
         }
 
-        function onSubmitSuccess(result) {
+        function onSubmitSuccess(quizSubmission) {
             vm.isSubmitting = false;
-            console.log("success", result);
+            vm.submission = quizSubmission;
+            console.log(vm.submission);
+            if (vm.submission.submissionDate) {
+                vm.lastSubmissionTime = moment(vm.submission.submissionDate).fromNow();
+            }
         }
 
-        function onSubmitError() {
+        function onSubmitError(error) {
+            console.log(error);
             alert("Submitting answers failed! Please try again later.");
             vm.isSubmitting = false;
         }

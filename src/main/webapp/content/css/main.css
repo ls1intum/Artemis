@@ -8493,6 +8493,9 @@ body.editor .navbar-brand span {
   .quiz-content .question-index {
     padding: 2px 6px; }
 
+.quiz-footer-content #remaining-time {
+  text-align: center; }
+
 .quiz-footer-content #remaining-time-value {
   font-weight: bold; }
 
