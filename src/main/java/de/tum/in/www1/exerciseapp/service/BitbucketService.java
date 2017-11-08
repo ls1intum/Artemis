@@ -155,7 +155,7 @@ public class BitbucketService implements VersionControlService {
                 throw e;
             }
         } catch (Exception e) {
-            log.error("Could not fork base repository", e);
+            log.error("Could not fork base repository for user " + username, e);
             throw new BitbucketException("Error while forking repository");
         }
         if (response != null && response.getStatusCode().equals(HttpStatus.CREATED)) {

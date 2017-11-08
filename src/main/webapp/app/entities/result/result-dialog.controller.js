@@ -11,6 +11,9 @@
         var vm = this;
 
         vm.result = entity;
+        if(vm.result.completionDate) {
+            vm.result.completionDate = new Date(vm.result.completionDate);
+        }
         vm.clear = clear;
         vm.datePickerOpenStatus = {};
         vm.openCalendar = openCalendar;
