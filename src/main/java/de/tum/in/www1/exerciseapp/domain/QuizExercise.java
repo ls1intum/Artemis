@@ -5,9 +5,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.List;
+import java.util.*;
 
 /**
  * A QuizExercise.
@@ -46,7 +44,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
-    @OneToOne(cascade=CascadeType.ALL)
+    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
@@ -179,23 +177,28 @@ public class QuizExercise extends Exercise implements Serializable {
 
     public QuizExercise questions(List<Question> questions) {
         this.questions = questions;
+        recalculatePointCounters();
         return this;
     }
 
     public QuizExercise addQuestions(Question question) {
         this.questions.add(question);
         question.setExercise(this);
+        recalculatePointCounters();
         return this;
     }
 
     public QuizExercise removeQuestions(Question question) {
         this.questions.remove(question);
         question.setExercise(null);
+        recalculatePointCounters();
         return this;
     }
 
     public void setQuestions(List<Question> questions) {
+
         this.questions = questions;
+        recalculatePointCounters();
     }
 
     @Override
@@ -233,5 +236,35 @@ public class QuizExercise extends Exercise implements Serializable {
             ", duration='" + getDuration() + "'" +
             ", questions='" + getQuestions() + "'" +
             "}";
+    }
+
+    public QuizExercise(){
+        quizPointStatistic = new QuizPointStatistic();
+        quizPointStatistic.setQuiz(this);
+    }
+
+    private void recalculatePointCounters(){
+
+        double quizScore = 0.0;
+
+        //calculate Score of the Quiz
+        for(Question question: questions){
+            quizScore = quizScore + question.getScore();
+        }
+        //add new Scores
+        for(double i = 0.0 ; i <= quizScore; i++){  // for variable ScoreSteps change: i++ into: i= i + scoreStep
+            quizPointStatistic.addScore(new Double(i));
+        }
+        //delete old PointCounter
+        Set<PointCounter> delete = new HashSet<>();
+        for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
+            if (pointCounter.getId() != null) {                                               // for variable ScoreSteps
+                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 /*|| (pointCounter.getPoints()% pointStep) != 0*/){ ;
+                    delete.add(pointCounter);
+                    pointCounter.setQuizPointStatistic(null);
+                }
+            }
+        }
+        quizPointStatistic.getPointCounters().removeAll(delete);
     }
 }

@@ -50,6 +50,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
 
     public MultipleChoiceQuestion removeAnswerOptions(AnswerOption answerOption) {
         MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
+
         AnswerCounter delete = null;
 
         for(AnswerCounter answerCounter: mcStatistic.getAnswerCounters())

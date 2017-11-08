@@ -82,22 +82,19 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
     }
     public void addAnswerOption(AnswerOption answer){
 
-        boolean contain =false;
-
         if(answer ==null){
             return;
         }
 
         for(AnswerCounter counter: answerCounters){
             if(answer.equals(counter.getAnswer())){
-                contain =true;
+                return;
             }
         }
-        if(contain == false){
-            AnswerCounter answerCounter = new AnswerCounter();
-            answerCounter.setAnswer(answer);
-            addAnswerCounters(answerCounter);
-        }
+        AnswerCounter answerCounter = new AnswerCounter();
+        answerCounter.setAnswer(answer);
+        addAnswerCounters(answerCounter);
+
     }
 
     @Override

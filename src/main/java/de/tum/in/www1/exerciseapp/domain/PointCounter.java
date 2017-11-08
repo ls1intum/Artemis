@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -22,6 +23,7 @@ public class PointCounter extends StatisticCounter implements Serializable {
     private Double points;
 
     @ManyToOne
+    @JsonIgnore
     private QuizPointStatistic quizPointStatistic;
 
     public Double getPoints() {

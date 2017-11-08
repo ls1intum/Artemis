@@ -22,8 +22,8 @@ public class QuizPointStatistic extends Statistic implements Serializable {
     private static final long serialVersionUID = 1L;
 
 
-    @OneToMany(mappedBy = "quizPointStatistic")
-    @JsonIgnore
+    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true, mappedBy = "quizPointStatistic")
+   // @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<PointCounter> pointCounters = new HashSet<>();
 
@@ -95,4 +95,43 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             "id=" + getId() +
             "}";
     }
+    public void addScore(Double score){
+
+        if(score ==null){
+            return;
+        }
+        // check if score as an associated PointCounter: true: do nothing, false: add one
+        for(PointCounter counter: pointCounters){
+            if(score.equals(counter.getPoints())){
+                return;
+            }
+        }
+        PointCounter pointCounter = new PointCounter();
+        pointCounter.setPoints(score);
+        addPointCounters(pointCounter);
+
+    }
+
+    public void addResult(Long score, boolean rated){
+
+        if(rated){
+            setParticipantsRated(getParticipantsRated()+1);
+
+            for (PointCounter pointCounter: pointCounters){
+                if(score.equals(pointCounter.getPoints())){
+                    pointCounter.setRatedCounter(pointCounter.getRatedCounter()+1);
+                }
+            }
+        }
+        else{
+            setParticipantsUnrated(getParticipantsUnrated()+1);
+
+            for (PointCounter pointCounter: pointCounters){
+                if(score.equals(pointCounter.getPoints())){
+                    pointCounter.setRatedCounter(pointCounter.getUnRatedCounter()+1);
+                }
+            }
+        }
+    }
+
 }

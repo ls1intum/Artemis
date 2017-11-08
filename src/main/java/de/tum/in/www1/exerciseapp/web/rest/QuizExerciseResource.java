@@ -88,8 +88,7 @@ public class QuizExerciseResource {
                 if (question instanceof MultipleChoiceQuestion) {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
                     MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
-                    mcStatistic.setQuestion(mcQuestion);
-                    //reconnect answerCounter-entities
+                    //reconnect answerCounter
                     for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
                         if (answerCounter.getId() != null) {
                             answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
@@ -104,6 +103,11 @@ public class QuizExerciseResource {
                 }
             }
             // TODO: do the same for dragItems and dropLocations (if question is drag and drop)
+        }
+        for (PointCounter pointCounter: quizExercise.getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getId() != null) {
+                pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
+            }
         }
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
