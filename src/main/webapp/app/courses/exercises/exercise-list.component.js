@@ -17,7 +17,7 @@
 
     ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', '$http', '$location', 'Principal', '$rootScope'];
 
-    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http,  $location, Principal, $rootScope) {
+    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http, $location, Principal, $rootScope) {
         var vm = this;
 
         vm.clonePopover = {
@@ -38,7 +38,7 @@
 
         function init() {
 
-            if($location.search().welcome) {
+            if ($location.search().welcome) {
                 showWelcomeAlert();
             }
 
@@ -46,7 +46,10 @@
                 vm.repositoryPassword = password;
             });
 
-            CourseExercises.query({courseId: vm.course.id, withLtiOutcomeUrlExisting: true}).$promise.then(function (exercises) {
+            CourseExercises.query({
+                courseId: vm.course.id,
+                withLtiOutcomeUrlExisting: true
+            }).$promise.then(function (exercises) {
 
                 if (vm.filterByExerciseId) {
                     exercises = _.filter(exercises, {id: vm.filterByExerciseId})
@@ -93,18 +96,19 @@
         }
 
         function participationStatus(exercise) {
-            if(angular.equals({}, exercise.participation)) {
-                return "uninitialized";
-            } else if(exercise.participation.initializationState === "INITIALIZED") {
-                if (exercise.type && exercise.type === "quiz") {
-                    if (moment(exercise.dueDate).isBefore(moment())) {
-                        return "finished";
-                    } else {
-                        return "active"
-                    }
+            if (exercise.type && exercise.type === "quiz") {
+                if (angular.equals({}, exercise.participation)) {
+                    return "quiz-uninitialized";
+                } else if (moment(exercise.dueDate).isBefore(moment())) {
+                    return "quiz-finished";
                 } else {
-                    return "initialized";
+                    return "quiz-active"
                 }
+            }
+            if (angular.equals({}, exercise.participation)) {
+                return "uninitialized";
+            } else if (exercise.participation.initializationState === "INITIALIZED") {
+                return "initialized";
             }
             return "inactive";
         }
@@ -112,6 +116,7 @@
         function isNotOverdue(exercise) {
             return vm.showOverdueExercises || _.isEmpty(exercise.dueDate) || vm.now <= Date.parse(exercise.dueDate);
         }
+
         vm.isNotOverdue = isNotOverdue;
 
         function getRepositoryPassword() {
@@ -155,7 +160,7 @@
                 console.log(e);
                 AlertService.add({
                     type: 'danger',
-                    msg: '<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong> If this problem persists, please <a href="mailto:' + $rootScope.CONTACT_EMAIL + '?subject=Exercise%20Application%20Error%20Report&body=' + e.data.description+ '">send us an error report</a>.',
+                    msg: '<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong> If this problem persists, please <a href="mailto:' + $rootScope.CONTACT_EMAIL + '?subject=Exercise%20Application%20Error%20Report&body=' + e.data.description + '">send us an error report</a>.',
                     timeout: 30000
                 });
             }).finally(function () {
@@ -168,9 +173,9 @@
             exercise.$resume({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
-            }).catch(function(errorResponse) {
+            }).catch(function (errorResponse) {
                 alert(errorResponse.data.status + " " + errorResponse.data.detail);
-            }).finally(function() {
+            }).finally(function () {
                 vm.loading[exercise.id] = false;
             });
         }
@@ -178,6 +183,7 @@
         function toggleShowOverdueExercises() {
             vm.showOverdueExercises = true;
         }
+
         vm.toggleShowOverdueExercises = toggleShowOverdueExercises;
 
     }
