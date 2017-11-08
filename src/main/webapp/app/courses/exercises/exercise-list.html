@@ -24,7 +24,7 @@
             <a class="text-primary" has-any-authority="ROLE_ADMIN, ROLE_TA"><i class="fa fa-info-circle fa-fw"
                ui-sref="instructor-dashboard({courseId: exercise.course.id, exerciseId: exercise.id})"></i></a>
 
-            <span class="label label-warning" ng-show="!$ctrl.isReleased(exercise)" uib-tooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}"
+            <span class="label label-warning" ng-show="!exercise.isVisibleToStudents" uib-tooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}"
                   tooltip-placement="right">Not Released</span>
         </td>
         <td>

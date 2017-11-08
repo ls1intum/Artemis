@@ -30,7 +30,6 @@
         vm.getClonePopoverTemplate = getClonePopoverTemplate;
         vm.goToBuildPlan = goToBuildPlan;
         vm.participationStatus = participationStatus;
-        vm.isReleased = isReleased;
         vm.start = start;
         vm.resume = resume;
         vm.now = Date.now();
@@ -56,22 +55,6 @@
                 vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
                     return !isNotOverdue(exercise);
                 }).length;
-
-
-                exercises = _.filter(exercises, function (exercise) {
-                    if(Principal.hasGroup(exercise.course.teachingAssistantGroupName)) {
-                        return true;
-                    }
-                    else if(Principal.hasGroup(exercise.course.studentGroupName)) {
-                        return vm.isReleased(exercise);
-                    }
-                    if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_STUDENT'])) {        //== only ROLE_TA
-                        // hide exercises of other courses for TAs who are not TAs in the specific course (except Archive)
-                        return exercise.course.title === 'Archive';
-                    }
-                    return true;
-                    //TODO: test the case with LTI users from edX
-                });
 
                 angular.forEach(exercises, function (exercise) {
                     exercise['participation'] = ExerciseParticipation.get({
@@ -124,10 +107,6 @@
                 }
             }
             return "inactive";
-        }
-
-        function isReleased(exercise) {
-            return _.isEmpty(exercise.releaseDate) || vm.now >= Date.parse(exercise.releaseDate);
         }
 
         function isNotOverdue(exercise) {

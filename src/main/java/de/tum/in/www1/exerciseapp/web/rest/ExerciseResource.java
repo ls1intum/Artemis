@@ -1,13 +1,9 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.ProgrammingExercise;
-import de.tum.in.www1.exerciseapp.domain.QuizExercise;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
-import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
-import de.tum.in.www1.exerciseapp.service.ExerciseService;
-import de.tum.in.www1.exerciseapp.service.VersionControlService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
@@ -40,8 +36,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for managing Exercise.
@@ -57,12 +55,16 @@ public class ExerciseResource {
 
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
+    private final UserService userService;
+    private final CourseService courseService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
-    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, UserService userService, CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
+        this.userService = userService;
+        this.courseService = courseService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
     }
@@ -83,9 +85,9 @@ public class ExerciseResource {
         if (exercise.getId() != null) {
             throw new BadRequestAlertException("A new exercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        if(exercise instanceof ProgrammingExercise) {
+        if (exercise instanceof ProgrammingExercise) {
             ResponseEntity<Exercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) exercise);
-            if(errorResponse != null) {
+            if (errorResponse != null) {
                 return errorResponse;
             }
         }
@@ -96,15 +98,14 @@ public class ExerciseResource {
     }
 
     /**
-     *
      * @param exercise
      * @return the error message as response or null if everything is fine
      */
     private ResponseEntity<Exercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
+        if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
         }
-        if(!versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
+        if (!versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
         }
         return null;
@@ -128,9 +129,9 @@ public class ExerciseResource {
         if (exercise.getId() == null) {
             return createExercise(exercise);
         }
-        if(exercise instanceof ProgrammingExercise) {
+        if (exercise instanceof ProgrammingExercise) {
             ResponseEntity<Exercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) exercise);
-            if(errorResponse != null) {
+            if (errorResponse != null) {
                 return errorResponse;
             }
         }
@@ -157,34 +158,55 @@ public class ExerciseResource {
     }
 
     /**
-     * GET  /courses/:courseId/exercises : get all the exercises.
+     * GET /courses/:courseId/exercises : get all exercises for the given course
      *
      * @param courseId the course for which to retrieve all exercises
-     * @param pageable the pagination information
      * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
-     * @throws URISyntaxException if there is an error to generate the pagination HTTP headers
      */
     @GetMapping(value = "/courses/{courseId}/exercises")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
-    @Transactional(readOnly = true)
-    public ResponseEntity<List<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, @PageableDefault(value = 100) Pageable pageable, Principal principal)
-        throws URISyntaxException {
-        log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal, pageable) : exerciseRepository.findByCourseId(courseId, pageable);
+    public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, Principal principal) {
+        log.debug("REST request to get Exercises for Course : {}", courseId);
 
-        //TODO: filter exercises where the user does not have access, but where he might see the course
+        List<Exercise> result;
+
+        // first get user and create representative authorities
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Authority adminAuthority = new Authority();
+        adminAuthority.setName("ROLE_ADMIN");
+        Authority taAuthority = new Authority();
+        taAuthority.setName("ROLE_TA");
+
+        // get the course
+        Course course = courseService.findOne(courseId);
+
+        // determine user's access level for this course
+        if (user.getAuthorities().contains(adminAuthority)) {
+            // user is admin
+            result = exerciseRepository.findByCourseId(courseId);
+        } else if (user.getAuthorities().contains(taAuthority) && user.getGroups().contains(course.getTeachingAssistantGroupName())) {
+            // user is TA for this course
+            result = exerciseRepository.findByCourseId(courseId);
+        } else if (user.getGroups().contains(course.getStudentGroupName())) {
+            // user is student for this course
+            result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal) : exerciseRepository.findByCourseId(courseId);
+            // filter out exercises that are not released (or explicitly made visible to students) yet
+            result = result.stream().filter(Exercise::getIsVisibleToStudents).collect(Collectors.toList());
+        } else {
+            // user has no permissions for this course
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
 
         // filter out questions from quizExercises (so users can't see which answer options are correct)
-        for (Exercise exercise : page) {
+        for (Exercise exercise : result) {
             if (exercise instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) exercise;
                 quizExercise.setQuestions(null);
             }
         }
 
-        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses/" + courseId + "/exercises");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -236,7 +258,7 @@ public class ExerciseResource {
     /**
      * GET  /exercises/:id/cleanup : delete all build plans (except BASE) of all participations belonging to this exercise. Optionally delete and archive all repositories
      *
-     * @param id the id of the exercise to delete build plans for
+     * @param id                 the id of the exercise to delete build plans for
      * @param deleteRepositories whether repositories should be deleted or not
      * @return ResponseEntity with status
      */
@@ -259,8 +281,7 @@ public class ExerciseResource {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header("filename", zipFile.getName())
                 .body(resource);
-        }
-        else {
+        } else {
             exerciseService.cleanup(id, deleteRepositories);
             log.info("Cleanup build plans was successful for Exercise : {}", id);
             return ResponseEntity.ok().headers(HeaderUtil.createAlert("Cleanup was successful.", "")).build();

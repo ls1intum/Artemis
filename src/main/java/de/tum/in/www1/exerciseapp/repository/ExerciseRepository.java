@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.security.Principal;
+import java.util.List;
 
 
 /**
@@ -18,7 +19,7 @@ import java.security.Principal;
 @Repository
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
-    Page<Exercise> findByCourseId(@Param("courseId") Long courseId, Pageable pageable);
+    List<Exercise> findByCourseId(@Param("courseId") Long courseId);
 
 
     /**
@@ -30,5 +31,5 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
      *
      */
     @Query("SELECT e FROM Exercise e WHERE e.course.id =  :#{#courseId} AND ((NOT EXISTS(SELECT l from LtiOutcomeUrl l WHERE e = l.exercise)) OR EXISTS (SELECT l2 from LtiOutcomeUrl l2 WHERE e = l2.exercise AND l2.user.login = :#{#principal.name})) ")
-    Page<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("principal") Principal principal, Pageable pageable);
+    List<Exercise> findByCourseIdWhereLtiOutcomeUrlExists(@Param("courseId") Long courseId, @Param("principal") Principal principal);
 }
