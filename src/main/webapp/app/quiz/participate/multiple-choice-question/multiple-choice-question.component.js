@@ -23,8 +23,8 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
 
     function toggleSelection(answerOption) {
         if (isAnswerOptionSelected(answerOption)) {
-            vm.selectedAnswerOptions = vm.selectedAnswerOptions.filter(function(ao) {
-                return ao.id !== answerOption.id;
+            vm.selectedAnswerOptions = vm.selectedAnswerOptions.filter(function(selectedAnswerOption) {
+                return selectedAnswerOption.id !== answerOption.id;
             });
         } else {
             vm.selectedAnswerOptions.push(answerOption);

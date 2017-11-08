@@ -48,6 +48,9 @@ public class QuizSubmissionResource {
 
     /**
      * GET  /courses/{courseId}/exercises/{exerciseId}/submissions/my-latest : Get the latest quizSubmission for the given course.
+     * This endpoint is used when a user starts or resumes a quiz exercise, so that they can get the latest submission for that quiz exercise.
+     * If no submission exists yet, a participation, result, and submission are created so that the user can use PUT with the given submission id to submit.
+     * TODO: As we decided to change the logic of when a result is created, it might be better to change this workflow as well.
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to init a participation
@@ -119,7 +122,7 @@ public class QuizSubmissionResource {
     public ResponseEntity<QuizSubmission> updateQuizSubmission(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
         log.debug("REST request to update QuizSubmission : {}", quizSubmission);
 
-        //TODO: Valentin: check if submission belongs to user
+        //TODO: Valentin: check if submission belongs to user, so that a malicious user can't change random submissions by guessing a submission id (Which would be easy to do because submission ids are sequential)
 
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
@@ -129,6 +132,8 @@ public class QuizSubmissionResource {
         if (quizSubmission.getId() == null) {
             return createQuizSubmission(quizSubmission);
         }
+
+        // save changes to submission
         quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
         // update corresponding result
@@ -136,7 +141,9 @@ public class QuizSubmissionResource {
         if (resultOptional.isPresent()) {
             Result result = resultOptional.get();
             Exercise exercise = result.getParticipation().getExercise();
+            // only update if exercise hasn't ended already
             if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                // update completion date (which also functions as submission date for now)
                 result.setCompletionDate(ZonedDateTime.now());
                 resultRepository.save(result);
                 // TODO Valentin: calculate score and update result accordingly (do this only when actual submission is made <- "Final Submission" or "Out of time")

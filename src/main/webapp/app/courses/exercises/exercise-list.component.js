@@ -113,7 +113,7 @@
             if(angular.equals({}, exercise.participation)) {
                 return "uninitialized";
             } else if(exercise.participation.initializationState === "INITIALIZED") {
-                if (exercise.type === "quiz") {
+                if (exercise.type && exercise.type === "quiz") {
                     if (moment(exercise.dueDate).isBefore(moment())) {
                         return "finished";
                     } else {

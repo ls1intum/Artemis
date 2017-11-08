@@ -14,8 +14,9 @@
 
         vm.isSubmitting = false;
         vm.lastSubmissionTimeText = "never";
+        vm.justSubmitted = false;
 
-        vm.remainingTime = "?";
+        vm.remainingTimeText = "?";
         vm.remainingTimeSeconds = 0;
 
         // update displayed times in UI regularly
@@ -24,25 +25,29 @@
             if (vm.quizExercise && vm.quizExercise.adjustedDueDate) {
                 var endDate = vm.quizExercise.adjustedDueDate;
                 if (endDate.isAfter(moment())) {
+                    // quiz is still running => calculate remaining seconds and generate text based on that
                     vm.remainingTimeSeconds = endDate.diff(moment(), "seconds");
-                    if (vm.remainingTimeSeconds > 90) {
-                        vm.remainingTime = Math.ceil(vm.remainingTimeSeconds / 60) + " minutes";
-                    } else if (vm.remainingTimeSeconds > 4) {
-                        vm.remainingTime = vm.remainingTimeSeconds + " seconds";
+                    if (vm.remainingTimeSeconds > 210) {
+                        vm.remainingTimeText = Math.ceil(vm.remainingTimeSeconds / 60) + " min"
+                    } else if (vm.remainingTimeSeconds > 59) {
+                        vm.remainingTimeText = Math.floor(vm.remainingTimeSeconds / 60) + " min " + (vm.remainingTimeSeconds % 60) + " s";
                     } else {
-                        vm.remainingTime = "< 5 seconds";
+                        vm.remainingTimeText = vm.remainingTimeSeconds + " s";
                     }
                 } else {
+                    // quiz is over => set remaining seconds to negative, to deactivate "Submit" button
                     vm.remainingTimeSeconds = -1;
-                    vm.remainingTime = "Quiz has ended!";
+                    vm.remainingTimeText = "Quiz has ended!";
                 }
             } else {
+                // remaining time is unknown => Set remaining seconds to 0, to keep "Submit" button enabled
                 vm.remainingTimeSeconds = 0;
-                vm.remainingTime = "?";
+                vm.remainingTimeText = "?";
             }
 
             // update submission time
             if (vm.submission && vm.submission.adjustedSubmissionDate) {
+                // exact value is not important => use default relative time from moment for better readability and less distraction
                 vm.lastSubmissionTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
             }
         }, 100);
@@ -68,7 +73,6 @@
                     // update submission time
                     if (vm.submission.submissionDate) {
                         vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                        vm.lastSubmissionTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
                     }
 
                     // prepare answers for submission
@@ -112,11 +116,20 @@
         function onSubmitSuccess(quizSubmission) {
             vm.isSubmitting = false;
             vm.submission = quizSubmission;
+            vm.justSubmitted = true;
+            timeoutJustSubmitted();
             if (vm.submission.submissionDate) {
                 vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                vm.lastSubmissionTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
             }
         }
+
+        /**
+         * debounced function to reset "vm.justSubmitted", so that time since last submission is displayed again when no submission has been made for at least 2 seconds
+         * @type {Function}
+         */
+        var timeoutJustSubmitted = _.debounce(function() {
+            vm.justSubmitted = false;
+        }, 2000);
 
         /**
          * Callback function for handling error when sending submission to server
