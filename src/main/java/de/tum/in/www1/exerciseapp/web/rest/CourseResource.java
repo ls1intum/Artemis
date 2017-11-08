@@ -89,7 +89,7 @@ public class CourseResource {
      * @return  the list of courses (the user has access to)
      */
     @GetMapping("/courses")
-    @PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public List<Course> getAllCourses() {
         log.debug("REST request to get all Courses the user has access to");

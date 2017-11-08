@@ -11,6 +11,12 @@
         var vm = this;
 
         vm.exercise = entity;
+        if(vm.exercise.releaseDate) {
+            vm.exercise.releaseDate = new Date(vm.exercise.releaseDate);
+        }
+        if(vm.exercise.dueDate) {
+            vm.exercise.dueDate = new Date(vm.exercise.dueDate);
+        }
         vm.clear = clear;
         vm.datePickerOpenStatus = {};
         vm.openCalendar = openCalendar;
