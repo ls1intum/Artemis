@@ -5,7 +5,15 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+<<<<<<< HEAD
 import java.util.*;
+=======
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.List;
+>>>>>>> 5091b6189d23d6b99fd36b11ce414bf14e1e70bd
 
 /**
  * A QuizExercise.
@@ -158,6 +166,7 @@ public class QuizExercise extends Exercise implements Serializable {
         this.duration = duration;
     }
 
+<<<<<<< HEAD
     public QuizPointStatistic getQuizPointStatistic() {
         return quizPointStatistic;
     }
@@ -169,6 +178,17 @@ public class QuizExercise extends Exercise implements Serializable {
 
     public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
         this.quizPointStatistic = quizPointStatistic;
+=======
+    public String getType() { return "quiz"; }
+
+    @Override
+    public ZonedDateTime getDueDate() {
+        return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : null;
+    }
+
+    public Long getRemainingTime() {
+        return isPlannedToStart ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+>>>>>>> 5091b6189d23d6b99fd36b11ce414bf14e1e70bd
     }
 
     public List<Question> getQuestions() {
@@ -199,6 +219,11 @@ public class QuizExercise extends Exercise implements Serializable {
 
         this.questions = questions;
         recalculatePointCounters();
+    }
+
+    @Override
+    public Boolean getIsVisibleToStudents() {
+        return isVisibleBeforeStart || (isPlannedToStart && releaseDate.isBefore(ZonedDateTime.now()));
     }
 
     @Override

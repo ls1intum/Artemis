@@ -1,0 +1,46 @@
+<div class="quiz-header container">
+    <h1>{{vm.quizExercise.course.title}} - {{vm.quizExercise.title}}</h1>
+    <p data-translate="artemisApp.quizExercise.quizInstructions"></p>
+</div>
+<div class="quiz-content container">
+    <div ng-repeat="question in vm.quizExercise.questions">
+        <div class="question-index">
+            <span data-translate="artemisApp.question.detail.title"></span>
+            <span>{{$index+1}}:</span>
+        </div>
+        <multiple-choice-question question="question" selected-answer-options="vm.selectedAnswerOptions[question.id]" total-score="vm.totalScore"></multiple-choice-question>
+    </div>
+</div>
+<div class="quiz-footer">
+    <div class="container">
+        <div class="quiz-footer-content">
+            <div>
+                <div>
+                    <span data-translate="artemisApp.quizExercise.questions" class="colon-suffix"></span>
+                    {{vm.quizExercise.questions.length}}
+                </div>
+                <div>
+                    <span data-translate="artemisApp.question.totalScore" class="colon-suffix"></span>
+                    {{vm.totalScore}}
+                </div>
+            </div>
+            <div id="remaining-time">
+                <div>
+                    <span data-translate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
+                    <span id="remaining-time-value" ng-class="{'time-critical': vm.remainingTimeSeconds < 60 || vm.remainingTimeSeconds < vm.quizExercise.duration / 4, 'time-warning': vm.remainingTimeSeconds < 120 || vm.remainingTimeSeconds < vm.quizExercise.duration / 2}">
+                        {{vm.remainingTimeText}}
+                    </span>
+                </div>
+                <div>
+                    <span ng-if="vm.isSubmitting">Submitting Answers...</span>
+                    <span ng-if="!vm.isSubmitting" uib-tooltip="{{vm.submission.adjustedSubmissionDate | date:'MMM d, y HH:mm:ss'}}" tooltip-placement="right">
+                        <span data-translate="artemisApp.quizExercise.lastSubmission" class="colon-suffix"></span>
+                        <span ng-if="vm.justSubmitted" data-translate="justNow"></span>
+                        <span ng-if="!vm.justSubmitted">{{vm.lastSubmissionTimeText}}</span>
+                    </span>
+                </div>
+            </div>
+            <button ng-disabled="vm.isSubmitting || vm.remainingTimeSeconds < 0" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></button>
+        </div>
+    </div>
+</div>

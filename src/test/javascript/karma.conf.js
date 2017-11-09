@@ -49,7 +49,10 @@ module.exports = function (config) {
             'src/main/webapp/bower_components/file-saver.js/FileSaver.js',
             'src/main/webapp/bower_components/remarkable/dist/remarkable.js',
             'src/main/webapp/bower_components/showdown/dist/showdown.js',
+<<<<<<< HEAD
             'src/main/webapp/bower_components/chart.js/dist/Chart.js',
+=======
+>>>>>>> 5091b6189d23d6b99fd36b11ce414bf14e1e70bd
             'src/main/webapp/bower_components/angular/angular.js',
             'src/main/webapp/bower_components/angular-aria/angular-aria.js',
             'src/main/webapp/bower_components/angular-bootstrap/ui-bootstrap-tpls.js',

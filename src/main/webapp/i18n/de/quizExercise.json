@@ -2,43 +2,51 @@
     "artemisApp": {
         "quizExercise": {
             "home": {
-                "title": "Quiz Exercises",
-                "createLabel": "Quiz Exercise erstellen",
-                "createOrEditLabel": "Quiz Exercise erstellen oder bearbeiten"
+                "title": "Quiz",
+                "createLabel": "Quiz erstellen",
+                "createOrEditLabel": "Quiz erstellen oder bearbeiten"
             },
-            "created": "Quiz Exercise erstellt mit ID {{ param }}",
-            "updated": "Quiz Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "Quiz Exercise gelöscht mit ID {{ param }}",
+            "created": "Quiz erstellt mit ID {{ param }}",
+            "updated": "Quiz aktualisiert mit ID {{ param }}",
+            "deleted": "Quiz gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Quiz Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Quiz {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "edit": {
-                "title": "Edit Quiz Exercise for {{ param }}",
-                "addQuestion": "Add Question",
-                "invalidInput": "Invalid Input!",
-                "pendingChanges": "Unsaved Changes",
-                "saving": "Saving…",
-                "saved": "Saved!"
+                "title": "Quiz für {{ param }} bearbeiten",
+                "addQuestion": "Frage hinzufügen",
+                "invalidInput": "Ungültige Eingabe!",
+                "pendingChanges": "Ungespeicherte Änderungen",
+                "saving": "Speichern …",
+                "saved": "Gespeichert!"
             },
             "new": {
-                "title": "New Quiz Exercise for {{ param }}"
+                "title": "Quiz für {{ param }} erstellen"
             },
-            "description": "Description",
-            "explanation": "Explanation",
-            "randomizeQuestionOrder": "Randomize Question Order",
-            "allowedNumberOfAttempts": "Allowed Number Of Attempts",
-            "isVisibleBeforeStart": "Is Visible Before Start",
-            "isOpenForPractice": "Is Open For Practice",
-            "isPlannedToStart": "Is Planned To Start",
-            "duration": "Duration",
-            "minutes": "minutes",
-            "seconds": "seconds",
+            "description": "Beschreibung",
+            "explanation": "Erklärung",
+            "randomizeQuestionOrder": "Fragen in zufälliger Reihenfolge anzeigen",
+            "allowedNumberOfAttempts": "Erlaubte Anzahl an Versuchen",
+            "isVisibleBeforeStart": "Vor dem Start sichtbar",
+            "isOpenForPractice": "Zum Üben freigegeben",
+            "isPlannedToStart": "Geplante Startzeit",
+            "duration": "Dauer",
+            "minutes": "Minuten",
+            "seconds": "Sekunden",
             "minutesShort": "min",
             "secondsShort": "s",
-            "questions": "Questions",
+            "questions": "Fragen",
             "status": "Status",
+<<<<<<< HEAD
             "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic"
+=======
+            "startTime": "Startzeit",
+            "quiz": "Quiz",
+            "remainingTime": "Verbleibende Zeit",
+            "quizInstructions": "Wählen Sie für jede Frage die richtigen Antworten aus und klicken Sie auf \"Absenden\", um ihre Auswahl abzugeben.",
+            "lastSubmission": "Zuletzt gesendet"
+>>>>>>> 5091b6189d23d6b99fd36b11ce414bf14e1e70bd
         }
     }
 }

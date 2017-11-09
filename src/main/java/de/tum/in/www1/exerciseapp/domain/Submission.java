@@ -5,6 +5,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**
@@ -12,12 +13,12 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "submission")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(
-    name="discriminator",
-    discriminatorType=DiscriminatorType.STRING
+    name = "discriminator",
+    discriminatorType = DiscriminatorType.STRING
 )
-@DiscriminatorValue(value="S")
+@DiscriminatorValue(value = "S")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public abstract class Submission implements Serializable {
 
@@ -26,6 +27,20 @@ public abstract class Submission implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Transient
+    // variable name must be different from Getter name,
+    // so that Jackson ignores the @Transient annotation,
+    // but Hibernate still respects it
+    private ZonedDateTime submissionDateTransient;
+
+    public ZonedDateTime getSubmissionDate() {
+        return submissionDateTransient;
+    }
+
+    public void setSubmissionDate(ZonedDateTime submissionDate) {
+        submissionDateTransient = submissionDate;
+    }
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {

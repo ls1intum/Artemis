@@ -38,7 +38,14 @@
             "questions": "Questions",
             "status": "Status",
             "startTime": "Start Time",
+<<<<<<< HEAD
             "quizPointStatistic": "Quiz Point Statistic"
+=======
+            "quiz": "Quiz",
+            "remainingTime": "Remaining Time",
+            "quizInstructions": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
+            "lastSubmission": "Last Submission"
+>>>>>>> 5091b6189d23d6b99fd36b11ce414bf14e1e70bd
         }
     }
 }
