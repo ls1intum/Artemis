@@ -57,7 +57,6 @@ public class CourseService {
         Stream<Course> userCourses = result.stream().filter(
             course -> user.getGroups().contains(course.getStudentGroupName())
                 || user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || (user.getAuthorities().contains(taAuthority) && course.getTitle().equals("Archive"))
                 || user.getAuthorities().contains(adminAuthority)
         );
         List<Course> userAuthorizedCourses = userCourses.collect(Collectors.toList());
