@@ -283,7 +283,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void onBuildCompleted(Participation participation) {
-        log.info("Retrieving build result...");
+        log.debug("Retrieving build result...");
         Boolean isOldBuildResult = true;
         Map buildResults = new HashMap<>();
         try {
@@ -294,13 +294,13 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         if (isOldBuildResult) {
-            log.info("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
+            log.debug("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
             try {
                 Thread.sleep(RESULT_RETRIEVAL_DELAY);
             } catch (InterruptedException e) {
                 log.error("Sleep error", e);
             }
-            log.info("Retrieving build result (second try)...");
+            log.debug("Retrieving build result (second try)...");
             buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
         }
 
