@@ -7,11 +7,15 @@
             <span data-translate="artemisApp.question.hint"></span>
         </span>
     </h4>
+    <div class="question-score">
+        <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
+        <span>{{vm.question.score}}</span>
+    </div>
     <div class="answer-options">
         <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-click="vm.toggleSelection(answerOption)">
             <div class="selection">
-                <i class="fa fa-2x fa-check-square-o" ng-if="vm.selectedAnswerOptions.indexOf(answerOption) !== -1"></i>
-                <i class="fa fa-2x fa-square-o" ng-if="vm.selectedAnswerOptions.indexOf(answerOption) === -1"></i>
+                <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
+                <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>
             </div>
             <div class="content">
                 <div class="text" ng-bind-html="vm.rendered.answerOptions[$index].text"></div>

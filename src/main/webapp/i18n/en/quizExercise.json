@@ -37,7 +37,11 @@
             "secondsShort": "s",
             "questions": "Questions",
             "status": "Status",
-            "startTime": "Start Time"
+            "startTime": "Start Time",
+            "quiz": "Quiz",
+            "remainingTime": "Remaining Time",
+            "quizInstructions": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
+            "lastSubmission": "Last Submission"
         }
     }
 }
