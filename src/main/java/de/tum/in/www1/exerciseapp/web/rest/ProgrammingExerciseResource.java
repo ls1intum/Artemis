@@ -1,9 +1,14 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.tum.in.www1.exerciseapp.domain.Authority;
+import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.domain.ProgrammingExercise;
+import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
+import de.tum.in.www1.exerciseapp.service.CourseService;
+import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.service.VersionControlService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -16,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,11 +37,15 @@ public class ProgrammingExerciseResource {
     private static final String ENTITY_NAME = "programmingExercise";
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final UserService userService;
+    private final CourseService courseService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
-    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService, CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.userService = userService;
+        this.courseService = courseService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
     }
@@ -118,7 +128,7 @@ public class ProgrammingExerciseResource {
     public List<ProgrammingExercise> getAllProgrammingExercises() {
         log.debug("REST request to get all ProgrammingExercises");
         return programmingExerciseRepository.findAll();
-        }
+    }
 
     /**
      * GET  /courses/:courseId/exercises : get all the exercises.
@@ -131,7 +141,27 @@ public class ProgrammingExerciseResource {
     @Transactional(readOnly = true)
     public List<ProgrammingExercise> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
-        return programmingExerciseRepository.findByCourseId(courseId);
+
+        //this call is only used in the admin interface and there, tutors should not see exercise of courses in which they are only students
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Authority adminAuthority = new Authority();
+        adminAuthority.setName("ROLE_ADMIN");
+        Authority taAuthority = new Authority();
+        taAuthority.setName("ROLE_TA");
+
+        // get the course
+        Course course = courseService.findOne(courseId);
+
+        // determine user's access level for this course
+        if (user.getAuthorities().contains(adminAuthority)) {
+            // user is admin
+            return programmingExerciseRepository.findByCourseId(courseId);
+        } else if (user.getAuthorities().contains(taAuthority) && user.getGroups().contains(course.getTeachingAssistantGroupName())) {
+            // user is TA for this course
+            return programmingExerciseRepository.findByCourseId(courseId);
+        }
+        //in this case the user does not have access, return an empty list
+        return new ArrayList<ProgrammingExercise>();
     }
 
     /**

@@ -96,6 +96,8 @@ public class CourseResource {
         return courseService.findAll();
     }
 
+    //TODO: create a second method for the administration of courses, so that in this case, courses are only visible to Admins and TAs of this course
+
     /**
      * GET  /courses/:id : get the "id" course.
      *

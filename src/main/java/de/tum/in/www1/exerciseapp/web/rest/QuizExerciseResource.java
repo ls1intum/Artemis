@@ -128,6 +128,8 @@ public class QuizExerciseResource {
     @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
+        //TODO Valentin: apply the same filtering as in getProgrammingExercisesForCourse(...),
+        //this call is only used in the admin interface and there, tutors should not see exercise of courses in which they are only students
         return quizExerciseRepository.findByCourseId(courseId);
     }
 
