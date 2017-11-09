@@ -3,6 +3,12 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "question",
+            "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "many-to-one",
             "relationshipName": "submission",
             "otherEntityName": "quizSubmission",
             "otherEntityField": "id"

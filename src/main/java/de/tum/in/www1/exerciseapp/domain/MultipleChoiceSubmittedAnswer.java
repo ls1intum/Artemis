@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -13,17 +14,18 @@ import java.util.Set;
  * A MultipleChoiceSubmittedAnswer.
  */
 @Entity
-@DiscriminatorValue(value="MC")
+@DiscriminatorValue(value = "MC")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeName("multiple-choice")
 public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "multiple_choice_submitted_answer_selected_options",
-               joinColumns = @JoinColumn(name="multiple_choice_submitted_answers_id", referencedColumnName="id"),
-               inverseJoinColumns = @JoinColumn(name="selected_options_id", referencedColumnName="id"))
+        joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"),
+        inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
     private Set<AnswerOption> selectedOptions = new HashSet<>();
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove

@@ -89,10 +89,10 @@ public class ParticipationService {
         }
         else if (exercise instanceof QuizExercise) {
             participation.setInitializationState(ParticipationState.INITIALIZED);
-            participation.setInitializationDate(ZonedDateTime.now());
-            //TODO: Valentin implement
+            if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
+                participation.setInitializationDate(ZonedDateTime.now());
+            }
         }
-
 
         save(participation);
         return participation;

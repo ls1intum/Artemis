@@ -17,7 +17,7 @@
 
     ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', '$http', '$location', 'Principal', '$rootScope'];
 
-    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http,  $location, Principal, $rootScope) {
+    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http, $location, Principal, $rootScope) {
         var vm = this;
 
         vm.clonePopover = {
@@ -30,7 +30,6 @@
         vm.getClonePopoverTemplate = getClonePopoverTemplate;
         vm.goToBuildPlan = goToBuildPlan;
         vm.participationStatus = participationStatus;
-        vm.isReleased = isReleased;
         vm.start = start;
         vm.resume = resume;
         vm.now = Date.now();
@@ -39,7 +38,7 @@
 
         function init() {
 
-            if($location.search().welcome) {
+            if ($location.search().welcome) {
                 showWelcomeAlert();
             }
 
@@ -47,7 +46,10 @@
                 vm.repositoryPassword = password;
             });
 
-            CourseExercises.query({courseId: vm.course.id, withLtiOutcomeUrlExisting: true}).$promise.then(function (exercises) {
+            CourseExercises.query({
+                courseId: vm.course.id,
+                withLtiOutcomeUrlExisting: true
+            }).$promise.then(function (exercises) {
 
                 if (vm.filterByExerciseId) {
                     exercises = _.filter(exercises, {id: vm.filterByExerciseId})
@@ -56,22 +58,6 @@
                 vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
                     return !isNotOverdue(exercise);
                 }).length;
-
-
-                exercises = _.filter(exercises, function (exercise) {
-                    if(Principal.hasGroup(exercise.course.teachingAssistantGroupName)) {
-                        return true;
-                    }
-                    else if(Principal.hasGroup(exercise.course.studentGroupName)) {
-                        return vm.isReleased(exercise);
-                    }
-                    if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_STUDENT'])) {        //== only ROLE_TA
-                        // hide exercises of other courses for TAs who are not TAs in the specific course (except Archive)
-                        return exercise.course.title === 'Archive';
-                    }
-                    return true;
-                    //TODO: test the case with LTI users from edX
-                });
 
                 angular.forEach(exercises, function (exercise) {
                     exercise['participation'] = ExerciseParticipation.get({
@@ -110,21 +96,27 @@
         }
 
         function participationStatus(exercise) {
-            if(angular.equals({}, exercise.participation)) {
+            if (exercise.type && exercise.type === "quiz") {
+                if (angular.equals({}, exercise.participation)) {
+                    return "quiz-uninitialized";
+                } else if (moment(exercise.dueDate).isBefore(moment())) {
+                    return "quiz-finished";
+                } else {
+                    return "quiz-active"
+                }
+            }
+            if (angular.equals({}, exercise.participation)) {
                 return "uninitialized";
-            } else if(exercise.participation.initializationState === "INITIALIZED") {
+            } else if (exercise.participation.initializationState === "INITIALIZED") {
                 return "initialized";
             }
             return "inactive";
         }
 
-        function isReleased(exercise) {
-            return _.isEmpty(exercise.releaseDate) || vm.now >= Date.parse(exercise.releaseDate);
-        }
-
         function isNotOverdue(exercise) {
             return vm.showOverdueExercises || _.isEmpty(exercise.dueDate) || vm.now <= Date.parse(exercise.dueDate);
         }
+
         vm.isNotOverdue = isNotOverdue;
 
         function getRepositoryPassword() {
@@ -146,6 +138,13 @@
 
         function start(exercise) {
             vm.loading[exercise.id.toString()] = true;
+
+            if (exercise.type && exercise.type === "quiz") {
+                // start the quiz
+                $location.url("/quiz/" + exercise.id);
+                return;
+            }
+
             exercise.$start({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
@@ -161,7 +160,7 @@
                 console.log(e);
                 AlertService.add({
                     type: 'danger',
-                    msg: '<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong> If this problem persists, please <a href="mailto:' + $rootScope.CONTACT_EMAIL + '?subject=Exercise%20Application%20Error%20Report&body=' + e.data.description+ '">send us an error report</a>.',
+                    msg: '<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong> If this problem persists, please <a href="mailto:' + $rootScope.CONTACT_EMAIL + '?subject=Exercise%20Application%20Error%20Report&body=' + e.data.description + '">send us an error report</a>.',
                     timeout: 30000
                 });
             }).finally(function () {
@@ -174,9 +173,9 @@
             exercise.$resume({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
-            }).catch(function(errorResponse) {
+            }).catch(function (errorResponse) {
                 alert(errorResponse.data.status + " " + errorResponse.data.detail);
-            }).finally(function() {
+            }).finally(function () {
                 vm.loading[exercise.id] = false;
             });
         }
@@ -184,6 +183,7 @@
         function toggleShowOverdueExercises() {
             vm.showOverdueExercises = true;
         }
+
         vm.toggleShowOverdueExercises = toggleShowOverdueExercises;
 
     }

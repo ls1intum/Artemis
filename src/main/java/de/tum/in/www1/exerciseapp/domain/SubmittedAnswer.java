@@ -1,5 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -19,6 +22,16 @@ import java.util.Objects;
 )
 @DiscriminatorValue(value="S")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+
+// add JsonTypeInfo and JsonSubTypes annotation to help Jackson decide which class the JSON should be deserialized to
+// depending on the value of the "type" property.
+// Note: The "type" property has to be added on the front-end when making a request that includes a SubmittedAnswer Object
+// However, the "type" property will be automatically added by Jackson when an object is serialized
+@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, property="type")
+@JsonSubTypes({
+    @JsonSubTypes.Type(value=MultipleChoiceSubmittedAnswer.class, name="multiple-choice"),
+    @JsonSubTypes.Type(value=DragAndDropSubmittedAnswer.class, name="drag-and-drop")
+})
 public abstract class SubmittedAnswer implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -28,15 +41,31 @@ public abstract class SubmittedAnswer implements Serializable {
     private Long id;
 
     @ManyToOne
+    private Question question;
+
+    @ManyToOne
+    @JsonIgnore
     private QuizSubmission submission;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Question getQuestion() {
+        return question;
+    }
+
+    public SubmittedAnswer question(Question question) {
+        this.question = question;
+        return this;
+    }
+
+    public void setQuestion(Question question) {
+        this.question = question;
     }
 
     public QuizSubmission getSubmission() {
@@ -51,7 +80,6 @@ public abstract class SubmittedAnswer implements Serializable {
     public void setSubmission(QuizSubmission quizSubmission) {
         this.submission = quizSubmission;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
