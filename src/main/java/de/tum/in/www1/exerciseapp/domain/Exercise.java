@@ -35,7 +35,7 @@ public abstract class Exercise implements Serializable {
     private String title;
 
     @Column(name = "release_date")
-    private ZonedDateTime releaseDate;
+    protected ZonedDateTime releaseDate;
 
     @Column(name = "due_date")
     private ZonedDateTime dueDate;
@@ -134,6 +134,10 @@ public abstract class Exercise implements Serializable {
         this.course = course;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    public Boolean getIsVisibleToStudents() {
+        return releaseDate != null && releaseDate.isBefore(ZonedDateTime.now());
+    }
 
     @Override
     public boolean equals(Object o) {

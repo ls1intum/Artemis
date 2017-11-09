@@ -208,7 +208,7 @@ relationship ManyToOne {
   Participation{student(login)} to User,
   LtiOutcomeUrl{user} to User,
   LtiOutcomeUrl{exercise} to Exercise,
-
+  SubmittedAnswer{question} to Question
   DragAndDropAssignment{item} to DragItem,
   DragAndDropAssignment{location} to DropLocation
 }

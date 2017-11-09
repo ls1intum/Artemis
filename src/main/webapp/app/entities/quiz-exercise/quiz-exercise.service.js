@@ -2,7 +2,8 @@
     'use strict';
     angular
         .module('artemisApp')
-        .factory('QuizExercise', QuizExercise);
+        .factory('QuizExercise', QuizExercise)
+        .factory('QuizExerciseForStudent', QuizExerciseForStudent);
 
     QuizExercise.$inject = ['$resource'];
 
@@ -21,6 +22,24 @@
                 }
             },
             'update': { method:'PUT' }
+        });
+    }
+
+    QuizExerciseForStudent.$inject = ['$resource'];
+
+    function QuizExerciseForStudent ($resource) {
+        var resourceUrl =  'api/quiz-exercises/:id/for-student';
+
+        return $resource(resourceUrl, {}, {
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                    }
+                    return data;
+                }
+            }
         });
     }
 })();

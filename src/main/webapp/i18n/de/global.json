@@ -123,7 +123,8 @@
             "view": "Details",
             "preview": "Vorschau",
             "cleanup": "Aufräumen",
-            "archive": "Archivieren"
+            "archive": "Archivieren",
+            "submit": "Absenden"
         },
         "detail": {
             "field": "Feld",
@@ -161,5 +162,6 @@
         "emailexists": "Email wird bereits verwendet!",
         "idexists": "Ein neuer {{entityName}} kann noch keine ID haben"
     },
-    "footer": "Dies ist Ihre Fußzeile"
+    "footer": "Dies ist Ihre Fußzeile",
+    "justNow": "gerade eben"
 }
