@@ -268,10 +268,14 @@ public class QuizExercise extends Exercise implements Serializable {
 
         double quizScore = 0.0;
 
-        //calculate Score of the Quiz
-        for(Question question: questions){
-            quizScore = quizScore + question.getScore();
+        if(questions != null){
+            //calculate Score of the Quiz
+            for(Question question: questions){
+                quizScore = quizScore + question.getScore();
+            }
         }
+
+
         //add new Scores
         for(double i = 0.0 ; i <= quizScore; i++){  // for variable ScoreSteps change: i++ into: i= i + scoreStep
             quizPointStatistic.addScore(new Double(i));
@@ -279,8 +283,8 @@ public class QuizExercise extends Exercise implements Serializable {
         //delete old PointCounter
         Set<PointCounter> delete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
-            if (pointCounter.getId() != null) {                                               // for variable ScoreSteps
-                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 /*|| (pointCounter.getPoints()% pointStep) != 0*/){ ;
+            if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
+                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% pointStep) != 0*/){ ;
                     delete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);
                 }
