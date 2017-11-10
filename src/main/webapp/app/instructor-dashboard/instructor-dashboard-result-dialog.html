@@ -7,7 +7,7 @@
         <h4 class="modal-title" id="myResultLabel">Create manual result for {{vm.result.participation.student.login}}</h4>
     </div>
     <div class="modal-body">
-        <div ng-show="vm.openForSubmission()" class="alert alert-warning">
+        <div ng-show="vm.result.participation.exercise.openForSubmission" class="alert alert-warning">
             <strong>Exercise is still open for submissions!</strong> The due date of this exercise is not reached yet. The student could override this manual result by comitting a new solution.
         </div>
         <jhi-alert-error></jhi-alert-error>

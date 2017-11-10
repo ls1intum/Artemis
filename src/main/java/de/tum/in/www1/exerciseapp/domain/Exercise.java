@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.hibernate.annotations.Cache;
@@ -57,6 +58,9 @@ public abstract class Exercise implements Serializable {
 
     @ManyToOne
     private Course course;
+
+    @Transient
+    private boolean isOpenForSubmission;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -143,6 +147,18 @@ public abstract class Exercise implements Serializable {
     public void setCourse(Course course) {
         this.course = course;
     }
+
+    public boolean isOpenForSubmission() {
+        if(dueDate != null) {
+            return ZonedDateTime.now().isBefore(dueDate);
+        }
+        return true;
+    }
+
+    public void setOpenForSubmission(boolean openForSubmission) {
+        isOpenForSubmission = openForSubmission;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
