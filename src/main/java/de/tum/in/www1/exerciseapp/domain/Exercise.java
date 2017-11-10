@@ -25,11 +25,11 @@ import java.util.Set;
 )
 @DiscriminatorValue(value="E")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonTypeInfo(use = JsonTypeInfo.Id.CLASS, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = ProgrammingExercise.class),
-    @JsonSubTypes.Type(value = ModelingExercise.class),
-    @JsonSubTypes.Type(value = QuizExercise.class)
+    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming-exercise"),
+    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling-exercise"),
+    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz-exercise")
 })
 public abstract class Exercise implements Serializable {
 

@@ -20,7 +20,21 @@
                     return data;
                 }
             },
-            'update': { method:'PUT' }
+            'save': {
+                method: 'POST',
+                transformRequest: addType
+            },
+            'update': {
+                method:'PUT',
+                transformRequest: addType
+            }
         });
     }
+
+    var addType = function(data) {
+            data.type = "modeling-exercise";
+            data = angular.toJson(data);
+            return data;
+        };
+
 })();
