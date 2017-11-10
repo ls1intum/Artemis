@@ -70,6 +70,9 @@ public class ResultResource {
             throw new BadRequestAlertException("A new result cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Result savedResult = resultRepository.save(result);
+        result.getFeedbacks().forEach(feedback -> { feedback.setResult(savedResult);
+                                                    feedbackService.save(feedback);
+                                                  });
         ltiService.ifPresent(ltiService -> ltiService.onNewBuildResult(savedResult.getParticipation()));
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))

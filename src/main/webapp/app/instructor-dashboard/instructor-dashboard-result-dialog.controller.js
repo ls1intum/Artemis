@@ -18,7 +18,7 @@
         vm.openForSubmission = openForSubmission;
         vm.addFeedbackClicked = false;
         vm.feedbackIndices = [0];
-        vm.feedbacks = [];
+        vm.result.feedbacks = [];
         vm.pushFeedback = pushFeedback;
         vm.popFeedback = popFeedback;
 
@@ -45,6 +45,9 @@
 
         function save() {
             vm.isSaving = true;
+            for(var i = 0; i < vm.result.feedbacks.length; i++) {
+                vm.result.feedbacks[i].type = 'MANUAL';
+            }
             if (vm.result.id !== null) {
                 Result.update(vm.result, onSaveSuccess, onSaveError);
             } else {
@@ -53,23 +56,8 @@
         }
 
         function onSaveSuccess(result) {
-            if(vm.feedbacks.length > 0) {
-                for (var i = 0; i < vm.feedbacks.length; i++) {
-                    var currentFeedback = vm.feedbacks[i];
-                    currentFeedback.result = result;
-                    currentFeedback.type = 'MANUAL';
-                    Feedback.save(currentFeedback, function () {
-                        $uibModalInstance.close(result);
-                        vm.isSaving = false;
-                    }, function () {
-                        vm.isSaving = false;
-                    });
-                }
-            } else {
-                $uibModalInstance.close(result);
-                vm.isSaving = false;
-            }
-
+            $uibModalInstance.close(result);
+            vm.isSaving = false;
         }
 
         function onSaveError() {
@@ -90,8 +78,8 @@
             if(vm.feedbackIndices.length == 1) {
                 vm.addFeedbackClicked = false;
             }
-            if(vm.feedbackIndices.length === vm.feedbacks.length) {
-                vm.feedbacks.pop();
+            if(vm.feedbackIndices.length === vm.result.feedbacks.length) {
+                vm.result.feedbacks.pop();
             }
             if(vm.feedbackIndices.length > 1) {
                 vm.feedbackIndices.pop();

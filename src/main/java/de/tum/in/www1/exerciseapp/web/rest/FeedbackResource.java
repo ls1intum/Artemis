@@ -57,9 +57,7 @@ public class FeedbackResource {
         if (feedback.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new feedback cannot already have an ID")).body(null);
         }
-        Feedback savedFeedback = feedbackRepository.save(feedback);
-        Result resultToUpdate = resultRepository.findOne(savedFeedback.getResult().getId());
-        resultToUpdate.addFeedbacks(savedFeedback);
+        Feedback savedFeedback = feedbackService.save(feedback);
         return ResponseEntity.created(new URI("/api/feedbacks/" + savedFeedback.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, savedFeedback.getId().toString()))
             .body(savedFeedback);

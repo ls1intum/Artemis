@@ -49,11 +49,11 @@
         <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
             <div class="form-group">
                 <label class="control-label">Feedback #{{index + 1}} Text</label>
-                <input class="form-control" ng-model="vm.feedbacks[index].text"/>
+                <input class="form-control" ng-model="vm.result.feedbacks[index].text"/>
             </div>
             <div class="form-group">
                 <label class="control-label">Feedback #{{index + 1}} Detail Text</label>
-                <input class="form-control" ng-model="vm.feedbacks[index].detailText"/>
+                <input class="form-control" ng-model="vm.result.feedbacks[index].detailText"/>
             </div>
             <br/>
         </div>
