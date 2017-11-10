@@ -26,6 +26,8 @@ import java.util.Set;
 @DiscriminatorValue(value="E")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+
+// Annonation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming-exercise"),
     @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling-exercise"),
