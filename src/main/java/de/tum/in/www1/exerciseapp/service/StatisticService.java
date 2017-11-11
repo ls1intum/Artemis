@@ -1,6 +1,6 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.QuizExercise;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -31,8 +31,15 @@ public class StatisticService {
     public void plusOneToB() {
         // fetches the new build result
         // notify user via websocket
-        System.out.println("--------------------------------addOnetoB----------------------------------");
         messagingTemplate.convertAndSend("/topic/statistic/test/plusB", true);
+        // handles new results and sends them to LTI consumers
+        //ltiService.onNewBuildResult(participation);
+    }
+
+    public void updateStatistic(QuizExercise quizExercise) {
+        // fetches the new build result
+        // notify user via websocket
+        messagingTemplate.convertAndSend("/topic/statistic/"+quizExercise.getId(), true);
         // handles new results and sends them to LTI consumers
         //ltiService.onNewBuildResult(participation);
     }
