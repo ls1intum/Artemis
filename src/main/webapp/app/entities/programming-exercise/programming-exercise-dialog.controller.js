@@ -11,6 +11,12 @@
         var vm = this;
 
         vm.programmingExercise = entity;
+        if(vm.programmingExercise.releaseDate) {
+            vm.programmingExercise.releaseDate = new Date(vm.programmingExercise.releaseDate);
+        }
+        if(vm.programmingExercise.dueDate) {
+            vm.programmingExercise.dueDate = new Date(vm.programmingExercise.dueDate);
+        }
         vm.clear = clear;
         vm.datePickerOpenStatus = {};
         vm.openCalendar = openCalendar;
@@ -50,6 +56,5 @@
         function openCalendar (date) {
             vm.datePickerOpenStatus[date] = true;
         }
-
     }
 })();

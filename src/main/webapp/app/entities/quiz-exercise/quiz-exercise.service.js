@@ -2,7 +2,8 @@
     'use strict';
     angular
         .module('artemisApp')
-        .factory('QuizExercise', QuizExercise);
+        .factory('QuizExercise', QuizExercise)
+        .factory('QuizExerciseForStudent', QuizExerciseForStudent);
 
     QuizExercise.$inject = ['$resource'];
 
@@ -31,6 +32,7 @@
         });
     }
 
+
     // Type property has to be added to the exercise so that Jackson can
     // deserialize the data into correct concrete implementation of Exercise class
     var addType = function(data) {
@@ -38,4 +40,22 @@
             data = angular.toJson(data);
             return data;
         };
+
+    QuizExerciseForStudent.$inject = ['$resource'];
+
+    function QuizExerciseForStudent ($resource) {
+        var resourceUrl =  'api/quiz-exercises/:id/for-student';
+
+        return $resource(resourceUrl, {}, {
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                    }
+                    return data;
+                }
+            }
+        });
+    }
 })();

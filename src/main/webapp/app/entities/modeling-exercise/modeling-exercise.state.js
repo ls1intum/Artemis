@@ -29,6 +29,9 @@
                     $translatePartialLoader.addPart('exercise');
                     $translatePartialLoader.addPart('global');
                     return $translate.refresh();
+                }],
+                courseEntity: [function () {
+                    return null;
                 }]
             }
         })

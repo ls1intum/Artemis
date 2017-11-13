@@ -15,6 +15,7 @@
             "detail": {
                 "title": "Submitted Answer"
             },
+            "question": "Question",
             "submission": "Submission"
         }
     }

@@ -5,14 +5,15 @@
         .module('artemisApp')
         .controller('SubmittedAnswerDialogController', SubmittedAnswerDialogController);
 
-    SubmittedAnswerDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'SubmittedAnswer', 'QuizSubmission'];
+    SubmittedAnswerDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'SubmittedAnswer', 'Question', 'QuizSubmission'];
 
-    function SubmittedAnswerDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, SubmittedAnswer, QuizSubmission) {
+    function SubmittedAnswerDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, SubmittedAnswer, Question, QuizSubmission) {
         var vm = this;
 
         vm.submittedAnswer = entity;
         vm.clear = clear;
         vm.save = save;
+        vm.questions = Question.query();
         vm.quizsubmissions = QuizSubmission.query();
 
         $timeout(function (){
