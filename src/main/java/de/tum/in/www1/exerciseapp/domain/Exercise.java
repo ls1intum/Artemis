@@ -136,7 +136,12 @@ public abstract class Exercise implements Serializable {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public Boolean getIsVisibleToStudents() {
-        return releaseDate != null && releaseDate.isBefore(ZonedDateTime.now());
+
+        if (releaseDate == null) {  //no release date means the exercise is visible to students
+            return true;
+        }
+        return releaseDate.isBefore(ZonedDateTime.now());
+
     }
 
     @Override
