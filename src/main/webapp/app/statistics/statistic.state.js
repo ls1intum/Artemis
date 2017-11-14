@@ -48,6 +48,26 @@
                         return $translate.refresh();
                     }]
                 }
+            })
+            .state('multiple-choice-question-statistic-chart', {
+                parent: 'app',
+                url: '/quiz/{quizId}/multiple-choice-question-statistic/{questionId}',
+                data: {
+                    authorities: []
+                },
+                views: {
+                    'content@': {
+                        templateUrl: 'app/statistics/multiple-choice-question-statistic/show-multiple-choice-question-statistic.html',
+                        controller: 'ShowMultipleChoiceQuestionStatisticController',
+                        controllerAs: 'vm'
+                    }
+                },
+                resolve: {
+                    mainTranslatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        $translatePartialLoader.addPart('global');
+                        return $translate.refresh();
+                    }]
+                }
             });
         }
 })();

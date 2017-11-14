@@ -99,10 +99,19 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
 
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated){
+
+        if(submittedAnswer == null){
+            return;
+        }
+
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
 
         if(rated){
             setParticipantsRated(getParticipantsRated()+1);
+
+            if(mcSubmittedAnswer.getSelectedOptions() == null){
+                return;
+            }
 
             for (AnswerCounter answerCounter: answerCounters){
                 if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
@@ -117,6 +126,9 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
         else{
             setParticipantsUnrated(getParticipantsUnrated()+1);
 
+            if(mcSubmittedAnswer.getSelectedOptions() == null){
+                return;
+            }
             for (AnswerCounter answerCounter: answerCounters){
                 if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
                     answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()+1);

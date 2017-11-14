@@ -31,7 +31,7 @@
             else
                 dataset.data = unratedData;
         })
-        window.myChart.update();
+        window.testChart.update();
 
 
         function init() {
@@ -66,7 +66,7 @@
                     dataset.data[1] = unratedData[1];
                 }
             })
-            window.myChart.update();
+            window.testChart.update();
         }
 
         function unratedSolutions(){
@@ -100,7 +100,7 @@
                     document.getElementById("text").innerHTML = "Antwortenverteilung (bewertet)";
                     rated = true;
                 }
-            window.myChart.update();
+            window.testChart.update();
         }
 
         function switchSolution(){
@@ -127,19 +127,19 @@
                     dataset.backgroundColor = ["#5cb85c", "#d9534f", "#d9534f", "#5cb85c", "#5bc0de"];
                     if (rated) {
                         dataset.data = ratedData.slice(0);
-                        if(dataset.data.length == ratedData.length)
+                        //if(dataset.data.length == ratedData.length)
                             dataset.data.push(ratedCorrects);
                     }
                     else {
                         dataset.data = unratedData.slice(0);
-                        if(dataset.data.length == unratedData.length)
+                        //if(dataset.data.length == unratedData.length)
                             dataset.data.push(unratedCorrects);
                     }
                 })
                 showSolution = true;
                 document.getElementById("solutionButton").innerHTML = "<span class=\"glyphicon glyphicon-remove-circle\"></span>&nbsp;Verberge Lösung";
                 }
-            window.myChart.update();
+            window.testChart.update();
         }
 
 

@@ -19,6 +19,8 @@
         var backgroundColor;
 
         vm.switchRated = switchRated;
+        vm.nextStatistic = nextStatistic;
+        vm.previousStatistic = previousStatistic;
 
         var rated = true;
         vm.$onInit = init;
@@ -32,7 +34,7 @@
             JhiWebsocketService.subscribe(websocketChannel);
 
             JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
-                loadData();
+                QuizPointStatistic.get({id: _.get($state, vm.quizPointStatistic.id)}).$promise.then(loadNewData);
             });
 
             $scope.$on('$destroy', function() {
@@ -41,18 +43,20 @@
 
         }
 
+        function loadNewData(statistic){
+            vm.quizPointStatistic = statistic;
+            loadData();
+        }
+
         function loadQuizSucces(quiz){
             vm.quizExercise = quiz;
             vm.quizPointStatistic = vm.quizExercise.quizPointStatistic;
             vm.maxScore = calculateMaxScore();
-            vm.participants = vm.quizPointStatistic.participantsRated;
 
             loadData();
 
-            console.log(barChartData.datasets.backgroundColor);
-
-            window.myChart.update()
         }
+
 
 
         function calculateMaxScore(){
@@ -84,23 +88,23 @@
             barChartData.labels = label;
 
             if (rated) {
+                vm.participants = vm.quizPointStatistic.participantsRated;
+                barChartData.participants = vm.quizPointStatistic.participantsRated;
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData;
                     dataset.backgroundColor = backgroundColor;
-                    dataset.participants = vm.quizPointStatistic.participantsRated;
             });
-                vm.participants = vm.quizPointStatistic.participantsRated;
             }
             else {
+                vm.participants = vm.quizPointStatistic.participantsUnrated;
+                barChartData.participants = vm.quizPointStatistic.participantsUnrated;
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData;
                     dataset.backgroundColor = backgroundColor;
-                    dataset.participants = vm.quizPointStatistic.participantsUnrated;
                 });
-                vm.participants = vm.quizPointStatistic.participantsUnrated;
             }
-
             window.myChart.update();
+
         }
 
         function switchRated(){
@@ -108,23 +112,23 @@
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData;
                     dataset.backgroundColor = backgroundColor;
-                    dataset.participants = vm.quizPointStatistic.participantsUnrated;
                 });
                 document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Ergebnisse";
                 document.getElementById("text").innerHTML = "Punkteverteilung (unbewertet)";
-                rated = false;
                 vm.participants = vm.quizPointStatistic.participantsUnrated;
+                barChartData.participants = vm.quizPointStatistic.participantsUnrated;
+                rated = false;
             }
             else{
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData;
                     dataset.backgroundColor = backgroundColor;
-                    dataset.participants = vm.quizPointStatistic.participantsRated;
                 });
                 document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Ergebnisse";
                 document.getElementById("text").innerHTML = "Punkteverteilung (bewertet)";
-                rated = true;
                 vm.participants = vm.quizPointStatistic.participantsRated;
+                barChartData.participants = vm.quizPointStatistic.participantsRated;
+                rated = true;
             }
             window.myChart.update();
         }
@@ -147,6 +151,14 @@
                     }
                 }
             }
+        }
+
+        function previousStatistic() {
+
+            return "quiz-point-statistic-chart({quizId:vm.quizExercise.id})";
+        }
+        function nextStatistic() {
+
         }
     }
 })();

@@ -19,7 +19,7 @@
                     <p>&nbsp</p>
                     <div class="col-md-8 text-left"><p id="text" style="font-size: large">Antwortenverteilung (bewertet)</p></div>
                     <div class="col-md-3 text-right"><p style="font-size: large">213 Teilnehmer</p></div>
-                    <canvas id="myChart"></canvas>
+                    <canvas id="testChart"></canvas>
                     <!--<div ng-controller="StatisticController">
                         <canvas tc-chartjs-bar
                                 chart-data="data"
@@ -41,46 +41,6 @@
     </div>
 <script>
 
-
-    // Define a plugin to provide data labels
-    Chart.plugins.register({
-        afterDatasetsDraw: function(chart, easing) {
-            // To only draw at the end of animation, check for easing === 1
-            var ctx = chart.ctx;
-
-            chart.data.datasets.forEach(function (dataset, i) {
-                var meta = chart.getDatasetMeta(i);
-                if (!meta.hidden) {
-                    meta.data.forEach(function(element, index) {
-                        // Draw the text in black, with the specified font
-                        ctx.fillStyle = 'black';
-
-                        var fontSize = 12;
-                        var fontStyle = 'normal';
-                        var fontFamily = 'Calibri';
-                        ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
-
-                        // Just naively convert to string for now
-
-
-                        var dataString = dataset.data[index].toString();
-                        var dataPersentageString = (Math.round((dataset.data[index] /213) *1000)/10).toString() + "%";
-
-                        // Make sure alignment settings are correct
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-
-                        var padding = 5;
-                        var position = element.tooltipPosition();
-                        ctx.fillText(dataString, position.x, position.y - (fontSize / 2) - padding);
-
-                        ctx.fillStyle = 'white';
-                        ctx.fillText(dataPersentageString, position.x, position.y + (fontSize / 2) + padding);
-                    });
-                }
-            });
-        }
-    });
     var barChartData = {
         labels: ["A", "B", "C", "D", ["Richte", " Lösung"]], // Array ermöglicht Zeilenumbruch
         datasets: [{
@@ -93,8 +53,8 @@
     }
 
 
-    var ctx = document.getElementById("myChart").getContext('2d');
-    window.myChart = new Chart(ctx, {
+    var ctx = document.getElementById("testChart").getContext('2d');
+    window.testChart = new Chart(ctx, {
         type: 'bar',
         data: barChartData,
         options: {
@@ -136,6 +96,40 @@
                     },
                 }]
             },
+            hover: {animationDuration: 0},
+            animation: {
+                duration: 500,
+                onComplete: function () {
+                    var chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+                    var fontSize = 12;
+                    var fontStyle = 'normal';
+                    var fontFamily = 'Calibri';
+                    ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    this.data.datasets.forEach(function (dataset, i) {
+                        var meta = chartInstance.controller.getDatasetMeta(i);
+                        meta.data.forEach(function (bar, index) {
+                            var data = dataset.data[index];
+                            var dataPersentage = (Math.round((dataset.data[index] /213) *1000)/10);
+
+                            if(dataPersentage > 6) {
+                                ctx.fillStyle = 'black';
+                                ctx.fillText(data, bar._model.x, bar._model.y - 10);
+
+                                ctx.fillStyle = 'white';
+                                ctx.fillText(dataPersentage.toString()+"%", bar._model.x, bar._model.y + 10);
+                            }
+                            else{
+                                ctx.fillStyle = 'black';
+                                ctx.fillText(data + " / " + dataPersentage.toString()+"%", bar._model.x, bar._model.y - 10);
+                            }
+                        });
+                    });
+                }
+            }
         }
     });
 

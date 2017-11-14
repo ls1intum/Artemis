@@ -114,6 +114,10 @@ public class QuizPointStatistic extends Statistic implements Serializable {
 
     public void addResult(Long score, boolean rated){
 
+        if(score == null){
+            return;
+        }
+
         if(rated){
             setParticipantsRated(getParticipantsRated()+1);
 
