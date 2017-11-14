@@ -20,6 +20,7 @@
             disconnect: disconnect,
             receive: receive,
             sendActivity: sendActivity,
+            send: send,
             subscribe: subscribe,
             unsubscribe: unsubscribe
         };
@@ -72,6 +73,20 @@
                     .send('/topic/activity',
                         {},
                         angular.toJson({'page': $rootScope.toState.name}));
+            }
+        }
+
+        /**
+         * Send data through the websocket connection
+         * @param path {string} the path for the websocket connection
+         * @param data {object} the date to send through the websocket connection
+         */
+        function send(path, data) {
+            if (stompClient !== null && stompClient.connected) {
+                stompClient
+                    .send(path,
+                        {},
+                        angular.toJson(data));
             }
         }
 

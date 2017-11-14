@@ -119,7 +119,7 @@ public class QuizSubmissionResource {
     @PutMapping("/quiz-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
-    public ResponseEntity<QuizSubmission> updateQuizSubmission(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
+    public ResponseEntity<QuizSubmission> updateQuizSubmission(@RequestBody QuizSubmission quizSubmission, Principal principal) throws URISyntaxException {
         log.debug("REST request to update QuizSubmission : {}", quizSubmission);
 
         //TODO: Valentin: check if submission belongs to user, so that a malicious user can't change random submissions by guessing a submission id (Which would be easy to do because submission ids are sequential)
@@ -140,20 +140,27 @@ public class QuizSubmissionResource {
         Optional<Result> resultOptional = resultRepository.findDistinctBySubmissionId(quizSubmission.getId());
         if (resultOptional.isPresent()) {
             Result result = resultOptional.get();
-            Exercise exercise = result.getParticipation().getExercise();
-            // only update if exercise hasn't ended already
-            if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                // update completion date (which also functions as submission date for now)
-                result.setCompletionDate(ZonedDateTime.now());
-                resultRepository.save(result);
-                // TODO Valentin: calculate score and update result accordingly (do this only when actual submission is made <- "Final Submission" or "Out of time")
-                quizSubmission.setSubmissionDate(result.getCompletionDate());
+            Participation participation = result.getParticipation();
+            Exercise exercise = participation.getExercise();
+            User user = participation.getStudent();
+            // check if participation (and thus submission) actually belongs to the user who sent this message
+            if (principal.getName().equals(user.getLogin())) {
+                // only update if exercise hasn't ended already
+                if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                    // update completion date (which also functions as submission date for now)
+                    result.setCompletionDate(ZonedDateTime.now());
+                    resultRepository.save(result);
+                    // TODO Valentin: calculate score and update result accordingly => no further submissions allowed
+                    quizSubmission.setSubmissionDate(result.getCompletionDate());
 
-                return ResponseEntity.ok()
-                    .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
-                    .body(quizSubmission);
+                    return ResponseEntity.ok()
+                        .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
+                        .body(quizSubmission);
+                } else {
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The exercise for this submission has already ended.")).body(null);
+                }
             } else {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The exercise for this submission has already ended.")).body(null);
+                return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "The submission belongs to a different user.")).body(null);
             }
         } else {
             return ResponseEntity.status(500).headers(HeaderUtil.createFailureAlert("submission", "resultNotFound", "No result was found for the given submission")).body(null);

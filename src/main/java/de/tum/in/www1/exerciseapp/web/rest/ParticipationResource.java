@@ -298,6 +298,7 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
         Participation participation = participationService.findOne(id);
+        // TODO adapt code for quiz exercises
         ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(participation);
         return Optional.ofNullable(buildStatus)
             .map(status -> new ResponseEntity<>(
