@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -16,13 +18,21 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "exercise")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@Inheritance(strategy= InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(
     name="discriminator",
     discriminatorType=DiscriminatorType.STRING
 )
 @DiscriminatorValue(value="E")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+
+// Annonation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming-exercise"),
+    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling-exercise"),
+    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz-exercise")
+})
 public abstract class Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -47,6 +57,9 @@ public abstract class Exercise implements Serializable {
 
     @ManyToOne
     private Course course;
+
+    @Transient
+    private boolean isOpenForSubmission;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
@@ -133,6 +146,18 @@ public abstract class Exercise implements Serializable {
     public void setCourse(Course course) {
         this.course = course;
     }
+
+    public boolean isOpenForSubmission() {
+        if(dueDate != null) {
+            return ZonedDateTime.now().isBefore(dueDate);
+        }
+        return true;
+    }
+
+    public void setOpenForSubmission(boolean openForSubmission) {
+        isOpenForSubmission = openForSubmission;
+    }
+
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     public Boolean getIsVisibleToStudents() {
