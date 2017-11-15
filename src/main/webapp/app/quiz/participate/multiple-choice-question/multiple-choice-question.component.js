@@ -19,17 +19,24 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         })
     };
 
-    vm.selectedAnswerOptions = [];
     vm.toggleSelection = toggleSelection;
 
     function toggleSelection(answerOption) {
-        if (vm.selectedAnswerOptions.indexOf(answerOption) !== -1) {
-            vm.selectedAnswerOptions = vm.selectedAnswerOptions.filter(function(ao) {
-                return ao !== answerOption;
+        if (isAnswerOptionSelected(answerOption)) {
+            vm.selectedAnswerOptions = vm.selectedAnswerOptions.filter(function(selectedAnswerOption) {
+                return selectedAnswerOption.id !== answerOption.id;
             });
         } else {
             vm.selectedAnswerOptions.push(answerOption);
         }
+    }
+
+    vm.isAnswerOptionSelected = isAnswerOptionSelected;
+
+    function isAnswerOptionSelected(answerOption) {
+        return vm.selectedAnswerOptions.findIndex(function(selected) {
+            return selected.id === answerOption.id;
+        }) !== -1;
     }
 
     /**
@@ -59,6 +66,7 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
     controller: MultipleChoiceQuestionController,
     controllerAs: 'vm',
     bindings: {
-        question: '='
+        question: '=',
+        selectedAnswerOptions: '='
     }
 });

@@ -2,27 +2,28 @@
     "artemisApp": {
         "question" : {
             "home": {
-                "title": "Questions",
-                "createLabel": "Question erstellen",
-                "createOrEditLabel": "Question erstellen oder bearbeiten"
+                "title": "Fragen",
+                "createLabel": "Frage erstellen",
+                "createOrEditLabel": "Frage erstellen oder bearbeiten"
             },
-            "created": "Question erstellt mit ID {{ param }}",
-            "updated": "Question aktualisiert mit ID {{ param }}",
-            "deleted": "Question gelöscht mit ID {{ param }}",
+            "created": "Frage erstellt mit ID {{ param }}",
+            "updated": "Frage aktualisiert mit ID {{ param }}",
+            "deleted": "Frage gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Question {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Frage {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Question"
+                "title": "Frage"
             },
-            "title": "Title",
+            "title": "Titel",
             "text": "Text",
-            "hint": "Hint",
-            "explanation": "Explanation",
-            "score": "Score",
-            "randomizeOrder": "Present Answers in Random Order",
-            "scoringType": "Scoring Type",
-            "exercise": "Exercise"
+            "hint": "Hinweis",
+            "explanation": "Erklärung",
+            "score": "Punkte",
+            "totalScore": "Gesamtpunktzahl",
+            "randomizeOrder": "Fragen in zufälliger Reihenfolge anzeigen",
+            "scoringType": "Bewertungsweise",
+            "exercise": "Übung"
         }
     }
 }
