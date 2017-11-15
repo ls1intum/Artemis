@@ -37,7 +37,7 @@
             <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
             <span class="text-muted" ng-switch-when="quiz-uninitialized">You have not started this quiz yet.</span>
             <span class="text-muted" ng-switch-when="quiz-active">You are currently participating in this quiz.</span>
-            <span ng-switch-when="quiz-finished"><result participation="exercise.participation"></result></span>
+            <span ng-switch-when="quiz-finished"><result participation="exercise.participation" show-score="true"></result></span>
         </td>
         <td class="text-center">
             <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"

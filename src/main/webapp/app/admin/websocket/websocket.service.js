@@ -27,6 +27,9 @@
 
         return service;
 
+        // TODO: Valentin: Implement automatic reconnection attempts when connection is lost
+        // TODO: Valentin: Implement callbacks for both "connection lost" and "reconnected" events
+
         function connect () {
             //building absolute path so that websocket doesn't fail when deploying with a context path
             var loc = $window.location;

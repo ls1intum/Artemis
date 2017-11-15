@@ -54,6 +54,7 @@ public class ParticipationService {
 
     /**
      * This method should only be invoked for programming exercises, not for other exercises
+     *
      * @param exercise
      * @param username
      * @return
@@ -86,8 +87,7 @@ public class ParticipationService {
             participation = configureBuildPlan(participation, programmingExercise);
             participation.setInitializationState(ParticipationState.INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
-        }
-        else if (exercise instanceof QuizExercise) {
+        } else if (exercise instanceof QuizExercise) {
             participation.setInitializationState(ParticipationState.INITIALIZED);
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
                 participation.setInitializationDate(ZonedDateTime.now());
@@ -100,8 +100,8 @@ public class ParticipationService {
 
     /**
      * Service method to resume inactive participation (with previously deleted build plan)
+     *
      * @param exercise exercise to which the inactive participation belongs
-
      * @return resumed participation
      */
     public Participation resume(Exercise exercise, Participation participation) {
@@ -178,8 +178,8 @@ public class ParticipationService {
     /**
      * Get all the participations.
      *
-     *  @param pageable the pagination information
-     *  @return the list of entities
+     * @param pageable the pagination information
+     * @return the list of entities
      */
     @Transactional(readOnly = true)
     public Page<Participation> findAll(Pageable pageable) {
@@ -188,10 +188,10 @@ public class ParticipationService {
     }
 
     /**
-     *  Get one participation by id.
+     * Get one participation by id.
      *
-     *  @param id the id of the entity
-     *  @return the entity
+     * @param id the id of the entity
+     * @return the entity
      */
     @Transactional(readOnly = true)
     public Participation findOne(Long id) {
@@ -209,10 +209,13 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
         log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
-        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
-        if(!Optional.ofNullable(participation).isPresent()) {
-            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
-        }
+
+        // TODO: Valentin: Ask: Why are only participations with state INACTIVE or INITIALIZED considered?
+//        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
+//        if(!Optional.ofNullable(participation).isPresent()) {
+//            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
+//        }
+        Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username);
         return participation;
     }
 

@@ -19,6 +19,20 @@ import java.util.List;
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class QuizExercise extends Exercise implements Serializable {
 
+    public enum Status {
+        INACTIVE, STARTED, FINISHED
+    }
+
+    public static Status statusForQuiz(QuizExercise quiz) {
+        if (!quiz.isPlannedToStart || quiz.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            return Status.INACTIVE;
+        } else if (quiz.getDueDate().isBefore(ZonedDateTime.now())) {
+            return Status.FINISHED;
+        } else {
+            return Status.STARTED;
+        }
+    }
+
     private static final long serialVersionUID = 1L;
 
     @Column(name = "description")
@@ -198,6 +212,16 @@ public class QuizExercise extends Exercise implements Serializable {
     public Boolean getIsVisibleToStudents() {
         //TODO: what happens if release date is null?
         return isVisibleBeforeStart || (isPlannedToStart && releaseDate.isBefore(ZonedDateTime.now()));
+    }
+
+    Long getScoreForSubmission(QuizSubmission quizSubmission) {
+        double score = 0.0;
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            if (getQuestions().contains(submittedAnswer.getQuestion())) {
+                score += submittedAnswer.getQuestion().scoreForAnswer(submittedAnswer);
+            }
+        }
+        return (long) score;
     }
 
     @Override

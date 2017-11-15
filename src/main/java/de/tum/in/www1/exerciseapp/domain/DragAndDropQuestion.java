@@ -105,6 +105,18 @@ public class DragAndDropQuestion extends Question implements Serializable {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
+    public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
+        // TODO
+        return 0.0;
+    }
+
+    @Override
+    public boolean isAnswerPerfect(SubmittedAnswer submittedAnswer) {
+        // TODO
+        return false;
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;

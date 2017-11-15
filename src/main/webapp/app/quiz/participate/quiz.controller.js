@@ -163,16 +163,6 @@
         }
 
         /**
-         * This function is called when the user clicks the "Submit" button
-         */
-        function onSubmit() {
-            applySelection();
-            vm.isSubmitting = true;
-            // TODO: send final submission
-            // QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
-        }
-
-        /**
          * Callback function for handling response after saving submission to server
          * @param quizSubmission The response data from the server
          */
@@ -198,13 +188,22 @@
         }, 2000);
 
         /**
+         * This function is called when the user clicks the "Submit" button
+         */
+        function onSubmit() {
+            applySelection();
+            vm.isSubmitting = true;
+            QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+        }
+
+        /**
          * Callback function for handling response after submitting
          * @param response
          */
-        function onSubmitSuccess(response) {
-            // TODO
-            console.log(response);
+        function onSubmitSuccess() {
+            alert("Your answers have been successfully submitted.");
             vm.isSubmitting = false;
+            // TODO redirect back to "Courses"
         }
 
         /**

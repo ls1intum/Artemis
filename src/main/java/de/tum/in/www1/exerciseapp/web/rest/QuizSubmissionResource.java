@@ -2,10 +2,12 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -38,12 +40,14 @@ public class QuizSubmissionResource {
     private final QuizExerciseRepository quizExerciseRepository;
     private final ResultRepository resultRepository;
     private final ParticipationService participationService;
+    private final UserService userService;
 
-    public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, ParticipationService participationService) {
+    public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, ParticipationService participationService, UserService userService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
+        this.userService = userService;
     }
 
     /**
@@ -67,19 +71,24 @@ public class QuizSubmissionResource {
         log.debug("REST request to get QuizSubmission for QuizExercise: {}", exerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findOne(exerciseId);
         if (Optional.ofNullable(quizExercise).isPresent()) {
-            // TODO: Valentin: check if user is allowed to take part in this exercise (is this necessary?)
-            Participation participation = participationService.init(quizExercise, principal.getName());
-            Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
-            if (result == null) {
-                // no result exists yet => create a new one
-                QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
-                newSubmission = quizSubmissionRepository.save(newSubmission);
-                result = new Result().participation(participation).submission(newSubmission);
-                result = resultRepository.save(result);
+            User user = userService.getUserWithGroupsAndAuthorities();
+            // check if user is allowed to take part in this exercise
+            if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
+                Participation participation = participationService.init(quizExercise, principal.getName());
+                Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
+                if (result == null) {
+                    // no result exists yet => create a new one
+                    QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
+                    newSubmission = quizSubmissionRepository.save(newSubmission);
+                    result = new Result().participation(participation).submission(newSubmission);
+                    result = resultRepository.save(result);
+                }
+                QuizSubmission submission = (QuizSubmission) result.getSubmission();
+                submission.setSubmissionDate(result.getCompletionDate());
+                return ResponseEntity.ok(submission);
+            } else {
+                return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "You are not part of the students group for this course")).body(null);
             }
-            QuizSubmission submission = (QuizSubmission) result.getSubmission();
-            submission.setSubmissionDate(result.getCompletionDate());
-            return ResponseEntity.ok(submission);
         } else {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID")).body(null);
         }
@@ -122,8 +131,6 @@ public class QuizSubmissionResource {
     public ResponseEntity<QuizSubmission> updateQuizSubmission(@RequestBody QuizSubmission quizSubmission, Principal principal) throws URISyntaxException {
         log.debug("REST request to update QuizSubmission : {}", quizSubmission);
 
-        //TODO: Valentin: check if submission belongs to user, so that a malicious user can't change random submissions by guessing a submission id (Which would be easy to do because submission ids are sequential)
-
         // recreate pointers back to submission in each submitted answer
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
@@ -133,31 +140,38 @@ public class QuizSubmissionResource {
             return createQuizSubmission(quizSubmission);
         }
 
-        // save changes to submission
-        quizSubmission = quizSubmissionRepository.save(quizSubmission);
-
         // update corresponding result
         Optional<Result> resultOptional = resultRepository.findDistinctBySubmissionId(quizSubmission.getId());
         if (resultOptional.isPresent()) {
             Result result = resultOptional.get();
             Participation participation = result.getParticipation();
-            Exercise exercise = participation.getExercise();
+            QuizExercise quizExercise = (QuizExercise) participation.getExercise();
             User user = participation.getStudent();
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
-                // only update if exercise hasn't ended already
-                if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                // only update if quizExercise hasn't ended and user hasn't made final submission yet
+                if (quizExercise.getDueDate().isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                    // save changes to submission
+                    quizSubmission = quizSubmissionRepository.save(quizSubmission);
                     // update completion date (which also functions as submission date for now)
                     result.setCompletionDate(ZonedDateTime.now());
+                    // update participation state => no further submissions allowed
+                    participation.setInitializationState(ParticipationState.FINISHED);
+                    log.debug("Participation Results: {}", participation.getResults());
+                    participation = participationService.save(participation);
+                    result.setParticipation(participation);
+                    // calculate score and update result accordingly
+                    result.applyQuizSubmission(quizSubmission);
+                    // save result
                     resultRepository.save(result);
-                    // TODO Valentin: calculate score and update result accordingly => no further submissions allowed
+                    // add date to submission for response
                     quizSubmission.setSubmissionDate(result.getCompletionDate());
-
+                    // send response
                     return ResponseEntity.ok()
                         .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
                         .body(quizSubmission);
                 } else {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The exercise for this submission has already ended.")).body(null);
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The quizExercise for this submission has already ended.")).body(null);
                 }
             } else {
                 return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "The submission belongs to a different user.")).body(null);

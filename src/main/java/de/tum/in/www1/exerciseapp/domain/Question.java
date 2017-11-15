@@ -175,6 +175,9 @@ public abstract class Question implements Serializable {
         this.exercise = quizExercise;
     }
 
+    abstract public double scoreForAnswer(SubmittedAnswer submittedAnswer);
+    abstract public boolean isAnswerPerfect(SubmittedAnswer submittedAnswer);
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

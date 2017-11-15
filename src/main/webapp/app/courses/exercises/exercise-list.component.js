@@ -99,10 +99,10 @@
             if (exercise.type && exercise.type === "quiz") {
                 if (angular.equals({}, exercise.participation)) {
                     return "quiz-uninitialized";
-                } else if (moment(exercise.dueDate).isBefore(moment())) {
-                    return "quiz-finished";
+                } else if (exercise.participation.initializationState === "INITIALIZED" && moment(exercise.dueDate).isAfter(moment())) {
+                    return "quiz-active";
                 } else {
-                    return "quiz-active"
+                    return "quiz-finished"
                 }
             }
             if (angular.equals({}, exercise.participation)) {

@@ -1,10 +1,9 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.ProgrammingExercise;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.ExerciseService;
@@ -27,6 +26,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -44,6 +44,8 @@ public class ParticipationResource {
 
     private final ParticipationRepository participationRepository;
 
+    private final ResultRepository resultRepository;
+
     private final ExerciseService exerciseService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -55,9 +57,10 @@ public class ParticipationResource {
     private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
     private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
-    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, ResultRepository resultRepository, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationService = participationService;
         this.participationRepository = participationRepository;
+        this.resultRepository = resultRepository;
         this.exerciseService = exerciseService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -122,7 +125,7 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-        if(exercise instanceof ProgrammingExercise) {
+        if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resume(exercise, participation);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
                 .body(participation);
@@ -259,7 +262,6 @@ public class ParticipationResource {
     }
 
 
-
     @GetMapping(value = "/participations/{id}/buildArtifact")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id, Authentication authentication) {
@@ -288,9 +290,9 @@ public class ParticipationResource {
     }
 
     /**
-     * GET  /courses/:courseId/exercises/:exerciseId/participation/status: get build status of the user's participation for the "id" exercise.
+     * GET  /participations/:id/status: get build status of the user's participation for the "id" participation.
      *
-     * @param id   the participation id
+     * @param id the participation id
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping(value = "/participations/{id}/status")
@@ -298,13 +300,18 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
         Participation participation = participationService.findOne(id);
-        // TODO adapt code for quiz exercises
-        ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(participation);
-        return Optional.ofNullable(buildStatus)
-            .map(status -> new ResponseEntity<>(
-                status,
-                HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        if (participation.getExercise() instanceof QuizExercise) {
+            QuizExercise.Status status = QuizExercise.statusForQuiz((QuizExercise) participation.getExercise());
+            return new ResponseEntity<>(status, HttpStatus.OK);
+        } else if (participation.getExercise() instanceof ProgrammingExercise) {
+            ContinuousIntegrationService.BuildStatus buildStatus = continuousIntegrationService.get().getBuildStatus(participation);
+            return Optional.ofNullable(buildStatus)
+                .map(status -> new ResponseEntity<>(
+                    status,
+                    HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        }
+        return ResponseEntity.unprocessableEntity().build();
     }
 
     /**
