@@ -1,13 +1,14 @@
 <div class="modal-header">
     <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
             ng-click="$close()">&times;</button>
-    <h4 class="modal-title">Failed Build Details</h4>
+    <h4 class="modal-title">Feedback</h4>
 </div>
 <div class="modal-body" id="result-detail-body" style="position: relative;" ng-switch on="$ctrl.loading">
     <div class="text-muted" id="result-detail-spinner" ng-switch-when="true"><i
         class="fa fa-circle-o-notch fa-lg fa-spin "></i></div>
     <div ng-switch-when="false" ng-repeat="feedback in $ctrl.details track by $index" ng-init="lastDetail = $last">
-        <p>Error in method <code-error>{{feedback.text}}</code-error>:</p>
+        <p ng-if="feedback.type === 'AUTOMATIC'">Error in method <code-error>{{feedback.text}}</code-error>:</p>
+        <p ng-if="feedback.type === 'MANUAL'">Feedback <code-error>{{feedback.text}}</code-error>:</p>
         <pre ng-bind="feedback.detailText"></pre>
         <hr ng-if="!lastDetail">
     </div>
