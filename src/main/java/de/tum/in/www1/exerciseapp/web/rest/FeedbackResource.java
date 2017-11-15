@@ -2,6 +2,8 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Feedback;
+
+import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.FeedbackService;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -36,9 +39,9 @@ public class FeedbackResource {
     public FeedbackResource(FeedbackRepository feedbackRepository, FeedbackService feedbackService, ResultRepository resultRepository) {
         this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
-
         this.feedbackService = feedbackService;
     }
+
 
     /**
      * POST  /feedbacks : Create a new feedback.
@@ -54,10 +57,10 @@ public class FeedbackResource {
         if (feedback.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new feedback cannot already have an ID")).body(null);
         }
-        Feedback result = feedbackRepository.save(feedback);
-        return ResponseEntity.created(new URI("/api/feedbacks/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
+        Feedback savedFeedback = feedbackService.save(feedback);
+        return ResponseEntity.created(new URI("/api/feedbacks/" + savedFeedback.getId()))
+            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, savedFeedback.getId().toString()))
+            .body(savedFeedback);
     }
 
     /**
@@ -123,5 +126,4 @@ public class FeedbackResource {
         feedbackRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
-
 }
