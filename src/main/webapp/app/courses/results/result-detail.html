@@ -7,8 +7,8 @@
     <div class="text-muted" id="result-detail-spinner" ng-switch-when="true"><i
         class="fa fa-circle-o-notch fa-lg fa-spin "></i></div>
     <div ng-switch-when="false" ng-repeat="feedback in $ctrl.details track by $index" ng-init="lastDetail = $last">
-        <p ng-if="feedback.type === 'AUTOMATIC'">Error in method <code-error>{{feedback.text}}</code-error>:</p>
-        <p ng-if="feedback.type === 'MANUAL'">Feedback <code-error>{{feedback.text}}</code-error>:</p>
+        <p ng-if="feedback.type === 'AUTOMATIC'">Error in method &nbsp;<code-error>{{feedback.text}}</code-error>:</p>
+        <p ng-if="feedback.type === 'MANUAL'">Feedback &nbsp;<code-error>{{feedback.text}}</code-error>:</p>
         <pre ng-bind="feedback.detailText"></pre>
         <hr ng-if="!lastDetail">
     </div>
