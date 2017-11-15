@@ -91,7 +91,7 @@ public class QuizExerciseResource {
                         }
                     }
                 }
-                // TODO: do the same for dragItems and dropLocations (if question is drag and drop)
+                // TODO: Valentin: do the same for dragItems and dropLocations (if question is drag and drop)
             }
         }
 
@@ -128,6 +128,8 @@ public class QuizExerciseResource {
     @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
+        //TODO Valentin: apply the same filtering as in getProgrammingExercisesForCourse(...),
+        //this call is only used in the admin interface and there, tutors should not see exercise of courses in which they are only students
         return quizExerciseRepository.findByCourseId(courseId);
     }
 
@@ -143,6 +145,36 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
+    }
+
+    /**
+     * GET  /quiz-exercises/:id : get the "id" quizExercise.
+     *
+     * @param id the id of the quizExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/quiz-exercises/{id}/for-student")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @Timed
+    public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
+        log.debug("REST request to get QuizExercise : {}", id);
+        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+
+        // filter out "explanation" field from all questions (so students can't see explanation while answering quiz)
+        for (Question question : quizExercise.getQuestions()) {
+            question.setExplanation(null);
+
+            // filter out "isCorrect" and "explanation" fields from answerOptions in all MC questions (so students can't see correct options in JSON)
+            if (question instanceof MultipleChoiceQuestion) {
+                MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                    answerOption.setIsCorrect(null);
+                    answerOption.setExplanation(null);
+                }
+            }
+        }
+
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
     }
 

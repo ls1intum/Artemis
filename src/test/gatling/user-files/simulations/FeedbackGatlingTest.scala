@@ -67,7 +67,7 @@ class FeedbackGatlingTest extends Simulation {
             .exec(http("Create new feedback")
             .post("/api/feedbacks")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "text":"SAMPLE_TEXT", "detailText":"SAMPLE_TEXT"}""")).asJSON
+            .body(StringBody("""{"id":null, "text":"SAMPLE_TEXT", "detailText":"SAMPLE_TEXT", "type":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_feedback_url"))).exitHereIfFailed
             .pause(10)

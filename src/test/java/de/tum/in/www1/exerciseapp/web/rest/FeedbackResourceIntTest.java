@@ -28,6 +28,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 /**
  * Test class for the FeedbackResource REST controller.
  *
@@ -42,6 +43,9 @@ public class FeedbackResourceIntTest {
 
     private static final String DEFAULT_DETAIL_TEXT = "AAAAAAAAAA";
     private static final String UPDATED_DETAIL_TEXT = "BBBBBBBBBB";
+
+    private static final FeedbackType DEFAULT_TYPE = FeedbackType.AUTOMATIC;
+    private static final FeedbackType UPDATED_TYPE = FeedbackType.MANUAL;
 
     @Autowired
     private FeedbackRepository feedbackRepository;
@@ -65,11 +69,11 @@ public class FeedbackResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-//        final FeedbackResource feedbackResource = new FeedbackResource(feedbackRepository);
-//        this.restFeedbackMockMvc = MockMvcBuilders.standaloneSetup(feedbackResource)
-//            .setCustomArgumentResolvers(pageableArgumentResolver)
-//            .setControllerAdvice(exceptionTranslator)
-//            .setMessageConverters(jacksonMessageConverter).build();
+ //       final FeedbackResource feedbackResource = new FeedbackResource(feedbackRepository);
+ //       this.restFeedbackMockMvc = MockMvcBuilders.standaloneSetup(feedbackResource)
+ //           .setCustomArgumentResolvers(pageableArgumentResolver)
+ //           .setControllerAdvice(exceptionTranslator)
+ //           .setMessageConverters(jacksonMessageConverter).build();
     }
 
     /**
@@ -81,7 +85,8 @@ public class FeedbackResourceIntTest {
     public static Feedback createEntity(EntityManager em) {
         Feedback feedback = new Feedback()
             .text(DEFAULT_TEXT)
-            .detailText(DEFAULT_DETAIL_TEXT);
+            .detailText(DEFAULT_DETAIL_TEXT)
+            .type(DEFAULT_TYPE);
         return feedback;
     }
 
@@ -107,6 +112,7 @@ public class FeedbackResourceIntTest {
         Feedback testFeedback = feedbackList.get(feedbackList.size() - 1);
         assertThat(testFeedback.getText()).isEqualTo(DEFAULT_TEXT);
         assertThat(testFeedback.getDetailText()).isEqualTo(DEFAULT_DETAIL_TEXT);
+        assertThat(testFeedback.getType()).isEqualTo(DEFAULT_TYPE);
     }
 
     @Test
@@ -140,7 +146,8 @@ public class FeedbackResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(feedback.getId().intValue())))
             .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())))
-            .andExpect(jsonPath("$.[*].detailText").value(hasItem(DEFAULT_DETAIL_TEXT.toString())));
+            .andExpect(jsonPath("$.[*].detailText").value(hasItem(DEFAULT_DETAIL_TEXT.toString())))
+            .andExpect(jsonPath("$.[*].type").value(hasItem(DEFAULT_TYPE.toString())));
     }
 
     @Test
@@ -155,7 +162,8 @@ public class FeedbackResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(feedback.getId().intValue()))
             .andExpect(jsonPath("$.text").value(DEFAULT_TEXT.toString()))
-            .andExpect(jsonPath("$.detailText").value(DEFAULT_DETAIL_TEXT.toString()));
+            .andExpect(jsonPath("$.detailText").value(DEFAULT_DETAIL_TEXT.toString()))
+            .andExpect(jsonPath("$.type").value(DEFAULT_TYPE.toString()));
     }
 
     @Test
@@ -177,7 +185,8 @@ public class FeedbackResourceIntTest {
         Feedback updatedFeedback = feedbackRepository.findOne(feedback.getId());
         updatedFeedback
             .text(UPDATED_TEXT)
-            .detailText(UPDATED_DETAIL_TEXT);
+            .detailText(UPDATED_DETAIL_TEXT)
+            .type(UPDATED_TYPE);
 
         restFeedbackMockMvc.perform(put("/api/feedbacks")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -190,6 +199,7 @@ public class FeedbackResourceIntTest {
         Feedback testFeedback = feedbackList.get(feedbackList.size() - 1);
         assertThat(testFeedback.getText()).isEqualTo(UPDATED_TEXT);
         assertThat(testFeedback.getDetailText()).isEqualTo(UPDATED_DETAIL_TEXT);
+        assertThat(testFeedback.getType()).isEqualTo(UPDATED_TYPE);
     }
 
     @Test

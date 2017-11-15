@@ -7,7 +7,7 @@
         <h4 class="modal-title" id="myResultLabel">Create manual result for {{vm.result.participation.student.login}}</h4>
     </div>
     <div class="modal-body">
-        <div ng-show="entity.participation.exercise.dueDate == null || Date.now() < Date.parse(entity.participation.exercise.dueDate)" class="alert alert-warning">
+        <div ng-show="vm.result.participation.exercise.openForSubmission" class="alert alert-warning">
             <strong>Exercise is still open for submissions!</strong> The due date of this exercise is not reached yet. The student could override this manual result by comitting a new solution.
         </div>
         <jhi-alert-error></jhi-alert-error>
@@ -44,6 +44,24 @@
                    ng-model="vm.result.score"
             />
         </div>
+        <br/>
+        <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
+        <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
+            <div class="form-group">
+                <label class="control-label">Feedback #{{index + 1}} Text</label>
+                <input class="form-control" ng-model="vm.result.feedbacks[index].text"/>
+            </div>
+            <div class="form-group">
+                <label class="control-label">Feedback #{{index + 1}} Detail Text</label>
+                <input class="form-control" ng-model="vm.result.feedbacks[index].detailText"/>
+            </div>
+            <br/>
+        </div>
+        <span ng-show="vm.addFeedbackClicked">
+            <a ng-click="vm.pushFeedback()">More feedback</a>
+            &nbsp;
+            <a ng-click="vm.popFeedback()">Less feedback</a>
+        </span>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">

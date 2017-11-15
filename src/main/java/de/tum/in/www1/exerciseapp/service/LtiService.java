@@ -392,7 +392,7 @@ public class LtiService {
                 HttpClient client = HttpClientBuilder.create().build();
                 HttpResponse response = client.execute(request);
                 String responseString = new BasicResponseHandler().handleResponse(response);
-                log.info("Response from LTI consumer: {}", responseString);
+                log.debug("Response from LTI consumer: {}", responseString);
                 if (response.getStatusLine().getStatusCode() >= 400) {
                     throw new HttpResponseException(response.getStatusLine().getStatusCode(),
                         response.getStatusLine().getReasonPhrase());

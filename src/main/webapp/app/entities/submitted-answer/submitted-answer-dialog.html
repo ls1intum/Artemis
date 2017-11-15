@@ -15,6 +15,12 @@
         </div>
 
         <div class="form-group">
+            <label data-translate="artemisApp.submittedAnswer.question" for="field_question">Question</label>
+            <select class="form-control" id="field_question" name="question" ng-model="vm.submittedAnswer.question" ng-options="question as question.id for question in vm.questions track by question.id">
+                <option value=""></option>
+            </select>
+        </div>
+        <div class="form-group">
             <label data-translate="artemisApp.submittedAnswer.submission" for="field_submission">Submission</label>
             <select class="form-control" id="field_submission" name="submission" ng-model="vm.submittedAnswer.submission" ng-options="quizSubmission as quizSubmission.id for quizSubmission in vm.quizsubmissions track by quizSubmission.id">
                 <option value=""></option>

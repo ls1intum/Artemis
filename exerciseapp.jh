@@ -111,8 +111,14 @@ entity Result (result) {
 }
 
 entity Feedback(feedback) {
-	text String
-	detailText String
+	text String,
+	detailText String,
+	type FeedbackType
+}
+
+enum FeedbackType {
+    AUTOMATIC,
+    MANUAL
 }
 
 enum ParticipationState {
@@ -166,7 +172,7 @@ relationship ManyToOne {
   Participation{student(login)} to User,
   LtiOutcomeUrl{user} to User,
   LtiOutcomeUrl{exercise} to Exercise,
-
+  SubmittedAnswer{question} to Question
   DragAndDropAssignment{item} to DragItem,
   DragAndDropAssignment{location} to DropLocation
 }

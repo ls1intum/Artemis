@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
@@ -58,8 +59,7 @@ public class BambooService implements ContinuousIntegrationService {
     @Value("${artemis.result-retrieval-delay}")
     private int RESULT_RETRIEVAL_DELAY = 10000;
 
-    //Never use this field directly, always call getBambooClient()
-    private BambooClient bambooClient;
+    private static String REPO_REFERRAL_NAME = "Assignment";
 
     private final GitService gitService;
     private final ResultRepository resultRepository;
@@ -72,18 +72,16 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     private BambooClient getBambooClient() {
-        if (bambooClient == null) {
-            bambooClient = new BambooClient();
-            //setup the Bamboo Client to use the correct username and password
+        final BambooClient bambooClient = new BambooClient();
+        //setup the Bamboo Client to use the correct username and password
 
-            String[] args = new String[]{
-                "-s", BAMBOO_SERVER_URL.toString(),
-                "--user", BAMBOO_USER,
-                "--password", BAMBOO_PASSWORD,
-            };
+        String[] args = new String[]{
+            "-s", BAMBOO_SERVER_URL.toString(),
+            "--user", BAMBOO_USER,
+            "--password", BAMBOO_PASSWORD,
+        };
 
-            bambooClient.doWork(args); //only invoke this to set server address, username and password so that the following action will work
-        }
+        bambooClient.doWork(args); //only invoke this to set server address, username and password so that the following action will work
         return bambooClient;
     }
 
@@ -107,7 +105,7 @@ public class BambooService implements ContinuousIntegrationService {
         updatePlanRepository(
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
-            "Assignment",
+            REPO_REFERRAL_NAME,
             getProjectKeyFromUrl(repositoryUrl),
             getRepositorySlugFromUrl(repositoryUrl)
         );
@@ -153,8 +151,8 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public Set<Feedback> getLatestBuildResultDetails(Result result) {
         Map<String, Object> buildResultDetails = retrieveLatestBuildResultDetails(result.getParticipation().getBuildPlanId());
-        addFeedbackToResult(result, buildResultDetails);
-        return result.getFeedbacks();
+        Set<Feedback> feedbacks = addFeedbackToResult(result, buildResultDetails);
+        return feedbacks;
     }
 
     @Override
@@ -231,6 +229,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) throws BambooException {
 
+        final BambooClient bambooClient = new BambooClient();
         String[] args = new String[]{
             "--field1", "repository.stash.projectKey", "--value1", bitbucketProject,
             "--field2", "repository.stash.repositoryId", "--value2", "2499", // Doesn't seem to be required
@@ -243,11 +242,11 @@ public class BambooService implements ContinuousIntegrationService {
             "--password", BAMBOO_PASSWORD
         };
         //workaround to pass additional fields
-        getBambooClient().doWork(args);
+        bambooClient.doWork(args);
 
         try {
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-            String message = getBambooClient().getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, bambooProject + "-" + bambooPlan, "STASH", null, false, true);
+            String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, bambooProject + "-" + bambooPlan, "STASH", null, false, true);
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful." + message);
             return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
@@ -283,7 +282,7 @@ public class BambooService implements ContinuousIntegrationService {
      */
     @Override
     public void onBuildCompleted(Participation participation) {
-        log.info("Retrieving build result...");
+        log.debug("Retrieving build result...");
         Boolean isOldBuildResult = true;
         Map buildResults = new HashMap<>();
         try {
@@ -294,13 +293,13 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         if (isOldBuildResult) {
-            log.info("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
+            log.debug("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
             try {
                 Thread.sleep(RESULT_RETRIEVAL_DELAY);
             } catch (InterruptedException e) {
                 log.error("Sleep error", e);
             }
-            log.info("Retrieving build result (second try)...");
+            log.debug("Retrieving build result (second try)...");
             buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
         }
 
@@ -358,6 +357,7 @@ public class BambooService implements ContinuousIntegrationService {
                 Feedback feedback = new Feedback();
                 feedback.setText(methodName);
                 feedback.setDetailText(errorMessageString);
+                feedback.setType(FeedbackType.AUTOMATIC);
                 feedback = feedbackRepository.save(feedback);
                 result.addFeedbacks(feedback);
             }
