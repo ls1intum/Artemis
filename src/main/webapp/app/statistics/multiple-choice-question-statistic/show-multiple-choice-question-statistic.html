@@ -8,8 +8,9 @@
             <div class="col-md-4 text-left">
                 <h3>{{vm.question.title}}</h3>
                 <h4>{{vm.question.text}}</h4>
-                <p style="font-size: 16px" ng-repeat="answer in vm.question.answerOptions"><span>{{vm.getCharacterByNumber($index)}}) {{answer.text}}</span></p>
-
+                <ol type=a>
+                <li ng-repeat="answer in vm.question.answerOptions"><span> {{answer.text}}</span></li>
+                </ol>
 
             </div>
             <div class="col-md-8 text-center">
@@ -57,10 +58,10 @@
             </div>
             <div class="form-group">
                 <div class="btn-group flex-btn-group-container">
-                    <button
+                    <button ng-click=vm.previousStatistic()
                         class="btn btn-default"
                     >Previous Statistic</button>
-                    <button
+                    <button ng-click=vm.nextStatistic()
                         class="btn btn-default"
                     >Next Statistic</button>
                 </div>
@@ -77,12 +78,12 @@
 <script>
 
     var barChartData = {
-        labels: ["A", "B", "C", "D", ["Richte", " Lösung"]], // Array ermöglicht Zeilenumbruch
+        labels: [], // Array ermöglicht Zeilenumbruch
         datasets: [{
             //label: 'Anzahl der Antwort',
             display: false,
             data: [],
-            backgroundColor: ["#428bca", "#428bca", "#428bca", "#428bca", "#428bca"],
+            backgroundColor: [],
             borderWidth: 0
         }]
     }
@@ -95,8 +96,8 @@
         options: {
             layout: {
                 padding: {
-                    left: 50,
-                    right: 50,
+                    left: 0,
+                    right: 0,
                     top: 0,
                     bottom: 30
                 }
@@ -150,16 +151,24 @@
                             var data = dataset.data[index];
                             var dataPersentage = (Math.round((dataset.data[index] /barChartData.participants) *1000)/10);
 
-                            if(dataPersentage > 6) {
-                                ctx.fillStyle = 'black';
-                                ctx.fillText(data, bar._model.x, bar._model.y - 10);
+                            var position = bar.tooltipPosition();
 
-                                ctx.fillStyle = 'white';
-                                ctx.fillText(dataPersentage.toString()+"%", bar._model.x, bar._model.y + 10);
+                            if(dataPersentage > 6) {
+                                if(position.y > 15){
+                                    ctx.fillStyle = 'black';
+                                    ctx.fillText(data, position.x, position.y - 10);
+
+                                    ctx.fillStyle = 'white';
+                                    ctx.fillText(dataPersentage.toString()+"%", position.x, position.y + 10);
+                                }
+                                else{
+                                    ctx.fillStyle = 'white';
+                                    ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y + 10);
+                                }
                             }
                             else{
                                 ctx.fillStyle = 'black';
-                                ctx.fillText(data + " / " + dataPersentage.toString()+"%", bar._model.x, bar._model.y - 10);
+                                ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y - 10);
                             }
                         });
                     });

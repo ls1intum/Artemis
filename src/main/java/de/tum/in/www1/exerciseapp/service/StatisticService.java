@@ -28,13 +28,6 @@ public class StatisticService {
      *
      */
     @Async
-    public void plusOneToB() {
-        // fetches the new build result
-        // notify user via websocket
-        messagingTemplate.convertAndSend("/topic/statistic/test/plusB", true);
-        // handles new results and sends them to LTI consumers
-        //ltiService.onNewBuildResult(participation);
-    }
 
     public void updateStatistic(QuizExercise quizExercise) {
         // fetches the new build result

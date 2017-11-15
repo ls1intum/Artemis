@@ -15,7 +15,7 @@
 
 
                 <div class="text-center">
-                    <button id="ratedButton" ng-click="vm.switchRated()" type="button" class="btn btn-primary"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Zeige unbewertete Antworten</button>
+                    <button id="ratedButton" ng-click="vm.switchRated()" type="button" class="btn btn-primary"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Zeige unbewertete Ergebnisse</button>
                     <p>&nbsp</p>
                 </div>
             </div>
@@ -47,10 +47,10 @@
                 </div>
                 <div class="form-group">
                     <div class="btn-group flex-btn-group-container">
-                        <button
+                        <button ng-click=vm.previousStatistic()
                             class="btn btn-default"
                         >Previous Statistic</button>
-                        <button
+                        <button ui-sref="quiz-statistic-chart({quizId: vm.quizExercise.id})"
                             class="btn btn-default"
                         >Next Statistic</button>
                     </div>
@@ -87,8 +87,8 @@
         options: {
             layout: {
                 padding: {
-                    left: 50,
-                    right: 50,
+                    left: 0,
+                    right: 0,
                     top: 0,
                     bottom: 30
                 }
@@ -140,16 +140,24 @@
                             var data = dataset.data[index];
                             var dataPersentage = (Math.round((dataset.data[index] /barChartData.participants) *1000)/10);
 
-                            if(dataPersentage > 6) {
-                                ctx.fillStyle = 'black';
-                                ctx.fillText(data, bar._model.x, bar._model.y - 10);
+                            var position = bar.tooltipPosition();
 
-                                ctx.fillStyle = 'white';
-                                ctx.fillText(dataPersentage.toString()+"%", bar._model.x, bar._model.y + 10);
+                            if(dataPersentage > 6) {
+                                if(position.y > 15){
+                                    ctx.fillStyle = 'black';
+                                    ctx.fillText(data, position.x, position.y - 10);
+
+                                    ctx.fillStyle = 'white';
+                                    ctx.fillText(dataPersentage.toString()+"%", position.x, position.y + 10);
+                                }
+                                else{
+                                    ctx.fillStyle = 'white';
+                                    ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y + 10);
+                                }
                             }
                             else{
                                 ctx.fillStyle = 'black';
-                                ctx.fillText(data + " / " + dataPersentage.toString()+"%", bar._model.x, bar._model.y - 10);
+                                ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y - 10);
                             }
                         });
                     });

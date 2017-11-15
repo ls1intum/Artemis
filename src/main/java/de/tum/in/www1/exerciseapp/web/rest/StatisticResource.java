@@ -124,15 +124,4 @@ public class StatisticResource {
         statisticRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
-
-    //Temporär
-
-    @PostMapping("/test-statistic")
-    @Timed
-    public ResponseEntity<Statistic> plusB() throws URISyntaxException {
-        System.out.println("--------------------------------add One to B----------------------------------");
-        statisticService.plusOneToB();
-
-        return null;
-    }
 }

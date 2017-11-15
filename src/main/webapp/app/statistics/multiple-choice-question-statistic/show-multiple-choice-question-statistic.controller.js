@@ -21,16 +21,16 @@
         var ratedCorrectData;
         var unratedCorrectData;
 
+
         vm.switchSolution = switchSolution;
         vm.switchRated = switchRated;
         vm.nextStatistic = nextStatistic;
         vm.previousStatistic = previousStatistic;
-        vm.getCharacterByNumber = getCharacterByNumber;
+
 
         var showSolution = false;
         var rated = true;
         vm.$onInit = init;
-
 
         function init(){
             QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuestion);
@@ -50,10 +50,10 @@
 
         function loadQuestion(quiz) {
             vm.quizExercise = quiz;
-            MultipleChoiceQuestion.get({id: _.get($state,"params.questionId")}).$promise.then(loadQuestionSucces);
+            MultipleChoiceQuestion.get({id: _.get($state,"params.questionId")}).$promise.then(loadQuestionSuccess);
         }
 
-        function loadQuestionSucces(question){
+        function loadQuestionSuccess(question){
             vm.question = question;
             vm.questionStatistic = vm.question.questionStatistic;
             loadData();
@@ -151,7 +151,7 @@
                         dataset.backgroundColor = backgroundColor;
                     }
                 });
-                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Ergebnisse";
+                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Antworten";
                 document.getElementById("text").innerHTML = "Antwortenverteilung (unbewertet)";
                 vm.participants = vm.questionStatistic.participantsUnrated;
                 barChartData.participants = vm.questionStatistic.participantsUnrated;
@@ -168,7 +168,7 @@
                         dataset.backgroundColor = backgroundColor;
                     }
                 });
-                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Ergebnisse";
+                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Antworten";
                 document.getElementById("text").innerHTML = "Antwortenverteilung (bewertet)";
                 vm.participants = vm.questionStatistic.participantsRated;
                 barChartData.participants = vm.questionStatistic.participantsRated;
@@ -212,15 +212,30 @@
             window.myChart.update();
         }
 
-        function getCharacterByNumber(index){
-            return String.fromCharCode(97 + index)
-        }
-
         function previousStatistic() {
+            if(vm.quizExercise.questions[0].id === vm.question.id){
+            $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
+        }
+        else{
+            for (var i = 0; i < vm.quizExercise.questions.length; i++){
+                if(vm.quizExercise.questions[i].id === vm.question.id){
+                    $state.go('multiple-choice-question-statistic-chart', {quizId: vm.quizExercise.id, questionId: vm.quizExercise.questions[i-1].id});
+                }
+            }
+        }
 
         }
         function nextStatistic() {
-
+            if(vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id === vm.question.id){
+                $state.go('quiz-point-statistic-chart',{quizId: vm.quizExercise.id});
+            }
+            else{
+                for (var i = 0; i < vm.quizExercise.questions.length; i++){
+                    if(vm.quizExercise.questions[i].id === vm.question.id){
+                        $state.go('multiple-choice-question-statistic-chart', {quizId: vm.quizExercise.id, questionId: vm.quizExercise.questions[i+1].id});
+                    }
+                }
+            }
         }
 
     }

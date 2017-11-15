@@ -8,8 +8,6 @@
     ShowQuizPointStatisticController.$inject = ['$rootScope', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizPointStatistic', 'QuizExercise'];
 
     function ShowQuizPointStatisticController(rootScope, $scope, $state, Principal, JhiWebsocketService, QuizPointStatistic, QuizExercise) {
-
-
         var vm = this;
 
         // Variables for the chart:
@@ -19,7 +17,6 @@
         var backgroundColor;
 
         vm.switchRated = switchRated;
-        vm.nextStatistic = nextStatistic;
         vm.previousStatistic = previousStatistic;
 
         var rated = true;
@@ -57,8 +54,6 @@
 
         }
 
-
-
         function calculateMaxScore(){
 
             var result = 0;
@@ -93,7 +88,7 @@
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData;
                     dataset.backgroundColor = backgroundColor;
-            });
+                });
             }
             else {
                 vm.participants = vm.quizPointStatistic.participantsUnrated;
@@ -111,7 +106,6 @@
             if(rated) {
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData;
-                    dataset.backgroundColor = backgroundColor;
                 });
                 document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Ergebnisse";
                 document.getElementById("text").innerHTML = "Punkteverteilung (unbewertet)";
@@ -122,7 +116,6 @@
             else{
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData;
-                    dataset.backgroundColor = backgroundColor;
                 });
                 document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Ergebnisse";
                 document.getElementById("text").innerHTML = "Punkteverteilung (bewertet)";
@@ -154,11 +147,13 @@
         }
 
         function previousStatistic() {
-
-            return "quiz-point-statistic-chart({quizId:vm.quizExercise.id})";
+            if(vm.quizExercise.questions === null || vm.quizExercise.questions.length === 0){
+                $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
+            }
+            else{
+                $state.go('multiple-choice-question-statistic-chart', {quizId: vm.quizExercise.id, questionId: vm.quizExercise.questions[vm.quizExercise.questions.length -1].id});
+            }
         }
-        function nextStatistic() {
 
-        }
     }
 })();

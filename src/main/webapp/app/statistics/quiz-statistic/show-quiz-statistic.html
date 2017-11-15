@@ -1,10 +1,177 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<div class="row">
+    <!--<div class="col-md-4">
+        <span class="hipster img-responsive img-rounded"></span>
+    </div>-->
+    <div class="col-md-8 col-md-offset-2 text-center">
+        <h3>{{vm.quizExercise.title}}</h3>
+        <div class="row">
+            <div class="col-md-4 text-left">
+                <h4>Quiz-description?</h4>
+                <ol>
+                <li style="font-size: 15px" ng-repeat="question in vm.quizExercise.questions"><p><span>{{question.title}}&nbsp &nbsp({{question.score}}P)</span></p></li>
+                </ol>
 
-</body>
-</html>
+            </div>
+            <div class="col-md-8 text-center">
+                <p>&nbsp</p>
+                <div class="col-md-8 text-left"><p id="text" style="font-size: large">Quiz-Statistik (bewertet)</p></div>
+                <div class="col-md-3 text-right"><p style="font-size: large">{{vm.participants}} Teilnehmer</p></div>
+                <canvas id="myChart"></canvas>
+
+
+                <div class="col-md-12 text-center" >
+                    <button id="ratedButton" ng-click="vm.switchRated()" type="button" class="btn btn-primary"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Zeige unbewertete Ergebnisse</button>
+                </div>
+                <p>&nbsp</p>
+            </div>
+
+        </div>
+    </div>
+</div>
+<div class="statistic-footer">
+    <div class="container">
+        <div class="edit-quiz-footer-content">
+            <div class="form-group">
+                <div class="btn-group dropup" uib-dropdown>
+                    <button
+                        type="button"
+                        class="btn btn-default"
+                        aria-haspopup="true"
+                        aria-expanded="false"
+                        uib-dropdown-toggle
+                    >
+                        <span class="hidden-xs hidden-sm">Choose Statistic</span>
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a ui-sref="quiz-point-statistic-chart({quizId: vm.quizExercise.id})"
+                        >Punkteverteilung</a></li>
+                        <li><a ui-sref="quiz-statistic-chart({quizId: vm.quizExercise.id})"
+                        >Quiz-Statistic</a></li>
+                        <li ng-repeat="question in vm.quizExercise.questions"><a ui-sref="multiple-choice-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
+                        ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="btn-group flex-btn-group-container">
+                    <button ui-sref="quiz-point-statistic-chart({quizId: vm.quizExercise.id})"
+                        class="btn btn-default"
+                    >Previous Statistic</button>
+                    <button ng-click=vm.nextStatistic()
+                        class="btn btn-default"
+                    >Next Statistic</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <button
+                    class="btn btn-success"
+                >Release Statistics</button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<script>
+
+    var barChartData = {
+        labels: [], // Array ermöglicht Zeilenumbruch
+        datasets: [{
+            //label: 'Anzahl der Antwort',
+            display: false,
+            data: [],
+            backgroundColor: [],
+            borderWidth: 0
+        }]
+    }
+
+
+    var ctx = document.getElementById("myChart").getContext('2d');
+    window.myChart = new Chart(ctx, {
+        type: 'bar',
+        data: barChartData,
+        options: {
+            layout: {
+                padding: {
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 30
+                }
+            },
+            legend: {
+                display: false
+            },
+            title: {
+                display: false,
+                text: "Quiz-Statistik",
+                position: "top",
+                fontSize: "16",
+                padding: 20
+            },
+            tooltips: {
+                enabled: false
+            },
+            scales: {
+                yAxes: [{
+                    scaleLabel: {
+                        labelString: 'Richtige Lösungen',
+                        display: true,
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        labelString: 'Fragen',
+                        display: true,
+                    },
+                }]
+            },
+            hover: {animationDuration: 0},
+            animation: {
+                duration: 500,
+                onComplete: function () {
+                    var chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+                    var fontSize = 12;
+                    var fontStyle = 'normal';
+                    var fontFamily = 'Calibri';
+                    ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    this.data.datasets.forEach(function (dataset, i) {
+                        var meta = chartInstance.controller.getDatasetMeta(i);
+                        meta.data.forEach(function (bar, index) {
+                            var data = (Math.round(dataset.data[index] * 100) /100);
+                            var dataPersentage = (Math.round((dataset.data[index] /barChartData.participants) *1000)/10);
+
+                            var position = bar.tooltipPosition();
+
+                            if(dataPersentage > 6) {
+                                if(position.y > 15){
+                                    ctx.fillStyle = 'black';
+                                    ctx.fillText(data, position.x, position.y - 10);
+
+                                    ctx.fillStyle = 'white';
+                                    ctx.fillText(dataPersentage.toString()+"%", position.x, position.y + 10);
+                                }
+                                else{
+                                    ctx.fillStyle = 'white';
+                                    ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y + 10);
+                                }
+                            }
+                            else{
+                                ctx.fillStyle = 'black';
+                                ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y - 10);
+                            }
+                        });
+                    });
+                }
+            }
+        }
+    });
+
+</script>
