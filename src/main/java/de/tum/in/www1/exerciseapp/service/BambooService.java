@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.exception.GitException;
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
@@ -150,8 +151,8 @@ public class BambooService implements ContinuousIntegrationService {
     @Override
     public Set<Feedback> getLatestBuildResultDetails(Result result) {
         Map<String, Object> buildResultDetails = retrieveLatestBuildResultDetails(result.getParticipation().getBuildPlanId());
-        addFeedbackToResult(result, buildResultDetails);
-        return result.getFeedbacks();
+        Set<Feedback> feedbacks = addFeedbackToResult(result, buildResultDetails);
+        return feedbacks;
     }
 
     @Override
@@ -356,6 +357,7 @@ public class BambooService implements ContinuousIntegrationService {
                 Feedback feedback = new Feedback();
                 feedback.setText(methodName);
                 feedback.setDetailText(errorMessageString);
+                feedback.setType(FeedbackType.AUTOMATIC);
                 feedback = feedbackRepository.save(feedback);
                 result.addFeedbacks(feedback);
             }

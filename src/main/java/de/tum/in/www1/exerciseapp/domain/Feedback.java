@@ -1,12 +1,15 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
+
+import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 
 /**
  * A Feedback.
@@ -28,11 +31,15 @@ public class Feedback implements Serializable {
     @Column(name = "detail_text")
     private String detailText;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type")
+    private FeedbackType type;
+
     @ManyToOne
-    @JsonIgnore
+    @JsonIgnoreProperties("feedbacks")
     private Result result;
 
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -67,6 +74,19 @@ public class Feedback implements Serializable {
         this.detailText = detailText;
     }
 
+    public FeedbackType getType() {
+        return type;
+    }
+
+    public Feedback type(FeedbackType type) {
+        this.type = type;
+        return this;
+    }
+
+    public void setType(FeedbackType type) {
+        this.type = type;
+    }
+
     public Result getResult() {
         return result;
     }
@@ -79,7 +99,7 @@ public class Feedback implements Serializable {
     public void setResult(Result result) {
         this.result = result;
     }
-    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -107,6 +127,7 @@ public class Feedback implements Serializable {
             "id=" + getId() +
             ", text='" + getText() + "'" +
             ", detailText='" + getDetailText() + "'" +
+            ", type='" + getType() + "'" +
             "}";
     }
 }
