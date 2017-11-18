@@ -8566,6 +8566,35 @@ code-error {
   border-radius: 4px;
   font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
 
+.overlay {
+  height: 100%;
+  width: 100%;
+  display: none;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: black;
+  background-color: rgba(0, 0, 0, 0.9); }
+
+.overlay-content {
+  position: relative;
+  top: 25%;
+  width: 100%;
+  text-align: center;
+  margin-top: 30px;
+  color: white; }
+
+.overlay .closebtn {
+  position: absolute;
+  color: white;
+  top: 20px;
+  right: 45px;
+  font-size: 60px; }
+  .overlay .closebtn:hover {
+    color: red;
+    text-decoration: none; }
+
 /* ==========================================================================
 Hide ng-cloak on page load, https://docs.angularjs.org/api/ng/directive/ngCloak
 ========================================================================== */

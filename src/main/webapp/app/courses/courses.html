@@ -1,4 +1,19 @@
 <div ng-cloak>
+
+    <div class="overlay" id="WelcomeOverlay">
+        <div class="row">
+            <a class="closebtn" ng-click="closeNav()">&times;</a>
+            <div class = "overlay-content">
+                <div class="col-md-8 col-md-offset-2 text-center">
+                    <h1 data-translate="home.title">Welcome, to ArTEMiS!</h1>
+                    <p class="lead" translate="home.subtitle">This is your first time on ArTEMiS, we offer you a guided tutorial</p>
+                    <button type="button" class="btn btn-primary" ng-click="">Ja</button>
+                    <button type="button" class="btn btn-primary" ng-click="closeNav()">Nein</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <jhi-alert></jhi-alert>
     <div ng-repeat="course in vm.courses track by course.id">
         <div class="panel panel-primary">

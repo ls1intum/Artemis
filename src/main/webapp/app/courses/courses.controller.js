@@ -14,6 +14,7 @@
         vm.filterByExerciseId = _.toInteger(_.get($state,"params.exerciseId"));
 
         loadAll();
+        openNav();
 
         function loadAll() {
             Course.query().$promise.then(function (courses) {
@@ -26,6 +27,18 @@
                     });
                 }
             });
+        }
+
+        /* Open */
+        function openNav() {
+            console.log("open");
+            document.getElementById("WelcomeOverlay").style.display = "block";
+        }
+
+        /* Close */
+        $scope.closeNav = function() {
+            console.log("closed");
+            document.getElementById("WelcomeOverlay").style.display = "none";
         }
     }
 })();
