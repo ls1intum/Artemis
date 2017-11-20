@@ -25,6 +25,7 @@
                 resolve: {
                     mainTranslatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                         $translatePartialLoader.addPart('global');
+                        $translatePartialLoader.addPart('showStatistic');
                         return $translate.refresh();
                     }]
                 }
@@ -45,6 +46,7 @@
                 resolve: {
                     mainTranslatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                         $translatePartialLoader.addPart('global');
+                        $translatePartialLoader.addPart('showStatistic');
                         return $translate.refresh();
                     }]
                 }
@@ -65,6 +67,7 @@
                 resolve: {
                     mainTranslatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                         $translatePartialLoader.addPart('global');
+                        $translatePartialLoader.addPart('showStatistic');
                         return $translate.refresh();
                     }]
                 }

@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowMultipleChoiceQuestionStatisticController', ShowMultipleChoiceQuestionStatisticController);
 
-    ShowMultipleChoiceQuestionStatisticController.$inject = [ '$rootScope','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'MultipleChoiceQuestion', 'MultipleChoiceQuestionStatistic'];
+    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate', '$rootScope','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'MultipleChoiceQuestion', 'MultipleChoiceQuestionStatistic'];
 
-    function ShowMultipleChoiceQuestionStatisticController ( rootScope, $scope, $state, Principal, JhiWebsocketService, QuizExercise, MultipleChoiceQuestion, MultipleChoiceQuestionStatistic) {
+    function ShowMultipleChoiceQuestionStatisticController ($translate, rootScope, $scope, $state, Principal, JhiWebsocketService, QuizExercise, MultipleChoiceQuestion, MultipleChoiceQuestionStatistic) {
 
         var vm = this;
 
@@ -28,8 +28,8 @@
         vm.previousStatistic = previousStatistic;
 
 
-        var showSolution = false;
-        var rated = true;
+        vm.showSolution = false;
+        vm.rated = true;
         vm.$onInit = init;
 
         function init(){
@@ -45,7 +45,14 @@
 
             $scope.$on('$destroy', function() {
                 JhiWebsocketService.unsubscribe(websocketChannel);
-            })
+            });
+
+            $translate('showStatistic.multipleChoiceQuestionStatistic.xAxes').then(function (xLabel){
+                window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+            });
+            $translate('showStatistic.multipleChoiceQuestionStatistic.yAxes').then(function (yLabel){
+                window.myChart.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+            });
         }
 
         function loadQuestion(quiz) {
@@ -100,12 +107,12 @@
             solutionLabel.push(["Richte", " Lösungen"]);
 
 
-            if (rated) {
+            if (vm.rated) {
                 vm.participants = vm.questionStatistic.participantsRated;
                 barChartData.participants = vm.questionStatistic.participantsRated;
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData.slice(0);
-                    if(showSolution){
+                    if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
                         //if(dataset.data.length == ratedData.length)
                             dataset.data.push(ratedCorrectData);
@@ -120,7 +127,7 @@
                 barChartData.participants = vm.questionStatistic.participantsRated;
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData.slice(0);
-                    if(showSolution){
+                    if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
                         //if(dataset.data.length == unratedData.length)
                         dataset.data.push(unratedCorrectData);
@@ -129,7 +136,7 @@
                     }
                 });
             }
-            if(showSolution){
+            if(vm.showSolution){
                 barChartData.labels = solutionLabel;
 
             }else{
@@ -140,10 +147,10 @@
         }
 
         function switchRated(){
-            if(rated) {
+            if(vm.rated) {
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData.slice(0);
-                    if(showSolution){
+                    if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
                         //if(dataset.data.length == unratedData.length)
                         dataset.data.push(unratedCorrectData);
@@ -151,16 +158,14 @@
                         dataset.backgroundColor = backgroundColor;
                     }
                 });
-                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Antworten";
-                document.getElementById("text").innerHTML = "Antwortenverteilung (unbewertet)";
                 vm.participants = vm.questionStatistic.participantsUnrated;
                 barChartData.participants = vm.questionStatistic.participantsUnrated;
-                rated = false;
+                vm.rated = false;
             }
             else{
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData.slice(0);
-                    if(showSolution){
+                    if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
                         //if(dataset.data.length == ratedData.length)
                         dataset.data.push(ratedCorrectData);
@@ -168,19 +173,17 @@
                         dataset.backgroundColor = backgroundColor;
                     }
                 });
-                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Antworten";
-                document.getElementById("text").innerHTML = "Antwortenverteilung (bewertet)";
                 vm.participants = vm.questionStatistic.participantsRated;
                 barChartData.participants = vm.questionStatistic.participantsRated;
-                rated = true;
+                vm.rated = true;
             }
             window.myChart.update();
         }
 
         function switchSolution(){
-            if(showSolution){
+            if(vm.showSolution){
                 barChartData.datasets.forEach(function (dataset) {
-                    if (rated) {
+                    if (vm.rated) {
                         dataset.data = ratedData.slice(0);
                     } else {
                         dataset.data = unratedData.slice(0);
@@ -188,12 +191,11 @@
                     dataset.backgroundColor = backgroundColor;
                 });
                 barChartData.labels = label;
-                showSolution = false;
-                document.getElementById("solutionButton").innerHTML = "<span class=\"glyphicon glyphicon-ok-circle\"></span>&nbsp;Zeige Lösung";
+                vm.showSolution = false;
             }
             else {
                 barChartData.datasets.forEach(function (dataset) {
-                    if (rated) {
+                    if (vm.rated) {
                         dataset.data = ratedData.slice(0);
                         //if(dataset.data.length == ratedData.length)
                         dataset.data.push(ratedCorrectData);
@@ -206,8 +208,7 @@
                     dataset.backgroundColor = backgroundSolutionColor;
                 });
                 barChartData.labels = solutionLabel;
-                showSolution = true;
-                document.getElementById("solutionButton").innerHTML = "<span class=\"glyphicon glyphicon-remove-circle\"></span>&nbsp;Verberge Lösung";
+                vm.showSolution = true;
             }
             window.myChart.update();
         }

@@ -7,15 +7,20 @@
 
 
             <div class="text-center">
-                <p class="text-left" style="font-size: large"><span>Maximalpunkte: {{vm.maxScore}}</span></p>
-                <div class="col-md-8 text-left"><p id="text" style="font-size: large">Punkteverteilung (bewertet)</p></div>
-                <div class="col-md-3 text-right"><p id="participants" style="font-size: large">{{vm.participants}} Teilnehmer</p></div>
+                <p class="text-left" style="font-size: large"><span data-translate="showStatistic.quizPointStatistic.maxScore"></span><span>{{vm.maxScore}}</span></p>
+                <div class="col-md-8 text-left"><p style="font-size: large">
+                    <span ng-show="vm.rated" data-translate="showStatistic.quizPointStatistic.titleRated"></span>
+                    <span ng-show="!vm.rated" data-translate="showStatistic.quizPointStatistic.titleUnrated"></span></p></div>
+                <div class="col-md-3 text-right"><p style="font-size: large"><span>{{vm.participants}} </span><span data-translate="showStatistic.participants"></span></p></div>
                 <canvas id="myChart"></canvas>
 
 
 
                 <div class="text-center">
-                    <button id="ratedButton" ng-click="vm.switchRated()" type="button" class="btn btn-primary"><span class="glyphicon glyphicon-refresh"></span>&nbsp;Zeige unbewertete Ergebnisse</button>
+                    <button ng-click="vm.switchRated()" type="button" class="btn btn-primary">
+                        <span class="glyphicon glyphicon-refresh"></span>&nbsp;
+                        <span ng-show="vm.rated" data-translate="showStatistic.switchToUnrated"></span>
+                        <span ng-show="!vm.rated" data-translate="showStatistic.switchToRated"></span></button>
                     <p>&nbsp</p>
                 </div>
             </div>
@@ -32,14 +37,14 @@
                             aria-expanded="false"
                             uib-dropdown-toggle
                         >
-                            <span class="hidden-xs hidden-sm">Choose Statistic</span>
+                            <span class="hidden-xs hidden-sm" data-translate="showStatistic.chooseStatistic"></span>
                             <span class="caret"></span>
                         </button>
                         <ul class="dropdown-menu">
                             <li><a ui-sref="quiz-point-statistic-chart({quizId: vm.quizExercise.id})"
-                            >Punkteverteilung</a></li>
+                                   data-translate="showStatistic.quizPointStatisticTitle"></a></li>
                             <li><a ui-sref="quiz-statistic-chart({quizId: vm.quizExercise.id})"
-                            >Quiz-Statistic</a></li>
+                                   data-translate="showStatistic.quizStatisticTitle"></a></li>
                             <li ng-repeat="question in vm.quizExercise.questions"><a ui-sref="multiple-choice-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
                             ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a></li>
                         </ul>
@@ -48,17 +53,19 @@
                 <div class="form-group">
                     <div class="btn-group flex-btn-group-container">
                         <button ng-click=vm.previousStatistic()
+                                data-translate="showStatistic.previousStatistic"
                             class="btn btn-default"
-                        >Previous Statistic</button>
+                        ></button>
                         <button ui-sref="quiz-statistic-chart({quizId: vm.quizExercise.id})"
+                                data-translate="showStatistic.nextStatistic"
                             class="btn btn-default"
-                        >Next Statistic</button>
+                        ></button>
                     </div>
                 </div>
                 <div class="form-group">
-                    <button
+                    <button data-translate="showStatistic.releaseStatistic"
                         class="btn btn-success"
-                    >Release Statistics</button>
+                    ></button>
                 </div>
             </div>
         </div>
@@ -77,7 +84,25 @@
             borderWidth: 0,
             participants: 0
         }]
-    }
+    };
+
+    var barScales = {
+        yAxes: [{
+            scaleLabel: {
+                labelString: "",
+                display: true
+            },
+            ticks: {
+                beginAtZero: true
+            }
+        }],
+        xAxes: [{
+            scaleLabel: {
+                labelString: "",
+                display: true
+            }
+        }]
+    };
 
 
     var ctx = document.getElementById("myChart").getContext('2d');
@@ -104,23 +129,7 @@
             tooltips: {
                 enabled: false
             },
-            scales: {
-                yAxes: [{
-                    scaleLabel: {
-                        labelString: 'Häufigkeit',
-                        display: true,
-                    },
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }],
-                xAxes: [{
-                    scaleLabel: {
-                        labelString: 'Punkte',
-                        display: true,
-                    },
-                }]
-            },
+            scales: barScales,
             hover: {animationDuration: 0},
             animation: {
                 duration: 500,

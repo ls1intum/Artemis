@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowQuizStatisticController', ShowQuizStatisticController);
 
-    ShowQuizStatisticController.$inject = [ '$rootScope','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise'];
+    ShowQuizStatisticController.$inject = ['$translate', '$rootScope','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise'];
 
-    function ShowQuizStatisticController ( rootScope, $scope, $state, Principal, JhiWebsocketService, QuizExercise) {
+    function ShowQuizStatisticController ($translate, rootScope, $scope, $state, Principal, JhiWebsocketService, QuizExercise) {
 
         var vm = this;
 
@@ -24,7 +24,7 @@
 
         var maxScore;
 
-        var rated = true;
+        vm.rated = true;
         vm.$onInit = init;
 
 
@@ -41,7 +41,14 @@
 
             $scope.$on('$destroy', function() {
                 JhiWebsocketService.unsubscribe(websocketChannel);
-            })
+            });
+
+            $translate('showStatistic.quizStatistic.xAxes').then(function (xLabel){
+                window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+            });
+            $translate('showStatistic.quizStatistic.yAxes').then(function (yLabel){
+                window.myChart.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+            });
         }
 
         function loadQuizSuccess(quiz){
@@ -85,7 +92,7 @@
 
             barChartData.labels = label;
 
-            if (rated) {
+            if (vm.rated) {
                 vm.participants = vm.quizExercise.quizPointStatistic.participantsRated;
                 barChartData.participants = vm.quizExercise.quizPointStatistic.participantsRated;
                 barChartData.datasets.forEach(function (dataset) {
@@ -105,25 +112,21 @@
         }
 
         function switchRated(){
-            if(rated) {
+            if(vm.rated) {
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData;
                 });
-                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Ergebnisse";
-                document.getElementById("text").innerHTML = "Durchschnitt der Fragen (unbewertet)";
                 vm.participants = vm.quizExercise.quizPointStatistic.participantsUnrated;
                 barChartData.participants = vm.quizExercise.quizPointStatistic.participantsUnrated;
-                rated = false;
+                vm.rated = false;
             }
             else{
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData;
                 });
-                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Ergebnisse";
-                document.getElementById("text").innerHTML = "Durchschnitt der Fragen (bewertet)";
                 vm.participants = vm.quizExercise.quizPointStatistic.participantsRated;
                 barChartData.participants = vm.quizExercise.quizPointStatistic.participantsRated;
-                rated = true;
+                vm.rated = true;
             }
             window.myChart.update();
         }

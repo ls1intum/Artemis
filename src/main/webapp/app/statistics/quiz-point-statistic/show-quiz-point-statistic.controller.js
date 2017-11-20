@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowQuizPointStatisticController', ShowQuizPointStatisticController);
 
-    ShowQuizPointStatisticController.$inject = ['$rootScope', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizPointStatistic', 'QuizExercise'];
+    ShowQuizPointStatisticController.$inject = ['$translate','$rootScope', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizPointStatistic', 'QuizExercise'];
 
-    function ShowQuizPointStatisticController(rootScope, $scope, $state, Principal, JhiWebsocketService, QuizPointStatistic, QuizExercise) {
+    function ShowQuizPointStatisticController($translate, rootScope, $scope, $state, Principal, JhiWebsocketService, QuizPointStatistic, QuizExercise) {
         var vm = this;
 
         // Variables for the chart:
@@ -19,7 +19,7 @@
         vm.switchRated = switchRated;
         vm.previousStatistic = previousStatistic;
 
-        var rated = true;
+        vm.rated = true;
         vm.$onInit = init;
 
 
@@ -36,8 +36,14 @@
 
             $scope.$on('$destroy', function() {
                 JhiWebsocketService.unsubscribe(websocketChannel);
-            })
+            });
 
+            $translate('showStatistic.quizPointStatistic.xAxes').then(function (xLabel){
+                window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+            });
+            $translate('showStatistic.quizPointStatistic.yAxes').then(function (yLabel){
+                window.myChart.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+            });
         }
 
         function loadNewData(statistic){
@@ -82,7 +88,7 @@
 
             barChartData.labels = label;
 
-            if (rated) {
+            if (vm.rated) {
                 vm.participants = vm.quizPointStatistic.participantsRated;
                 barChartData.participants = vm.quizPointStatistic.participantsRated;
                 barChartData.datasets.forEach(function (dataset) {
@@ -103,25 +109,23 @@
         }
 
         function switchRated(){
-            if(rated) {
+            if(vm.rated) {
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData;
                 });
-                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Ergebnisse";
-                document.getElementById("text").innerHTML = "Punkteverteilung (unbewertet)";
+                //document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Ergebnisse";
                 vm.participants = vm.quizPointStatistic.participantsUnrated;
                 barChartData.participants = vm.quizPointStatistic.participantsUnrated;
-                rated = false;
+                vm.rated = false;
             }
             else{
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData;
                 });
-                document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Ergebnisse";
-                document.getElementById("text").innerHTML = "Punkteverteilung (bewertet)";
+                //document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Ergebnisse";
                 vm.participants = vm.quizPointStatistic.participantsRated;
                 barChartData.participants = vm.quizPointStatistic.participantsRated;
-                rated = true;
+                vm.rated = true;
             }
             window.myChart.update();
         }
