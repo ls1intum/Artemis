@@ -18,7 +18,7 @@ import java.util.Set;
  * A DragAndDropQuestion.
  */
 @Entity
-@DiscriminatorValue(value="DD")
+@DiscriminatorValue(value = "DD")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeName("drag-and-drop")
 public class DragAndDropQuestion extends Question implements Serializable {
@@ -105,9 +105,13 @@ public class DragAndDropQuestion extends Question implements Serializable {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
-    public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
-        // TODO
-        return 0.0;
+    public ScoringStrategy getScoringStrategy() {
+        switch (getScoringType()) {
+            case ALL_OR_NOTHING:
+                return new ScoringStrategyAllOrNothing();
+            default:
+                throw new RuntimeException("Only Scoring Type ALL_OR_NOTHING is implemented yet!");
+        }
     }
 
     @Override

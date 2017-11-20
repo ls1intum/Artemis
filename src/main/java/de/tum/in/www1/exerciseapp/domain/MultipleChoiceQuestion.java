@@ -1,6 +1,5 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -15,16 +14,16 @@ import java.util.List;
  * A MultipleChoiceQuestion.
  */
 @Entity
-@DiscriminatorValue(value="MC")
+@DiscriminatorValue(value = "MC")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeName("multiple-choice")
 public class MultipleChoiceQuestion extends Question implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
-    @JoinColumn(name="question_id")
+    @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
@@ -57,15 +56,35 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
-    public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
-        // TODO
-        return 0.0;
+    public ScoringStrategy getScoringStrategy() {
+        switch (getScoringType()) {
+            case ALL_OR_NOTHING:
+                return new ScoringStrategyAllOrNothing();
+            default:
+                throw new RuntimeException("Only Scoring Type ALL_OR_NOTHING is implemented yet!");
+        }
     }
 
     @Override
     public boolean isAnswerPerfect(SubmittedAnswer submittedAnswer) {
-        // TODO
-        return false;
+        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+            MultipleChoiceSubmittedAnswer mcAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
+            for (AnswerOption answerOption : getAnswerOptions()) {
+                boolean isSelected = false;
+                for (AnswerOption selectedOption : mcAnswer.getSelectedOptions()) {
+                    if (selectedOption.getId().longValue() == answerOption.getId().longValue()) {
+                        isSelected = true;
+                        break;
+                    }
+                }
+                if (answerOption.isIsCorrect() ^ isSelected) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     @Override

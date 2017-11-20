@@ -216,12 +216,19 @@ public class QuizExercise extends Exercise implements Serializable {
 
     Long getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = 0.0;
-        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-            if (getQuestions().contains(submittedAnswer.getQuestion())) {
-                score += submittedAnswer.getQuestion().scoreForAnswer(submittedAnswer);
+        int maxScore = 0;
+        for (Question question : getQuestions()) {
+            maxScore += question.getScore();
+            // search for submitted answer for this question
+            for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+                if (question.getId().longValue() == submittedAnswer.getQuestion().getId().longValue()) {
+                    // add points for this submitted answer to the total
+                    score += question.scoreForAnswer(submittedAnswer);
+                    break;
+                }
             }
         }
-        return (long) score;
+        return Math.round(100.0 * score / maxScore);
     }
 
     @Override

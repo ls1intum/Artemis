@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.web.websocket;
 
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
@@ -63,7 +64,7 @@ public class QuizSubmissionService implements ApplicationListener<SessionDisconn
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
                 // only update if exercise hasn't ended already
-                if (exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                if (exercise.getDueDate().isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
                     quizSubmission = quizSubmissionRepository.save(quizSubmission);
 

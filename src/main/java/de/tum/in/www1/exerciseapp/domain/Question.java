@@ -17,17 +17,17 @@ import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
  */
 @Entity
 @Table(name = "question")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(
-    name="discriminator",
-    discriminatorType=DiscriminatorType.STRING
+    name = "discriminator",
+    discriminatorType = DiscriminatorType.STRING
 )
-@DiscriminatorValue(value="Q")
+@DiscriminatorValue(value = "Q")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-@JsonTypeInfo(use=JsonTypeInfo.Id.NAME, property="type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-    @JsonSubTypes.Type(value=MultipleChoiceQuestion.class, name="multiple-choice"),
-    @JsonSubTypes.Type(value=DragAndDropQuestion.class, name="drag-and-drop")
+    @JsonSubTypes.Type(value = MultipleChoiceQuestion.class, name = "multiple-choice"),
+    @JsonSubTypes.Type(value = DragAndDropQuestion.class, name = "drag-and-drop")
 })
 public abstract class Question implements Serializable {
 
@@ -175,7 +175,13 @@ public abstract class Question implements Serializable {
         this.exercise = quizExercise;
     }
 
-    abstract public double scoreForAnswer(SubmittedAnswer submittedAnswer);
+    @JsonIgnore
+    abstract public ScoringStrategy getScoringStrategy();
+
+    public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
+        return getScoringStrategy().calculateScore(this, submittedAnswer);
+    }
+
     abstract public boolean isAnswerPerfect(SubmittedAnswer submittedAnswer);
 
     @Override

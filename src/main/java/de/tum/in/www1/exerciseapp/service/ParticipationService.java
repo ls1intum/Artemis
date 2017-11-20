@@ -211,6 +211,7 @@ public class ParticipationService {
         log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
 
         // TODO: Valentin: Ask: Why are only participations with state INACTIVE or INITIALIZED considered?
+        // Answer: make it another method
 //        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
 //        if(!Optional.ofNullable(participation).isPresent()) {
 //            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);

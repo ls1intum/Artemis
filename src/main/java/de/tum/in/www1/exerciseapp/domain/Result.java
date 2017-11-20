@@ -201,7 +201,7 @@ public class Result implements Serializable {
     public void applyQuizSubmission(QuizSubmission quizSubmission) {
         QuizExercise quizExercise = (QuizExercise) getParticipation().getExercise();
         setScore(quizExercise.getScoreForSubmission(quizSubmission));
-        setSuccessful(true); // TODO: Valentin: ask: What does "successful" mean in this context?
+        setSuccessful(score == 100L);
     }
 
     @Override
