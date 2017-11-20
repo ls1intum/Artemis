@@ -63,9 +63,14 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <button data-translate="showStatistic.releaseStatistic"
-                        class="btn btn-success"
+                    <button ng-show="!vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(true);
+                            data-translate="showStatistic.releaseStatistic"
+                            class="btn btn-success"
                     ></button>
+                    <button ng-show="vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(false);
+                            data-translate="showStatistic.rereleaseStatistic"
+                            class="btn btn-danger"
+                ></button>
                 </div>
             </div>
         </div>

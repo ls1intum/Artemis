@@ -26,6 +26,7 @@
         vm.switchRated = switchRated;
         vm.nextStatistic = nextStatistic;
         vm.previousStatistic = previousStatistic;
+        vm.releaseStatistics = releaseStatistics;
 
 
         vm.showSolution = false;
@@ -236,6 +237,19 @@
                         $state.go('multiple-choice-question-statistic-chart', {quizId: vm.quizExercise.id, questionId: vm.quizExercise.questions[i+1].id});
                     }
                 }
+            }
+        }
+
+        function releaseStatistics(released){
+            if (released === vm.quizExercise.quizPointStatistic.released){
+                return;
+            }
+            if (vm.quizExercise.id) {
+                vm.quizExercise.quizPointStatistic.released = released;
+                for (var i = 0; i < vm.quizExercise.questions.length; i++){
+                    vm.quizExercise.questions[i].questionStatistic.released = released;
+                }
+                QuizExercise.update(vm.quizExercise);
             }
         }
 

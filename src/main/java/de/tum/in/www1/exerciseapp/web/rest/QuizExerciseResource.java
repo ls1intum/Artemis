@@ -88,7 +88,7 @@ public class QuizExerciseResource {
                 if (question instanceof MultipleChoiceQuestion) {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
                     MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
-                    //reconnect answerCounter
+                    //reconnect answerCounters
                     for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
                         if (answerCounter.getId() != null) {
                             answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
@@ -104,6 +104,7 @@ public class QuizExerciseResource {
             }
             // TODO: Valentin: do the same for dragItems and dropLocations (if question is drag and drop)
         }
+        //reconnect pointCounters
         for (PointCounter pointCounter: quizExercise.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getId() != null) {
                 pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
