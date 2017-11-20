@@ -210,12 +210,24 @@ public class ParticipationService {
     public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
         log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
 
-        // TODO: Valentin: Ask: Why are only participations with state INACTIVE or INITIALIZED considered?
-        // Answer: make it another method
-//        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
-//        if(!Optional.ofNullable(participation).isPresent()) {
-//            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
-//        }
+        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
+        if(!Optional.ofNullable(participation).isPresent()) {
+            participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
+        }
+        return participation;
+    }
+
+    /**
+     * Get one participation (in any state) by its student and exercise.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param username   the username of the student
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneByExerciseAndStudentLoginAnyState(Long exerciseId, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
+
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username);
         return participation;
     }

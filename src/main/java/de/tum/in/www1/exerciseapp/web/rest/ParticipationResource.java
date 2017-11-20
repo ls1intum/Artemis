@@ -283,7 +283,13 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
-        Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        Participation participation;
+        if (exercise instanceof QuizExercise) {
+            participation = participationService.findOneByExerciseAndStudentLoginAnyState(exerciseId, principal.getName());
+        } else {
+            participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        }
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(result, HttpStatus.OK))
             .orElse(new ResponseEntity<>(HttpStatus.NO_CONTENT));
