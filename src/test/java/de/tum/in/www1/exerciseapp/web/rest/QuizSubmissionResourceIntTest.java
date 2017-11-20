@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -68,6 +69,9 @@ public class QuizSubmissionResourceIntTest {
     @Autowired
     private EntityManager em;
 
+    @Autowired
+    private SimpMessageSendingOperations messageTemplate;
+
     private MockMvc restQuizSubmissionMockMvc;
 
     private QuizSubmission quizSubmission;
@@ -75,7 +79,7 @@ public class QuizSubmissionResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final QuizSubmissionResource quizSubmissionResource = new QuizSubmissionResource(quizSubmissionRepository, quizExerciseRepository, resultRepository, participationService, userService);
+        final QuizSubmissionResource quizSubmissionResource = new QuizSubmissionResource(quizSubmissionRepository, quizExerciseRepository, resultRepository, participationService, userService, messageTemplate);
         this.restQuizSubmissionMockMvc = MockMvcBuilders.standaloneSetup(quizSubmissionResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)

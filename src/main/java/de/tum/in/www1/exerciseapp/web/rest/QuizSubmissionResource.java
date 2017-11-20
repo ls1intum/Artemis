@@ -13,6 +13,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -41,13 +42,20 @@ public class QuizSubmissionResource {
     private final ResultRepository resultRepository;
     private final ParticipationService participationService;
     private final UserService userService;
+    private final SimpMessageSendingOperations messagingTemplate;
 
-    public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository, QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, ParticipationService participationService, UserService userService) {
+    public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository,
+                                  QuizExerciseRepository quizExerciseRepository,
+                                  ResultRepository resultRepository,
+                                  ParticipationService participationService,
+                                  UserService userService,
+                                  SimpMessageSendingOperations messagingTemplate) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.userService = userService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -91,7 +99,7 @@ public class QuizSubmissionResource {
                             @Override
                             public void run() {
                                 Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-                                if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                                if (participation != null && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                                     // update participation state => no further submissions allowed
                                     participation.setInitializationState(ParticipationState.FINISHED);
                                     Participation savedParticipation = participationService.save(participation);
@@ -102,6 +110,8 @@ public class QuizSubmissionResource {
                                         result.applyQuizSubmission((QuizSubmission) result.getSubmission());
                                         // save result
                                         resultRepository.save(result);
+                                        // notify user via websocket
+                                        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                                     }
                                 }
                             }
@@ -190,6 +200,8 @@ public class QuizSubmissionResource {
                     result.applyQuizSubmission(quizSubmission);
                     // save result
                     resultRepository.save(result);
+                    // notify user via websocket
+                    messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                     // add date to submission for response
                     quizSubmission.setSubmissionDate(result.getCompletionDate());
                     // send response

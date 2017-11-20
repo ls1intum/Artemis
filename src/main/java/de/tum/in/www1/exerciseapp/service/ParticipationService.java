@@ -65,7 +65,7 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (!Optional.ofNullable(participation).isPresent() || participation.getInitializationState() == ParticipationState.FINISHED) { //create a new participation only if it was finished before
+        if (!Optional.ofNullable(participation).isPresent() || (!(exercise instanceof QuizExercise) && participation.getInitializationState() == ParticipationState.FINISHED)) { //create a new participation only if it was finished before (not for quiz exercise)
             participation = new Participation();
             participation.setExercise(exercise);
 
@@ -88,7 +88,9 @@ public class ParticipationService {
             participation.setInitializationState(ParticipationState.INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise) {
-            participation.setInitializationState(ParticipationState.INITIALIZED);
+            if (participation.getInitializationState() == null) {
+                participation.setInitializationState(ParticipationState.INITIALIZED);
+            }
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
@@ -225,7 +227,7 @@ public class ParticipationService {
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Participation findOneByExerciseAndStudentLoginAnyState(Long exerciseId, String username) {
+    public Participation findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
         log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
 
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username);

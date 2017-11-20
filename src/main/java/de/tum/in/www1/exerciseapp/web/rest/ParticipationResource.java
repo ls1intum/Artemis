@@ -286,7 +286,7 @@ public class ParticipationResource {
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation;
         if (exercise instanceof QuizExercise) {
-            participation = participationService.findOneByExerciseAndStudentLoginAnyState(exerciseId, principal.getName());
+            participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
         } else {
             participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
         }
