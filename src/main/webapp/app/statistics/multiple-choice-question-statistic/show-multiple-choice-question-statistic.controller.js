@@ -65,6 +65,34 @@
             vm.question = question;
             vm.questionStatistic = vm.question.questionStatistic;
             loadData();
+            $translate('showStatistic.quizStatistic.yAxes').then(function (lastLabel){
+                solutionLabel.push(lastLabel);
+                label.push(lastLabel);
+                window.myChart.update();
+            });
+
+            $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel){
+                for(var i = 0; i < vm.question.answerOptions.length; i++) {
+                    if (vm.question.answerOptions[i].isCorrect) {
+                        backgroundSolutionColor[i] = ("#5cb85c");
+                        console.log(String.fromCharCode(65 + i));
+                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + correctLabel + ")"]);
+                    }
+                }
+                window.myChart.update();
+            });
+            $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel){
+                for(var i = 0; i < vm.question.answerOptions.length; i++) {
+                    if (!vm.question.answerOptions[i].isCorrect) {
+                        backgroundSolutionColor[i] = ("#d9534f");
+                        console.log(String.fromCharCode(65 + i));
+                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + incorrectLabel + ")"]);
+                    }
+                }
+                window.myChart.update();
+            });
+
+
         }
 
         function loadNewData(statistic){
@@ -75,37 +103,27 @@
 
         function loadData() {
 
-            label = [];
+            label = new Array(vm.question.answerOptions.length);
             backgroundColor = [];
-            backgroundSolutionColor = [];
+            backgroundSolutionColor = new Array(vm.question.answerOptions.length);
             ratedData = [];
             unratedData = [];
-            solutionLabel = [];
+            solutionLabel = new Array(vm.question.answerOptions.length);
 
             for(var i = 0; i < vm.question.answerOptions.length; i++){
-                label.push(String.fromCharCode(65 + i));
+                label[i] = (String.fromCharCode(65 + i));
                 backgroundColor.push("#428bca");
                 for(var j = 0; j < vm.questionStatistic.answerCounters.length; j++){
                     if (vm.question.answerOptions[i].id === (vm.questionStatistic.answerCounters[j].answer.id)){
                         ratedData.push(vm.questionStatistic.answerCounters[j].ratedCounter);
                         unratedData.push(vm.questionStatistic.answerCounters[j].unRatedCounter);
-                        if(vm.questionStatistic.answerCounters[j].answer.isCorrect){
-                            backgroundSolutionColor.push("#5cb85c");
-                            solutionLabel.push([label[i]," (richtig)"]);
-                        }else{
-                            backgroundSolutionColor.push("#d9534f");
-                            solutionLabel.push([label[i]," (falsch)"]);
-                        }
                     }
                 }
             }
-
-            label.push(["Richte", " Lösungen"]);
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;
             unratedCorrectData = vm.questionStatistic.unRatedCorrectCounter;
             backgroundColor.push("#5bc0de");
-            backgroundSolutionColor.push("#5bc0de");
-            solutionLabel.push(["Richte", " Lösungen"]);
+            backgroundSolutionColor[vm.question.answerOptions.length] = ("#5bc0de");
 
 
             if (vm.rated) {
@@ -115,7 +133,6 @@
                     dataset.data = ratedData.slice(0);
                     if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
-                        //if(dataset.data.length == ratedData.length)
                             dataset.data.push(ratedCorrectData);
 
                     }else{
@@ -130,7 +147,6 @@
                     dataset.data = unratedData.slice(0);
                     if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
-                        //if(dataset.data.length == unratedData.length)
                         dataset.data.push(unratedCorrectData);
                     }else{
                         dataset.backgroundColor = backgroundColor;
@@ -153,7 +169,6 @@
                     dataset.data = unratedData.slice(0);
                     if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
-                        //if(dataset.data.length == unratedData.length)
                         dataset.data.push(unratedCorrectData);
                     }else{
                         dataset.backgroundColor = backgroundColor;
@@ -168,7 +183,6 @@
                     dataset.data = ratedData.slice(0);
                     if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
-                        //if(dataset.data.length == ratedData.length)
                         dataset.data.push(ratedCorrectData);
                     }else{
                         dataset.backgroundColor = backgroundColor;
@@ -198,12 +212,10 @@
                 barChartData.datasets.forEach(function (dataset) {
                     if (vm.rated) {
                         dataset.data = ratedData.slice(0);
-                        //if(dataset.data.length == ratedData.length)
                         dataset.data.push(ratedCorrectData);
                     }
                     else {
                         dataset.data = unratedData.slice(0);
-                        //if(dataset.data.length == unratedData.length)
                         dataset.data.push(unratedCorrectData);
                     }
                     dataset.backgroundColor = backgroundSolutionColor;

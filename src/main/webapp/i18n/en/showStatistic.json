@@ -20,6 +20,7 @@
             "yAxes": "Amount"
         },
         "quizStatistic": {
+            "average": "Average",
             "titleRated": "Quiz-Statistic (rated)",
             "titleUnrated": "Quiz-Statistic (unrated)",
             "xAxes": "Questions",
@@ -29,7 +30,9 @@
             "titleRated": "Answer-Distribution (rated)",
             "titleUnrated": "Answer-Distribution (unrated)",
             "xAxes": "Answers",
-            "yAxes": "Amount"
+            "yAxes": "Amount",
+            "correct": "correct",
+            "incorrect": "incorrect"
         }
     }
 }

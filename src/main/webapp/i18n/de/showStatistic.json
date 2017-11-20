@@ -20,6 +20,7 @@
           "yAxes": "Häufigkeit"
       },
       "quizStatistic": {
+          "average": "Durchschnitt",
           "titleRated": "Quiz-Statistik (bewertet)",
           "titleUnrated": "Quiz-Statistik (unbewertet)",
           "xAxes": "Fragen",
@@ -29,7 +30,9 @@
           "titleRated": "Antwortenverteilung (bewertet)",
           "titleUnrated": "Antwortenverteilung (unbewertet)",
           "xAxes": "Antworten",
-          "yAxes": "Häufigkeit"
+          "yAxes": "Häufigkeit",
+          "correct": "richitg",
+          "incorrect": "falsch"
       }
   }
 }

@@ -56,6 +56,10 @@
             vm.quizExercise = quiz;
             maxScore = calculateMaxScore();
             loadData();
+            $translate('showStatistic.quizStatistic.average').then(function (lastLabel){
+                label.push(lastLabel);
+                window.myChart.update();
+            });
         }
 
         function calculateMaxScore(){
@@ -86,7 +90,6 @@
                 unratedAverage = unratedAverage + (vm.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * vm.quizExercise.questions[i].score);
             }
 
-            label.push("Durchschnitt");
             backgroundColor.push("#1e3368");
             ratedData.push(ratedAverage / maxScore);
             unratedData.push(unratedAverage / maxScore);
