@@ -42,7 +42,7 @@ public class QuizSubmissionService implements ApplicationListener<SessionDisconn
     }
 
     @SubscribeMapping("/topic/quizSubmissions/{submissionId}/save")
-    public void sendActivity(@Payload QuizSubmission quizSubmission, Principal principal) {
+    public void sendSubmission(@Payload QuizSubmission quizSubmission, Principal principal) {
         log.debug("Received Submission over Websocket: {}", quizSubmission);
 
         // recreate pointers back to submission in each submitted answer
@@ -64,7 +64,7 @@ public class QuizSubmissionService implements ApplicationListener<SessionDisconn
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
                 // only update if exercise hasn't ended already
-                if (exercise.getDueDate().isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                if (exercise.getDueDate().plusSeconds(3).isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
                     quizSubmission = quizSubmissionRepository.save(quizSubmission);
 

@@ -21,9 +21,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalUnit;
+import java.util.*;
 
 /**
  * REST controller for managing QuizSubmission.
@@ -74,18 +74,45 @@ public class QuizSubmissionResource {
             User user = userService.getUserWithGroupsAndAuthorities();
             // check if user is allowed to take part in this exercise
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
-                Participation participation = participationService.init(quizExercise, principal.getName());
-                Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
-                if (result == null) {
-                    // no result exists yet => create a new one
-                    QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
-                    newSubmission = quizSubmissionRepository.save(newSubmission);
-                    result = new Result().participation(participation).submission(newSubmission);
-                    result = resultRepository.save(result);
+                // check if exercise hasn't ended yet
+                if (quizExercise.getRemainingTime() > 0) {
+                    Participation participation = participationService.init(quizExercise, principal.getName());
+                    Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
+                    if (result == null) {
+                        // no result exists yet => create a new one
+                        QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
+                        newSubmission = quizSubmissionRepository.save(newSubmission);
+                        result = new Result().participation(participation).submission(newSubmission);
+                        result = resultRepository.save(result);
+
+                        // create timer to score this submission when exercise times out.
+                        Timer timer = new Timer();
+                        timer.schedule(new TimerTask() {
+                            @Override
+                            public void run() {
+                                Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+                                if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                                    // update participation state => no further submissions allowed
+                                    participation.setInitializationState(ParticipationState.FINISHED);
+                                    Participation savedParticipation = participationService.save(participation);
+                                    Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
+                                    if (result != null) {
+                                        result.setParticipation(savedParticipation);
+                                        // calculate score and update result accordingly
+                                        result.applyQuizSubmission((QuizSubmission) result.getSubmission());
+                                        // save result
+                                        resultRepository.save(result);
+                                    }
+                                }
+                            }
+                        }, ZonedDateTime.now().until(quizExercise.getDueDate().plusSeconds(3), ChronoUnit.MILLIS));
+                    }
+                    QuizSubmission submission = (QuizSubmission) result.getSubmission();
+                    submission.setSubmissionDate(result.getCompletionDate());
+                    return ResponseEntity.ok(submission);
+                } else {
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "This exercise has already ended")).body(null);
                 }
-                QuizSubmission submission = (QuizSubmission) result.getSubmission();
-                submission.setSubmissionDate(result.getCompletionDate());
-                return ResponseEntity.ok(submission);
             } else {
                 return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "You are not part of the students group for this course")).body(null);
             }
@@ -150,14 +177,13 @@ public class QuizSubmissionResource {
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
                 // only update if quizExercise hasn't ended and user hasn't made final submission yet
-                if (quizExercise.getDueDate().isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                if (quizExercise.getDueDate().plusSeconds(3).isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
                     quizSubmission = quizSubmissionRepository.save(quizSubmission);
                     // update completion date (which also functions as submission date for now)
                     result.setCompletionDate(ZonedDateTime.now());
                     // update participation state => no further submissions allowed
                     participation.setInitializationState(ParticipationState.FINISHED);
-                    log.debug("Participation Results: {}", participation.getResults());
                     participation = participationService.save(participation);
                     result.setParticipation(participation);
                     // calculate score and update result accordingly
