@@ -66,23 +66,30 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     }
 
     @Override
-    public boolean isAnswerPerfect(SubmittedAnswer submittedAnswer) {
+    public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
             MultipleChoiceSubmittedAnswer mcAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
+            // iterate through each answer option and compare its correctness with the answer's selection
             for (AnswerOption answerOption : getAnswerOptions()) {
                 boolean isSelected = false;
+                // search for this answer option in the selected answer options
                 for (AnswerOption selectedOption : mcAnswer.getSelectedOptions()) {
                     if (selectedOption.getId().longValue() == answerOption.getId().longValue()) {
+                        // this answer option is selected => we can stop searching
                         isSelected = true;
                         break;
                     }
                 }
-                if (answerOption.isIsCorrect() ^ isSelected) {
+                // if the user was wrong about this answer option, the entire answer can no longer be 100% correct
+                // being wrong means either a correct option is not selected, or an incorrect option is selected
+                if ((answerOption.isIsCorrect() && !isSelected) || (!answerOption.isIsCorrect() && isSelected)) {
                     return false;
                 }
             }
+            // the user wasn't wrong about a single answer option => the answer is 100% correct
             return true;
         } else {
+            // the submitted answer's type doesn't fit the question's type => it cannot be correct
             return false;
         }
     }

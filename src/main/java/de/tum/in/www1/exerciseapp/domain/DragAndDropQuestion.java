@@ -115,7 +115,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
     }
 
     @Override
-    public boolean isAnswerPerfect(SubmittedAnswer submittedAnswer) {
+    public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
         // TODO
         return false;
     }

@@ -182,7 +182,12 @@ public abstract class Question implements Serializable {
         return getScoringStrategy().calculateScore(this, submittedAnswer);
     }
 
-    abstract public boolean isAnswerPerfect(SubmittedAnswer submittedAnswer);
+    /**
+     * Checks if the given answer is 100 % correct. This is independent of the scoring type
+     * @param submittedAnswer The answer given for this question
+     * @return true, if the answer is 100% correct, false otherwise
+     */
+    abstract public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer);
 
     @Override
     public boolean equals(Object o) {
