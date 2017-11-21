@@ -10,6 +10,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -47,5 +48,17 @@ public class FeedbackService {
             return continuousIntegrationService.get().getLatestBuildResultDetails(result);
         }
         return result.getFeedbacks();
+    }
+
+    /**
+     * Save a feedback.
+     *
+     * @param feedback the entity to save
+     * @return the persisted entity
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public Feedback save(Feedback feedback) {
+        log.debug("Request to save Feedback : {}", feedback);
+        return feedbackRepository.saveAndFlush(feedback);
     }
 }
