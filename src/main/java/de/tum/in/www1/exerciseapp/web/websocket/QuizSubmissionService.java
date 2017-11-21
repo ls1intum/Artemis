@@ -27,8 +27,7 @@ import java.util.Optional;
 import static de.tum.in.www1.exerciseapp.config.WebsocketConfiguration.IP_ADDRESS;
 
 @Controller
-public class QuizSubmissionService implements ApplicationListener<SessionDisconnectEvent> {
-
+public class QuizSubmissionService {
     private static final Logger log = LoggerFactory.getLogger(QuizSubmissionService.class);
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -85,10 +84,5 @@ public class QuizSubmissionService implements ApplicationListener<SessionDisconn
                 messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(), quizSubmission);
             }
         }
-    }
-
-    @Override
-    public void onApplicationEvent(SessionDisconnectEvent event) {
-        // TODO
     }
 }

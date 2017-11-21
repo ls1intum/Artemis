@@ -62,7 +62,6 @@ public class QuizSubmissionResource {
      * GET  /courses/{courseId}/exercises/{exerciseId}/submissions/my-latest : Get the latest quizSubmission for the given course.
      * This endpoint is used when a user starts or resumes a quiz exercise, so that they can get the latest submission for that quiz exercise.
      * If no submission exists yet, a participation, result, and submission are created so that the user can use PUT with the given submission id to submit.
-     * TODO: As we decided to change the logic of when a result is created, it might be better to change this workflow as well.
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to init a participation
