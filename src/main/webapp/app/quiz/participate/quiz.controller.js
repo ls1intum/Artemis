@@ -87,23 +87,39 @@
         }
 
         /**
-         * applies the data from the model to the UI (reverse of applySelection)
+         * applies the data from the model to the UI (reverse of applySelection):
+         *
+         * Sets the checkmarks (selected answers) for all questions according to the submission data
+         * this needs to be done when we get new submission data, e.g. through the websocket connection
          */
         function applySubmission() {
+            // create a dictionary (key: questionID, value: Array of selected answerOptions)
+            // for the submittedAnswers to hand the selected options in individual arrays to the question components
             vm.selectedAnswerOptions = {};
+            // iterate through all questions of this quiz
             vm.quizExercise.questions.forEach(function (question) {
+                // find the submitted answer that belongs to this question
                 var submittedAnswer = vm.submission.submittedAnswers.find(function (submittedAnswer) {
                     return submittedAnswer.question.id === question.id;
                 });
+                // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                 vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
             });
         }
 
         /**
-         * updates the model according to UI state (reverse of applySubmission)
+         * updates the model according to UI state (reverse of applySubmission):
+         *
+         * Creates the submission from the user's selection
+         * this needs to be done when we want to send the submission
+         * either for saving (through websocket)
+         * or for submitting (through REST call)
          */
         function applySelection() {
+            // convert the selection dictionary (key: questionID, value: Array of selected answerOptions)
+            // into an array of submittedAnswer objects and save it as the submittedAnswers of the submission
             vm.submission.submittedAnswers = Object.keys(vm.selectedAnswerOptions).map(function (questionID) {
+                // find the question object for the given question id
                 var question = vm.quizExercise.questions.find(function (question) {
                     return question.id === Number(questionID);
                 });
@@ -111,6 +127,7 @@
                     console.error("question not found for ID: " + questionID);
                     return null;
                 }
+                // generate the submittedAnswer object
                 return {
                     question: question,
                     selectedOptions: vm.selectedAnswerOptions[questionID],
