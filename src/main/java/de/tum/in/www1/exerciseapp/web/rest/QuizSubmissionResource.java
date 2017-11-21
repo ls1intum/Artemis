@@ -96,20 +96,22 @@ public class QuizSubmissionResource {
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {
-                            Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+                            Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
                             if (participation != null) {
+                                Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
                                 if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
                                     // update participation state => no further submissions allowed
                                     participation.setInitializationState(ParticipationState.FINISHED);
                                     participation = participationService.save(participation);
+                                    if (result != null) {
+                                        result.setParticipation(participation);
+                                        // calculate score and update result accordingly
+                                        result.applyQuizSubmission((QuizSubmission) result.getSubmission());
+                                        // save result
+                                        result = resultRepository.save(result);
+                                    }
                                 }
-                                Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
                                 if (result != null) {
-                                    result.setParticipation(participation);
-                                    // calculate score and update result accordingly
-                                    result.applyQuizSubmission((QuizSubmission) result.getSubmission());
-                                    // save result
-                                    resultRepository.save(result);
                                     // notify user via websocket
                                     messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                                 }
