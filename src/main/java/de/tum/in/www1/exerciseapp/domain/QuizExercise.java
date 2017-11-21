@@ -214,10 +214,17 @@ public class QuizExercise extends Exercise implements Serializable {
         return isVisibleBeforeStart || (isPlannedToStart && releaseDate.isBefore(ZonedDateTime.now()));
     }
 
-    Long getScoreForSubmission(QuizSubmission quizSubmission) {
+    /**
+     * Get the score for this submission as a number from 0 to 100 (100 being the best possible result)
+     * @param quizSubmission the submission that should be evaluated
+     * @return the resulting score
+     */
+    public Long getScoreForSubmission(QuizSubmission quizSubmission) {
         double score = 0.0;
         int maxScore = 0;
+        // iterate through all questions of this quiz
         for (Question question : getQuestions()) {
+            // add this question's maxScore to the maxScore of the entire quiz
             maxScore += question.getScore();
             // search for submitted answer for this question
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
@@ -226,8 +233,11 @@ public class QuizExercise extends Exercise implements Serializable {
                     score += question.scoreForAnswer(submittedAnswer);
                     break;
                 }
+                // if there is no submitted answer for this question in the submission,
+                // the resulting score is 0 (i.e. nothing gets added to the score)
             }
         }
+        // map the resulting score to the 0 to 100 scale
         return Math.round(100.0 * score / maxScore);
     }
 
