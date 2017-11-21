@@ -8,6 +8,8 @@ import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
+
 /**
  * A Submission.
  */
@@ -28,6 +30,13 @@ public abstract class Submission implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "submitted")
+    private Boolean submitted;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "jhi_type")
+    private SubmissionType type;
+
     @Transient
     // variable name must be different from Getter name,
     // so that Jackson ignores the @Transient annotation,
@@ -42,7 +51,6 @@ public abstract class Submission implements Serializable {
         submissionDateTransient = submissionDate;
     }
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -50,7 +58,32 @@ public abstract class Submission implements Serializable {
     public void setId(Long id) {
         this.id = id;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    public Boolean isSubmitted() {
+        return submitted;
+    }
+
+    public Submission submitted(Boolean submitted) {
+        this.submitted = submitted;
+        return this;
+    }
+
+    public void setSubmitted(Boolean submitted) {
+        this.submitted = submitted;
+    }
+
+    public SubmissionType getType() {
+        return type;
+    }
+
+    public Submission type(SubmissionType type) {
+        this.type = type;
+        return this;
+    }
+
+    public void setType(SubmissionType type) {
+        this.type = type;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -76,6 +109,8 @@ public abstract class Submission implements Serializable {
     public String toString() {
         return "Submission{" +
             "id=" + getId() +
+            ", submitted='" + isSubmitted() + "'" +
+            ", type='" + getType() + "'" +
             "}";
     }
 }

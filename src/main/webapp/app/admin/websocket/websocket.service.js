@@ -20,11 +20,15 @@
             disconnect: disconnect,
             receive: receive,
             sendActivity: sendActivity,
+            send: send,
             subscribe: subscribe,
             unsubscribe: unsubscribe
         };
 
         return service;
+
+        // TODO: Valentin: Implement automatic reconnection attempts when connection is lost
+        // TODO: Valentin: Implement callbacks for both "connection lost" and "reconnected" events
 
         function connect () {
             //building absolute path so that websocket doesn't fail when deploying with a context path
@@ -72,6 +76,20 @@
                     .send('/topic/activity',
                         {},
                         angular.toJson({'page': $rootScope.toState.name}));
+            }
+        }
+
+        /**
+         * Send data through the websocket connection
+         * @param path {string} the path for the websocket connection
+         * @param data {object} the date to send through the websocket connection
+         */
+        function send(path, data) {
+            if (stompClient !== null && stompClient.connected) {
+                stompClient
+                    .send(path,
+                        {},
+                        angular.toJson(data));
             }
         }
 
