@@ -203,7 +203,9 @@ public class ExerciseResource {
             if (exercise instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) exercise;
                 quizExercise.setQuestions(null);
-                quizExercise.setQuizPointStatistic(null);
+                quizExercise.getQuizPointStatistic().setPointCounters(null);
+                quizExercise.getQuizPointStatistic().setParticipantsRated(null);
+                quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
             }
         }
 

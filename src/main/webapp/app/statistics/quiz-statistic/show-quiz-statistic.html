@@ -71,11 +71,11 @@
             </div>
             <div class="form-group">
                 <button ng-show="!vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(true);
-                        data-translate="showStatistic.releaseStatistic"
+                        data-translate="showStatistic.releaseStatistic" has-any-authority="ROLE_ADMIN, ROLE_TA"
                         class="btn btn-success"
                 ></button>
                 <button ng-show="vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(false);
-                        data-translate="showStatistic.rereleaseStatistic"
+                        data-translate="showStatistic.rereleaseStatistic" has-any-authority="ROLE_ADMIN, ROLE_TA"
                         class="btn btn-danger"
                 ></button>
             </div>

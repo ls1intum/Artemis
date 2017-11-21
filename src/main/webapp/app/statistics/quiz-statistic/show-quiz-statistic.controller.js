@@ -52,6 +52,8 @@
             });
         }
 
+        // This functions loads the Quiz, which is necessary to build the Web-Template.
+        // And it loads the new Data if the Websocket has been notified
         function loadQuizSuccess(quiz){
             vm.quizExercise = quiz;
             maxScore = calculateMaxScore();
@@ -72,6 +74,7 @@
             return result;
         }
 
+        // load the Data from the Json-entity to the chart: myChart
         function loadData() {
 
             label = [];
@@ -81,6 +84,7 @@
             ratedAverage = 0;
             unratedAverage = 0;
 
+            //set data based on the CorrectCounters in the QuestionStatistics
             for(var i = 0; i < vm.quizExercise.questions.length; i++){
                 label.push(i + 1);
                 backgroundColor.push("#5bc0de");
@@ -90,12 +94,15 @@
                 unratedAverage = unratedAverage + (vm.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * vm.quizExercise.questions[i].score);
             }
 
+            //add data for the last bar (Average)
             backgroundColor.push("#1e3368");
             ratedData.push(ratedAverage / maxScore);
             unratedData.push(unratedAverage / maxScore);
 
             barChartData.labels = label;
 
+            // load data into the chart
+            // if vm.rated == true  -> load the rated data, else: load the unrated data
             if (vm.rated) {
                 vm.participants = vm.quizExercise.quizPointStatistic.participantsRated;
                 barChartData.participants = vm.quizExercise.quizPointStatistic.participantsRated;
@@ -115,6 +122,7 @@
             window.myChart.update();
         }
 
+        // switch between the rated and the unrated Results
         function switchRated(){
             if(vm.rated) {
                 barChartData.datasets.forEach(function (dataset) {
@@ -135,6 +143,8 @@
             window.myChart.update();
         }
 
+        // got to the Template with the next Statistic -> the first QuestionStatistic
+        // if there is no QuestionStatistic -> go to QuizPointStatistic
         function nextStatistic() {
             if(vm.quizExercise.questions === null || vm.quizExercise.questions.length === 0){
                 $state.go('quiz-point-statistic-chart',{quizId: vm.quizExercise.id});
@@ -144,6 +154,8 @@
             }
         }
 
+        //if released == true: releases all Statistics of the Quiz and saves it via REST-PUT
+        //else:                 revoke all Statistics
         function releaseStatistics(released){
             if (released === vm.quizExercise.quizPointStatistic.released){
                 return;

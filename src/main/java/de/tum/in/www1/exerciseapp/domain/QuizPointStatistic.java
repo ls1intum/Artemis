@@ -15,15 +15,12 @@ import java.util.HashSet;
  */
 @Entity
 @DiscriminatorValue(value="QP")
-//@Table(name = "quiz_point_statistic")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class QuizPointStatistic extends Statistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
 
     @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true, mappedBy = "quizPointStatistic")
-   // @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<PointCounter> pointCounters = new HashSet<>();
 
@@ -95,6 +92,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             "id=" + getId() +
             "}";
     }
+    // add new Score
     public void addScore(Double score){
 
         if(score ==null){
@@ -111,7 +109,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
         addPointCounters(pointCounter);
 
     }
-
+    // add new Result
     public void addResult(Long score, boolean rated){
 
         if(score == null){

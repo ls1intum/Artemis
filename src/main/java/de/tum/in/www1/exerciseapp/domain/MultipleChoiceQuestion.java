@@ -67,8 +67,9 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
         MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
-
         this.answerOptions = answerOptions;
+
+        //add the AnswerCounters
         for (AnswerOption answerOption : getAnswerOptions()) {
             ((MultipleChoiceQuestionStatistic)getQuestionStatistic()).addAnswerOption(answerOption);
         }

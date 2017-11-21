@@ -13,7 +13,6 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="AC")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class AnswerCounter extends StatisticCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -24,7 +23,6 @@ public class AnswerCounter extends StatisticCounter implements Serializable {
 
     @OneToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(unique = true)
-    //@JsonIgnore
     private AnswerOption answer;
 
 

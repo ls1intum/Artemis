@@ -16,7 +16,6 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="MC")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeName("multiple-choice")
 public class MultipleChoiceQuestionStatistic extends QuestionStatistic implements Serializable {
 
@@ -24,7 +23,6 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
 
 
     @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true, mappedBy = "multipleChoiceQuestionStatistic")
-    //@JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerCounter> answerCounters = new HashSet<>();
 
@@ -80,6 +78,8 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
             "id=" + getId() +
             "}";
     }
+    //creates the AnswerCounter for the new AnswerOption
+    //      if where is already an AnswerCounter with the given answerOption -> nothing happens
     public void addAnswerOption(AnswerOption answer){
 
         if(answer ==null){
@@ -98,6 +98,7 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
     }
 
     @Override
+    //adds new Result to the MultipleChoiceQuestionStatistic
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated){
 
         if(submittedAnswer == null){

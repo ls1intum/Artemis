@@ -83,10 +83,10 @@
             </div>
                 <button type="submit"
                         class="btn btn-success btn-sm"
-                        ng-show="exercise.type ==='quiz'"
+                        ng-if="exercise.type ==='quiz' && exercise.quizPointStatistic.released == 1"
                         ui-sref="quiz-point-statistic-chart({quizId: exercise.id})">
                     <span class="fa fa-signal"></span>
-                    <span class="hidden-sm-down">Statistic</span>
+                    <span class="hidden-sm-down" data-translate="global.menu.entities.statistic"></span>
                 </button>
             </div>
         </td>

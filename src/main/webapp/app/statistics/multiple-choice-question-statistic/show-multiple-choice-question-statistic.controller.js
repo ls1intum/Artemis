@@ -34,7 +34,7 @@
         vm.$onInit = init;
 
         function init(){
-            QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuestion);
+            QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
 
             var websocketChannel = '/topic/statistic/'+ "params.quizId";
 
@@ -56,11 +56,13 @@
             });
         }
 
-        function loadQuestion(quiz) {
+        // This functions loads the Quiz, which is necessary to build the Web-Template
+        function loadQuiz(quiz) {
             vm.quizExercise = quiz;
             MultipleChoiceQuestion.get({id: _.get($state,"params.questionId")}).$promise.then(loadQuestionSuccess);
         }
 
+        // This functions loads the Question, on which the Statistic is allocated
         function loadQuestionSuccess(question){
             vm.question = question;
             vm.questionStatistic = vm.question.questionStatistic;
@@ -94,15 +96,16 @@
 
 
         }
-
+        // load the new Data if the Websocket has been notified
         function loadNewData(statistic){
             vm.questionStatistic = statistic;
             loadData();
         }
 
-
+        // load the Data from the Json-entity to the chart: myChart
         function loadData() {
 
+            // reset old data
             label = new Array(vm.question.answerOptions.length);
             backgroundColor = [];
             backgroundSolutionColor = new Array(vm.question.answerOptions.length);
@@ -110,6 +113,7 @@
             unratedData = [];
             solutionLabel = new Array(vm.question.answerOptions.length);
 
+            //set data based on the answerCounters for each AnswerOption
             for(var i = 0; i < vm.question.answerOptions.length; i++){
                 label[i] = (String.fromCharCode(65 + i));
                 backgroundColor.push("#428bca");
@@ -120,12 +124,14 @@
                     }
                 }
             }
+            //add data for the last bar (correct Solutions)
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;
             unratedCorrectData = vm.questionStatistic.unRatedCorrectCounter;
             backgroundColor.push("#5bc0de");
             backgroundSolutionColor[vm.question.answerOptions.length] = ("#5bc0de");
 
-
+            // load data into the chart
+            // if vm.rated == true  -> load the rated data, else: load the unrated data
             if (vm.rated) {
                 vm.participants = vm.questionStatistic.participantsRated;
                 barChartData.participants = vm.questionStatistic.participantsRated;
@@ -162,7 +168,7 @@
             window.myChart.update();
 
         }
-
+        // switch between the rated and the unrated Results
         function switchRated(){
             if(vm.rated) {
                 barChartData.datasets.forEach(function (dataset) {
@@ -195,6 +201,7 @@
             window.myChart.update();
         }
 
+        // switch between showing and hiding the solution in the chart
         function switchSolution(){
             if(vm.showSolution){
                 barChartData.datasets.forEach(function (dataset) {
@@ -226,6 +233,8 @@
             window.myChart.update();
         }
 
+        // got to the Template with the previous Statistic
+        //  if first QuestionStatistic -> go to the Quiz-Statistic
         function previousStatistic() {
             if(vm.quizExercise.questions[0].id === vm.question.id){
             $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
@@ -239,6 +248,9 @@
         }
 
         }
+
+        // got to the Template with the next Statistic
+        //  if last QuestionStatistic -> go to the Quiz-Point-Statistic
         function nextStatistic() {
             if(vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id === vm.question.id){
                 $state.go('quiz-point-statistic-chart',{quizId: vm.quizExercise.id});
@@ -251,7 +263,8 @@
                 }
             }
         }
-
+        //if released == true: releases all Statistics of the Quiz and saves it via REST-PUT
+        //else:                 revoke all Statistics
         function releaseStatistics(released){
             if (released === vm.quizExercise.quizPointStatistic.released){
                 return;

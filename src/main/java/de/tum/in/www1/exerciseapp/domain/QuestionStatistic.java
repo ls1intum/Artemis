@@ -16,8 +16,6 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="Q")
-//@Table(name = "question_statistic")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property="type")
 
 @JsonSubTypes({
