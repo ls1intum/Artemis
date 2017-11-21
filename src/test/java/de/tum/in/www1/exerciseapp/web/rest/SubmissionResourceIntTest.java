@@ -29,6 +29,7 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 /**
  * Test class for the SubmissionResource REST controller.
  *
@@ -37,6 +38,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = ArTEMiSApp.class)
 public class SubmissionResourceIntTest {
+
+    private static final Boolean DEFAULT_SUBMITTED = false;
+    private static final Boolean UPDATED_SUBMITTED = true;
+
+    private static final SubmissionType DEFAULT_TYPE = SubmissionType.MANUAL;
+    private static final SubmissionType UPDATED_TYPE = SubmissionType.TIMEOUT;
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -74,7 +81,9 @@ public class SubmissionResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static Submission createEntity(EntityManager em) {
-        Submission submission = new QuizSubmission();
+        Submission submission = new QuizSubmission()
+            .submitted(DEFAULT_SUBMITTED)
+            .type(DEFAULT_TYPE);
         return submission;
     }
 
@@ -98,6 +107,8 @@ public class SubmissionResourceIntTest {
         List<Submission> submissionList = submissionRepository.findAll();
         assertThat(submissionList).hasSize(databaseSizeBeforeCreate + 1);
         Submission testSubmission = submissionList.get(submissionList.size() - 1);
+        assertThat(testSubmission.isSubmitted()).isEqualTo(DEFAULT_SUBMITTED);
+        assertThat(testSubmission.getType()).isEqualTo(DEFAULT_TYPE);
     }
 
     @Test
@@ -129,7 +140,9 @@ public class SubmissionResourceIntTest {
         restSubmissionMockMvc.perform(get("/api/submissions?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(submission.getId().intValue())));
+            .andExpect(jsonPath("$.[*].id").value(hasItem(submission.getId().intValue())))
+            .andExpect(jsonPath("$.[*].submitted").value(hasItem(DEFAULT_SUBMITTED.booleanValue())))
+            .andExpect(jsonPath("$.[*].type").value(hasItem(DEFAULT_TYPE.toString())));
     }
 
     @Test
@@ -142,7 +155,9 @@ public class SubmissionResourceIntTest {
         restSubmissionMockMvc.perform(get("/api/submissions/{id}", submission.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(submission.getId().intValue()));
+            .andExpect(jsonPath("$.id").value(submission.getId().intValue()))
+            .andExpect(jsonPath("$.submitted").value(DEFAULT_SUBMITTED.booleanValue()))
+            .andExpect(jsonPath("$.type").value(DEFAULT_TYPE.toString()));
     }
 
     @Test
@@ -162,6 +177,9 @@ public class SubmissionResourceIntTest {
 
         // Update the submission
         Submission updatedSubmission = submissionRepository.findOne(submission.getId());
+        updatedSubmission
+            .submitted(UPDATED_SUBMITTED)
+            .type(UPDATED_TYPE);
 
         restSubmissionMockMvc.perform(put("/api/submissions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -172,6 +190,8 @@ public class SubmissionResourceIntTest {
         List<Submission> submissionList = submissionRepository.findAll();
         assertThat(submissionList).hasSize(databaseSizeBeforeUpdate);
         Submission testSubmission = submissionList.get(submissionList.size() - 1);
+        assertThat(testSubmission.isSubmitted()).isEqualTo(UPDATED_SUBMITTED);
+        assertThat(testSubmission.getType()).isEqualTo(UPDATED_TYPE);
     }
 
     @Test

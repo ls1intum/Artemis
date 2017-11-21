@@ -14,7 +14,9 @@
             },
             "detail": {
                 "title": "Submission"
-            }
+            },
+            "submitted": "Submitted",
+            "type": "Type"
         }
     }
 }

@@ -4,6 +4,14 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
+        <dt><span data-translate="artemisApp.submission.submitted">Submitted</span></dt>
+        <dd>
+            <span>{{vm.submission.submitted}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.submission.type">Type</span></dt>
+        <dd>
+            <span data-translate="{{'artemisApp.SubmissionType.' + vm.submission.type}}">{{vm.submission.type}}</span>
+        </dd>
     </dl>
 
     <button type="submit"
