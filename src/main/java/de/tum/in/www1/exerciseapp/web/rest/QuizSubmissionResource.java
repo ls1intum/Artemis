@@ -114,6 +114,10 @@ public class QuizSubmissionResource {
                                 if (result != null) {
                                     // notify user via websocket
                                     messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
+                                    Submission submission = result.getSubmission();
+                                    submission.setSubmissionDate(result.getCompletionDate());
+                                    submission.setFinal(true);
+                                    messagingTemplate.convertAndSend("/topic/quizSubmissions/" + submission.getId(), submission);
                                 }
                             }
                         }
@@ -203,12 +207,13 @@ public class QuizSubmissionResource {
                     // calculate score and update result accordingly
                     result.applyQuizSubmission(quizSubmission);
                     // save result
-                    resultRepository.save(result);
+                    result = resultRepository.save(result);
                     // notify user via websocket
                     messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                     // add date and isFinal to submission for response
                     quizSubmission.setSubmissionDate(result.getCompletionDate());
                     quizSubmission.setFinal(true);
+                    messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(), quizSubmission);
                     // send response
                     return ResponseEntity.ok()
                         .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
