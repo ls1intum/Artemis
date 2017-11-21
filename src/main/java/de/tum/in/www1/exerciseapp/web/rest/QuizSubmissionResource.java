@@ -16,15 +16,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.*;
 
 /**
@@ -229,7 +226,7 @@ public class QuizSubmissionResource {
             result.setSubmission(quizSubmission);
             result.setCompletionDate(ZonedDateTime.now());
             // calculate score and update result accordingly
-            result.applyQuizSubmission((QuizSubmission) result.getSubmission());
+            result.evaluateSubmission();
             // save result
             result = resultRepository.save(result);
         }
