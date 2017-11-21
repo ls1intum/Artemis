@@ -12,6 +12,7 @@
 
         var timeDifference = 0;
 
+        vm.isSubmitting = false;
         vm.isSaving = false;
         vm.lastSavedTimeText = "never";
         vm.justSaved = false;
@@ -200,10 +201,17 @@
          * Callback function for handling response after submitting
          * @param response
          */
-        function onSubmitSuccess() {
-            alert("Your answers have been successfully submitted.");
+        function onSubmitSuccess(response) {
             vm.isSubmitting = false;
-            // TODO redirect back to "Courses"
+            vm.submission = response;
+            applySubmission();
+            if (vm.submission.submissionDate) {
+                vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
+                    vm.justSaved = true;
+                    timeoutJustSaved();
+                }
+            }
         }
 
         /**

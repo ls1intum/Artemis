@@ -42,6 +42,20 @@ public abstract class Submission implements Serializable {
         submissionDateTransient = submissionDate;
     }
 
+    @Transient
+    // variable name must be different from Getter name,
+    // so that Jackson ignores the @Transient annotation,
+    // but Hibernate still respects it
+    private boolean isFinalTransient;
+
+    public boolean isFinal() {
+        return isFinalTransient;
+    }
+
+    public void setFinal(boolean isFinal) {
+        isFinalTransient = isFinal;
+    }
+
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;

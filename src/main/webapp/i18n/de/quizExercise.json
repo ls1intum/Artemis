@@ -41,7 +41,8 @@
             "quiz": "Quiz",
             "remainingTime": "Verbleibende Zeit",
             "quizInstructions": "Wählen Sie für jede Frage die richtigen Antworten aus und klicken Sie auf \"Absenden\", um ihre Auswahl abzugeben.",
-            "lastSaved": "Gespeichert"
+            "lastSaved": "Gespeichert",
+            "submitted": "Abgegeben"
         }
     }
 }

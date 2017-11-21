@@ -82,46 +82,48 @@ public class QuizSubmissionResource {
             User user = userService.getUserWithGroupsAndAuthorities();
             // check if user is allowed to take part in this exercise
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
-                // check if exercise hasn't ended yet
-                if (quizExercise.getRemainingTime() > 0) {
-                    Participation participation = participationService.init(quizExercise, principal.getName());
-                    Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
-                    if (result == null) {
-                        // no result exists yet => create a new one
-                        QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
-                        newSubmission = quizSubmissionRepository.save(newSubmission);
-                        result = new Result().participation(participation).submission(newSubmission);
-                        result = resultRepository.save(result);
+                Participation participation = participationService.init(quizExercise, principal.getName());
+                Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
+                if (quizExercise.getRemainingTime() > 0 && result == null) {
+                    // no result exists yet => create a new one
+                    QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
+                    newSubmission = quizSubmissionRepository.save(newSubmission);
+                    result = new Result().participation(participation).submission(newSubmission);
+                    result = resultRepository.save(result);
 
-                        // create timer to score this submission when exercise times out.
-                        Timer timer = new Timer();
-                        timer.schedule(new TimerTask() {
-                            @Override
-                            public void run() {
-                                Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-                                if (participation != null && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                    // create timer to score this submission when exercise times out.
+                    Timer timer = new Timer();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+                            if (participation != null) {
+                                if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
                                     // update participation state => no further submissions allowed
                                     participation.setInitializationState(ParticipationState.FINISHED);
-                                    Participation savedParticipation = participationService.save(participation);
-                                    Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
-                                    if (result != null) {
-                                        result.setParticipation(savedParticipation);
-                                        // calculate score and update result accordingly
-                                        result.applyQuizSubmission((QuizSubmission) result.getSubmission());
-                                        // save result
-                                        resultRepository.save(result);
-                                        // notify user via websocket
-                                        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
-                                    }
+                                    participation = participationService.save(participation);
+                                }
+                                Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
+                                if (result != null) {
+                                    result.setParticipation(participation);
+                                    // calculate score and update result accordingly
+                                    result.applyQuizSubmission((QuizSubmission) result.getSubmission());
+                                    // save result
+                                    resultRepository.save(result);
+                                    // notify user via websocket
+                                    messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                                 }
                             }
-                        }, ZonedDateTime.now().until(quizExercise.getDueDate().plusSeconds(3), ChronoUnit.MILLIS));
-                    }
+                        }
+                    }, ZonedDateTime.now().until(quizExercise.getDueDate().plusSeconds(3), ChronoUnit.MILLIS));
+                }
+                if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
                     submission.setSubmissionDate(result.getCompletionDate());
+                    submission.setFinal(participation.getInitializationState() == ParticipationState.FINISHED);
                     return ResponseEntity.ok(submission);
                 } else {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "This exercise has already ended")).body(null);
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "noSubmission", "The exercise is over and you haven't participated.")).body(null);
                 }
             } else {
                 return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "You are not part of the students group for this course")).body(null);
@@ -202,8 +204,9 @@ public class QuizSubmissionResource {
                     resultRepository.save(result);
                     // notify user via websocket
                     messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
-                    // add date to submission for response
+                    // add date and isFinal to submission for response
                     quizSubmission.setSubmissionDate(result.getCompletionDate());
+                    quizSubmission.setFinal(true);
                     // send response
                     return ResponseEntity.ok()
                         .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))

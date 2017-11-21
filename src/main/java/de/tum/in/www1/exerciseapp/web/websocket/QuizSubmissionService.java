@@ -79,7 +79,8 @@ public class QuizSubmissionService implements ApplicationListener<SessionDisconn
                     quizSubmission = (QuizSubmission) result.getSubmission();
                     quizSubmission.setSubmissionDate(result.getCompletionDate());
                 }
-
+                // set isFinal for response
+                quizSubmission.setFinal(participation.getInitializationState() == ParticipationState.FINISHED);
                 // send response (to all subscribers)
                 messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(), quizSubmission);
             }
