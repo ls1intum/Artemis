@@ -190,6 +190,17 @@ public class QuizSubmissionResource {
         }
     }
 
+    /**
+     * 1. Overwrite current submission with quizSubmission (if quizSubmission is not null and participation state is not FINISHED)
+     *
+     * 2. Mark the submission as final (submitted), calculate the score and save the result.
+     *
+     * 3. Notify socket subscriptions for new result in participation and changed submission
+     *
+     * @param participation the participation object that the submission belongs to
+     * @param quizSubmission (optional) the new submission to overwrite the existing one with
+     * @return The updated QuizSubmission (submitted is true; submissionDate and type are updated)
+     */
     private QuizSubmission submitSubmission(Participation participation, QuizSubmission quizSubmission) {
         if (participation == null) {
             // Do nothing
