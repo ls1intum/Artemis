@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Submission;
+
 import de.tum.in.www1.exerciseapp.repository.SubmissionRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +29,7 @@ public class SubmissionResource {
     private static final String ENTITY_NAME = "submission";
 
     private final SubmissionRepository submissionRepository;
+
     public SubmissionResource(SubmissionRepository submissionRepository) {
         this.submissionRepository = submissionRepository;
     }
@@ -83,7 +86,7 @@ public class SubmissionResource {
     public List<Submission> getAllSubmissions() {
         log.debug("REST request to get all Submissions");
         return submissionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /submissions/:id : get the "id" submission.

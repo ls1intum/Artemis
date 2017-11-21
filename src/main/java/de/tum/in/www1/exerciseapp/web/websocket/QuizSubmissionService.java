@@ -70,16 +70,12 @@ public class QuizSubmissionService {
                     // update completion date (which also functions as submission date for now)
                     result.setCompletionDate(ZonedDateTime.now());
                     resultRepository.save(result);
-
-                    // set submission date for response
-                    quizSubmission.setSubmissionDate(result.getCompletionDate());
                 } else {
                     // overwrite with existing submission to send back unchanged submission
                     quizSubmission = (QuizSubmission) result.getSubmission();
-                    quizSubmission.setSubmissionDate(result.getCompletionDate());
                 }
-                // set isFinal for response
-                quizSubmission.setFinal(participation.getInitializationState() == ParticipationState.FINISHED);
+                // set submission date for response
+                quizSubmission.setSubmissionDate(result.getCompletionDate());
                 // send response (to all subscribers)
                 messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(), quizSubmission);
             }

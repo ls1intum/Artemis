@@ -34,15 +34,15 @@
                 <div>
                     <span ng-if="vm.isSaving">Saving Answers...</span>
                     <span ng-if="!vm.isSaving" uib-tooltip="{{vm.submission.adjustedSubmissionDate | date:'MMM d, y HH:mm:ss'}}" tooltip-placement="right">
-                        <span ng-if="!vm.submission.final" data-translate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
-                        <span ng-if="vm.submission.final" data-translate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
+                        <span ng-if="!vm.submission.submitted" data-translate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
+                        <span ng-if="vm.submission.submitted" data-translate="artemisApp.quizExercise.submitted" class="colon-suffix"></span>
                         <span ng-if="vm.justSaved" data-translate="justNow"></span>
                         <span ng-if="!vm.justSaved">{{vm.lastSavedTimeText}}</span>
                     </span>
                 </div>
             </div>
-            <button ng-if="!vm.submission.final" ng-disabled="vm.isSubmitting" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></button>
-            <button ng-if="vm.submission.final"  disabled class="btn btn-success btn-lg" data-translate="artemisApp.quizExercise.submitted"></button>
+            <button ng-if="!vm.submission.submitted" ng-disabled="vm.isSubmitting" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></button>
+            <button ng-if="vm.submission.submitted"  disabled class="btn btn-success btn-lg" data-translate="artemisApp.quizExercise.submitted"></button>
         </div>
     </div>
 </div>
