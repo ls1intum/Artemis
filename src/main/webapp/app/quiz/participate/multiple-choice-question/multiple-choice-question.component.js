@@ -22,6 +22,10 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     vm.toggleSelection = toggleSelection;
 
     function toggleSelection(answerOption) {
+        if (vm.clickDisabled) {
+            // Do nothing
+            return;
+        }
         if (isAnswerOptionSelected(answerOption)) {
             vm.selectedAnswerOptions = vm.selectedAnswerOptions.filter(function(selectedAnswerOption) {
                 return selectedAnswerOption.id !== answerOption.id;
@@ -71,6 +75,7 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
     bindings: {
         question: '=',
         selectedAnswerOptions: '=',
+        clickDisabled: '<',
         onSelection: '&'
     }
 });
