@@ -119,10 +119,9 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
                         answerCounter.setRatedCounter(answerCounter.getRatedCounter()+1);
                 }
             }
-                // TO-DO isAnswerPerfect() must be defiend by Valentin
-//            if(getQuestion().isAnswerPerfect(mcSubmittedAnswer)){
-//                setRatedCorrectCounter(getRatedCorrectCounter()+1);
-//            }
+            if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)){
+                setRatedCorrectCounter(getRatedCorrectCounter()+1);
+            }
         }
         else{
             setParticipantsUnrated(getParticipantsUnrated()+1);
@@ -135,10 +134,9 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
                     answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()+1);
                 }
             }
-            // TO-DO isAnswerPerfect() must be defiend by Valentin
-//            if(getQuestion().isAnswerPerfect(mcSubmittedAnswer)){
-//                setUnRatedCorrectCounter(getUnRatedCorrectCounter()+1);
-//            }
+            if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)){
+                setUnRatedCorrectCounter(getUnRatedCorrectCounter()+1);
+            }
         }
     }
 

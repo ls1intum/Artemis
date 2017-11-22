@@ -305,10 +305,8 @@ public class QuizExercise extends Exercise implements Serializable {
         quizPointStatistic = new QuizPointStatistic();
         quizPointStatistic.setQuiz(this);
     }
-    // add or remove PointCounters  in the QuizPointStatistic
-    private void recalculatePointCounters(){
-
-        double quizScore = 0.0;
+    public int getMaxQuizScore(){
+        int quizScore = 0;
 
         if(questions != null){
             //calculate Score of the Quiz
@@ -316,7 +314,13 @@ public class QuizExercise extends Exercise implements Serializable {
                 quizScore = quizScore + question.getScore();
             }
         }
+        return quizScore;
+    }
 
+    // add or remove PointCounters  in the QuizPointStatistic
+    private void recalculatePointCounters(){
+
+        double quizScore = getMaxQuizScore();
 
         //add new Scores
         for(double i = 0.0 ; i <= quizScore; i++){  // for variable ScoreSteps change: i++ into: i= i + scoreStep

@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowMultipleChoiceQuestionStatisticController', ShowMultipleChoiceQuestionStatisticController);
 
-    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate', '$rootScope','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'MultipleChoiceQuestion', 'MultipleChoiceQuestionStatistic'];
+    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'MultipleChoiceQuestion', 'MultipleChoiceQuestionStatistic'];
 
-    function ShowMultipleChoiceQuestionStatisticController ($translate, rootScope, $scope, $state, Principal, JhiWebsocketService, QuizExercise, MultipleChoiceQuestion, MultipleChoiceQuestionStatistic) {
+    function ShowMultipleChoiceQuestionStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, MultipleChoiceQuestion, MultipleChoiceQuestionStatistic) {
 
         var vm = this;
 
@@ -36,12 +36,12 @@
         function init(){
             QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
 
-            var websocketChannel = '/topic/statistic/'+ "params.quizId";
+            var websocketChannel = '/topic/statistic/'+ _.get($state,"params.quizId");
 
             JhiWebsocketService.subscribe(websocketChannel);
 
             JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
-                MultipleChoiceQuestionStatistic.get({id: _.get($state, vm.question.questionStatistic.id)}).$promise.then(loadNewData);
+                MultipleChoiceQuestionStatistic.get({id: vm.question.questionStatistic.id}).$promise.then(loadNewData);
             });
 
             $scope.$on('$destroy', function() {
@@ -67,34 +67,6 @@
             vm.question = question;
             vm.questionStatistic = vm.question.questionStatistic;
             loadData();
-            $translate('showStatistic.quizStatistic.yAxes').then(function (lastLabel){
-                solutionLabel.push(lastLabel);
-                label.push(lastLabel);
-                window.myChart.update();
-            });
-
-            $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel){
-                for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                    if (vm.question.answerOptions[i].isCorrect) {
-                        backgroundSolutionColor[i] = ("#5cb85c");
-                        console.log(String.fromCharCode(65 + i));
-                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + correctLabel + ")"]);
-                    }
-                }
-                window.myChart.update();
-            });
-            $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel){
-                for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                    if (!vm.question.answerOptions[i].isCorrect) {
-                        backgroundSolutionColor[i] = ("#d9534f");
-                        console.log(String.fromCharCode(65 + i));
-                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + incorrectLabel + ")"]);
-                    }
-                }
-                window.myChart.update();
-            });
-
-
         }
         // load the new Data if the Websocket has been notified
         function loadNewData(statistic){
@@ -165,7 +137,33 @@
             }else{
                 barChartData.labels = label;
             }
-            window.myChart.update();
+
+            $translate('showStatistic.quizStatistic.yAxes').then(function (lastLabel){
+                solutionLabel.push(lastLabel);
+                label.push(lastLabel);
+                window.myChart.update();
+            });
+
+            $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel){
+                for(var i = 0; i < vm.question.answerOptions.length; i++) {
+                    if (vm.question.answerOptions[i].isCorrect) {
+                        backgroundSolutionColor[i] = ("#5cb85c");
+                        console.log(String.fromCharCode(65 + i));
+                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + correctLabel + ")"]);
+                    }
+                }
+                window.myChart.update();
+            });
+            $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel){
+                for(var i = 0; i < vm.question.answerOptions.length; i++) {
+                    if (!vm.question.answerOptions[i].isCorrect) {
+                        backgroundSolutionColor[i] = ("#d9534f");
+                        console.log(String.fromCharCode(65 + i));
+                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + incorrectLabel + ")"]);
+                    }
+                }
+                window.myChart.update();
+            });
 
         }
         // switch between the rated and the unrated Results

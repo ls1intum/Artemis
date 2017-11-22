@@ -112,7 +112,9 @@ public class QuizPointStatistic extends Statistic implements Serializable {
     // add new Result
     public void addResult(Long score, boolean rated){
 
-        if(score == null){
+        Double points = (double) Math.round(((double) quiz.getMaxQuizScore()) * ((double) score/100));
+
+        if(points == null){
             return;
         }
 
@@ -120,7 +122,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             setParticipantsRated(getParticipantsRated()+1);
 
             for (PointCounter pointCounter: pointCounters){
-                if(score.equals(pointCounter.getPoints())){
+                if(points.equals(pointCounter.getPoints())){
                     pointCounter.setRatedCounter(pointCounter.getRatedCounter()+1);
                 }
             }
@@ -129,7 +131,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             setParticipantsUnrated(getParticipantsUnrated()+1);
 
             for (PointCounter pointCounter: pointCounters){
-                if(score.equals(pointCounter.getPoints())){
+                if(points.equals(pointCounter.getPoints())){
                     pointCounter.setRatedCounter(pointCounter.getUnRatedCounter()+1);
                 }
             }

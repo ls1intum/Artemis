@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowQuizPointStatisticController', ShowQuizPointStatisticController);
 
-    ShowQuizPointStatisticController.$inject = ['$translate','$rootScope', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizPointStatistic', 'QuizExercise'];
+    ShowQuizPointStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizPointStatistic', 'QuizExercise'];
 
-    function ShowQuizPointStatisticController($translate, rootScope, $scope, $state, Principal, JhiWebsocketService, QuizPointStatistic, QuizExercise) {
+    function ShowQuizPointStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizPointStatistic, QuizExercise) {
         var vm = this;
 
         // Variables for the chart:
@@ -27,12 +27,12 @@
         function init(){
             QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSucces);
 
-            var websocketChannel = '/topic/statistic/'+ "params.quizId";
+            var websocketChannel = '/topic/statistic/'+ _.get($state,"params.quizId");
 
             JhiWebsocketService.subscribe(websocketChannel);
 
             JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
-                QuizPointStatistic.get({id: _.get($state, vm.quizPointStatistic.id)}).$promise.then(loadNewData);
+                QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
             });
 
             $scope.$on('$destroy', function() {

@@ -165,17 +165,28 @@
                                     ctx.fillStyle = 'black';
                                     ctx.fillText(data, position.x, position.y - 10);
 
-                                    ctx.fillStyle = 'white';
-                                    ctx.fillText(dataPersentage.toString()+"%", position.x, position.y + 10);
+
+                                    if(barChartData.participants !== 0){
+                                        ctx.fillStyle = 'white';
+                                        ctx.fillText(dataPersentage.toString()+"%", position.x, position.y + 10);
+                                    }
                                 }
                                 else{
                                     ctx.fillStyle = 'white';
-                                    ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y + 10);
+                                    if(barChartData.participants !== 0){
+                                        ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y + 10);
+                                    }else{
+                                        ctx.fillText(data, position.x, position.y + 10);
+                                    }
                                 }
                             }
                             else{
                                 ctx.fillStyle = 'black';
-                                ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y - 10);
+                                if(barChartData.participants !== 0){
+                                    ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y - 10);
+                                }else{
+                                    ctx.fillText(data, position.x, position.y - 10);
+                                }
                             }
                         });
                     });

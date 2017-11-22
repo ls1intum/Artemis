@@ -4,10 +4,9 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
-import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
-import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
-import de.tum.in.www1.exerciseapp.repository.ResultRepository;
+import de.tum.in.www1.exerciseapp.repository.*;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -37,23 +36,32 @@ public class QuizSubmissionResource {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizExerciseRepository quizExerciseRepository;
+    private final QuizPointStatisticRepository quizPointStatisticRepository;
+    private final QuestionStatisticRepository questionStatisticRepository;
     private final ResultRepository resultRepository;
     private final ParticipationService participationService;
     private final UserService userService;
+    private final StatisticService statisticService;
     private final SimpMessageSendingOperations messagingTemplate;
 
     public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository,
                                   QuizExerciseRepository quizExerciseRepository,
+                                  QuizPointStatisticRepository quizPointStatisticRepository,
+                                  QuestionStatisticRepository questionStatisticRepository,
                                   ResultRepository resultRepository,
                                   ParticipationService participationService,
                                   UserService userService,
-                                  SimpMessageSendingOperations messagingTemplate) {
+                                  SimpMessageSendingOperations messagingTemplate,
+                                  StatisticService statisticService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.userService = userService;
         this.messagingTemplate = messagingTemplate;
+        this.statisticService = statisticService;
+        this.quizPointStatisticRepository = quizPointStatisticRepository;
+        this.questionStatisticRepository = questionStatisticRepository;
     }
 
     /**
@@ -227,6 +235,14 @@ public class QuizSubmissionResource {
             result.setCompletionDate(ZonedDateTime.now());
             // calculate score and update result accordingly
             result.evaluateSubmission();
+            // add the Result to Statistics
+            ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(),true);
+            quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
+            for(SubmittedAnswer submittedAnswer: ((QuizSubmission)result.getSubmission()).getSubmittedAnswers()){
+                submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
+                questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
+            }
+            statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
             // save result
             result = resultRepository.save(result);
         }

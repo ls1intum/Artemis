@@ -68,22 +68,24 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
         this.answerOptions = answerOptions;
 
-        //add the AnswerCounters
-        for (AnswerOption answerOption : getAnswerOptions()) {
-            ((MultipleChoiceQuestionStatistic)getQuestionStatistic()).addAnswerOption(answerOption);
-        }
-        //delete old AnswerCounter
-        Set<AnswerCounter> delete = new HashSet<>();
-        for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-            if (answerCounter.getId() != null) {
-                if(!(answerOptions.contains(answerCounter.getAnswer()))){
-                    answerCounter.setAnswer(null);
-                    delete.add(answerCounter);
+        if(getQuestionStatistic() != null) {
+            //add the AnswerCounters
+            for (AnswerOption answerOption : getAnswerOptions()) {
+                ((MultipleChoiceQuestionStatistic) getQuestionStatistic()).addAnswerOption(answerOption);
+            }
+
+            //delete old AnswerCounter
+            Set<AnswerCounter> delete = new HashSet<>();
+            for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+                if (answerCounter.getId() != null) {
+                    if(!(answerOptions.contains(answerCounter.getAnswer()))){
+                        answerCounter.setAnswer(null);
+                        delete.add(answerCounter);
+                    }
                 }
             }
+            mcStatistic.getAnswerCounters().removeAll(delete);
         }
-
-        mcStatistic.getAnswerCounters().removeAll(delete);
     }
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 

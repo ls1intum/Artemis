@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowQuizStatisticController', ShowQuizStatisticController);
 
-    ShowQuizStatisticController.$inject = ['$translate', '$rootScope','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise'];
+    ShowQuizStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise'];
 
-    function ShowQuizStatisticController ($translate, rootScope, $scope, $state, Principal, JhiWebsocketService, QuizExercise) {
+    function ShowQuizStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise) {
 
         var vm = this;
 
@@ -32,7 +32,7 @@
         function init(){
             QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
 
-            var websocketChannel = '/topic/statistic/'+ "params.quizId";
+            var websocketChannel = '/topic/statistic/'+ _.get($state,"params.quizId");
 
             JhiWebsocketService.subscribe(websocketChannel);
 
@@ -58,10 +58,6 @@
             vm.quizExercise = quiz;
             maxScore = calculateMaxScore();
             loadData();
-            $translate('showStatistic.quizStatistic.average').then(function (lastLabel){
-                label.push(lastLabel);
-                window.myChart.update();
-            });
         }
 
         function calculateMaxScore(){
@@ -119,7 +115,10 @@
                     dataset.backgroundColor = backgroundColor;
                 });
             }
-            window.myChart.update();
+            $translate('showStatistic.quizStatistic.average').then(function (lastLabel){
+                label.push(lastLabel);
+                window.myChart.update();
+            });
         }
 
         // switch between the rated and the unrated Results
