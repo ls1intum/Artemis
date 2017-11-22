@@ -165,7 +165,14 @@ enum ParticipationState {
    INITIALIZED
 }
 
-entity Submission {                 //abstract
+enum SubmissionType {
+	MANUAL,
+    TIMEOUT
+}
+
+entity Submission {  //abstract
+	submitted Boolean
+    type SubmissionType
 }
 
 entity ModelingSubmission {         //extends Submission

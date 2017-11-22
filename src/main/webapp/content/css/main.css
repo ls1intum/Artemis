@@ -8515,6 +8515,10 @@ body.editor .navbar-brand span {
         font-size: 18px; }
     .mc-question .answer-option:hover {
       background: #fafafa; }
+    .mc-question .answer-option.click-disabled {
+      cursor: not-allowed; }
+      .mc-question .answer-option.click-disabled:hover {
+        background: inherit; }
 
 .quiz-header,
 .quiz-content,

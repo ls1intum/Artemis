@@ -26,6 +26,7 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('submission');
+                    $translatePartialLoader.addPart('submissionType');
                     $translatePartialLoader.addPart('global');
                     return $translate.refresh();
                 }]
@@ -48,6 +49,7 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('submission');
+                    $translatePartialLoader.addPart('submissionType');
                     return $translate.refresh();
                 }],
                 entity: ['$stateParams', 'Submission', function($stateParams, Submission) {
@@ -104,6 +106,8 @@
                     resolve: {
                         entity: function () {
                             return {
+                                submitted: null,
+                                type: null,
                                 id: null
                             };
                         }

@@ -54,6 +54,7 @@ public class ParticipationService {
 
     /**
      * This method should only be invoked for programming exercises, not for other exercises
+     *
      * @param exercise
      * @param username
      * @return
@@ -64,7 +65,7 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (!Optional.ofNullable(participation).isPresent() || participation.getInitializationState() == ParticipationState.FINISHED) { //create a new participation only if it was finished before
+        if (!Optional.ofNullable(participation).isPresent() || (!(exercise instanceof QuizExercise) && participation.getInitializationState() == ParticipationState.FINISHED)) { //create a new participation only if it was finished before (not for quiz exercise)
             participation = new Participation();
             participation.setExercise(exercise);
 
@@ -86,9 +87,10 @@ public class ParticipationService {
             participation = configureBuildPlan(participation, programmingExercise);
             participation.setInitializationState(ParticipationState.INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
-        }
-        else if (exercise instanceof QuizExercise) {
-            participation.setInitializationState(ParticipationState.INITIALIZED);
+        } else if (exercise instanceof QuizExercise) {
+            if (participation.getInitializationState() == null) {
+                participation.setInitializationState(ParticipationState.INITIALIZED);
+            }
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
@@ -100,8 +102,8 @@ public class ParticipationService {
 
     /**
      * Service method to resume inactive participation (with previously deleted build plan)
+     *
      * @param exercise exercise to which the inactive participation belongs
-
      * @return resumed participation
      */
     public Participation resume(Exercise exercise, Participation participation) {
@@ -178,8 +180,8 @@ public class ParticipationService {
     /**
      * Get all the participations.
      *
-     *  @param pageable the pagination information
-     *  @return the list of entities
+     * @param pageable the pagination information
+     * @return the list of entities
      */
     @Transactional(readOnly = true)
     public Page<Participation> findAll(Pageable pageable) {
@@ -188,10 +190,10 @@ public class ParticipationService {
     }
 
     /**
-     *  Get one participation by id.
+     * Get one participation by id.
      *
-     *  @param id the id of the entity
-     *  @return the entity
+     * @param id the id of the entity
+     * @return the entity
      */
     @Transactional(readOnly = true)
     public Participation findOne(Long id) {
@@ -209,10 +211,26 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
         log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
+
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
         if(!Optional.ofNullable(participation).isPresent()) {
             participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
         }
+        return participation;
+    }
+
+    /**
+     * Get one participation (in any state) by its student and exercise.
+     *
+     * @param exerciseId the project key of the exercise
+     * @param username   the username of the student
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public Participation findOneByExerciseIdAndStudentLoginAnyState(Long exerciseId, String username) {
+        log.debug("Request to get Participation for User {} for Exercise with id: {}", username, exerciseId);
+
+        Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exerciseId, username);
         return participation;
     }
 
