@@ -242,6 +242,14 @@
         &:hover {
             background: #fafafa;
         }
+
+        &.click-disabled {
+            cursor: not-allowed;
+
+            &:hover {
+                background: inherit;
+            }
+        }
     }
 }
 

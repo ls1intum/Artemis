@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Feedback;
 import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.QuizExercise;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
@@ -95,16 +96,14 @@ public class ResultResource {
         }
         Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
-            if(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()) ) {
+            if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
                 resultService.onResultNotified(participation);
                 return ResponseEntity.ok().build();
-            }
-            else {
+            } else {
                 log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-        }
-        else {
+        } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -170,12 +169,17 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
         if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
-            if(showAllResults) {
+            // if exercise is quiz => only give out results if quiz is over
+            if (participation.getExercise() instanceof QuizExercise && participation.getExercise().getDueDate().isAfter(ZonedDateTime.now())) {
+                // return empty list
+                return results;
+            }
+            if (showAllResults) {
                 results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
             } else {
                 results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId)
-                .map(Arrays::asList)
-                .orElse(new ArrayList<>());
+                    .map(Arrays::asList)
+                    .orElse(new ArrayList<>());
             }
         }
         return results;
@@ -192,8 +196,8 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Result> getResultsForExercise(@PathVariable Long courseId,
-                                                @PathVariable Long exerciseId,
-                                                @RequestParam(defaultValue = "false") boolean showAllResults) {
+                                              @PathVariable Long exerciseId,
+                                              @RequestParam(defaultValue = "false") boolean showAllResults) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
         List<Result> results;
         if (showAllResults) {
@@ -233,7 +237,6 @@ public class ResultResource {
         List<Result> results;
         return resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
     }
-
 
 
     /**

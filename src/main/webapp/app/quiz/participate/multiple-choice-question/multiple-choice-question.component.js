@@ -1,6 +1,6 @@
-MultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$sanitize'];
+MultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$sanitize', '$timeout'];
 
-function MultipleChoiceQuestionController($translate, $translatePartialLoader, $scope, $sanitize) {
+function MultipleChoiceQuestionController($translate, $translatePartialLoader, $scope, $sanitize, $timeout) {
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('multipleChoiceQuestion');
@@ -22,6 +22,10 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     vm.toggleSelection = toggleSelection;
 
     function toggleSelection(answerOption) {
+        if (vm.clickDisabled) {
+            // Do nothing
+            return;
+        }
         if (isAnswerOptionSelected(answerOption)) {
             vm.selectedAnswerOptions = vm.selectedAnswerOptions.filter(function(selectedAnswerOption) {
                 return selectedAnswerOption.id !== answerOption.id;
@@ -29,6 +33,9 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         } else {
             vm.selectedAnswerOptions.push(answerOption);
         }
+        // Note: I had to add a timeout of 0ms here, because the model changes are propagated asynchronously,
+        // so we wait for one javascript event cycle before we inform the parent of changes
+        $timeout(vm.onSelection, 0);
     }
 
     vm.isAnswerOptionSelected = isAnswerOptionSelected;
@@ -67,6 +74,8 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
     controllerAs: 'vm',
     bindings: {
         question: '=',
-        selectedAnswerOptions: '='
+        selectedAnswerOptions: '=',
+        clickDisabled: '<',
+        onSelection: '&'
     }
 });

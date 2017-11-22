@@ -81,7 +81,7 @@
          */
         function showDropdown() {
             if (vm.quizExercise.isPlannedToStart) {
-                var plannedEndMoment = moment(vm.quizExercise.releaseDate).add(vm.quizExercise.duration, "minutes");
+                var plannedEndMoment = moment(vm.quizExercise.releaseDate).add(vm.quizExercise.duration, "seconds");
                 if (plannedEndMoment.isBefore(moment())) {
                     return "isOpenForPractice";
                 } else if (moment(vm.quizExercise.releaseDate).isBefore(moment())) {

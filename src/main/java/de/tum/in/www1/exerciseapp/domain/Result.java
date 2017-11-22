@@ -199,6 +199,21 @@ public class Result implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    /**
+     * Updates the attributes "score" and "successful" by evaluating its submission
+     */
+    public void evaluateSubmission() {
+        if (submission instanceof QuizSubmission) {
+            QuizSubmission quizSubmission = (QuizSubmission) submission;
+            // get the exercise this result belongs to
+            QuizExercise quizExercise = (QuizExercise) getParticipation().getExercise();
+            // update score
+            setScore(quizExercise.getScoreForSubmission(quizSubmission));
+            // update successful
+            setSuccessful(score == 100L);
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
