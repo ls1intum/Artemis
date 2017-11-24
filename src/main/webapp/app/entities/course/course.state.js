@@ -107,6 +107,10 @@
                                 title: null,
                                 studentGroupName: null,
                                 teachingAssistantGroupName: null,
+                                instructorGroupName: null,
+                                startDate: null,
+                                endDate: null,
+                                onlineCourse: null,
                                 id: null
                             };
                         }

@@ -16,7 +16,7 @@
 
         loadAll();
 
-        function loadAll () {
+        function loadAll() {
             Course.query(function(result) {
                 vm.courses = result;
                 vm.searchQuery = null;
