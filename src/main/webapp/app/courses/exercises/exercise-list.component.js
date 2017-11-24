@@ -32,6 +32,7 @@
         vm.participationStatus = participationStatus;
         vm.start = start;
         vm.resume = resume;
+        vm.canOpenStatistic = canOpenStatistic;
         vm.now = Date.now();
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
@@ -189,6 +190,16 @@
         }
 
         vm.toggleShowOverdueExercises = toggleShowOverdueExercises;
+
+
+        // return true if: the User is allowed to see the Statistic:
+        //          either the User is Tutor or Admin or the statistic is released
+        function canOpenStatistic(exercise){
+            if(exercise.type === 'quiz'){
+                return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']) ||  exercise.quizPointStatistic.released == true;
+            }
+            return false;
+        }
 
     }
 })();

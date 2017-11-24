@@ -65,6 +65,7 @@
                 <div class="form-group">
                     <button ng-show="!vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(true);
                             data-translate="showStatistic.releaseStatistic" has-any-authority="ROLE_ADMIN, ROLE_TA"
+                            ng-disabled="vm.quizIsOver"
                             class="btn btn-success"
                     ></button>
                     <button ng-show="vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(false);

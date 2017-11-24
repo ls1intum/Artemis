@@ -2,7 +2,8 @@
     'use strict';
     angular
         .module('artemisApp')
-        .factory('QuizPointStatistic', QuizPointStatistic);
+        .factory('QuizPointStatistic', QuizPointStatistic)
+        .factory('QuizPointStatisticForStudent', QuizPointStatisticForStudent)
 
     QuizPointStatistic.$inject = ['$resource'];
 
@@ -21,6 +22,24 @@
                 }
             },
             'update': { method:'PUT' }
+        });
+    }
+
+    QuizPointStatisticForStudent.$inject = ['$resource'];
+
+    function QuizPointStatisticForStudent ($resource) {
+        var resourceUrl =  'api/quiz-point-statistic/:id/for-student';
+
+        return $resource(resourceUrl, {}, {
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                    }
+                    return data;
+                }
+            }
         });
     }
 })();

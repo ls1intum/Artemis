@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowMultipleChoiceQuestionStatisticController', ShowMultipleChoiceQuestionStatisticController);
 
-    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'MultipleChoiceQuestion', 'MultipleChoiceQuestionStatistic'];
+    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'MultipleChoiceQuestionStatistic', 'MultipleChoiceQuestionStatisticForStudent'];
 
-    function ShowMultipleChoiceQuestionStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, MultipleChoiceQuestion, MultipleChoiceQuestionStatistic) {
+    function ShowMultipleChoiceQuestionStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, MultipleChoiceQuestionStatistic, MultipleChoiceQuestionStatisticForStudent) {
 
         var vm = this;
 
@@ -27,6 +27,7 @@
         vm.nextStatistic = nextStatistic;
         vm.previousStatistic = previousStatistic;
         vm.releaseStatistics = releaseStatistics;
+        vm.quizIsOver = quizIsOver;
 
 
         vm.showSolution = false;
@@ -34,14 +35,23 @@
         vm.$onInit = init;
 
         function init(){
-            QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
-
+            if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
+                QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
+            }
+            else{
+                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz)
+            }
             var websocketChannel = '/topic/statistic/'+ _.get($state,"params.quizId");
 
             JhiWebsocketService.subscribe(websocketChannel);
 
             JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
-                MultipleChoiceQuestionStatistic.get({id: vm.question.questionStatistic.id}).$promise.then(loadNewData);
+                if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
+                    MultipleChoiceQuestionStatistic.get({id: vm.question.questionStatistic.id}).$promise.then(loadNewData);
+                }
+                else{
+                    MultipleChoiceQuestionStatisticForStudent.get({id: vm.question.questionStatistic.id}).$promise.then(loadNewData);
+                }
             });
 
             $scope.$on('$destroy', function() {
@@ -58,18 +68,32 @@
 
         // This functions loads the Quiz, which is necessary to build the Web-Template
         function loadQuiz(quiz) {
+            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false){
+                $state.go('courses');
+            }
             vm.quizExercise = quiz;
-            MultipleChoiceQuestion.get({id: _.get($state,"params.questionId")}).$promise.then(loadQuestionSuccess);
-        }
-
-        // This functions loads the Question, on which the Statistic is allocated
-        function loadQuestionSuccess(question){
-            vm.question = question;
+            vm.question = null;
+            for(var i = 0; vm.question === null && i < vm.quizExercise.questions.length; i++){
+                if (_.get($state,"params.questionId") == vm.quizExercise.questions[i].id){
+                    vm.question = vm.quizExercise.questions[i];
+                }
+            }
+            // if the Anyone finds a way to the Website, with an wrong combination of QuizId and QuestionId -> go back to Courses
+            if(vm.question === null){
+                $state.go('courses');
+            }
+            //MultipleChoiceQuestion.get({id: _.get($state,"params.questionId")}).$promise.then(loadQuestionSuccess);
             vm.questionStatistic = vm.question.questionStatistic;
             loadData();
         }
+
         // load the new Data if the Websocket has been notified
         function loadNewData(statistic){
+            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false){
+                $state.go('courses');
+            }
             vm.questionStatistic = statistic;
             loadData();
         }
@@ -148,7 +172,6 @@
                 for(var i = 0; i < vm.question.answerOptions.length; i++) {
                     if (vm.question.answerOptions[i].isCorrect) {
                         backgroundSolutionColor[i] = ("#5cb85c");
-                        console.log(String.fromCharCode(65 + i));
                         solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + correctLabel + ")"]);
                     }
                 }
@@ -158,7 +181,6 @@
                 for(var i = 0; i < vm.question.answerOptions.length; i++) {
                     if (!vm.question.answerOptions[i].isCorrect) {
                         backgroundSolutionColor[i] = ("#d9534f");
-                        console.log(String.fromCharCode(65 + i));
                         solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + incorrectLabel + ")"]);
                     }
                 }
@@ -264,7 +286,11 @@
         //if released == true: releases all Statistics of the Quiz and saves it via REST-PUT
         //else:                 revoke all Statistics
         function releaseStatistics(released){
-            if (released === vm.quizExercise.quizPointStatistic.released){
+            if (released === vm.quizExercise.quizPointStatistic.released ){
+                return;
+            }
+            if (quizIsOver()){
+                alert("Quiz noch nicht beendet!");
                 return;
             }
             if (vm.quizExercise.id) {
@@ -274,6 +300,10 @@
                 }
                 QuizExercise.update(vm.quizExercise);
             }
+        }
+
+        function quizIsOver(){
+            return moment().isBefore(vm.quizExercise.dueDate);
         }
 
     }

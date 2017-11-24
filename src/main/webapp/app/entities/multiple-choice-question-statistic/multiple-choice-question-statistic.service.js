@@ -2,7 +2,8 @@
     'use strict';
     angular
         .module('artemisApp')
-        .factory('MultipleChoiceQuestionStatistic', MultipleChoiceQuestionStatistic);
+        .factory('MultipleChoiceQuestionStatistic', MultipleChoiceQuestionStatistic)
+        .factory('MultipleChoiceQuestionStatisticForStudent', MultipleChoiceQuestionStatisticForStudent);
 
     MultipleChoiceQuestionStatistic.$inject = ['$resource'];
 
@@ -21,6 +22,24 @@
                 }
             },
             'update': { method:'PUT' }
+        });
+    }
+
+    MultipleChoiceQuestionStatisticForStudent.$inject = ['$resource'];
+
+    function MultipleChoiceQuestionStatisticForStudent ($resource) {
+        var resourceUrl =  'api/multiple-choice-question-statistic/:id/for-student';
+
+        return $resource(resourceUrl, {}, {
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                    }
+                    return data;
+                }
+            }
         });
     }
 })();

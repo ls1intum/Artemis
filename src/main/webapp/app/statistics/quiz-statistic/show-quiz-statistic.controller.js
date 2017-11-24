@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowQuizStatisticController', ShowQuizStatisticController);
 
-    ShowQuizStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise'];
+    ShowQuizStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent'];
 
-    function ShowQuizStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise) {
+    function ShowQuizStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent) {
 
         var vm = this;
 
@@ -22,6 +22,7 @@
         vm.switchRated = switchRated;
         vm.nextStatistic = nextStatistic;
         vm.releaseStatistics = releaseStatistics;
+        vm.quizIsOver = quizIsOver;
 
         var maxScore;
 
@@ -30,14 +31,24 @@
 
 
         function init(){
-            QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+            if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
+                QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+            }
+            else{
+                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
+            }
 
             var websocketChannel = '/topic/statistic/'+ _.get($state,"params.quizId");
 
             JhiWebsocketService.subscribe(websocketChannel);
 
             JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
-                QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+                if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
+                    QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+                }
+                else{
+                    QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
+            }
             });
 
             $scope.$on('$destroy', function() {
@@ -55,6 +66,10 @@
         // This functions loads the Quiz, which is necessary to build the Web-Template.
         // And it loads the new Data if the Websocket has been notified
         function loadQuizSuccess(quiz){
+            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false){
+                $state.go('courses');
+            }
             vm.quizExercise = quiz;
             maxScore = calculateMaxScore();
             loadData();
@@ -156,7 +171,11 @@
         //if released == true: releases all Statistics of the Quiz and saves it via REST-PUT
         //else:                 revoke all Statistics
         function releaseStatistics(released){
-            if (released === vm.quizExercise.quizPointStatistic.released){
+            if (released === vm.quizExercise.quizPointStatistic.released ){
+                return;
+            }
+            if (quizIsOver()){
+                alert("Quiz noch nicht beendet!");
                 return;
             }
             if (vm.quizExercise.id) {
@@ -166,6 +185,10 @@
                 }
                 QuizExercise.update(vm.quizExercise);
             }
+        }
+
+        function quizIsOver(){
+                return moment().isBefore(vm.quizExercise.dueDate);
         }
 
     }

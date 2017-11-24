@@ -9,6 +9,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -109,6 +110,30 @@ public class QuizPointStatisticResource {
     public ResponseEntity<QuizPointStatistic> getQuizPointStatistic(@PathVariable Long id) {
         log.debug("REST request to get QuizPointStatistic : {}", id);
         QuizPointStatistic quizPointStatistic = quizPointStatisticRepository.findOne(id);
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizPointStatistic));
+    }
+
+    /**
+     * GET  /quiz-point-statistic/:id : get the "id" quizPointStatistic.
+     *
+     * @param id the id of the quizPointStatistic to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/quiz-point-statistic/{id}/for-student")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @Timed
+    public ResponseEntity<QuizPointStatistic> getQuizExerciseForStudent(@PathVariable Long id) {
+        log.debug("REST request to get QuizPointStatistic : {}", id);
+        QuizPointStatistic quizPointStatistic = quizPointStatisticRepository.findOne(id);
+
+        if(!quizPointStatistic.isReleased()){
+            // filter out all Information about the Statistic except if it is released (so students can't get the pointCounters before the Statistic is released)
+            quizPointStatistic.setQuiz(null);
+            quizPointStatistic.setPointCounters(null);
+            quizPointStatistic.setParticipantsRated(null);
+            quizPointStatistic.setParticipantsUnrated(null);
+        }
+
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizPointStatistic));
     }
 

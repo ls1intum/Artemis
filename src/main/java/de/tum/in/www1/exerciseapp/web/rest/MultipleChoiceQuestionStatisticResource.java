@@ -3,12 +3,14 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic;
 
+import de.tum.in.www1.exerciseapp.domain.QuizPointStatistic;
 import de.tum.in.www1.exerciseapp.repository.MultipleChoiceQuestionStatisticRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -101,6 +103,33 @@ public class MultipleChoiceQuestionStatisticResource {
         MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = multipleChoiceQuestionStatisticRepository.findOne(id);
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(multipleChoiceQuestionStatistic));
     }
+
+    /**
+     * GET  /multiple-choice-question-statistic/:id : get the "id" multipleChoiceQuestionStatistic.
+     *
+     * @param id the id of the multipleChoiceQuestionStatistic to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the multipleChoiceQuestionStatistic, or with status 404 (Not Found)
+     */
+    @GetMapping("/multiple-choice-question-statistic/{id}/for-student")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @Timed
+    public ResponseEntity<MultipleChoiceQuestionStatistic> getQuizExerciseForStudent(@PathVariable Long id) {
+        log.debug("REST request to get QuizPointStatistic : {}", id);
+        MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = multipleChoiceQuestionStatisticRepository.findOne(id);
+
+        if(!multipleChoiceQuestionStatistic.isReleased()){
+            // filter out all Information about the Statistic except if it is released (so students can't get the information before the Statistic is released)
+            multipleChoiceQuestionStatistic.setQuestion(null);
+            multipleChoiceQuestionStatistic.setAnswerCounters(null);
+            multipleChoiceQuestionStatistic.setRatedCorrectCounter(null);
+            multipleChoiceQuestionStatistic.setUnRatedCorrectCounter(null);
+            multipleChoiceQuestionStatistic.setParticipantsRated(null);
+            multipleChoiceQuestionStatistic.setParticipantsUnrated(null);
+        }
+
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(multipleChoiceQuestionStatistic));
+    }
+
 
     /**
      * DELETE  /multiple-choice-question-statistics/:id : delete the "id" multipleChoiceQuestionStatistic.
