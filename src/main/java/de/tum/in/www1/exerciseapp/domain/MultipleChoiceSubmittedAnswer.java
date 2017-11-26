@@ -54,6 +54,23 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
     }
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
+    /**
+     * Check if the given answer option is selected in this submitted answer
+     * @param answerOption the answer option to check for
+     * @return true if the answer option is selected, false otherwise
+     */
+    public boolean isSelected(AnswerOption answerOption) {
+        // search for this answer option in the selected answer options
+        for (AnswerOption selectedOption : getSelectedOptions()) {
+            if (selectedOption.getId().longValue() == answerOption.getId().longValue()) {
+                // this answer option is selected => we can stop searching
+                return true;
+            }
+        }
+        // we didn't find the answer option => it wasn't selected
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

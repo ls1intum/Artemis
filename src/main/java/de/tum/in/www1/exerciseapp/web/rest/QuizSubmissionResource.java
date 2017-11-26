@@ -95,6 +95,8 @@ public class QuizSubmissionResource {
                         public void run() {
                             Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
                             submitSubmission(participation, null);
+                            // notify user about new result
+                            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                         }
                     }, ZonedDateTime.now().until(quizExercise.getDueDate().plusSeconds(3), ChronoUnit.MILLIS));
                 }
@@ -230,8 +232,6 @@ public class QuizSubmissionResource {
             // save result
             result = resultRepository.save(result);
         }
-        // notify user about new result
-        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
         // prepare submission for sending
         // Note: We get submission from result because if submission was already submitted
         // and this was called from the timer, quizSubmission might be null at this point

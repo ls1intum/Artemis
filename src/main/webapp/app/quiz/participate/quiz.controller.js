@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizController', QuizController);
 
-    QuizController.$inject = ['$scope', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService'];
+    QuizController.$inject = ['$scope', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult'];
 
-    function QuizController($scope, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService) {
+    function QuizController($scope, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult) {
         var vm = this;
 
         var timeDifference = 0;
@@ -33,20 +33,29 @@
          */
         function init() {
             load(function() {
-                var websocketChannel = '/topic/quizSubmissions/' + vm.submission.id;
+                var submissionChannel = '/topic/quizSubmissions/' + vm.submission.id;
+                var participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
 
-                JhiWebsocketService.subscribe(websocketChannel);
-
-                JhiWebsocketService.receive(websocketChannel).then(null, null, function(payload) {
+                // submission channel => react to new submissions
+                JhiWebsocketService.subscribe(submissionChannel);
+                JhiWebsocketService.receive(submissionChannel).then(null, null, function(payload) {
                     onSaveSuccess(payload);
                 });
 
+                // save answers (submissions) through websocket
                 vm.sendWebsocket = function(data) {
-                    JhiWebsocketService.send(websocketChannel + '/save', data);
+                    JhiWebsocketService.send(submissionChannel + '/save', data);
                 };
 
+                // participation channel => react to new results
+                JhiWebsocketService.subscribe(participationChannel);
+                JhiWebsocketService.receive(participationChannel).then(null, null, function() {
+                    load();
+                });
+
                 $scope.$on('$destroy', function() {
-                    JhiWebsocketService.unsubscribe(websocketChannel);
+                    JhiWebsocketService.unsubscribe(submissionChannel);
+                    JhiWebsocketService.unsubscribe(participationChannel);
                 });
             });
         }
@@ -159,14 +168,42 @@
                         vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
                     }
 
-                    // prepare answers for submission
+                    // show submission answers in UI
                     applySubmission();
 
-                    if(callback) {
-                        callback();
-                    }
+                    // load participation
+                    ExerciseParticipation.get({
+                        courseId: vm.quizExercise.course.id,
+                        exerciseId: vm.quizExercise.id
+                    }).$promise.then(function(participation) {
+                        vm.participation = participation;
+
+                        if (vm.quizExercise.remainingTime < 0) {
+                            // load result
+                            ParticipationResult.query({
+                                courseId: vm.participation.exercise.course.id,
+                                exerciseId: vm.participation.exercise.id,
+                                participationId: vm.participation.id,
+                                showAllResults: false
+                            }).$promise.then(showResult);
+                        }
+
+                        if(callback) {
+                            callback();
+                        }
+                    });
                 });
             });
+        }
+
+        /**
+         * Display results of quiz
+         * @param results
+         */
+        function showResult(results) {
+            vm.result = results[0];
+            console.log(vm.result);
+            // TODO
         }
 
         /**
