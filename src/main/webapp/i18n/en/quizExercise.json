@@ -42,7 +42,8 @@
             "remainingTime": "Remaining Time",
             "quizInstructions": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
             "lastSaved": "Saved",
-            "submitted": "Submitted"
+            "submitted": "Submitted",
+            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended."
         }
     }
 }

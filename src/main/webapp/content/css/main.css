@@ -8485,6 +8485,9 @@ body.editor .navbar-brand span {
       cursor: not-allowed; }
       .mc-question .answer-option.click-disabled:hover {
         background: inherit; }
+  .mc-question.disabled {
+    color: dimgrey;
+    background: #fafafa; }
 
 .quiz-header,
 .quiz-content,
@@ -8508,6 +8511,21 @@ body.editor .navbar-brand span {
 
 .quiz-footer-content .time-critical {
   color: red; }
+
+.quiz-submitted-overlay {
+  position: fixed;
+  bottom: 50%;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+  -moz-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+  -o-transform: translateX(-50%);
+  transform: translateX(-50%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  font-size: 16px;
+  text-align: center;
+  font-weight: bold;
+  border-color: #3c763d; }
 
 .colon-suffix:after {
   content: ":"; }

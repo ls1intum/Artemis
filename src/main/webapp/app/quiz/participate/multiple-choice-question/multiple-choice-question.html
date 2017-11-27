@@ -1,4 +1,4 @@
-<div class="mc-question">
+<div class="mc-question" ng-class="{'disabled': vm.clickDisabled}">
     <h2>{{vm.question.title}}</h2>
     <p ng-bind-html="vm.rendered.text"></p>
     <h4>
