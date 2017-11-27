@@ -110,6 +110,15 @@ public class QuizExerciseResource {
                 pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
             }
         }
+
+        // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
+        if (quizExercise != null && (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0)) {
+            quizExercise.getQuizPointStatistic().setReleased(false);
+            for (Question question : quizExercise.getQuestions()){
+                question.getQuestionStatistic().setReleased(false);
+            }
+        }
+
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         //       and delete the now orphaned entries from the database
@@ -177,20 +186,30 @@ public class QuizExerciseResource {
         log.debug("REST request to get QuizExercise : {}", id);
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
 
-        // filter out "quizPointStatistic" field (so students can't see quizPointStatistic while answering quiz)
-        quizExercise.setQuizPointStatistic(null);
+        // only filter out information if quiz hasn't ended yet
+        if (quizExercise != null && (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0)) {
 
-        // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
-        for (Question question : quizExercise.getQuestions()) {
-            question.setExplanation(null);
-            question.setQuestionStatistic(null);
+            // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
+            if(!quizExercise.getQuizPointStatistic().isReleased()){
+                quizExercise.getQuizPointStatistic().setPointCounters(null);
+                quizExercise.getQuizPointStatistic().setParticipantsRated(null);
+                quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
+            }
 
-            // filter out "isCorrect" and "explanation" fields from answerOptions in all MC questions (so students can't see correct options in JSON)
-            if (question instanceof MultipleChoiceQuestion) {
-                MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                    answerOption.setIsCorrect(null);
-                    answerOption.setExplanation(null);
+            // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
+            for (Question question : quizExercise.getQuestions()) {
+                question.setExplanation(null);
+                if(!question.getQuestionStatistic().isReleased()){
+                    question.setQuestionStatistic(null);
+                }
+
+                // filter out "isCorrect" and "explanation" fields from answerOptions in all MC questions (so students can't see correct options in JSON)
+                if (question instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                        answerOption.setIsCorrect(null);
+                        answerOption.setExplanation(null);
+                    }
                 }
             }
         }

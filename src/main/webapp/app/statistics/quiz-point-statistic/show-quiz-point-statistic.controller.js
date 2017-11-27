@@ -19,7 +19,6 @@
         vm.switchRated = switchRated;
         vm.previousStatistic = previousStatistic;
         vm.releaseStatistics = releaseStatistics;
-        vm.quizIsOver = quizIsOver;
 
         vm.rated = true;
         vm.$onInit = init;
@@ -194,7 +193,7 @@
             if (released === vm.quizExercise.quizPointStatistic.released ){
                 return;
             }
-            if (quizIsOver()){
+            if (released && !vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate)){
                 alert("Quiz noch nicht beendet!");
                 return;
             }
@@ -205,10 +204,6 @@
                 }
                 QuizExercise.update(vm.quizExercise);
             }
-        }
-
-        function quizIsOver(){
-            return moment().isBefore(vm.quizExercise.dueDate);
         }
 
     }
