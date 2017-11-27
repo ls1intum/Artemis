@@ -11,10 +11,12 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     vm.rendered = {
         text: htmlForMarkdown(vm.question.text),
         hint: htmlForMarkdown(vm.question.hint),
+        explanation: htmlForMarkdown(vm.question.explanation),
         answerOptions: vm.question.answerOptions.map(function(answerOption){
             return {
                 text: htmlForMarkdown(answerOption.text),
-                hint: htmlForMarkdown(answerOption.hint)
+                hint: htmlForMarkdown(answerOption.hint),
+                explanation: htmlForMarkdown(answerOption.explanation)
             };
         })
     };
@@ -76,6 +78,7 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
         question: '=',
         selectedAnswerOptions: '=',
         clickDisabled: '<',
+        showResult: '<',
         onSelection: '&'
     }
 });

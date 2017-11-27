@@ -21,6 +21,7 @@
         vm.remainingTimeSeconds = 0;
 
         vm.sendWebsocket = null;
+        vm.showingResult = false;
 
         vm.onSelectionChanged = onSelectionChanged;
         vm.onSubmit = onSubmit;
@@ -202,8 +203,9 @@
          */
         function showResult(results) {
             vm.result = results[0];
-            console.log(vm.result);
-            // TODO
+            if (vm.result) {
+                vm.showingResult = true;
+            }
         }
 
         /**

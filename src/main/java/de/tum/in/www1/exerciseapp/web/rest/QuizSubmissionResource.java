@@ -98,7 +98,7 @@ public class QuizSubmissionResource {
                             // notify user about new result
                             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                         }
-                    }, ZonedDateTime.now().until(quizExercise.getDueDate().plusSeconds(3), ChronoUnit.MILLIS));
+                    }, (quizExercise.getRemainingTime() + 3) * 1000);
                 }
                 if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
@@ -171,7 +171,7 @@ public class QuizSubmissionResource {
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
                 // only update if quizExercise hasn't ended and user hasn't made final submission yet
-                if (quizExercise.getDueDate().plusSeconds(2).isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                if (quizExercise.isIsPlannedToStart() && quizExercise.getRemainingTime() > -2 && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
                     quizSubmission = submitSubmission(participation, quizSubmission);
                     // send response

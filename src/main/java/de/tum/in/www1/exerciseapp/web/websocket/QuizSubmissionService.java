@@ -58,12 +58,12 @@ public class QuizSubmissionService {
         if (resultOptional.isPresent()) {
             Result result = resultOptional.get();
             Participation participation = result.getParticipation();
-            Exercise exercise = participation.getExercise();
+            QuizExercise quizExercise = (QuizExercise) participation.getExercise();
             User user = participation.getStudent();
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
                 // only update if exercise hasn't ended already
-                if (exercise.getDueDate().plusSeconds(2).isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                if (quizExercise.isIsPlannedToStart() && quizExercise.getRemainingTime() > -2 && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
                     quizSubmission = quizSubmissionRepository.save(quizSubmission);
 

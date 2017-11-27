@@ -179,6 +179,10 @@ public class QuizExercise extends Exercise implements Serializable {
         return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : null;
     }
 
+    /**
+     * Get the remaining time in seconds
+     * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
+     */
     public Long getRemainingTime() {
         return isPlannedToStart ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
     }

@@ -8527,6 +8527,23 @@ body.editor .navbar-brand span {
   font-weight: bold;
   border-color: #3c763d; }
 
+table.answer-options-result {
+  width: 100%; }
+  table.answer-options-result .answer-option {
+    display: table-row; }
+  table.answer-options-result th {
+    color: dimgray; }
+  table.answer-options-result th, table.answer-options-result td {
+    padding: 6px 10px; }
+  table.answer-options-result .correct {
+    color: green; }
+  table.answer-options-result .wrong {
+    color: red; }
+  table.answer-options-result .warning {
+    color: orange;
+    vertical-align: middle;
+    padding-right: 10px; }
+
 .colon-suffix:after {
   content: ":"; }
 

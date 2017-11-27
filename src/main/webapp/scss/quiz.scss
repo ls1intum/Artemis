@@ -267,6 +267,36 @@
     border-color: #3c763d;
 }
 
+table.answer-options-result {
+    width: 100%;
+
+    .answer-option {
+        display: table-row;
+    }
+
+    th {
+        color: dimgray;
+    }
+
+    th, td {
+        padding: 6px 10px;
+    }
+
+    .correct {
+        color: green;
+    }
+
+    .wrong {
+        color: red;
+    }
+
+    .warning {
+        color: orange;
+        vertical-align: middle;
+        padding-right: 10px;
+    }
+}
+
 .colon-suffix:after {
     content: ":";
 }

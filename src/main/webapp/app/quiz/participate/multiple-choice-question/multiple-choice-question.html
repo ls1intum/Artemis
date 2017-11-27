@@ -1,4 +1,4 @@
-<div class="mc-question" ng-class="{'disabled': vm.clickDisabled}">
+<div class="mc-question" ng-class="{'disabled': vm.clickDisabled && !vm.showResult}">
     <h2>{{vm.question.title}}</h2>
     <p ng-bind-html="vm.rendered.text"></p>
     <h4>
@@ -7,11 +7,17 @@
             <span data-translate="artemisApp.question.hint"></span>
         </span>
     </h4>
+    <h4>
+        <span class="label label-primary" uib-popover-html="vm.rendered.explanation" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.explanation">
+            <i class="fa fa-exclamation-circle"></i>
+            <span data-translate="artemisApp.question.explanation"></span>
+        </span>
+    </h4>
     <div class="question-score">
         <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
         <span>{{vm.question.score}}</span>
     </div>
-    <div class="answer-options">
+    <div class="answer-options" ng-if="!vm.showResult">
         <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-class="{'click-disabled': vm.clickDisabled}" ng-click="vm.toggleSelection(answerOption)">
             <div class="selection">
                 <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
@@ -28,4 +34,37 @@
             </div>
         </div>
     </div>
+    <table class="answer-options-result" ng-if="vm.showResult">
+        <tr>
+            <th>You</th>
+            <th>Solution</th>
+            <th>Answer</th>
+        </tr>
+        <tr class="answer-option" ng-repeat="answerOption in vm.question.answerOptions">
+            <td class="selection">
+                <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
+                <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>
+            </td>
+            <td class="solution">
+                <i class="fa fa-2x fa-exclamation-triangle warning" ng-if="(vm.isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!vm.isAnswerOptionSelected(answerOption) && answerOption.isCorrect)"></i>
+                <span ng-if="answerOption.isCorrect" class="correct">Correct</span>
+                <span ng-if="!answerOption.isCorrect" class="wrong">Wrong</span>
+            </td>
+            <td class="content">
+                <div class="text" ng-bind-html="vm.rendered.answerOptions[$index].text"></div>
+                <div class="hint">
+                    <span class="label label-info" uib-popover-html="vm.rendered.answerOptions[$index].hint" popover-placement="left-top" popover-trigger="mouseenter" ng-if="answerOption.hint">
+                        <i class="fa fa-question-circle-o"></i>
+                        <span data-translate="artemisApp.question.hint"></span>
+                    </span>
+                </div>
+                <div class="hint">
+                    <span class="label label-primary" uib-popover-html="vm.rendered.answerOptions[$index].explanation" popover-placement="left-top" popover-trigger="mouseenter" ng-if="answerOption.explanation">
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span data-translate="artemisApp.question.explanation"></span>
+                    </span>
+                </div>
+            </td>
+        </tr>
+    </table>
 </div>
