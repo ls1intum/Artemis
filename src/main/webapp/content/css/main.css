@@ -8515,6 +8515,13 @@ body.editor .navbar-brand span {
 .quiz-footer-content #remaining-time-value {
   font-weight: bold; }
 
+.quiz-footer-content #quiz-score {
+  text-align: center;
+  font-weight: bold;
+  color: green; }
+  .quiz-footer-content #quiz-score.incorrect {
+    color: black; }
+
 .quiz-footer-content .time-warning {
   color: orange; }
 

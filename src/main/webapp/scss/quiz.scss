@@ -259,6 +259,16 @@
         font-weight: bold;
     }
 
+    #quiz-score {
+        text-align: center;
+        font-weight: bold;
+        color: green;
+
+        &.incorrect {
+            color: black;
+        }
+    }
+
     .time-warning {
         color: orange;
     }

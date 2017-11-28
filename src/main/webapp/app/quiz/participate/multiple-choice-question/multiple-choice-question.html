@@ -19,7 +19,7 @@
     </div>
     <div class="question-score result" ng-if="vm.showResult" ng-class="{incorrect: vm.getUserScore() < vm.question.score}">
         <span data-translate="artemisApp.question.yourScore" class="colon-suffix"></span>
-        <span>{{vm.getUserScore()}} / {{vm.question.score}}</span>
+        <span>{{vm.getUserScore()}}/{{vm.question.score}}</span>
     </div>
     <div class="answer-options" ng-if="!vm.showResult">
         <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-class="{'click-disabled': vm.clickDisabled}" ng-click="vm.toggleSelection(answerOption)">
