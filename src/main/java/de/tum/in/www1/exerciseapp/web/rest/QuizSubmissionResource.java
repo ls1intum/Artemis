@@ -235,16 +235,18 @@ public class QuizSubmissionResource {
             result.setCompletionDate(ZonedDateTime.now());
             // calculate score and update result accordingly
             result.evaluateSubmission();
-            // add the Result to Statistics
+            // add the Result to the quizPointStatistic
             ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(),true);
             quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
+            // add the Result to QuestionStatistics
             for(SubmittedAnswer submittedAnswer: ((QuizSubmission)result.getSubmission()).getSubmittedAnswers()){
                 submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
                 questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
             }
-            statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
             // save result
             result = resultRepository.save(result);
+            // notify statistics about new Result
+            statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
         }
         // notify user about new result
         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);

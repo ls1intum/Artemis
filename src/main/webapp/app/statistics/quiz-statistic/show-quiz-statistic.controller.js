@@ -22,6 +22,8 @@
         vm.switchRated = switchRated;
         vm.nextStatistic = nextStatistic;
         vm.releaseStatistics = releaseStatistics;
+        vm.releaseButtonDisabled = releaseButtonDisabled;
+
         var maxScore;
 
         vm.rated = true;
@@ -172,7 +174,7 @@
             if (released === vm.quizExercise.quizPointStatistic.released ){
                 return;
             }
-            if (released && !vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate)){
+            if (released && releaseButtonDisabled()){
                 alert("Quiz noch nicht beendet!");
                 return;
             }
@@ -182,6 +184,15 @@
                     vm.quizExercise.questions[i].questionStatistic.released = released;
                 }
                 QuizExercise.update(vm.quizExercise);
+            }
+        }
+
+
+        function releaseButtonDisabled(){
+            if (vm.quizExercise != null){
+                return (!vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate));
+            }else{
+                return true;
             }
         }
 
