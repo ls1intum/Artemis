@@ -8450,10 +8450,19 @@ body.editor .navbar-brand span {
   .mc-question p {
     margin: 10px 0;
     font-size: 16px; }
+  .mc-question.result {
+    border-color: green; }
+    .mc-question.result.incorrect {
+      border-color: orange; }
   .mc-question .question-score {
     position: absolute;
     top: 20px;
     right: 20px; }
+    .mc-question .question-score.result {
+      font-weight: bold;
+      color: green; }
+      .mc-question .question-score.result.incorrect {
+        color: orange; }
   .mc-question .label {
     cursor: pointer; }
   .mc-question .answer-options {

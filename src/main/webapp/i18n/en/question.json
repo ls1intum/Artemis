@@ -23,7 +23,8 @@
             "totalScore": "Total Points",
             "randomizeOrder": "Present Answers in Random Order",
             "scoringType": "Scoring Type",
-            "exercise": "Exercise"
+            "exercise": "Exercise",
+            "yourScore": "Your Score"
         }
     }
 }

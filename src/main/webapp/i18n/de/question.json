@@ -23,7 +23,8 @@
             "totalScore": "Gesamtpunktzahl",
             "randomizeOrder": "Fragen in zufälliger Reihenfolge anzeigen",
             "scoringType": "Bewertungsweise",
-            "exercise": "Übung"
+            "exercise": "Übung",
+            "yourScore": "Erreichte Punktzahl"
         }
     }
 }

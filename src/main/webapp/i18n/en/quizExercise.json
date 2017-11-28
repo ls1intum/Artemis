@@ -40,7 +40,11 @@
             "startTime": "Start Time",
             "quiz": "Quiz",
             "remainingTime": "Remaining Time",
-            "quizInstructions": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
+            "quizInstructions": {
+                "default": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
+                "wait": "Please wait until the quiz has ended to see your results.",
+                "result": "You have finished the quiz with <b>{{userScore}}</b> out of <b>{{maxScore}}</b> points (<b>{{percentage}} %</b>)."
+            },
             "lastSaved": "Saved",
             "submitted": "Submitted",
             "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended."

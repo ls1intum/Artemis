@@ -1,6 +1,8 @@
 <div class="quiz-header container">
     <h1>{{vm.quizExercise.course.title}} - {{vm.quizExercise.title}}</h1>
-    <p data-translate="artemisApp.quizExercise.quizInstructions"></p>
+    <p ng-if="!vm.submission.submitted" data-translate="artemisApp.quizExercise.quizInstructions.default"></p>
+    <p ng-if="vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.wait"></p>
+    <p ng-if="vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.result" data-translate-values="{userScore: vm.userScore, maxScore: vm.totalScore, percentage: vm.result.score}"></p>
 </div>
 <div class="quiz-content container">
     <div ng-repeat="question in vm.quizExercise.questions">

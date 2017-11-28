@@ -155,10 +155,27 @@
         font-size: 16px;
     }
 
+    &.result {
+        border-color: green;
+
+        &.incorrect {
+            border-color: orange;
+        }
+    }
+
     .question-score {
         position: absolute;
         top: 20px;
         right: 20px;
+
+        &.result {
+            font-weight: bold;
+            color: green;
+
+            &.incorrect {
+                color: orange;
+            }
+        }
     }
 
     .label {

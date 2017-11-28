@@ -22,6 +22,7 @@
 
         vm.sendWebsocket = null;
         vm.showingResult = false;
+        vm.userScore = "?";
 
         vm.onSelectionChanged = onSelectionChanged;
         vm.onSubmit = onSubmit;
@@ -205,6 +206,14 @@
             vm.result = results[0];
             if (vm.result) {
                 vm.showingResult = true;
+
+                // calculate user score in points
+                vm.userScore = 0;
+                vm.quizExercise.questions.forEach(function(question) {
+                    var selectedAnswerOptions = vm.selectedAnswerOptions[question.id];
+                    var scorer = QuestionScorerFactory.makeScorer(question.scoringType, question.type);
+                    vm.userScore += scorer.scoreAnswerForQuestion(selectedAnswerOptions, question);
+                });
             }
         }
 

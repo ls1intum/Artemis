@@ -22,6 +22,7 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     };
 
     vm.toggleSelection = toggleSelection;
+    vm.getUserScore = getUserScore;
 
     function toggleSelection(answerOption) {
         if (vm.clickDisabled) {
@@ -66,6 +67,16 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         });
         var html = converter.makeHtml(markdownText);
         return $sanitize(html);
+    }
+
+    /**
+     * Calculate the user's score for this question (only possible when isCorrect is set for each answer option)
+     *
+     * @return {number} the user's score
+     */
+    function getUserScore() {
+        var scorer = QuestionScorerFactory.makeScorer(vm.question.scoringType, vm.question.type);
+        return scorer.scoreAnswerForQuestion(vm.selectedAnswerOptions, vm.question);
     }
 
 }
