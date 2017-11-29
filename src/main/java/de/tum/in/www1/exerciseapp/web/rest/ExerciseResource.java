@@ -152,7 +152,7 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<List<Exercise>> getAllExercises(@ApiParam Pageable pageable) {
         log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseService.findAll(pageable);
+        Page<Exercise> page = exerciseRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
