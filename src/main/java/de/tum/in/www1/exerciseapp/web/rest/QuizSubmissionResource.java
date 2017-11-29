@@ -235,16 +235,28 @@ public class QuizSubmissionResource {
             result.setCompletionDate(ZonedDateTime.now());
             // calculate score and update result accordingly
             result.evaluateSubmission();
-            // add the Result to the quizPointStatistic
+            // save result
+            result = resultRepository.save(result);
+            // get previous Result
+            Result previousResult = getPreviousResult(result);
+            // add the new Result to the quizPointStatistic and remove the previous one
+            if(previousResult != null){
+                ((QuizExercise) previousResult.getParticipation().getExercise()).getQuizPointStatistic().removeOldResult(previousResult.getScore(),true);
+            }
             ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(),true);
             quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
-            // add the Result to QuestionStatistics
+            // remove the previous Result from the QuestionStatistics
+            if(previousResult != null){
+                for(SubmittedAnswer submittedAnswer: ((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswers()){
+                    submittedAnswer.getQuestion().getQuestionStatistic().removeOldResult(submittedAnswer, true);
+                    questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
+                }
+            }
+            // add the new Result to QuestionStatistics
             for(SubmittedAnswer submittedAnswer: ((QuizSubmission)result.getSubmission()).getSubmittedAnswers()){
                 submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
                 questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
             }
-            // save result
-            result = resultRepository.save(result);
             // notify statistics about new Result
             statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
         }
@@ -258,6 +270,24 @@ public class QuizSubmissionResource {
         // notify user about changed submission
         messagingTemplate.convertAndSend("/topic/quizSubmissions/" + submission.getId(), submission);
         return quizSubmission;
+    }
+
+    /**
+     * Go throw all Results in the Participation and save the latest one before the new Result,
+     *
+     * @param newResult the new result object which will replace the old Result in the Statistics
+     * @return the previous Result, which is presented in the Statistics (null if where is no previous Result)
+     */
+    private Result getPreviousResult(Result newResult){
+        Result oldResult = null;
+
+        for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())){
+            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) &&
+                (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))){
+                oldResult = result;
+            }
+        }
+        return oldResult;
     }
 
     /**

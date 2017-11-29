@@ -19,19 +19,16 @@ public class StatisticService {
 
     private static boolean semaphorUpdateStatistic = false;
 
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-    private final LtiService ltiService;
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public StatisticService(Optional<ContinuousIntegrationService> continuousIntegrationService, LtiService ltiService, SimpMessageSendingOperations messagingTemplate) {
-        this.continuousIntegrationService = continuousIntegrationService;
-        this.ltiService = ltiService;
+    public StatisticService(SimpMessageSendingOperations messagingTemplate) {
         this.messagingTemplate = messagingTemplate;
     }
 
     /**
-     * Perform async operations after we were notified about new results.
+     * Perform async operations after we were notified about new results for the statistics.
      *
+     * @param quizExercise contains the object of the quiz, for which statistics new result are available;
      */
     @Async
 
@@ -57,6 +54,19 @@ public class StatisticService {
             messagingTemplate.convertAndSend("/topic/statistic/" + quizExercise.getId(), true);
         }
 
+    }
+    /**
+     * Perform async operations if the release state of an statistic is changed
+     *
+     * @param quizExercise contains the object of the quiz, for which statistics has been released or revoked;
+     * @param payload: release = true , revoke = false.
+     */
+    @Async
+
+    public void releaseStatistic(QuizExercise quizExercise, boolean payload) {
+        // notify user via websocket
+        // release: payload = true , revoke: payload = false.
+        messagingTemplate.convertAndSend("/topic/statistic/" + quizExercise.getId() +"/release", payload);
     }
 
 }

@@ -41,21 +41,28 @@
             else{
                 QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz)
             }
-            var websocketChannel = '/topic/statistic/'+ _.get($state,"params.quizId");
+            var websocketChannelForData = '/topic/statistic/'+ _.get($state,"params.quizId");
+            var websocketChannelForReleaseState = websocketChannelForData + '/release';
 
-            JhiWebsocketService.subscribe(websocketChannel);
+            JhiWebsocketService.subscribe(websocketChannelForData);
+            JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
-            JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
+            JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
-                    MultipleChoiceQuestionStatistic.get({id: vm.question.questionStatistic.id}).$promise.then(loadNewData);
+                    QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
                 }
                 else{
-                    MultipleChoiceQuestionStatisticForStudent.get({id: vm.question.questionStatistic.id}).$promise.then(loadNewData);
+                    QuizPointStatisticForStudent.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
                 }
+
+            });
+            JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
+                vm.quizExercise.quizPointStatistic.released = payload;
             });
 
             $scope.$on('$destroy', function() {
-                JhiWebsocketService.unsubscribe(websocketChannel);
+                JhiWebsocketService.unsubscribe(websocketChannelForData);
+                JhiWebsocketService.unsubscribe(websocketChannelForReleaseState);
             });
 
             $translate('showStatistic.multipleChoiceQuestionStatistic.xAxes').then(function (xLabel){

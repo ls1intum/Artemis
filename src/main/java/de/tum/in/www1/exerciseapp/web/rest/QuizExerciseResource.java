@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.MultipleChoiceQuestionRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
+import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -32,9 +33,11 @@ public class QuizExerciseResource {
     private static final String ENTITY_NAME = "quizExercise";
 
     private final QuizExerciseRepository quizExerciseRepository;
+    private final StatisticService statisticService;
 
-    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository) {
+    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, StatisticService statisticService) {
         this.quizExerciseRepository = quizExerciseRepository;
+        this.statisticService = statisticService;
     }
 
     /**
@@ -118,6 +121,8 @@ public class QuizExerciseResource {
                 question.getQuestionStatistic().setReleased(false);
             }
         }
+        //notify clients about the release state of the statistics.
+        statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
 
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions

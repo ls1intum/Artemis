@@ -84,4 +84,7 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated){
         //TO-DO
     }
+    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated){
+        //TO-DO
+    }
 }

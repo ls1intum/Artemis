@@ -37,22 +37,28 @@
             else{
                 QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
             }
+            var websocketChannelForData = '/topic/statistic/'+ _.get($state,"params.quizId");
+            var websocketChannelForReleaseState = websocketChannelForData + '/release';
 
-            var websocketChannel = '/topic/statistic/'+ _.get($state,"params.quizId");
+            JhiWebsocketService.subscribe(websocketChannelForData);
+            JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
-            JhiWebsocketService.subscribe(websocketChannel);
-
-            JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
+            JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
-                    QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+                    QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
                 }
                 else{
-                    QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
-            }
+                    QuizPointStatisticForStudent.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
+                }
+
+            });
+            JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
+                vm.quizExercise.quizPointStatistic.released = payload;
             });
 
             $scope.$on('$destroy', function() {
-                JhiWebsocketService.unsubscribe(websocketChannel);
+                JhiWebsocketService.unsubscribe(websocketChannelForData);
+                JhiWebsocketService.unsubscribe(websocketChannelForReleaseState);
             });
 
             $translate('showStatistic.quizStatistic.xAxes').then(function (xLabel){

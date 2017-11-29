@@ -137,5 +137,32 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             }
         }
     }
+    public void removeOldResult(Long score ,boolean rated){
+
+        Double points = (double) Math.round(((double) quiz.getMaxQuizScore()) * ((double) score/100));
+
+        if(points == null){
+            return;
+        }
+
+        if(rated){
+            setParticipantsRated(getParticipantsRated()-1);
+
+            for (PointCounter pointCounter: pointCounters){
+                if(points.equals(pointCounter.getPoints())){
+                    pointCounter.setRatedCounter(pointCounter.getRatedCounter()-1);
+                }
+            }
+        }
+        else{
+            setParticipantsUnrated(getParticipantsUnrated()-1);
+
+            for (PointCounter pointCounter: pointCounters){
+                if(points.equals(pointCounter.getPoints())){
+                    pointCounter.setRatedCounter(pointCounter.getUnRatedCounter()-1);
+                }
+            }
+        }
+    }
 
 }

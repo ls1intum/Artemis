@@ -139,6 +139,45 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
             }
         }
     }
+    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated){
 
+        if(submittedAnswer == null){
+            return;
+        }
+
+        MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
+
+        if(rated){
+            setParticipantsRated(getParticipantsRated()-1);
+
+            if(mcSubmittedAnswer.getSelectedOptions() == null){
+                return;
+            }
+
+            for (AnswerCounter answerCounter: answerCounters){
+                if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
+                    answerCounter.setRatedCounter(answerCounter.getRatedCounter()-1);
+                }
+            }
+            if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)){
+                setRatedCorrectCounter(getRatedCorrectCounter()-1);
+            }
+        }
+        else{
+            setParticipantsUnrated(getParticipantsUnrated()-1);
+
+            if(mcSubmittedAnswer.getSelectedOptions() == null){
+                return;
+            }
+            for (AnswerCounter answerCounter: answerCounters){
+                if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
+                    answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()-1);
+                }
+            }
+            if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)){
+                setUnRatedCorrectCounter(getUnRatedCorrectCounter()-1);
+            }
+        }
+    }
 
 }

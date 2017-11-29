@@ -32,11 +32,13 @@
             else{
                 QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
             }
-            var websocketChannel = '/topic/statistic/'+ _.get($state,"params.quizId");
+            var websocketChannelForData = '/topic/statistic/'+ _.get($state,"params.quizId");
+            var websocketChannelForReleaseState = websocketChannelForData + '/release';
 
-            JhiWebsocketService.subscribe(websocketChannel);
+            JhiWebsocketService.subscribe(websocketChannelForData);
+            JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
-            JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
+            JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
                     QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
                 }
@@ -45,9 +47,13 @@
                 }
 
             });
+            JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
+                vm.quizExercise.quizPointStatistic.released = payload;
+            });
 
             $scope.$on('$destroy', function() {
-                JhiWebsocketService.unsubscribe(websocketChannel);
+                JhiWebsocketService.unsubscribe(websocketChannelForData);
+                JhiWebsocketService.unsubscribe(websocketChannelForReleaseState);
             });
 
             $translate('showStatistic.quizPointStatistic.xAxes').then(function (xLabel){
