@@ -78,8 +78,13 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
             "id=" + getId() +
             "}";
     }
-    //creates the AnswerCounter for the new AnswerOption
-    //      if where is already an AnswerCounter with the given answerOption -> nothing happens
+
+    /**
+     * 1. creates the AnswerCounter for the new AnswerOption
+     *          if where is already an AnswerCounter with the given answerOption -> nothing happens
+     *
+     * @param answer the answer object which will be added to the MultipleChoiceStatistic
+     */
     public void addAnswerOption(AnswerOption answer){
 
         if(answer ==null){
@@ -97,8 +102,15 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
 
     }
 
+    /**
+     * 1. check if the Result is rated or unrated
+     * 2. increase participants, all selected AnswerCounter and if the question is correct, than increase the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                                  or unrated  ( participated after the dueDate of the quizExercise)
+     */
     @Override
-    //adds new Result to the MultipleChoiceQuestionStatistic
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated){
 
         if(submittedAnswer == null){
@@ -108,37 +120,52 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
 
         if(rated){
+            //increase participants
             setParticipantsRated(getParticipantsRated()+1);
 
-            if(mcSubmittedAnswer.getSelectedOptions() == null){
-                return;
-            }
-
-            for (AnswerCounter answerCounter: answerCounters){
-                if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
+            if(mcSubmittedAnswer.getSelectedOptions() != null){
+                // increase answerCounter if answer is selected
+                for (AnswerCounter answerCounter: answerCounters){
+                    if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
                         answerCounter.setRatedCounter(answerCounter.getRatedCounter()+1);
+                    }
                 }
             }
+            // increase correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)){
                 setRatedCorrectCounter(getRatedCorrectCounter()+1);
             }
         }
+        // Result is unrated
         else{
+            //increase participants
             setParticipantsUnrated(getParticipantsUnrated()+1);
 
-            if(mcSubmittedAnswer.getSelectedOptions() == null){
-                return;
-            }
-            for (AnswerCounter answerCounter: answerCounters){
-                if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
-                    answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()+1);
+            if(mcSubmittedAnswer.getSelectedOptions() != null){
+                for (AnswerCounter answerCounter: answerCounters){
+                    // increase answerCounter if answer is selected
+                    if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
+                        answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()+1);
+                    }
                 }
             }
+
+            // increase correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)){
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter()+1);
             }
         }
     }
+
+    /**
+     * 1. check if the Result is rated or unrated
+     * 2. decrease participants, all selected AnswerCounter and if the question is correct, than decrease the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                                  or unrated  ( participated after the dueDate of the quizExercise)
+     */
+    @Override
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated){
 
         if(submittedAnswer == null){
@@ -148,32 +175,36 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
 
         if(rated){
+            //decrease participants
             setParticipantsRated(getParticipantsRated()-1);
 
-            if(mcSubmittedAnswer.getSelectedOptions() == null){
-                return;
-            }
-
-            for (AnswerCounter answerCounter: answerCounters){
-                if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
-                    answerCounter.setRatedCounter(answerCounter.getRatedCounter()-1);
+            if(mcSubmittedAnswer.getSelectedOptions() != null){
+                // decrease answerCounter if answer is selected
+                for (AnswerCounter answerCounter: answerCounters){
+                    if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
+                        answerCounter.setRatedCounter(answerCounter.getRatedCounter()-1);
+                    }
                 }
             }
+            // decrease correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)){
                 setRatedCorrectCounter(getRatedCorrectCounter()-1);
             }
         }
+        // Result is unrated
         else{
+            //decrease participants
             setParticipantsUnrated(getParticipantsUnrated()-1);
 
-            if(mcSubmittedAnswer.getSelectedOptions() == null){
-                return;
-            }
-            for (AnswerCounter answerCounter: answerCounters){
-                if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
-                    answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()-1);
+            if(mcSubmittedAnswer.getSelectedOptions() != null){
+                // decrease answerCounter if answer is selected
+                for (AnswerCounter answerCounter: answerCounters){
+                    if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())){
+                        answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()-1);
+                    }
                 }
             }
+            // decrease correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)){
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter()-1);
             }

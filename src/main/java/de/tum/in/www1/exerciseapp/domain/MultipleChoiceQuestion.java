@@ -43,22 +43,22 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     public MultipleChoiceQuestion addAnswerOptions(AnswerOption answerOption) {
         this.answerOptions.add(answerOption);
         answerOption.setQuestion(this);
+        //if an answerOption was added then add the associated AnswerCounter implicitly
         ((MultipleChoiceQuestionStatistic)getQuestionStatistic()).addAnswerOption(answerOption);
         return this;
     }
 
     public MultipleChoiceQuestion removeAnswerOptions(AnswerOption answerOption) {
+        //if an answerOption was removed then remove the associated AnswerCounter implicitly
         MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
-
         AnswerCounter delete = null;
-
         for(AnswerCounter answerCounter: mcStatistic.getAnswerCounters())
             if(answerOption.equals(answerCounter.getAnswer())){
             answerCounter.setAnswer(null);
             delete = answerCounter;
             }
-
         mcStatistic.getAnswerCounters().remove(delete);
+
         this.answerOptions.remove(answerOption);
         answerOption.setQuestion(null);
         return this;
@@ -69,12 +69,12 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         this.answerOptions = answerOptions;
 
         if(getQuestionStatistic() != null) {
-            //add the AnswerCounters
+            //if an answerOption was added then add the associated AnswerCounter implicitly
             for (AnswerOption answerOption : getAnswerOptions()) {
                 ((MultipleChoiceQuestionStatistic) getQuestionStatistic()).addAnswerOption(answerOption);
             }
 
-            //delete old AnswerCounter
+            //if an answerOption was removed then remove the associated AnswerCounter implicitly
             Set<AnswerCounter> delete = new HashSet<>();
             for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
                 if (answerCounter.getId() != null) {
@@ -164,6 +164,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     }
 
     public MultipleChoiceQuestion(){
+        //create associated Statistic implicitly
         MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();
         setQuestionStatistic(mcStatistic);
         mcStatistic.setQuestion(this);

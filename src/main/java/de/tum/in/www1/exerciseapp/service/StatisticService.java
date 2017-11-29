@@ -12,7 +12,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Created by Josias Montag on 06.10.16.
+ * Created by Moritz Issig on 22.11.17.
  */
 @Service
 public class StatisticService {

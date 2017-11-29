@@ -207,6 +207,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     public QuizExercise questions(List<Question> questions) {
         this.questions = questions;
+        //correct the associated quizPointStatistic implicitly
         recalculatePointCounters();
         return this;
     }
@@ -214,6 +215,7 @@ public class QuizExercise extends Exercise implements Serializable {
     public QuizExercise addQuestions(Question question) {
         this.questions.add(question);
         question.setExercise(this);
+        //correct the associated quizPointStatistic implicitly
         recalculatePointCounters();
         return this;
     }
@@ -221,6 +223,7 @@ public class QuizExercise extends Exercise implements Serializable {
     public QuizExercise removeQuestions(Question question) {
         this.questions.remove(question);
         question.setExercise(null);
+        //correct the associated quizPointStatistic implicitly
         recalculatePointCounters();
         return this;
     }
@@ -302,9 +305,16 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     public QuizExercise(){
+        //creates the associated quizPointStatistic implicitly
         quizPointStatistic = new QuizPointStatistic();
         quizPointStatistic.setQuiz(this);
     }
+
+    /**
+     * 1. add up the scores of every question in this quiz
+     *
+     * @return the sum of these scores
+     */
     public int getMaxQuizScore(){
         int quizScore = 0;
 
@@ -317,12 +327,17 @@ public class QuizExercise extends Exercise implements Serializable {
         return quizScore;
     }
 
-    // add or remove PointCounters  in the QuizPointStatistic
+    /**
+     * correct the associated quizPointStatistic implicitly
+     *
+     * 1. add new PointCounters for new Scores
+     * 2. delete old PointCounters if the score is no longer contained
+     */
     private void recalculatePointCounters(){
 
         double quizScore = getMaxQuizScore();
 
-        //add new Scores
+        //add new PointCounter
         for(double i = 0.0 ; i <= quizScore; i++){  // for variable ScoreSteps change: i++ into: i= i + scoreStep
             quizPointStatistic.addScore(new Double(i));
         }

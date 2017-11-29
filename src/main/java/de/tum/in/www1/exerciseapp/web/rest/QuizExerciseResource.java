@@ -55,9 +55,7 @@ public class QuizExerciseResource {
         if (quizExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
-
         QuizExercise result = quizExerciseRepository.save(quizExercise);
-
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
@@ -121,14 +119,13 @@ public class QuizExerciseResource {
                 question.getQuestionStatistic().setReleased(false);
             }
         }
-        //notify clients about the release state of the statistics.
+        //notify clients via websocket about the release state of the statistics.
         statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
 
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         //       and delete the now orphaned entries from the database
         QuizExercise result = quizExerciseRepository.save(quizExercise);
-
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
@@ -194,13 +191,6 @@ public class QuizExerciseResource {
         // only filter out information if quiz hasn't ended yet
         if (quizExercise != null && (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0)) {
 
-            // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
-            if(!quizExercise.getQuizPointStatistic().isReleased()){
-                quizExercise.getQuizPointStatistic().setPointCounters(null);
-                quizExercise.getQuizPointStatistic().setParticipantsRated(null);
-                quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
-            }
-
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
             for (Question question : quizExercise.getQuestions()) {
                 question.setExplanation(null);
@@ -217,6 +207,13 @@ public class QuizExerciseResource {
                     }
                 }
             }
+        }
+        // filter out the statistic information if the statistic is not released
+        if(!quizExercise.getQuizPointStatistic().isReleased()){
+            // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
+            quizExercise.getQuizPointStatistic().setPointCounters(null);
+            quizExercise.getQuizPointStatistic().setParticipantsRated(null);
+            quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
         }
 
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));

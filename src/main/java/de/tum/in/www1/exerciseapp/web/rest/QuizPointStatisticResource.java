@@ -126,6 +126,7 @@ public class QuizPointStatisticResource {
         log.debug("REST request to get QuizPointStatistic : {}", id);
         QuizPointStatistic quizPointStatistic = quizPointStatisticRepository.findOne(id);
 
+        // filter out the statistic information if the statistic is not released
         if(!quizPointStatistic.isReleased()){
             // filter out all Information about the Statistic except if it is released (so students can't get the pointCounters before the Statistic is released)
             quizPointStatistic.setQuiz(null);

@@ -117,6 +117,7 @@ public class MultipleChoiceQuestionStatisticResource {
         log.debug("REST request to get QuizPointStatistic : {}", id);
         MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = multipleChoiceQuestionStatisticRepository.findOne(id);
 
+        // only filter out the information if the statistic is not released
         if(!multipleChoiceQuestionStatistic.isReleased()){
             // filter out all Information about the Statistic except if it is released (so students can't get the information before the Statistic is released)
             multipleChoiceQuestionStatistic.setQuestion(null);

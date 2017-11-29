@@ -80,11 +80,30 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
             "id=" + getId() +
             "}";
     }
+
+    /**
+     * 1. check if the Result is rated or unrated
+     * 2. increase participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than increase the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                                  or unrated  ( participated after the dueDate of the quizExercise)
+     */
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated){
-        //TO-DO
+        //TO-DO: Moritz Issig
     }
+
+    /**
+     * 1. check if the Result is rated or unrated
+     * 2. decrease participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than decrease the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                                  or unrated  ( participated after the dueDate of the quizExercise)
+     */
+    @Override
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated){
-        //TO-DO
+        //TO-DO: Moritz Issig
     }
 }
