@@ -90,6 +90,7 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
         selectedAnswerOptions: '=',
         clickDisabled: '<',
         showResult: '<',
+        questionIndex: '<',
         onSelection: '&'
     }
 });

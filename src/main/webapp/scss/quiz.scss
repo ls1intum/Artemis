@@ -148,6 +148,10 @@
 
     h2 {
         margin: 0 90px 0 0;
+
+        span {
+            color: grey;
+        }
     }
 
     p {
@@ -214,7 +218,7 @@
             .hint {
                 display: flex;
                 flex-direction: column;
-                align-items: center;
+                align-items: flex-end;
                 font-size: 18px;
             }
         }

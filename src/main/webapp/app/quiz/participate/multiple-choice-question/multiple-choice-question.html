@@ -1,5 +1,5 @@
 <div class="mc-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult, incorrect: vm.getUserScore() < vm.question.score}">
-    <h2>{{vm.question.title}}</h2>
+    <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
     <p ng-bind-html="vm.rendered.text"></p>
     <h4>
         <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">

@@ -8447,6 +8447,8 @@ body.editor .navbar-brand span {
   background: #fefefe; }
   .mc-question h2 {
     margin: 0 90px 0 0; }
+    .mc-question h2 span {
+      color: grey; }
   .mc-question p {
     margin: 10px 0;
     font-size: 16px; }
@@ -8489,7 +8491,7 @@ body.editor .navbar-brand span {
       .mc-question .answer-option .content .hint {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: flex-end;
         font-size: 18px; }
     .mc-question .answer-option:hover {
       background: #fafafa; }

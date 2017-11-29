@@ -268,6 +268,7 @@ angular.module('artemisApp').component('editMultipleChoiceQuestion', {
     bindings: {
         question: '=',
         onDelete: '&',
-        onUpdated: '&'
+        onUpdated: '&',
+        questionIndex: '<'
     }
 });
