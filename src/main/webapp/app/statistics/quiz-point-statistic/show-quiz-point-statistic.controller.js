@@ -26,18 +26,23 @@
 
 
         function init(){
+            // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
                 QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
             }
             else{
                 QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
             }
-            var websocketChannelForData = '/topic/statistic/'+ _.get($state,"params.quizId");
-            var websocketChannelForReleaseState = websocketChannelForData + '/release';
 
+            //subscribe websocket for new statistical data
+            var websocketChannelForData = '/topic/statistic/'+ _.get($state,"params.quizId");
             JhiWebsocketService.subscribe(websocketChannelForData);
+
+            //subscribe websocket which notifies the user if the release status was changed
+            var websocketChannelForReleaseState = websocketChannelForData + '/release';
             JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
+            // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
                     QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
@@ -47,8 +52,13 @@
                 }
 
             });
+            // refresh release information
             JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
                 vm.quizExercise.quizPointStatistic.released = payload;
+                // send students back to courses if the statistic was revoked
+                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']) && !payload){
+                    $state.go('courses');
+                }
             });
 
             $scope.$on('$destroy', function() {
@@ -56,6 +66,7 @@
                 JhiWebsocketService.unsubscribe(websocketChannelForReleaseState);
             });
 
+            // add Axes-labels based on selected language
             $translate('showStatistic.quizPointStatistic.xAxes').then(function (xLabel){
                 window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
             });
@@ -101,6 +112,7 @@
         // load the Data from the Json-entity to the chart: myChart
         function loadData() {
 
+            // reset old data
             label = [];
             backgroundColor = [];
             ratedData = [];
@@ -113,12 +125,13 @@
                 unratedData.push(pointCounter.unRatedCounter);
                 backgroundColor.push("#428bca");
             });
+            // order the bars ascending on points
             order();
 
             barChartData.labels = label;
 
             // load data into the chart
-            // if vm.rated == true  -> load the rated data, else: load the unrated data
+            // if vm.rated == true  -> load the rated data
             if (vm.rated) {
                 vm.participants = vm.quizPointStatistic.participantsRated;
                 barChartData.participants = vm.quizPointStatistic.participantsRated;
@@ -127,6 +140,7 @@
                     dataset.backgroundColor = backgroundColor;
                 });
             }
+            //else: load the unrated data
             else {
                 vm.participants = vm.quizPointStatistic.participantsUnrated;
                 barChartData.participants = vm.quizPointStatistic.participantsUnrated;
@@ -142,19 +156,19 @@
         // switch between the rated and the unrated Results
         function switchRated(){
             if(vm.rated) {
+                //load unrated Data
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData;
                 });
-                //document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige bewertete Ergebnisse";
                 vm.participants = vm.quizPointStatistic.participantsUnrated;
                 barChartData.participants = vm.quizPointStatistic.participantsUnrated;
                 vm.rated = false;
             }
             else{
+                //load rated Data
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData;
                 });
-                //document.getElementById("ratedButton").innerHTML = "<span class=\"glyphicon glyphicon-refresh\"></span>&nbsp;Zeige unbewertete Ergebnisse";
                 vm.participants = vm.quizPointStatistic.participantsRated;
                 barChartData.participants = vm.quizPointStatistic.participantsRated;
                 vm.rated = true;

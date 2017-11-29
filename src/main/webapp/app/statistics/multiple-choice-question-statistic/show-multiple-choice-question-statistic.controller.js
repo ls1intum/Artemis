@@ -21,7 +21,6 @@
         var ratedCorrectData;
         var unratedCorrectData;
 
-
         vm.switchSolution = switchSolution;
         vm.switchRated = switchRated;
         vm.nextStatistic = nextStatistic;
@@ -29,24 +28,28 @@
         vm.releaseStatistics = releaseStatistics;
         vm.releaseButtonDisabled = releaseButtonDisabled;
 
-
         vm.showSolution = false;
         vm.rated = true;
+
         vm.$onInit = init;
 
         function init(){
+            // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
                 QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
             }
             else{
                 QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz)
             }
+            //subscribe websocket for new statistical data
             var websocketChannelForData = '/topic/statistic/'+ _.get($state,"params.quizId");
-            var websocketChannelForReleaseState = websocketChannelForData + '/release';
-
             JhiWebsocketService.subscribe(websocketChannelForData);
+
+            //subscribe websocket which notifies the user if the release status was changed
+            var websocketChannelForReleaseState = websocketChannelForData + '/release';
             JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
+            // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])){
                     QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
@@ -56,8 +59,14 @@
                 }
 
             });
+            // refresh release information
             JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
                 vm.quizExercise.quizPointStatistic.released = payload;
+                vm.questionStatistic.released = payload;
+                // send students back to courses if the statistic was revoked
+                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']) && !payload){
+                    $state.go('courses');
+                }
             });
 
             $scope.$on('$destroy', function() {
@@ -65,6 +74,7 @@
                 JhiWebsocketService.unsubscribe(websocketChannelForReleaseState);
             });
 
+            // add Axes-labels based on selected language
             $translate('showStatistic.multipleChoiceQuestionStatistic.xAxes').then(function (xLabel){
                 window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
             });
@@ -79,6 +89,7 @@
             if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false){
                 $state.go('courses');
             }
+            //search selected question in quizExercise based on questionId
             vm.quizExercise = quiz;
             vm.question = null;
             for(var i = 0; vm.question === null && i < vm.quizExercise.questions.length; i++){
@@ -140,6 +151,7 @@
                 barChartData.participants = vm.questionStatistic.participantsRated;
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData.slice(0);
+                    // if show Solution is true use the backgroundColor which shows the solution
                     if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
                             dataset.data.push(ratedCorrectData);
@@ -154,6 +166,7 @@
                 barChartData.participants = vm.questionStatistic.participantsRated;
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData.slice(0);
+                    // if show Solution is true use the backgroundColor which shows the solution
                     if(vm.showSolution){
                         dataset.backgroundColor = backgroundSolutionColor;
                         dataset.data.push(unratedCorrectData);
@@ -162,19 +175,21 @@
                     }
                 });
             }
+            // if show Solution is true use the label which shows the solution
             if(vm.showSolution){
                 barChartData.labels = solutionLabel;
 
             }else{
                 barChartData.labels = label;
             }
-
+            //add Text for last label based on the language
             $translate('showStatistic.quizStatistic.yAxes').then(function (lastLabel){
                 solutionLabel.push(lastLabel);
                 label.push(lastLabel);
                 window.myChart.update();
             });
 
+            //add correct-text to the label based on the language
             $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel){
                 for(var i = 0; i < vm.question.answerOptions.length; i++) {
                     if (vm.question.answerOptions[i].isCorrect) {
@@ -184,6 +199,8 @@
                 }
                 window.myChart.update();
             });
+
+            //add incorrect-text to the label based on the language
             $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel){
                 for(var i = 0; i < vm.question.answerOptions.length; i++) {
                     if (!vm.question.answerOptions[i].isCorrect) {
@@ -198,9 +215,11 @@
         // switch between the rated and the unrated Results
         function switchRated(){
             if(vm.rated) {
+                //load unrated Data
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = unratedData.slice(0);
                     if(vm.showSolution){
+                        // if show Solution is true use the backgroundColor which shows the solution
                         dataset.backgroundColor = backgroundSolutionColor;
                         dataset.data.push(unratedCorrectData);
                     }else{
@@ -212,9 +231,11 @@
                 vm.rated = false;
             }
             else{
+                //load rated Data
                 barChartData.datasets.forEach(function (dataset) {
                     dataset.data = ratedData.slice(0);
                     if(vm.showSolution){
+                        // if show Solution is true use the backgroundColor which shows the solution
                         dataset.backgroundColor = backgroundSolutionColor;
                         dataset.data.push(ratedCorrectData);
                     }else{
@@ -231,27 +252,36 @@
         // switch between showing and hiding the solution in the chart
         function switchSolution(){
             if(vm.showSolution){
+                // don't show Solution
                 barChartData.datasets.forEach(function (dataset) {
+                    // if rated is true use the rated Data
                     if (vm.rated) {
                         dataset.data = ratedData.slice(0);
-                    } else {
+                    }
+                    // if rated is false use the unrated Data
+                    else {
                         dataset.data = unratedData.slice(0);
                     }
+                    // if show Solution is false use the backgroundColor which doesn't show the solution
                     dataset.backgroundColor = backgroundColor;
                 });
                 barChartData.labels = label;
                 vm.showSolution = false;
             }
             else {
+                // show Solution
                 barChartData.datasets.forEach(function (dataset) {
                     if (vm.rated) {
+                        // if rated is true use the rated Data and add the rated CorrectCounter
                         dataset.data = ratedData.slice(0);
                         dataset.data.push(ratedCorrectData);
                     }
                     else {
+                        // if rated is true use the unrated Data and add the unrated CorrectCounter
                         dataset.data = unratedData.slice(0);
                         dataset.data.push(unratedCorrectData);
                     }
+                    // if show Solution is true use the backgroundColor which shows the solution
                     dataset.backgroundColor = backgroundSolutionColor;
                 });
                 barChartData.labels = solutionLabel;
