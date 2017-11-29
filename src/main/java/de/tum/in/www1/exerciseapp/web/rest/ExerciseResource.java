@@ -77,7 +77,7 @@ public class ExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/exercises")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     //TODO: test if it still works with abstract entity in body
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) throws URISyntaxException {
@@ -121,7 +121,7 @@ public class ExerciseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/exercises")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     //TODO: test if it still works with abstract entity in body
     public ResponseEntity<Exercise> updateExercise(@RequestBody Exercise exercise) throws URISyntaxException {
@@ -148,11 +148,11 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
      */
     @GetMapping("/exercises")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<List<Exercise>> getAllExercises(@ApiParam Pageable pageable) {
         log.debug("REST request to get a page of Exercises");
-        Page<Exercise> page = exerciseRepository.findAll(pageable);
+        Page<Exercise> page = exerciseService.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/exercises");
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }
@@ -231,7 +231,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/exercises/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
@@ -246,7 +246,7 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping(value = "/exercises/{id}/participations")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
@@ -263,7 +263,7 @@ public class ExerciseResource {
      * @return ResponseEntity with status
      */
     @DeleteMapping(value = "/exercises/{id}/cleanup")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
@@ -296,7 +296,7 @@ public class ExerciseResource {
      * @return ResponseEntity with status
      */
     @GetMapping(value = "/exercises/{id}/archive")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);

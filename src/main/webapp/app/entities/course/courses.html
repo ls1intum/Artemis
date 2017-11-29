@@ -38,7 +38,8 @@
                     <td>{{course.instructorGroupName}}</td>
                     <td>{{course.startDate | date:'medium'}}</td>
                     <td>{{course.endDate | date:'medium'}}</td>
-                    <td>{{course.onlineCourse}}</td>
+                    <td ng-if="course.onlineCourse">yes</td>
+                    <td ng-if="!course.onlineCourse">no</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <div class="btn-group" uib-dropdown>
