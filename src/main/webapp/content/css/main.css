@@ -8464,7 +8464,8 @@ body.editor .navbar-brand span {
       .mc-question .question-score.result.incorrect {
         color: orange; }
   .mc-question .label {
-    cursor: pointer; }
+    cursor: pointer;
+    margin: 2px 0; }
   .mc-question .answer-options {
     margin-top: 20px; }
   .mc-question .answer-option {
@@ -8475,7 +8476,8 @@ body.editor .navbar-brand span {
     margin: 4px 0;
     padding: 6px 10px; }
     .mc-question .answer-option .selection {
-      width: 36px; }
+      width: 36px;
+      margin-left: 16px; }
     .mc-question .answer-option .content {
       display: flex;
       flex: 1;
@@ -8486,6 +8488,7 @@ body.editor .navbar-brand span {
         font-size: 16px; }
       .mc-question .answer-option .content .hint {
         display: flex;
+        flex-direction: column;
         align-items: center;
         font-size: 18px; }
     .mc-question .answer-option:hover {
@@ -8551,14 +8554,19 @@ table.answer-options-result {
     color: dimgray; }
   table.answer-options-result th, table.answer-options-result td {
     padding: 6px 10px; }
+  table.answer-options-result .solution {
+    width: 100px; }
+  table.answer-options-result .result-symbol {
+    padding: 0;
+    color: orange;
+    width: 50px; }
+  table.answer-options-result .selection {
+    width: 36px;
+    margin-left: 0; }
   table.answer-options-result .correct {
     color: green; }
   table.answer-options-result .wrong {
     color: red; }
-  table.answer-options-result .warning {
-    color: orange;
-    vertical-align: middle;
-    padding-right: 10px; }
 
 .colon-suffix:after {
   content: ":"; }

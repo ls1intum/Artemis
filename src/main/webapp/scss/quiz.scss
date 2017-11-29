@@ -180,6 +180,7 @@
 
     .label {
         cursor: pointer;
+        margin: 2px 0;
     }
 
     .answer-options {
@@ -196,6 +197,7 @@
 
         .selection {
             width: 36px;
+            margin-left: 16px;
         }
 
         .content {
@@ -211,6 +213,7 @@
 
             .hint {
                 display: flex;
+                flex-direction: column;
                 align-items: center;
                 font-size: 18px;
             }
@@ -309,18 +312,27 @@ table.answer-options-result {
         padding: 6px 10px;
     }
 
+    .solution {
+        width: 100px;
+    }
+
+    .result-symbol {
+        padding: 0;
+        color: orange;
+        width: 50px;
+    }
+
+    .selection {
+        width: 36px;
+        margin-left: 0;
+    }
+
     .correct {
         color: green;
     }
 
     .wrong {
         color: red;
-    }
-
-    .warning {
-        color: orange;
-        vertical-align: middle;
-        padding-right: 10px;
     }
 }
 

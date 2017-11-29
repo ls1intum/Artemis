@@ -5,9 +5,7 @@
         <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
             <i class="fa fa-question-circle-o"></i>
             <span data-translate="artemisApp.question.hint"></span>
-        </span>
-    </h4>
-    <h4>
+        </span> &nbsp;
         <span class="label label-primary" uib-popover-html="vm.rendered.explanation" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.explanation">
             <i class="fa fa-exclamation-circle"></i>
             <span data-translate="artemisApp.question.explanation"></span>
@@ -23,10 +21,6 @@
     </div>
     <div class="answer-options" ng-if="!vm.showResult">
         <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-class="{'click-disabled': vm.clickDisabled}" ng-click="vm.toggleSelection(answerOption)">
-            <div class="selection">
-                <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
-                <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>
-            </div>
             <div class="content">
                 <div class="text" ng-bind-html="vm.rendered.answerOptions[$index].text"></div>
                 <div class="hint">
@@ -36,24 +30,20 @@
                     </span>
                 </div>
             </div>
+            <div class="selection">
+                <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
+                <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>
+            </div>
         </div>
     </div>
     <table class="answer-options-result" ng-if="vm.showResult">
         <tr>
-            <th>You</th>
-            <th>Solution</th>
-            <th>Answer</th>
+            <th class="content">Answer</th>
+            <th class="solution">Solution</th>
+            <th class="result-symbol"></th>
+            <th class="selection">You</th>
         </tr>
         <tr class="answer-option" ng-repeat="answerOption in vm.question.answerOptions">
-            <td class="selection">
-                <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
-                <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>
-            </td>
-            <td class="solution">
-                <i class="fa fa-2x fa-exclamation-triangle warning" ng-if="(vm.isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!vm.isAnswerOptionSelected(answerOption) && answerOption.isCorrect)"></i>
-                <span ng-if="answerOption.isCorrect" class="correct">Correct</span>
-                <span ng-if="!answerOption.isCorrect" class="wrong">Wrong</span>
-            </td>
             <td class="content">
                 <div class="text" ng-bind-html="vm.rendered.answerOptions[$index].text"></div>
                 <div class="hint">
@@ -61,13 +51,22 @@
                         <i class="fa fa-question-circle-o"></i>
                         <span data-translate="artemisApp.question.hint"></span>
                     </span>
-                </div>
-                <div class="hint">
                     <span class="label label-primary" uib-popover-html="vm.rendered.answerOptions[$index].explanation" popover-placement="left-top" popover-trigger="mouseenter" ng-if="answerOption.explanation">
                         <i class="fa fa-exclamation-circle"></i>
                         <span data-translate="artemisApp.question.explanation"></span>
                     </span>
                 </div>
+            </td>
+            <td class="solution">
+                <span ng-if="answerOption.isCorrect" class="correct">Correct</span>
+                <span ng-if="!answerOption.isCorrect" class="wrong">Wrong</span>
+            </td>
+            <td class="result-symbol">
+                <i class="fa fa-2x fa-exclamation-triangle warning" ng-if="(vm.isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!vm.isAnswerOptionSelected(answerOption) && answerOption.isCorrect)"></i>
+            </td>
+            <td class="selection">
+                <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
+                <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>
             </td>
         </tr>
     </table>
