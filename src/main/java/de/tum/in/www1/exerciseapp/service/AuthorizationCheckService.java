@@ -38,6 +38,9 @@ public class AuthorizationCheckService {
     }
 
     public boolean isAuthorizedForExercise(Exercise exercise) {
+        if(exercise == null) {
+            return true;
+        }
         Course correspondingCourse = exercise.getCourse();
         if(correspondingCourse == null) {
             return true;
