@@ -65,6 +65,22 @@ public class QuizSubmission extends Submission implements Serializable {
         this.submittedAnswers = submittedAnswers;
     }
 
+    public void calculateAndUpdateScores() {
+        double totalScore = 0.0;
+        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
+            submittedAnswer.calculateAndUpdateScore();
+            totalScore += submittedAnswer.getScoreInPoints();
+        }
+        setScoreInPoints(totalScore);
+    }
+
+    public void removeScores() {
+        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
+            submittedAnswer.setScoreInPoints(null);
+        }
+        setScoreInPoints(null);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

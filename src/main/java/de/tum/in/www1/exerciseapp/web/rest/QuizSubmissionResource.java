@@ -102,6 +102,11 @@ public class QuizSubmissionResource {
                 }
                 if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
+                    // remove scores from submission if quiz hasn't ended yet
+                    if (submission.isSubmitted() && quizExercise.getRemainingTime() > -2) {
+                        submission.removeScores();
+                    }
+                    // set submission date for response
                     submission.setSubmissionDate(result.getCompletionDate());
                     return ResponseEntity.ok(submission);
                 } else {
@@ -222,6 +227,7 @@ public class QuizSubmissionResource {
             }
             quizSubmission.setSubmitted(true);
             quizSubmission.setType(submissionType);
+            quizSubmission.calculateAndUpdateScores();
             quizSubmission = quizSubmissionRepository.save(quizSubmission);
             // update result
             result.setParticipation(participation);
@@ -235,11 +241,16 @@ public class QuizSubmissionResource {
         // prepare submission for sending
         // Note: We get submission from result because if submission was already submitted
         // and this was called from the timer, quizSubmission might be null at this point
-        Submission submission = result.getSubmission();
-        submission.setSubmissionDate(result.getCompletionDate());
+        QuizSubmission resultSubmission = (QuizSubmission) result.getSubmission();
+        // remove scores from submission if quiz hasn't ended yet
+        if (resultSubmission.isSubmitted() && ((QuizExercise) participation.getExercise()).getRemainingTime() > -2) {
+            resultSubmission.removeScores();
+        }
+        // set submission date for response
+        resultSubmission.setSubmissionDate(result.getCompletionDate());
         // notify user about changed submission
-        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + submission.getId(), submission);
-        return quizSubmission;
+        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + resultSubmission.getId(), resultSubmission);
+        return resultSubmission;
     }
 
     /**

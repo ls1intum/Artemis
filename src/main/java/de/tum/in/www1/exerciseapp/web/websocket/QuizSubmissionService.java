@@ -73,6 +73,10 @@ public class QuizSubmissionService {
                 } else {
                     // overwrite with existing submission to send back unchanged submission
                     quizSubmission = (QuizSubmission) result.getSubmission();
+                    // remove scores from submission if quiz hasn't ended yet
+                    if (quizSubmission.isSubmitted() && quizExercise.getRemainingTime() > -2) {
+                        quizSubmission.removeScores();
+                    }
                 }
                 // set submission date for response
                 quizSubmission.setSubmissionDate(result.getCompletionDate());

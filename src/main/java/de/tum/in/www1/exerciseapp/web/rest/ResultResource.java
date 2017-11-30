@@ -71,9 +71,10 @@ public class ResultResource {
             throw new BadRequestAlertException("A new result cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Result savedResult = resultRepository.save(result);
-        result.getFeedbacks().forEach(feedback -> { feedback.setResult(savedResult);
-                                                    feedbackService.save(feedback);
-                                                  });
+        result.getFeedbacks().forEach(feedback -> {
+            feedback.setResult(savedResult);
+            feedbackService.save(feedback);
+        });
         ltiService.ifPresent(ltiService -> ltiService.onNewBuildResult(savedResult.getParticipation()));
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -170,9 +171,12 @@ public class ResultResource {
         Participation participation = participationService.findOne(participationId);
         if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
             // if exercise is quiz => only give out results if quiz is over
-            if (participation.getExercise() instanceof QuizExercise && participation.getExercise().getDueDate().isAfter(ZonedDateTime.now())) {
-                // return empty list
-                return results;
+            if (participation.getExercise() instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) participation.getExercise();
+                if (quizExercise.getRemainingTime() > -2) {
+                    // return empty list
+                    return results;
+                }
             }
             if (showAllResults) {
                 results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
