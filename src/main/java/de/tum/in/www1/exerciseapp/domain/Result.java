@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
@@ -47,7 +48,7 @@ public class Result implements Serializable {
 
     //TODO: we might want to store it as a list (see quizzes)
     @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
-    @JsonIgnore
+    @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Feedback> feedbacks = new HashSet<>();
 
@@ -197,6 +198,21 @@ public class Result implements Serializable {
         this.participation = participation;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    /**
+     * Updates the attributes "score" and "successful" by evaluating its submission
+     */
+    public void evaluateSubmission() {
+        if (submission instanceof QuizSubmission) {
+            QuizSubmission quizSubmission = (QuizSubmission) submission;
+            // get the exercise this result belongs to
+            QuizExercise quizExercise = (QuizExercise) getParticipation().getExercise();
+            // update score
+            setScore(quizExercise.getScoreForSubmission(quizSubmission));
+            // update successful
+            setSuccessful(score == 100L);
+        }
+    }
 
     @Override
     public boolean equals(Object o) {

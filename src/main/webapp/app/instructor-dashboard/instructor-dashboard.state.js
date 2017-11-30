@@ -30,6 +30,8 @@
                         $translatePartialLoader.addPart('global');
                         $translatePartialLoader.addPart('instructorDashboard');
                         $translatePartialLoader.addPart('exercise');
+                        $translatePartialLoader.addPart('result');
+                        $translatePartialLoader.addPart('feedback');
                         return $translate.refresh();
                     }]
                 }

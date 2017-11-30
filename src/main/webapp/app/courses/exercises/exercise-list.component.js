@@ -97,12 +97,16 @@
 
         function participationStatus(exercise) {
             if (exercise.type && exercise.type === "quiz") {
-                if (angular.equals({}, exercise.participation)) {
+                if (angular.equals({}, exercise.participation) && moment(exercise.dueDate).isAfter(moment())) {
                     return "quiz-uninitialized";
-                } else if (moment(exercise.dueDate).isBefore(moment())) {
-                    return "quiz-finished";
+                } else if (angular.equals({}, exercise.participation)) {
+                    return "quiz-not-participated";
+                } else if (exercise.participation.initializationState === "INITIALIZED" && moment(exercise.dueDate).isAfter(moment())) {
+                    return "quiz-active";
+                } else if (exercise.participation.initializationState === "FINISHED" && moment(exercise.dueDate).isAfter(moment())) {
+                    return "quiz-submitted";
                 } else {
-                    return "quiz-active"
+                    return "quiz-finished"
                 }
             }
             if (angular.equals({}, exercise.participation)) {

@@ -36,8 +36,10 @@
             <span ng-switch-when="initialized"><result participation="exercise.participation"></result></span>
             <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
             <span class="text-muted" ng-switch-when="quiz-uninitialized">You have not started this quiz yet.</span>
+            <span class="text-muted" ng-switch-when="quiz-not-participated">You have not participated in this quiz.</span>
             <span class="text-muted" ng-switch-when="quiz-active">You are currently participating in this quiz.</span>
-            <span ng-switch-when="quiz-finished"><result participation="exercise.participation"></result></span>
+            <span class="text-muted" ng-switch-when="quiz-submitted">You have already submitted. Wait for the quiz to end to see results.</span>
+            <span ng-switch-when="quiz-finished"><result participation="exercise.participation" show-score="true"></result></span>
         </td>
         <td class="text-center">
             <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
@@ -59,6 +61,20 @@
                     ng-click="$ctrl.start(exercise)"
                     ng-disabled="$ctrl.loading[exercise.id.toString()]">
                 <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume Quiz</span>
+                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+            </button>
+            <button class="btn btn-primary btn-sm btn-block"
+                    ng-switch-when="quiz-submitted"
+                    ng-click="$ctrl.start(exercise)"
+                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                <span ng-hide="$ctrl.loading[exercise.id.toString()]">View Submission</span>
+                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+            </button>
+            <button class="btn btn-primary btn-sm btn-block"
+                    ng-switch-when="quiz-finished"
+                    ng-click="$ctrl.start(exercise)"
+                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                <span ng-hide="$ctrl.loading[exercise.id.toString()]">View Results</span>
                 <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
             </button>
             <button class="btn btn-primary btn-sm btn-block"
