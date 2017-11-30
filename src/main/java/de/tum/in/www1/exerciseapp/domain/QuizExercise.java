@@ -224,12 +224,21 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return the resulting score
      */
     public Long getScoreForSubmission(QuizSubmission quizSubmission) {
+        double score = getScoreInPointsForSubmission(quizSubmission);
+        int maxScore = getMaxTotalScore();
+        // map the resulting score to the 0 to 100 scale
+        return Math.round(100.0 * score / maxScore);
+    }
+
+    /**
+     * Get the score for this submission as the number of points
+     * @param quizSubmission the submission that should be evaluated
+     * @return the resulting score
+     */
+    public Double getScoreInPointsForSubmission(QuizSubmission quizSubmission) {
         double score = 0.0;
-        int maxScore = 0;
         // iterate through all questions of this quiz
         for (Question question : getQuestions()) {
-            // add this question's maxScore to the maxScore of the entire quiz
-            maxScore += question.getScore();
             // search for submitted answer for this question
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 if (question.getId().longValue() == submittedAnswer.getQuestion().getId().longValue()) {
@@ -239,10 +248,23 @@ public class QuizExercise extends Exercise implements Serializable {
                 }
                 // if there is no submitted answer for this question in the submission,
                 // the resulting score is 0 (i.e. nothing gets added to the score)
+                // TODO: @Moritz: this might be different when a question has invalid answer options or has been set to invalid altogether.
             }
         }
-        // map the resulting score to the 0 to 100 scale
-        return Math.round(100.0 * score / maxScore);
+        return score;
+    }
+
+    /**
+     * Get the maximum total score for this quiz
+     * @return the sum of all the questions' maximum scores
+     */
+    public Integer getMaxTotalScore() {
+        int maxScore = 0;
+        // iterate through all questions of this quiz and add up the score
+        for (Question question : getQuestions()) {
+            maxScore += question.getScore();
+        }
+        return maxScore;
     }
 
     @Override
