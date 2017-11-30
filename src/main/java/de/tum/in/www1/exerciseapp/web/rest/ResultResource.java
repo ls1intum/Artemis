@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Feedback;
 import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.QuizExercise;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
@@ -24,10 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * REST controller for managing Result.
@@ -73,6 +71,9 @@ public class ResultResource {
             throw new BadRequestAlertException("A new result cannot already have an ID", ENTITY_NAME, "idexists");
         }
         Result savedResult = resultRepository.save(result);
+        result.getFeedbacks().forEach(feedback -> { feedback.setResult(savedResult);
+                                                    feedbackService.save(feedback);
+                                                  });
         ltiService.ifPresent(ltiService -> ltiService.onNewBuildResult(savedResult.getParticipation()));
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -95,16 +96,14 @@ public class ResultResource {
         }
         Participation participation = participationService.findOneByBuildPlanId(planKey);
         if (Optional.ofNullable(participation).isPresent()) {
-            if(participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate()) ) {
+            if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
                 resultService.onResultNotified(participation);
                 return ResponseEntity.ok().build();
-            }
-            else {
+            } else {
                 log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
-        }
-        else {
+        } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
@@ -170,12 +169,17 @@ public class ResultResource {
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
         if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
-            if(showAllResults) {
+            // if exercise is quiz => only give out results if quiz is over
+            if (participation.getExercise() instanceof QuizExercise && participation.getExercise().getDueDate().isAfter(ZonedDateTime.now())) {
+                // return empty list
+                return results;
+            }
+            if (showAllResults) {
                 results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
             } else {
                 results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId)
-                .map(Arrays::asList)
-                .orElse(new ArrayList<>());
+                    .map(Arrays::asList)
+                    .orElse(new ArrayList<>());
             }
         }
         return results;
@@ -192,8 +196,8 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
     @Timed
     public List<Result> getResultsForExercise(@PathVariable Long courseId,
-                                                @PathVariable Long exerciseId,
-                                                @RequestParam(defaultValue = "false") boolean showAllResults) {
+                                              @PathVariable Long exerciseId,
+                                              @RequestParam(defaultValue = "false") boolean showAllResults) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
         List<Result> results;
         if (showAllResults) {
@@ -235,7 +239,6 @@ public class ResultResource {
     }
 
 
-
     /**
      * GET  /results/:id : get the "id" result.
      *
@@ -265,7 +268,7 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     @Transactional
-    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
+    public ResponseEntity<Set<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
         AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
@@ -273,7 +276,7 @@ public class ResultResource {
         GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
         if (result.getParticipation().getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority))) {
             try {
-            List<Feedback> feedbacks = new ArrayList<Feedback>(feedbackService.getFeedbackForBuildResult(result));
+                Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
                 return Optional.ofNullable(feedbacks)
                     .map(resultDetails -> new ResponseEntity<>(feedbacks, HttpStatus.OK))
                     .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));

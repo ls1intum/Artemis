@@ -26,6 +26,7 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('feedback');
+                    $translatePartialLoader.addPart('feedbackType');
                     $translatePartialLoader.addPart('global');
                     return $translate.refresh();
                 }]
@@ -48,6 +49,7 @@
             resolve: {
                 translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
                     $translatePartialLoader.addPart('feedback');
+                    $translatePartialLoader.addPart('feedbackType');
                     return $translate.refresh();
                 }],
                 entity: ['$stateParams', 'Feedback', function($stateParams, Feedback) {
@@ -106,6 +108,7 @@
                             return {
                                 text: null,
                                 detailText: null,
+                                type: null,
                                 id: null
                             };
                         }

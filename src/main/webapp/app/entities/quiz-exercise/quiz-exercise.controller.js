@@ -61,7 +61,7 @@
          */
         function statusForQuiz(quizExercise) {
             if (quizExercise.isPlannedToStart) {
-                var plannedEndMoment = moment(quizExercise.releaseDate).add(quizExercise.duration, "minutes");
+                var plannedEndMoment = moment(quizExercise.releaseDate).add(quizExercise.duration, "seconds");
                 if (plannedEndMoment.isBefore(moment())) {
                     // the quiz is over
                     return quizExercise.isOpenForPractice ? "Open for Practice" : "Closed";

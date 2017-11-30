@@ -17,6 +17,7 @@
             },
             "text": "Text",
             "detailText": "Detail Text",
+            "type": "Type",
             "result": "Result"
         }
     }

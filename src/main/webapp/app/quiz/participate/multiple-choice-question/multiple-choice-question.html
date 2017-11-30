@@ -12,7 +12,7 @@
         <span>{{vm.question.score}}</span>
     </div>
     <div class="answer-options">
-        <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-click="vm.toggleSelection(answerOption)">
+        <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-class="{'click-disabled': vm.clickDisabled}" ng-click="vm.toggleSelection(answerOption)">
             <div class="selection">
                 <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
                 <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>

@@ -20,7 +20,23 @@
                     return data;
                 }
             },
-            'update': { method:'PUT' }
+            'save': {
+                method: 'POST',
+                transformRequest: addType
+            },
+            'update': {
+                method:'PUT',
+                transformRequest: addType
+            }
         });
     }
+
+    // Type property has to be added to the exercise so that Jackson can
+    // deserialize the data into correct concrete implementation of Exercise class
+    var addType = function(data) {
+            data.type = "modeling-exercise";
+            data = angular.toJson(data);
+            return data;
+        };
+
 })();

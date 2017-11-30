@@ -19,12 +19,16 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="artemisApp.submission.submitted">Submitted</span></th>
+                    <th><span data-translate="artemisApp.submission.type">Type</span></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="submission in vm.submissions track by submission.id">
                     <td><a ui-sref="submission-detail({id:submission.id})">{{submission.id}}</a></td>
+                    <td>{{submission.submitted}}</td>
+                    <td data-translate="{{'artemisApp.SubmissionType.' + submission.type}}">{{submission.type}}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"

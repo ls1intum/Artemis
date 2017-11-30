@@ -1,7 +1,17 @@
 {
     "fluentMethods": true,
     "relationships": [],
-    "fields": [],
+    "fields": [
+        {
+            "fieldName": "submitted",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "type",
+            "fieldType": "SubmissionType",
+            "fieldValues": "MANUAL,TIMEOUT"
+        }
+    ],
     "changelogDate": "20170831094159",
     "entityTableName": "submission",
     "dto": "no",
