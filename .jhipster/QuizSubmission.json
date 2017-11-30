@@ -8,7 +8,12 @@
             "otherEntityRelationshipName": "submission"
         }
     ],
-    "fields": [],
+    "fields": [
+        {
+            "fieldName": "scoreInPoints",
+            "fieldType": "Double"
+        }
+    ],
     "changelogDate": "20170831094201",
     "entityTableName": "quiz_submission",
     "dto": "no",

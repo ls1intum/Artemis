@@ -7,8 +7,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
+import java.util.Objects;
 
 /**
  * A QuizSubmission.
@@ -20,11 +20,26 @@ public class QuizSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Column(name = "score_in_points")
+    private Double scoreInPoints;
+
     @OneToMany(mappedBy = "submission", cascade= CascadeType.ALL, fetch= FetchType.EAGER, orphanRemoval=true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
+    public Double getScoreInPoints() {
+        return scoreInPoints;
+    }
+
+    public QuizSubmission scoreInPoints(Double scoreInPoints) {
+        this.scoreInPoints = scoreInPoints;
+        return this;
+    }
+
+    public void setScoreInPoints(Double scoreInPoints) {
+        this.scoreInPoints = scoreInPoints;
+    }
+
     public Set<SubmittedAnswer> getSubmittedAnswers() {
         return submittedAnswers;
     }
@@ -49,7 +64,6 @@ public class QuizSubmission extends Submission implements Serializable {
     public void setSubmittedAnswers(Set<SubmittedAnswer> submittedAnswers) {
         this.submittedAnswers = submittedAnswers;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -75,6 +89,7 @@ public class QuizSubmission extends Submission implements Serializable {
     public String toString() {
         return "QuizSubmission{" +
             "id=" + getId() +
+            ", scoreInPoints='" + getScoreInPoints() + "'" +
             "}";
     }
 }
