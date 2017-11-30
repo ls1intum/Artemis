@@ -261,8 +261,10 @@ public class QuizExercise extends Exercise implements Serializable {
     public Integer getMaxTotalScore() {
         int maxScore = 0;
         // iterate through all questions of this quiz and add up the score
-        for (Question question : getQuestions()) {
-            maxScore += question.getScore();
+        if (getQuestions() != null) {
+            for (Question question : getQuestions()) {
+                maxScore += question.getScore();
+            }
         }
         return maxScore;
     }

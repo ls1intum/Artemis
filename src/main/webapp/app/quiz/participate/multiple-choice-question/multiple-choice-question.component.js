@@ -75,8 +75,12 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
      * @return {number} the user's score
      */
     function getUserScore() {
-        var scorer = QuestionScorerFactory.makeScorer(vm.question.scoringType, vm.question.type);
-        return scorer.scoreAnswerForQuestion(vm.selectedAnswerOptions, vm.question);
+        if (vm.score) {
+            return vm.score;
+        } else {
+            return 0;
+            // TODO: @Moritz: this might be different when a question has invalid answer options or has been set to invalid altogether.
+        }
     }
 
 }
@@ -91,6 +95,7 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
         clickDisabled: '<',
         showResult: '<',
         questionIndex: '<',
+        score:'<',
         onSelection: '&'
     }
 });

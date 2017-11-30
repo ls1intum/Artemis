@@ -97,10 +97,6 @@ public abstract class SubmittedAnswer implements Serializable {
         this.submission = quizSubmission;
     }
 
-    public void calculateAndUpdateScore() {
-        setScoreInPoints(getQuestion().scoreForAnswer(this));
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) {

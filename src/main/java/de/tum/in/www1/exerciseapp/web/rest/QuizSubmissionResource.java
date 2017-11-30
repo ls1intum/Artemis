@@ -227,7 +227,7 @@ public class QuizSubmissionResource {
             }
             quizSubmission.setSubmitted(true);
             quizSubmission.setType(submissionType);
-            quizSubmission.calculateAndUpdateScores();
+            quizSubmission.calculateAndUpdateScores((QuizExercise) participation.getExercise());
             quizSubmission = quizSubmissionRepository.save(quizSubmission);
             // update result
             result.setParticipation(participation);

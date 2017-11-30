@@ -65,15 +65,28 @@ public class QuizSubmission extends Submission implements Serializable {
         this.submittedAnswers = submittedAnswers;
     }
 
-    public void calculateAndUpdateScores() {
-        double totalScore = 0.0;
-        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
-            submittedAnswer.calculateAndUpdateScore();
-            totalScore += submittedAnswer.getScoreInPoints();
+    /**
+     * calculates the scores for this submission and all its submitted answers and saves them in scoreInPoints
+     * @param quizExercise the quiz this submission belongs to (is needed to have values for isCorrect in answer options)
+     */
+    public void calculateAndUpdateScores(QuizExercise quizExercise) {
+        // set scores for all questions
+        for (Question question : quizExercise.getQuestions()) {
+            // search for submitted answer for this question
+            for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
+                if (question.getId().longValue() == submittedAnswer.getQuestion().getId().longValue()) {
+                    submittedAnswer.setScoreInPoints(question.scoreForAnswer(submittedAnswer));
+                    break;
+                }
+            }
         }
-        setScoreInPoints(totalScore);
+        // set total score
+        setScoreInPoints(quizExercise.getScoreInPointsForSubmission(this));
     }
 
+    /**
+     * Remove all values for scoreInPoints in this submission and all its submitted answers
+     */
     public void removeScores() {
         for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
             submittedAnswer.setScoreInPoints(null);

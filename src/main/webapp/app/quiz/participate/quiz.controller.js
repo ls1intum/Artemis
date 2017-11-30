@@ -207,12 +207,13 @@
             if (vm.result) {
                 vm.showingResult = true;
 
-                // calculate user score in points
-                vm.userScore = 0;
-                vm.quizExercise.questions.forEach(function(question) {
-                    var selectedAnswerOptions = vm.selectedAnswerOptions[question.id];
-                    var scorer = QuestionScorerFactory.makeScorer(question.scoringType, question.type);
-                    vm.userScore += scorer.scoreAnswerForQuestion(selectedAnswerOptions, question);
+                // assign user score
+                vm.userScore = vm.result.submission.scoreInPoints || 0;
+
+                // create dictionary with scores for each question
+                vm.questionScores = {};
+                vm.result.submission.submittedAnswers.forEach(function(submittedAnswer) {
+                    vm.questionScores[submittedAnswer.question.id] = submittedAnswer.scoreInPoints;
                 });
             }
         }

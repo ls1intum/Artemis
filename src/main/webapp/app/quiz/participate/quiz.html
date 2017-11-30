@@ -6,7 +6,7 @@
 </div>
 <div class="quiz-content container">
     <div ng-repeat="question in vm.quizExercise.questions">
-        <multiple-choice-question question="question" selected-answer-options="vm.selectedAnswerOptions[question.id]" on-selection="vm.onSelectionChanged()" click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0" show-result="vm.showingResult" question-index="$index + 1"></multiple-choice-question>
+        <multiple-choice-question question="question" selected-answer-options="vm.selectedAnswerOptions[question.id]" on-selection="vm.onSelectionChanged()" click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0" show-result="vm.showingResult" question-index="$index + 1" score="vm.questionScores[question.id]"></multiple-choice-question>
     </div>
 </div>
 <div class="quiz-footer">
