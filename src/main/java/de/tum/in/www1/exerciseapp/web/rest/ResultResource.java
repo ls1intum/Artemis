@@ -173,7 +173,7 @@ public class ResultResource {
             // if exercise is quiz => only give out results if quiz is over
             if (participation.getExercise() instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) participation.getExercise();
-                if (quizExercise.getRemainingTime() > -2) {
+                if (quizExercise.shouldFilterForStudents()) {
                     // return empty list
                     return results;
                 }

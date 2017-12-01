@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
@@ -81,7 +82,7 @@ public class QuizSubmissionResource {
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
                 Participation participation = participationService.init(quizExercise, principal.getName());
                 Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
-                if (quizExercise.getRemainingTime() > 0 && result == null) {
+                if (quizExercise.isSubmissionAllowed() && result == null) {
                     // no result exists yet => create a new one
                     QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
                     newSubmission = quizSubmissionRepository.save(newSubmission);
@@ -98,12 +99,12 @@ public class QuizSubmissionResource {
                             // notify user about new result
                             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                         }
-                    }, (quizExercise.getRemainingTime() + 3) * 1000);
+                    }, (quizExercise.getRemainingTime() + Constants.QUIZ_AUTOMATIC_SUBMISSION_DELAY_IN_SECONDS) * 1000);
                 }
                 if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
                     // remove scores from submission if quiz hasn't ended yet
-                    if (submission.isSubmitted() && quizExercise.getRemainingTime() > -2) {
+                    if (submission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
                         submission.removeScores();
                     }
                     // set submission date for response
@@ -176,7 +177,7 @@ public class QuizSubmissionResource {
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
                 // only update if quizExercise hasn't ended and user hasn't made final submission yet
-                if (quizExercise.isIsPlannedToStart() && quizExercise.getRemainingTime() > -2 && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                if (quizExercise.isSubmissionAllowed() && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
                     quizSubmission = submitSubmission(participation, quizSubmission);
                     // send response
@@ -243,7 +244,7 @@ public class QuizSubmissionResource {
         // and this was called from the timer, quizSubmission might be null at this point
         QuizSubmission resultSubmission = (QuizSubmission) result.getSubmission();
         // remove scores from submission if quiz hasn't ended yet
-        if (resultSubmission.isSubmitted() && ((QuizExercise) participation.getExercise()).getRemainingTime() > -2) {
+        if (resultSubmission.isSubmitted() && ((QuizExercise) participation.getExercise()).shouldFilterForStudents()) {
             resultSubmission.removeScores();
         }
         // set submission date for response

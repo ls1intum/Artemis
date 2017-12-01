@@ -12,6 +12,9 @@ public final class Constants {
     public static final String ANONYMOUS_USER = "anonymoususer";
     public static final String DEFAULT_LANGUAGE = "en";
 
+    public static final int QUIZ_AUTOMATIC_SUBMISSION_DELAY_IN_SECONDS = 3;
+    public static final int QUIZ_GRACE_PERIOD_IN_SECONDS = 2;
+
     private Constants() {
     }
 }

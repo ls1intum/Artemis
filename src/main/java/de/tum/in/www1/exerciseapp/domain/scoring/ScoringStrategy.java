@@ -1,4 +1,7 @@
-package de.tum.in.www1.exerciseapp.domain;
+package de.tum.in.www1.exerciseapp.domain.scoring;
+
+import de.tum.in.www1.exerciseapp.domain.Question;
+import de.tum.in.www1.exerciseapp.domain.SubmittedAnswer;
 
 public interface ScoringStrategy {
     /**

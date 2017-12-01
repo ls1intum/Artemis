@@ -1,5 +1,7 @@
-package de.tum.in.www1.exerciseapp.domain;
+package de.tum.in.www1.exerciseapp.domain.scoring;
 
+import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestion;
+import de.tum.in.www1.exerciseapp.domain.Question;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 

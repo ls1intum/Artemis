@@ -1,6 +1,5 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -66,18 +65,32 @@ public class QuizSubmission extends Submission implements Serializable {
     }
 
     /**
+     * Get the submitted answer to the given question
+     *
+     * @param question the question that the answer should belong to
+     * @return the submitted answer for this question (null if this question wasn't answered by this submission)
+     */
+    public SubmittedAnswer getSubmittedAnswerForQuestion(Question question) {
+        for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
+            if (question.equals(submittedAnswer.getQuestion())) {
+                return submittedAnswer;
+            }
+        }
+        return null;
+    }
+
+    /**
      * calculates the scores for this submission and all its submitted answers and saves them in scoreInPoints
+     *
      * @param quizExercise the quiz this submission belongs to (is needed to have values for isCorrect in answer options)
      */
     public void calculateAndUpdateScores(QuizExercise quizExercise) {
         // set scores for all questions
         for (Question question : quizExercise.getQuestions()) {
             // search for submitted answer for this question
-            for (SubmittedAnswer submittedAnswer : getSubmittedAnswers()) {
-                if (question.getId().longValue() == submittedAnswer.getQuestion().getId().longValue()) {
-                    submittedAnswer.setScoreInPoints(question.scoreForAnswer(submittedAnswer));
-                    break;
-                }
+            SubmittedAnswer submittedAnswer = getSubmittedAnswerForQuestion(question);
+            if (submittedAnswer != null) {
+                submittedAnswer.setScoreInPoints(question.scoreForAnswer(submittedAnswer));
             }
         }
         // set total score

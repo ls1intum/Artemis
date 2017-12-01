@@ -63,7 +63,7 @@ public class QuizSubmissionService {
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
                 // only update if exercise hasn't ended already
-                if (quizExercise.isIsPlannedToStart() && quizExercise.getRemainingTime() > -2 && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                if (quizExercise.isSubmissionAllowed() && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
                     quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
@@ -74,7 +74,7 @@ public class QuizSubmissionService {
                     // overwrite with existing submission to send back unchanged submission
                     quizSubmission = (QuizSubmission) result.getSubmission();
                     // remove scores from submission if quiz hasn't ended yet
-                    if (quizSubmission.isSubmitted() && quizExercise.getRemainingTime() > -2) {
+                    if (quizSubmission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
                         quizSubmission.removeScores();
                     }
                 }
