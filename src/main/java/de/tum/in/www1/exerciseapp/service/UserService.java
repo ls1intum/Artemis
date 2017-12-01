@@ -68,16 +68,16 @@ public class UserService {
         if(passwordEncoder != null) {
             return passwordEncoder;
         }
-        PBEPasswordEncoder encoder = new PBEPasswordEncoder();
-        encoder.setPbeStringEncryptor(encryptor());
-        return encoder;
+        passwordEncoder = new PBEPasswordEncoder();
+        passwordEncoder.setPbeStringEncryptor(encryptor());
+        return passwordEncoder;
     }
 
     public StandardPBEStringEncryptor encryptor() {
         if(encryptor != null) {
             return encryptor;
         }
-        StandardPBEStringEncryptor encryptor = new StandardPBEStringEncryptor();
+        encryptor = new StandardPBEStringEncryptor();
         encryptor.setAlgorithm("PBEWithMD5AndDES");
         encryptor.setPassword(ENCRYPTION_PASSWORD);
         return encryptor;
@@ -129,7 +129,7 @@ public class UserService {
         User newUser = new User();
         Authority authority = authorityRepository.findOne(AuthoritiesConstants.USER);
         Set<Authority> authorities = new HashSet<>();
-        String encryptedPassword = passwordEncoder.encode(userDTO.getPassword());
+        String encryptedPassword = passwordEncoder().encode(userDTO.getPassword());
         newUser.setLogin(userDTO.getLogin());
         // new user gets initially a generated password
         newUser.setPassword(encryptedPassword);

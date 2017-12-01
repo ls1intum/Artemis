@@ -20,11 +20,10 @@
             "hint": "Hint",
             "explanation": "Explanation",
             "score": "Points",
-            "totalScore": "Total Points",
             "randomizeOrder": "Present Answers in Random Order",
             "scoringType": "Scoring Type",
-            "questionStatistic": "Question Statistic",
-            "exercise": "Exercise"
+            "exercise": "Exercise",
+            "yourScore": "Your Score"
         }
     }
 }

@@ -91,7 +91,7 @@
     right: 0;
     z-index: 10;
 
-    box-shadow: 0 0 3px rgba(0,0,0,0.7);
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
 
     background: white;
 
@@ -188,6 +188,10 @@
 
     h2 {
         margin: 0 90px 0 0;
+
+        span {
+            color: grey;
+        }
     }
 
     p {
@@ -195,14 +199,32 @@
         font-size: 16px;
     }
 
+    &.result {
+        border-color: green;
+
+        &.incorrect {
+            border-color: orange;
+        }
+    }
+
     .question-score {
         position: absolute;
         top: 20px;
         right: 20px;
+
+        &.result {
+            font-weight: bold;
+            color: green;
+
+            &.incorrect {
+                color: orange;
+            }
+        }
     }
 
     .label {
         cursor: pointer;
+        margin: 2px 0;
     }
 
     .answer-options {
@@ -219,6 +241,7 @@
 
         .selection {
             width: 36px;
+            margin-left: 16px;
         }
 
         .content {
@@ -234,7 +257,8 @@
 
             .hint {
                 display: flex;
-                align-items: center;
+                flex-direction: column;
+                align-items: flex-end;
                 font-size: 18px;
             }
         }
@@ -250,6 +274,11 @@
                 background: inherit;
             }
         }
+    }
+
+    &.disabled {
+        color: dimgrey;
+        background: #fafafa;
     }
 }
 
@@ -277,11 +306,76 @@
         font-weight: bold;
     }
 
+    #quiz-score {
+        text-align: center;
+        font-weight: bold;
+        color: green;
+
+        &.incorrect {
+            color: black;
+        }
+    }
+
     .time-warning {
         color: orange;
     }
 
     .time-critical {
+        color: red;
+    }
+}
+
+.quiz-submitted-overlay {
+    position: fixed;
+    bottom: 50%;
+    left: 50%;
+    -webkit-transform: translateX(-50%);
+    -moz-transform: translateX(-50%);
+    -ms-transform: translateX(-50%);
+    -o-transform: translateX(-50%);
+    transform: translateX(-50%);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    font-size: 16px;
+    text-align: center;
+    font-weight: bold;
+    border-color: #3c763d;
+}
+
+table.answer-options-result {
+    width: 100%;
+
+    .answer-option {
+        display: table-row;
+    }
+
+    th {
+        color: dimgray;
+    }
+
+    th, td {
+        padding: 6px 10px;
+    }
+
+    .solution {
+        width: 100px;
+    }
+
+    .result-symbol {
+        padding: 0;
+        color: orange;
+        width: 50px;
+    }
+
+    .selection {
+        width: 36px;
+        margin-left: 0;
+    }
+
+    .correct {
+        color: green;
+    }
+
+    .wrong {
         color: red;
     }
 }

@@ -189,8 +189,7 @@ public class QuizExerciseResource {
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
 
         // only filter out information if quiz hasn't ended yet
-        if (quizExercise != null && (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0)) {
-
+        if (quizExercise != null && quizExercise.shouldFilterForStudents()) {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
             for (Question question : quizExercise.getQuestions()) {
                 question.setExplanation(null);

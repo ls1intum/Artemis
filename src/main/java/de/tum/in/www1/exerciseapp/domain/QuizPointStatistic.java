@@ -130,7 +130,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
         }
 
         //convert score into points
-        Double points = (double) Math.round(((double) quiz.getMaxQuizScore()) * ((double) score/100));
+        Double points = (double) Math.round(((double) quiz.getMaxTotalScore()) * ((double) score/100));
 
         if(rated) {
             //increase participants
@@ -171,7 +171,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             return;
         }
 
-        Double points = (double) Math.round(((double) quiz.getMaxQuizScore()) * ((double) score/100));
+        Double points = (double) Math.round(((double) quiz.getMaxTotalScore()) * ((double) score/100));
 
         if(rated) {
             //decrease participants

@@ -67,7 +67,7 @@ class QuizSubmissionGatlingTest extends Simulation {
             .exec(http("Create new quizSubmission")
             .post("/api/quiz-submissions")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null}""")).asJSON
+            .body(StringBody("""{"id":null, "scoreInPoints":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_quizSubmission_url"))).exitHereIfFailed
             .pause(10)

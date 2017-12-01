@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
@@ -89,7 +90,7 @@ public class QuizSubmissionResource {
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
                 Participation participation = participationService.init(quizExercise, principal.getName());
                 Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
-                if (quizExercise.getRemainingTime() > 0 && result == null) {
+                if (quizExercise.isSubmissionAllowed() && result == null) {
                     // no result exists yet => create a new one
                     QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
                     newSubmission = quizSubmissionRepository.save(newSubmission);
@@ -103,11 +104,18 @@ public class QuizSubmissionResource {
                         public void run() {
                             Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
                             submitSubmission(participation, null);
+                            // notify user about new result
+                            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                         }
-                    }, ZonedDateTime.now().until(quizExercise.getDueDate().plusSeconds(3), ChronoUnit.MILLIS));
+                    }, (quizExercise.getRemainingTime() + Constants.QUIZ_AUTOMATIC_SUBMISSION_DELAY_IN_SECONDS) * 1000);
                 }
                 if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
+                    // remove scores from submission if quiz hasn't ended yet
+                    if (submission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
+                        submission.removeScores();
+                    }
+                    // set submission date for response
                     submission.setSubmissionDate(result.getCompletionDate());
                     return ResponseEntity.ok(submission);
                 } else {
@@ -177,7 +185,7 @@ public class QuizSubmissionResource {
             // check if participation (and thus submission) actually belongs to the user who sent this message
             if (principal.getName().equals(user.getLogin())) {
                 // only update if quizExercise hasn't ended and user hasn't made final submission yet
-                if (quizExercise.getDueDate().plusSeconds(2).isAfter(ZonedDateTime.now()) && participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                if (quizExercise.isSubmissionAllowed() && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
                     quizSubmission = submitSubmission(participation, quizSubmission);
                     // send response
@@ -228,6 +236,7 @@ public class QuizSubmissionResource {
             }
             quizSubmission.setSubmitted(true);
             quizSubmission.setType(submissionType);
+            quizSubmission.calculateAndUpdateScores((QuizExercise) participation.getExercise());
             quizSubmission = quizSubmissionRepository.save(quizSubmission);
             // update result
             result.setParticipation(participation);
@@ -260,16 +269,19 @@ public class QuizSubmissionResource {
             // notify statistics about new Result
             statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
         }
-        // notify user about new result
-        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
         // prepare submission for sending
         // Note: We get submission from result because if submission was already submitted
         // and this was called from the timer, quizSubmission might be null at this point
-        Submission submission = result.getSubmission();
-        submission.setSubmissionDate(result.getCompletionDate());
+        QuizSubmission resultSubmission = (QuizSubmission) result.getSubmission();
+        // remove scores from submission if quiz hasn't ended yet
+        if (resultSubmission.isSubmitted() && ((QuizExercise) participation.getExercise()).shouldFilterForStudents()) {
+            resultSubmission.removeScores();
+        }
+        // set submission date for response
+        resultSubmission.setSubmissionDate(result.getCompletionDate());
         // notify user about changed submission
-        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + submission.getId(), submission);
-        return quizSubmission;
+        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + resultSubmission.getId(), resultSubmission);
+        return resultSubmission;
     }
 
     /**

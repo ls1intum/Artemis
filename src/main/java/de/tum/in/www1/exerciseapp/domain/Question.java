@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.tum.in.www1.exerciseapp.domain.scoring.ScoringStrategyFactory;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -192,11 +193,13 @@ public abstract class Question implements Serializable {
         this.exercise = quizExercise;
     }
 
-    @JsonIgnore
-    abstract public ScoringStrategy getScoringStrategy();
-
+    /**
+     * Calculate the score for the given answer
+     * @param submittedAnswer The answer given for this question
+     * @return the resulting score
+     */
     public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
-        return getScoringStrategy().calculateScore(this, submittedAnswer);
+        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer);
     }
 
     /**
@@ -204,7 +207,9 @@ public abstract class Question implements Serializable {
      * @param submittedAnswer The answer given for this question
      * @return true, if the answer is 100% correct, false otherwise
      */
-    abstract public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer);
+    public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
+        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getScore();
+    }
 
     @Override
     public boolean equals(Object o) {

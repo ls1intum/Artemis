@@ -42,6 +42,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(classes = ArTEMiSApp.class)
 public class QuizSubmissionResourceIntTest {
 
+    private static final Double DEFAULT_SCORE_IN_POINTS = 1D;
+    private static final Double UPDATED_SCORE_IN_POINTS = 2D;
+
     @Autowired
     private QuizSubmissionRepository quizSubmissionRepository;
 
@@ -93,7 +96,8 @@ public class QuizSubmissionResourceIntTest {
      * if they test an entity which requires the current entity.
      */
     public static QuizSubmission createEntity(EntityManager em) {
-        QuizSubmission quizSubmission = new QuizSubmission();
+        QuizSubmission quizSubmission = new QuizSubmission()
+            .scoreInPoints(DEFAULT_SCORE_IN_POINTS);
         return quizSubmission;
     }
 
@@ -117,6 +121,7 @@ public class QuizSubmissionResourceIntTest {
         List<QuizSubmission> quizSubmissionList = quizSubmissionRepository.findAll();
         assertThat(quizSubmissionList).hasSize(databaseSizeBeforeCreate + 1);
         QuizSubmission testQuizSubmission = quizSubmissionList.get(quizSubmissionList.size() - 1);
+        assertThat(testQuizSubmission.getScoreInPoints()).isEqualTo(DEFAULT_SCORE_IN_POINTS);
     }
 
     @Test
@@ -148,7 +153,8 @@ public class QuizSubmissionResourceIntTest {
         restQuizSubmissionMockMvc.perform(get("/api/quiz-submissions?sort=id,desc"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.[*].id").value(hasItem(quizSubmission.getId().intValue())));
+            .andExpect(jsonPath("$.[*].id").value(hasItem(quizSubmission.getId().intValue())))
+            .andExpect(jsonPath("$.[*].scoreInPoints").value(hasItem(DEFAULT_SCORE_IN_POINTS.doubleValue())));
     }
 
     @Test
@@ -161,7 +167,8 @@ public class QuizSubmissionResourceIntTest {
         restQuizSubmissionMockMvc.perform(get("/api/quiz-submissions/{id}", quizSubmission.getId()))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
-            .andExpect(jsonPath("$.id").value(quizSubmission.getId().intValue()));
+            .andExpect(jsonPath("$.id").value(quizSubmission.getId().intValue()))
+            .andExpect(jsonPath("$.scoreInPoints").value(DEFAULT_SCORE_IN_POINTS.doubleValue()));
     }
 
     @Test
@@ -181,6 +188,8 @@ public class QuizSubmissionResourceIntTest {
 
         // Update the quizSubmission
         QuizSubmission updatedQuizSubmission = quizSubmissionRepository.findOne(quizSubmission.getId());
+        updatedQuizSubmission
+            .scoreInPoints(UPDATED_SCORE_IN_POINTS);
 
         restQuizSubmissionMockMvc.perform(put("/api/quiz-submissions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -191,6 +200,7 @@ public class QuizSubmissionResourceIntTest {
         List<QuizSubmission> quizSubmissionList = quizSubmissionRepository.findAll();
         assertThat(quizSubmissionList).hasSize(databaseSizeBeforeUpdate);
         QuizSubmission testQuizSubmission = quizSubmissionList.get(quizSubmissionList.size() - 1);
+        assertThat(testQuizSubmission.getScoreInPoints()).isEqualTo(UPDATED_SCORE_IN_POINTS);
     }
 
     @Test

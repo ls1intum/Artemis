@@ -40,10 +40,19 @@
             "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic",
             "quiz": "Quiz",
+            "totalPoints": "Total Points",
+            "totalScore": "Result",
             "remainingTime": "Remaining Time",
-            "quizInstructions": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
+            "quizInstructions": {
+                "default": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
+                "wait": "Please wait until the quiz has ended to see your results.",
+                "result": "You have finished the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %)."
+            },
             "lastSaved": "Saved",
-            "submitted": "Submitted"
+            "submitted": "Submitted",
+            "statistics": "Statistics",
+            "statisticsNotPublished": "The instructor has not published any statistics.",
+            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended."
         }
     }
 }

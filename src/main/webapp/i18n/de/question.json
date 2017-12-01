@@ -17,23 +17,14 @@
             },
             "title": "Titel",
             "text": "Text",
-<<<<<<< HEAD
-            "hint": "Hint",
-            "explanation": "Explanation",
-            "score": "Score",
-            "randomizeOrder": "Present Answers in Random Order",
-            "scoringType": "Scoring Type",
-            "questionStatistic": "Question Statistic",
-            "exercise": "Exercise"
-=======
             "hint": "Hinweis",
             "explanation": "Erklärung",
             "score": "Punkte",
-            "totalScore": "Gesamtpunktzahl",
             "randomizeOrder": "Fragen in zufälliger Reihenfolge anzeigen",
             "scoringType": "Bewertungsweise",
-            "exercise": "Übung"
->>>>>>> 5091b6189d23d6b99fd36b11ce414bf14e1e70bd
+            "questionStatistic": "Frage-Statistik",
+            "exercise": "Übung",
+            "yourScore": "Erreichte Punktzahl"
         }
     }
 }
