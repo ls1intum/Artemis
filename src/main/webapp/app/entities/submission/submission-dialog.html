@@ -13,6 +13,18 @@
             <input type="text" class="form-control" id="id" name="id"
                     ng-model="vm.submission.id" readonly />
         </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="artemisApp.submission.submitted" for="field_submitted">Submitted</label>
+                <input type="checkbox" name="submitted" id="field_submitted"
+                          ng-model="vm.submission.submitted"/>
+        </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="artemisApp.submission.type" for="field_type">Type</label>
+            <select class="form-control" name="type" ng-model="vm.submission.type" id="field_type">
+                <option value="MANUAL" data-translate="artemisApp.SubmissionType.MANUAL">MANUAL</option>
+                <option value="TIMEOUT" data-translate="artemisApp.SubmissionType.TIMEOUT">TIMEOUT</option>
+            </select>
+        </div>
 
     </div>
     <div class="modal-footer">

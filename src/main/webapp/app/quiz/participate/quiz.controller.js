@@ -5,22 +5,56 @@
         .module('artemisApp')
         .controller('QuizController', QuizController);
 
-    QuizController.$inject = ['$scope', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizSubmission', 'QuizSubmissionForExercise'];
+    QuizController.$inject = ['$scope', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService'];
 
-    function QuizController($scope, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise) {
+    function QuizController($scope, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService) {
         var vm = this;
 
         var timeDifference = 0;
 
         vm.isSubmitting = false;
-        vm.lastSubmissionTimeText = "never";
-        vm.justSubmitted = false;
+        vm.isSaving = false;
+        vm.lastSavedTimeText = "never";
+        vm.justSaved = false;
 
         vm.remainingTimeText = "?";
         vm.remainingTimeSeconds = 0;
 
-        // update displayed times in UI regularly
-        $interval(function () {
+        vm.sendWebsocket = null;
+
+        vm.onSelectionChanged = onSelectionChanged;
+        vm.onSubmit = onSubmit;
+
+        init();
+        $interval(updateDisplayedTimes, 100);  // update displayed times in UI regularly
+
+        /**
+         * loads latest submission from server and sets up socket connection
+         */
+        function init() {
+            load(function() {
+                var websocketChannel = '/topic/quizSubmissions/' + vm.submission.id;
+
+                JhiWebsocketService.subscribe(websocketChannel);
+
+                JhiWebsocketService.receive(websocketChannel).then(null, null, function(payload) {
+                    onSaveSuccess(payload);
+                });
+
+                vm.sendWebsocket = function(data) {
+                    JhiWebsocketService.send(websocketChannel + '/save', data);
+                };
+
+                $scope.$on('$destroy', function() {
+                    JhiWebsocketService.unsubscribe(websocketChannel);
+                });
+            });
+        }
+
+        /**
+         * updates all displayed (relative) times in the UI
+         */
+        function updateDisplayedTimes() {
             // update remaining time
             if (vm.quizExercise && vm.quizExercise.adjustedDueDate) {
                 var endDate = vm.quizExercise.adjustedDueDate;
@@ -48,15 +82,65 @@
             // update submission time
             if (vm.submission && vm.submission.adjustedSubmissionDate) {
                 // exact value is not important => use default relative time from moment for better readability and less distraction
-                vm.lastSubmissionTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
+                vm.lastSavedTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
             }
-        }, 100);
+        }
 
-        vm.onSubmit = onSubmit;
+        /**
+         * applies the data from the model to the UI (reverse of applySelection):
+         *
+         * Sets the checkmarks (selected answers) for all questions according to the submission data
+         * this needs to be done when we get new submission data, e.g. through the websocket connection
+         */
+        function applySubmission() {
+            // create a dictionary (key: questionID, value: Array of selected answerOptions)
+            // for the submittedAnswers to hand the selected options in individual arrays to the question components
+            vm.selectedAnswerOptions = {};
+            // iterate through all questions of this quiz
+            vm.quizExercise.questions.forEach(function (question) {
+                // find the submitted answer that belongs to this question
+                var submittedAnswer = vm.submission.submittedAnswers.find(function (submittedAnswer) {
+                    return submittedAnswer.question.id === question.id;
+                });
+                // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
+            });
+        }
 
-        load();
+        /**
+         * updates the model according to UI state (reverse of applySubmission):
+         *
+         * Creates the submission from the user's selection
+         * this needs to be done when we want to send the submission
+         * either for saving (through websocket)
+         * or for submitting (through REST call)
+         */
+        function applySelection() {
+            // convert the selection dictionary (key: questionID, value: Array of selected answerOptions)
+            // into an array of submittedAnswer objects and save it as the submittedAnswers of the submission
+            vm.submission.submittedAnswers = Object.keys(vm.selectedAnswerOptions).map(function (questionID) {
+                // find the question object for the given question id
+                var question = vm.quizExercise.questions.find(function (question) {
+                    return question.id === Number(questionID);
+                });
+                if (!question) {
+                    console.error("question not found for ID: " + questionID);
+                    return null;
+                }
+                // generate the submittedAnswer object
+                return {
+                    question: question,
+                    selectedOptions: vm.selectedAnswerOptions[questionID],
+                    type: question.type
+                };
+            });
+        }
 
-        function load() {
+        /**
+         * Load the latest submission data for this user and this exercise
+         * @param callback [optional] callback function to be called when data has been loaded
+         */
+        function load(callback) {
             QuizSubmissionForExercise.get({
                 courseId: 1,
                 exerciseId: $stateParams.id
@@ -76,50 +160,40 @@
                     }
 
                     // prepare answers for submission
-                    vm.selectedAnswerOptions = {};
-                    vm.quizExercise.questions.forEach(function (question) {
-                        var submittedAnswer = vm.submission.submittedAnswers.find(function (submittedAnswer) {
-                            return submittedAnswer.question.id === question.id;
-                        });
-                        vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
-                    });
+                    applySubmission();
+
+                    if(callback) {
+                        callback();
+                    }
                 });
             });
         }
 
         /**
-         * This function is called when the user clicks the "Submit" button
+         * Callback method to be triggered when the user (de-)selects answers
          */
-        function onSubmit() {
-            vm.submission.submittedAnswers = Object.keys(vm.selectedAnswerOptions).map(function (questionID) {
-                var question = vm.quizExercise.questions.find(function (question) {
-                    return question.id === Number(questionID);
-                });
-                if (!question) {
-                    console.error("question not found for ID: " + questionID);
-                    return null;
-                }
-                return {
-                    question: question,
-                    selectedOptions: vm.selectedAnswerOptions[questionID],
-                    type: question.type
-                };
-            });
-            vm.isSubmitting = true;
-            QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError)
+        function onSelectionChanged() {
+            applySelection();
+            vm.isSaving = true;
+            if (vm.sendWebsocket) {
+                vm.sendWebsocket(vm.submission);
+            }
         }
 
         /**
-         * Callback function for handling response after sending submission to server
+         * Callback function for handling response after saving submission to server
          * @param quizSubmission The response data from the server
          */
-        function onSubmitSuccess(quizSubmission) {
-            vm.isSubmitting = false;
+        function onSaveSuccess(quizSubmission) {
+            vm.isSaving = false;
             vm.submission = quizSubmission;
-            vm.justSubmitted = true;
-            timeoutJustSubmitted();
+            applySubmission();
             if (vm.submission.submissionDate) {
                 vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
+                    vm.justSaved = true;
+                    timeoutJustSaved();
+                }
             }
         }
 
@@ -127,12 +201,38 @@
          * debounced function to reset "vm.justSubmitted", so that time since last submission is displayed again when no submission has been made for at least 2 seconds
          * @type {Function}
          */
-        var timeoutJustSubmitted = _.debounce(function() {
-            vm.justSubmitted = false;
+        var timeoutJustSaved = _.debounce(function() {
+            vm.justSaved = false;
         }, 2000);
 
         /**
-         * Callback function for handling error when sending submission to server
+         * This function is called when the user clicks the "Submit" button
+         */
+        function onSubmit() {
+            applySelection();
+            vm.isSubmitting = true;
+            QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+        }
+
+        /**
+         * Callback function for handling response after submitting
+         * @param response
+         */
+        function onSubmitSuccess(response) {
+            vm.isSubmitting = false;
+            vm.submission = response;
+            applySubmission();
+            if (vm.submission.submissionDate) {
+                vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
+                    vm.justSaved = true;
+                    timeoutJustSaved();
+                }
+            }
+        }
+
+        /**
+         * Callback function for handling error when submitting
          * @param error
          */
         function onSubmitError(error) {
