@@ -159,19 +159,19 @@
                             var position = bar.tooltipPosition();
 
                             if(dataPersentage > 6) {
-                                if(position.y > 15){
+                                if(position.y > 15) {
                                     ctx.fillStyle = 'black';
                                     ctx.fillText(data, position.x, position.y - 10);
 
 
-                                    if(barChartData.participants !== 0){
+                                    if(barChartData.participants !== 0) {
                                         ctx.fillStyle = 'white';
                                         ctx.fillText(dataPersentage.toString()+"%", position.x, position.y + 10);
                                     }
                                 }
                                 else{
                                     ctx.fillStyle = 'white';
-                                    if(barChartData.participants !== 0){
+                                    if(barChartData.participants !== 0) {
                                         ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y + 10);
                                     }else{
                                         ctx.fillText(data, position.x, position.y + 10);
@@ -180,7 +180,7 @@
                             }
                             else{
                                 ctx.fillStyle = 'black';
-                                if(barChartData.participants !== 0){
+                                if(barChartData.participants !== 0) {
                                     ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y - 10);
                                 }else{
                                     ctx.fillText(data, position.x, position.y - 10);
