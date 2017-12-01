@@ -342,15 +342,15 @@ public class QuizExercise extends Exercise implements Serializable {
             quizPointStatistic.addScore(new Double(i));
         }
         //delete old PointCounter
-        Set<PointCounter> delete = new HashSet<>();
+        Set<PointCounter> pointCounterToDelete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
                 if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) { ;
-                    delete.add(pointCounter);
+                    pointCounterToDelete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);
                 }
             }
         }
-        quizPointStatistic.getPointCounters().removeAll(delete);
+        quizPointStatistic.getPointCounters().removeAll(pointCounterToDelete);
     }
 }
