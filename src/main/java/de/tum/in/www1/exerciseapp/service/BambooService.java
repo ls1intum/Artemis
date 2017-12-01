@@ -580,6 +580,10 @@ public class BambooService implements ContinuousIntegrationService {
      * - isBuilding: true if the plan is building
      */
     public Map<String, Boolean> retrieveBuildStatus(String planKey) {
+        if(planKey.toLowerCase().equals("tutorial")){
+            return null;
+        }
+
         HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
