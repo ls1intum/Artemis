@@ -11,15 +11,18 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
     vm.rendered = {
         text: htmlForMarkdown(vm.question.text),
         hint: htmlForMarkdown(vm.question.hint),
+        explanation: htmlForMarkdown(vm.question.explanation),
         answerOptions: vm.question.answerOptions.map(function(answerOption){
             return {
                 text: htmlForMarkdown(answerOption.text),
-                hint: htmlForMarkdown(answerOption.hint)
+                hint: htmlForMarkdown(answerOption.hint),
+                explanation: htmlForMarkdown(answerOption.explanation)
             };
         })
     };
 
     vm.toggleSelection = toggleSelection;
+    vm.getUserScore = getUserScore;
 
     function toggleSelection(answerOption) {
         if (vm.clickDisabled) {
@@ -66,6 +69,20 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
         return $sanitize(html);
     }
 
+    /**
+     * Calculate the user's score for this question (only possible when isCorrect is set for each answer option)
+     *
+     * @return {number} the user's score
+     */
+    function getUserScore() {
+        if (vm.score) {
+            return vm.score;
+        } else {
+            return 0;
+            // TODO: @Moritz: this might be different when a question has invalid answer options or has been set to invalid altogether.
+        }
+    }
+
 }
 
 angular.module('artemisApp').component('multipleChoiceQuestion', {
@@ -76,6 +93,9 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
         question: '=',
         selectedAnswerOptions: '=',
         clickDisabled: '<',
+        showResult: '<',
+        questionIndex: '<',
+        score:'<',
         onSelection: '&'
     }
 });

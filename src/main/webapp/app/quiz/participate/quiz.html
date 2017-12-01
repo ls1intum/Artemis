@@ -1,19 +1,12 @@
 <div class="quiz-header container">
     <h1>{{vm.quizExercise.course.title}} - {{vm.quizExercise.title}}</h1>
-    <p data-translate="artemisApp.quizExercise.quizInstructions"></p>
+    <p ng-if="!vm.submission.submitted" data-translate="artemisApp.quizExercise.quizInstructions.default"></p>
+    <p ng-if="vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.wait"></p>
+    <p ng-if="vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.result" data-translate-values="{userScore: vm.userScore, maxScore: vm.totalScore, percentage: vm.result.score}"></p>
 </div>
 <div class="quiz-content container">
     <div ng-repeat="question in vm.quizExercise.questions">
-        <div class="question-index">
-            <span data-translate="artemisApp.question.detail.title"></span>
-            <span>{{$index+1}}:</span>
-        </div>
-        <multiple-choice-question
-            question="question"
-            selected-answer-options="vm.selectedAnswerOptions[question.id]"
-            on-selection="vm.onSelectionChanged()"
-            click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0"
-        ></multiple-choice-question>
+        <multiple-choice-question question="question" selected-answer-options="vm.selectedAnswerOptions[question.id]" on-selection="vm.onSelectionChanged()" click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0" show-result="vm.showingResult" question-index="$index + 1" score="vm.questionScores[question.id]"></multiple-choice-question>
     </div>
 </div>
 <div class="quiz-footer">
@@ -25,11 +18,11 @@
                     {{vm.quizExercise.questions.length}}
                 </div>
                 <div>
-                    <span data-translate="artemisApp.question.totalScore" class="colon-suffix"></span>
+                    <span data-translate="artemisApp.quizExercise.totalPoints" class="colon-suffix"></span>
                     {{vm.totalScore}}
                 </div>
             </div>
-            <div id="remaining-time">
+            <div ng-if="!vm.showingResult" id="remaining-time">
                 <div>
                     <span data-translate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                     <span id="remaining-time-value" ng-class="{'time-critical': vm.remainingTimeSeconds < 60 || vm.remainingTimeSeconds < vm.quizExercise.duration / 4, 'time-warning': vm.remainingTimeSeconds < 120 || vm.remainingTimeSeconds < vm.quizExercise.duration / 2}">
@@ -46,8 +39,16 @@
                     </span>
                 </div>
             </div>
+            <div ng-if="vm.showingResult" id="quiz-score" ng-class="{incorrect: vm.userScore < vm.totalScore}">
+                <span class="colon-suffix" data-translate="artemisApp.quizExercise.totalScore"></span>
+                <span>{{vm.userScore}}/{{vm.totalScore}} ({{vm.result.score}} %)</span>
+            </div>
             <button ng-if="!vm.submission.submitted" ng-disabled="vm.isSubmitting || vm.remainingTimeSeconds < 0" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></button>
-            <button ng-if="vm.submission.submitted"  disabled class="btn btn-success btn-lg" data-translate="artemisApp.quizExercise.submitted"></button>
+            <button ng-if="vm.submission.submitted && !vm.showingResult" disabled class="btn btn-success btn-lg" data-translate="artemisApp.quizExercise.submitted"></button>
+            <button ng-if="vm.showingResult" class="btn btn-default btn-lg disabled" data-translate="artemisApp.quizExercise.statistics" uib-popover-html="'{{'artemisApp.quizExercise.statisticsNotPublished' | translate}}'" popover-placement="top-right" popover-trigger="mouseenter"></button>
         </div>
     </div>
+</div>
+<div class="quiz-submitted-overlay alert alert-success" ng-if="vm.submission.submitted && !vm.showingResult">
+    <span data-translate="artemisApp.quizExercise.successfullySubmittedText"></span>
 </div>

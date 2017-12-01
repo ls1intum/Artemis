@@ -16,7 +16,8 @@
                 "title": "Eingereichte Lösung"
             },
             "question": "Frage",
-            "submission": "Abgabe"
+            "submission": "Abgabe",
+            "scoreInPoints": "Erreichte Punktzahl"
         }
     }
 }

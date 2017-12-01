@@ -39,10 +39,19 @@
             "status": "Status",
             "startTime": "Startzeit",
             "quiz": "Quiz",
+            "totalPoints": "Gesamtpunktzahl",
+            "totalScore": "Ergebnis",
             "remainingTime": "Verbleibende Zeit",
-            "quizInstructions": "Wählen Sie für jede Frage die richtigen Antworten aus und klicken Sie auf \"Absenden\", um ihre Auswahl abzugeben.",
+            "quizInstructions": {
+                "default": "Wählen Sie für jede Frage die richtigen Antworten aus und klicken Sie auf \"Absenden\", um ihre Auswahl abzugeben.",
+                "wait": "Warten Sie bis das Quiz beendet ist um Ihre Ergebnisse zu sehen.",
+                "result": "Sie haben das Quiz mit {{userScore}} von {{maxScore}} Punkten abgeschlossen ({{percentage}} %)."
+            },
             "lastSaved": "Gespeichert",
-            "submitted": "Abgegeben"
+            "submitted": "Abgegeben",
+            "statistics": "Statistiken",
+            "statisticsNotPublished": "Der Übungsleiter hat keine Statistiken freigegeben.",
+            "successfullySubmittedText": "Ihre Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, sobald das Quiz beendet ist."
         }
     }
 }

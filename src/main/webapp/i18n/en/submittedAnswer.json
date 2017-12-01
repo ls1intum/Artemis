@@ -15,6 +15,7 @@
             "detail": {
                 "title": "Submitted Answer"
             },
+            "scoreInPoints": "Score In Points",
             "question": "Question",
             "submission": "Submission"
         }
