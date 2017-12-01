@@ -22,7 +22,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     List<Exercise> findByCourseId(@Param("courseId") Long courseId);
 
-    Optional<Exercise> findOneByTitle(String title);
+    Optional<Exercise> findOneByTitleAndCourseId(String title, Long courseId);
 
 
     /**

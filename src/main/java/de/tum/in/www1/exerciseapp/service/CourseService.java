@@ -102,7 +102,7 @@ public class CourseService {
             Course tutorial = course.get();
             log.debug("Starting to initalize tutorial for {}", user);
 
-            Optional<Exercise> exercise = exerciseRepository.findOneByTitle("Exercise 1");
+            Optional<Exercise> exercise = exerciseRepository.findOneByTitleAndCourseId("Exercise 1", tutorial.getId());
 
             if (exercise.isPresent()) {
                 participationService.createTutorialParticipation(user, exercise.get());
