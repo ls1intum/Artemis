@@ -32,15 +32,9 @@ public class StatisticResource {
     private static final String ENTITY_NAME = "statistic";
 
     private final StatisticRepository statisticRepository;
-    private final Optional<LtiService> ltiService;
-    private final StatisticService statisticService;
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
-    public StatisticResource(StatisticRepository statisticRepository, Optional<LtiService> ltiService, StatisticService statisticService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public StatisticResource(StatisticRepository statisticRepository) {
         this.statisticRepository = statisticRepository;
-        this.ltiService =ltiService;
-        this.statisticService = statisticService;
-        this.continuousIntegrationService =continuousIntegrationService;
     }
 
     /**

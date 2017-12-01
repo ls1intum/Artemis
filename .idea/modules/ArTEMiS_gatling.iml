@@ -17,53 +17,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ArTEMiS_main" />
     <orderEntry type="module" module-name="ArTEMiS_test" production-on-test="" />
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../../build/classes/java/gatling" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../src/gatling/java" />
-          <root url="file://$MODULE_DIR$/../../src/test/gatling" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../../build/classes/java/main" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../src/main/scala" />
-          <root url="file://$MODULE_DIR$/../../src/main/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../../build/classes/java/test" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../src/test/scala" />
-          <root url="file://$MODULE_DIR$/../../src/test/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../../build/classes/java/main" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../src/main/scala" />
-          <root url="file://$MODULE_DIR$/../../src/main/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Gradle: io.gatling.highcharts:gatling-charts-highcharts:2.2.5" level="project" />
     <orderEntry type="library" name="Gradle: io.gatling:gatling-app:2.2.5" level="project" />
     <orderEntry type="library" name="Gradle: io.gatling:gatling-charts:2.2.5" level="project" />
@@ -125,27 +78,6 @@
     <orderEntry type="library" name="Gradle: io.netty:netty-buffer:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-common:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: commons-pool:commons-pool:1.6" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../../build/classes/java/test" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="file://$MODULE_DIR$/../../src/test/scala" />
-          <root url="file://$MODULE_DIR$/../../src/test/java" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" name="Gradle: ch.qos.logback:logback-core:1.1.11" level="project" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/../../build/classes/java/gatling" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
   </component>
 </module>
