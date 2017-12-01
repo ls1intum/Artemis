@@ -60,7 +60,7 @@ public abstract class Submission implements Serializable {
     }
 
     public Boolean isSubmitted() {
-        return submitted;
+        return submitted != null ? submitted : false;
     }
 
     public Submission submitted(Boolean submitted) {

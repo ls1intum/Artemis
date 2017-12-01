@@ -104,6 +104,7 @@
                     resolve: {
                         entity: function () {
                             return {
+                                scoreInPoints: null,
                                 id: null
                             };
                         }

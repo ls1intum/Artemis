@@ -161,16 +161,19 @@ public class QuizExerciseResource {
         log.debug("REST request to get QuizExercise : {}", id);
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
 
-        // filter out "explanation" field from all questions (so students can't see explanation while answering quiz)
-        for (Question question : quizExercise.getQuestions()) {
-            question.setExplanation(null);
+        // only filter out information if quiz hasn't ended yet
+        if (quizExercise != null && quizExercise.shouldFilterForStudents()) {
+            // filter out "explanation" field from all questions (so students can't see explanation while answering quiz)
+            for (Question question : quizExercise.getQuestions()) {
+                question.setExplanation(null);
 
-            // filter out "isCorrect" and "explanation" fields from answerOptions in all MC questions (so students can't see correct options in JSON)
-            if (question instanceof MultipleChoiceQuestion) {
-                MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                    answerOption.setIsCorrect(null);
-                    answerOption.setExplanation(null);
+                // filter out "isCorrect" and "explanation" fields from answerOptions in all MC questions (so students can't see correct options in JSON)
+                if (question instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                        answerOption.setIsCorrect(null);
+                        answerOption.setExplanation(null);
+                    }
                 }
             }
         }

@@ -19,6 +19,7 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="artemisApp.submittedAnswer.scoreInPoints">Score In Points</span></th>
                     <th><span data-translate="artemisApp.submittedAnswer.question">Question</span></th>
                     <th><span data-translate="artemisApp.submittedAnswer.submission">Submission</span></th>
                     <th></th>
@@ -27,6 +28,7 @@
             <tbody>
                 <tr ng-repeat="submittedAnswer in vm.submittedAnswers track by submittedAnswer.id">
                     <td><a ui-sref="submitted-answer-detail({id:submittedAnswer.id})">{{submittedAnswer.id}}</a></td>
+                    <td>{{submittedAnswer.scoreInPoints}}</td>
                     <td>
                         <a ui-sref="question-detail({id:submittedAnswer.question.id})">{{submittedAnswer.question.id}}</a>
                     </td>

@@ -95,6 +95,7 @@
             class="question"
             ng-repeat="question in vm.quizExercise.questions"
             question="question"
+            question-index="$index + 1"
             on-delete="vm.deleteQuestion(question)"
             on-updated="vm.onQuestionUpdated()"
         ></edit-multiple-choice-question>
