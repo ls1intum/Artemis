@@ -35,9 +35,9 @@ public class StatisticService {
     public void updateStatistic(QuizExercise quizExercise) {
         // notify user via websocket
         // if the quiz-timer is ending this service waits for 300ms for additional Results before its sending the Websocket
-        if(quizExercise.getDueDate().isAfter(ZonedDateTime.now()) && quizExercise.getDueDate().isBefore(ZonedDateTime.now().plusSeconds(10))){
+        if(quizExercise.getDueDate().isAfter(ZonedDateTime.now()) && quizExercise.getDueDate().isBefore(ZonedDateTime.now().plusSeconds(10))) {
             // semaphore, which checks if the service is still waiting for new Results
-            if(!semaphorUpdateStatistic){
+            if(!semaphorUpdateStatistic) {
                 semaphorUpdateStatistic = true;
                 Timer timer = new Timer();
                 timer.schedule(new TimerTask() {

@@ -17,7 +17,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="ArTEMiS_main" />
     <orderEntry type="module" module-name="ArTEMiS_test" production-on-test="" />
-    <orderEntry type="module-library" scope="RUNTIME">
       <library>
         <CLASSES>
           <root url="file://$MODULE_DIR$/../../build/classes/java/gatling" />

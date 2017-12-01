@@ -304,7 +304,7 @@ public class QuizExercise extends Exercise implements Serializable {
             "}";
     }
 
-    public QuizExercise(){
+    public QuizExercise() {
         //creates the associated quizPointStatistic implicitly
         quizPointStatistic = new QuizPointStatistic();
         quizPointStatistic.setQuiz(this);
@@ -315,12 +315,12 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return the sum of these scores
      */
-    public int getMaxQuizScore(){
+    public int getMaxQuizScore() {
         int quizScore = 0;
 
-        if(questions != null){
+        if(questions != null) {
             //calculate Score of the Quiz
-            for(Question question: questions){
+            for(Question question: questions) {
                 quizScore = quizScore + question.getScore();
             }
         }
@@ -333,19 +333,19 @@ public class QuizExercise extends Exercise implements Serializable {
      * 1. add new PointCounters for new Scores
      * 2. delete old PointCounters if the score is no longer contained
      */
-    private void recalculatePointCounters(){
+    private void recalculatePointCounters() {
 
         double quizScore = getMaxQuizScore();
 
         //add new PointCounter
-        for(double i = 0.0 ; i <= quizScore; i++){  // for variable ScoreSteps change: i++ into: i= i + scoreStep
+        for(double i = 0.0 ; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
             quizPointStatistic.addScore(new Double(i));
         }
         //delete old PointCounter
         Set<PointCounter> delete = new HashSet<>();
         for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
-                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/){ ;
+                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) { ;
                     delete.add(pointCounter);
                     pointCounter.setQuizPointStatistic(null);
                 }

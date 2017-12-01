@@ -90,7 +90,7 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
      *                                  or unrated  ( participated after the dueDate of the quizExercise)
      */
     @Override
-    public void addResult(SubmittedAnswer submittedAnswer, boolean rated){
+    public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
         //TO-DO: Moritz Issig
     }
 
@@ -103,7 +103,7 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
      *                                  or unrated  ( participated after the dueDate of the quizExercise)
      */
     @Override
-    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated){
+    public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
         //TO-DO: Moritz Issig
     }
 }

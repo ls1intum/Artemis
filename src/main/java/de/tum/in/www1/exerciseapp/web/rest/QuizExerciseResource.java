@@ -115,7 +115,7 @@ public class QuizExerciseResource {
         // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
         if (quizExercise != null && (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0)) {
             quizExercise.getQuizPointStatistic().setReleased(false);
-            for (Question question : quizExercise.getQuestions()){
+            for (Question question : quizExercise.getQuestions()) {
                 question.getQuestionStatistic().setReleased(false);
             }
         }
@@ -194,7 +194,7 @@ public class QuizExerciseResource {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
             for (Question question : quizExercise.getQuestions()) {
                 question.setExplanation(null);
-                if(!question.getQuestionStatistic().isReleased()){
+                if(!question.getQuestionStatistic().isReleased()) {
                     question.setQuestionStatistic(null);
                 }
 
@@ -209,7 +209,7 @@ public class QuizExerciseResource {
             }
         }
         // filter out the statistic information if the statistic is not released
-        if(!quizExercise.getQuizPointStatistic().isReleased()){
+        if(!quizExercise.getQuizPointStatistic().isReleased()) {
             // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
             quizExercise.getQuizPointStatistic().setPointCounters(null);
             quizExercise.getQuizPointStatistic().setParticipantsRated(null);

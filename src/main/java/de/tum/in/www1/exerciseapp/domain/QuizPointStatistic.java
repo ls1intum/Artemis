@@ -98,14 +98,14 @@ public class QuizPointStatistic extends Statistic implements Serializable {
      *
      * @param score the score which will be added to the QuizPointStatistic
      */
-    public void addScore(Double score){
+    public void addScore(Double score) {
 
-        if(score ==null){
+        if(score ==null) {
             return;
         }
         // check if score as an associated PointCounter: true: do nothing, false: add one
-        for(PointCounter counter: pointCounters){
-            if(score.equals(counter.getPoints())){
+        for(PointCounter counter: pointCounters) {
+            if(score.equals(counter.getPoints())) {
                 return;
             }
         }
@@ -123,22 +123,22 @@ public class QuizPointStatistic extends Statistic implements Serializable {
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
      *                                  or unrated  ( participated after the dueDate of the quizExercise)
      */
-    public void addResult(Long score, boolean rated){
+    public void addResult(Long score, boolean rated) {
 
-        if(score == null){
+        if(score == null) {
             return;
         }
 
         //convert score into points
         Double points = (double) Math.round(((double) quiz.getMaxQuizScore()) * ((double) score/100));
 
-        if(rated){
+        if(rated) {
             //increase participants
             setParticipantsRated(getParticipantsRated()+1);
 
             //find associated pointCounter and increase it
-            for (PointCounter pointCounter: pointCounters){
-                if(points.equals(pointCounter.getPoints())){
+            for (PointCounter pointCounter: pointCounters) {
+                if(points.equals(pointCounter.getPoints())) {
                     pointCounter.setRatedCounter(pointCounter.getRatedCounter()+1);
                 }
             }
@@ -149,8 +149,8 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             setParticipantsUnrated(getParticipantsUnrated()+1);
 
             //find associated pointCounter and increase it
-            for (PointCounter pointCounter: pointCounters){
-                if(points.equals(pointCounter.getPoints())){
+            for (PointCounter pointCounter: pointCounters) {
+                if(points.equals(pointCounter.getPoints())) {
                     pointCounter.setRatedCounter(pointCounter.getUnRatedCounter()+1);
                 }
             }
@@ -165,21 +165,21 @@ public class QuizPointStatistic extends Statistic implements Serializable {
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
      *                                  or unrated  ( participated after the dueDate of the quizExercise)
      */
-    public void removeOldResult(Long score ,boolean rated){
+    public void removeOldResult(Long score ,boolean rated ) {
 
-        if(score == null){
+        if(score == null) {
             return;
         }
 
         Double points = (double) Math.round(((double) quiz.getMaxQuizScore()) * ((double) score/100));
 
-        if(rated){
+        if(rated) {
             //decrease participants
             setParticipantsRated(getParticipantsRated()-1);
 
             //find associated pointCounter and decrease it
-            for (PointCounter pointCounter: pointCounters){
-                if(points.equals(pointCounter.getPoints())){
+            for (PointCounter pointCounter: pointCounters) {
+                if(points.equals(pointCounter.getPoints())) {
                     pointCounter.setRatedCounter(pointCounter.getRatedCounter()-1);
                 }
             }
@@ -189,8 +189,8 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             setParticipantsUnrated(getParticipantsUnrated()-1);
 
             //find associated pointCounter and decrease it
-            for (PointCounter pointCounter: pointCounters){
-                if(points.equals(pointCounter.getPoints())){
+            for (PointCounter pointCounter: pointCounters) {
+                if(points.equals(pointCounter.getPoints())) {
                     pointCounter.setRatedCounter(pointCounter.getUnRatedCounter()-1);
                 }
             }

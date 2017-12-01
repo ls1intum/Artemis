@@ -50,42 +50,51 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
 
     public MultipleChoiceQuestion removeAnswerOptions(AnswerOption answerOption) {
         //if an answerOption was removed then remove the associated AnswerCounter implicitly
-        MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
-        AnswerCounter delete = null;
-        for(AnswerCounter answerCounter: mcStatistic.getAnswerCounters())
-            if(answerOption.equals(answerCounter.getAnswer())){
-            answerCounter.setAnswer(null);
-            delete = answerCounter;
+        if (getQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
+            MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) getQuestionStatistic();
+            AnswerCounter answerCounterToDelete = null;
+            for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+                if (answerOption.equals(answerCounter.getAnswer())) {
+                    answerCounter.setAnswer(null);
+                    answerCounterToDelete = answerCounter;
+                }
             }
-        mcStatistic.getAnswerCounters().remove(delete);
-
+            mcStatistic.getAnswerCounters().remove(answerCounterToDelete);
+        }
         this.answerOptions.remove(answerOption);
         answerOption.setQuestion(null);
         return this;
+
     }
 
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
-        MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
+        MultipleChoiceQuestionStatistic mcStatistic;
+        if (getQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
+            mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
+        }
+        else{
+            mcStatistic = new MultipleChoiceQuestionStatistic();
+            setQuestionStatistic(mcStatistic);
+        }
         this.answerOptions = answerOptions;
 
-        if(getQuestionStatistic() != null) {
-            //if an answerOption was added then add the associated AnswerCounter implicitly
-            for (AnswerOption answerOption : getAnswerOptions()) {
-                ((MultipleChoiceQuestionStatistic) getQuestionStatistic()).addAnswerOption(answerOption);
-            }
+        //if an answerOption was added then add the associated AnswerCounter implicitly
+        for (AnswerOption answerOption : getAnswerOptions()) {
+            ((MultipleChoiceQuestionStatistic) getQuestionStatistic()).addAnswerOption(answerOption);
+        }
 
-            //if an answerOption was removed then remove the associated AnswerCounter implicitly
-            Set<AnswerCounter> delete = new HashSet<>();
-            for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-                if (answerCounter.getId() != null) {
-                    if(!(answerOptions.contains(answerCounter.getAnswer()))){
-                        answerCounter.setAnswer(null);
-                        delete.add(answerCounter);
-                    }
+        //if an answerOption was removed then remove the associated AnswerCounter implicitly
+        Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
+        for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+            if (answerCounter.getId() != null) {
+                if(!(answerOptions.contains(answerCounter.getAnswer()))) {
+                    answerCounter.setAnswer(null);
+                    answerCounterToDelete.add(answerCounter);
                 }
             }
-            mcStatistic.getAnswerCounters().removeAll(delete);
         }
+        mcStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
+
     }
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
@@ -163,7 +172,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
             "}";
     }
 
-    public MultipleChoiceQuestion(){
+    public MultipleChoiceQuestion() {
         //create associated Statistic implicitly
         MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();
         setQuestionStatistic(mcStatistic);
