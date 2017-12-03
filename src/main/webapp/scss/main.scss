@@ -74,38 +74,7 @@ code-error {
     font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
-.overlay {
-    height: 100%;
-    width: 100%;
-    display: none;
-    position: fixed;
-    z-index: 1;
-    top: 0;
-    left: 0;
-    background-color: rgb(0,0,0);
-    background-color: rgba(0,0,0, 0.9);
-}
 
-.overlay-content {
-    position: relative;
-    top: 25%;
-    width: 100%;
-    text-align: center;
-    margin-top: 30px;
-    color: white;
-}
-.overlay .closebtn {
-    position: absolute;
-    color: white;
-    top: 20px;
-    right: 45px;
-    font-size: 60px;
-
-    &:hover {
-        color: red;
-        text-decoration: none;
-    }
-}
 
 
 
