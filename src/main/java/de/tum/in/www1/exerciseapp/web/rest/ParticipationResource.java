@@ -5,10 +5,7 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
-import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
-import de.tum.in.www1.exerciseapp.service.ExerciseService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
-import de.tum.in.www1.exerciseapp.service.VersionControlService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -26,7 +23,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,6 +44,8 @@ public class ParticipationResource {
 
     private final ExerciseService exerciseService;
 
+    private final AuthorizationCheckService authCheckService;
+
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
@@ -57,11 +55,14 @@ public class ParticipationResource {
     private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
     private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
-    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, ResultRepository resultRepository, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository,
+                                 ResultRepository resultRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+                                 Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationService = participationService;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.exerciseService = exerciseService;
+        this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
     }
@@ -207,15 +208,13 @@ public class ParticipationResource {
      */
     @GetMapping("/participations/{id}")
     @Timed
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipation(@PathVariable Long id, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
-
-        if (participation != null && (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority)))) {
-            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(
                 result,
@@ -327,12 +326,16 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/participations/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long id,
                                                     @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
                                                     @RequestParam(defaultValue = "false") boolean deleteRepository) {
         log.debug("REST request to delete Participation : {}, deleteBuildPlan: {}, deleteRepository: {}", id, deleteBuildPlan, deleteRepository);
+        Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         participationService.delete(id, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", id.toString())).build();
     }

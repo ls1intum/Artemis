@@ -11,30 +11,22 @@ import io.github.jhipster.web.util.ResponseUtil;
 import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.List;
@@ -57,14 +49,18 @@ public class ExerciseResource {
     private final ExerciseService exerciseService;
     private final UserService userService;
     private final CourseService courseService;
+    private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
-    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService, UserService userService, CourseService courseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService,
+                            UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
+                            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
         this.userService = userService;
         this.courseService = courseService;
+        this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
     }
@@ -164,42 +160,29 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
      */
     @GetMapping(value = "/courses/{courseId}/exercises")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, Principal principal) {
         log.debug("REST request to get Exercises for Course : {}", courseId);
 
         List<Exercise> result;
-
-        // first get user and create representative authorities
         User user = userService.getUserWithGroupsAndAuthorities();
-        Authority adminAuthority = new Authority();
-        adminAuthority.setName("ROLE_ADMIN");
-        Authority taAuthority = new Authority();
-        taAuthority.setName("ROLE_TA");
 
-        // get the course
         Course course = courseService.findOne(courseId);
-
-        // determine user's access level for this course
-        if (user.getAuthorities().contains(adminAuthority)) {
-            // user is admin
-            result = exerciseRepository.findByCourseId(courseId);
-        } else if (user.getAuthorities().contains(taAuthority) && user.getGroups().contains(course.getTeachingAssistantGroupName())) {
-            // user is TA for this course
-            result = exerciseRepository.findByCourseId(courseId);
-        } else if (user.getGroups().contains(course.getStudentGroupName())) {
+        if(!authCheckService.isAuthorizedForCourse(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if(user.getGroups().contains(course.getStudentGroupName())) {
             // user is student for this course
             result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal) : exerciseRepository.findByCourseId(courseId);
             // filter out exercises that are not released (or explicitly made visible to students) yet
             result = result.stream().filter(Exercise::getIsVisibleToStudents).collect(Collectors.toList());
         } else {
-            // user has no permissions for this course
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+            result = exerciseRepository.findByCourseId(courseId);
         }
 
         // filter out questions from quizExercises (so users can't see which answer options are correct)
-        for (Exercise exercise : result) {
+        for(Exercise exercise : result) {
             if (exercise instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) exercise;
                 quizExercise.setQuestions(null);
@@ -235,6 +218,13 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
+        Exercise exercise = exerciseService.findOne(id);
+        if(Optional.ofNullable(exercise).isPresent()) {
+            if(!authCheckService.isAuthorizedForExercise(exercise)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            exerciseService.reset(exercise);
+        }
         exerciseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
@@ -246,11 +236,14 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping(value = "/exercises/{id}/participations")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
-        Exercise exercise = exerciseRepository.findOne(id);
+        Exercise exercise = exerciseService.findOne(id);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         exerciseService.reset(exercise);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert("exercise", id.toString())).build();
     }
@@ -267,6 +260,10 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Resource> cleanup(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean deleteRepositories) throws IOException {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
+        Exercise exercise = exerciseService.findOne(id);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (deleteRepositories) {
             File zipFile = exerciseService.cleanup(id, deleteRepositories);
             if (zipFile == null) {
@@ -300,6 +297,10 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Resource> archiveRepositories(@PathVariable Long id) throws IOException {
         log.info("Start to archive repositories for Exercise : {}", id);
+        Exercise exercise = exerciseService.findOne(id);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         File zipFile = exerciseService.archive(id);
         if (zipFile == null) {
             return ResponseEntity.noContent()
