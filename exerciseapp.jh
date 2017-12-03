@@ -43,7 +43,7 @@ entity LtiOutcomeUrl (lti_outcome_url) {
 }
 
 entity SubmittedAnswer {            //abstract
-
+    scoreInPoints Double
 }
 
 entity Question {                   //abstract
@@ -149,6 +149,7 @@ entity ModelingSubmission {         //extends Submission
 }
 
 entity QuizSubmission {             //extends Submission
+    scoreInPoints Double
 }
 
 

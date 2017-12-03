@@ -19,12 +19,14 @@
             <thead>
                 <tr>
                     <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="artemisApp.quizSubmission.scoreInPoints">Score In Points</span></th>
                     <th></th>
                 </tr>
             </thead>
             <tbody>
                 <tr ng-repeat="quizSubmission in vm.quizSubmissions track by quizSubmission.id">
                     <td><a ui-sref="quiz-submission-detail({id:quizSubmission.id})">{{quizSubmission.id}}</a></td>
+                    <td>{{quizSubmission.scoreInPoints}}</td>
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"

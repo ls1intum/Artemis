@@ -14,7 +14,12 @@
             "otherEntityField": "id"
         }
     ],
-    "fields": [],
+    "fields": [
+        {
+            "fieldName": "scoreInPoints",
+            "fieldType": "Double"
+        }
+    ],
     "changelogDate": "20170831094148",
     "entityTableName": "submitted_answer",
     "dto": "no",

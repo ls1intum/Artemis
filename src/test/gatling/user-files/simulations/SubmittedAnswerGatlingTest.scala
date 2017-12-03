@@ -67,7 +67,7 @@ class SubmittedAnswerGatlingTest extends Simulation {
             .exec(http("Create new submittedAnswer")
             .post("/api/submitted-answers")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null}""")).asJSON
+            .body(StringBody("""{"id":null, "scoreInPoints":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_submittedAnswer_url"))).exitHereIfFailed
             .pause(10)

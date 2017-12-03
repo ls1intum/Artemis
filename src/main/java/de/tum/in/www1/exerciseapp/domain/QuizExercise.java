@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import de.tum.in.www1.exerciseapp.config.Constants;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -172,15 +173,46 @@ public class QuizExercise extends Exercise implements Serializable {
         this.duration = duration;
     }
 
-    public String getType() { return "quiz"; }
+    public String getType() {
+        return "quiz";
+    }
 
     @Override
     public ZonedDateTime getDueDate() {
         return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : null;
     }
 
+    /**
+     * Get the remaining time in seconds
+     *
+     * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
+     */
     public Long getRemainingTime() {
-        return isPlannedToStart ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+        return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+    }
+
+    /**
+     * Check if the quiz has started
+     * @return true if quiz has started, false otherwise
+     */
+    public Boolean hasStarted() {
+        return isIsPlannedToStart() && ZonedDateTime.now().isAfter(getReleaseDate());
+    }
+
+    /**
+     * Check if submissions for this quiz are allowed at the moment
+     * @return true if submissions are allowed, false otherwise
+     */
+    public Boolean isSubmissionAllowed() {
+        return hasStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
+    }
+
+    /**
+     * Check if the quiz should be filtered for students (because it hasn't ended yet)
+     * @return true if quiz should be filtered, false otherwise
+     */
+    public Boolean shouldFilterForStudents() {
+        return !hasStarted() || isSubmissionAllowed();
     }
 
     public List<Question> getQuestions() {
@@ -216,29 +248,50 @@ public class QuizExercise extends Exercise implements Serializable {
 
     /**
      * Get the score for this submission as a number from 0 to 100 (100 being the best possible result)
+     *
      * @param quizSubmission the submission that should be evaluated
      * @return the resulting score
      */
     public Long getScoreForSubmission(QuizSubmission quizSubmission) {
-        double score = 0.0;
-        int maxScore = 0;
-        // iterate through all questions of this quiz
-        for (Question question : getQuestions()) {
-            // add this question's maxScore to the maxScore of the entire quiz
-            maxScore += question.getScore();
-            // search for submitted answer for this question
-            for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                if (question.getId().longValue() == submittedAnswer.getQuestion().getId().longValue()) {
-                    // add points for this submitted answer to the total
-                    score += question.scoreForAnswer(submittedAnswer);
-                    break;
-                }
-                // if there is no submitted answer for this question in the submission,
-                // the resulting score is 0 (i.e. nothing gets added to the score)
-            }
-        }
+        double score = getScoreInPointsForSubmission(quizSubmission);
+        int maxScore = getMaxTotalScore();
         // map the resulting score to the 0 to 100 scale
         return Math.round(100.0 * score / maxScore);
+    }
+
+    /**
+     * Get the score for this submission as the number of points
+     *
+     * @param quizSubmission the submission that should be evaluated
+     * @return the resulting score
+     */
+    public Double getScoreInPointsForSubmission(QuizSubmission quizSubmission) {
+        double score = 0.0;
+        // iterate through all questions of this quiz
+        for (Question question : getQuestions()) {
+            // search for submitted answer for this question
+            SubmittedAnswer submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(question);
+            if (submittedAnswer != null) {
+                score += question.scoreForAnswer(submittedAnswer);
+            }
+        }
+        return score;
+    }
+
+    /**
+     * Get the maximum total score for this quiz
+     *
+     * @return the sum of all the questions' maximum scores
+     */
+    public Integer getMaxTotalScore() {
+        int maxScore = 0;
+        // iterate through all questions of this quiz and add up the score
+        if (getQuestions() != null) {
+            for (Question question : getQuestions()) {
+                maxScore += question.getScore();
+            }
+        }
+        return maxScore;
     }
 
     @Override
