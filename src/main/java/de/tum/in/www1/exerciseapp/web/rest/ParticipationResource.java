@@ -301,10 +301,13 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping(value = "/participations/{id}/status")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (participation.getExercise() instanceof QuizExercise) {
             QuizExercise.Status status = QuizExercise.statusForQuiz((QuizExercise) participation.getExercise());
             return new ResponseEntity<>(status, HttpStatus.OK);

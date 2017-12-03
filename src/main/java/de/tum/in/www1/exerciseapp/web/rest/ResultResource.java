@@ -42,10 +42,13 @@ public class ResultResource {
     private final Optional<LtiService> ltiService;
     private final ParticipationService participationService;
     private final ResultService resultService;
+    private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final FeedbackService feedbackService;
 
-    public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService, ResultService resultService, Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService) {
+    public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService,
+                          ResultService resultService, AuthorizationCheckService authCheckService,
+                          Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService) {
 
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
@@ -53,6 +56,7 @@ public class ResultResource {
         this.resultService = resultService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.feedbackService = feedbackService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -156,26 +160,26 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Result> getResultsForParticipation(@PathVariable Long courseId,
+    public ResponseEntity<List<Result>> getResultsForParticipation(@PathVariable Long courseId,
                                                    @PathVariable Long exerciseId,
                                                    @PathVariable Long participationId,
-                                                   @RequestParam(defaultValue = "true") boolean showAllResults,
-                                                   Authentication authentication) {
+                                                   @RequestParam(defaultValue = "true") boolean showAllResults) {
         log.debug("REST request to get Results for Participation : {}", participationId);
-        AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
-        GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-        GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
-        if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (participation != null) {
             // if exercise is quiz => only give out results if quiz is over
             if (participation.getExercise() instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) participation.getExercise();
                 if (quizExercise.shouldFilterForStudents()) {
                     // return empty list
-                    return results;
+                    return ResponseEntity.ok().body(results);
                 }
             }
             if (showAllResults) {
@@ -186,7 +190,7 @@ public class ResultResource {
                     .orElse(new ArrayList<>());
             }
         }
-        return results;
+        return ResponseEntity.ok().body(results);
     }
 
     /**

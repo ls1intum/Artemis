@@ -46,9 +46,6 @@ public class RepositoryResource {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<GitService> gitService;
 
-    private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-    private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
-
     public RepositoryResource(ParticipationService participationService, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.participationService = participationService;
         this.gitService = gitService;

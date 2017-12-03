@@ -29,6 +29,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
 
     private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
     private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+    private final GrantedAuthority instructorAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.INSTRUCTOR);
 
     public CustomPermissionEvaluator(@Lazy ParticipationService participationService) {
         this.participationService = participationService;
@@ -57,6 +58,7 @@ public class CustomPermissionEvaluator implements PermissionEvaluator {
                 return participation != null &&
                     (participation.getStudent().getLogin().equals(auth.getName())
                     || auth.getAuthorities().contains(adminAuthority)
+                    || auth.getAuthorities().contains(instructorAuthority)
                     || auth.getAuthorities().contains(taAuthority));
             default:
                 return false;
