@@ -17,9 +17,7 @@
         showOverlay();
 
         function showOverlay() {
-            tutorialWelcomeService.open().then(function (result) {
-                console.log("result", result);
-            });
+            tutorialWelcomeService.open();
         }
 
 
