@@ -285,7 +285,7 @@ public class QuizSubmissionResource {
     }
 
     /**
-     * Go through all Results in the Participation and save the latest one before the new Result,
+     * Go through all Results in the Participation and return the latest one before the new Result,
      *
      * @param newResult the new result object which will replace the old Result in the Statistics
      * @return the previous Result, which is presented in the Statistics (null if where is no previous Result)

@@ -212,9 +212,12 @@
 
         vm.toggleShowOverdueExercises = toggleShowOverdueExercises;
 
-
-        // return true if: the User is allowed to see the Statistic:
-        //          either the User is Tutor or Admin or the statistic is released
+        /**
+         * checks if the User has access to statistic
+         *
+         * @param {QuizExercise} exercise: the quizExercise, which will be checked
+         * @return {boolean} true: if the User is allowed to see the Statistic -> the User is Tutor or Admin or the statistic is released
+         */
         function canOpenStatistic(exercise){
             if(exercise.type === 'quiz'){
                 return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']) ||  exercise.quizPointStatistic.released == true;
