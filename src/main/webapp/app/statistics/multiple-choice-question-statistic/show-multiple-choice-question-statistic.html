@@ -20,14 +20,15 @@
                     <span ng-show="!vm.rated" data-translate="showStatistic.multipleChoiceQuestionStatistic.titleUnrated"></span></p></div>
                 <div class="col-md-3 text-right"><p style="font-size: large"><span>{{vm.participants}} </span><span data-translate="showStatistic.participants"></span></p></div>
                 <canvas id="myChart"></canvas>
+                <script src="app/statistics/statistic-chart.js"></script>
 
 
                 <div class="col-md-12 text-center" >
                     <button ng-click="vm.switchSolution()" type="button" class="btn btn-primary">
                         <span ng-show="vm.showSolution" class="glyphicon glyphicon-ok-circle"></span>&nbsp;
                         <span ng-show="!vm.showSolution" class="glyphicon glyphicon-remove-circle"></span>&nbsp;
-                        <span ng-show="vm.showSolution" data-translate="showStatistic.switchToUnrated"></span>
-                        <span ng-show="!vm.showSolution" data-translate="showStatistic.switchToRated"></span></button></button>
+                        <span ng-show="vm.showSolution" data-translate="showStatistic.hideSolution"></span>
+                        <span ng-show="!vm.showSolution" data-translate="showStatistic.showSolution"></span></button></button>
 
                     <button ng-click="vm.switchRated()" type="button" class="btn btn-primary">
                         <span class="glyphicon glyphicon-refresh"></span>&nbsp;
@@ -89,118 +90,4 @@
         </div>
     </div>
 </div>
-<script>
 
-    var barChartData = {
-        labels: [], // Array ermöglicht Zeilenumbruch
-        datasets: [{
-            //label: 'Anzahl der Antwort',
-            display: false,
-            data: [],
-            backgroundColor: [],
-            borderWidth: 0
-        }]
-    }
-
-
-    var ctx = document.getElementById("myChart").getContext('2d');
-    window.myChart = new Chart(ctx, {
-        type: 'bar',
-        data: barChartData,
-        options: {
-            layout: {
-                padding: {
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    bottom: 30
-                }
-            },
-            legend: {
-                display: false
-            },
-            title: {
-                display: false,
-                text: "Antwortenverteilung",
-                position: "top",
-                fontSize: "16",
-                padding: 20
-            },
-            tooltips: {
-                enabled: false
-            },
-            scales: {
-                yAxes: [{
-                    scaleLabel: {
-                        labelString: 'Häufigkeit der Antwort',
-                        display: true,
-                    },
-                    ticks: {
-                        beginAtZero: true
-                    }
-                }],
-                xAxes: [{
-                    scaleLabel: {
-                        labelString: 'Antwortmöglichkeiten',
-                        display: true,
-                    },
-                }]
-            },
-            hover: {animationDuration: 0},
-            //add numbers on top of the bars
-            animation: {
-                duration: 500,
-                onComplete: function () {
-                    var chartInstance = this.chart,
-                        ctx = chartInstance.ctx;
-                    var fontSize = 12;
-                    var fontStyle = 'normal';
-                    var fontFamily = 'Calibri';
-                    ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
-                    this.data.datasets.forEach(function (dataset, i) {
-                        var meta = chartInstance.controller.getDatasetMeta(i);
-                        meta.data.forEach(function (bar, index) {
-                            var data = dataset.data[index];
-                            var dataPersentage = (Math.round((dataset.data[index] /barChartData.participants) *1000)/10);
-
-                            var position = bar.tooltipPosition();
-
-                            if(dataPersentage > 6) {
-                                if(position.y > 15) {
-                                    ctx.fillStyle = 'black';
-                                    ctx.fillText(data, position.x, position.y - 10);
-
-
-                                    if(barChartData.participants !== 0) {
-                                        ctx.fillStyle = 'white';
-                                        ctx.fillText(dataPersentage.toString()+"%", position.x, position.y + 10);
-                                    }
-                                }
-                                else{
-                                    ctx.fillStyle = 'white';
-                                    if(barChartData.participants !== 0) {
-                                        ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y + 10);
-                                    }else{
-                                        ctx.fillText(data, position.x, position.y + 10);
-                                    }
-                                }
-                            }
-                            else{
-                                ctx.fillStyle = 'black';
-                                if(barChartData.participants !== 0) {
-                                    ctx.fillText(data + " / " + dataPersentage.toString()+"%", position.x, position.y - 10);
-                                }else{
-                                    ctx.fillText(data, position.x, position.y - 10);
-                                }
-                            }
-                        });
-                    });
-                }
-            }
-        }
-    });
-
-</script>

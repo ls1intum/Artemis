@@ -29,7 +29,9 @@
         vm.rated = true;
         vm.$onInit = init;
 
-
+        /**
+         * loads quizExercise with all multipleChoiceQuestionStatistics from server and sets up socket connections
+         */
         function init() {
             // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
@@ -80,8 +82,12 @@
             });
         }
 
-        // This functions loads the Quiz, which is necessary to build the Web-Template.
-        // And it loads the new Data if the Websocket has been notified
+        /**
+         * This functions loads the Quiz, which is necessary to build the Web-Template
+         * And it loads the new Data if the Websocket has been notified
+         *
+         * @param {QuizExercise} quiz: the quizExercise, which the this quiz-statistic presents.
+         */
         function loadQuizSuccess(quiz) {
             // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
             if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
@@ -92,6 +98,11 @@
             loadData();
         }
 
+        /**
+         * calculate the maximal  possible Score for the quiz
+         *
+         * @return (int): sum over the Scores of all questions
+         */
         function calculateMaxScore() {
 
             var result = 0;
@@ -102,7 +113,9 @@
             return result;
         }
 
-        // load the Data from the Json-entity to the chart: myChart
+        /**
+         * load the Data from the Json-entity to the chart: myChart
+          */
         function loadData() {
 
             // reset old data
@@ -157,7 +170,11 @@
             });
         }
 
-        // switch between the rated and the unrated Results
+        /**
+         * switch between showing and hiding the solution in the chart
+         *  1. change the amount of  participants
+         *  2. change the bar-Data
+         */
         function switchRated() {
             if(vm.rated) {
                 //load unrated Data
@@ -180,8 +197,10 @@
             window.myChart.update();
         }
 
-        // got to the Template with the next Statistic -> the first QuestionStatistic
-        // if there is no QuestionStatistic -> go to QuizPointStatistic
+        /**
+         * got to the Template with the next Statistic -> the first QuestionStatistic
+         * if there is no QuestionStatistic -> go to QuizPointStatistic
+         */
         function nextStatistic() {
             if(vm.quizExercise.questions === null || vm.quizExercise.questions.length === 0) {
                 $state.go('quiz-point-statistic-chart',{quizId: vm.quizExercise.id});
@@ -191,12 +210,16 @@
             }
         }
 
-        //if released == true: releases all Statistics of the Quiz and saves it via REST-PUT
-        //else:                 revoke all Statistics
+        /**
+         * release of revoke the all statistics of the quizExercise
+         *
+         * @param {boolean} released: true to release, false to revoke
+         */
         function releaseStatistics(released) {
             if (released === vm.quizExercise.quizPointStatistic.released ) {
                 return;
             }
+            // check if it's allowed to release the statistics, if not send alert and do nothing
             if (released && releaseButtonDisabled()) {
                 alert("Quiz noch nicht beendet!");
                 return;
@@ -210,7 +233,10 @@
             }
         }
 
-
+        /**
+         * check if it's allowed to release the Statistic (allowed if the quiz is finished)
+         * @returns {boolean} true if it's allowed, false if not
+         */
         function releaseButtonDisabled() {
             if (vm.quizExercise != null) {
                 return (!vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate));

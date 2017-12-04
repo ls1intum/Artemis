@@ -7,9 +7,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 /**
  * Created by Moritz Issig on 22.11.17.
@@ -17,7 +15,7 @@ import java.util.TimerTask;
 @Service
 public class StatisticService {
 
-    private static boolean semaphorUpdateStatistic = false;
+    private static Set<Long> semaphorSetUpdateStatistic = new HashSet<Long>();
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -36,15 +34,15 @@ public class StatisticService {
         // notify user via websocket
         // if the quiz-timer is ending this service waits for 300ms for additional Results before its sending the Websocket
         if(quizExercise.getDueDate().isAfter(ZonedDateTime.now()) && quizExercise.getDueDate().isBefore(ZonedDateTime.now().plusSeconds(10))) {
-            // semaphore, which checks if the service is still waiting for new Results
-            if(!semaphorUpdateStatistic) {
-                semaphorUpdateStatistic = true;
+            // semaphore, which checks if the service is still waiting for new Results for the given qiuzExercise
+            if(!semaphorSetUpdateStatistic.contains(quizExercise.getId())) {
+                semaphorSetUpdateStatistic.add(quizExercise.getId());
                 Timer timer = new Timer();
                 timer.schedule(new TimerTask() {
                     @Override
                     public void run() {
                         messagingTemplate.convertAndSend("/topic/statistic/" + quizExercise.getId(), true);
-                        semaphorUpdateStatistic = false;
+                        semaphorSetUpdateStatistic.remove(quizExercise.getId());
                     }
                 }, 300);
             }

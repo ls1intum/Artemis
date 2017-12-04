@@ -33,6 +33,9 @@
 
         vm.$onInit = init;
 
+        /**
+         * loads quizExercise with the selected multipleChoiceQuestionStatistic from server and sets up socket connections
+         */
         function init() {
             // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
@@ -83,7 +86,11 @@
             });
         }
 
-        // This functions loads the Quiz, which is necessary to build the Web-Template
+        /**
+         * This functions loads the Quiz, which is necessary to build the Web-Template
+         *
+         * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
+         */
         function loadQuiz(quiz) {
             // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
             if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
@@ -106,7 +113,11 @@
             loadData();
         }
 
-        // load the new Data if the Websocket has been notified
+        /**
+         * load the new multipleChoiceQuestionStatistic from the server if the Websocket has been notified
+         *
+         * @param {MultipleChoiceQuestionStatistic} statistic: the new multipleChoiceQuestionStatistic from the server with the new Data.
+         */
         function loadNewData(statistic) {
             // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
             if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
@@ -116,7 +127,9 @@
             loadData();
         }
 
-        // load the Data from the Json-entity to the chart: myChart
+        /**
+         * load the Data from the Json-entity to the chart: myChart
+         */
         function loadData() {
 
             // reset old data
@@ -197,7 +210,6 @@
                         solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + correctLabel + ")"]);
                     }
                 }
-                window.myChart.update();
             });
 
             //add incorrect-text to the label based on the language
@@ -208,11 +220,17 @@
                         solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + incorrectLabel + ")"]);
                     }
                 }
-                window.myChart.update();
             });
+            //update Chart
+            window.myChart.update();
 
         }
-        // switch between the rated and the unrated Results
+
+        /**
+         * switch between showing and hiding the solution in the chart
+         *  1. change the amount of  participants
+         *  2. change the bar-Data
+         */
         function switchRated() {
             if(vm.rated) {
                 //load unrated Data
@@ -249,7 +267,11 @@
             window.myChart.update();
         }
 
-        // switch between showing and hiding the solution in the chart
+        /**
+         * switch between showing and hiding the solution in the chart
+         *  1. change the BackgroundColor of the bars
+         *  2. change the bar-Labels
+          */
         function switchSolution() {
             if(vm.showSolution) {
                 // don't show Solution
@@ -290,8 +312,10 @@
             window.myChart.update();
         }
 
-        // got to the Template with the previous Statistic
-        //  if first QuestionStatistic -> go to the Quiz-Statistic
+        /**
+         * got to the Template with the previous Statistic
+         * if first QuestionStatistic -> go to the Quiz-Statistic
+         */
         function previousStatistic() {
             if(vm.quizExercise.questions[0].id === vm.question.id) {
             $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
@@ -306,8 +330,10 @@
 
         }
 
-        // got to the Template with the next Statistic
-        //  if last QuestionStatistic -> go to the Quiz-Point-Statistic
+        /**
+         * got to the Template with the next Statistic
+         * if last QuestionStatistic -> go to the Quiz-Point-Statistic
+         */
         function nextStatistic() {
             if(vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id === vm.question.id) {
                 $state.go('quiz-point-statistic-chart',{quizId: vm.quizExercise.id});
@@ -320,12 +346,17 @@
                 }
             }
         }
-        //if released == true: releases all Statistics of the Quiz and saves it via REST-PUT
-        //else:                 revoke all Statistics
+
+        /**
+         * release of revoke the all statistics of the quizExercise
+         *
+         * @param {boolean} released: true to release, false to revoke
+         */
         function releaseStatistics(released) {
             if (released === vm.quizExercise.quizPointStatistic.released ) {
                 return;
             }
+            // check if it's allowed to release the statistics, if not send alert and do nothing
             if (released && releaseButtonDisabled()) {
                 alert("Quiz noch nicht beendet!");
                 return;
@@ -339,7 +370,10 @@
             }
         }
 
-
+        /**
+         * check if it's allowed to release the Statistic (allowed if the quiz is finished)
+         * @returns {boolean} true if it's allowed, false if not
+         */
         function releaseButtonDisabled() {
             if (vm.quizExercise != null) {
                 return (!vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate));

@@ -24,7 +24,9 @@
         vm.rated = true;
         vm.$onInit = init;
 
-
+        /**
+         * loads quizExercise with the quizPointStatistic from server and sets up socket connections
+         */
         function init() {
             // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
@@ -66,6 +68,7 @@
                 JhiWebsocketService.unsubscribe(websocketChannelForReleaseState);
             });
 
+            console.log(barChartData);
             // add Axes-labels based on selected language
             $translate('showStatistic.quizPointStatistic.xAxes').then(function (xLabel) {
                 window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
@@ -75,7 +78,11 @@
             });
         }
 
-        // load the new Data if the Websocket has been notified
+        /**
+         * load the new quizPointStatistic from the server if the Websocket has been notified
+         *
+         * @param {QuizPointStatistic} statistic: the new quizPointStatistic from the server with the new Data.
+         */
         function loadNewData(statistic) {
             // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
             if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && statistic.released == false) {
@@ -85,7 +92,11 @@
             loadData();
         }
 
-        // This functions loads the Quiz, which is necessary to build the Web-Template
+        /**
+         * This functions loads the Quiz, which is necessary to build the Web-Template
+         *
+         * @param {QuizExercise} quiz: the quizExercise, which the this quiz-point-statistic presents.
+         */
         function loadQuizSuccess(quiz) {
             // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
             if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
@@ -99,17 +110,24 @@
 
         }
 
+        /**
+         * calculate the maximal  possible Score for the quiz
+         *
+         * @return (int): sum over the Scores of all questions
+         */
         function calculateMaxScore() {
 
             var result = 0;
 
             vm.quizExercise.questions.forEach(function(question) {
-                result = result + question.score
+                result = result + question.score;
             });
             return result;
         }
 
-        // load the Data from the Json-entity to the chart: myChart
+        /**
+         * load the Data from the Json-entity to the chart: myChart
+         */
         function loadData() {
 
             // reset old data
@@ -153,7 +171,11 @@
 
         }
 
-        // switch between the rated and the unrated Results
+        /**
+         * switch between showing and hiding the solution in the chart
+         *  1. change the amount of  participants
+         *  2. change the bar-Data
+         */
         function switchRated() {
             if(vm.rated) {
                 //load unrated Data
@@ -176,19 +198,24 @@
             window.myChart.update();
         }
 
-        //order the data, so that they are ascending
+        /**
+         * order the data and the associated Labels, so that they are ascending (BubbleSort)
+         */
         function order() {
             var old = [];
             while (old.toString() !== label.toString()) {
                 old = label.slice();
                 for(var i = 0; i < label.length-1; i ++) {
                     if(label[i] > label[i+1]) {
+                        // switch Labels
                         var temp = label[i];
                         label[i] = label[i+1];
                         label[i+1] = temp;
+                        // switch rated Data
                         temp = ratedData[i];
                         ratedData[i] = ratedData[i+1];
                         ratedData[i+1] = temp;
+                        // switch unrated Data
                         temp = unratedData[i];
                         unratedData[i] = unratedData[i+1];
                         unratedData[i+1] = temp;
@@ -197,8 +224,10 @@
             }
         }
 
-        // got to the Template with the previous Statistic -> the last QuestionStatistic
-        // if there is no QuestionStatistic -> go to QuizStatistic
+        /**
+         * got to the Template with the previous Statistic -> the last QuestionStatistic
+         * if there is no QuestionStatistic -> go to QuizStatistic
+         */
         function previousStatistic() {
             if(vm.quizExercise.questions === null || vm.quizExercise.questions.length === 0) {
                 $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
@@ -208,12 +237,16 @@
             }
         }
 
-        //if released == true: releases all Statistics of the Quiz and saves it via REST-PUT
-        //else:                 revoke all Statistics
+        /**
+         * release of revoke the all statistics of the quizExercise
+         *
+         * @param {boolean} released: true to release, false to revoke
+         */
         function releaseStatistics(released) {
             if (released === vm.quizExercise.quizPointStatistic.released ) {
                 return;
             }
+            // check if it's allowed to release the statistics, if not send alert and do nothing
             if (released && releaseButtonDisabled()) {
                 alert("Quiz noch nicht beendet!");
                 return;
@@ -227,7 +260,10 @@
             }
         }
 
-
+        /**
+         * check if it's allowed to release the Statistic (allowed if the quiz is finished)
+         * @returns {boolean} true if it's allowed, false if not
+         */
         function releaseButtonDisabled() {
             if (vm.quizExercise != null) {
                 return (!vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate));

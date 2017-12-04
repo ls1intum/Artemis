@@ -8369,7 +8369,6 @@ body.editor .navbar-brand span {
     .question-options .form-group > * {
       margin: 0 4px; }
 
-.statistic-footer,
 .statistic-footer {
   position: fixed;
   height: 60px;
@@ -8379,27 +8378,21 @@ body.editor .navbar-brand span {
   z-index: 10;
   box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
   background: white; }
-  .statistic-footer .container,
   .statistic-footer .container {
     height: 100%; }
 
-.statistic-footer-content,
 .statistic-footer-content {
   height: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between; }
   .statistic-footer-content .form-control,
-  .statistic-footer-content .input-group-btn,
-  .statistic-footer-content .form-control,
   .statistic-footer-content .input-group-btn {
     display: inline-block;
     width: auto; }
-  .statistic-footer-content .form-group,
   .statistic-footer-content .form-group {
     display: flex;
     align-items: center; }
-    .statistic-footer-content .form-group > *,
     .statistic-footer-content .form-group > * {
       margin: 0 4px; }
 
