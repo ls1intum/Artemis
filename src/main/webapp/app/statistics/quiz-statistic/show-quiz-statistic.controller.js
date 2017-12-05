@@ -12,6 +12,10 @@
         var vm = this;
 
         // Variables for the chart:
+        vm.labels = [];
+        vm.data = [];
+        vm.colors = [];
+
         var label;
         var ratedData;
         var unratedData;
@@ -52,10 +56,10 @@
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
-                    QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
+                    QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
                 }
                 else{
-                    QuizPointStatisticForStudent.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
+                    QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
                 }
 
             });
@@ -75,10 +79,10 @@
 
             // add Axes-labels based on selected language
             $translate('showStatistic.quizStatistic.xAxes').then(function (xLabel) {
-                window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+                vm.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
             });
             $translate('showStatistic.quizStatistic.yAxes').then(function (yLabel) {
-                window.myChart.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+                vm.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
             });
         }
 
@@ -129,7 +133,12 @@
             //set data based on the CorrectCounters in the QuestionStatistics
             for(var i = 0; i < vm.quizExercise.questions.length; i++) {
                 label.push(i + 1);
-                backgroundColor.push("#5bc0de");
+                backgroundColor.push(
+                    {backgroundColor: "#5bc0de",
+                        borderColor: "#5bc0de",
+                        pointBackgroundColor: "#5bc0de",
+                        pointBorderColor: "#5bc0de"
+                    });
                 ratedData.push(vm.quizExercise.questions[i].questionStatistic.ratedCorrectCounter);
                 unratedData.push(vm.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter);
                 ratedAverage = ratedAverage + (vm.quizExercise.questions[i].questionStatistic.ratedCorrectCounter * vm.quizExercise.questions[i].score);
@@ -137,37 +146,34 @@
             }
 
             //add data for the last bar (Average)
-            backgroundColor.push("#1e3368");
+            backgroundColor.push(
+                {backgroundColor: "#1e3368",
+                    borderColor: "#1e3368",
+                    pointBackgroundColor: "#1e3368",
+                    pointBorderColor: "#1e3368",
+                });
             ratedData.push(ratedAverage / maxScore);
             unratedData.push(unratedAverage / maxScore);
 
             // load data into the chart
-            barChartData.labels = label;
-
-            // if vm.rated == true  -> load the rated data
-            if (vm.rated) {
-                vm.participants = vm.quizExercise.quizPointStatistic.participantsRated;
-                barChartData.participants = vm.quizExercise.quizPointStatistic.participantsRated;
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = ratedData;
-                    dataset.backgroundColor = backgroundColor;
-                });
-            }
-            // else: load the unrated data
-            else {
-                vm.participants = vm.quizExercise.quizPointStatistic.participantsUnrated;
-                barChartData.participants = vm.quizExercise.quizPointStatistic.participantsRated;
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = unratedData;
-                    dataset.backgroundColor = backgroundColor;
-                });
-            }
+            vm.labels = label;
+            vm.colors = backgroundColor;
 
             //add Text for last label based on the language
             $translate('showStatistic.quizStatistic.average').then(function (lastLabel) {
                 label.push(lastLabel);
-                window.myChart.update();
             });
+
+            // if vm.rated == true  -> load the rated data
+            if (vm.rated) {
+                vm.participants = vm.quizExercise.quizPointStatistic.participantsRated;
+                vm.data = ratedData;
+            }
+            // else: load the unrated data
+            else {
+                vm.participants = vm.quizExercise.quizPointStatistic.participantsUnrated;
+                vm.data = unratedData;
+            }
         }
 
         /**
@@ -178,23 +184,16 @@
         function switchRated() {
             if(vm.rated) {
                 //load unrated Data
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = unratedData;
-                });
+                vm.data = unratedData;
                 vm.participants = vm.quizExercise.quizPointStatistic.participantsUnrated;
-                barChartData.participants = vm.quizExercise.quizPointStatistic.participantsUnrated;
                 vm.rated = false;
             }
             else{
                 //load rated Data
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = ratedData;
-                });
+                vm.data = ratedData;
                 vm.participants = vm.quizExercise.quizPointStatistic.participantsRated;
-                barChartData.participants = vm.quizExercise.quizPointStatistic.participantsRated;
                 vm.rated = true;
             }
-            window.myChart.update();
         }
 
         /**
@@ -245,5 +244,104 @@
             }
         }
 
+        // options for chart in chart.js style
+        vm.options= {
+            layout: {
+                padding: {
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 30
+                }
+            },
+            legend: {
+                display: false
+            },
+            title: {
+                display: false,
+                text: "",
+                position: "top",
+                fontSize: "16",
+                padding: 20
+            },
+            tooltips: {
+                enabled: false
+            },
+            scales: {
+                yAxes: [{
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    }
+                }]
+            },
+            hover: {animationDuration: 0},
+            //add numbers on top of the bars
+            animation: {
+                duration: 500,
+                onComplete: function () {
+                    var chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+                    var fontSize = 12;
+                    var fontStyle = 'normal';
+                    var fontFamily = 'Calibri';
+                    ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    this.data.datasets.forEach(function (dataset, i) {
+                        var meta = chartInstance.controller.getDatasetMeta(i);
+                        meta.data.forEach(function (bar, index) {
+                            var data = (Math.round(dataset.data[index] * 100) / 100);
+                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+
+                            var position = bar.tooltipPosition();
+
+                            //if the bar is high enough -> write the percentageValue inside the bar
+                            if (dataPercentage > 6) {
+                                //if the bar is low enough -> write the amountValue above the bar
+                                if (position.y > 15) {
+                                    ctx.fillStyle = 'black';
+                                    ctx.fillText(data, position.x, position.y - 10);
+
+
+                                    if (vm.participants !== 0) {
+                                        ctx.fillStyle = 'white';
+                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                    }
+                                }
+                                //if the bar is too high -> write the amountValue inside the bar
+                                else {
+                                    ctx.fillStyle = 'white';
+                                    if (vm.participants !== 0) {
+                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                    } else {
+                                        ctx.fillText(data, position.x, position.y + 10);
+                                    }
+                                }
+                            }
+                            //if the bar is to low -> write the percentageValue above the bar
+                            else {
+                                ctx.fillStyle = 'black';
+                                if (vm.participants !== 0) {
+                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                } else {
+                                    ctx.fillText(data, position.x, position.y - 10);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+        }
     }
 })();

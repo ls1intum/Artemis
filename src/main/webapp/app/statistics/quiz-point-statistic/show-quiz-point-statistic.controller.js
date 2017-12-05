@@ -11,6 +11,10 @@
         var vm = this;
 
         // Variables for the chart:
+        vm.labels = [];
+        vm.data = [];
+        vm.colors = [];
+
         var label;
         var ratedData;
         var unratedData;
@@ -68,13 +72,12 @@
                 JhiWebsocketService.unsubscribe(websocketChannelForReleaseState);
             });
 
-            console.log(barChartData);
             // add Axes-labels based on selected language
             $translate('showStatistic.quizPointStatistic.xAxes').then(function (xLabel) {
-                window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+                vm.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
             });
             $translate('showStatistic.quizPointStatistic.yAxes').then(function (yLabel) {
-                window.myChart.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+                vm.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
             });
         }
 
@@ -141,34 +144,31 @@
                 label.push(pointCounter.points);
                 ratedData.push(pointCounter.ratedCounter);
                 unratedData.push(pointCounter.unRatedCounter);
-                backgroundColor.push("#428bca");
+                backgroundColor.push(
+                    {backgroundColor: "#428bca",
+                        borderColor: "#428bca",
+                        pointBackgroundColor: "#428bca",
+                        pointBorderColor: "#428bca"
+                });
             });
             // order the bars ascending on points
             order();
 
-            barChartData.labels = label;
+            vm.labels = label;
+
+            vm.colors = backgroundColor;
 
             // load data into the chart
             // if vm.rated == true  -> load the rated data
             if (vm.rated) {
                 vm.participants = vm.quizPointStatistic.participantsRated;
-                barChartData.participants = vm.quizPointStatistic.participantsRated;
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = ratedData;
-                    dataset.backgroundColor = backgroundColor;
-                });
+                vm.data = ratedData;
             }
             //else: load the unrated data
             else {
                 vm.participants = vm.quizPointStatistic.participantsUnrated;
-                barChartData.participants = vm.quizPointStatistic.participantsUnrated;
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = unratedData;
-                    dataset.backgroundColor = backgroundColor;
-                });
+                vm.data = unratedData;
             }
-            window.myChart.update();
-
         }
 
         /**
@@ -177,25 +177,18 @@
          *  2. change the bar-Data
          */
         function switchRated() {
-            if(vm.rated) {
+            if (vm.rated) {
                 //load unrated Data
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = unratedData;
-                });
+                vm.data = unratedData;
                 vm.participants = vm.quizPointStatistic.participantsUnrated;
-                barChartData.participants = vm.quizPointStatistic.participantsUnrated;
                 vm.rated = false;
             }
-            else{
+            else {
                 //load rated Data
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = ratedData;
-                });
+                vm.data = ratedData;
                 vm.participants = vm.quizPointStatistic.participantsRated;
-                barChartData.participants = vm.quizPointStatistic.participantsRated;
                 vm.rated = true;
             }
-            window.myChart.update();
         }
 
         /**
@@ -272,5 +265,104 @@
             }
         }
 
+        // options for chart in chart.js style
+        vm.options= {
+            layout: {
+                padding: {
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 30
+                }
+            },
+            legend: {
+                display: false
+            },
+            title: {
+                display: false,
+                text: "",
+                position: "top",
+                fontSize: "16",
+                padding: 20
+            },
+            tooltips: {
+                enabled: false
+            },
+            scales: {
+                yAxes: [{
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    }
+                }]
+            },
+            hover: {animationDuration: 0},
+            //add numbers on top of the bars
+            animation: {
+                duration: 500,
+                onComplete: function () {
+                    var chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+                    var fontSize = 12;
+                    var fontStyle = 'normal';
+                    var fontFamily = 'Calibri';
+                    ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    this.data.datasets.forEach(function (dataset, i) {
+                        var meta = chartInstance.controller.getDatasetMeta(i);
+                        meta.data.forEach(function (bar, index) {
+                            var data = (Math.round(dataset.data[index] * 100) / 100);
+                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+
+                            var position = bar.tooltipPosition();
+
+                            //if the bar is high enough -> write the percentageValue inside the bar
+                            if (dataPercentage > 6) {
+                                //if the bar is low enough -> write the amountValue above the bar
+                                if (position.y > 15) {
+                                    ctx.fillStyle = 'black';
+                                    ctx.fillText(data, position.x, position.y - 10);
+
+
+                                    if (vm.participants !== 0) {
+                                        ctx.fillStyle = 'white';
+                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                    }
+                                }
+                                //if the bar is too high -> write the amountValue inside the bar
+                                else {
+                                    ctx.fillStyle = 'white';
+                                    if (vm.participants !== 0) {
+                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                    } else {
+                                        ctx.fillText(data, position.x, position.y + 10);
+                                    }
+                                }
+                            }
+                            //if the bar is to low -> write the percentageValue above the bar
+                            else {
+                                ctx.fillStyle = 'black';
+                                if (vm.participants !== 0) {
+                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                } else {
+                                    ctx.fillText(data, position.x, position.y - 10);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+        }
     }
 })();

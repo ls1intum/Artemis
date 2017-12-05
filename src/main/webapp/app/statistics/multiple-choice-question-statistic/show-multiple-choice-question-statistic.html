@@ -19,8 +19,9 @@
                     <span ng-show="vm.rated" data-translate="showStatistic.multipleChoiceQuestionStatistic.titleRated"></span>
                     <span ng-show="!vm.rated" data-translate="showStatistic.multipleChoiceQuestionStatistic.titleUnrated"></span></p></div>
                 <div class="col-md-3 text-right"><p style="font-size: large"><span>{{vm.participants}} </span><span data-translate="showStatistic.participants"></span></p></div>
-                <canvas id="myChart"></canvas>
-                <script src="app/statistics/statistic-chart.js"></script>
+                <canvas id="bar" class="chart chart-bar"
+                        chart-data="vm.data" chart-labels="vm.labels" chart-options="vm.options" chart-colors="vm.colors">
+                </canvas>
 
 
                 <div class="col-md-12 text-center" >

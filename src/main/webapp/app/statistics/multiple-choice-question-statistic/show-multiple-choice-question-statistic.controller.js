@@ -12,6 +12,10 @@
         var vm = this;
 
         // Variables for the chart:
+        vm.labels = [];
+        vm.data = [];
+        vm.colors = [];
+
         var label;
         var solutionLabel;
         var ratedData;
@@ -55,10 +59,10 @@
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
-                    QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
+                    MultipleChoiceQuestionStatistic.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
                 }
                 else{
-                    QuizPointStatisticForStudent.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
+                    MultipleChoiceQuestionStatisticForStudent.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
                 }
 
             });
@@ -79,10 +83,10 @@
 
             // add Axes-labels based on selected language
             $translate('showStatistic.multipleChoiceQuestionStatistic.xAxes').then(function (xLabel) {
-                window.myChart.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
+                vm.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
             });
             $translate('showStatistic.multipleChoiceQuestionStatistic.yAxes').then(function (yLabel) {
-                window.myChart.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
+                vm.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
             });
         }
 
@@ -110,6 +114,7 @@
             }
             //MultipleChoiceQuestion.get({id: _.get($state,"params.questionId")}).$promise.then(loadQuestionSuccess);
             vm.questionStatistic = vm.question.questionStatistic;
+            loadLayout();
             loadData();
         }
 
@@ -128,22 +133,88 @@
         }
 
         /**
+         * build the Chart-Layout based on the the Json-entity (questionStatistic)
+         */
+        function loadLayout(){
+
+            // reset old data
+            label = new Array(vm.question.answerOptions.length + 1);
+            backgroundColor = [];
+            backgroundSolutionColor = new Array(vm.question.answerOptions.length + 1);
+            solutionLabel = new Array(vm.question.answerOptions.length + 1);
+
+            //set label and backgroundcolor based on the AnswerOptions
+            for(var i = 0; i < vm.question.answerOptions.length; i++) {
+                label[i] = (String.fromCharCode(65 + i));
+                backgroundColor.push(
+                    {backgroundColor: "#428bca",
+                        borderColor: "#428bca",
+                        pointBackgroundColor: "#428bca",
+                        pointBorderColor: "#428bca"
+                    });
+            }
+            backgroundColor.push(
+                {backgroundColor: "#5bc0de",
+                    borderColor: "#5bc0de",
+                    pointBackgroundColor: "#5bc0de",
+                    pointBorderColor: "#5bc0de"
+                });
+            backgroundSolutionColor[vm.question.answerOptions.length] =
+                {backgroundColor: "#5bc0de",
+                    borderColor: "#5bc0de",
+                    pointBackgroundColor: "#5bc0de",
+                    pointBorderColor: "#5bc0de"
+                };
+
+            //add Text for last label based on the language
+            $translate('showStatistic.quizStatistic.yAxes').then(function (lastLabel) {
+                solutionLabel[vm.question.answerOptions.length] = (lastLabel.split(" "));
+                label[vm.question.answerOptions.length] = (lastLabel.split(" "));
+                vm.labels = label;
+            });
+
+            //add correct-text to the label based on the language
+            $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel) {
+                for(var i = 0; i < vm.question.answerOptions.length; i++) {
+                    if (vm.question.answerOptions[i].isCorrect) {
+                        backgroundSolutionColor[i] = (
+                            {backgroundColor: "#5cb85c",
+                                borderColor: "#5cb85c",
+                                pointBackgroundColor: "#5cb85c",
+                                pointBorderColor: "#5cb85c"
+                            });
+                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + correctLabel + ")"]);
+                    }
+                }
+            });
+
+            //add incorrect-text to the label based on the language
+            $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel) {
+                for(var i = 0; i < vm.question.answerOptions.length; i++) {
+                    if (!vm.question.answerOptions[i].isCorrect) {
+                        backgroundSolutionColor[i] = (
+                            {backgroundColor: "#d9534f",
+                                borderColor: "#d9534f",
+                                pointBackgroundColor: "#d9534f",
+                                pointBorderColor: "#d9534f"
+                            });
+                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + incorrectLabel + ")"]);
+                    }
+                }
+            });
+        }
+
+        /**
          * load the Data from the Json-entity to the chart: myChart
          */
         function loadData() {
 
             // reset old data
-            label = new Array(vm.question.answerOptions.length);
-            backgroundColor = [];
-            backgroundSolutionColor = new Array(vm.question.answerOptions.length);
             ratedData = [];
             unratedData = [];
-            solutionLabel = new Array(vm.question.answerOptions.length);
 
             //set data based on the answerCounters for each AnswerOption
             for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                label[i] = (String.fromCharCode(65 + i));
-                backgroundColor.push("#428bca");
                 for(var j = 0; j < vm.questionStatistic.answerCounters.length; j++) {
                     if (vm.question.answerOptions[i].id === (vm.questionStatistic.answerCounters[j].answer.id)) {
                         ratedData.push(vm.questionStatistic.answerCounters[j].ratedCounter);
@@ -154,76 +225,42 @@
             //add data for the last bar (correct Solutions)
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;
             unratedCorrectData = vm.questionStatistic.unRatedCorrectCounter;
-            backgroundColor.push("#5bc0de");
-            backgroundSolutionColor[vm.question.answerOptions.length] = ("#5bc0de");
 
-            // load data into the chart
-            // if vm.rated == true  -> load the rated data, else: load the unrated data
-            if (vm.rated) {
-                vm.participants = vm.questionStatistic.participantsRated;
-                barChartData.participants = vm.questionStatistic.participantsRated;
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = ratedData.slice(0);
-                    // if show Solution is true use the backgroundColor which shows the solution
-                    if(vm.showSolution) {
-                        dataset.backgroundColor = backgroundSolutionColor;
-                            dataset.data.push(ratedCorrectData);
-
-                    }else{
-                        dataset.backgroundColor = backgroundColor;
-                    }
-                });
+            // if show Solution is true use the label, backgroundColor and Data, which show the solution
+            if(vm.showSolution) {
+                // show Solution
+                vm.labels = solutionLabel;
+                // if show Solution is true use the backgroundColor which shows the solution
+                vm.colors = backgroundSolutionColor;
+                if (vm.rated) {
+                    vm.participants = vm.questionStatistic.participantsRated;
+                    // if rated is true use the rated Data and add the rated CorrectCounter
+                    vm.data = ratedData.slice(0);
+                    vm.data.push(ratedCorrectData);
+                }
+                else {
+                    vm.participants = vm.questionStatistic.participantsUnrated;
+                    // if rated is false use the unrated Data and add the unrated CorrectCounter
+                    vm.data = unratedData.slice(0);
+                    vm.data.push(unratedCorrectData);
+                }
             }
             else {
-                vm.participants = vm.questionStatistic.participantsUnrated;
-                barChartData.participants = vm.questionStatistic.participantsRated;
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = unratedData.slice(0);
-                    // if show Solution is true use the backgroundColor which shows the solution
-                    if(vm.showSolution) {
-                        dataset.backgroundColor = backgroundSolutionColor;
-                        dataset.data.push(unratedCorrectData);
-                    }else{
-                        dataset.backgroundColor = backgroundColor;
-                    }
-                });
-            }
-            // if show Solution is true use the label which shows the solution
-            if(vm.showSolution) {
-                barChartData.labels = solutionLabel;
-
-            }else{
-                barChartData.labels = label;
-            }
-            //add Text for last label based on the language
-            $translate('showStatistic.quizStatistic.yAxes').then(function (lastLabel) {
-                solutionLabel.push(lastLabel);
-                label.push(lastLabel);
-                window.myChart.update();
-            });
-
-            //add correct-text to the label based on the language
-            $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel) {
-                for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                    if (vm.question.answerOptions[i].isCorrect) {
-                        backgroundSolutionColor[i] = ("#5cb85c");
-                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + correctLabel + ")"]);
-                    }
+                // don't show Solution
+                vm.labels = label;
+                // if show Solution is false use the backgroundColor which doesn't show the solution
+                vm.colors = backgroundColor;
+                // if rated is true use the rated Data
+                if (vm.rated) {
+                    vm.participants = vm.questionStatistic.participantsRated;
+                    vm.data = ratedData;
                 }
-            });
-
-            //add incorrect-text to the label based on the language
-            $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel) {
-                for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                    if (!vm.question.answerOptions[i].isCorrect) {
-                        backgroundSolutionColor[i] = ("#d9534f");
-                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + incorrectLabel + ")"]);
-                    }
+                // if rated is false use the unrated Data
+                else {
+                    vm.participants = vm.questionStatistic.participantsUnrated;
+                    vm.data = unratedData;
                 }
-            });
-            //update Chart
-            window.myChart.update();
-
+            }
         }
 
         /**
@@ -234,37 +271,28 @@
         function switchRated() {
             if(vm.rated) {
                 //load unrated Data
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = unratedData.slice(0);
-                    if(vm.showSolution) {
-                        // if show Solution is true use the backgroundColor which shows the solution
-                        dataset.backgroundColor = backgroundSolutionColor;
-                        dataset.data.push(unratedCorrectData);
-                    }else{
-                        dataset.backgroundColor = backgroundColor;
-                    }
-                });
                 vm.participants = vm.questionStatistic.participantsUnrated;
-                barChartData.participants = vm.questionStatistic.participantsUnrated;
+                // if show Solution is true use the backgroundColor which shows the solution
+                if(vm.showSolution) {
+                    vm.data = unratedData.slice(0);
+                    vm.data.push(unratedCorrectData);
+                }else{
+                    vm.data = unratedData;
+                }
                 vm.rated = false;
             }
             else{
                 //load rated Data
-                barChartData.datasets.forEach(function (dataset) {
-                    dataset.data = ratedData.slice(0);
-                    if(vm.showSolution) {
-                        // if show Solution is true use the backgroundColor which shows the solution
-                        dataset.backgroundColor = backgroundSolutionColor;
-                        dataset.data.push(ratedCorrectData);
-                    }else{
-                        dataset.backgroundColor = backgroundColor;
-                    }
-                });
                 vm.participants = vm.questionStatistic.participantsRated;
-                barChartData.participants = vm.questionStatistic.participantsRated;
+                // if show Solution is true use the backgroundColor which shows the solution
+                if(vm.showSolution) {
+                    vm.data = ratedData.slice(0);
+                    vm.data.push(ratedCorrectData);
+                }else{
+                    vm.data = ratedData;
+                }
                 vm.rated = true;
             }
-            window.myChart.update();
         }
 
         /**
@@ -275,41 +303,36 @@
         function switchSolution() {
             if(vm.showSolution) {
                 // don't show Solution
-                barChartData.datasets.forEach(function (dataset) {
-                    // if rated is true use the rated Data
-                    if (vm.rated) {
-                        dataset.data = ratedData.slice(0);
-                    }
-                    // if rated is false use the unrated Data
-                    else {
-                        dataset.data = unratedData.slice(0);
-                    }
-                    // if show Solution is false use the backgroundColor which doesn't show the solution
-                    dataset.backgroundColor = backgroundColor;
-                });
-                barChartData.labels = label;
+                vm.labels = label;
+                // if show Solution is false use the backgroundColor which doesn't show the solution
+                vm.colors = backgroundColor;
+                // if rated is true use the rated Data
+                if (vm.rated) {
+                    vm.data = ratedData;
+                }
+                // if rated is false use the unrated Data
+                else {
+                    vm.data = unratedData;
+                }
                 vm.showSolution = false;
             }
             else {
                 // show Solution
-                barChartData.datasets.forEach(function (dataset) {
-                    if (vm.rated) {
-                        // if rated is true use the rated Data and add the rated CorrectCounter
-                        dataset.data = ratedData.slice(0);
-                        dataset.data.push(ratedCorrectData);
-                    }
-                    else {
-                        // if rated is true use the unrated Data and add the unrated CorrectCounter
-                        dataset.data = unratedData.slice(0);
-                        dataset.data.push(unratedCorrectData);
-                    }
-                    // if show Solution is true use the backgroundColor which shows the solution
-                    dataset.backgroundColor = backgroundSolutionColor;
-                });
-                barChartData.labels = solutionLabel;
+                vm.labels = solutionLabel;
+                // if show Solution is true use the backgroundColor which shows the solution
+                vm.colors = backgroundSolutionColor;
+                if (vm.rated) {
+                    // if rated is true use the rated Data and add the rated CorrectCounter
+                    vm.data = ratedData.slice(0);
+                    vm.data.push(ratedCorrectData);
+                }
+                else {
+                    // if rated is false use the unrated Data and add the unrated CorrectCounter
+                    vm.data = unratedData.slice(0);
+                    vm.data.push(unratedCorrectData);
+                }
                 vm.showSolution = true;
             }
-            window.myChart.update();
         }
 
         /**
@@ -382,5 +405,104 @@
             }
         }
 
+        // options for chart in chart.js style
+        vm.options= {
+            layout: {
+                padding: {
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 30
+                }
+            },
+            legend: {
+                display: false
+            },
+            title: {
+                display: false,
+                text: "",
+                position: "top",
+                fontSize: "16",
+                padding: 20
+            },
+            tooltips: {
+                enabled: false
+            },
+            scales: {
+                yAxes: [{
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
+                }],
+                xAxes: [{
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    }
+                }]
+            },
+            hover: {animationDuration: 0},
+            //add numbers on top of the bars
+            animation: {
+                duration: 500,
+                onComplete: function () {
+                    var chartInstance = this.chart,
+                        ctx = chartInstance.ctx;
+                    var fontSize = 12;
+                    var fontStyle = 'normal';
+                    var fontFamily = 'Calibri';
+                    ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+
+                    this.data.datasets.forEach(function (dataset, i) {
+                        var meta = chartInstance.controller.getDatasetMeta(i);
+                        meta.data.forEach(function (bar, index) {
+                            var data = (Math.round(dataset.data[index] * 100) / 100);
+                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+
+                            var position = bar.tooltipPosition();
+
+                            //if the bar is high enough -> write the percentageValue inside the bar
+                            if (dataPercentage > 6) {
+                                //if the bar is low enough -> write the amountValue above the bar
+                                if (position.y > 15) {
+                                    ctx.fillStyle = 'black';
+                                    ctx.fillText(data, position.x, position.y - 10);
+
+
+                                    if (vm.participants !== 0) {
+                                        ctx.fillStyle = 'white';
+                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                    }
+                                }
+                                //if the bar is too high -> write the amountValue inside the bar
+                                else {
+                                    ctx.fillStyle = 'white';
+                                    if (vm.participants !== 0) {
+                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                    } else {
+                                        ctx.fillText(data, position.x, position.y + 10);
+                                    }
+                                }
+                            }
+                            //if the bar is to low -> write the percentageValue above the bar
+                            else {
+                                ctx.fillStyle = 'black';
+                                if (vm.participants !== 0) {
+                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                } else {
+                                    ctx.fillText(data, position.x, position.y - 10);
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+        }
     }
 })();
