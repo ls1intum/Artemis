@@ -35,25 +35,15 @@ import java.util.Optional;
 public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
-
     private final ParticipationService participationService;
-
     private final ParticipationRepository participationRepository;
-
     private final ResultRepository resultRepository;
-
     private final ExerciseService exerciseService;
-
     private final AuthorizationCheckService authCheckService;
-
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
     private final Optional<VersionControlService> versionControlService;
 
     private static final String ENTITY_NAME = "participation";
-
-    private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-    private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
 
     public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository,
                                  ResultRepository resultRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
@@ -75,7 +65,7 @@ public class ParticipationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> createParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to save Participation : {}", participation);
@@ -123,7 +113,7 @@ public class ParticipationResource {
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
     @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-participation")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to resume Exercise : {}", exerciseId);
@@ -148,7 +138,7 @@ public class ParticipationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> updateParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
@@ -182,7 +172,7 @@ public class ParticipationResource {
      * @return
      */
     @GetMapping(value = "/exercise/{exerciseId}/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public List<Participation> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
@@ -196,7 +186,7 @@ public class ParticipationResource {
      * @return
      */
     @GetMapping(value = "/courses/{courseId}/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public List<Participation> getAllParticipationsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Participations for Course {}", courseId);
@@ -277,7 +267,7 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);

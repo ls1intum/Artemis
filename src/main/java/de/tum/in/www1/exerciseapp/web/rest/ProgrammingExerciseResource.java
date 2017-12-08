@@ -131,7 +131,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping("/programming-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public List<ProgrammingExercise> getAllProgrammingExercises() {
         log.debug("REST request to get all ProgrammingExercises");
@@ -144,32 +144,18 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
     @GetMapping(value = "/courses/{courseId}/programming-exercises")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional(readOnly = true)
-    public List<ProgrammingExercise> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
-
-        //this call is only used in the admin interface and there, tutors should not see exercise of courses in which they are only students
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Authority adminAuthority = new Authority();
-        adminAuthority.setName("ROLE_ADMIN");
-        Authority taAuthority = new Authority();
-        taAuthority.setName("ROLE_TA");
-
-        // get the course
         Course course = courseService.findOne(courseId);
-
-        // determine user's access level for this course
-        if (user.getAuthorities().contains(adminAuthority)) {
-            // user is admin
-            return programmingExerciseRepository.findByCourseId(courseId);
-        } else if (user.getAuthorities().contains(taAuthority) && user.getGroups().contains(course.getTeachingAssistantGroupName())) {
-            // user is TA for this course
-            return programmingExerciseRepository.findByCourseId(courseId);
+        if(!authCheckService.isAuthorizedForCourse(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        //in this case the user does not have access, return an empty list
-        return new ArrayList<ProgrammingExercise>();
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseId(courseId);
+
+        return ResponseEntity.ok().body(exercises);
     }
 
     /**
@@ -197,7 +183,7 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/programming-exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);

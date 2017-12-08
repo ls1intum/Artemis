@@ -37,7 +37,7 @@ import java.util.*;
  */
 @RestController
 @RequestMapping({"/api", "/api_basic"})
-@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
@@ -66,7 +66,6 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{id}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to files for Participation : {}", id);
         Participation participation = participationService.findOne(id);
@@ -102,7 +101,6 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
@@ -143,7 +141,6 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @PostMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> createFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to create file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
@@ -190,7 +187,6 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @PutMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to update file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
@@ -230,7 +226,6 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @DeleteMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> deleteFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to delete file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
@@ -269,7 +264,6 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @PostMapping(value = "/repository/{id}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Void> updateFile(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to commit Repository for Participation : {}", id);
         Participation participation = participationService.findOne(id);
@@ -300,7 +294,6 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to get clean status for Repository for Participation : {}", id);
         Participation participation = participationService.findOne(id);
@@ -332,7 +325,6 @@ public class RepositoryResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/repository/{id}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get build log : {}", id);
         Participation participation = participationService.findOne(id);

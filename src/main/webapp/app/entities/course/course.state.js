@@ -13,7 +13,7 @@
             parent: 'entity',
             url: '/course',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                 pageTitle: 'artemisApp.course.home.title'
             },
             views: {

@@ -248,7 +248,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public List<Result> getResultsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Results for Course : {}", courseId);
@@ -264,7 +264,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping("/results/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
         log.debug("REST request to get Result : {}", id);
@@ -283,7 +283,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/results/{id}/details")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional
     public ResponseEntity<Set<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
@@ -314,7 +314,7 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/results/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);

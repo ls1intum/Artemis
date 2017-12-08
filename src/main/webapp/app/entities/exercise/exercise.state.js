@@ -14,7 +14,7 @@
                 url: '/exercise',
                 contentContainerClass: 'container-fluid',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                     pageTitle: 'artemisApp.exercise.home.title'
                 },
                 views: {
@@ -40,7 +40,7 @@
                 url: '/course/{courseid}/exercise',
                 contentContainerClass: 'container-fluid',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                     pageTitle: 'artemisApp.exercise.home.title'
                 },
                 views: {
@@ -65,7 +65,7 @@
                 parent: 'entity',
                 url: '/exercise/{id}',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                     pageTitle: 'artemisApp.exercise.detail.title'
                 },
                 views: {
@@ -89,7 +89,7 @@
                 parent: 'exercise',
                 url: '/new',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -123,7 +123,7 @@
                 parent: 'exercise-for-course',
                 url: '/new',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -157,7 +157,7 @@
                 parent: 'exercise',
                 url: '/{id}/edit',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -182,7 +182,7 @@
                 parent: 'exercise-for-course',
                 url: '/{id}/edit',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -303,7 +303,7 @@
                 parent: 'exercise-detail',
                 url: '/{id}/lticonfiguration',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({

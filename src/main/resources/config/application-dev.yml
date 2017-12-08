@@ -88,18 +88,18 @@ artemis:
   result-retrieval-delay: 5000
   jira:
     url: https://jirabruegge.in.tum.de
-    user: ga83yad
-    password: want21HAPPY08
-    instructor-group-name: artemis-dev
+    user: <username>
+    password: <password>
+    instructor-group-name: <group>
   bitbucket:
     url: https://repobruegge.in.tum.de
-    user: ga83yad
-    password: want21HAPPY08
+    user: <username>
+    password: <password>
   bamboo:
     url: https://bamboobruegge.in.tum.de
-    bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
-    user: ga83yad
-    password: want21HAPPY08
+    bitbucket-application-link-id: <application-link-id>
+    user: <username>
+    password: <password>
   lti:
     id: artemis_lti
     oauth-key: artemis_lti_key
