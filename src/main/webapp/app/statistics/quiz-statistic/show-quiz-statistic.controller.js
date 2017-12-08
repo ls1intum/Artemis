@@ -132,7 +132,7 @@
 
             //set data based on the CorrectCounters in the QuestionStatistics
             for(var i = 0; i < vm.quizExercise.questions.length; i++) {
-                label.push(i + 1);
+                label.push(i + 1 +".");
                 backgroundColor.push(
                     {backgroundColor: "#5bc0de",
                         borderColor: "#5bc0de",

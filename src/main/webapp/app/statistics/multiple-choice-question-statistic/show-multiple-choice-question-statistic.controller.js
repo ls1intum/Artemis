@@ -145,7 +145,7 @@
 
             //set label and backgroundcolor based on the AnswerOptions
             for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                label[i] = (String.fromCharCode(65 + i));
+                label[i] = (String.fromCharCode(65 + i) + ".");
                 backgroundColor.push(
                     {backgroundColor: "#428bca",
                         borderColor: "#428bca",
@@ -183,7 +183,7 @@
                                 pointBackgroundColor: "#5cb85c",
                                 pointBorderColor: "#5cb85c"
                             });
-                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + correctLabel + ")"]);
+                        solutionLabel[i] = ([String.fromCharCode(65 + i) + ".", " (" + correctLabel + ")"]);
                     }
                 }
             });
@@ -198,7 +198,7 @@
                                 pointBackgroundColor: "#d9534f",
                                 pointBorderColor: "#d9534f"
                             });
-                        solutionLabel[i] = ([String.fromCharCode(65 + i), " (" + incorrectLabel + ")"]);
+                        solutionLabel[i] = ([String.fromCharCode(65 + i) + ".", " (" + incorrectLabel + ")"]);
                     }
                 }
             });
