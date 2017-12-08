@@ -68,7 +68,6 @@ local.properties
 *.orig
 classes/
 
-
 ######################
 # Visual Studio Code
 ######################
