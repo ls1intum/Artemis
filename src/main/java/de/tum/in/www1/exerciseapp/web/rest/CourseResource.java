@@ -154,6 +154,10 @@ public class CourseResource {
     @Timed
     public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId){
         log.debug("REST request to get courseScores from course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+        if(!authCheckService.isAuthorizedForCourse(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
 

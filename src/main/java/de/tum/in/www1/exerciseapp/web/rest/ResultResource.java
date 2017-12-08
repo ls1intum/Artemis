@@ -37,6 +37,7 @@ public class ResultResource {
 
     private final ResultRepository resultRepository;
     private final Optional<LtiService> ltiService;
+    private final CourseService courseService;
     private final ParticipationService participationService;
     private final ResultService resultService;
     private final ExerciseService exerciseService;
@@ -47,12 +48,13 @@ public class ResultResource {
     public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService,
                           ResultService resultService, AuthorizationCheckService authCheckService,
                           Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService,
-                          ExerciseService exerciseService) {
+                          ExerciseService exerciseService, CourseService courseService) {
 
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.participationService = participationService;
         this.resultService = resultService;
+        this.courseService = courseService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.feedbackService = feedbackService;
         this.exerciseService = exerciseService;
@@ -250,10 +252,14 @@ public class ResultResource {
     @GetMapping(value = "/courses/{courseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Result> getResultsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Results for Course : {}", courseId);
-        List<Result> results;
-        return resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+        Course course = courseService.findOne(courseId);
+        if(!authCheckService.isAuthorizedForCourse(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+        return ResponseEntity.ok().body(results);
     }
 
 
@@ -289,21 +295,21 @@ public class ResultResource {
     public ResponseEntity<Set<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
-        AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
-        GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-        GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
-        if (result.getParticipation().getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority))) {
-            try {
-                Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
-                return Optional.ofNullable(feedbacks)
-                    .map(resultDetails -> new ResponseEntity<>(feedbacks, HttpStatus.OK))
-                    .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-            } catch (Exception e) {
-                log.error("REST request to get Result failed : {}", id, e);
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        } else {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if(result == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Participation participation = result.getParticipation();
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        try {
+            Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
+            return Optional.ofNullable(feedbacks)
+                .map(resultDetails -> new ResponseEntity<>(feedbacks, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        } catch (Exception e) {
+            log.error("REST request to get Result failed : {}", id, e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

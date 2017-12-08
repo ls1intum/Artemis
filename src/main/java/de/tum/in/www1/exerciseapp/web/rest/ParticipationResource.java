@@ -8,6 +8,7 @@ import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -39,19 +40,21 @@ public class ParticipationResource {
     private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
     private final ExerciseService exerciseService;
+    private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
     private static final String ENTITY_NAME = "participation";
 
-    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository,
+    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, CourseService courseService,
                                  ResultRepository resultRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
                                  Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationService = participationService;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.exerciseService = exerciseService;
+        this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -119,6 +122,9 @@ public class ParticipationResource {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resume(exercise, participation);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
@@ -188,9 +194,14 @@ public class ParticipationResource {
     @GetMapping(value = "/courses/{courseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Participation> getAllParticipationsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<Participation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Participations for Course {}", courseId);
-        return participationRepository.findByCourseId(courseId);
+        Course course = courseService.findOne(courseId);
+        if(!authCheckService.isAuthorizedForCourse(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<Participation> participations = participationRepository.findByCourseId(courseId);
+        return ResponseEntity.ok().body(participations);
     }
 
     /**
