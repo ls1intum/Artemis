@@ -1,10 +1,7 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.exerciseapp.domain.Feedback;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.QuizExercise;
-import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.*;
@@ -42,13 +39,15 @@ public class ResultResource {
     private final Optional<LtiService> ltiService;
     private final ParticipationService participationService;
     private final ResultService resultService;
+    private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final FeedbackService feedbackService;
 
     public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService,
                           ResultService resultService, AuthorizationCheckService authCheckService,
-                          Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService) {
+                          Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService,
+                          ExerciseService exerciseService) {
 
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
@@ -56,6 +55,7 @@ public class ResultResource {
         this.resultService = resultService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.feedbackService = feedbackService;
+        this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
     }
 
@@ -67,10 +67,14 @@ public class ResultResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/results")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
+        Participation participation = result.getParticipation();
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (result.getId() != null) {
             throw new BadRequestAlertException("A new result cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -201,12 +205,18 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Result> getResultsForExercise(@PathVariable Long courseId,
+    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
                                               @RequestParam(defaultValue = "false") boolean showAllResults) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
+
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         List<Result> results;
         if (showAllResults) {
             results = resultRepository.findLatestResultsForExercise(exerciseId);
@@ -228,7 +238,7 @@ public class ResultResource {
                 }
             }));
 
-        return results;
+        return ResponseEntity.ok().body(results);
     }
 
     /**

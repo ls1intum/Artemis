@@ -67,11 +67,15 @@ public class AuthorizationCheckService {
         if(participation == null) {
             return true;
         }
-        Exercise correspondingExercise = participation.getExercise();
-        if(correspondingExercise == null) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        Course course = participation.getExercise().getCourse();
+        if(participation.getStudent().getLogin().equals(user.getLogin())
+            || user.getGroups().contains(course.getTeachingAssistantGroupName())
+            || user.getGroups().contains(course.getInstructorGroupName())
+            || user.getAuthorities().contains(adminAuthority)) {
             return true;
         }
-        return isAuthorizedForCourse(correspondingExercise.getCourse());
+        return false;
     }
 
 }

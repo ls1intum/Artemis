@@ -199,11 +199,14 @@ public class ExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @GetMapping("/exercises/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
-        Exercise exercise = exerciseRepository.findOne(id);
+        Exercise exercise = exerciseService.findOne(id);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
     }
 
