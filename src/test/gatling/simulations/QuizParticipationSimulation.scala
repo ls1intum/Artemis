@@ -57,6 +57,7 @@ class QuizParticipationSimulation extends Simulation {
             .get("/api/account")
             .headers(headers_http_authenticated)
             .check(status.is(200)))
+        .pause(10 seconds)
 
     val startQuiz = exec(
         http("Get quiz")
@@ -69,17 +70,30 @@ class QuizParticipationSimulation extends Simulation {
                 .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
                 .headers(headers_http_authenticated)
                 .check(status.is(200))
+                .check(bodyString.saveAs("submission"))
                 .check(regex("\"id\" : (\\d*),").saveAs("submissionID"))).exitHereIfFailed
         .pause(2 seconds, 5 seconds)
 
-    // TODO: add websocket and submit
+    val submitQuiz =
+        pause(20 seconds)
+            .exec(http("Submit Quiz")
+                .put("/api/quiz-submissions")
+                .headers(headers_http_authenticated)
+                .header("Content-Type", "application/json")
+                .body(StringBody("${submission}"))  // TODO: add submitted answers to body
+                .check(status.is(200)))
+
+    // TODO: add websocket
 
     val studentScenario = scenario("Test Quiz Participation").exec(login, startQuiz)
+    val studentSubmitScenario = scenario("Test Quiz Participation With Submit").exec(login, startQuiz, submitQuiz)
 
-    val users = scenario("Users").exec(studentScenario)
+    val users1 = scenario("Users without submit").exec(studentScenario)
+    val users2 = scenario("Users with submit").exec(studentSubmitScenario)
 
     setUp(
-        users.inject(rampUsers(500) over (30 seconds))
+        users1.inject(rampUsers(250) over (20 seconds)),
+        users2.inject(rampUsers(250) over (20 seconds))
     ).protocols(httpConf)
 
 }
