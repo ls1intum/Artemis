@@ -235,6 +235,13 @@ public class QuizExercise extends Exercise implements Serializable {
         return questions;
     }
 
+    /**
+     * 1. replace the old Question-List with the new one
+     * 2. recalculate the PointCounters in quizPointStatistic
+     *
+     * @param questions the List of Question objects which will be set
+     * @return this QuizExercise-object
+     */
     public QuizExercise questions(List<Question> questions) {
         this.questions = questions;
         //correct the associated quizPointStatistic implicitly
@@ -242,6 +249,14 @@ public class QuizExercise extends Exercise implements Serializable {
         return this;
     }
 
+    /**
+     * 1. add the new Question object to the Question-List
+     * 2. add backward relation in the question-object
+     * 3. recalculate the PointCounters in quizPointStatistic
+     *
+     * @param question the new Question object which will be added
+     * @return this QuizExercise-object
+     */
     public QuizExercise addQuestions(Question question) {
         this.questions.add(question);
         question.setExercise(this);
@@ -250,6 +265,14 @@ public class QuizExercise extends Exercise implements Serializable {
         return this;
     }
 
+    /**
+     * 1. remove the given Question object in the Question-List
+     * 2. remove backward relation in the question-object
+     * 3. recalculate the PointCounters in quizPointStatistic
+     *
+     * @param question the Question object which should be removed
+     * @return this QuizExercise-object
+     */
     public QuizExercise removeQuestions(Question question) {
         this.questions.remove(question);
         question.setExercise(null);
@@ -258,6 +281,12 @@ public class QuizExercise extends Exercise implements Serializable {
         return this;
     }
 
+    /**
+     * 1. replace the old Question-List with the new one
+     * 2. recalculate the PointCounters in quizPointStatistic
+     *
+     * @param questions the List of Question objects which will be set
+     */
     public void setQuestions(List<Question> questions) {
 
         this.questions = questions;
@@ -355,6 +384,11 @@ public class QuizExercise extends Exercise implements Serializable {
             "}";
     }
 
+    /**
+     * Constructor.
+     *
+     * 1. generate associated QuizPointStatistic implicitly
+     */
     public QuizExercise() {
         //creates the associated quizPointStatistic implicitly
         quizPointStatistic = new QuizPointStatistic();

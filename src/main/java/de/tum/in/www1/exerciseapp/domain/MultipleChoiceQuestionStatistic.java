@@ -120,37 +120,37 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
 
         if(rated) {
-            //increase participants
+            //increase the rated participants
             setParticipantsRated(getParticipantsRated()+1);
 
             if(mcSubmittedAnswer.getSelectedOptions() != null) {
-                // increase answerCounter if answer is selected
+                // increase rated answerCounter if answer is selected
                 for (AnswerCounter answerCounter: answerCounters) {
                     if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
                         answerCounter.setRatedCounter(answerCounter.getRatedCounter()+1);
                     }
                 }
             }
-            // increase correctCounter if answer is complete correct
+            // increase rated correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter()+1);
             }
         }
         // Result is unrated
         else{
-            //increase participants
+            //increase the unrated participants
             setParticipantsUnrated(getParticipantsUnrated()+1);
 
             if(mcSubmittedAnswer.getSelectedOptions() != null) {
                 for (AnswerCounter answerCounter: answerCounters) {
-                    // increase answerCounter if answer is selected
+                    // increase unrated answerCounter if answer is selected
                     if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
                         answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()+1);
                     }
                 }
             }
 
-            // increase correctCounter if answer is complete correct
+            // increase unrated correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter()+1);
             }
@@ -175,36 +175,36 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
         MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
 
         if(rated) {
-            //decrease participants
+            //decrease rated participants
             setParticipantsRated(getParticipantsRated()-1);
 
             if(mcSubmittedAnswer.getSelectedOptions() != null) {
-                // decrease answerCounter if answer is selected
+                // decrease rated answerCounter if answer is selected
                 for (AnswerCounter answerCounter: answerCounters) {
                     if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
                         answerCounter.setRatedCounter(answerCounter.getRatedCounter()-1);
                     }
                 }
             }
-            // decrease correctCounter if answer is complete correct
+            // decrease rated correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
                 setRatedCorrectCounter(getRatedCorrectCounter()-1);
             }
         }
         // Result is unrated
         else{
-            //decrease participants
+            //decrease unrated participants
             setParticipantsUnrated(getParticipantsUnrated()-1);
 
             if(mcSubmittedAnswer.getSelectedOptions() != null) {
-                // decrease answerCounter if answer is selected
+                // decrease unrated answerCounter if answer is selected
                 for (AnswerCounter answerCounter: answerCounters) {
                     if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
                         answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()-1);
                     }
                 }
             }
-            // decrease correctCounter if answer is complete correct
+            // decrease unrated correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
                 setUnRatedCorrectCounter(getUnRatedCorrectCounter()-1);
             }

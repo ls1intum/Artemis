@@ -9,6 +9,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -44,6 +45,7 @@ public class QuestionStatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<QuestionStatistic> createQuestionStatistic(@RequestBody QuestionStatistic questionStatistic) throws URISyntaxException {
         log.debug("REST request to save QuestionStatistic : {}", questionStatistic);
@@ -66,6 +68,7 @@ public class QuestionStatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<QuestionStatistic> updateQuestionStatistic(@RequestBody QuestionStatistic questionStatistic) throws URISyntaxException {
         log.debug("REST request to update QuestionStatistic : {}", questionStatistic);
@@ -85,6 +88,7 @@ public class QuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK) and the list of questionStatistics in body
      */
     @GetMapping("/question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<QuestionStatistic> getAllQuestionStatistics(@RequestParam(required = false) String filter) {
         if ("question-is-null".equals(filter)) {
@@ -105,6 +109,7 @@ public class QuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK) and with body the questionStatistic, or with status 404 (Not Found)
      */
     @GetMapping("/question-statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<QuestionStatistic> getQuestionStatistic(@PathVariable Long id) {
         log.debug("REST request to get QuestionStatistic : {}", id);
@@ -119,6 +124,7 @@ public class QuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/question-statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deleteQuestionStatistic(@PathVariable Long id) {
         log.debug("REST request to delete QuestionStatistic : {}", id);

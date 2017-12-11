@@ -9,6 +9,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -42,6 +43,7 @@ public class DragAndDropQuestionStatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/drag-and-drop-question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<DragAndDropQuestionStatistic> createDragAndDropQuestionStatistic(@RequestBody DragAndDropQuestionStatistic dragAndDropQuestionStatistic) throws URISyntaxException {
         log.debug("REST request to save DragAndDropQuestionStatistic : {}", dragAndDropQuestionStatistic);
@@ -64,6 +66,7 @@ public class DragAndDropQuestionStatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/drag-and-drop-question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<DragAndDropQuestionStatistic> updateDragAndDropQuestionStatistic(@RequestBody DragAndDropQuestionStatistic dragAndDropQuestionStatistic) throws URISyntaxException {
         log.debug("REST request to update DragAndDropQuestionStatistic : {}", dragAndDropQuestionStatistic);
@@ -82,6 +85,7 @@ public class DragAndDropQuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK) and the list of dragAndDropQuestionStatistics in body
      */
     @GetMapping("/drag-and-drop-question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<DragAndDropQuestionStatistic> getAllDragAndDropQuestionStatistics() {
         log.debug("REST request to get all DragAndDropQuestionStatistics");
@@ -95,6 +99,7 @@ public class DragAndDropQuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK) and with body the dragAndDropQuestionStatistic, or with status 404 (Not Found)
      */
     @GetMapping("/drag-and-drop-question-statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<DragAndDropQuestionStatistic> getDragAndDropQuestionStatistic(@PathVariable Long id) {
         log.debug("REST request to get DragAndDropQuestionStatistic : {}", id);
@@ -109,6 +114,7 @@ public class DragAndDropQuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/drag-and-drop-question-statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deleteDragAndDropQuestionStatistic(@PathVariable Long id) {
         log.debug("REST request to delete DragAndDropQuestionStatistic : {}", id);

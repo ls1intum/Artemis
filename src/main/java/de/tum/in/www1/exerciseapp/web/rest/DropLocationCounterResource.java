@@ -9,6 +9,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -42,6 +43,7 @@ public class DropLocationCounterResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/drop-location-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<DropLocationCounter> createDropLocationCounter(@RequestBody DropLocationCounter dropLocationCounter) throws URISyntaxException {
         log.debug("REST request to save DropLocationCounter : {}", dropLocationCounter);
@@ -64,6 +66,7 @@ public class DropLocationCounterResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/drop-location-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<DropLocationCounter> updateDropLocationCounter(@RequestBody DropLocationCounter dropLocationCounter) throws URISyntaxException {
         log.debug("REST request to update DropLocationCounter : {}", dropLocationCounter);
@@ -82,6 +85,7 @@ public class DropLocationCounterResource {
      * @return the ResponseEntity with status 200 (OK) and the list of dropLocationCounters in body
      */
     @GetMapping("/drop-location-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<DropLocationCounter> getAllDropLocationCounters() {
         log.debug("REST request to get all DropLocationCounters");
@@ -95,6 +99,7 @@ public class DropLocationCounterResource {
      * @return the ResponseEntity with status 200 (OK) and with body the dropLocationCounter, or with status 404 (Not Found)
      */
     @GetMapping("/drop-location-counters/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<DropLocationCounter> getDropLocationCounter(@PathVariable Long id) {
         log.debug("REST request to get DropLocationCounter : {}", id);
@@ -109,6 +114,7 @@ public class DropLocationCounterResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/drop-location-counters/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deleteDropLocationCounter(@PathVariable Long id) {
         log.debug("REST request to delete DropLocationCounter : {}", id);

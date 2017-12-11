@@ -9,6 +9,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -42,6 +43,7 @@ public class PointCounterResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/point-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<PointCounter> createPointCounter(@RequestBody PointCounter pointCounter) throws URISyntaxException {
         log.debug("REST request to save PointCounter : {}", pointCounter);
@@ -64,6 +66,7 @@ public class PointCounterResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/point-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<PointCounter> updatePointCounter(@RequestBody PointCounter pointCounter) throws URISyntaxException {
         log.debug("REST request to update PointCounter : {}", pointCounter);
@@ -82,6 +85,7 @@ public class PointCounterResource {
      * @return the ResponseEntity with status 200 (OK) and the list of pointCounters in body
      */
     @GetMapping("/point-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<PointCounter> getAllPointCounters() {
         log.debug("REST request to get all PointCounters");
@@ -95,6 +99,7 @@ public class PointCounterResource {
      * @return the ResponseEntity with status 200 (OK) and with body the pointCounter, or with status 404 (Not Found)
      */
     @GetMapping("/point-counters/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<PointCounter> getPointCounter(@PathVariable Long id) {
         log.debug("REST request to get PointCounter : {}", id);
@@ -109,6 +114,7 @@ public class PointCounterResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/point-counters/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deletePointCounter(@PathVariable Long id) {
         log.debug("REST request to delete PointCounter : {}", id);

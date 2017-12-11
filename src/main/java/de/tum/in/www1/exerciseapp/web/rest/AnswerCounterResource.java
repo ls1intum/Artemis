@@ -9,6 +9,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -42,6 +43,7 @@ public class AnswerCounterResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/answer-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<AnswerCounter> createAnswerCounter(@RequestBody AnswerCounter answerCounter) throws URISyntaxException {
         log.debug("REST request to save AnswerCounter : {}", answerCounter);
@@ -64,6 +66,7 @@ public class AnswerCounterResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/answer-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<AnswerCounter> updateAnswerCounter(@RequestBody AnswerCounter answerCounter) throws URISyntaxException {
         log.debug("REST request to update AnswerCounter : {}", answerCounter);
@@ -82,6 +85,7 @@ public class AnswerCounterResource {
      * @return the ResponseEntity with status 200 (OK) and the list of answerCounters in body
      */
     @GetMapping("/answer-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<AnswerCounter> getAllAnswerCounters() {
         log.debug("REST request to get all AnswerCounters");
@@ -95,6 +99,7 @@ public class AnswerCounterResource {
      * @return the ResponseEntity with status 200 (OK) and with body the answerCounter, or with status 404 (Not Found)
      */
     @GetMapping("/answer-counters/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<AnswerCounter> getAnswerCounter(@PathVariable Long id) {
         log.debug("REST request to get AnswerCounter : {}", id);
@@ -109,6 +114,7 @@ public class AnswerCounterResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/answer-counters/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deleteAnswerCounter(@PathVariable Long id) {
         log.debug("REST request to delete AnswerCounter : {}", id);

@@ -12,6 +12,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -45,6 +46,7 @@ public class StatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Statistic> createStatistic(@RequestBody Statistic statistic) throws URISyntaxException {
         log.debug("REST request to save Statistic : {}", statistic);
@@ -67,6 +69,7 @@ public class StatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Statistic> updateStatistic(@RequestBody Statistic statistic) throws URISyntaxException {
         log.debug("REST request to update Statistic : {}", statistic);
@@ -85,6 +88,7 @@ public class StatisticResource {
      * @return the ResponseEntity with status 200 (OK) and the list of statistics in body
      */
     @GetMapping("/statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<Statistic> getAllStatistics() {
         log.debug("REST request to get all Statistics");
@@ -98,6 +102,7 @@ public class StatisticResource {
      * @return the ResponseEntity with status 200 (OK) and with body the statistic, or with status 404 (Not Found)
      */
     @GetMapping("/statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Statistic> getStatistic(@PathVariable Long id) {
         log.debug("REST request to get Statistic : {}", id);
@@ -112,6 +117,7 @@ public class StatisticResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deleteStatistic(@PathVariable Long id) {
         log.debug("REST request to delete Statistic : {}", id);

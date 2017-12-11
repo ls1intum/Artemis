@@ -44,6 +44,7 @@ public class MultipleChoiceQuestionStatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/multiple-choice-question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<MultipleChoiceQuestionStatistic> createMultipleChoiceQuestionStatistic(@RequestBody MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic) throws URISyntaxException {
         log.debug("REST request to save MultipleChoiceQuestionStatistic : {}", multipleChoiceQuestionStatistic);
@@ -66,6 +67,7 @@ public class MultipleChoiceQuestionStatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/multiple-choice-question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<MultipleChoiceQuestionStatistic> updateMultipleChoiceQuestionStatistic(@RequestBody MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic) throws URISyntaxException {
         log.debug("REST request to update MultipleChoiceQuestionStatistic : {}", multipleChoiceQuestionStatistic);
@@ -84,6 +86,7 @@ public class MultipleChoiceQuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK) and the list of multipleChoiceQuestionStatistics in body
      */
     @GetMapping("/multiple-choice-question-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<MultipleChoiceQuestionStatistic> getAllMultipleChoiceQuestionStatistics() {
         log.debug("REST request to get all MultipleChoiceQuestionStatistics");
@@ -97,6 +100,7 @@ public class MultipleChoiceQuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK) and with body the multipleChoiceQuestionStatistic, or with status 404 (Not Found)
      */
     @GetMapping("/multiple-choice-question-statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<MultipleChoiceQuestionStatistic> getMultipleChoiceQuestionStatistic(@PathVariable Long id) {
         log.debug("REST request to get MultipleChoiceQuestionStatistic : {}", id);
@@ -139,6 +143,7 @@ public class MultipleChoiceQuestionStatisticResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/multiple-choice-question-statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deleteMultipleChoiceQuestionStatistic(@PathVariable Long id) {
         log.debug("REST request to delete MultipleChoiceQuestionStatistic : {}", id);

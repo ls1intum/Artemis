@@ -40,6 +40,14 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         return this;
     }
 
+    /**
+     * 1. add the answerOption to the List of the other answerOptions
+     * 2. add backward relation in the answerOption-object
+     * 3. add the new answer-option to the MultipleChoiceQuestionStatistic
+     *
+     * @param answerOption the answerOption object which will be added
+     * @return this MultipleChoiceQuestion-object
+     */
     public MultipleChoiceQuestion addAnswerOptions(AnswerOption answerOption) {
         this.answerOptions.add(answerOption);
         answerOption.setQuestion(this);
@@ -48,6 +56,14 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         return this;
     }
 
+    /**
+     * 1. delete the new answer-option in the MultipleChoiceQuestionStatistic
+     * 2. remove the answerOption from the List of the other answerOptions
+     * 3. remove backward relation in the answerOption-object
+     *
+     * @param answerOption the answerOption object which should be removed
+     * @return this MultipleChoiceQuestion-object
+     */
     public MultipleChoiceQuestion removeAnswerOptions(AnswerOption answerOption) {
         //if an answerOption was removed then remove the associated AnswerCounter implicitly
         if (getQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
@@ -67,6 +83,15 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
 
     }
 
+    /**
+     * 1. check if the questionStatistic is an instance of MultipleChoiceQuestionStatistic.
+     *              otherwise generate a MultipleChoiceQuestionStatistic new replace the old one
+     * 2. set the answerOption List to the new answerOption List
+     * 3. if an answerOption was added then add the associated AnswerCounter
+     * 4. if an answerOption was removed then remove the associated AnswerCounter
+     *
+     * @param answerOptions the new List of answerOption objects which will be set
+     */
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
         MultipleChoiceQuestionStatistic mcStatistic;
         if (getQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
@@ -83,7 +108,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
             ((MultipleChoiceQuestionStatistic) getQuestionStatistic()).addAnswerOption(answerOption);
         }
 
-        //if an answerOption was removed then remove the associated AnswerCounter implicitly
+        //if an answerOption was removed then remove the associated AnswerCounters implicitly
         Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
         for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
             if (answerCounter.getId() != null) {
@@ -133,6 +158,11 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
             "}";
     }
 
+    /**
+     * Constructor.
+     *
+     * 1. generate associated MultipleChoiceQuestionStatistic implicitly
+     */
     public MultipleChoiceQuestion() {
         //create associated Statistic implicitly
         MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();

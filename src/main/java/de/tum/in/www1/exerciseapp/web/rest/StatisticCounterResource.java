@@ -9,6 +9,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -42,6 +43,7 @@ public class StatisticCounterResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/statistic-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<StatisticCounter> createStatisticCounter(@RequestBody StatisticCounter statisticCounter) throws URISyntaxException {
         log.debug("REST request to save StatisticCounter : {}", statisticCounter);
@@ -64,6 +66,7 @@ public class StatisticCounterResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/statistic-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<StatisticCounter> updateStatisticCounter(@RequestBody StatisticCounter statisticCounter) throws URISyntaxException {
         log.debug("REST request to update StatisticCounter : {}", statisticCounter);
@@ -82,6 +85,7 @@ public class StatisticCounterResource {
      * @return the ResponseEntity with status 200 (OK) and the list of statisticCounters in body
      */
     @GetMapping("/statistic-counters")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<StatisticCounter> getAllStatisticCounters() {
         log.debug("REST request to get all StatisticCounters");
@@ -95,6 +99,7 @@ public class StatisticCounterResource {
      * @return the ResponseEntity with status 200 (OK) and with body the statisticCounter, or with status 404 (Not Found)
      */
     @GetMapping("/statistic-counters/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<StatisticCounter> getStatisticCounter(@PathVariable Long id) {
         log.debug("REST request to get StatisticCounter : {}", id);
@@ -109,6 +114,7 @@ public class StatisticCounterResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/statistic-counters/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deleteStatisticCounter(@PathVariable Long id) {
         log.debug("REST request to delete StatisticCounter : {}", id);

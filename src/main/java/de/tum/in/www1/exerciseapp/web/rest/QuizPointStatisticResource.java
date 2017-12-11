@@ -45,6 +45,7 @@ public class QuizPointStatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/quiz-point-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<QuizPointStatistic> createQuizPointStatistic(@RequestBody QuizPointStatistic quizPointStatistic) throws URISyntaxException {
         log.debug("REST request to save QuizPointStatistic : {}", quizPointStatistic);
@@ -67,6 +68,7 @@ public class QuizPointStatisticResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/quiz-point-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<QuizPointStatistic> updateQuizPointStatistic(@RequestBody QuizPointStatistic quizPointStatistic) throws URISyntaxException {
         log.debug("REST request to update QuizPointStatistic : {}", quizPointStatistic);
@@ -86,6 +88,7 @@ public class QuizPointStatisticResource {
      * @return the ResponseEntity with status 200 (OK) and the list of quizPointStatistics in body
      */
     @GetMapping("/quiz-point-statistics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public List<QuizPointStatistic> getAllQuizPointStatistics(@RequestParam(required = false) String filter) {
         if ("quiz-is-null".equals(filter)) {
@@ -106,6 +109,7 @@ public class QuizPointStatisticResource {
      * @return the ResponseEntity with status 200 (OK) and with body the quizPointStatistic, or with status 404 (Not Found)
      */
     @GetMapping("/quiz-point-statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<QuizPointStatistic> getQuizPointStatistic(@PathVariable Long id) {
         log.debug("REST request to get QuizPointStatistic : {}", id);
@@ -145,6 +149,7 @@ public class QuizPointStatisticResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/quiz-point-statistics/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'TA')")
     @Timed
     public ResponseEntity<Void> deleteQuizPointStatistic(@PathVariable Long id) {
         log.debug("REST request to delete QuizPointStatistic : {}", id);

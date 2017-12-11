@@ -94,7 +94,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
     }
     /**
      * 1. creates the PointCounter for the new score
-     *          if where is already an PointCounter with the given score -> nothing happens
+     *          if there is already an PointCounter with the given score -> nothing happens
      *
      * @param score the score which will be added to the QuizPointStatistic
      */
@@ -133,10 +133,10 @@ public class QuizPointStatistic extends Statistic implements Serializable {
         Double points = (double) Math.round(((double) quiz.getMaxTotalScore()) * ((double) score/100));
 
         if(rated) {
-            //increase participants
+            //increase rated participants
             setParticipantsRated(getParticipantsRated()+1);
 
-            //find associated pointCounter and increase it
+            //find associated rated pointCounter and increase it
             for (PointCounter pointCounter: pointCounters) {
                 if(points.equals(pointCounter.getPoints())) {
                     pointCounter.setRatedCounter(pointCounter.getRatedCounter()+1);
@@ -145,13 +145,13 @@ public class QuizPointStatistic extends Statistic implements Serializable {
         }
         // Result is unrated
         else{
-            //increase participants
+            //increase unrated participants
             setParticipantsUnrated(getParticipantsUnrated()+1);
 
-            //find associated pointCounter and increase it
+            //find associated unrated pointCounter and increase it
             for (PointCounter pointCounter: pointCounters) {
                 if(points.equals(pointCounter.getPoints())) {
-                    pointCounter.setRatedCounter(pointCounter.getUnRatedCounter()+1);
+                    pointCounter.setUnRatedCounter(pointCounter.getUnRatedCounter()+1);
                 }
             }
         }
@@ -174,10 +174,10 @@ public class QuizPointStatistic extends Statistic implements Serializable {
         Double points = (double) Math.round(((double) quiz.getMaxTotalScore()) * ((double) score/100));
 
         if(rated) {
-            //decrease participants
+            //decrease rated participants
             setParticipantsRated(getParticipantsRated()-1);
 
-            //find associated pointCounter and decrease it
+            //find associated rated pointCounter and decrease it
             for (PointCounter pointCounter: pointCounters) {
                 if(points.equals(pointCounter.getPoints())) {
                     pointCounter.setRatedCounter(pointCounter.getRatedCounter()-1);
@@ -185,16 +185,15 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             }
         }
         else{
-            //decrease participants
+            //decrease unrated participants
             setParticipantsUnrated(getParticipantsUnrated()-1);
 
-            //find associated pointCounter and decrease it
+            //find associated unrated pointCounter and decrease it
             for (PointCounter pointCounter: pointCounters) {
                 if(points.equals(pointCounter.getPoints())) {
-                    pointCounter.setRatedCounter(pointCounter.getUnRatedCounter()-1);
+                    pointCounter.setUnRatedCounter(pointCounter.getUnRatedCounter()-1);
                 }
             }
         }
     }
-
 }
