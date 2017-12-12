@@ -1,0 +1,22 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipName": "quizPointStatistic",
+            "otherEntityName": "quizPointStatistic",
+            "relationshipType": "many-to-one",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "points",
+            "fieldType": "Double"
+        }
+    ],
+    "changelogDate": "20171102180816",
+    "entityTableName": "point_counter",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

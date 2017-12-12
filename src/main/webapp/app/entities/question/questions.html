@@ -26,6 +26,7 @@
                     <th><span data-translate="artemisApp.question.score">Score</span></th>
                     <th><span data-translate="artemisApp.question.scoringType">Scoring Type</span></th>
                     <th><span data-translate="artemisApp.question.randomizeOrder">Randomize Order</span></th>
+                    <th><span data-translate="arTeMiSApp.question.questionStatistic">Question Statistic</span></th>
                     <th><span data-translate="artemisApp.question.exercise">Exercise</span></th>
                     <th></th>
                 </tr>
@@ -40,6 +41,9 @@
                     <td>{{question.score}}</td>
                     <td data-translate="{{'artemisApp.ScoringType.' + question.scoringType}}">{{question.scoringType}}</td>
                     <td>{{question.randomizeOrder}}</td>
+                    <td>
+                        <a ui-sref="question-statistic-detail({id:question.questionStatistic.id})">{{question.questionStatistic.id}}</a>
+                    </td>
                     <td>
                         <a ui-sref="quiz-exercise-detail({id:question.exercise.id})">{{question.exercise.id}}</a>
                     </td>

@@ -37,6 +37,7 @@
             "secondsShort": "s",
             "questions": "Fragen",
             "status": "Status",
+            "quizPointStatistic": "Quiz-Punkte-Statistik",
             "startTime": "Startzeit",
             "quiz": "Quiz",
             "totalPoints": "Gesamtpunktzahl",

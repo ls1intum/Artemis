@@ -15,9 +15,9 @@
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', '$http', '$location', 'Principal', '$rootScope'];
+    ExerciseListController.$inject = ['$sce', '$scope', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', 'JhiWebsocketService', '$http', '$location', 'Principal', '$rootScope'];
 
-    function ExerciseListController($sce, $window, AlertService, CourseExercises, Participation, ExerciseParticipation, $http, $location, Principal, $rootScope) {
+    function ExerciseListController($sce, $scope,  $window, AlertService, CourseExercises, Participation, ExerciseParticipation, JhiWebsocketService, $http, $location, Principal, $rootScope) {
         var vm = this;
 
         vm.clonePopover = {
@@ -32,6 +32,7 @@
         vm.participationStatus = participationStatus;
         vm.start = start;
         vm.resume = resume;
+        vm.canOpenStatistic = canOpenStatistic;
         vm.now = Date.now();
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
@@ -64,9 +65,30 @@
                         courseId: exercise.course.id,
                         exerciseId: exercise.id
                     });
+
+                    //if the User is a student: subscribe the release Websocket of every quizExercise
+                    if(exercise.type === 'quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']))){
+                        var websocketChannel = '/topic/statistic/'+ exercise.id +'/release';
+
+                        JhiWebsocketService.subscribe(websocketChannel);
+
+                        JhiWebsocketService.receive(websocketChannel).then(null, null, function(payload) {
+                            exercise.quizPointStatistic.released = payload;
+                        });
+                    }
                 });
                 vm.exercises = exercises;
             });
+
+            //if the User is a student: unsubscribe the release Websocket of every quizExercise
+            $scope.$on('$destroy', function() {
+                vm.exercises.forEach(function (exercise) {
+                    if(exercise.typa ==='quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']))){
+                    JhiWebsocketService.unsubscribe('/topic/statistic/'+ exercise.id +'/release');
+                    }
+                })
+            });
+
         }
 
         function buildSourceTreeUrl(cloneUrl) {
@@ -189,6 +211,19 @@
         }
 
         vm.toggleShowOverdueExercises = toggleShowOverdueExercises;
+
+        /**
+         * checks if the User has access to statistic
+         *
+         * @param {QuizExercise} exercise: the quizExercise, which will be checked
+         * @return {boolean} true: if the User is allowed to see the Statistic -> the User is Tutor or Admin or the statistic is released
+         */
+        function canOpenStatistic(exercise){
+            if(exercise.type === 'quiz'){
+                return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']) ||  exercise.quizPointStatistic.released == true;
+            }
+            return false;
+        }
 
     }
 })();
