@@ -2,14 +2,19 @@ package simulations
 
 import _root_.io.gatling.core.scenario.Simulation
 import io.gatling.core.Predef._
+import io.gatling.core.structure.{ChainBuilder, ScenarioBuilder}
 import io.gatling.http.Predef._
+import io.gatling.http.protocol.HttpProtocolBuilder
+import io.gatling.core.json._
+
 import scala.concurrent.duration._
 import scala.util.parsing.json._
+import scala.language.existentials
 
 class QuizParticipationSimulation extends Simulation {
 
     // TODO replace exerciseID with id of dynamically created exercise
-    val exerciseId = 113
+    val exerciseId = 118
 
     val feeder = Iterator.tabulate(500)(i => Map(
         "username" -> ("<USERNAME>"),   // TODO: generate real username for each value of i (removed for security)
@@ -18,7 +23,7 @@ class QuizParticipationSimulation extends Simulation {
 
     val baseURL = "http://localhost:8080"
 
-    val httpConf = http
+    val httpConf: HttpProtocolBuilder = http
         .baseURL(baseURL)
         .inferHtmlResources()
         .acceptHeader("*/*")
@@ -36,7 +41,60 @@ class QuizParticipationSimulation extends Simulation {
         "X-XSRF-TOKEN" -> "${xsrf_token}"
     )
 
-    val login = exec(
+    /**
+      * Selects random answers and adds submittedAnswers to the submission
+      *
+      * @param submissionString the submission as a JSON string
+      * @param questionsString the questions of the exercise as a JSON string
+      * @return the submission including the submittedAnswers as a JSON string
+      */
+    def selectRandomAnswers(submissionString: String, questionsString: String): String = {
+        // parse json strings into objects (Map or List)
+        val submission = JSON.parseFull(submissionString).get.asInstanceOf[Map[String, Any]]
+        val questions = JSON.parseFull(questionsString).get.asInstanceOf[List[Any]]
+
+        // save submitted answers in a List
+        var submittedAnswers = List[Map[String, Any]]()
+
+        // iterate through all questions to select answers
+        questions.foreach((questionP) => {
+            val question = questionP.get.asInstanceOf[Map[String, Any]]
+
+            // create a submitted answer for this question
+            var submittedAnswer = Map(
+                "question" -> question,
+                "type" -> question("type")
+            )
+
+            // save selected options in a List
+            var selectedOptions = List[Map[String, Any]]()
+
+            // iterate through all answer options of this question
+            val answerOptions = question("answerOptions").get.asInstanceOf[List[Any]]
+            answerOptions.foreach((answerOptionP) => {
+                val answerOption = answerOptionP.get.asInstanceOf[Map[String, Any]]
+
+                // select each answer option with a 50/50 chance
+                if (math.random < 0.5) {
+                    selectedOptions = answerOption +: selectedOptions
+                }
+            })
+
+            // add selected options to submitted answer
+            submittedAnswer = submittedAnswer + ("selectedOptions" -> selectedOptions)
+
+            // add submitted answer to the List
+            submittedAnswers = submittedAnswer +: submittedAnswers
+        })
+
+        // add submitted answers to submission
+        val result = submission + ("submittedAnswers" -> submittedAnswers)
+
+        // convert back into json string
+        Json.stringify(result)
+    }
+
+    val login: ChainBuilder = exec(
         http("First unauthenticated request")
             .get("/api/account")
             .headers(headers_http)
@@ -60,79 +118,38 @@ class QuizParticipationSimulation extends Simulation {
             .check(status.is(200)))
         .pause(10 seconds)
 
-    val startQuiz = exec(
+    val startQuiz: ChainBuilder = exec(
         http("Get quiz")
-            .get("/api/courses/10/exercises/113/submissions/my-latest")
+            .get("/api/quiz-exercises/" + exerciseId + "/for-student")
             .headers(headers_http_authenticated)
             .check(status.is(200))
-            .check(bodyString.saveAs("quizExercise"))).exitHereIfFailed
+            .check(jsonPath("$.questions").saveAs("questions"))).exitHereIfFailed
         .exec(
             http("Start Quiz")
                 .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
                 .headers(headers_http_authenticated)
                 .check(status.is(200))
                 .check(bodyString.saveAs("submission"))
-                .check(regex("\"id\" : (\\d*),").saveAs("submissionID"))).exitHereIfFailed
+                .check(jsonPath("$.id").saveAs("submissionID"))).exitHereIfFailed
         .pause(2 seconds, 5 seconds)
 
-    val submitQuiz =
+    val submitQuiz: ChainBuilder =
         pause(20 seconds)
             .exec(http("Submit Quiz")
                 .put("/api/quiz-submissions")
                 .headers(headers_http_authenticated)
                 .header("Content-Type", "application/json")
-                .body(StringBody("${submission}"))  // TODO: add submitted answers to body
+                .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
                 .check(status.is(200)))
 
     // TODO: add websocket
 
-    val studentScenario = scenario("Test Quiz Participation").exec(login, startQuiz)
-    val studentSubmitScenario = scenario("Test Quiz Participation With Submit").exec(login, startQuiz, submitQuiz)
-
-    val users1 = scenario("Users without submit").exec(studentScenario)
-    val users2 = scenario("Users with submit").exec(studentSubmitScenario)
+    val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, startQuiz)
+    val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, startQuiz, submitQuiz)
 
     setUp(
-        users1.inject(rampUsers(250) over (20 seconds)),
-        users2.inject(rampUsers(250) over (20 seconds))
+        usersNoSubmit.inject(rampUsers(250) over (20 seconds)),
+        usersSubmit.inject(rampUsers(250) over (20 seconds))
     ).protocols(httpConf)
-
-    def selectAnswers(submissionString: String, exerciseString: String): String = {
-        val submissionSome = JSON.parseFull(submissionString)
-        val exerciseSome = JSON.parseFull(exerciseString)
-
-        submissionSome match {
-            case Some(submission: Map[String, Any]) => {
-                exerciseSome match {
-                    case Some(exercise: Map[String, Any]) => {
-                        var result = submission + ("submittedAnswers" -> "TODO")
-                        // TODO: fill submission with submittedAnswers randomly chosen from the exercise
-                        mapToJsonString(result)
-                    }
-                }
-            }
-        }
-
-        ""
-    }
-
-    def mapToJsonString(json: Map[String, Any]): String = {
-
-        def parse(elem: (String, Any)): String = elem match {
-            case (a: String, b: Map[String, _]) => "\"" + a + "\"" + ":" + mapToJsonString(b) + ""
-            case (a: String, b: Boolean) => "\"" + a + "\"" + ":" + b.toString
-            case (a: String, b: Int) => "\"" + a + "\"" + ":" + b.toString
-            case (a: String, b: Double) => "\"" + a + "\"" + ":" + b.toString
-            case (a: String, b: String) => "\"" + a + "\"" + ":\"" + b + "\""
-        }
-        // TODO: add case for array
-
-        val assocs = json.map {
-            case (key, value) => parse((key, value))
-        }
-
-        "{\n" + assocs.mkString(", \n") + "}"
-
-    }
 
 }
