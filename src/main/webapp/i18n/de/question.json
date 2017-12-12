@@ -22,6 +22,7 @@
             "score": "Punkte",
             "randomizeOrder": "Fragen in zufälliger Reihenfolge anzeigen",
             "scoringType": "Bewertungsweise",
+            "questionStatistic": "Frage-Statistik",
             "exercise": "Übung",
             "yourScore": "Erreichte Punktzahl"
         }

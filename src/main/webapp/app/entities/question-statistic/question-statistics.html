@@ -1,0 +1,58 @@
+<div>
+    <h2 data-translate="arTeMiSApp.questionStatistic.home.title">Question Statistics</h2>
+    <jhi-alert></jhi-alert>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-xs-4 no-padding-left">
+                <button class="btn btn-primary" ui-sref="question-statistic.new" >
+                    <span class="glyphicon glyphicon-plus"></span>
+                    <span  data-translate="arTeMiSApp.questionStatistic.home.createLabel">
+                        Create new Question Statistic
+                    </span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="jh-table table table-striped">
+            <thead>
+                <tr>
+                    <th><span data-translate="global.field.id">ID</span></th>
+                    <th><span data-translate="arTeMiSApp.questionStatistic.ratedCorrectCounter">Rated Correct Counter</span></th>
+                    <th><span data-translate="arTeMiSApp.questionStatistic.unRatedCorrectCounter">Un Rated Correct Counter</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="questionStatistic in vm.questionStatistics track by questionStatistic.id">
+                    <td><a ui-sref="question-statistic-detail({id:questionStatistic.id})">{{questionStatistic.id}}</a></td>
+                    <td>{{questionStatistic.ratedCorrectCounter}}</td>
+                    <td>{{questionStatistic.unRatedCorrectCounter}}</td>
+                    <td class="text-right">
+                        <div class="btn-group flex-btn-group-container">
+                            <button type="submit"
+                                    ui-sref="question-statistic-detail({id:questionStatistic.id})"
+                                    class="btn btn-info btn-sm">
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="question-statistic.edit({id:questionStatistic.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
+                            </button>
+                            <button type="submit"
+                                    ui-sref="question-statistic.delete({id:questionStatistic.id})"
+                                    class="btn btn-danger btn-sm">
+                                <span class="glyphicon glyphicon-remove-circle"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.delete"></span>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

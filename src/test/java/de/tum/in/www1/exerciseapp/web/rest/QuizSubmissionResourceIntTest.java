@@ -3,10 +3,9 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 
 import de.tum.in.www1.exerciseapp.domain.QuizSubmission;
-import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
-import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
-import de.tum.in.www1.exerciseapp.repository.ResultRepository;
+import de.tum.in.www1.exerciseapp.repository.*;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
 
@@ -52,6 +51,12 @@ public class QuizSubmissionResourceIntTest {
     private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
+    private QuizPointStatisticRepository quizPointStatisticRepository;
+
+    @Autowired
+    private QuestionStatisticRepository questionStatisticRepository;
+
+    @Autowired
     private ResultRepository resultRepository;
 
     @Autowired
@@ -59,6 +64,9 @@ public class QuizSubmissionResourceIntTest {
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private StatisticService statisticService;
 
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -82,7 +90,7 @@ public class QuizSubmissionResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final QuizSubmissionResource quizSubmissionResource = new QuizSubmissionResource(quizSubmissionRepository, quizExerciseRepository, resultRepository, participationService, userService, messageTemplate);
+        final QuizSubmissionResource quizSubmissionResource = new QuizSubmissionResource(quizSubmissionRepository, quizExerciseRepository, quizPointStatisticRepository, questionStatisticRepository, resultRepository, participationService, userService, messageTemplate, statisticService);
         this.restQuizSubmissionMockMvc = MockMvcBuilders.standaloneSetup(quizSubmissionResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)

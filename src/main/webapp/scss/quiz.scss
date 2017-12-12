@@ -41,6 +41,43 @@
         }
     }
 }
+ .statistic-footer {
+     position: fixed;
+     height: 60px;
+     bottom: 0;
+     left: 0;
+     right: 0;
+     z-index: 10;
+
+     box-shadow: 0 0 3px rgba(0,0,0,0.7);
+
+     background: white;
+
+     .container {
+         height: 100%;
+     }
+ }
+.statistic-footer-content {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    .form-control,
+    .input-group-btn {
+        display: inline-block;
+        width: auto;
+    }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+
+        > * {
+            margin: 0 4px;
+        }
+    }
+}
 
 .edit-quiz-footer,
 .quiz-footer {

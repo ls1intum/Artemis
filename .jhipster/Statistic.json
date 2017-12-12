@@ -1,0 +1,23 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "released",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "participantsRated",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "participantsUnrated",
+            "fieldType": "Integer"
+        }
+    ],
+    "changelogDate": "20171026164259",
+    "entityTableName": "statistic",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}
