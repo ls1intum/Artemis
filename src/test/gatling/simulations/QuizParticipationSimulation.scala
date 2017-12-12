@@ -119,7 +119,7 @@ class QuizParticipationSimulation extends Simulation {
     def mapToJsonString(json: Map[String, Any]): String = {
 
         def parse(elem: (String, Any)): String = elem match {
-            case (a: String, b: Map[String, _]) => "\"" + a + "\"" + ":" + show(b) + ""
+            case (a: String, b: Map[String, _]) => "\"" + a + "\"" + ":" + mapToJsonString(b) + ""
             case (a: String, b: Boolean) => "\"" + a + "\"" + ":" + b.toString
             case (a: String, b: Int) => "\"" + a + "\"" + ":" + b.toString
             case (a: String, b: Double) => "\"" + a + "\"" + ":" + b.toString
