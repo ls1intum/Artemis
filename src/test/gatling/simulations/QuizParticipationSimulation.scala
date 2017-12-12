@@ -4,6 +4,7 @@ import _root_.io.gatling.core.scenario.Simulation
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import scala.concurrent.duration._
+import scala.util.parsing.json._
 
 class QuizParticipationSimulation extends Simulation {
 
@@ -95,5 +96,43 @@ class QuizParticipationSimulation extends Simulation {
         users1.inject(rampUsers(250) over (20 seconds)),
         users2.inject(rampUsers(250) over (20 seconds))
     ).protocols(httpConf)
+
+    def selectAnswers(submissionString: String, exerciseString: String): String = {
+        val submissionSome = JSON.parseFull(submissionString)
+        val exerciseSome = JSON.parseFull(exerciseString)
+
+        submissionSome match {
+            case Some(submission: Map[String, Any]) => {
+                exerciseSome match {
+                    case Some(exercise: Map[String, Any]) => {
+                        var result = submission + ("submittedAnswers" -> "TODO")
+                        // TODO: fill submission with submittedAnswers randomly chosen from the exercise
+                        mapToJsonString(result)
+                    }
+                }
+            }
+        }
+
+        ""
+    }
+
+    def mapToJsonString(json: Map[String, Any]): String = {
+
+        def parse(elem: (String, Any)): String = elem match {
+            case (a: String, b: Map[String, _]) => "\"" + a + "\"" + ":" + show(b) + ""
+            case (a: String, b: Boolean) => "\"" + a + "\"" + ":" + b.toString
+            case (a: String, b: Int) => "\"" + a + "\"" + ":" + b.toString
+            case (a: String, b: Double) => "\"" + a + "\"" + ":" + b.toString
+            case (a: String, b: String) => "\"" + a + "\"" + ":\"" + b + "\""
+        }
+        // TODO: add case for array
+
+        val assocs = json.map {
+            case (key, value) => parse((key, value))
+        }
+
+        "{\n" + assocs.mkString(", \n") + "}"
+
+    }
 
 }
