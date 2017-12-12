@@ -114,7 +114,7 @@ public class MultipleChoiceQuestionStatisticResource {
      * @param id the id of the multipleChoiceQuestionStatistic to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the multipleChoiceQuestionStatistic, or with status 404 (Not Found)
      */
-    @GetMapping("/multiple-choice-question-statistic/{id}/for-student")
+    @GetMapping("/multiple-choice-question-statistics/{id}/for-student")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
     public ResponseEntity<MultipleChoiceQuestionStatistic> getQuizExerciseForStudent(@PathVariable Long id) {

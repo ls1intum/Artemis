@@ -42,7 +42,7 @@ public class Result implements Serializable {
     @Column(name = "score")
     private Long score;
 
-    @OneToOne
+    @OneToOne(cascade=CascadeType.REMOVE, orphanRemoval=true)
     @JoinColumn(unique = true)
     private Submission submission;
 

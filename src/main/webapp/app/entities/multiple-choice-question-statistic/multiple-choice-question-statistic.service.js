@@ -28,7 +28,7 @@
     MultipleChoiceQuestionStatisticForStudent.$inject = ['$resource'];
 
     function MultipleChoiceQuestionStatisticForStudent ($resource) {
-        var resourceUrl =  'api/multiple-choice-question-statistic/:id/for-student';
+        var resourceUrl =  'api/multiple-choice-question-statistics/:id/for-student';
 
         return $resource(resourceUrl, {}, {
             'get': {

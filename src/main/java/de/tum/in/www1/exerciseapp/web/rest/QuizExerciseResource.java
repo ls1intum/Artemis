@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.MultipleChoiceQuestionRepository;
+import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -33,10 +34,12 @@ public class QuizExerciseResource {
     private static final String ENTITY_NAME = "quizExercise";
 
     private final QuizExerciseRepository quizExerciseRepository;
+    private final ParticipationRepository participationRepository;
     private final StatisticService statisticService;
 
-    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, StatisticService statisticService) {
+    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, ParticipationRepository participationRepository, StatisticService statisticService) {
         this.quizExerciseRepository = quizExerciseRepository;
+        this.participationRepository = participationRepository;
         this.statisticService = statisticService;
     }
 
@@ -229,6 +232,13 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
+
+        List<Participation> participationsToDelete= participationRepository.findByExerciseId(id);
+
+        for(Participation participation: participationsToDelete){
+            participationRepository.delete(participation.getId());
+        }
+
         quizExerciseRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
