@@ -181,11 +181,14 @@ public class ExerciseResource {
             result = exerciseRepository.findByCourseId(courseId);
         }
 
-        // filter out questions from quizExercises (so users can't see which answer options are correct)
-        for(Exercise exercise : result) {
+        // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+        for (Exercise exercise : result) {
             if (exercise instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) exercise;
                 quizExercise.setQuestions(null);
+                quizExercise.getQuizPointStatistic().setPointCounters(null);
+                quizExercise.getQuizPointStatistic().setParticipantsRated(null);
+                quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
             }
         }
 

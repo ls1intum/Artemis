@@ -5,10 +5,9 @@ import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
-import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
-import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
-import de.tum.in.www1.exerciseapp.repository.ResultRepository;
+import de.tum.in.www1.exerciseapp.repository.*;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -38,23 +37,32 @@ public class QuizSubmissionResource {
 
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizExerciseRepository quizExerciseRepository;
+    private final QuizPointStatisticRepository quizPointStatisticRepository;
+    private final QuestionStatisticRepository questionStatisticRepository;
     private final ResultRepository resultRepository;
     private final ParticipationService participationService;
     private final UserService userService;
+    private final StatisticService statisticService;
     private final SimpMessageSendingOperations messagingTemplate;
 
     public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository,
                                   QuizExerciseRepository quizExerciseRepository,
+                                  QuizPointStatisticRepository quizPointStatisticRepository,
+                                  QuestionStatisticRepository questionStatisticRepository,
                                   ResultRepository resultRepository,
                                   ParticipationService participationService,
                                   UserService userService,
-                                  SimpMessageSendingOperations messagingTemplate) {
+                                  SimpMessageSendingOperations messagingTemplate,
+                                  StatisticService statisticService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.userService = userService;
         this.messagingTemplate = messagingTemplate;
+        this.statisticService = statisticService;
+        this.quizPointStatisticRepository = quizPointStatisticRepository;
+        this.questionStatisticRepository = questionStatisticRepository;
     }
 
     /**
@@ -238,6 +246,28 @@ public class QuizSubmissionResource {
             result.evaluateSubmission();
             // save result
             result = resultRepository.save(result);
+            // get previous Result
+            Result previousResult = getPreviousResult(result);
+            // add the new Result to the quizPointStatistic and remove the previous one
+            if(previousResult != null) {
+                ((QuizExercise) previousResult.getParticipation().getExercise()).getQuizPointStatistic().removeOldResult(previousResult.getScore(),true);
+            }
+            ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(),true);
+            quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
+            // remove the previous Result from the QuestionStatistics
+            if(previousResult != null) {
+                for(SubmittedAnswer submittedAnswer: ((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswers()) {
+                    submittedAnswer.getQuestion().getQuestionStatistic().removeOldResult(submittedAnswer, true);
+                    questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
+                }
+            }
+            // add the new Result to QuestionStatistics
+            for(SubmittedAnswer submittedAnswer: ((QuizSubmission)result.getSubmission()).getSubmittedAnswers()) {
+                submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
+                questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
+            }
+            // notify statistics about new Result
+            statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
         }
         // prepare submission for sending
         // Note: We get submission from result because if submission was already submitted
@@ -252,6 +282,24 @@ public class QuizSubmissionResource {
         // notify user about changed submission
         messagingTemplate.convertAndSend("/topic/quizSubmissions/" + resultSubmission.getId(), resultSubmission);
         return resultSubmission;
+    }
+
+    /**
+     * Go through all Results in the Participation and return the latest one before the new Result,
+     *
+     * @param newResult the new result object which will replace the old Result in the Statistics
+     * @return the previous Result, which is presented in the Statistics (null if where is no previous Result)
+     */
+    private Result getPreviousResult(Result newResult) {
+        Result oldResult = null;
+
+        for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
+            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) &&
+                (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
+                oldResult = result;
+            }
+        }
+        return oldResult;
     }
 
     /**

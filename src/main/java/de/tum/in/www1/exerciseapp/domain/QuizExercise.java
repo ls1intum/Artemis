@@ -6,6 +6,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.*;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -62,6 +64,10 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     @Column(name = "duration")
     private Integer duration;
+
+    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @JoinColumn(unique = true)
+    private QuizPointStatistic quizPointStatistic;
 
     @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
     @OrderColumn
@@ -173,9 +179,19 @@ public class QuizExercise extends Exercise implements Serializable {
         this.duration = duration;
     }
 
-    public String getType() {
-        return "quiz";
+    public QuizPointStatistic getQuizPointStatistic() {
+        return quizPointStatistic;
     }
+
+    public QuizExercise quizPointStatistic(QuizPointStatistic quizPointStatistic) {
+        this.quizPointStatistic = quizPointStatistic;
+        return this;
+    }
+
+    public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
+        this.quizPointStatistic = quizPointStatistic;
+    }
+    public String getType() { return "quiz"; }
 
     @Override
     public ZonedDateTime getDueDate() {
@@ -219,25 +235,62 @@ public class QuizExercise extends Exercise implements Serializable {
         return questions;
     }
 
+    /**
+     * 1. replace the old Question-List with the new one
+     * 2. recalculate the PointCounters in quizPointStatistic
+     *
+     * @param questions the List of Question objects which will be set
+     * @return this QuizExercise-object
+     */
     public QuizExercise questions(List<Question> questions) {
         this.questions = questions;
+        //correct the associated quizPointStatistic implicitly
+        recalculatePointCounters();
         return this;
     }
 
+    /**
+     * 1. add the new Question object to the Question-List
+     * 2. add backward relation in the question-object
+     * 3. recalculate the PointCounters in quizPointStatistic
+     *
+     * @param question the new Question object which will be added
+     * @return this QuizExercise-object
+     */
     public QuizExercise addQuestions(Question question) {
         this.questions.add(question);
         question.setExercise(this);
+        //correct the associated quizPointStatistic implicitly
+        recalculatePointCounters();
         return this;
     }
 
+    /**
+     * 1. remove the given Question object in the Question-List
+     * 2. remove backward relation in the question-object
+     * 3. recalculate the PointCounters in quizPointStatistic
+     *
+     * @param question the Question object which should be removed
+     * @return this QuizExercise-object
+     */
     public QuizExercise removeQuestions(Question question) {
         this.questions.remove(question);
         question.setExercise(null);
+        //correct the associated quizPointStatistic implicitly
+        recalculatePointCounters();
         return this;
     }
 
+    /**
+     * 1. replace the old Question-List with the new one
+     * 2. recalculate the PointCounters in quizPointStatistic
+     *
+     * @param questions the List of Question objects which will be set
+     */
     public void setQuestions(List<Question> questions) {
+
         this.questions = questions;
+        recalculatePointCounters();
     }
 
     @Override
@@ -329,5 +382,43 @@ public class QuizExercise extends Exercise implements Serializable {
             ", duration='" + getDuration() + "'" +
             ", questions='" + getQuestions() + "'" +
             "}";
+    }
+
+    /**
+     * Constructor.
+     *
+     * 1. generate associated QuizPointStatistic implicitly
+     */
+    public QuizExercise() {
+        //creates the associated quizPointStatistic implicitly
+        quizPointStatistic = new QuizPointStatistic();
+        quizPointStatistic.setQuiz(this);
+    }
+
+    /**
+     * correct the associated quizPointStatistic implicitly
+     *
+     * 1. add new PointCounters for new Scores
+     * 2. delete old PointCounters if the score is no longer contained
+     */
+    private void recalculatePointCounters() {
+
+        double quizScore = getMaxTotalScore();
+
+        //add new PointCounter
+        for(double i = 0.0 ; i <= quizScore; i++) {  // for variable ScoreSteps change: i++ into: i= i + scoreStep
+            quizPointStatistic.addScore(new Double(i));
+        }
+        //delete old PointCounter
+        Set<PointCounter> pointCounterToDelete = new HashSet<>();
+        for (PointCounter pointCounter : quizPointStatistic.getPointCounters()) {
+            if (pointCounter.getId() != null) {                                                                                        // for variable ScoreSteps add:
+                if(pointCounter.getPoints() > quizScore || pointCounter.getPoints() < 0 || questions == null  || questions.isEmpty()/*|| (pointCounter.getPoints()% scoreStep) != 0*/) { ;
+                    pointCounterToDelete.add(pointCounter);
+                    pointCounter.setQuizPointStatistic(null);
+                }
+            }
+        }
+        quizPointStatistic.getPointCounters().removeAll(pointCounterToDelete);
     }
 }

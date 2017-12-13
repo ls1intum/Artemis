@@ -1,0 +1,79 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="Mo (generated)" id="1512389509343-1">
+        <createTable tableName="statistic">
+            <column name="discriminator" type="VARCHAR(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="statisticPK"/>
+            </column>
+            <column name="participants_rated" type="INT"/>
+            <column name="participants_unrated" type="INT"/>
+            <column name="released" type="BIT"/>
+            <column name="rated_correct_counter" type="INT"/>
+            <column name="un_rated_correct_counter" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-2">
+        <createTable tableName="statistic_counter">
+            <column name="discriminator" type="VARCHAR(31)">
+                <constraints nullable="false"/>
+            </column>
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="statistic_counterPK"/>
+            </column>
+            <column name="rated_counter" type="INT"/>
+            <column name="un_rated_counter" type="INT"/>
+            <column name="points" type="DOUBLE"/>
+            <column name="drag_and_drop_question_statistic_id" type="BIGINT"/>
+            <column name="drop_location_id" type="BIGINT"/>
+            <column name="quiz_point_statistic_id" type="BIGINT"/>
+            <column name="answer_id" type="BIGINT"/>
+            <column name="multiple_choice_question_statistic_id" type="BIGINT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-3">
+        <addColumn tableName="question">
+            <column name="question_statistic_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-4">
+        <addColumn tableName="exercise">
+            <column name="quiz_point_statistic_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-5">
+        <addUniqueConstraint columnNames="quiz_point_statistic_id" constraintName="UC_EXERCISEQUIZ_POINT_STATISTIC_ID_COL" tableName="exercise"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-6">
+        <addUniqueConstraint columnNames="question_statistic_id" constraintName="UC_QUESTIONQUESTION_STATISTIC_ID_COL" tableName="question"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-7">
+        <addUniqueConstraint columnNames="answer_id" constraintName="UC_STATISTIC_COUNTERANSWER_ID_COL" tableName="statistic_counter"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-8">
+        <addUniqueConstraint columnNames="drop_location_id" constraintName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL" tableName="statistic_counter"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-9">
+        <addForeignKeyConstraint baseColumnNames="drag_and_drop_question_statistic_id" baseTableName="statistic_counter" constraintName="FK11jgyics37wyibhhpp866exa8" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-10">
+        <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="exercise" constraintName="FK1kyxexi1uqeu8pw3vcbulfi42" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-11">
+        <addForeignKeyConstraint baseColumnNames="drop_location_id" baseTableName="statistic_counter" constraintName="FK2bses6ev8komaj0jw4gcyl8te" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="drop_location"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-12">
+        <addForeignKeyConstraint baseColumnNames="quiz_point_statistic_id" baseTableName="statistic_counter" constraintName="FK3bqk45run356e20sqmf3sak1o" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-13">
+        <addForeignKeyConstraint baseColumnNames="answer_id" baseTableName="statistic_counter" constraintName="FKg7hjug3wu6icklf6gbiqs4n18" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="answer_option"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-14">
+        <addForeignKeyConstraint baseColumnNames="multiple_choice_question_statistic_id" baseTableName="statistic_counter" constraintName="FKoh69hhnfcimvw7i1cwhepvt5g" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+    <changeSet author="Mo (generated)" id="1512389509343-15">
+        <addForeignKeyConstraint baseColumnNames="question_statistic_id" baseTableName="question" constraintName="FKoi0sqphft8m7f92qa7ui8i3ac" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="statistic"/>
+    </changeSet>
+</databaseChangeLog>

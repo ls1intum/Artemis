@@ -1,3 +1,38 @@
+entity Statistic (statistic) {      //abstract
+    released Boolean,
+    participantsRated Integer,
+    participantsUnrated Integer
+}
+
+entity QuizPointStatistic (quizPointStatistic){ //extends Statistic
+}
+
+entity QuestionStatistic (questionStatistic){   //extends Statistic, abstract
+    ratedCorrectCounter Integer,
+    unRatedCorrectCounter Integer,
+}
+
+entity MultipleChoiceQuestionStatistic (multipleChoiceQuestionStatistic){   //extends QuestionStatistic
+}
+
+entity DragAndDropQuestionStatistic (dragAndDropQuestionStatistic){   //extends QuestionStatistic
+}
+
+entity StatisticCounter(statisticCounter){ //abstract
+    ratedCounter Integer,
+    UnRatedCounter Integer
+}
+
+entity PointCounter(pointCounter){         //extends PointCounter
+    points Double
+}
+
+entity AnswerCounter(answerCounter){       //extends StatisticCounter
+}
+
+entity DropLocationCounter(dropLocationCounter){    //extends StatisticCounter
+}
+
 entity Course (course) {
   title String,
   studentGroupName String,
@@ -162,6 +197,9 @@ entity DragAndDropAssignment {
 }
 
 relationship OneToMany {
+  QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
+  MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
+  DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
   Course{exercises} to Exercise{course(title)},
   Exercise{participations} to Participation{exercise(title)},
   Participation{results} to Result{participation},
@@ -175,6 +213,10 @@ relationship OneToMany {
 }
 
 relationship OneToOne {
+    QuizExercise{quizPointStatistic} to QuizPointStatistic{quiz},
+    Question{questionStatistic} to QuestionStatistic{question},
+    AnswerCounter{answer} to AnswerOption,
+    DropLocationCounter{dropLocation} to DropLocation,
     Result{submission} to Submission,
     DragItem{correctLocation} to DropLocation,
     LtiUserId{user} to User

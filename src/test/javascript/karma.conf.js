@@ -49,6 +49,7 @@ module.exports = function (config) {
             'src/main/webapp/bower_components/file-saver.js/FileSaver.js',
             'src/main/webapp/bower_components/remarkable/dist/remarkable.js',
             'src/main/webapp/bower_components/showdown/dist/showdown.js',
+            'src/main/webapp/bower_components/chart.js/dist/Chart.js',
             'src/main/webapp/bower_components/angular/angular.js',
             'src/main/webapp/bower_components/angular-aria/angular-aria.js',
             'src/main/webapp/bower_components/angular-bootstrap/ui-bootstrap-tpls.js',
@@ -72,6 +73,7 @@ module.exports = function (config) {
             'src/main/webapp/bower_components/angular-ui-ace/ui-ace.js',
             'src/main/webapp/bower_components/angular-file-saver/dist/angular-file-saver.bundle.js',
             'src/main/webapp/bower_components/angular-resizable/src/angular-resizable.js',
+            'src/main/webapp/bower_components/angular-chart.js/dist/angular-chart.js',
             'src/main/webapp/bower_components/angular-mocks/angular-mocks.js',
             // endbower
             'src/main/webapp/app/app.module.js',

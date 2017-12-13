@@ -21,6 +21,7 @@
             'angularMoment',
             'ui.ace',
             'angularResizable',
+            'chart.js',
             'ngSanitize'
         ])
         .constant('CONTACT_EMAIL', "krusche@in.tum.de,seitz@in.tum.de,montag@in.tum.de")
