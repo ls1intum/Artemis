@@ -180,9 +180,14 @@ public class ParticipationResource {
     @GetMapping(value = "/exercise/{exerciseId}/participations")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Participation> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<Participation>> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
-        return participationRepository.findByExerciseId(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<Participation> participations = participationRepository.findByExerciseId(exerciseId);
+        return ResponseEntity.ok(participations);
     }
 
     /**
@@ -263,9 +268,12 @@ public class ParticipationResource {
 
     @GetMapping(value = "/participations/{id}/buildArtifact")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id) {
         log.debug("REST request to get Participation build artifact: {}", id);
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return continuousIntegrationService.get().retrieveLatestArtifact(participation);
     }
 
@@ -283,6 +291,9 @@ public class ParticipationResource {
     public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         Participation participation;
         if (exercise instanceof QuizExercise) {
             participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
