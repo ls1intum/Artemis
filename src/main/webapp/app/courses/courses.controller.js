@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('CoursesController', CoursesController);
 
-    CoursesController.$inject = ['$scope', '$q', '$state', 'Course', 'CourseExercises', 'tutorialWelcomeService'];
+    CoursesController.$inject = ['$scope', '$q', '$state', 'Course', 'CourseExercises', 'tutorialWelcomeService', 'Cookie'];
 
-    function CoursesController($scope, $q, $state, Course, CourseExercises, tutorialWelcomeService) {
+    function CoursesController($scope, $q, $state, Course, CourseExercises, tutorialWelcomeService, Cookie) {
         var vm = this;
 
         vm.filterByCourseId = _.toInteger(_.get($state,"params.courseId"));
@@ -17,7 +17,10 @@
         showOverlay();
 
         function showOverlay() {
-            tutorialWelcomeService.open();
+            if(Cookie.getFromCookie("tutorialDone") != "true") {
+                Cookie.setInCookie("tutorialDone", true, 365);
+                tutorialWelcomeService.open();
+            }
         }
 
 
