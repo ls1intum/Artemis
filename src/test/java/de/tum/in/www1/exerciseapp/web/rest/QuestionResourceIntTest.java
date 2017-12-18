@@ -60,6 +60,9 @@ public class QuestionResourceIntTest {
     private static final Boolean DEFAULT_RANDOMIZE_ORDER = false;
     private static final Boolean UPDATED_RANDOMIZE_ORDER = true;
 
+    private static final Boolean DEFAULT_INVALID = false;
+    private static final Boolean UPDATED_INVALID = true;
+
     @Autowired
     private QuestionRepository questionRepository;
 
@@ -103,7 +106,8 @@ public class QuestionResourceIntTest {
             .explanation(DEFAULT_EXPLANATION)
             .score(DEFAULT_SCORE)
             .scoringType(DEFAULT_SCORING_TYPE)
-            .randomizeOrder(DEFAULT_RANDOMIZE_ORDER);
+            .randomizeOrder(DEFAULT_RANDOMIZE_ORDER)
+            .invalid(DEFAULT_INVALID);
         return question;
     }
 
@@ -134,6 +138,7 @@ public class QuestionResourceIntTest {
         assertThat(testQuestion.getScore()).isEqualTo(DEFAULT_SCORE);
         assertThat(testQuestion.getScoringType()).isEqualTo(DEFAULT_SCORING_TYPE);
         assertThat(testQuestion.isRandomizeOrder()).isEqualTo(DEFAULT_RANDOMIZE_ORDER);
+        assertThat(testQuestion.isInvalid()).isEqualTo(DEFAULT_INVALID);
     }
 
     @Test
@@ -172,7 +177,8 @@ public class QuestionResourceIntTest {
             .andExpect(jsonPath("$.[*].explanation").value(hasItem(DEFAULT_EXPLANATION.toString())))
             .andExpect(jsonPath("$.[*].score").value(hasItem(DEFAULT_SCORE)))
             .andExpect(jsonPath("$.[*].scoringType").value(hasItem(DEFAULT_SCORING_TYPE.toString())))
-            .andExpect(jsonPath("$.[*].randomizeOrder").value(hasItem(DEFAULT_RANDOMIZE_ORDER.booleanValue())));
+            .andExpect(jsonPath("$.[*].randomizeOrder").value(hasItem(DEFAULT_RANDOMIZE_ORDER.booleanValue())))
+            .andExpect(jsonPath("$.[*].invalid").value(hasItem(DEFAULT_INVALID.booleanValue())));
     }
 
     @Test
@@ -192,7 +198,8 @@ public class QuestionResourceIntTest {
             .andExpect(jsonPath("$.explanation").value(DEFAULT_EXPLANATION.toString()))
             .andExpect(jsonPath("$.score").value(DEFAULT_SCORE))
             .andExpect(jsonPath("$.scoringType").value(DEFAULT_SCORING_TYPE.toString()))
-            .andExpect(jsonPath("$.randomizeOrder").value(DEFAULT_RANDOMIZE_ORDER.booleanValue()));
+            .andExpect(jsonPath("$.randomizeOrder").value(DEFAULT_RANDOMIZE_ORDER.booleanValue()))
+            .andExpect(jsonPath("$.invalid").value(DEFAULT_INVALID.booleanValue()));
     }
 
     @Test
@@ -219,7 +226,8 @@ public class QuestionResourceIntTest {
             .explanation(UPDATED_EXPLANATION)
             .score(UPDATED_SCORE)
             .scoringType(UPDATED_SCORING_TYPE)
-            .randomizeOrder(UPDATED_RANDOMIZE_ORDER);
+            .randomizeOrder(UPDATED_RANDOMIZE_ORDER)
+            .invalid(UPDATED_INVALID);
 
         restQuestionMockMvc.perform(put("/api/questions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -237,6 +245,7 @@ public class QuestionResourceIntTest {
         assertThat(testQuestion.getScore()).isEqualTo(UPDATED_SCORE);
         assertThat(testQuestion.getScoringType()).isEqualTo(UPDATED_SCORING_TYPE);
         assertThat(testQuestion.isRandomizeOrder()).isEqualTo(UPDATED_RANDOMIZE_ORDER);
+        assertThat(testQuestion.isInvalid()).isEqualTo(UPDATED_INVALID);
     }
 
     @Test

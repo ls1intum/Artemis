@@ -24,6 +24,10 @@
         {
             "fieldName": "isCorrect",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20170831094151",

@@ -24,7 +24,8 @@
             "scoringType": "Bewertungsweise",
             "questionStatistic": "Frage-Statistik",
             "exercise": "Übung",
-            "yourScore": "Erreichte Punktzahl"
+            "yourScore": "Erreichte Punktzahl",
+            "invalid": "ungültig"
         }
     }
 }

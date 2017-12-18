@@ -113,6 +113,7 @@
                                 score: null,
                                 scoringType: null,
                                 randomizeOrder: null,
+                                invalid: null,
                                 id: null
                             };
                         }
