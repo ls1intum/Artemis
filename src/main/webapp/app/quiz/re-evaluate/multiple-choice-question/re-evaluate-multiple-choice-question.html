@@ -13,10 +13,10 @@
         </div>
         <div class="col-md-2 text-right">
             <div class="form-group">
-                <div class="re-evaluate-button">
+                <div class="re-evaluate-button" ng-click="vm.moveUp()">
                     <i class="fa fa-chevron-up fa-2x"></i>
                 </div>
-                <div class="re-evaluate-button">
+                <div class="re-evaluate-button" ng-click="vm.moveDown()">
                     <i class="fa fa-chevron-down fa-2x"></i>
                 </div>
                 <div class="re-evaluate-button" ng-click="vm.resetQuestion()">
@@ -47,28 +47,32 @@
         </div>
         <button
             class="btn btn-default"
-            ng-disabled="vm.question.invalid"
-            ng-click="vm.setQuestionInvalid()"
+            ng-hide="vm.question.invalid"
+            ng-click="vm.question.invalid = true"
             data-translate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
         ></button>
+        <button
+        class="btn btn-default"
+        ng-show="vm.question.invalid"
+        ng-disabled="vm.question.invalid"
+        data-translate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
+    ></button>
     </div>
     <div class="markupEditorArea">
         <div class="question-content">
             <div class="input-group" style="height: 45px">
                 <div id="{{'question-content-editor-' + vm.random}}" class="form-control"></div>
                 <span class="input-group-btn">
-                    <button class="btn btn-default btn-lg" type="button" ng-click="vm.resetQuestionTitle()">
+                    <button class="btn btn-default btn-lg" type="button" ng-click="vm.resetQuestionText()">
                     <i class="fa fa-rotate-left"></i>
                     </button>
                 </span>
             </div>
         </div>
     </div>
-    <br>
-    <div class="fa-border">
+    <div class="answer-border">
         <div class="answer"
              ng-repeat="answer in vm.question.answerOptions">
-            <br>
             <div class="markupEditorArea">
                 <div class="answer-content">
                     <div class="form-group" >
@@ -78,18 +82,24 @@
                         <div class="form-group col-md-4 text-center">
                             <button
                                 class="btn btn-default"
-                                ng-disabled="answer.invalid"
-                                ng-click="vm.setAnswerInvalid(answer)"
+                                data-ng-hide="vm.isAnswerInvalid(answer)"
+                                data-ng-click="vm.setAnswerInvalid(answer)"
                                 data-translate="artemisApp.quizExercise.re-evaluate.setAnswerInvalid"
+                            ></button>
+                            <button
+                                class="btn btn-default"
+                                data-ng-hide="!vm.isAnswerInvalid(answer)"
+                                data-ng-disabled="vm.isAnswerInvalid(answer)"
+                                data-translate="artemisApp.quizExercise.re-evaluate.answerIsInvalid"
                             ></button>&nbsp;
 
                             <div class="re-evaluate-button">
-                                <i class="fa fa-list-ul fa-2x"></i>
+                                <i class="fa fa-arrows-v fa-2x"></i>
                             </div>
-                            <div class="re-evaluate-button" ng-click="vm.resetAnswer()">
+                            <div class="re-evaluate-button" data-ng-click="vm.resetAnswer(answer)">
                             <i class="fa fa-rotate-left fa-2x"></i>
                             </div>
-                            <div class="re-evaluate-button" ng-click="vm.delete()">
+                            <div class="re-evaluate-button" data-ng-click="vm.deleteAnswer(answer)">
                                 <i class="fa fa-trash fa-2x"></i>
                             </div>
 

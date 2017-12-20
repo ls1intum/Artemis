@@ -389,6 +389,13 @@ table.answer-options-result {
     display: inline-block;
     padding: 4px;
 }
+
 .re-evaluate-button:hover {
      color: blue;
  }
+
+.answer-border {
+    padding: .0em .0em .0em;
+    border-radius: .1em;
+    height: auto;
+}

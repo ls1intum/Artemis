@@ -57,7 +57,9 @@
                 "title": "Re-evaluate Quiz Exercise for {{ param }}",
                 "resetQuiz": "Reset Quiz Exercise",
                 "setQuestionInvalid": "Set question invalid",
-                "setAnswerInvalid": "Set answer invalid"
+                "questionIsInvalid": "Question is invalid",
+                "setAnswerInvalid": "Set answer invalid",
+                "answerIsInvalid": "Answer is invalid"
             }
         }
     }

@@ -59,6 +59,8 @@
             question="question"
             question-index="$index + 1"
             on-delete="vm.deleteQuestion(question)"
+            on-move-up="vm.moveUp(question)"
+            on-move-down="vm.moveDown(question)"
             on-updated="vm.onQuestionUpdated()"
         ></re-evaluate-multiple-choice-question>
     </div>

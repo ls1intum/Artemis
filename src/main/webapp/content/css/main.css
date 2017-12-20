@@ -8610,6 +8610,11 @@ table.answer-options-result {
 .re-evaluate-button:hover {
   color: blue; }
 
+.answer-border {
+  padding: .0em .0em .0em;
+  border-radius: .1em;
+  height: auto; }
+
 html {
   height: 100%; }
 

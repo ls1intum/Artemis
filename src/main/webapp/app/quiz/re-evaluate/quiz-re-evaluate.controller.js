@@ -26,6 +26,8 @@
             minutes: 0,
             seconds: 0
         };
+        //create BackUp for resets
+        var backUpQuiz = angular.copy(vm.quizExercise);
 
         // status options depending on relationship between start time, end time, and current time
         vm.statusOptionsVisible = [
@@ -56,7 +58,6 @@
         ];
 
         // make functions available to html
-        vm.showDropdown = showDropdown;
         vm.pendingChanges = pendingChanges;
         vm.validQuiz = validQuiz;
         vm.deleteQuestion = deleteQuestion;
@@ -66,28 +67,13 @@
         vm.durationString = durationString;
         vm.resetAll = resetAll;
         vm.resetQuizTitle = resetQuizTitle;
+        vm.moveUp = moveUp;
+        vm.moveDown = moveDown;
 
         var unsubscribe = $rootScope.$on('artemisApp:quizExerciseUpdate', function (event, result) {
             vm.quizExercise = result;
         });
         $scope.$on('$destroy', unsubscribe);
-
-
-        /**
-         * Determine which dropdown to display depending on the relationship between start time, end time, and current time
-         * @returns {string} the name of the dropdown to show
-         */
-        function showDropdown() {
-            if (vm.quizExercise.isPlannedToStart) {
-                var plannedEndMoment = moment(vm.quizExercise.releaseDate).add(vm.quizExercise.duration, "seconds");
-                if (plannedEndMoment.isBefore(moment())) {
-                    return "isOpenForPractice";
-                } else if (moment(vm.quizExercise.releaseDate).isBefore(moment())) {
-                    return "active";
-                }
-            }
-            return "isVisibleBeforeStart";
-        }
 
         /**
          * Remove question from the quiz
@@ -137,7 +123,8 @@
          */
         function save() {
 
-            alert("TO-DO");
+            console.log(vm.quizExercise);
+            alert("TO-DO:\n Open warning!\n Send Json to server\n close editor");
             return;
 
             vm.isSaving = true;
@@ -147,14 +134,22 @@
                 QuizExercise.save(vm.quizExercise, onSaveSuccess, onSaveError);
             }
         }
-
+        /**
+         * Updates the backUpQuiz and the vm.quizExercise with the result
+         *
+         * @param result {QuizExercise} the saved quizExercise-Object
+         */
         function onSaveSuccess(result) {
             vm.isSaving = false;
             prepareEntity(result);
+            backUpQuiz = angular.copy(vm.quizExercise);
             savedEntity = Object.assign({}, result);
             vm.quizExercise = result;
         }
 
+        /**
+         * Send alert if the saving failed
+         */
         function onSaveError() {
             alert("Saving Quiz Failed! Please try again later.");
             vm.isSaving = false;
@@ -211,14 +206,47 @@
          * Resets the whole Quiz
          */
         function resetAll() {
-            //TO-DO
+            vm.quizExercise = angular.copy(backUpQuiz);
+            savedEntity = entity.id ? Object.assign({}, entity) : {};
         }
 
         /**
-         * Resets the the quiz title
+         * Resets the quiz title
          */
         function resetQuizTitle() {
-            //TO-DO
+            vm.quizExercise.title = angular.copy(backUpQuiz.title);
+        }
+
+        /**
+         * move the question one position up
+         * @param question {Question} the question to move
+         */
+        function moveUp(question) {
+            var index = vm.quizExercise.questions.indexOf(question);
+            if(index === 0) {
+                return;
+            }
+            var tempQuestions = angular.copy(vm.quizExercise.questions);
+            var temp = tempQuestions[index];
+            tempQuestions[index] = tempQuestions[index-1];
+            tempQuestions[index-1] = temp;
+            vm.quizExercise.questions = tempQuestions;
+        }
+
+        /**
+         * move the question one position down
+         * @param question {Question} the question to move
+         */
+        function moveDown(question) {
+            var index = vm.quizExercise.questions.indexOf(question);
+            if(index === (vm.quizExercise.questions.length - 1)) {
+                return;
+            }
+            var tempQuestions = angular.copy(vm.quizExercise.questions);
+            var temp = tempQuestions[index];
+            tempQuestions[index] = tempQuestions[index+1];
+            tempQuestions[index+1] = temp;
+            vm.quizExercise.questions = tempQuestions;
         }
     }
 })();

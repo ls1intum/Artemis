@@ -57,7 +57,9 @@
                 "title": "Quiz für {{ param }} überarbeiten",
                 "resetQuiz": "Setze Quiz zurück",
                 "setQuestionInvalid": "Frage ungültig setzen",
-                "setAnswerInvalid": "Antwort ungültig setzen"
+                "questionIsInvalid": "Frage ist ungültig",
+                "setAnswerInvalid": "Antwort ungültig setzen",
+                "answerIsInvalid": "Antwort ist ungültig"
             }
         }
     }
