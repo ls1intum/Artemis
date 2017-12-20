@@ -52,7 +52,13 @@
             "submitted": "Submitted",
             "statistics": "Statistics",
             "statisticsNotPublished": "The instructor has not published any statistics.",
-            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended."
+            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended.",
+            "re-evaluate": {
+                "title": "Re-evaluate Quiz Exercise for {{ param }}",
+                "resetQuiz": "Reset Quiz Exercise",
+                "setQuestionInvalid": "Set question invalid",
+                "setAnswerInvalid": "Set answer invalid"
+            }
         }
     }
 }

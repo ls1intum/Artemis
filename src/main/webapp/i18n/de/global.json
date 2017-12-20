@@ -124,7 +124,8 @@
             "preview": "Vorschau",
             "cleanup": "Aufräumen",
             "archive": "Archivieren",
-            "submit": "Absenden"
+            "submit": "Absenden",
+            "re-evaluate": "Überarbeiten"
         },
         "detail": {
             "field": "Feld",

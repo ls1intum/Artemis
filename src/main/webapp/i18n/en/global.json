@@ -125,7 +125,8 @@
             "preview": "Preview",
             "cleanup": "Cleanup",
             "archive": "Archive",
-            "submit": "Submit"
+            "submit": "Submit",
+            "re-evaluate": "Re-evaluate"
         },
         "detail": {
             "field": "Field",

@@ -8603,6 +8603,13 @@ table.answer-options-result {
 .no-flex-shrink {
   flex-shrink: 0; }
 
+.re-evaluate-button {
+  display: inline-block;
+  padding: 4px; }
+
+.re-evaluate-button:hover {
+  color: blue; }
+
 html {
   height: 100%; }
 

@@ -1,0 +1,104 @@
+<div class="edit-mc-question" ng-hide="vm.showPreview">
+    <div>
+        <div class="col-md-10 text-left">
+            <div class="input-group">
+                <input class="form-control" ng-model="vm.question.title" placeholder="Question Title"
+                       style="height: 33px"/>
+                <span class="input-group-btn">
+                <button class="btn btn-default" type="button" ng-click="vm.resetQuestionTitle()">
+                <i class="fa fa-rotate-left"></i>
+            </button>
+            </span>
+            </div>
+        </div>
+        <div class="col-md-2 text-right">
+            <div class="form-group">
+                <div class="re-evaluate-button">
+                    <i class="fa fa-chevron-up fa-2x"></i>
+                </div>
+                <div class="re-evaluate-button">
+                    <i class="fa fa-chevron-down fa-2x"></i>
+                </div>
+                <div class="re-evaluate-button" ng-click="vm.resetQuestion()">
+                    <i class="fa fa-rotate-left fa-2x"></i>
+                </div>
+                <div class="re-evaluate-button" ng-click="vm.delete()">
+                    <i class="fa fa-trash fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <span data-translate="artemisApp.multipleChoiceQuestion.scoringType"
+                  class="colon-suffix no-flex-shrink"></span>
+            <select class="form-control" ng-options="option.key as option.label for option in vm.scoringTypeOptions"
+                    ng-model="vm.question.scoringType" title="scoring type"></select>
+            <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
+            <span>{{vm.question.score}}</span>
+        </div>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" ng-model="vm.question.randomizeOrder"/>
+                    <span data-translate="artemisApp.question.randomizeOrder"></span>
+                </label>
+            </div>
+        </div>
+        <button
+            class="btn btn-default"
+            ng-disabled="vm.question.invalid"
+            ng-click="vm.setQuestionInvalid()"
+            data-translate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
+        ></button>
+    </div>
+    <div class="markupEditorArea">
+        <div class="question-content">
+            <div class="input-group" style="height: 45px">
+                <div id="{{'question-content-editor-' + vm.random}}" class="form-control"></div>
+                <span class="input-group-btn">
+                    <button class="btn btn-default btn-lg" type="button" ng-click="vm.resetQuestionTitle()">
+                    <i class="fa fa-rotate-left"></i>
+                    </button>
+                </span>
+            </div>
+        </div>
+    </div>
+    <br>
+    <div class="fa-border">
+        <div class="answer"
+             ng-repeat="answer in vm.question.answerOptions">
+            <br>
+            <div class="markupEditorArea">
+                <div class="answer-content">
+                    <div class="form-group" >
+                        <div class="col-md-8 text-left" style="height: 45px">
+                            <div id="{{'answer-content-editor-' + answer.id}}" class="form-control "></div>
+                        </div>
+                        <div class="form-group col-md-4 text-center">
+                            <button
+                                class="btn btn-default"
+                                ng-disabled="answer.invalid"
+                                ng-click="vm.setAnswerInvalid(answer)"
+                                data-translate="artemisApp.quizExercise.re-evaluate.setAnswerInvalid"
+                            ></button>&nbsp;
+
+                            <div class="re-evaluate-button">
+                                <i class="fa fa-list-ul fa-2x"></i>
+                            </div>
+                            <div class="re-evaluate-button" ng-click="vm.resetAnswer()">
+                            <i class="fa fa-rotate-left fa-2x"></i>
+                            </div>
+                            <div class="re-evaluate-button" ng-click="vm.delete()">
+                                <i class="fa fa-trash fa-2x"></i>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <br>
+    </div>
+</div>
+

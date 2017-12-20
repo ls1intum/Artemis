@@ -52,7 +52,13 @@
             "submitted": "Abgegeben",
             "statistics": "Statistiken",
             "statisticsNotPublished": "Der Übungsleiter hat keine Statistiken freigegeben.",
-            "successfullySubmittedText": "Ihre Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, sobald das Quiz beendet ist."
+            "successfullySubmittedText": "Ihre Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, sobald das Quiz beendet ist.",
+            "re-evaluate": {
+                "title": "Quiz für {{ param }} überarbeiten",
+                "resetQuiz": "Setze Quiz zurück",
+                "setQuestionInvalid": "Frage ungültig setzen",
+                "setAnswerInvalid": "Antwort ungültig setzen"
+            }
         }
     }
 }
