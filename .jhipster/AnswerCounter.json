@@ -1,0 +1,25 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "answer",
+            "otherEntityName": "answerOption",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "answerCounter"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "multipleChoiceQuestionStatistic",
+            "otherEntityName": "multipleChoiceQuestionStatistic",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20171026164304",
+    "entityTableName": "answer_counter",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

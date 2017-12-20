@@ -60,6 +60,10 @@ public abstract class Question implements Serializable {
     @Column(name = "randomize_order")
     private Boolean randomizeOrder;
 
+    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @JoinColumn(unique = true)
+    private QuestionStatistic questionStatistic;
+
     @ManyToOne
     @JsonIgnore
     private QuizExercise exercise;
@@ -161,6 +165,19 @@ public abstract class Question implements Serializable {
 
     public void setRandomizeOrder(Boolean randomizeOrder) {
         this.randomizeOrder = randomizeOrder;
+    }
+
+    public QuestionStatistic getQuestionStatistic() {
+        return questionStatistic;
+    }
+
+    public Question questionStatistic(QuestionStatistic questionStatistic) {
+        this.questionStatistic = questionStatistic;
+        return this;
+    }
+
+    public void setQuestionStatistic(QuestionStatistic questionStatistic) {
+        this.questionStatistic = questionStatistic;
     }
 
     public QuizExercise getExercise() {

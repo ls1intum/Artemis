@@ -38,6 +38,7 @@
             "questions": "Questions",
             "status": "Status",
             "startTime": "Start Time",
+            "quizPointStatistic": "Quiz Point Statistic",
             "quiz": "Quiz",
             "totalPoints": "Total Points",
             "totalScore": "Result",

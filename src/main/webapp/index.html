@@ -72,6 +72,7 @@
     <script src="bower_components/file-saver.js/FileSaver.js"></script>
     <script src="bower_components/remarkable/dist/remarkable.js"></script>
     <script src="bower_components/showdown/dist/showdown.js"></script>
+    <script src="bower_components/chart.js/dist/Chart.js"></script>
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-aria/angular-aria.js"></script>
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
@@ -95,12 +96,17 @@
     <script src="bower_components/angular-ui-ace/ui-ace.js"></script>
     <script src="bower_components/angular-file-saver/dist/angular-file-saver.bundle.js"></script>
     <script src="bower_components/angular-resizable/src/angular-resizable.js"></script>
+    <script src="bower_components/angular-chart.js/dist/angular-chart.js"></script>
     <!-- endinject -->
     <!-- endbuild -->
 
     <!-- build:js app/app.js  -->
     <!-- inject:js -->
     <script src="app/app.module.js"></script>
+    <script src="app/statistics/statistic.state.js"></script>
+    <script src="app/statistics/quiz-statistic/show-quiz-statistic.controller.js"></script>
+    <script src="app/statistics/quiz-point-statistic/show-quiz-point-statistic.controller.js"></script>
+    <script src="app/statistics/multiple-choice-question-statistic/show-multiple-choice-question-statistic.controller.js"></script>
     <script src="app/services/user/user.service.js"></script>
     <script src="app/services/profiles/profile.service.js"></script>
     <script src="app/services/profiles/page-ribbon.directive.js"></script>
@@ -143,6 +149,18 @@
     <script src="app/entities/submission/submission.state.js"></script>
     <script src="app/entities/submission/submission.service.js"></script>
     <script src="app/entities/submission/submission.controller.js"></script>
+    <script src="app/entities/statistic-counter/statistic-counter-dialog.controller.js"></script>
+    <script src="app/entities/statistic-counter/statistic-counter-detail.controller.js"></script>
+    <script src="app/entities/statistic-counter/statistic-counter-delete-dialog.controller.js"></script>
+    <script src="app/entities/statistic-counter/statistic-counter.state.js"></script>
+    <script src="app/entities/statistic-counter/statistic-counter.service.js"></script>
+    <script src="app/entities/statistic-counter/statistic-counter.controller.js"></script>
+    <script src="app/entities/statistic/statistic-dialog.controller.js"></script>
+    <script src="app/entities/statistic/statistic-detail.controller.js"></script>
+    <script src="app/entities/statistic/statistic-delete-dialog.controller.js"></script>
+    <script src="app/entities/statistic/statistic.state.js"></script>
+    <script src="app/entities/statistic/statistic.service.js"></script>
+    <script src="app/entities/statistic/statistic.controller.js"></script>
     <script src="app/entities/result/result-dialog.controller.js"></script>
     <script src="app/entities/result/result-detail.controller.js"></script>
     <script src="app/entities/result/result-delete-dialog.controller.js"></script>
@@ -157,12 +175,24 @@
     <script src="app/entities/quiz-submission/quiz-submission.state.js"></script>
     <script src="app/entities/quiz-submission/quiz-submission.service.js"></script>
     <script src="app/entities/quiz-submission/quiz-submission.controller.js"></script>
+    <script src="app/entities/quiz-point-statistic/quiz-point-statistic-dialog.controller.js"></script>
+    <script src="app/entities/quiz-point-statistic/quiz-point-statistic-detail.controller.js"></script>
+    <script src="app/entities/quiz-point-statistic/quiz-point-statistic-delete-dialog.controller.js"></script>
+    <script src="app/entities/quiz-point-statistic/quiz-point-statistic.state.js"></script>
+    <script src="app/entities/quiz-point-statistic/quiz-point-statistic.service.js"></script>
+    <script src="app/entities/quiz-point-statistic/quiz-point-statistic.controller.js"></script>
     <script src="app/entities/quiz-exercise/quiz-exercise-dialog.controller.js"></script>
     <script src="app/entities/quiz-exercise/quiz-exercise-detail.controller.js"></script>
     <script src="app/entities/quiz-exercise/quiz-exercise-delete-dialog.controller.js"></script>
     <script src="app/entities/quiz-exercise/quiz-exercise.state.js"></script>
     <script src="app/entities/quiz-exercise/quiz-exercise.service.js"></script>
     <script src="app/entities/quiz-exercise/quiz-exercise.controller.js"></script>
+    <script src="app/entities/question-statistic/question-statistic-dialog.controller.js"></script>
+    <script src="app/entities/question-statistic/question-statistic-detail.controller.js"></script>
+    <script src="app/entities/question-statistic/question-statistic-delete-dialog.controller.js"></script>
+    <script src="app/entities/question-statistic/question-statistic.state.js"></script>
+    <script src="app/entities/question-statistic/question-statistic.service.js"></script>
+    <script src="app/entities/question-statistic/question-statistic.controller.js"></script>
     <script src="app/entities/question/question-dialog.controller.js"></script>
     <script src="app/entities/question/question-detail.controller.js"></script>
     <script src="app/entities/question/question-delete-dialog.controller.js"></script>
@@ -174,6 +204,12 @@
     <script src="app/entities/programming-exercise/programming-exercise.state.js"></script>
     <script src="app/entities/programming-exercise/programming-exercise.service.js"></script>
     <script src="app/entities/programming-exercise/programming-exercise.controller.js"></script>
+    <script src="app/entities/point-counter/point-counter-dialog.controller.js"></script>
+    <script src="app/entities/point-counter/point-counter-detail.controller.js"></script>
+    <script src="app/entities/point-counter/point-counter-delete-dialog.controller.js"></script>
+    <script src="app/entities/point-counter/point-counter.state.js"></script>
+    <script src="app/entities/point-counter/point-counter.service.js"></script>
+    <script src="app/entities/point-counter/point-counter.controller.js"></script>
     <script src="app/entities/participation/participation-dialog.controller.js"></script>
     <script src="app/entities/participation/participation-detail.controller.js"></script>
     <script src="app/entities/participation/participation-delete-dialog.controller.js"></script>
@@ -187,6 +223,12 @@
     <script src="app/entities/multiple-choice-submitted-answer/multiple-choice-submitted-answer.state.js"></script>
     <script src="app/entities/multiple-choice-submitted-answer/multiple-choice-submitted-answer.service.js"></script>
     <script src="app/entities/multiple-choice-submitted-answer/multiple-choice-submitted-answer.controller.js"></script>
+    <script src="app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic-dialog.controller.js"></script>
+    <script src="app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic-detail.controller.js"></script>
+    <script src="app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic-delete-dialog.controller.js"></script>
+    <script src="app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic.state.js"></script>
+    <script src="app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic.service.js"></script>
+    <script src="app/entities/multiple-choice-question-statistic/multiple-choice-question-statistic.controller.js"></script>
     <script src="app/entities/multiple-choice-question/multiple-choice-question-dialog.controller.js"></script>
     <script src="app/entities/multiple-choice-question/multiple-choice-question-detail.controller.js"></script>
     <script src="app/entities/multiple-choice-question/multiple-choice-question-delete-dialog.controller.js"></script>
@@ -227,6 +269,12 @@
     <script src="app/entities/exercise/exercise.search.service.js"></script>
     <script src="app/entities/exercise/exercise.controller.js"></script>
     <script src="app/entities/entity.state.js"></script>
+    <script src="app/entities/drop-location-counter/drop-location-counter-dialog.controller.js"></script>
+    <script src="app/entities/drop-location-counter/drop-location-counter-detail.controller.js"></script>
+    <script src="app/entities/drop-location-counter/drop-location-counter-delete-dialog.controller.js"></script>
+    <script src="app/entities/drop-location-counter/drop-location-counter.state.js"></script>
+    <script src="app/entities/drop-location-counter/drop-location-counter.service.js"></script>
+    <script src="app/entities/drop-location-counter/drop-location-counter.controller.js"></script>
     <script src="app/entities/drop-location/drop-location-dialog.controller.js"></script>
     <script src="app/entities/drop-location/drop-location-detail.controller.js"></script>
     <script src="app/entities/drop-location/drop-location-delete-dialog.controller.js"></script>
@@ -245,6 +293,12 @@
     <script src="app/entities/drag-and-drop-submitted-answer/drag-and-drop-submitted-answer.state.js"></script>
     <script src="app/entities/drag-and-drop-submitted-answer/drag-and-drop-submitted-answer.service.js"></script>
     <script src="app/entities/drag-and-drop-submitted-answer/drag-and-drop-submitted-answer.controller.js"></script>
+    <script src="app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic-dialog.controller.js"></script>
+    <script src="app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic-detail.controller.js"></script>
+    <script src="app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic-delete-dialog.controller.js"></script>
+    <script src="app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic.state.js"></script>
+    <script src="app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic.service.js"></script>
+    <script src="app/entities/drag-and-drop-question-statistic/drag-and-drop-question-statistic.controller.js"></script>
     <script src="app/entities/drag-and-drop-question/drag-and-drop-question-dialog.controller.js"></script>
     <script src="app/entities/drag-and-drop-question/drag-and-drop-question-detail.controller.js"></script>
     <script src="app/entities/drag-and-drop-question/drag-and-drop-question-delete-dialog.controller.js"></script>
@@ -270,6 +324,12 @@
     <script src="app/entities/answer-option/answer-option.state.js"></script>
     <script src="app/entities/answer-option/answer-option.service.js"></script>
     <script src="app/entities/answer-option/answer-option.controller.js"></script>
+    <script src="app/entities/answer-counter/answer-counter-dialog.controller.js"></script>
+    <script src="app/entities/answer-counter/answer-counter-detail.controller.js"></script>
+    <script src="app/entities/answer-counter/answer-counter-delete-dialog.controller.js"></script>
+    <script src="app/entities/answer-counter/answer-counter.state.js"></script>
+    <script src="app/entities/answer-counter/answer-counter.service.js"></script>
+    <script src="app/entities/answer-counter/answer-counter.controller.js"></script>
     <script src="app/editor/instructions/editor-instructions.component.js"></script>
     <script src="app/editor/file-browser/editor-file-browser.component.js"></script>
     <script src="app/editor/editor.state.js"></script>

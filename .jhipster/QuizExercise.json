@@ -2,6 +2,14 @@
     "fluentMethods": true,
     "relationships": [
         {
+            "relationshipType": "one-to-one",
+            "relationshipName": "quizPointStatistic",
+            "otherEntityName": "quizPointStatistic",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "quiz"
+        },
+        {
             "relationshipType": "one-to-many",
             "relationshipName": "questions",
             "otherEntityName": "question",

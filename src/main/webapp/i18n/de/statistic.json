@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "statistic" : {
+            "home": {
+                "title": "Statistics",
+                "createLabel": "Statistic erstellen",
+                "createOrEditLabel": "Statistic erstellen oder bearbeiten"
+            },
+            "created": "Statistic erstellt mit ID {{ param }}",
+            "updated": "Statistic aktualisiert mit ID {{ param }}",
+            "deleted": "Statistic gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Statistic {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Statistic"
+            },
+            "released": "Released",
+            "participantsRated": "Participants Rated",
+            "participantsUnrated": "Participants Unrated"
+        }
+    }
+}
