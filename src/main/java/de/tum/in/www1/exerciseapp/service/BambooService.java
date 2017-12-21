@@ -580,7 +580,7 @@ public class BambooService implements ContinuousIntegrationService {
      * - isBuilding: true if the plan is building
      */
     public Map<String, Boolean> retrieveBuildStatus(String planKey) {
-        if(planKey.toLowerCase().equals("tutorial")){
+        if("tutorial".equals(planKey.toLowerCase())){
             return null;
         }
 
