@@ -22,9 +22,11 @@ class QuizParticipationSimulation extends Simulation {
     ))
 
     val baseURL = "http://localhost:8080"
+    val wsBaseURL = "ws://localhost:8080"
 
     val httpConf: HttpProtocolBuilder = http
         .baseURL(baseURL)
+        .wsBaseURL(wsBaseURL)
         .inferHtmlResources()
         .acceptHeader("*/*")
         .acceptEncodingHeader("gzip, deflate")
@@ -124,14 +126,34 @@ class QuizParticipationSimulation extends Simulation {
             .headers(headers_http_authenticated)
             .check(status.is(200))
             .check(jsonPath("$.questions").saveAs("questions"))).exitHereIfFailed
-        .exec(
-            http("Start Quiz")
-                .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
-                .headers(headers_http_authenticated)
-                .check(status.is(200))
-                .check(bodyString.saveAs("submission"))
-                .check(jsonPath("$.id").saveAs("submissionID"))).exitHereIfFailed
+        .exec(http("Start Quiz")
+            .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
+            .headers(headers_http_authenticated)
+            .check(status.is(200))
+            .check(bodyString.saveAs("submission"))
+            .check(jsonPath("$.id").saveAs("submissionID"))).exitHereIfFailed
         .pause(2 seconds, 5 seconds)
+
+    val workOnQuiz: ChainBuilder = exec(
+        ws("Connect WebSocket")
+            .open("/websocket/tracker")
+        // NOTE: There seems to be no way of setting the headers for a websocket open in Gatling 2.3.0
+        // TODO: Find a way to get around this
+//            .headers(headers_http_authenticated)
+        ).exitHereIfFailed
+        .pause(5 seconds)
+        .exec(ws("Connect STOMP")
+            .sendText("[\"CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000\"]")
+            .check(wsAwait.within(30 seconds).until(1)))
+        // TODO: get participation id and subscribe to participation
+        //        .exec(ws("Subscribe Participation")
+        //            .sendText("[\"SUBSCRIBE\nid:sub-1\ndestination:/topic/participation/13020/newResults\n\n\u0000\"]"))
+        .exec(ws("Subscribe Submission")
+            .sendText("[\"SUBSCRIBE\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000\"]"))
+        .pause(5 seconds)
+        .exec(ws("Send Answers")
+            .sendText(session => "[\"SEND\ndestination:/topic/quizSubmissions/${submissionID}/save\n\n"+ selectRandomAnswers(session("submission").as[String], session("questions").as[String]) +"\u0000\"]")
+            .check(wsAwait.within(30 seconds).until(1)))
 
     val submitQuiz: ChainBuilder =
         pause(20 seconds)
@@ -142,7 +164,7 @@ class QuizParticipationSimulation extends Simulation {
                 .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
                 .check(status.is(200)))
 
-    // TODO: add websocket
+    // TODO: add websocket to scenario (would fail now, because we haven't figured out how to add the headers to ws().open()
 
     val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, startQuiz)
     val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, startQuiz, submitQuiz)
