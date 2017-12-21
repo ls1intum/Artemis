@@ -27,12 +27,12 @@ function TutorialCourseController($scope, $q, Modal, Course, Cookie, uiTourServi
 
             Modal.showModal({}, modalOptions).then(function (result) {
                 if (result.result == 'ok') {
-                    //Cookie.setInCookie("tutorialDone", 'started', 365);
+                    Cookie.setInCookie("tutorialDone", 'started', 365);
                     tutorialState = 'started';
                     self.tour = uiTourService.getTour();
                     self.tour.start();
                 } else {
-                    //Cookie.setInCookie("tutorialDone", 'skipped', 365);
+                    Cookie.setInCookie("tutorialDone", 'skipped', 365);
                     tutorialState = 'skipped';
                 }
             });
