@@ -19,7 +19,7 @@
         function loadAll() {
             Course.query().$promise.then(function (courses) {
 
-                //remove the tut course
+                //remove the tutorial course
                 courses.shift();
                 vm.courses = courses;
 
