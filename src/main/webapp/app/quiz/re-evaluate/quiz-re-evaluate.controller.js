@@ -12,8 +12,6 @@
 
         prepareEntity(entity);
 
-        var savedEntity = entity.id ? Object.assign({}, entity) : {};
-
         vm.quizExercise = entity;
         vm.previousState = previousState.name;
         vm.quizExercise.course = courseEntity;
@@ -97,17 +95,7 @@
          * @returns {boolean} true if there are any pending changes, false otherwise
          */
         function pendingChanges() {
-            return [
-                "title",
-                "duration",
-                "isPlannedToStart",
-                "releaseDate",
-                "isVisibleBeforeStart",
-                "isOpenForPractice",
-                "questions"
-            ].some(function (key) {
-                return vm.quizExercise[key] !== savedEntity[key];
-            });
+            return !angular.equals(vm.quizExercise, backUpQuiz);
         }
 
         /**
@@ -143,7 +131,6 @@
             vm.isSaving = false;
             prepareEntity(result);
             backUpQuiz = angular.copy(vm.quizExercise);
-            savedEntity = Object.assign({}, result);
             vm.quizExercise = result;
         }
 
@@ -207,7 +194,6 @@
          */
         function resetAll() {
             vm.quizExercise = angular.copy(backUpQuiz);
-            savedEntity = entity.id ? Object.assign({}, entity) : {};
         }
 
         /**

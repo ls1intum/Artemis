@@ -32,29 +32,33 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
     vm.setAnswerInvalid = setAnswerInvalid;
     vm.isAnswerInvalid = isAnswerInvalid;
 
-    // set up editor
-    vm.random = Math.random();
-    var editor;
-    requestAnimationFrame(function () {
-        editor = ace.edit("question-content-editor-" + vm.random);
-        editor.setTheme("ace/theme/chrome");
-        editor.getSession().setMode("ace/mode/markdown");
-        editor.renderer.setShowGutter(false);
-        editor.renderer.setPadding(10);
-        editor.renderer.setScrollMargin(8, 8);
-        editor.setHighlightActiveLine(false);
-        editor.setShowPrintMargin(false);
-
-        generateQuestionMarkdown();
-
-        editor.on("blur", function () {
-            parseQuestionMarkdown(editor.getValue());
-            vm.onUpdated();
-            $scope.$apply();
-        });
-    });
-
+    setUpQuestionEditor();
     setUpAnswerEditors();
+    /**
+     * set up Question text editor
+     */
+    function setUpQuestionEditor() {
+        vm.random = Math.random();
+        var editor;
+        requestAnimationFrame(function () {
+            editor = ace.edit("question-content-editor-" + vm.random);
+            editor.setTheme("ace/theme/chrome");
+            editor.getSession().setMode("ace/mode/markdown");
+            editor.renderer.setShowGutter(false);
+            editor.renderer.setPadding(10);
+            editor.renderer.setScrollMargin(8, 8);
+            editor.setHighlightActiveLine(false);
+            editor.setShowPrintMargin(false);
+
+            generateQuestionMarkdown();
+
+            editor.on("blur", function () {
+                parseQuestionMarkdown(editor.getValue());
+                vm.onUpdated();
+                $scope.$apply();
+            });
+        });
+    }
 
     /**
      * set up answerOption editors
@@ -100,6 +104,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      *
      */
     function generateQuestionMarkdown() {
+        var editor = ace.edit("question-content-editor-" + vm.random);
         var markdownText = (
             vm.question.text +
             (vm.question.hint ? "\n\t[-h] " + vm.question.hint : "") +
@@ -267,16 +272,24 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      */
     function resetQuestionText() {
         vm.question.text = angular.copy(backUpQuestion.text);
-        generateQuestionMarkdown();
+        vm.question.expalanation = angular.copy(backUpQuestion.expalanation);
+        vm.question.hint = angular.copy(backUpQuestion.hint);
+        setUpQuestionEditor();
     }
 
     /**
      * Resets the whole question
      */
     function resetQuestion() {
-        vm.question = angular.copy(backUpQuestion);
-        setUpAnswerEditors();
-        generateQuestionMarkdown();
+        vm.question.title = angular.copy(backUpQuestion.title);
+        vm.question.invalid = angular.copy(backUpQuestion.invalid);
+        vm.question.randomizeOrder = angular.copy(backUpQuestion.randomizeOrder);
+        vm.question.scoringType = angular.copy(backUpQuestion.scoringType);
+        vm.question.answerOptions = angular.copy(backUpQuestion.answerOptions);
+        vm.question.answerOptions.forEach( function (answer) {
+           resetAnswer(answer);
+        });
+        resetQuestionText();
     }
     /**
      * Resets the whole answer
@@ -326,6 +339,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
     function deleteAnswer(answer) {
         var index = vm.question.answerOptions.indexOf(answer);
         vm.question.answerOptions.splice(index,1);
+        vm.onUpdated();
     }
 
     /**
@@ -336,6 +350,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
     function setAnswerInvalid(answer) {
 
         vm.question.answerOptions[vm.question.answerOptions.indexOf(answer)].invalid = true;
+        vm.onUpdated();
     }
 
     /**
