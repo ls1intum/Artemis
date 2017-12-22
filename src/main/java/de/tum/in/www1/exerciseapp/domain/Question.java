@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.tum.in.www1.exerciseapp.domain.scoring.ScoringStrategyFactory;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -58,6 +59,10 @@ public abstract class Question implements Serializable {
 
     @Column(name = "randomize_order")
     private Boolean randomizeOrder;
+
+    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @JoinColumn(unique = true)
+    private QuestionStatistic questionStatistic;
 
     @ManyToOne
     @JsonIgnore
@@ -162,6 +167,19 @@ public abstract class Question implements Serializable {
         this.randomizeOrder = randomizeOrder;
     }
 
+    public QuestionStatistic getQuestionStatistic() {
+        return questionStatistic;
+    }
+
+    public Question questionStatistic(QuestionStatistic questionStatistic) {
+        this.questionStatistic = questionStatistic;
+        return this;
+    }
+
+    public void setQuestionStatistic(QuestionStatistic questionStatistic) {
+        this.questionStatistic = questionStatistic;
+    }
+
     public QuizExercise getExercise() {
         return exercise;
     }
@@ -175,11 +193,13 @@ public abstract class Question implements Serializable {
         this.exercise = quizExercise;
     }
 
-    @JsonIgnore
-    abstract public ScoringStrategy getScoringStrategy();
-
+    /**
+     * Calculate the score for the given answer
+     * @param submittedAnswer The answer given for this question
+     * @return the resulting score
+     */
     public double scoreForAnswer(SubmittedAnswer submittedAnswer) {
-        return getScoringStrategy().calculateScore(this, submittedAnswer);
+        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer);
     }
 
     /**
@@ -187,7 +207,9 @@ public abstract class Question implements Serializable {
      * @param submittedAnswer The answer given for this question
      * @return true, if the answer is 100% correct, false otherwise
      */
-    abstract public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer);
+    public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
+        return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getScore();
+    }
 
     @Override
     public boolean equals(Object o) {

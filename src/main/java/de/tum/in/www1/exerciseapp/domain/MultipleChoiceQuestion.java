@@ -9,6 +9,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.List;
+import java.util.Set;
+import java.util.HashSet;
 
 /**
  * A MultipleChoiceQuestion.
@@ -38,61 +40,88 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         return this;
     }
 
+    /**
+     * 1. add the answerOption to the List of the other answerOptions
+     * 2. add backward relation in the answerOption-object
+     * 3. add the new answer-option to the MultipleChoiceQuestionStatistic
+     *
+     * @param answerOption the answerOption object which will be added
+     * @return this MultipleChoiceQuestion-object
+     */
     public MultipleChoiceQuestion addAnswerOptions(AnswerOption answerOption) {
         this.answerOptions.add(answerOption);
         answerOption.setQuestion(this);
+        //if an answerOption was added then add the associated AnswerCounter implicitly
+        ((MultipleChoiceQuestionStatistic)getQuestionStatistic()).addAnswerOption(answerOption);
         return this;
     }
 
+    /**
+     * 1. delete the new answer-option in the MultipleChoiceQuestionStatistic
+     * 2. remove the answerOption from the List of the other answerOptions
+     * 3. remove backward relation in the answerOption-object
+     *
+     * @param answerOption the answerOption object which should be removed
+     * @return this MultipleChoiceQuestion-object
+     */
     public MultipleChoiceQuestion removeAnswerOptions(AnswerOption answerOption) {
+        //if an answerOption was removed then remove the associated AnswerCounter implicitly
+        if (getQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
+            MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) getQuestionStatistic();
+            AnswerCounter answerCounterToDelete = null;
+            for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+                if (answerOption.equals(answerCounter.getAnswer())) {
+                    answerCounter.setAnswer(null);
+                    answerCounterToDelete = answerCounter;
+                }
+            }
+            mcStatistic.getAnswerCounters().remove(answerCounterToDelete);
+        }
         this.answerOptions.remove(answerOption);
         answerOption.setQuestion(null);
         return this;
+
     }
 
+    /**
+     * 1. check if the questionStatistic is an instance of MultipleChoiceQuestionStatistic.
+     *              otherwise generate a MultipleChoiceQuestionStatistic new replace the old one
+     * 2. set the answerOption List to the new answerOption List
+     * 3. if an answerOption was added then add the associated AnswerCounter
+     * 4. if an answerOption was removed then remove the associated AnswerCounter
+     *
+     * @param answerOptions the new List of answerOption objects which will be set
+     */
     public void setAnswerOptions(List<AnswerOption> answerOptions) {
-        this.answerOptions = answerOptions;
-    }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
-
-    @Override
-    public ScoringStrategy getScoringStrategy() {
-        switch (getScoringType()) {
-            case ALL_OR_NOTHING:
-                return new ScoringStrategyAllOrNothing();
-            default:
-                throw new RuntimeException("Only Scoring Type ALL_OR_NOTHING is implemented yet!");
+        MultipleChoiceQuestionStatistic mcStatistic;
+        if (getQuestionStatistic() instanceof MultipleChoiceQuestionStatistic) {
+            mcStatistic = (MultipleChoiceQuestionStatistic)getQuestionStatistic();
         }
-    }
+        else{
+            mcStatistic = new MultipleChoiceQuestionStatistic();
+            setQuestionStatistic(mcStatistic);
+        }
+        this.answerOptions = answerOptions;
 
-    @Override
-    public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
-        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-            MultipleChoiceSubmittedAnswer mcAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-            // iterate through each answer option and compare its correctness with the answer's selection
-            for (AnswerOption answerOption : getAnswerOptions()) {
-                boolean isSelected = false;
-                // search for this answer option in the selected answer options
-                for (AnswerOption selectedOption : mcAnswer.getSelectedOptions()) {
-                    if (selectedOption.getId().longValue() == answerOption.getId().longValue()) {
-                        // this answer option is selected => we can stop searching
-                        isSelected = true;
-                        break;
-                    }
-                }
-                // if the user was wrong about this answer option, the entire answer can no longer be 100% correct
-                // being wrong means either a correct option is not selected, or an incorrect option is selected
-                if ((answerOption.isIsCorrect() && !isSelected) || (!answerOption.isIsCorrect() && isSelected)) {
-                    return false;
+        //if an answerOption was added then add the associated AnswerCounter implicitly
+        for (AnswerOption answerOption : getAnswerOptions()) {
+            ((MultipleChoiceQuestionStatistic) getQuestionStatistic()).addAnswerOption(answerOption);
+        }
+
+        //if an answerOption was removed then remove the associated AnswerCounters implicitly
+        Set<AnswerCounter> answerCounterToDelete = new HashSet<>();
+        for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+            if (answerCounter.getId() != null) {
+                if(!(answerOptions.contains(answerCounter.getAnswer()))) {
+                    answerCounter.setAnswer(null);
+                    answerCounterToDelete.add(answerCounter);
                 }
             }
-            // the user wasn't wrong about a single answer option => the answer is 100% correct
-            return true;
-        } else {
-            // the submitted answer's type doesn't fit the question's type => it cannot be correct
-            return false;
         }
+        mcStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
+
     }
+    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -127,5 +156,18 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
             ", randomizeOrder='" + isRandomizeOrder() + "'" +
             ", exerciseTitle='" + ((getExercise() == null) ? null : getExercise().getTitle()) + "'" +
             "}";
+    }
+
+    /**
+     * Constructor.
+     *
+     * 1. generate associated MultipleChoiceQuestionStatistic implicitly
+     */
+    public MultipleChoiceQuestion() {
+        //create associated Statistic implicitly
+        MultipleChoiceQuestionStatistic mcStatistic = new MultipleChoiceQuestionStatistic();
+        setQuestionStatistic(mcStatistic);
+        mcStatistic.setQuestion(this);
+
     }
 }

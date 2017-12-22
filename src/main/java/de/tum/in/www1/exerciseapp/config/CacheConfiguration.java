@@ -78,6 +78,24 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.exerciseapp.domain.Question.class.getName() + ".quizExercises", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.Result.class.getName() + ".feedbacks", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.Feedback.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.Statistic.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.QuizPointStatistic.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.QuestionStatistic.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.AnswerCounter.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DropLocationCounter.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.QuizPointStatistic.class.getName() + ".ratedPointCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.QuizPointStatistic.class.getName() + ".unRatedPointCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic.class.getName() + ".ratedAnswerCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic.class.getName() + ".unRatedAnswerCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropQuestionStatistic.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropQuestionStatistic.class.getName() + ".ratedDropLocationCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropQuestionStatistic.class.getName() + ".unRatedDropLocationCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.StatisticCounter.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.PointCounter.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.QuizPointStatistic.class.getName() + ".pointCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic.class.getName() + ".answerCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropQuestionStatistic.class.getName() + ".dropLocationCounters", jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
         };
     }

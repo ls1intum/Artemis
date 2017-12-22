@@ -1,0 +1,25 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "dropLocation",
+            "otherEntityName": "dropLocation",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "dropLocationCounter"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "dragAndDropQuestionStatistic",
+            "otherEntityName": "dragAndDropQuestionStatistic",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20171026164305",
+    "entityTableName": "drop_location_counter",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no"
+}

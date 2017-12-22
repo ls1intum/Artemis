@@ -4,6 +4,10 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="dl-horizontal jh-entity-details">
+        <dt><span data-translate="artemisApp.submittedAnswer.scoreInPoints">Score In Points</span></dt>
+        <dd>
+            <span>{{vm.submittedAnswer.scoreInPoints}}</span>
+        </dd>
         <dt><span data-translate="artemisApp.submittedAnswer.question">Question</span></dt>
         <dd>
             <a ui-sref="question-detail({id:vm.submittedAnswer.question.id})">{{vm.submittedAnswer.question.id}}</a>

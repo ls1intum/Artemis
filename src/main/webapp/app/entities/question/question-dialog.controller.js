@@ -5,14 +5,23 @@
         .module('artemisApp')
         .controller('QuestionDialogController', QuestionDialogController);
 
-    QuestionDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'Question', 'QuizExercise'];
+    QuestionDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'Question', 'QuestionStatistic', 'QuizExercise'];
 
-    function QuestionDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, Question, QuizExercise) {
+    function QuestionDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, Question, QuestionStatistic, QuizExercise) {
         var vm = this;
 
         vm.question = entity;
         vm.clear = clear;
         vm.save = save;
+        vm.questionstatistics = QuestionStatistic.query({filter: 'question-is-null'});
+        $q.all([vm.question.$promise, vm.questionstatistics.$promise]).then(function() {
+            if (!vm.question.questionStatistic || !vm.question.questionStatistic.id) {
+                return $q.reject();
+            }
+            return QuestionStatistic.get({id : vm.question.questionStatistic.id}).$promise;
+        }).then(function(questionStatistic) {
+            vm.questionstatistics.push(questionStatistic);
+        });
         vm.quizexercises = QuizExercise.query();
 
         $timeout(function (){

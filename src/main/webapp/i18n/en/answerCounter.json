@@ -1,0 +1,22 @@
+{
+    "arTeMiSApp": {
+        "answerCounter" : {
+            "home": {
+                "title": "Answer Counters",
+                "createLabel": "Create a new Answer Counter",
+                "createOrEditLabel": "Create or edit a Answer Counter"
+            },
+            "created": "A new Answer Counter is created with identifier {{ param }}",
+            "updated": "A Answer Counter is updated with identifier {{ param }}",
+            "deleted": "A Answer Counter is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Answer Counter {{ id }}?"
+            },
+            "detail": {
+                "title": "Answer Counter"
+            },
+            "answer": "Answer",
+            "multipleChoiceQuestionStatistic": "Multiple Choice Question Statistic"
+        }
+    }
+}

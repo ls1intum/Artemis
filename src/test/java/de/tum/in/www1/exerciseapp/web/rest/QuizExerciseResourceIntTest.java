@@ -4,6 +4,7 @@ import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 
 import de.tum.in.www1.exerciseapp.domain.QuizExercise;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
+import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
 
 import org.junit.Before;
@@ -15,6 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -83,7 +86,7 @@ public class QuizExerciseResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository);
+        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, new StatisticService( new SimpMessagingTemplate(null)));
         this.restQuizExerciseMockMvc = MockMvcBuilders.standaloneSetup(quizExerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)

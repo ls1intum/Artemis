@@ -20,10 +20,11 @@
             "hint": "Hinweis",
             "explanation": "Erklärung",
             "score": "Punkte",
-            "totalScore": "Gesamtpunktzahl",
             "randomizeOrder": "Fragen in zufälliger Reihenfolge anzeigen",
             "scoringType": "Bewertungsweise",
-            "exercise": "Übung"
+            "questionStatistic": "Frage-Statistik",
+            "exercise": "Übung",
+            "yourScore": "Erreichte Punktzahl"
         }
     }
 }

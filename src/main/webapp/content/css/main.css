@@ -8369,6 +8369,33 @@ body.editor .navbar-brand span {
     .question-options .form-group > * {
       margin: 0 4px; }
 
+.statistic-footer {
+  position: fixed;
+  height: 60px;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.7);
+  background: white; }
+  .statistic-footer .container {
+    height: 100%; }
+
+.statistic-footer-content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; }
+  .statistic-footer-content .form-control,
+  .statistic-footer-content .input-group-btn {
+    display: inline-block;
+    width: auto; }
+  .statistic-footer-content .form-group {
+    display: flex;
+    align-items: center; }
+    .statistic-footer-content .form-group > * {
+      margin: 0 4px; }
+
 .edit-quiz-footer,
 .quiz-footer {
   position: fixed;
@@ -8447,15 +8474,27 @@ body.editor .navbar-brand span {
   background: #fefefe; }
   .mc-question h2 {
     margin: 0 90px 0 0; }
+    .mc-question h2 span {
+      color: grey; }
   .mc-question p {
     margin: 10px 0;
     font-size: 16px; }
+  .mc-question.result {
+    border-color: green; }
+    .mc-question.result.incorrect {
+      border-color: orange; }
   .mc-question .question-score {
     position: absolute;
     top: 20px;
     right: 20px; }
+    .mc-question .question-score.result {
+      font-weight: bold;
+      color: green; }
+      .mc-question .question-score.result.incorrect {
+        color: orange; }
   .mc-question .label {
-    cursor: pointer; }
+    cursor: pointer;
+    margin: 2px 0; }
   .mc-question .answer-options {
     margin-top: 20px; }
   .mc-question .answer-option {
@@ -8466,7 +8505,8 @@ body.editor .navbar-brand span {
     margin: 4px 0;
     padding: 6px 10px; }
     .mc-question .answer-option .selection {
-      width: 36px; }
+      width: 36px;
+      margin-left: 16px; }
     .mc-question .answer-option .content {
       display: flex;
       flex: 1;
@@ -8477,7 +8517,8 @@ body.editor .navbar-brand span {
         font-size: 16px; }
       .mc-question .answer-option .content .hint {
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        align-items: flex-end;
         font-size: 18px; }
     .mc-question .answer-option:hover {
       background: #fafafa; }
@@ -8485,6 +8526,9 @@ body.editor .navbar-brand span {
       cursor: not-allowed; }
       .mc-question .answer-option.click-disabled:hover {
         background: inherit; }
+  .mc-question.disabled {
+    color: dimgrey;
+    background: #fafafa; }
 
 .quiz-header,
 .quiz-content,
@@ -8503,11 +8547,55 @@ body.editor .navbar-brand span {
 .quiz-footer-content #remaining-time-value {
   font-weight: bold; }
 
+.quiz-footer-content #quiz-score {
+  text-align: center;
+  font-weight: bold;
+  color: green; }
+  .quiz-footer-content #quiz-score.incorrect {
+    color: black; }
+
 .quiz-footer-content .time-warning {
   color: orange; }
 
 .quiz-footer-content .time-critical {
   color: red; }
+
+.quiz-submitted-overlay {
+  position: fixed;
+  bottom: 50%;
+  left: 50%;
+  -webkit-transform: translateX(-50%);
+  -moz-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+  -o-transform: translateX(-50%);
+  transform: translateX(-50%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  font-size: 16px;
+  text-align: center;
+  font-weight: bold;
+  border-color: #3c763d; }
+
+table.answer-options-result {
+  width: 100%; }
+  table.answer-options-result .answer-option {
+    display: table-row; }
+  table.answer-options-result th {
+    color: dimgray; }
+  table.answer-options-result th, table.answer-options-result td {
+    padding: 6px 10px; }
+  table.answer-options-result .solution {
+    width: 100px; }
+  table.answer-options-result .result-symbol {
+    padding: 0;
+    color: orange;
+    width: 50px; }
+  table.answer-options-result .selection {
+    width: 36px;
+    margin-left: 0; }
+  table.answer-options-result .correct {
+    color: green; }
+  table.answer-options-result .wrong {
+    color: red; }
 
 .colon-suffix:after {
   content: ":"; }

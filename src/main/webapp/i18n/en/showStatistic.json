@@ -1,0 +1,38 @@
+{
+    "showStatistic": {
+        "participants": "Participations",
+        "chooseStatistic": "Choose Statistic",
+        "previousStatistic": "Previous Statistic",
+        "nextStatistic": "Next Statistic",
+        "releaseStatistic": "Release Statistics",
+        "rereleaseStatistic": "Revoke Statistics",
+        "switchToRated": "Show rated Results",
+        "switchToUnrated": "Show unrated Results",
+        "showSolution": "Show Solution",
+        "hideSolution": "Hide Solution",
+        "quizPointStatisticTitle": "Score-Distribution",
+        "quizStatisticTitle": "Quiz-Statistic",
+        "quizPointStatistic": {
+            "maxScore": "Maximum Score: ",
+            "titleRated": "Score-Distribution (rated)",
+            "titleUnrated": "Score-Distribution (unrated)",
+            "xAxes": "Scores",
+            "yAxes": "Amount"
+        },
+        "quizStatistic": {
+            "average": "Average",
+            "titleRated": "Quiz-Statistic (rated)",
+            "titleUnrated": "Quiz-Statistic (unrated)",
+            "xAxes": "Questions",
+            "yAxes": "Correct Solutions"
+        },
+        "multipleChoiceQuestionStatistic": {
+            "titleRated": "Answer-Distribution (rated)",
+            "titleUnrated": "Answer-Distribution (unrated)",
+            "xAxes": "Answers",
+            "yAxes": "Amount",
+            "correct": "correct",
+            "incorrect": "incorrect"
+        }
+    }
+}
