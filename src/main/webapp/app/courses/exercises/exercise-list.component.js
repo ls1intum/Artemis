@@ -12,6 +12,6 @@
                 filterByExerciseId: '<'
             },
             templateUrl: 'app/courses/exercises/exercise-list.html',
-            controller: ExerciseListController
+            controller: 'ExerciseListController'
         });
 })();

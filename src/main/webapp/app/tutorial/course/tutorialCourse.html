@@ -5,6 +5,7 @@
              tour-step-title="Course"
              tour-step-content="This is a course, in each course you are enrolled by your Instructor"
              tour-step-order="0"
+             tour-step-backdrop="true"
         >
             <h4 class="panel-title">{{tutorial.course.title}}</h4>
         </div>
@@ -16,12 +17,12 @@
              tour-step-backdrop-border-radius="10"
         >
 
-            <button class="btn btn-primary btn-sm" ng-show="tutorial.started">Continue Tutorial</button>
-            <button class="btn btn-primary btn-sm" ng-show="tutorial.skipped">Start Tutorial</button>
+            <button class="btn btn-primary btn-sm" ng-show="tutorial.started" disabled>Continue Tutorial</button>
+            <button class="btn btn-primary btn-sm" ng-show="tutorial.skipped" disabled>Start Tutorial</button>
 
-            <exercise-finished></exercise-finished>
             <div ng-if="tutorial.loaded">
-                <exercise-list  course="tutorial.course" filter-by-exercise-id=""></exercise-list>
+               <!-- <exercise-list  course="tutorial.course" filter-by-exercise-id=""></exercise-list>-->
+                <exercise-finished course="tutorial.course" filter-by-exercise-id=""></exercise-finished>
             </div>
 
         </div>
