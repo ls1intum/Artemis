@@ -71,5 +71,7 @@
     "test": "gulp test",
     "postinstall": "webdriver-manager update"
   },
-  "dependencies": {}
+  "dependencies": {
+    "hone": "^1.0.3"
+  }
 }
