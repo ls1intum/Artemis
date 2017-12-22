@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizReEvaluateController', QuizReEvaluateController);
 
-    QuizReEvaluateController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity'];
+    QuizReEvaluateController.$inject = ['$state', '$scope', '$rootScope', '$uibModal', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity'];
 
-    function QuizReEvaluateController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity) {
+    function QuizReEvaluateController($state, $scope, $rootScope, $uibModal, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity) {
         var vm = this;
 
         prepareEntity(entity);
@@ -107,21 +107,27 @@
         }
 
         /**
-         * Save the quiz to the server
+         * Open Warning-Modal
+         *  -> if confirmed: send changed quiz to server (in Modal-controller) and go back to parent-template
+         *  -> if canceled: close Modal
          */
         function save() {
 
-            console.log(vm.quizExercise);
-            alert("TO-DO:\n Open warning!\n Send Json to server\n close editor");
-            return;
-
-            vm.isSaving = true;
-            if (vm.quizExercise.id) {
-                QuizExercise.update(vm.quizExercise, onSaveSuccess, onSaveError);
-            } else {
-                QuizExercise.save(vm.quizExercise, onSaveSuccess, onSaveError);
-            }
+            $uibModal.open({
+                templateUrl: 'app/quiz/re-evaluate/quiz-re-evaluate-warning.html',
+                controller: 'QuizReEvaluateWarningController',
+                controllerAs: 'vm',
+                size: 'md',
+                resolve: {
+                    entity:  function() {
+                        return vm.quizExercise;
+                    }
+                }
+            }).result.then(function() {
+                $state.go('quiz-exercise-for-course', $state.params, {reload: true});
+            });
         }
+
         /**
          * Updates the backUpQuiz and the vm.quizExercise with the result
          *
@@ -180,10 +186,10 @@
          *@returns {String} the duration as String
          */
         function durationString() {
-            if(vm.duration.seconds <= 0){
+            if(vm.duration.seconds <= 0) {
                 return vm.duration.minutes + ":00";
             }
-            if(vm.duration.seconds < 10){
+            if(vm.duration.seconds < 10) {
                 return vm.duration.minutes + ":0" + vm.duration.seconds;
             }
             return vm.duration.minutes + ":" + vm.duration.seconds;

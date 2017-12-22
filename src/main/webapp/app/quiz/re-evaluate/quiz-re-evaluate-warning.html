@@ -1,0 +1,52 @@
+<div style="padding: 20px">
+    <h2><span data-translate="artemisApp.quizExercise.re-evaluate.warning.warning"></span></h2>
+    <div style="padding: 10px">
+        <h4><span data-translate="artemisApp.quizExercise.re-evaluate.warning.problems"></span> </h4>
+        <ul>
+            <li ng-show="vm.answerDeleted" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.answer_deleted"></span>
+            <ul style="padding-left: 15px">
+                <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
+                    <p style="margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.answer_deleted"></p></li>
+                <li><span data-translate="artemisApp.quizExercise.re-evaluate.warning.statistic"></span></li>
+            </ul></li>
+            <li ng-show="vm.answerInvalid" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.answer_invalid"></span>
+            <ul style="padding-left: 15px">
+                <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
+                    <p style="margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.answer_invalid"></p></li>
+                <li><span data-translate="artemisApp.quizExercise.re-evaluate.warning.statistic"></span></li>
+            </ul> </li>
+            <li ng-show="vm.answerCorrectess" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.answer_correctness"></span>
+            <ul style="padding-left: 15px">
+                <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
+                    <p style="margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p></li>
+            </ul></li>
+            <li ng-show="vm.questionDeleted" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.question_deleted"></span>
+            <ul style="padding-left: 15px">
+                <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
+                    <p style="margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.question_deleted"></p></li>
+                <li><span data-translate="artemisApp.quizExercise.re-evaluate.warning.statistic"></span></li>
+            </ul></li>
+            <li ng-show="vm.questionInvalid" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.question_invalid"></span>
+            <ul style="padding-left: 15px">
+                <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
+                    <p style="margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.question_invalid"></p></li>
+                <li><span data-translate="artemisApp.quizExercise.re-evaluate.warning.statistic"></span></li>
+            </ul></li>
+            <li ng-show="vm.scoringChanged" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.scoring_change"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
+                        <p style="margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p></li>
+                </ul></li>
+            <li ng-show="!(vm.answerInvalid || vm.answerDeleted || vm.answerCorrectess || vm.questionInvalid || vm.questionDeleted || vm.scoringChanged )"
+                style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.no_changes"></span></li>
+        </ul>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
+            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" ng-click="vm.confirmChange()" class="btn btn-success">
+            <span class="glyphicon glyphicon-ok-circle"></span>&nbsp;<span data-translate="artemisApp.quizExercise.re-evaluate.warning.confirm">Delete</span>
+        </button>
+    </div>
+</div>

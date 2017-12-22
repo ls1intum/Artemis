@@ -241,6 +241,30 @@
                     return currentStateData;
                 }]
             }
+        })
+        .state('quiz-exercise-re-evaluate.warning', {
+            parent: 'quiz-exercise-re-evaluate',
+            url: '{id}/warning',
+            data: {
+                authorities: ['ROLE_ADMIN']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/quiz/re-evaluate/quiz-re-evaluate-warning.html',
+                    controller: 'QuizReEvaluateWarningController',
+                    controllerAs: 'vm',
+                    size: 'md',
+                    resolve: {
+                        entity: ['QuizExercise', function(QuizExercise) {
+                            return QuizExercise.get({id : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('quiz-exercise-for-course', $state.params, {reload: true});
+                }, function() {
+                    $state.go('^');
+                });
+            }]
         });
     }
 

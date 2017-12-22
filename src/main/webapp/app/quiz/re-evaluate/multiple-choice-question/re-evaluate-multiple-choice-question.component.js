@@ -63,7 +63,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
     /**
      * set up answerOption editors
      */
-    function setUpAnswerEditors(){
+    function setUpAnswerEditors() {
     var answerEditor = new Array(vm.question.answerOptions.length);
     var i = 0;
     vm.question.answerOptions.forEach(function (answer) {
@@ -297,7 +297,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      * @param answer {answerOption} the answer, which will be reset
      */
     function resetAnswer(answer) {
-        for( var i = 0; i < backUpQuestion.answerOptions.length; i++){
+        for( var i = 0; i < backUpQuestion.answerOptions.length; i++) {
             if(backUpQuestion.answerOptions[i].id === answer.id) {
 
                 vm.question.answerOptions[i] = angular.copy(backUpQuestion.answerOptions[i]);
