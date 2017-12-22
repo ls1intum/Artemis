@@ -47,7 +47,7 @@ class QuizParticipationSimulation extends Simulation {
       * Selects random answers and adds submittedAnswers to the submission
       *
       * @param submissionString the submission as a JSON string
-      * @param questionsString the questions of the exercise as a JSON string
+      * @param questionsString  the questions of the exercise as a JSON string
       * @return the submission including the submittedAnswers as a JSON string
       */
     def selectRandomAnswers(submissionString: String, questionsString: String): String = {
@@ -118,7 +118,7 @@ class QuizParticipationSimulation extends Simulation {
             .get("/api/account")
             .headers(headers_http_authenticated)
             .check(status.is(200)))
-        .pause(10 seconds)
+        .pause(30 seconds)
 
     val startQuiz: ChainBuilder = exec(
         http("Get quiz")
@@ -132,31 +132,32 @@ class QuizParticipationSimulation extends Simulation {
             .check(status.is(200))
             .check(bodyString.saveAs("submission"))
             .check(jsonPath("$.id").saveAs("submissionID"))).exitHereIfFailed
-        .pause(2 seconds, 5 seconds)
+        .pause(10 seconds, 5 seconds)
 
     val workOnQuiz: ChainBuilder = exec(
         ws("Connect WebSocket")
-            .open("/websocket/tracker")
-        // NOTE: There seems to be no way of setting the headers for a websocket open in Gatling 2.3.0
-        // TODO: Find a way to get around this
-//            .headers(headers_http_authenticated)
-        ).exitHereIfFailed
+            .open("/websocket/tracker/websocket")
+    ).exitHereIfFailed
         .pause(5 seconds)
         .exec(ws("Connect STOMP")
             .sendText("[\"CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000\"]")
-            .check(wsAwait.within(30 seconds).until(1)))
+            .check(wsAwait.within(10 seconds).until(1)))
         // TODO: get participation id and subscribe to participation
         //        .exec(ws("Subscribe Participation")
         //            .sendText("[\"SUBSCRIBE\nid:sub-1\ndestination:/topic/participation/13020/newResults\n\n\u0000\"]"))
         .exec(ws("Subscribe Submission")
             .sendText("[\"SUBSCRIBE\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000\"]"))
         .pause(5 seconds)
-        .exec(ws("Send Answers")
-            .sendText(session => "[\"SEND\ndestination:/topic/quizSubmissions/${submissionID}/save\n\n"+ selectRandomAnswers(session("submission").as[String], session("questions").as[String]) +"\u0000\"]")
-            .check(wsAwait.within(30 seconds).until(1)))
+        .repeat(60) {
+            exec(
+                ws("Send Answers")
+                    .sendText(session => "[\"SEND\ndestination:/topic/quizSubmissions/${submissionID}/save\n\n" + selectRandomAnswers(session("submission").as[String], session("questions").as[String]) + "\u0000\"]")
+                    .check(wsListen.within(10 seconds).until(1)))
+                .pause(2 seconds)
+        }
 
     val submitQuiz: ChainBuilder =
-        pause(20 seconds)
+        pause(5 seconds)
             .exec(http("Submit Quiz")
                 .put("/api/quiz-submissions")
                 .headers(headers_http_authenticated)
@@ -164,14 +165,12 @@ class QuizParticipationSimulation extends Simulation {
                 .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
                 .check(status.is(200)))
 
-    // TODO: add websocket to scenario (would fail now, because we haven't figured out how to add the headers to ws().open()
-
-    val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, startQuiz)
-    val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, startQuiz, submitQuiz)
+    val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, startQuiz, workOnQuiz)
+    val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, startQuiz, workOnQuiz, submitQuiz)
 
     setUp(
-        usersNoSubmit.inject(rampUsers(250) over (20 seconds)),
-        usersSubmit.inject(rampUsers(250) over (20 seconds))
+        usersNoSubmit.inject(rampUsers(200) over (30 seconds)),
+        usersSubmit.inject(rampUsers(300) over (30 seconds))
     ).protocols(httpConf)
 
 }
