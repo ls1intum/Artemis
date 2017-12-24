@@ -47,11 +47,11 @@
     "angular-chart.js": "^1.1.1",
     "hone": "^1.0.3",
     "tether": "^1.4.3",
-    "angular-ui-tour": "^0.9.2",
     "ngSmoothScroll": "^2.0.0",
     "angular-hotkeys": "cfp-angular-hotkeys#^1.7.0",
     "angular-scroll": "^1.0.2",
-    "angular-bind-html-compile": "^1.4.1"
+    "angular-bind-html-compile": "^1.4.1",
+    "angular-ui-tour": "^0.9.2"
   },
   "devDependencies": {
     "angular-mocks": "1.5.8"
