@@ -118,7 +118,7 @@ class QuizParticipationSimulation extends Simulation {
             .get("/api/account")
             .headers(headers_http_authenticated)
             .check(status.is(200)))
-        .pause(30 seconds)
+        .pause(30 seconds, 40 seconds)
 
     val startQuiz: ChainBuilder = exec(
         http("Get quiz")
@@ -132,32 +132,30 @@ class QuizParticipationSimulation extends Simulation {
             .check(status.is(200))
             .check(bodyString.saveAs("submission"))
             .check(jsonPath("$.id").saveAs("submissionID"))).exitHereIfFailed
-        .pause(10 seconds, 5 seconds)
+        .pause(5 seconds)
 
     val workOnQuiz: ChainBuilder = exec(
         ws("Connect WebSocket")
-            .open("/websocket/tracker/websocket")
-    ).exitHereIfFailed
+            .open("/websocket/tracker/websocket")).exitHereIfFailed
         .pause(5 seconds)
         .exec(ws("Connect STOMP")
-            .sendText("[\"CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000\"]")
+            .sendText("CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000")
             .check(wsAwait.within(10 seconds).until(1)))
         // TODO: get participation id and subscribe to participation
         //        .exec(ws("Subscribe Participation")
         //            .sendText("[\"SUBSCRIBE\nid:sub-1\ndestination:/topic/participation/13020/newResults\n\n\u0000\"]"))
         .exec(ws("Subscribe Submission")
-            .sendText("[\"SUBSCRIBE\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000\"]"))
+            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000"))
         .pause(5 seconds)
-        .repeat(60) {
-            exec(
-                ws("Send Answers")
-                    .sendText(session => "[\"SEND\ndestination:/topic/quizSubmissions/${submissionID}/save\n\n" + selectRandomAnswers(session("submission").as[String], session("questions").as[String]) + "\u0000\"]")
-                    .check(wsListen.within(10 seconds).until(1)))
-                .pause(2 seconds)
+        .repeat(30) {
+            exec(ws("Send Answers")
+                .sendText(session => "SEND\ndestination:/topic/quizSubmissions/${submissionID}/save\n\n" + selectRandomAnswers(session("submission").as[String], session("questions").as[String]) + "\u0000")
+                .check(wsListen.within(10 seconds).until(1)))
+                .pause(5 seconds)
         }
 
     val submitQuiz: ChainBuilder =
-        pause(5 seconds)
+        pause(5 seconds, 10 seconds)
             .exec(http("Submit Quiz")
                 .put("/api/quiz-submissions")
                 .headers(headers_http_authenticated)
