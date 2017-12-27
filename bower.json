@@ -23,6 +23,7 @@
     "bootstrap-sass": "3.3.7",
     "bootstrap-ui-datetime-picker": "2.4.3",
     "jquery": "3.1.0",
+    "jquery-ui": "1.12.1",
     "json3": "3.3.2",
     "messageformat": "0.3.1",
     "modernizr": "3.3.1",
@@ -43,7 +44,8 @@
     "angular-resizable": "https://github.com/Reklino/angular-resizable.git#bd77750c910f0cc85a774fba4f6df433a97fc53d",
     "showdown": "^1.7.6",
     "chart.js": "^2.7.0",
-    "angular-chart.js": "^1.1.1"
+    "angular-chart.js": "^1.1.1",
+    "angular-ui-sortable": "^0.18.0"
   },
   "devDependencies": {
     "angular-mocks": "1.5.8"

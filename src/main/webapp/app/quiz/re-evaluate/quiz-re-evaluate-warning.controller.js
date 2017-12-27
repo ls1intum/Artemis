@@ -45,7 +45,6 @@
             backUpQuiz = quiz;
 
             console.log(vm.quizExercise);
-            console.log(backUpQuiz);
 
             // question deleted?
             vm.questionDeleted = (backUpQuiz.questions.length !== vm.quizExercise.questions.length);

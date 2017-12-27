@@ -129,26 +129,6 @@
         }
 
         /**
-         * Updates the backUpQuiz and the vm.quizExercise with the result
-         *
-         * @param result {QuizExercise} the saved quizExercise-Object
-         */
-        function onSaveSuccess(result) {
-            vm.isSaving = false;
-            prepareEntity(result);
-            backUpQuiz = angular.copy(vm.quizExercise);
-            vm.quizExercise = result;
-        }
-
-        /**
-         * Send alert if the saving failed
-         */
-        function onSaveError() {
-            alert("Saving Quiz Failed! Please try again later.");
-            vm.isSaving = false;
-        }
-
-        /**
          * Makes sure the entity is well formed and its fields are of the correct types
          * @param entity
          */

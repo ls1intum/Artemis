@@ -14,6 +14,7 @@
             'ngFileSaver',
             'ui.bootstrap',
             'ui.bootstrap.datetimepicker',
+            'ui.sortable',
             'ui.router',
             'infinite-scroll',
             // jhipster-needle-angularjs-add-module JHipster will add new module here

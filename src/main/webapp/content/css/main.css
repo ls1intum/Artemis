@@ -8611,8 +8611,11 @@ table.answer-options-result {
   color: blue; }
 
 .answer-border {
-  padding: .0em .0em .0em;
+  padding: 10px;
   border-radius: .1em;
+  border-width: 1px;
+  border-style: solid;
+  border-color: lightgrey;
   height: auto; }
 
 html {

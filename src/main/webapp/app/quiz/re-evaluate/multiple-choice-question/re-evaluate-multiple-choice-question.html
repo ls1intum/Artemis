@@ -59,7 +59,7 @@
     ></button>
     </div>
     <div class="markupEditorArea">
-        <div class="question-content">
+        <div class="question-content" style="padding-bottom: 12px">
             <div class="input-group" style="height: 45px">
                 <div id="{{'question-content-editor-' + vm.random}}" class="form-control"></div>
                 <span class="input-group-btn">
@@ -70,17 +70,18 @@
             </div>
         </div>
     </div>
-    <div class="answer-border">
-        <div class="answer"
+    <div class="answer-border" ui-sortable="vm.sortableOptions">
+        <!--ng-model="vm.question.answerOptions"-->
+
+        <div class="answer-border"
              ng-repeat="answer in vm.question.answerOptions">
-            <div class="form-group">
-                <span class="re-evaluate-button text-center" style="width: 5%; float: left">
-                    <i class="fa fa-arrows-v fa-2x"></i>
-                </span>
-                <div class="text-left" style="height: 45px; width: 70%; float: left">
+            <div class="question-options">
+            <span class="handle re-evaluate-button text-center" style="width: 5%">
+                    <i class="fa fa-arrows-v fa-2x"></i></span>
+                <div class="text-left" style="height: 45px; width: 65%">
                     <span id="{{'answer-content-editor-' + answer.id}}" class="form-control "></span>
                 </div>
-                <div class="form-group text-center" style="width: 25%; float: left">
+                <div class="form-group text-center" style="width: 25%">
                     <button
                         class="btn btn-default"
                         data-ng-hide="vm.isAnswerInvalid(answer)"
@@ -102,7 +103,6 @@
                 </div>
             </div>
         </div>
-        <br>
     </div>
 </div>
 

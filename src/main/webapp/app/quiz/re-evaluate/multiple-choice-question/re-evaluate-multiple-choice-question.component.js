@@ -1,6 +1,6 @@
-ReEvaluateMultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope'];
+ReEvaluateMultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$timeout'];
 
-function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartialLoader, $scope) {
+function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartialLoader, $scope, $timeout) {
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('multipleChoiceQuestion');
@@ -32,8 +32,24 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
     vm.setAnswerInvalid = setAnswerInvalid;
     vm.isAnswerInvalid = isAnswerInvalid;
 
+    vm.sortableOptions = {
+        handle: '.handle',
+        ignore: '.question-options',
+        axis: "y",
+        tolerance: 'pointer',
+        start: function (e, ui) {
+            ui.item.startPos = ui.item.index();
+        },
+        stop: function (e, ui) {
+            var temp = vm.question.answerOptions.splice(ui.item.startPos, 1);
+            vm.question.answerOptions.splice(ui.item.index(), 0, temp[0]);
+            $scope.$apply();
+        }
+    };
+
     setUpQuestionEditor();
     setUpAnswerEditors();
+
     /**
      * set up Question text editor
      */
@@ -64,36 +80,37 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      * set up answerOption editors
      */
     function setUpAnswerEditors() {
-    var answerEditor = new Array(vm.question.answerOptions.length);
-    var i = 0;
-    vm.question.answerOptions.forEach(function (answer) {
-        requestAnimationFrame(function () {
-            answerEditor[i] = ace.edit("answer-content-editor-" + answer.id);
-            answerEditor[i].setTheme("ace/theme/chrome");
-            answerEditor[i].getSession().setMode("ace/mode/markdown");
-            answerEditor[i].renderer.setShowGutter(false);
-            answerEditor[i].renderer.setPadding(10);
-            answerEditor[i].renderer.setScrollMargin(8, 8);
-            answerEditor[i].setOptions({
-                autoScrollEditorIntoView: true
-            });
-            answerEditor[i].setHighlightActiveLine(false);
-            answerEditor[i].setShowPrintMargin(false);
+        var answerEditor;
+        var i = 0;
+        vm.question.answerOptions.forEach(function (answer) {
+            requestAnimationFrame(function () {
+                answerEditor = ace.edit("answer-content-editor-" + answer.id);
+                answerEditor.setTheme("ace/theme/chrome");
+                answerEditor.getSession().setMode("ace/mode/markdown");
+                answerEditor.renderer.setShowGutter(false);
+                answerEditor.renderer.setPadding(10);
+                answerEditor.renderer.setScrollMargin(8, 8);
+                answerEditor.setOptions({
+                    autoScrollEditorIntoView: true
+                });
+                answerEditor.setHighlightActiveLine(false);
+                answerEditor.setShowPrintMargin(false);
 
-            generateAnswerMarkdown(answer, i);
+                generateAnswerMarkdown(answer);
 
-            answerEditor[i].on("blur", function () {
-                var answerOptionEditor = ace.edit("answer-content-editor-" + answer.id);
-                parseAnswerMarkdown(answerOptionEditor.getValue(), answer);
-                vm.onUpdated();
-                $scope.$apply();
+                answerEditor.on("blur", function () {
+                    var answerOptionEditor = ace.edit("answer-content-editor-" + answer.id);
+                    parseAnswerMarkdown(answerOptionEditor.getValue(), answer);
+                    vm.onUpdated();
+                    $scope.$apply();
+                });
             });
             i++;
+
         });
 
-    });
-
     }
+
     /**
      * generate the markdown text for this question
      *
@@ -123,9 +140,8 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      * 2. If hint and/or explanation exist, they are added after the text with a linebreak and tab in front of them
      *
      * @param answer {answerOption}  is the AnswerOption, which the Markdown-field presents
-     * @param i {number} index of the answer in question.answerOptions
      */
-    function generateAnswerMarkdown(answer, i) {
+    function generateAnswerMarkdown(answer) {
         var answerEditor = ace.edit("answer-content-editor-" + answer.id);
         var markdownText = (
             (answer.isCorrect ? "[x]" : "[ ]") + " " +
@@ -195,35 +211,35 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
         // first split by [], [ ], [x] and [X]
         var answerParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
         // work on answer options
-            // find the box (text in-between the parts)
-            var answerOption = {};
-            var answerOptionText = answerParts[1];
-            var startOfThisPart = text.indexOf(answerOptionText);
-            var box = text.substring(0, startOfThisPart);
-            // check if box says this answer option is correct or not
-            answer.isCorrect = (box === "[x]" || box === "[X]");
+        // find the box (text in-between the parts)
+        var answerOption = {};
+        var answerOptionText = answerParts[1];
+        var startOfThisPart = text.indexOf(answerOptionText);
+        var box = text.substring(0, startOfThisPart);
+        // check if box says this answer option is correct or not
+        answer.isCorrect = (box === "[x]" || box === "[X]");
 
-            // parse this answerOption
-            answerParts = answerOptionText.split(/\[\-e\]|\[\-h\]/g);
-            answer.text = answerParts[0].trim();
-            if (answerOptionText.indexOf("[-h]") !== -1 && answerOptionText.indexOf("[-e]") !== -1) {
-                if (answerOptionText.indexOf("[-h]") < answerOptionText.indexOf("[-e]")) {
-                    answer.hint = answerParts[1].trim();
-                    answer.explanation = answerParts[2].trim();
-                } else {
-                    answer.hint = answerParts[2].trim();
-                    answer.explanation = answerParts[1].trim();
-                }
-            } else if (answerOptionText.indexOf("[-h]") !== -1) {
+        // parse this answerOption
+        answerParts = answerOptionText.split(/\[\-e\]|\[\-h\]/g);
+        answer.text = answerParts[0].trim();
+        if (answerOptionText.indexOf("[-h]") !== -1 && answerOptionText.indexOf("[-e]") !== -1) {
+            if (answerOptionText.indexOf("[-h]") < answerOptionText.indexOf("[-e]")) {
                 answer.hint = answerParts[1].trim();
-                answer.expalanation = null;
-            } else if (answerOptionText.indexOf("[-e]") !== -1) {
-                answer.hint = null;
-                answer.explanation = answerParts[1].trim();
+                answer.explanation = answerParts[2].trim();
             } else {
-                answer.hint = null;
-                answer.explanation = null;
+                answer.hint = answerParts[2].trim();
+                answer.explanation = answerParts[1].trim();
             }
+        } else if (answerOptionText.indexOf("[-h]") !== -1) {
+            answer.hint = answerParts[1].trim();
+            answer.expalanation = null;
+        } else if (answerOptionText.indexOf("[-e]") !== -1) {
+            answer.hint = null;
+            answer.explanation = answerParts[1].trim();
+        } else {
+            answer.hint = null;
+            answer.explanation = null;
+        }
     }
 
     /**
@@ -267,6 +283,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
     function resetQuestionTitle() {
         vm.question.title = angular.copy(backUpQuestion.title);
     }
+
     /**
      * Resets the question text
      */
@@ -286,51 +303,32 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
         vm.question.randomizeOrder = angular.copy(backUpQuestion.randomizeOrder);
         vm.question.scoringType = angular.copy(backUpQuestion.scoringType);
         vm.question.answerOptions = angular.copy(backUpQuestion.answerOptions);
-        vm.question.answerOptions.forEach( function (answer) {
-           resetAnswer(answer);
+        vm.question.answerOptions.forEach(function (answer) {
+            resetAnswer(answer);
         });
         resetQuestionText();
     }
+
     /**
      * Resets the whole answer
      *
      * @param answer {answerOption} the answer, which will be reset
      */
     function resetAnswer(answer) {
-        for( var i = 0; i < backUpQuestion.answerOptions.length; i++) {
-            if(backUpQuestion.answerOptions[i].id === answer.id) {
+        for (var i = 0; i < backUpQuestion.answerOptions.length; i++) {
+            if (backUpQuestion.answerOptions[i].id === answer.id) {
 
-                vm.question.answerOptions[i] = angular.copy(backUpQuestion.answerOptions[i]);
-                answer = vm.question.answerOptions[i];
+                //find correct answer if they have another order
+                vm.question.answerOptions[vm.question.answerOptions.indexOf(answer)] = angular.copy(backUpQuestion.answerOptions[i]);
+                answer = angular.copy(backUpQuestion.answerOptions[i]);
 
                 // reset answer editor
-                requestAnimationFrame(function () {
-                    var answerEditor = ace.edit("answer-content-editor-" + answer.id);
-                    answerEditor.setTheme("ace/theme/chrome");
-                    answerEditor.getSession().setMode("ace/mode/markdown");
-                    answerEditor.renderer.setShowGutter(false);
-                    answerEditor.renderer.setPadding(10);
-                    answerEditor.renderer.setScrollMargin(8, 8);
-                    answerEditor.setOptions({
-                        autoScrollEditorIntoView: true
-                    });
-                    answerEditor.setHighlightActiveLine(false);
-                    answerEditor.setShowPrintMargin(false);
-
-                    generateAnswerMarkdown(answer, vm.question.answerOptions.indexOf(answer));
-
-                    answerEditor.on("blur", function () {
-                        var answerOptionEditor = ace.edit("answer-content-editor-" + answer.id);
-                        parseAnswerMarkdown(answerOptionEditor.getValue(), answer);
-                        vm.onUpdated();
-                        $scope.$apply();
-                    });
-
-                });
+                setUpAnswerEditors();
 
             }
         }
     }
+
     /**
      * Delete the answer
      *
@@ -338,8 +336,8 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      */
     function deleteAnswer(answer) {
         var index = vm.question.answerOptions.indexOf(answer);
-        vm.question.answerOptions.splice(index,1);
-        vm.onUpdated();
+        vm.question.answerOptions.splice(index, 1);
+
     }
 
     /**
