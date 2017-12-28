@@ -48,7 +48,6 @@
     "hone": "^1.0.3",
     "tether": "^1.4.3",
     "ngSmoothScroll": "^2.0.0",
-    "angular-hotkeys": "cfp-angular-hotkeys#^1.7.0",
     "angular-scroll": "^1.0.2",
     "angular-bind-html-compile": "^1.4.1",
     "angular-ui-tour": "^0.9.2"
