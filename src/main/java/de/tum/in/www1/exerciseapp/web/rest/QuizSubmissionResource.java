@@ -264,7 +264,7 @@ public class QuizSubmissionResource {
                 // remove the previous Result from the QuestionStatistics
                 if (previousResult != null) {
                     for (Question question: quiz.getQuestions()) {
-                        question.getQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
+                        question.getQuestionStatistic().removeOldResult(((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
                         questionStatisticRepository.save(question.getQuestionStatistic());
                     }
                 }
@@ -307,7 +307,7 @@ public class QuizSubmissionResource {
         Result oldResult = null;
 
         for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
-            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) &&
+            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult) &&
                 (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
                 oldResult = result;
             }
