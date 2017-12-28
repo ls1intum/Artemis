@@ -10,6 +10,8 @@ var gulp = require('gulp'),
 
 var handleErrors = require('./handle-errors');
 
+var series = require('stream-series');
+
 var config = require('./config');
 
 module.exports = {
@@ -29,9 +31,11 @@ function app() {
 }
 
 function vendor() {
+    var angularStream = gulp.src(bowerFiles({filter: ['**/angular.*']}), {read: false});
+    var vendorStream = gulp.src(bowerFiles({filter: ['**/!(angular).*']}), {read: false});
+
     var stream = gulp.src(config.app + 'index.html')
-        .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(inject(gulp.src(bowerFiles(), {read: false}), {
+        .pipe(inject(series(angularStream, vendorStream), {
             name: 'bower',
             relative: true
         }))
@@ -39,7 +43,7 @@ function vendor() {
 
     return es.merge(stream, gulp.src(config.sassVendor)
         .pipe(plumber({errorHandler: handleErrors}))
-        .pipe(inject(gulp.src(bowerFiles({filter:['**/*.{scss,sass}']}), {read: false}), {
+        .pipe(inject(gulp.src(bowerFiles({filter: ['**/*.{scss,sass}']}), {read: false}), {
             name: 'bower',
             relative: true
         }))
