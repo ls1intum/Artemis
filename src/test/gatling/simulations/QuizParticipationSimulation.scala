@@ -101,7 +101,7 @@ class QuizParticipationSimulation extends Simulation {
             .get("/api/account")
             .headers(headers_http)
             .check(status.is(401))
-            .check(headerRegex("Set-Cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
+            .check(headerRegex("Set-Cookie", "XSRF-TOKEN=([^;]*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
         .feed(feeder)
         .pause(2 seconds)
         .exec(http("Authentication")
@@ -112,7 +112,7 @@ class QuizParticipationSimulation extends Simulation {
             .formParam("remember-me", "true")
             .formParam("submit", "Login")
             .check(status.is(200))
-            .check(headerRegex("Set-Cookie", "XSRF-TOKEN=(.*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
+            .check(headerRegex("Set-Cookie", "XSRF-TOKEN=([^;]*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
         .pause(2 seconds)
         .exec(http("Authenticated request")
             .get("/api/account")
