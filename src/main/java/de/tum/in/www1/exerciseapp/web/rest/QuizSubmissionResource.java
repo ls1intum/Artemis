@@ -254,25 +254,25 @@ public class QuizSubmissionResource {
             // critical part locked with Semaphore statisticSemaphore
             try {
                 statisticSemaphore.acquire();
-                QuizExercise quiz = quizExerciseRepository.findOne(result.getParticipation().getExercise().getId());
+                QuizExercise quiz = quizExerciseRepository.findOne(participation.getExercise().getId());
+
+                for (Question question: quiz.getQuestions()) {
+                    if(previousResult != null) {
+                        // remove the previous Result from the QuestionStatistics
+                        question.getQuestionStatistic().removeOldResult(((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
+                    }
+                    // add the new Result to QuestionStatistics
+                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
+                    questionStatisticRepository.save(question.getQuestionStatistic());
+                }
+
                 // add the new Result to the quizPointStatistic and remove the previous one
                 if (previousResult != null) {
                     quiz.getQuizPointStatistic().removeOldResult(previousResult.getScore(), true);
                 }
                 quiz.getQuizPointStatistic().addResult(result.getScore(), true);
                 quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
-                // remove the previous Result from the QuestionStatistics
-                if (previousResult != null) {
-                    for (Question question: quiz.getQuestions()) {
-                        question.getQuestionStatistic().removeOldResult(((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
-                        questionStatisticRepository.save(question.getQuestionStatistic());
-                    }
-                }
-                // add the new Result to QuestionStatistics
-                for (Question question: quiz.getQuestions()) {
-                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
-                    questionStatisticRepository.save(question.getQuestionStatistic());
-                }
+
             } catch (InterruptedException e) {
                 //TO-DO
             } finally {
