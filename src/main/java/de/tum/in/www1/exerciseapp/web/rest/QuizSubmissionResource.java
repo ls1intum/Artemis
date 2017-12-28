@@ -23,6 +23,7 @@ import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 /**
  * REST controller for managing QuizSubmission.
@@ -34,6 +35,7 @@ public class QuizSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
 
     private static final String ENTITY_NAME = "quizSubmission";
+    private static Semaphore statisticSemaphore = new Semaphore(1);
 
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizExerciseRepository quizExerciseRepository;
@@ -248,24 +250,35 @@ public class QuizSubmissionResource {
             result = resultRepository.save(result);
             // get previous Result
             Result previousResult = getPreviousResult(result);
-            // add the new Result to the quizPointStatistic and remove the previous one
-            if(previousResult != null) {
-                ((QuizExercise) previousResult.getParticipation().getExercise()).getQuizPointStatistic().removeOldResult(previousResult.getScore(),true);
-            }
-            ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(),true);
-            quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
-            // remove the previous Result from the QuestionStatistics
-            if(previousResult != null) {
-                for(SubmittedAnswer submittedAnswer: ((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswers()) {
-                    submittedAnswer.getQuestion().getQuestionStatistic().removeOldResult(submittedAnswer, true);
-                    questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
+
+            // critical part locked with Semaphore statisticSemaphore
+            try {
+                statisticSemaphore.acquire();
+                QuizExercise quiz = quizExerciseRepository.findOne(result.getParticipation().getExercise().getId());
+                // add the new Result to the quizPointStatistic and remove the previous one
+                if (previousResult != null) {
+                    quiz.getQuizPointStatistic().removeOldResult(previousResult.getScore(), true);
                 }
+                quiz.getQuizPointStatistic().addResult(result.getScore(), true);
+                quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
+                // remove the previous Result from the QuestionStatistics
+                if (previousResult != null) {
+                    for (Question question: quiz.getQuestions()) {
+                        question.getQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
+                        questionStatisticRepository.save(question.getQuestionStatistic());
+                    }
+                }
+                // add the new Result to QuestionStatistics
+                for (Question question: quiz.getQuestions()) {
+                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
+                    questionStatisticRepository.save(question.getQuestionStatistic());
+                }
+            } catch (InterruptedException e) {
+                //TO-DO
+            } finally {
+                statisticSemaphore.release();
             }
-            // add the new Result to QuestionStatistics
-            for(SubmittedAnswer submittedAnswer: ((QuizSubmission)result.getSubmission()).getSubmittedAnswers()) {
-                submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
-                questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
-            }
+
             // notify statistics about new Result
             statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
         }
