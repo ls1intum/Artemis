@@ -60,7 +60,8 @@
         vm.pendingChanges = pendingChanges;
         vm.validQuiz = validQuiz;
         vm.openCalendar = openCalendar;
-        vm.addQuestion = addQuestion;
+        vm.addMultipleChoiceQuestion = addMultipleChoiceQuestion;
+        vm.addDragAndDropQuestion = addDragAndDropQuestion;
         vm.deleteQuestion = deleteQuestion;
         vm.onQuestionUpdated = onQuestionUpdated;
         vm.save = save;
@@ -92,9 +93,9 @@
         }
 
         /**
-         * Add an empty question to the quiz
+         * Add an empty multiple choice question to the quiz
          */
-        function addQuestion() {
+        function addMultipleChoiceQuestion() {
             vm.quizExercise.questions = vm.quizExercise.questions.concat([{
                 title: "",
                 text: "Enter your question text here",
@@ -112,6 +113,22 @@
                         text: "Enter an incorrect answer option here"
                     }
                 ]
+            }]);
+        }
+
+        /**
+         * Add an empty drag and drop question to the quiz
+         */
+        function addDragAndDropQuestion() {
+            vm.quizExercise.questions = vm.quizExercise.questions.concat([{
+                title: "",
+                text: "Enter your question text here",
+                scoringType: "ALL_OR_NOTHING",
+                randomizeOrder: false,
+                score: 1,
+                type: "drag-and-drop",
+                dropLocations: [],
+                dragItems: []
             }]);
         }
 
