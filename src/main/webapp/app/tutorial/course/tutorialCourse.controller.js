@@ -2,9 +2,9 @@ angular
     .module('artemisApp')
     .controller('TutorialCourseController', TutorialCourseController);
 
-TutorialCourseController.$inject = ['$scope', '$q', 'Modal', 'Course', 'Cookie', 'uiTourService', 'CourseExercises'];
+TutorialCourseController.$inject = ['$scope', '$q', '$cookies', 'Modal', 'Course', 'uiTourService', 'CourseExercises'];
 
-function TutorialCourseController($scope, $q, Modal, Course, Cookie, uiTourService, CourseExercises) {
+function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourService, CourseExercises) {
 
     var self = this;
 
@@ -15,9 +15,9 @@ function TutorialCourseController($scope, $q, Modal, Course, Cookie, uiTourServi
     askForTutorial();
 
     function askForTutorial() {
-        var tutorialState = Cookie.getFromCookie("tutorialDone");
+        var tutorialState = $cookies.get("tutorialDone");
 
-        if (tutorialState == "") {
+        if (!tutorialState) {
             var modalOptions = {
                 closeButtonText: 'Skip',
                 actionsButtonText: 'Do Tutorial!',
@@ -27,12 +27,12 @@ function TutorialCourseController($scope, $q, Modal, Course, Cookie, uiTourServi
 
             Modal.showModal({}, modalOptions).then(function (result) {
                 if (result.result == 'ok') {
-                    Cookie.setInCookie("tutorialDone", 'started', 365);
+                   $cookies.put("tutorialDone", 'started');
                     tutorialState = 'started';
                     self.tour = uiTourService.getTour();
                     self.tour.start();
                 } else {
-                    Cookie.setInCookie("tutorialDone", 'skipped', 365);
+                    $cookies.put("tutorialDone", 'skipped');
                     tutorialState = 'skipped';
                 }
             });
