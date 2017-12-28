@@ -16,7 +16,7 @@ class QuizParticipationSimulation extends Simulation {
     // TODO replace exerciseID with id of dynamically created exercise
     val exerciseId = 118
 
-    val feeder = Iterator.tabulate(500)(i => Map(
+    val feeder: Iterator[Map[String, String]] = Iterator.tabulate(500)(i => Map(
         "username" -> ("<USERNAME>"),   // TODO: generate real username for each value of i (removed for security)
         "password" -> ("<PASSWORD>")    // TODO: generate real password for each value of i (removed for security)
     ))
@@ -147,7 +147,7 @@ class QuizParticipationSimulation extends Simulation {
         .exec(ws("Subscribe Submission")
             .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000"))
         .pause(5 seconds)
-        .repeat(30) {
+        .repeat(20) {
             exec(ws("Send Answers")
                 .sendText(session => "SEND\ndestination:/topic/quizSubmissions/${submissionID}/save\n\n" + selectRandomAnswers(session("submission").as[String], session("questions").as[String]) + "\u0000")
                 .check(wsListen.within(10 seconds).until(1)))
@@ -167,8 +167,8 @@ class QuizParticipationSimulation extends Simulation {
     val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, startQuiz, workOnQuiz, submitQuiz)
 
     setUp(
-        usersNoSubmit.inject(rampUsers(200) over (30 seconds)),
-        usersSubmit.inject(rampUsers(300) over (30 seconds))
+        usersNoSubmit.inject(rampUsers(100) over (30 seconds)),
+        usersSubmit.inject(rampUsers(100) over (30 seconds))
     ).protocols(httpConf)
 
 }
