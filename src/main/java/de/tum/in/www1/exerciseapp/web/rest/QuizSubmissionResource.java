@@ -307,7 +307,7 @@ public class QuizSubmissionResource {
         Result oldResult = null;
 
         for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
-            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult) &&
+            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.getId().equals(newResult.getId()) &&
                 (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
                 oldResult = result;
             }
