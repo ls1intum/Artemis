@@ -17,8 +17,8 @@
              tour-step-backdrop-border-radius="10"
         >
 
-            <button class="btn btn-primary btn-sm" ng-show="tutorial.started" disabled>Continue Tutorial</button>
-            <button class="btn btn-primary btn-sm" ng-show="tutorial.skipped" disabled>Start Tutorial</button>
+            <button class="btn btn-primary btn-sm" ng-show="tutorial.started || tutorial.skipped" ng-click="continueTutorial()">Continue Tutorial</button>
+            <button class="btn btn-primary btn-sm" ng-show="tutorial.finished" ng-click="startTutorial()">Start Tutorial</button>
 
             <div ng-if="tutorial.loaded">
                <!-- <exercise-list  course="tutorial.course" filter-by-exercise-id=""></exercise-list>-->

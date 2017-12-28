@@ -10,6 +10,7 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
 
     self.loaded=false;
     self.course = {};
+    self.tour = {};
 
     loadTutorial();
     askForTutorial();
@@ -29,8 +30,7 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
                 if (result.result == 'ok') {
                    $cookies.put("tutorialDone", 'started');
                     tutorialState = 'started';
-                    self.tour = uiTourService.getTour();
-                    self.tour.start();
+                    doTutorial();
                 } else {
                     $cookies.put("tutorialDone", 'skipped');
                     tutorialState = 'skipped';
@@ -59,4 +59,32 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
         });
     };
 
+    $scope.startTutorial = function () {
+        doTutorial();
+    };
+
+    $scope.continueTutorial = function () {
+        doTutorial($cookies.getObject('tutorialStep'));
+    }
+
+    function doTutorial(step){
+        var tour = uiTourService.getTour();
+
+        if(step){
+            tour.startAt(step);
+        }else{
+            tour.start();
+        }
+
+        tour.on('ended', function (data) {
+            tutorialState = "finished";
+            $cookies.put("tutorialDone", 'finished');
+        });
+
+        tour.on('paused', function (data) {
+            console.log(data);
+            $cookies.putObject('tutorialStep', data.order);
+            $cookies.put("tutorialDone", 'skipped');
+        })
+    };
 }
