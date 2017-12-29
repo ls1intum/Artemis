@@ -20,7 +20,7 @@ import java.util.Objects;
     discriminatorType=DiscriminatorType.STRING
 )
 @DiscriminatorValue(value="S")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public abstract class Statistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
