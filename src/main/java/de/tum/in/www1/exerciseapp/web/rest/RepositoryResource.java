@@ -5,6 +5,7 @@ import de.tum.in.www1.exerciseapp.domain.File;
 import de.tum.in.www1.exerciseapp.domain.Participation;
 import de.tum.in.www1.exerciseapp.domain.Repository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
+import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
 import de.tum.in.www1.exerciseapp.service.GitService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
@@ -36,21 +37,21 @@ import java.util.*;
  */
 @RestController
 @RequestMapping({"/api", "/api_basic"})
-@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class RepositoryResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
 
     private final ParticipationService participationService;
+    private final AuthorizationCheckService authCheckService;
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<GitService> gitService;
 
-    private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-    private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
-
-    public RepositoryResource(ParticipationService participationService, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+    public RepositoryResource(ParticipationService participationService, AuthorizationCheckService authCheckService,
+                              Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
         this.participationService = participationService;
+        this.authCheckService = authCheckService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
     }
@@ -65,10 +66,12 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{id}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasPermission(#id, 'Repository', 'read')")
     public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to files for Participation : {}", id);
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -98,15 +101,16 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    @PreAuthorize("hasPermission(#id, 'Repository', 'read')")
     public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
         Optional<File> file = gitService.get().getFileByName(repository, filename);
@@ -137,15 +141,16 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @PostMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasPermission(#id, 'Repository', 'update')")
     public ResponseEntity<Void> createFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to create file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
         if(gitService.get().getFileByName(repository, filename).isPresent()) {
@@ -182,15 +187,16 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @PutMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasPermission(#id, 'Repository', 'update')")
     public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to update file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
         Optional<File> file = gitService.get().getFileByName(repository, filename);
@@ -220,15 +226,15 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @DeleteMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasPermission(#id, 'Repository', 'update')")
     public ResponseEntity<Void> deleteFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to delete file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
         Optional<File> file = gitService.get().getFileByName(repository, filename);
@@ -258,15 +264,16 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @PostMapping(value = "/repository/{id}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasPermission(#id, 'Repository', 'commit')")
     public ResponseEntity<Void> updateFile(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to commit Repository for Participation : {}", id);
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
         gitService.get().stageAllChanges(repository);
@@ -287,15 +294,16 @@ public class RepositoryResource {
      * @throws GitAPIException
      */
     @GetMapping(value = "/repository/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasPermission(#id, 'Repository', 'read')")
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to get clean status for Repository for Participation : {}", id);
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-
         Repository repository = gitService.get().getOrCheckoutRepository(participation);
 
         RepositoryStatusDTO status = new RepositoryStatusDTO();
@@ -317,11 +325,12 @@ public class RepositoryResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/repository/{id}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
-    @PreAuthorize("hasPermission(#id, 'Repository', 'read')")
     public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get build log : {}", id);
-
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

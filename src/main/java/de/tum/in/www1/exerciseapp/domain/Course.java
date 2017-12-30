@@ -6,6 +6,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Objects;
@@ -32,6 +33,18 @@ public class Course implements Serializable {
 
     @Column(name = "teaching_assistant_group_name")
     private String teachingAssistantGroupName;
+
+    @Column(name = "instructor_group_name")
+    private String instructorGroupName;
+
+    @Column(name = "start_date")
+    private ZonedDateTime startDate;
+
+    @Column(name = "end_date")
+    private ZonedDateTime endDate;
+
+    @Column(name = "online_course")
+    private Boolean onlineCourse;
 
     @OneToMany(mappedBy = "course")
     @JsonIgnore
@@ -84,6 +97,58 @@ public class Course implements Serializable {
 
     public void setTeachingAssistantGroupName(String teachingAssistantGroupName) {
         this.teachingAssistantGroupName = teachingAssistantGroupName;
+    }
+
+    public String getInstructorGroupName() {
+        return instructorGroupName;
+    }
+
+    public Course instructorGroupName(String instructorGroupName) {
+        this.instructorGroupName = instructorGroupName;
+        return this;
+    }
+
+    public void setInstructorGroupName(String instructorGroupName) {
+        this.instructorGroupName = instructorGroupName;
+    }
+
+    public ZonedDateTime getStartDate() {
+        return startDate;
+    }
+
+    public Course startDate(ZonedDateTime startDate) {
+        this.startDate = startDate;
+        return this;
+    }
+
+    public void setStartDate(ZonedDateTime startDate) {
+        this.startDate = startDate;
+    }
+
+    public ZonedDateTime getEndDate() {
+        return endDate;
+    }
+
+    public Course endDate(ZonedDateTime endDate) {
+        this.endDate = endDate;
+        return this;
+    }
+
+    public void setEndDate(ZonedDateTime endDate) {
+        this.endDate = endDate;
+    }
+
+    public Boolean isOnlineCourse() {
+        return onlineCourse;
+    }
+
+    public Course onlineCourse(Boolean onlineCourse) {
+        this.onlineCourse = onlineCourse;
+        return this;
+    }
+
+    public void setOnlineCourse(Boolean onlineCourse) {
+        this.onlineCourse = onlineCourse;
     }
 
     public Set<Exercise> getExercises() {
@@ -139,6 +204,10 @@ public class Course implements Serializable {
             ", title='" + getTitle() + "'" +
             ", studentGroupName='" + getStudentGroupName() + "'" +
             ", teachingAssistantGroupName='" + getTeachingAssistantGroupName() + "'" +
+            ", instructorGroupName='" + getInstructorGroupName() + "'" +
+            ", startDate='" + getStartDate() + "'" +
+            ", endDate='" + getEndDate() + "'" +
+            ", onlineCourse='" + isOnlineCourse() + "'" +
             "}";
     }
 }

@@ -13,7 +13,7 @@
                 parent: 'app',
                 url: '/course/{courseId}/exercise/{exerciseId}/dashboard',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
                     pageTitle: 'artemisApp.exercise.home.title'
                 },
                 views: {
@@ -40,7 +40,7 @@
                 parent: 'app',
                 url: '/course/{courseId}/dashboard',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
                     pageTitle: 'artemisApp.exercise.home.title'
                 },
                 views: {
@@ -62,7 +62,7 @@
                 parent: 'instructor-dashboard',
                 url: '/participation/{participationId}/result/new',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -96,7 +96,7 @@
                 parent: 'instructor-dashboard',
                 url: '/cleanup',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -120,7 +120,7 @@
             parent: 'instructor-dashboard',
             url: '/archive',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                 $uibModal.open({
