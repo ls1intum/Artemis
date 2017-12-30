@@ -14,7 +14,7 @@
                 url: '/participation',
                 contentContainerClass: 'container-fluid',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                     pageTitle: 'artemisApp.participation.home.title'
                 },
                 views: {
@@ -41,7 +41,7 @@
                 url: '/exercise/{exerciseId}/participation',
                 contentContainerClass: 'container-fluid',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                     pageTitle: 'artemisApp.participation.home.title'
                 },
                 views: {
@@ -67,7 +67,7 @@
                 parent: 'entity',
                 url: '/participation/{id}',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                     pageTitle: 'artemisApp.participation.detail.title'
                 },
                 views: {
@@ -99,7 +99,7 @@
                 parent: 'participation-detail',
                 url: '/detail/edit',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -155,7 +155,7 @@
                 parent: 'participation-for-exercise',
                 url: '/{id}/edit',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -181,7 +181,7 @@
                 parent: 'participation',
                 url: '/{id}/edit',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -206,7 +206,7 @@
                 parent: 'participation',
                 url: '/{id}/delete',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({
@@ -230,7 +230,7 @@
                 parent: 'participation-for-exercise',
                 url: '/{id}/delete',
                 data: {
-                    authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                    authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
                 },
                 onEnter: ['$stateParams', '$state', '$uibModal', function ($stateParams, $state, $uibModal) {
                     $uibModal.open({

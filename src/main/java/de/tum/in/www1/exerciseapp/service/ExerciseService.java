@@ -138,11 +138,6 @@ public class ExerciseService {
     @Transactional
     public void delete(Long id) {
         log.debug("Request to delete Exercise : {}", id);
-        Exercise exercise = exerciseRepository.findOne(id);
-
-        if (Optional.ofNullable(exercise).isPresent()) {
-            reset(exercise);
-        }
         exerciseRepository.delete(id);
     }
 

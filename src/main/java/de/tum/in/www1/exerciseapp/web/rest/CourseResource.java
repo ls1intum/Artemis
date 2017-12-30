@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.CourseService;
 
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
@@ -11,6 +12,7 @@ import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +22,8 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * REST controller for managing Course.
@@ -34,9 +38,11 @@ public class CourseResource {
     private static final String ENTITY_NAME = "course";
 
     private final CourseService courseService;
+    private final AuthorizationCheckService authCheckService;
 
-    public CourseResource(CourseService courseService) {
+    public CourseResource(CourseService courseService, AuthorizationCheckService authCheckService) {
         this.courseService = courseService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -89,11 +95,15 @@ public class CourseResource {
      * @return  the list of courses (the user has access to)
      */
     @GetMapping("/courses")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public List<Course> getAllCourses() {
         log.debug("REST request to get all Courses the user has access to");
-        return courseService.findAll();
+        List<Course> courses = courseService.findAll();
+        Stream<Course> userCourses = courses.stream().filter(
+           course -> authCheckService.isAuthorizedForCourse(course)
+        );
+        return userCourses.collect(Collectors.toList());
     }
 
     //TODO: create a second method for the administration of courses, so that in this case, courses are only visible to Admins and TAs of this course
@@ -105,11 +115,14 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
      */
     @GetMapping("/courses/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
         Course course = courseService.findOne(id);
+        if(!authCheckService.isAuthorizedForCourse(course)) {
+           return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
 
@@ -137,10 +150,14 @@ public class CourseResource {
      *  ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
      */
     @GetMapping("/courses/{courseId}/getAllCourseScoresOfCourseUsers")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId){
         log.debug("REST request to get courseScores from course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+        if(!authCheckService.isAuthorizedForCourse(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
 

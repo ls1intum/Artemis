@@ -13,7 +13,7 @@
             parent: 'entity',
             url: '/quiz-exercise',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                 pageTitle: 'artemisApp.quizExercise.home.title'
             },
             views: {
@@ -36,7 +36,7 @@
             parent: 'entity',
             url: '/course/{courseid}/quiz-exercise',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                 pageTitle: 'artemisApp.quizExercise.home.title'
             },
             views: {
@@ -62,7 +62,7 @@
             parent: 'quiz-exercise',
             url: '/course/{courseid}/quiz-exercise/edit/{id}',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             },
             views: {
                 'content@': {
@@ -96,7 +96,7 @@
             parent: 'quiz-exercise',
             url: '/course/{courseid}/quiz-exercise/new',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
             },
             views: {
                 'content@': {
@@ -139,7 +139,7 @@
             parent: 'quiz-exercise',
             url: '/{id}/edit',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({

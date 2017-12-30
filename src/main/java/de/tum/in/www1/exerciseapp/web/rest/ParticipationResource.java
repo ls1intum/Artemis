@@ -5,12 +5,10 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
-import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
-import de.tum.in.www1.exerciseapp.service.ExerciseService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
-import de.tum.in.www1.exerciseapp.service.VersionControlService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -26,7 +24,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,29 +36,26 @@ import java.util.Optional;
 public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
-
     private final ParticipationService participationService;
-
     private final ParticipationRepository participationRepository;
-
     private final ResultRepository resultRepository;
-
     private final ExerciseService exerciseService;
-
+    private final CourseService courseService;
+    private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
-
     private final Optional<VersionControlService> versionControlService;
 
     private static final String ENTITY_NAME = "participation";
 
-    private final GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-    private final GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
-
-    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, ResultRepository resultRepository, ExerciseService exerciseService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, CourseService courseService,
+                                 ResultRepository resultRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
+                                 Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationService = participationService;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.exerciseService = exerciseService;
+        this.courseService = courseService;
+        this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
     }
@@ -74,10 +68,13 @@ public class ParticipationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> createParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to save Participation : {}", participation);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (participation.getId() != null) {
             throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -96,11 +93,14 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the exercise, or with status 404 (Not Found)
      */
     @PostMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> initParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to init Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (Optional.ofNullable(exercise).isPresent()) {
             Participation participation = participationService.init(exercise, principal.getName());
             return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
@@ -119,12 +119,15 @@ public class ParticipationResource {
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
     @PutMapping(value = "/courses/{courseId}/exercises/{exerciseId}/resume-participation")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> resumeParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) throws URISyntaxException {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (exercise instanceof ProgrammingExercise) {
             participation = participationService.resume(exercise, participation);
             return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, participation.getId().toString()))
@@ -144,10 +147,13 @@ public class ParticipationResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> updateParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (participation.getId() == null) {
             return createParticipation(participation);
         }
@@ -178,11 +184,16 @@ public class ParticipationResource {
      * @return
      */
     @GetMapping(value = "/exercise/{exerciseId}/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Participation> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
+    public ResponseEntity<List<Participation>> getAllParticipationsForExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get all Participations for Exercise {}", exerciseId);
-        return participationRepository.findByExerciseId(exerciseId);
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<Participation> participations = participationRepository.findByExerciseId(exerciseId);
+        return ResponseEntity.ok(participations);
     }
 
     /**
@@ -192,11 +203,16 @@ public class ParticipationResource {
      * @return
      */
     @GetMapping(value = "/courses/{courseId}/participations")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Participation> getAllParticipationsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<Participation>> getAllParticipationsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all Participations for Course {}", courseId);
-        return participationRepository.findByCourseId(courseId);
+        Course course = courseService.findOne(courseId);
+        if(!authCheckService.isAuthorizedForCourse(course)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<Participation> participations = participationRepository.findByCourseId(courseId);
+        return ResponseEntity.ok().body(participations);
     }
 
     /**
@@ -207,15 +223,13 @@ public class ParticipationResource {
      */
     @GetMapping("/participations/{id}")
     @Timed
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipation(@PathVariable Long id, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
-
-        if (participation != null && (!participation.getStudent().getLogin().equals(authentication.getName()) && !(authentication.getAuthorities().contains(adminAuthority) && !authentication.getAuthorities().contains(taAuthority)))) {
-            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(
                 result,
@@ -224,14 +238,12 @@ public class ParticipationResource {
     }
 
     @GetMapping(value = "/participations/{id}/repositoryWebUrl")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
-
-        AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
-        if (participation != null && (!participation.getStudent().getLogin().equals(user.getName()) && !(user.getAuthorities().contains(adminAuthority) && !user.getAuthorities().contains(taAuthority)))) {
-            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         URL url = versionControlService.get().getRepositoryWebUrl(participation);
@@ -243,14 +255,12 @@ public class ParticipationResource {
     }
 
     @GetMapping(value = "/participations/{id}/buildPlanWebUrl")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
-
-        AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
-        if (participation != null && (!participation.getStudent().getLogin().equals(user.getName()) && !(user.getAuthorities().contains(adminAuthority) && !user.getAuthorities().contains(taAuthority)))) {
-            //return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         URL url = continuousIntegrationService.get().getBuildPlanWebUrl(participation);
@@ -263,10 +273,13 @@ public class ParticipationResource {
 
 
     @GetMapping(value = "/participations/{id}/buildArtifact")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
-    public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id, Authentication authentication) {
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id) {
         log.debug("REST request to get Participation build artifact: {}", id);
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return continuousIntegrationService.get().retrieveLatestArtifact(participation);
     }
 
@@ -279,11 +292,14 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         Participation participation;
         if (exercise instanceof QuizExercise) {
             participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
@@ -302,10 +318,13 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping(value = "/participations/{id}/status")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
         Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (participation.getExercise() instanceof QuizExercise) {
             QuizExercise.Status status = QuizExercise.statusForQuiz((QuizExercise) participation.getExercise());
             return new ResponseEntity<>(status, HttpStatus.OK);
@@ -327,12 +346,16 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/participations/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteParticipation(@PathVariable Long id,
                                                     @RequestParam(defaultValue = "false") boolean deleteBuildPlan,
                                                     @RequestParam(defaultValue = "false") boolean deleteRepository) {
         log.debug("REST request to delete Participation : {}, deleteBuildPlan: {}, deleteRepository: {}", id, deleteBuildPlan, deleteRepository);
+        Participation participation = participationService.findOne(id);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         participationService.delete(id, deleteBuildPlan, deleteRepository);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert("participation", id.toString())).build();
     }

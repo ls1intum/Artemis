@@ -36,7 +36,11 @@ entity DropLocationCounter(dropLocationCounter){    //extends StatisticCounter
 entity Course (course) {
   title String,
   studentGroupName String,
-  teachingAssistantGroupName String
+  teachingAssistantGroupName String,
+  instructorGroupName String,
+  startDate ZonedDateTime,
+  endDate ZonedDateTime,
+  onlineCourse Boolean
 }
 
 entity Exercise (exercise) {        //abstract
