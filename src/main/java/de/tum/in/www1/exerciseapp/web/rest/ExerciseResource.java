@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * REST controller for managing Exercise.
@@ -78,6 +79,9 @@ public class ExerciseResource {
     //TODO: test if it still works with abstract entity in body
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to save Exercise : {}", exercise);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (exercise.getId() != null) {
             throw new BadRequestAlertException("A new exercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -122,6 +126,9 @@ public class ExerciseResource {
     //TODO: test if it still works with abstract entity in body
     public ResponseEntity<Exercise> updateExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to update Exercise : {}", exercise);
+        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (exercise.getId() == null) {
             return createExercise(exercise);
         }
@@ -149,8 +156,11 @@ public class ExerciseResource {
     public ResponseEntity<List<Exercise>> getAllExercises(@ApiParam Pageable pageable) {
         log.debug("REST request to get a page of Exercises");
         Page<Exercise> page = exerciseRepository.findAll(pageable);
+        Stream<Exercise> authorizedExercises = page.getContent().stream().filter(
+            exercise -> authCheckService.isAuthorizedForExercise(exercise)
+        );
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/exercises");
-        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+        return new ResponseEntity<>(authorizedExercises.collect(Collectors.toList()), headers, HttpStatus.OK);
     }
 
     /**

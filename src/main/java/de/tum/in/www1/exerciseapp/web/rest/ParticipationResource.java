@@ -72,6 +72,9 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> createParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to save Participation : {}", participation);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (participation.getId() != null) {
             throw new BadRequestAlertException("A new participation cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -148,6 +151,9 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> updateParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (participation.getId() == null) {
             return createParticipation(participation);
         }

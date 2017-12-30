@@ -133,6 +133,10 @@ public class ResultResource {
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
+        Participation participation = result.getParticipation();
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (result.getId() == null) {
             return createResult(result);
         }
@@ -275,6 +279,10 @@ public class ResultResource {
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
+        Participation participation = result.getParticipation();
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return Optional.ofNullable(result)
             .map(foundResult -> new ResponseEntity<>(
                 foundResult,
@@ -324,6 +332,11 @@ public class ResultResource {
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);
+        Result result = resultRepository.findOne(id);
+        Participation participation = result.getParticipation();
+        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         resultRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }

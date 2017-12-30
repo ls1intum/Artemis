@@ -22,6 +22,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * REST controller for managing ProgrammingExercise.
@@ -135,7 +137,11 @@ public class ProgrammingExerciseResource {
     @Timed
     public List<ProgrammingExercise> getAllProgrammingExercises() {
         log.debug("REST request to get all ProgrammingExercises");
-        return programmingExerciseRepository.findAll();
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findAll();
+        Stream<ProgrammingExercise> authorizedExercises = exercises.stream().filter(
+            exercise -> authCheckService.isAuthorizedForExercise(exercise)
+        );
+        return authorizedExercises.collect(Collectors.toList());
     }
 
     /**
@@ -187,6 +193,10 @@ public class ProgrammingExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
+        if(!authCheckService.isAuthorizedForExercise(programmingExercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         programmingExerciseRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
