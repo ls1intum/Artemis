@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -7,8 +8,6 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
-
-import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 
 /**
  * A Submission.
