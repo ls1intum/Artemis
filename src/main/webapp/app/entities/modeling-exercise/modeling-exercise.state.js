@@ -13,7 +13,7 @@
             parent: 'entity',
             url: '/modeling-exercise',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                 pageTitle: 'artemisApp.modelingExercise.home.title'
             },
             views: {
@@ -39,7 +39,7 @@
             parent: 'entity',
             url: '/course/{courseid}/modeling-exercise',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
                 pageTitle: 'artemisApp.modelingExercise.home.title'
             },
             views: {
@@ -65,7 +65,7 @@
             parent: 'modeling-exercise',
             url: '/course/{courseid}/modeling-exercise/edit/{id}',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA'],
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             },
             views: {
                 'content@': {
@@ -99,7 +99,7 @@
             parent: 'modeling-exercise',
             url: '/new',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -127,7 +127,7 @@
             parent: 'modeling-exercise-for-course',
             url: '/new',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({
@@ -159,7 +159,7 @@
             parent: 'modeling-exercise',
             url: '/{id}/edit',
             data: {
-                authorities: ['ROLE_ADMIN', 'ROLE_TA']
+                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({

@@ -48,19 +48,7 @@ public class CourseService {
     @Transactional(readOnly = true)
     public List<Course> findAll() {
         log.debug("Request to get all Courses");
-        List<Course> result = courseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Authority adminAuthority = new Authority();
-        adminAuthority.setName("ROLE_ADMIN");
-        Authority taAuthority = new Authority();
-        taAuthority.setName("ROLE_TA");
-        Stream<Course> userCourses = result.stream().filter(
-            course -> user.getGroups().contains(course.getStudentGroupName())
-                || user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getAuthorities().contains(adminAuthority)
-        );
-        List<Course> userAuthorizedCourses = userCourses.collect(Collectors.toList());
-        return userAuthorizedCourses;
+        return courseRepository.findAll();
     }
 
     /**
