@@ -20,11 +20,28 @@
         {
             "fieldName": "teachingAssistantGroupName",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "instructorGroupName",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "startDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "endDate",
+            "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "onlineCourse",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20160609093907",
     "entityTableName": "course",
     "dto": "no",
     "pagination": "no",
-    "service": "serviceClass"
+    "service": "serviceClass",
+    "jpaMetamodelFiltering": false
 }

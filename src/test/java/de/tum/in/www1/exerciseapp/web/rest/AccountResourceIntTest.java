@@ -1,7 +1,7 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
-import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
+import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.domain.Authority;
 import de.tum.in.www1.exerciseapp.domain.PersistentToken;
 import de.tum.in.www1.exerciseapp.domain.User;
@@ -10,13 +10,12 @@ import de.tum.in.www1.exerciseapp.repository.PersistentTokenRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.MailService;
+import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.service.dto.UserDTO;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
 import de.tum.in.www1.exerciseapp.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.exerciseapp.web.rest.vm.ManagedUserVM;
-import de.tum.in.www1.exerciseapp.service.UserService;
 import org.apache.commons.lang3.RandomStringUtils;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,9 +31,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
+
 import java.time.Instant;
 import java.time.LocalDate;
-
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;

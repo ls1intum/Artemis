@@ -11,10 +11,8 @@ import de.tum.in.www1.exerciseapp.security.PBEPasswordEncoder;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.service.dto.UserDTO;
 import de.tum.in.www1.exerciseapp.service.util.RandomUtil;
-import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
-import de.tum.in.www1.exerciseapp.service.dto.UserDTO;
 import de.tum.in.www1.exerciseapp.web.rest.vm.ManagedUserVM;
-
+import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

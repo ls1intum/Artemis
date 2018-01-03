@@ -2,14 +2,14 @@ package simulations
 
 import _root_.io.gatling.core.scenario.Simulation
 import io.gatling.core.Predef._
+import io.gatling.core.json._
 import io.gatling.core.structure.{ChainBuilder, ScenarioBuilder}
 import io.gatling.http.Predef._
 import io.gatling.http.protocol.HttpProtocolBuilder
-import io.gatling.core.json._
 
 import scala.concurrent.duration._
-import scala.util.parsing.json._
 import scala.language.existentials
+import scala.util.parsing.json._
 
 class QuizParticipationSimulation extends Simulation {
 

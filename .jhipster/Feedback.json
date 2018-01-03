@@ -16,11 +16,17 @@
         {
             "fieldName": "detailText",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "type",
+            "fieldType": "FeedbackType",
+            "fieldValues": "AUTOMATIC,MANUAL"
         }
     ],
     "changelogDate": "20170930120856",
     "entityTableName": "feedback",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }
