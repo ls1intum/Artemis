@@ -27,7 +27,12 @@
             <input class="form-control" title="score" type="number" min="0" max="9999" ng-model="vm.question.score"/>
         </div>
     </div>
-    TODO
+    <div>
+        <div class="form-group">
+            <input type="file" file-model="vm.backgroundFile"/>
+            <button ng-click="vm.uploadBackground()">upload me</button>
+        </div>
+    </div>
 </div>
 <div class="preview-dnd-question" ng-if="vm.showPreview">
     TODO

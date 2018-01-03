@@ -34,10 +34,9 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     function uploadBackground() {
         var file = vm.backgroundFile;
 
-        FileUpload.uploadFileToUrl(file).then(
+        FileUpload(file).then(
             function(result){
                 console.log(result);
-                console.log(FileUpload.getResponse());
             }, function(error) {
                 alert(error);
             });
