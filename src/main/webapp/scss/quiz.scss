@@ -279,6 +279,19 @@
     }
 }
 
+.edit-dnd-question {
+    .instructions {
+        margin: 10px 0;
+        font-weight: bold;
+    }
+
+    .background-area {
+        img {
+            width: 100%;
+        }
+    }
+}
+
 .quiz-header,
 .quiz-content,
 .quiz-footer-content {

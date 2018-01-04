@@ -24,6 +24,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
 
     vm.backgroundFile = null;
     vm.showPreview = false;
+    vm.isUploadingBackgroundFile = false;
     vm.togglePreview = togglePreview;
     vm.uploadBackground = uploadBackground;
 
@@ -31,14 +32,25 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.showPreview = !vm.showPreview;
     }
 
+    /**
+     * Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
+     */
     function uploadBackground() {
         var file = vm.backgroundFile;
 
+        if (!file) {
+            alert("Please select a file to upload first.");
+            return;
+        }
+
+        vm.isUploadingBackgroundFile = true;
         FileUpload(file).then(
-            function(result){
-                console.log(result);
-            }, function(error) {
+            function (result) {
+                vm.question.backgroundFilePath = result.data.path;
+                vm.isUploadingBackgroundFile = false;
+            }, function (error) {
                 alert(error);
+                vm.isUploadingBackgroundFile = false;
             });
     }
 

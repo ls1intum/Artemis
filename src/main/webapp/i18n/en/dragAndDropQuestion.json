@@ -17,7 +17,9 @@
             },
             "backgroundFilePath": "Background File Path",
             "dropLocations": "Drop Locations",
-            "dragItems": "Drag Items"
+            "dragItems": "Drag Items",
+            "uploadBackgroundPicture": "Upload Background",
+            "drawOnBackgroundInstructions": "Draw on the background picture to define drop locations."
         }
     }
 }

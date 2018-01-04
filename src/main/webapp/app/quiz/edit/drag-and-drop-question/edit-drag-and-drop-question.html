@@ -27,11 +27,18 @@
             <input class="form-control" title="score" type="number" min="0" max="9999" ng-model="vm.question.score"/>
         </div>
     </div>
-    <div>
+    <div class="question-options">
         <div class="form-group">
-            <input type="file" file-model="vm.backgroundFile"/>
-            <button ng-click="vm.uploadBackground()">upload me</button>
+            <span data-translate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink"></span>
+            <input type="file" accept="image/*" file-model="vm.backgroundFile"/>
+            <button ng-disabled="vm.isUploadingBackgroundFile || !vm.backgroundFile" class="btn btn-default" ng-click="vm.uploadBackground()">{{vm.isUploadingBackgroundFile ? "Uploading..." : "Upload"}}</button>
         </div>
+    </div>
+    <div class="instructions" ng-if="vm.question.backgroundFilePath">
+        <span data-translate="artemisApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
+    </div>
+    <div class="background-area">
+        <img ng-src="{{vm.question.backgroundFilePath}}" alt="Please upload a background picture.">
     </div>
 </div>
 <div class="preview-dnd-question" ng-if="vm.showPreview">
