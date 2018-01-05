@@ -23,59 +23,56 @@ public class AuthorizationCheckService {
     }
 
     /**
-     * Method used to check whether the current logged in user is authorized to view this course
+     * Method used to check whether the current logged in user is instructor of this course
      * @param course course to check the rights for
-     * @return true, if user is authorized to view this course, otherwise false
+     * @return true, if user is instructor of this course, otherwise false
      */
-    public boolean isAuthorizedForCourse(Course course) {
-        log.debug("Request to check access rights to course with id: {}", course.getId());
-        if(course == null) {
-            return true;
-        }
+    public boolean isInstructorInCourse(Course course) {
+        log.debug("Request to check instructor access rights to course with id: {}", course.getId());
         User user = userService.getUserWithGroupsAndAuthorities();
-        if(user.getGroups().contains(course.getStudentGroupName())
-            || user.getGroups().contains(course.getTeachingAssistantGroupName())
-            || user.getGroups().contains(course.getInstructorGroupName())
-            || user.getAuthorities().contains(adminAuthority)) {
-            return true;
-        }
-        return false;
+        return user.getGroups().contains(course.getInstructorGroupName());
     }
 
-
     /**
-     * Method used to check whether the current logged in user is authorized to view this exercise
-     * @param exercise exercise to check the rights for
-     * @return true, if user is authorized to view this exercise, otherwise false
+     * Method used to check whether the current logged in user is teaching assistant of this course
+     * @param course course to check the rights for
+     * @return true, if user is teaching assistant of this course, otherwise false
      */
-    public boolean isAuthorizedForExercise(Exercise exercise) {
-        log.debug("Request to check access rights to exercise with id: {}", exercise.getId());
-        if(exercise == null) {
-            return true;
-        }
-        Course correspondingCourse = exercise.getCourse();
-        return isAuthorizedForCourse(correspondingCourse);
+    public boolean isTeachingAssistantInCourse(Course course) {
+        log.debug("Request to check teaching assistant access rights to course with id: {}", course.getId());
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return user.getGroups().contains(course.getTeachingAssistantGroupName());
     }
 
     /**
-     * Method used to check whether the current logged in user is authorized to view this participation
+     * Method used to check whether the current logged in user is student of this course
+     * @param course course to check the rights for
+     * @return true, if user is student of this course, otherwise false
+     */
+    public boolean isStudentInCourse(Course course) {
+        log.debug("Request to check student access rights to course with id: {}", course.getId());
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return user.getGroups().contains(course.getStudentGroupName());
+    }
+
+    /**
+     * Method used to check whether the current logged in user is owner of this participation
      * @param participation participation to check the rights for
-     * @return true, if user is authorized to view this participation, otherwise false
+     * @return true, if user is student is owner of this participation, otherwise false
      */
-    public boolean isAuthorizedForParticipation(Participation participation) {
-        log.debug("Request to check access rights to participation with id: {}", participation.getId());
-        if(participation == null) {
-            return true;
-        }
+    public boolean isOwnerOfParticipation(Participation participation) {
+        log.debug("Request to check student access rights to participation with id: {}", participation.getId());
         User user = userService.getUserWithGroupsAndAuthorities();
-        Course course = participation.getExercise().getCourse();
-        if(participation.getStudent().getLogin().equals(user.getLogin())
-            || user.getGroups().contains(course.getTeachingAssistantGroupName())
-            || user.getGroups().contains(course.getInstructorGroupName())
-            || user.getAuthorities().contains(adminAuthority)) {
-            return true;
-        }
-        return false;
+        return participation.getStudent().getLogin().equals(user.getLogin());
     }
 
+    /**
+     * Method used to check whether the current logged in user is application admin
+     * @return true, if user is admin, otherwise false
+     */
+    public boolean isAdmin() {
+        log.debug("Request to check if user is admin");
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return user.getAuthorities().contains(adminAuthority);
+    }
 }
