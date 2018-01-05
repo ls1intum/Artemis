@@ -11,7 +11,6 @@ import de.tum.in.www1.exerciseapp.service.dto.UserDTO;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.exerciseapp.web.rest.errors.LoginAlreadyUsedException;
-import de.tum.in.www1.exerciseapp.web.rest.vm.ManagedUserVM;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
 import de.tum.in.www1.exerciseapp.web.rest.vm.ManagedUserVM;

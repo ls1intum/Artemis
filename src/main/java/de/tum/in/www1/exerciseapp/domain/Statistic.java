@@ -1,7 +1,5 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -20,7 +18,7 @@ import java.util.Objects;
     discriminatorType=DiscriminatorType.STRING
 )
 @DiscriminatorValue(value="S")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public abstract class Statistic implements Serializable {
 
     private static final long serialVersionUID = 1L;

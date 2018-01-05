@@ -5,8 +5,6 @@ import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.CourseService;
-
-import de.tum.in.www1.exerciseapp.repository.CourseRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -161,8 +159,8 @@ public class CourseResource {
         log.debug("REST request to get courseScores from course : {}", courseId);
         Course course = courseService.findOne(courseId);
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
-            !authCheckService.isAdmin()) {
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));

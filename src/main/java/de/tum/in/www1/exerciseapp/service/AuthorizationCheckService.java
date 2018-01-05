@@ -76,5 +76,4 @@ public class AuthorizationCheckService {
         User user = userService.getUserWithGroupsAndAuthorities();
         return user.getAuthorities().contains(adminAuthority);
     }
-
 }

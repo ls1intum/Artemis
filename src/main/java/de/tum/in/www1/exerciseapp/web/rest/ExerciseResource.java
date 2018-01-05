@@ -81,8 +81,8 @@ public class ExerciseResource {
         log.debug("REST request to save Exercise : {}", exercise);
         Course course = exercise.getCourse();
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
-            !authCheckService.isAdmin()) {
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (exercise.getId() != null) {
@@ -131,8 +131,8 @@ public class ExerciseResource {
         log.debug("REST request to update Exercise : {}", exercise);
         Course course = exercise.getCourse();
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
-            !authCheckService.isAdmin()) {
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (exercise.getId() == null) {
@@ -234,8 +234,8 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOne(id);
         Course course = exercise.getCourse();
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
-            !authCheckService.isAdmin()) {
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
@@ -299,7 +299,7 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOne(id);
         Course course = exercise.getCourse();
         if (!authCheckService.isInstructorInCourse(course) && !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (deleteRepositories) {
             File zipFile = exerciseService.cleanup(id, deleteRepositories);

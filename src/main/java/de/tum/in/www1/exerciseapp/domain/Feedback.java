@@ -1,14 +1,13 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
-
-import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 
 /**
  * A Feedback.
