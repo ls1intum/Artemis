@@ -1,9 +1,6 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
-import de.tum.in.www1.exerciseapp.domain.BuildLogEntry;
-import de.tum.in.www1.exerciseapp.domain.File;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.Repository;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
@@ -69,7 +66,11 @@ public class RepositoryResource {
     public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to files for Participation : {}", id);
         Participation participation = participationService.findOne(id);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -104,7 +105,11 @@ public class RepositoryResource {
     public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -144,7 +149,11 @@ public class RepositoryResource {
     public ResponseEntity<Void> createFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to create file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -190,7 +199,11 @@ public class RepositoryResource {
     public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to update file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -229,7 +242,11 @@ public class RepositoryResource {
     public ResponseEntity<Void> deleteFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to delete file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (!Optional.ofNullable(participation).isPresent()) {
@@ -267,7 +284,11 @@ public class RepositoryResource {
     public ResponseEntity<Void> updateFile(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to commit Repository for Participation : {}", id);
         Participation participation = participationService.findOne(id);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -297,7 +318,11 @@ public class RepositoryResource {
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to get clean status for Repository for Participation : {}", id);
         Participation participation = participationService.findOne(id);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -328,7 +353,11 @@ public class RepositoryResource {
     public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get build log : {}", id);
         Participation participation = participationService.findOne(id);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

@@ -84,7 +84,10 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new programmingExercise cannot already have an ID")).body(null);
         }
-        if(!authCheckService.isAuthorizedForExercise(programmingExercise)) {
+        Course course = programmingExercise.getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
@@ -114,7 +117,10 @@ public class ProgrammingExerciseResource {
         if (programmingExercise.getId() == null) {
             return createProgrammingExercise(programmingExercise);
         }
-        if(!authCheckService.isAuthorizedForExercise(programmingExercise)) {
+        Course course = programmingExercise.getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         ResponseEntity<ProgrammingExercise> errorResponse = checkProgrammingExerciseForError(programmingExercise);
@@ -139,7 +145,12 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get all ProgrammingExercises");
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findAll();
         Stream<ProgrammingExercise> authorizedExercises = exercises.stream().filter(
-            exercise -> authCheckService.isAuthorizedForExercise(exercise)
+            exercise -> {
+                Course course = exercise.getCourse();
+                return authCheckService.isTeachingAssistantInCourse(course) ||
+                    authCheckService.isInstructorInCourse(course) ||
+                    authCheckService.isAdmin();
+            }
         );
         return authorizedExercises.collect(Collectors.toList());
     }
@@ -156,7 +167,9 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
-        if(!authCheckService.isAuthorizedForCourse(course)) {
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByCourseId(courseId);
@@ -176,7 +189,10 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to get ProgrammingExercise : {}", id);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
-        if(!authCheckService.isAuthorizedForExercise(programmingExercise)) {
+        Course course = programmingExercise.getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(programmingExercise));
@@ -194,7 +210,10 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
-        if(!authCheckService.isAuthorizedForExercise(programmingExercise)) {
+        Course course = programmingExercise.getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         programmingExerciseRepository.delete(id);

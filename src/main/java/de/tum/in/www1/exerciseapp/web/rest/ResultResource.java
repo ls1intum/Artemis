@@ -74,7 +74,10 @@ public class ResultResource {
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
         Participation participation = result.getParticipation();
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (result.getId() != null) {
@@ -130,11 +133,15 @@ public class ResultResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/results")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
         Participation participation = result.getParticipation();
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (result.getId() == null) {
@@ -180,7 +187,11 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (participation != null) {
@@ -219,7 +230,10 @@ public class ResultResource {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
-        if(!authCheckService.isAuthorizedForExercise(exercise)) {
+        Course course = exercise.getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -259,7 +273,9 @@ public class ResultResource {
     public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Results for Course : {}", courseId);
         Course course = courseService.findOne(courseId);
-        if(!authCheckService.isAuthorizedForCourse(course)) {
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
@@ -280,7 +296,10 @@ public class ResultResource {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
         Participation participation = result.getParticipation();
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return Optional.ofNullable(result)
@@ -307,7 +326,11 @@ public class ResultResource {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         Participation participation = result.getParticipation();
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         try {
@@ -334,7 +357,10 @@ public class ResultResource {
         log.debug("REST request to delete Result : {}", id);
         Result result = resultRepository.findOne(id);
         Participation participation = result.getParticipation();
-        if(!authCheckService.isAuthorizedForParticipation(participation)) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         resultRepository.delete(id);
