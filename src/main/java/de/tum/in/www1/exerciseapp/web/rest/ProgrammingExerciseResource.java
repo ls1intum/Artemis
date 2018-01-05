@@ -164,7 +164,6 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
-
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
              !authCheckService.isInstructorInCourse(course) &&
              !authCheckService.isAdmin()) {
