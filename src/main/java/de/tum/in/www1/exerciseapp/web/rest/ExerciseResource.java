@@ -196,7 +196,6 @@ public class ExerciseResource {
 
         List<Exercise> result;
         User user = userService.getUserWithGroupsAndAuthorities();
-
         if (user.getGroups().contains(course.getStudentGroupName())) {
             // user is student for this course
             result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal) : exerciseRepository.findByCourseId(courseId);

@@ -66,7 +66,6 @@ public class AuthorizationCheckService {
         return participation.getStudent().getLogin().equals(user.getLogin());
     }
 
-
     /**
      * Method used to check whether the current logged in user is application admin
      * @return true, if user is admin, otherwise false
