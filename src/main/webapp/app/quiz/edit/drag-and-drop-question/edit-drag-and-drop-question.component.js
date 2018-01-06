@@ -11,14 +11,6 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         {
             key: "ALL_OR_NOTHING",
             label: "All or Nothing"
-        },
-        {
-            key: "PROPORTIONAL_CORRECT_OPTIONS",
-            label: "Proportional Points for Correct Answer Options"
-        },
-        {
-            key: "TRUE_FALSE_NEUTRAL",
-            label: "True / False / No Answer"
         }
     ];
 
@@ -37,6 +29,16 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      */
     function uploadBackground() {
         var file = vm.backgroundFile;
+
+        var fileExtension = file.name.split('.').pop().toLocaleLowerCase();
+        if (fileExtension !== "png" && fileExtension !== "jpg" && fileExtension !== "jpeg" && fileExtension !== "svg") {
+            alert('Unsupported file-type! Only files of type ".png", ".jpg" or ".svg" allowed.');
+            return;
+        }
+        if (file.size > 5000000) {
+            alert('File is too big! Maximum allowed file size: 5 MB.');
+            return;
+        }
 
         if (!file) {
             alert("Please select a file to upload first.");

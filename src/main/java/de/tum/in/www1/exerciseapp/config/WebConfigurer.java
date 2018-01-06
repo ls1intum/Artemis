@@ -103,25 +103,6 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
     }
 
     /**
-     * Get the Location of the static assets
-     * @return The location as a String or an empty String if location cannot be determined.
-     */
-    public String getLocationForStaticAssets() {
-        File root;
-        String prefixPath = resolvePathPrefix();
-        if (env.acceptsProfiles(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
-            root = new File(prefixPath + "build/www/");
-        } else {
-            root = new File(prefixPath + "src/main/webapp/");
-        }
-        if (root.exists() && root.isDirectory()) {
-            return root.getPath();
-        } else {
-            return "";
-        }
-    }
-
-    /**
      *  Resolve path prefix to static resources.
      */
     private String resolvePathPrefix() {
