@@ -2,8 +2,8 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.PersistentToken;
-import de.tum.in.www1.exerciseapp.repository.PersistentTokenRepository;
 import de.tum.in.www1.exerciseapp.domain.User;
+import de.tum.in.www1.exerciseapp.repository.PersistentTokenRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import de.tum.in.www1.exerciseapp.service.MailService;
@@ -12,7 +12,6 @@ import de.tum.in.www1.exerciseapp.service.dto.UserDTO;
 import de.tum.in.www1.exerciseapp.web.rest.errors.*;
 import de.tum.in.www1.exerciseapp.web.rest.vm.KeyAndPasswordVM;
 import de.tum.in.www1.exerciseapp.web.rest.vm.ManagedUserVM;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

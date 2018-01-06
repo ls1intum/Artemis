@@ -1,7 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
-import de.tum.in.www1.exerciseapp.config.Constants;
 
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
+import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.domain.User;
 import io.github.jhipster.config.JHipsterProperties;
 import org.junit.Before;

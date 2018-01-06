@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
 import de.tum.in.www1.exerciseapp.domain.scoring.ScoringStrategyFactory;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -10,8 +11,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
-
-import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
 
 /**
  * A Question.

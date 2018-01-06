@@ -1,11 +1,10 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
-
 import de.tum.in.www1.exerciseapp.domain.Feedback;
+import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -17,7 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
@@ -27,8 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import de.tum.in.www1.exerciseapp.domain.enumeration.FeedbackType;
 /**
  * Test class for the FeedbackResource REST controller.
  *

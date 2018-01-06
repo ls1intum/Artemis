@@ -10,6 +10,7 @@ import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.service.UserService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
+import de.tum.in.www1.exerciseapp.web.websocket.QuizSubmissionService;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.Semaphore;
 
@@ -113,12 +113,23 @@ public class QuizSubmissionResource {
                 }
                 if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
+                    // get submission from cache, if it exists
+                    QuizSubmission cachedSubmission = QuizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
+                    if (cachedSubmission != null) {
+                        submission = cachedSubmission;
+                    }
+
                     // remove scores from submission if quiz hasn't ended yet
                     if (submission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
                         submission.removeScores();
                     }
-                    // set submission date for response
-                    submission.setSubmissionDate(result.getCompletionDate());
+
+                    // set submission date for response (only necessary if submission is not from cache)
+                    if (cachedSubmission == null) {
+                        submission.setSubmissionDate(result.getCompletionDate());
+                    }
+
+                    // return submission
                     return ResponseEntity.ok(submission);
                 } else {
                     return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "noSubmission", "The exercise is over and you haven't participated.")).body(null);
@@ -226,16 +237,27 @@ public class QuizSubmissionResource {
             // Do nothing
             return quizSubmission;
         }
+        SubmissionType submissionType = SubmissionType.MANUAL;
+        if (quizSubmission == null) {
+            submissionType = SubmissionType.TIMEOUT;
+            // first check cachedSubmissions (if user sent answers via websocket)
+            String username = participation.getStudent().getLogin();
+            Long submissionId = result.getSubmission().getId();
+            QuizSubmission cachedSubmission = QuizSubmissionService.getCachedSubmission(username, submissionId);
+            if (cachedSubmission != null) {
+                quizSubmission = cachedSubmission;
+                // remove this submission from the cached submissions
+                QuizSubmissionService.removeCachedSubmission(username, submissionId);
+            } else {
+                // if user never sent answers through websocket, use initially created submission
+                quizSubmission = (QuizSubmission) result.getSubmission();
+            }
+        }
         if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
             // update participation state => no further submissions allowed
             participation.setInitializationState(ParticipationState.FINISHED);
             participation = participationService.save(participation);
             // update submission
-            SubmissionType submissionType = SubmissionType.MANUAL;
-            if (quizSubmission == null) {
-                submissionType = SubmissionType.TIMEOUT;
-                quizSubmission = (QuizSubmission) result.getSubmission();
-            }
             quizSubmission.setSubmitted(true);
             quizSubmission.setType(submissionType);
             quizSubmission.calculateAndUpdateScores((QuizExercise) participation.getExercise());

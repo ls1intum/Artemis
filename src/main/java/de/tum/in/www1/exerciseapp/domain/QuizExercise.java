@@ -6,13 +6,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.*;
-
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.Objects;
-import java.util.List;
+import java.util.*;
 
 /**
  * A QuizExercise.

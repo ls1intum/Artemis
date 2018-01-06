@@ -27,8 +27,12 @@
 
         return service;
 
-        // TODO: Valentin: Implement automatic reconnection attempts when connection is lost
-        // TODO: Valentin: Implement callbacks for both "connection lost" and "reconnected" events
+        //adapted from https://stackoverflow.com/questions/22361917/automatic-reconnect-with-stomp-js-in-node-js-application
+        function stompFailureCallback(error) {
+            setTimeout(connect, 1000);
+            //TODO: after 5 failed attempts in row, increase the timeout to 5 seconds, after 10 failed attempts in row, increase the timeout to 10 seconds
+            console.log('Websocket: Try to reconect in 1 seconds...');
+        };
 
         function connect () {
             //building absolute path so that websocket doesn't fail when deploying with a context path
@@ -41,6 +45,12 @@
             headers[$http.defaults.xsrfHeaderName] = $cookies.get($http.defaults.xsrfCookieName);
             stompClient.connect(headers, function() {
                 connected.resolve('success');
+                //(re)connect to all existing channels
+                for (var channel in listener) {
+                    subscriber = stompClient.subscribe(channel, function(data) {
+                        listener[channel].notify(angular.fromJson(data.body));
+                    });
+                }
                 sendActivity();
                 if (!alreadyConnectedOnce) {
                     stateChangeStart = $rootScope.$on('$stateChangeStart', function () {
@@ -48,7 +58,7 @@
                     });
                     alreadyConnectedOnce = true;
                 }
-            });
+            }, stompFailureCallback);
             $rootScope.$on('$destroy', function () {
                 if(angular.isDefined(stateChangeStart) && stateChangeStart !== null){
                     stateChangeStart();
