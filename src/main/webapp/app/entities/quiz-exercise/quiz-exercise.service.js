@@ -3,7 +3,8 @@
     angular
         .module('artemisApp')
         .factory('QuizExercise', QuizExercise)
-        .factory('QuizExerciseForStudent', QuizExerciseForStudent);
+        .factory('QuizExerciseForStudent', QuizExerciseForStudent)
+        .factory('QuizExerciseReEvaluate', QuizExerciseReEvaluate);
 
     QuizExercise.$inject = ['$resource'];
 

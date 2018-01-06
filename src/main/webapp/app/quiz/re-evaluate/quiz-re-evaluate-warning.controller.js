@@ -1,13 +1,13 @@
-(function() {
+(function () {
     'use strict';
 
     angular
         .module('artemisApp')
-        .controller('QuizReEvaluateWarningController',QuizReEvaluateWarningController);
+        .controller('QuizReEvaluateWarningController', QuizReEvaluateWarningController);
 
-    QuizReEvaluateWarningController.$inject = ['$uibModalInstance', 'entity', 'QuizExercise'/*, 'QuizExerciseReEvaluate'*/];
+    QuizReEvaluateWarningController.$inject = ['$uibModalInstance', 'entity', 'QuizExercise', 'QuizExerciseReEvaluate'];
 
-    function QuizReEvaluateWarningController($uibModalInstance, entity, QuizExercise/*, QuizExerciseReEvaluate*/) {
+    function QuizReEvaluateWarningController($uibModalInstance, entity, QuizExercise, QuizExerciseReEvaluate) {
         var vm = this;
 
         vm.answerDeleted = false;
@@ -40,31 +40,29 @@
          * @param quiz {quizExercise} the reference Quiz from Server
          */
 
-        function loadQuizSuccess (quiz) {
+        function loadQuizSuccess(quiz) {
 
             backUpQuiz = quiz;
-
-            console.log(vm.quizExercise);
 
             // question deleted?
             vm.questionDeleted = (backUpQuiz.questions.length !== vm.quizExercise.questions.length);
 
             //check each question
-            vm.quizExercise.questions.forEach( function (question) {
+            vm.quizExercise.questions.forEach(function (question) {
                 //find same question in backUp (necessary if the order has been changed)
                 var backUpQuestion = null;
                 for (var i = 0; backUpQuestion === null && i < backUpQuiz.questions.length; i++) {
-                    if(backUpQuiz.questions[i].id === question.id) {
+                    if (backUpQuiz.questions[i].id === question.id) {
                         backUpQuestion = backUpQuiz.questions[i];
                     }
                 }
-                if(backUpQuestion != null){
+                if (backUpQuestion != null) {
                     // question set invalid?
-                    if(question.invalid !== backUpQuestion.invalid) {
+                    if (question.invalid !== backUpQuestion.invalid) {
                         vm.questionInvalid = true;
                     }
                     // answer deleted?
-                    if(question.answerOptions.length !== backUpQuestion.answerOptions.length) {
+                    if (question.answerOptions.length !== backUpQuestion.answerOptions.length) {
                         vm.answerDeleted = true;
                     }
                     // question scoring changed?
@@ -94,16 +92,13 @@
                         }
                     });
                 }
-
             });
-
-
         }
 
         /**
          * close modal
          */
-        function clear () {
+        function clear() {
             $uibModalInstance.dismiss('cancel');
         }
 
@@ -111,15 +106,12 @@
          * Confirm changes
          *  => send changes to server and close modal
          */
-        function confirmChange () {
-            console.log(vm.quizExercise);
-            alert("TO-DO:\n Open warning!\n Send Json to server\n close editor");
-            $uibModalInstance.close(true);
+        function confirmChange() {
 
-            // QuizExerciseReEvaluate.update(vm.quizExercise,
-            //     function () {
-            //         $uibModalInstance.close(true);
-            //     });
+            QuizExerciseReEvaluate.update(vm.quizExercise,
+                function () {
+                    $uibModalInstance.close(true);
+                });
         }
     }
 })();

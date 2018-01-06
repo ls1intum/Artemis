@@ -1,9 +1,9 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.sun.org.apache.regexp.internal.RE;
 import de.tum.in.www1.exerciseapp.domain.*;
-import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
-import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
+import de.tum.in.www1.exerciseapp.repository.*;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -16,8 +16,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * REST controller for managing QuizExercise.
@@ -33,11 +35,25 @@ public class QuizExerciseResource {
     private final QuizExerciseRepository quizExerciseRepository;
     private final ParticipationRepository participationRepository;
     private final StatisticService statisticService;
+    private final ResultRepository resultRepository;
+    private final QuizPointStatisticRepository quizPointStatisticRepository;
+    private final QuestionStatisticRepository questionStatisticRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
 
-    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, ParticipationRepository participationRepository, StatisticService statisticService) {
+    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository,
+                                ParticipationRepository participationRepository,
+                                StatisticService statisticService,
+                                ResultRepository resultRepository,
+                                QuizPointStatisticRepository quizPointStatisticRepository,
+                                QuestionStatisticRepository questionStatisticRepository,
+                                QuizSubmissionRepository quizSubmissionRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.statisticService = statisticService;
+        this.resultRepository = resultRepository;
+        this.quizPointStatisticRepository = quizPointStatisticRepository;
+        this.questionStatisticRepository = questionStatisticRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
     /**
@@ -85,6 +101,8 @@ public class QuizExerciseResource {
         for (Question question : quizExercise.getQuestions()) {
             if (question.getId() != null) {
                 question.setExercise(quizExercise);
+                //reconnect QuestionStatistics
+                question.getQuestionStatistic().setQuestion(question);
                 // do the same for answerOptions (if question is multiple choice)
                 if (question instanceof MultipleChoiceQuestion) {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
@@ -105,8 +123,10 @@ public class QuizExerciseResource {
             }
             // TODO: Valentin: do the same for dragItems and dropLocations (if question is drag and drop)
         }
+        //reconnect quizPointStatistic
+        quizExercise.getQuizPointStatistic().setQuiz(quizExercise);
         //reconnect pointCounters
-        for (PointCounter pointCounter: quizExercise.getQuizPointStatistic().getPointCounters()) {
+        for (PointCounter pointCounter : quizExercise.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getId() != null) {
                 pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
             }
@@ -121,6 +141,41 @@ public class QuizExerciseResource {
         }
         //notify clients via websocket about the release state of the statistics.
         statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
+
+        //change existing results if an answer or and question was deleted
+        for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
+
+            Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
+
+            for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
+                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                    // Delete all references to question an answers if the question was deleted
+                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
+                        submittedAnswer.setQuestion(null);
+                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(null);
+                        submittedAnswersToDelete.add(submittedAnswer);
+                    } else {
+                        // find same question in quizExercise
+                        for (Question question : quizExercise.getQuestions()) {
+                            if (question.getId().equals(submittedAnswer.getQuestion().getId())) {
+                                // Check if an answerOption was deleted and delete reference to in selectedOptions
+                                Set<AnswerOption> selectedOptionsToDelete = new HashSet<>();
+                                for (AnswerOption answerOption : ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions()) {
+                                    if (!((MultipleChoiceQuestion) question).getAnswerOptions().contains(answerOption)) {
+                                        selectedOptionsToDelete.add(answerOption);
+                                    }
+                                }
+                                ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().removeAll(selectedOptionsToDelete);
+
+                            }
+                        }
+                    }
+                }
+                // TO-DO DragAndDrop Question
+            }
+            ((QuizSubmission) result.getSubmission()).getSubmittedAnswers().removeAll(submittedAnswersToDelete);
+            quizSubmissionRepository.save((QuizSubmission) result.getSubmission());
+        }
 
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
@@ -193,7 +248,7 @@ public class QuizExerciseResource {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
             for (Question question : quizExercise.getQuestions()) {
                 question.setExplanation(null);
-                if(!question.getQuestionStatistic().isReleased()) {
+                if (!question.getQuestionStatistic().isReleased()) {
                     question.setQuestionStatistic(null);
                 }
 
@@ -208,7 +263,7 @@ public class QuizExerciseResource {
             }
         }
         // filter out the statistic information if the statistic is not released
-        if(!quizExercise.getQuizPointStatistic().isReleased()) {
+        if (!quizExercise.getQuizPointStatistic().isReleased()) {
             // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
             quizExercise.getQuizPointStatistic().setPointCounters(null);
             quizExercise.getQuizPointStatistic().setParticipantsRated(null);
@@ -230,13 +285,199 @@ public class QuizExerciseResource {
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
 
-        List<Participation> participationsToDelete= participationRepository.findByExerciseId(id);
+        List<Participation> participationsToDelete = participationRepository.findByExerciseId(id);
 
-        for(Participation participation: participationsToDelete){
+        for (Participation participation : participationsToDelete) {
             participationRepository.delete(participation.getId());
         }
 
         quizExerciseRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     * PUT  /quiz-exercises-re-evaluate : Re-evaluates an existing quizExercise.
+     *
+     * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary
+     * 2. save changed quizExercise
+     * 3. if flag is set: -> change results if an answer or a question is set invalid
+     *                    -> recalculate statistics and results and save them.
+     *
+     * @param quizExercise the quizExercise to re-evaluate
+     * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise,
+     * or with status 400 (Bad Request) if the quizExercise is not valid,
+     * or with status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping("/quiz-exercises-re-evaluate")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+        log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
+        if (quizExercise.getId() == null) {
+            return createQuizExercise(quizExercise);
+        }
+        QuizExercise originalQuizExercise = quizExerciseRepository.findOne(quizExercise.getId());
+        boolean updateResultsAndStatistics = false;
+
+        //reset unchangeable attributes: ( dueDate, releaseDate, question.points)
+
+        quizExercise.setDueDate(originalQuizExercise.getDueDate());
+        quizExercise.setReleaseDate(originalQuizExercise.getReleaseDate());
+
+        //remove added Questions, which are not allowed to be added
+        // and check the changes -> updates of statistics and results necessary?
+        Set<Question> addedQuestions = new HashSet<Question>();
+
+        for (Question question : quizExercise.getQuestions()) {
+            if (originalQuizExercise.getQuestions().contains(question)) {
+                // find original unchanged question
+                for (Question originalQuestion : originalQuizExercise.getQuestions()) {
+                    if (originalQuestion.getId().equals(question.getId())) {
+                        //reset score (not allowed to change)
+                        question.setScore(originalQuestion.getScore());
+                        //reset invalid if the question is already invalid;
+                        question.setInvalid(question.isInvalid() || originalQuestion.isInvalid());
+                        ;
+
+                        // check in a question is  set invalid orif the scoringType has changed
+                        if ((question.isInvalid() && !originalQuestion.isInvalid()) ||
+                            !question.getScoringType().equals(originalQuestion.getScoringType())) {
+                            updateResultsAndStatistics = true;
+                        }
+
+                        if (question instanceof MultipleChoiceQuestion) {
+                            //remove added Answers, which are not allowed to be added
+                            Set<AnswerOption> addedAnswers = new HashSet<AnswerOption>();
+                            for (AnswerOption answer : (((MultipleChoiceQuestion) question).getAnswerOptions())) {
+                                if (((MultipleChoiceQuestion) originalQuestion).getAnswerOptions().contains(answer)) {
+                                    //find original answer and reset invalid if it already set to true;
+                                    for (AnswerOption originalAnswer : ((MultipleChoiceQuestion) originalQuestion).getAnswerOptions()) {
+                                        if (answer.getId().equals(originalAnswer.getId())) {
+                                            answer.setInvalid(answer.isInvalid() || originalAnswer.isInvalid());
+                                        }
+
+                                        // check if an answer is  set invalid or if the correctness has changed
+                                        if ((answer.isInvalid() && !originalAnswer.isInvalid()) ||
+                                            (!answer.isIsCorrect().equals(originalAnswer.isIsCorrect()))) {
+                                            updateResultsAndStatistics = true;
+                                        }
+                                    }
+                                } else {
+                                    addedAnswers.add(answer);
+                                }
+                            }
+                            ((MultipleChoiceQuestion) question).getAnswerOptions().removeAll(addedAnswers);
+
+                            // check if an answer was deleted
+                            if (((MultipleChoiceQuestion) question).getAnswerOptions().size() <
+                                ((MultipleChoiceQuestion) originalQuestion).getAnswerOptions().size()) {
+                                updateResultsAndStatistics = true;
+                            }
+                        }
+                    }
+                }
+            } else {
+                // question is added (not allowed)
+                addedQuestions.add(question);
+            }
+        }
+        quizExercise.getQuestions().removeAll(addedQuestions);
+
+        //update QuizExercise
+        ResponseEntity<QuizExercise> methodResult = updateQuizExercise(quizExercise);
+
+        // question deleted?
+        if (quizExercise.getQuestions().size() != originalQuizExercise.getQuestions().size()) {
+            updateResultsAndStatistics = true;
+        }
+
+        // update Statistics and Results
+        if (updateResultsAndStatistics) {
+
+            //reset all statistic
+            quizExercise.getQuizPointStatistic().resetStatistic();
+            for (Question question : quizExercise.getQuestions()) {
+                question.getQuestionStatistic().resetStatistic();
+            }
+
+            for (Participation participation : participationRepository.findByExerciseId(quizExercise.getId())) {
+
+                Result lastRatedResult = null;
+                Result lastUnratedResult = null;
+
+                for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
+
+                    // manipulate existing results if the question or answer is set invalid
+                    for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
+                        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                            if (submittedAnswer.getQuestion().isInvalid()) {
+                                // if question is set invalid -> change question-result, so that it is perfect
+                                ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(new HashSet<>());
+                                for (AnswerOption answer : ((MultipleChoiceQuestion) submittedAnswer.getQuestion()).getAnswerOptions()) {
+                                    if (answer.isIsCorrect()) {
+                                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).addSelectedOptions(answer);
+                                    }
+                                }
+                            } else {
+                                //check if an answer is set invalid
+                                for (AnswerOption answer : ((MultipleChoiceQuestion) submittedAnswer.getQuestion()).getAnswerOptions()) {
+                                    if (answer.isInvalid()) {
+                                        if (answer.isIsCorrect()) {
+                                            // if the answer is invalid and correct -> add answer if it's not already contained
+                                            if (!((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().contains(answer)) {
+                                                ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().add(answer);
+                                            }
+                                        } else {
+                                            // if the answer is incorrect remove the answer
+                                            ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().remove(answer);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    //recalculate existing score
+                    ((QuizSubmission) result.getSubmission()).calculateAndUpdateScores(quizExercise);
+                    result.setScore(Math.round(((QuizSubmission) result.getSubmission()).getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
+                    resultRepository.save(result);
+                    quizSubmissionRepository.save((QuizSubmission) result.getSubmission());
+
+                    //save last rated and unrated Result for Statistic update
+                    if (result.getCompletionDate().isBefore(quizExercise.getDueDate().plusSeconds(5))
+                        && (lastRatedResult == null || lastRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                        lastRatedResult = result;
+                    }
+                    if (result.getCompletionDate().isAfter(quizExercise.getDueDate().plusSeconds(5))
+                        && (lastUnratedResult == null || lastUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                        lastUnratedResult = result;
+                    }
+                }
+
+                // update Statistics with latest Results
+                if (lastRatedResult != null) {
+                    quizExercise.getQuizPointStatistic().addResult(lastRatedResult.getScore(), true);
+                }
+                if (lastUnratedResult != null) {
+                    quizExercise.getQuizPointStatistic().addResult(lastUnratedResult.getScore(), false);
+                }
+                for (Question question : quizExercise.getQuestions()) {
+                    if (lastRatedResult != null) {
+                        question.getQuestionStatistic().addResult(((QuizSubmission) lastRatedResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
+                    }
+                    if (lastUnratedResult != null) {
+                        question.getQuestionStatistic().addResult(((QuizSubmission) lastUnratedResult.getSubmission()).getSubmittedAnswerForQuestion(question), false);
+                    }
+                }
+            }
+            //save Statistics
+            quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
+            for (Question question : quizExercise.getQuestions()) {
+                questionStatisticRepository.save(question.getQuestionStatistic());
+            }
+        }
+
+        return methodResult;
     }
 }
