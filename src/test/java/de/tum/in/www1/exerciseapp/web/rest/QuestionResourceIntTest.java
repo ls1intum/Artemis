@@ -1,12 +1,11 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
-
 import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestion;
 import de.tum.in.www1.exerciseapp.domain.Question;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
 import de.tum.in.www1.exerciseapp.repository.QuestionRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,8 +27,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
-
-import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
 /**
  * Test class for the QuestionResource REST controller.
  *

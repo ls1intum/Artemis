@@ -1,11 +1,9 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
-
 import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic;
 import de.tum.in.www1.exerciseapp.repository.MultipleChoiceQuestionStatisticRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
