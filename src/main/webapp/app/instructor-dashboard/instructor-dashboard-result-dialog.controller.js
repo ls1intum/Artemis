@@ -39,6 +39,7 @@
         }
 
         function save() {
+            console.log("result " + JSON.stringify(vm.result));
             vm.isSaving = true;
             for(var i = 0; i < vm.result.feedbacks.length; i++) {
                 vm.result.feedbacks[i].type = 'MANUAL';

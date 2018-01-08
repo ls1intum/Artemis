@@ -18,9 +18,10 @@
         </div>
         <div class="form-group">
             <label class="control-label">Result Text</label>
-            <input type="text" class="form-control" name="resultString" id="field_resultString"
+            <input type="text" required class="form-control" name="resultString" id="field_resultString"
                    ng-model="vm.result.resultString"
             />
+            <span class="help-block" ng-show="editForm.resultString.$dirty && editForm.resultString.$error.required">Result text is required.</span>
         </div>
         <div class="form-group">
             <label class="control-label">Completion Date</label>
@@ -35,25 +36,28 @@
         <div class="form-group">
             <label class="control-label">Successful</label>
             <input type="checkbox" class="form-control" name="successful" id="field_successful"
-                   ng-model="vm.result.successful"
+                   ng-model="vm.result.successful" ng-disabled="vm.result.score !== 100"
             />
         </div>
         <div class="form-group">
-            <label class="control-label">Score</label>
-            <input type="text" class="form-control" name="score" id="field_score"
-                   ng-model="vm.result.score"
+            <label class="control-label">Score (in %)</label>
+            <input type="number" required class="form-control" name="score" id="field_score" ng-model="vm.result.score"
+                   ng-change="vm.result.score === 100 ? vm.result.successful = true : vm.result.successful = false"
             />
+            <span class="help-block" ng-show="editForm.score.$dirty && editForm.score.$invalid">Score is required and should be a number.</span>
         </div>
         <br/>
         <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
         <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
             <div class="form-group">
                 <label class="control-label">Feedback #{{index + 1}} Text</label>
-                <input class="form-control" ng-model="vm.result.feedbacks[index].text"/>
+                <input class="form-control" name="feedbackText" ng-required="vm.addFeedbackClicked" ng-model="vm.result.feedbacks[index].text"/>
+                <span class="help-block" ng-show="editForm.feedbackText.$dirty && editForm.feedbackText.$error.required">Feedback text is required.</span>
             </div>
             <div class="form-group">
                 <label class="control-label">Feedback #{{index + 1}} Detail Text</label>
-                <input class="form-control" ng-model="vm.result.feedbacks[index].detailText"/>
+                <input class="form-control" name="feedbackErrorText" ng-required="vm.addFeedbackClicked" ng-model="vm.result.feedbacks[index].detailText"/>
+                <span class="help-block" ng-show="editForm.feedbackErrorText.$dirty && editForm.feedbackErrorText.$error.required">Feedback detail text is required.</span>
             </div>
             <br/>
         </div>
