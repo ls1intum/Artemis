@@ -23,16 +23,16 @@ public class DropLocation implements Serializable {
     private Long id;
 
     @Column(name = "pos_x")
-    private Integer posX;
+    private Double posX;
 
     @Column(name = "pos_y")
-    private Integer posY;
+    private Double posY;
 
     @Column(name = "width")
-    private Integer width;
+    private Double width;
 
     @Column(name = "height")
-    private Integer height;
+    private Double height;
 
     @ManyToOne
     @JsonIgnoreProperties({"dragItems", "dropLocations"})
@@ -47,55 +47,55 @@ public class DropLocation implements Serializable {
         this.id = id;
     }
 
-    public Integer getPosX() {
+    public Double getPosX() {
         return posX;
     }
 
-    public DropLocation posX(Integer posX) {
+    public DropLocation posX(Double posX) {
         this.posX = posX;
         return this;
     }
 
-    public void setPosX(Integer posX) {
+    public void setPosX(Double posX) {
         this.posX = posX;
     }
 
-    public Integer getPosY() {
+    public Double getPosY() {
         return posY;
     }
 
-    public DropLocation posY(Integer posY) {
+    public DropLocation posY(Double posY) {
         this.posY = posY;
         return this;
     }
 
-    public void setPosY(Integer posY) {
+    public void setPosY(Double posY) {
         this.posY = posY;
     }
 
-    public Integer getWidth() {
+    public Double getWidth() {
         return width;
     }
 
-    public DropLocation width(Integer width) {
+    public DropLocation width(Double width) {
         this.width = width;
         return this;
     }
 
-    public void setWidth(Integer width) {
+    public void setWidth(Double width) {
         this.width = width;
     }
 
-    public Integer getHeight() {
+    public Double getHeight() {
         return height;
     }
 
-    public DropLocation height(Integer height) {
+    public DropLocation height(Double height) {
         this.height = height;
         return this;
     }
 
-    public void setHeight(Integer height) {
+    public void setHeight(Double height) {
         this.height = height;
     }
 

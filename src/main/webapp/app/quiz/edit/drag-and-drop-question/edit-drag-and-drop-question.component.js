@@ -2,6 +2,20 @@ EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoa
 
 function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document) {
 
+    /**
+     * enum for the different drag operations
+     *
+     * @type {{NONE: number, CREATE: number, MOVE: number, RESIZE_BOTH: number, RESIZE_X: number, RESIZE_Y: number}}
+     */
+    var DragState = {
+        NONE: 0,
+        CREATE: 1,
+        MOVE: 2,
+        RESIZE_BOTH: 3,
+        RESIZE_X: 4,
+        RESIZE_Y: 5
+    };
+
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('dragAndDropQuestion');
     $translate.refresh();
@@ -20,6 +34,9 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.togglePreview = togglePreview;
     vm.uploadBackground = uploadBackground;
     vm.backgroundMouseDown = backgroundMouseDown;
+    vm.dropLocationMouseDown = dropLocationMouseDown;
+    vm.deleteDropLocation = deleteDropLocation;
+    vm.duplicateDropLocation = duplicateDropLocation;
 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
@@ -58,13 +75,13 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     }
 
     /**
-     * keep track of whether the user is currently dragging a dropLocation
-     * @type {boolean}
+     * keep track of what the current drag action is doing
+     * @type {number}
      */
-    var isDragging = false;
+    var draggingState = DragState.NONE;
 
     /**
-     * keep track of the currently edited / created drop location
+     * keep track of the currently dragged drop location
      * @type {object | null}
      */
     var currentDropLocation = null;
@@ -113,15 +130,37 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         mouse.x = Math.min(Math.max(0, mouse.x), backgroundWidth);
         mouse.y = Math.min(Math.max(0, mouse.y), backgroundHeight);
 
-        if (isDragging && currentDropLocation) {
-            // update current drop locations postion and size
-            currentDropLocation.posX = 100 * Math.min(mouse.x, mouse.startX) / backgroundWidth;
-            currentDropLocation.posY = 100 * Math.min(mouse.y, mouse.startY) / backgroundHeight;
-            currentDropLocation.width = 100 * Math.abs(mouse.x - mouse.startX) / backgroundWidth;
-            currentDropLocation.height = 100 * Math.abs(mouse.y - mouse.startY) / backgroundHeight;
+        if (currentDropLocation) {
+            switch (draggingState) {
+                case DragState.CREATE:
+                    // update current drop location's position and size
+                    currentDropLocation.posX = 100 * Math.min(mouse.x, mouse.startX) / backgroundWidth;
+                    currentDropLocation.posY = 100 * Math.min(mouse.y, mouse.startY) / backgroundHeight;
+                    currentDropLocation.width = 100 * Math.abs(mouse.x - mouse.startX) / backgroundWidth;
+                    currentDropLocation.height = 100 * Math.abs(mouse.y - mouse.startY) / backgroundHeight;
 
-            // update view
-            $scope.$apply();
+                    // update view
+                    $scope.$apply();
+                    break;
+                case DragState.MOVE:
+                    // update current drop location's position
+                    currentDropLocation.posX = Math.min(Math.max(0, 100 * (mouse.x + mouse.offsetX) / backgroundWidth), 100 - currentDropLocation.width);
+                    currentDropLocation.posY = Math.min(Math.max(0, 100 * (mouse.y + mouse.offsetY) / backgroundHeight), 100 - currentDropLocation.height);
+
+                    // update view
+                    $scope.$apply();
+                    break;
+                case DragState.RESIZE_BOTH:
+                    // TODO
+                    break;
+                case DragState.RESIZE_X:
+                    // TODO
+                    break;
+                case DragState.RESIZE_Y:
+                    // TODO
+                    break;
+            }
+
         }
     }
 
@@ -129,22 +168,41 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      * react to mouseup events to finish dragging operations
      */
     function mouseUp() {
-        if (isDragging) {
-            var clickLayer = $(".click-layer");
-            var backgroundWidth = clickLayer.width();
-            var backgroundHeight = clickLayer.height();
-            // remove drop Location if minimum dimensions are not met,
-            // notify parent of new drop location otherwise
-            if (currentDropLocation.width / 100 * backgroundWidth < 10 || currentDropLocation.height / 100 * backgroundHeight < 10) {
-                vm.question.dropLocations.pop();
-            } else {
-                vm.onUpdated();
+        if (currentDropLocation) {
+            switch (draggingState) {
+                case DragState.CREATE:
+                    var clickLayer = $(".click-layer");
+                    var backgroundWidth = clickLayer.width();
+                    var backgroundHeight = clickLayer.height();
+                    // remove drop Location if minimum dimensions are not met,
+                    // notify parent of new drop location otherwise
+                    if (currentDropLocation.width / 100 * backgroundWidth < 10 || currentDropLocation.height / 100 * backgroundHeight < 10) {
+                        vm.question.dropLocations.pop();
+                    } else {
+                        vm.onUpdated();
+                    }
+                    // update view
+                    $scope.$apply();
+                    break;
+                case DragState.MOVE:
+                    // notify parent of changed drop location
+                    vm.onUpdated();
+                    // update view
+                    $scope.$apply();
+                    break;
+                case DragState.RESIZE_BOTH:
+                    // TODO
+                    break;
+                case DragState.RESIZE_X:
+                    // TODO
+                    break;
+                case DragState.RESIZE_Y:
+                    // TODO
+                    break;
             }
-            // update view
-            $scope.$apply();
         }
         // update state
-        isDragging = false;
+        draggingState = DragState.NONE;
         currentDropLocation = null;
     }
 
@@ -152,7 +210,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      * react to mouse down events on the background to start dragging
      */
     function backgroundMouseDown() {
-        if (vm.question.backgroundFilePath && !isDragging) {
+        if (vm.question.backgroundFilePath && draggingState === DragState.NONE) {
             // save current mouse position as starting position
             mouse.startX = mouse.x;
             mouse.startY = mouse.y;
@@ -172,8 +230,53 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             vm.question.dropLocations.push(currentDropLocation);
 
             // update state
-            isDragging = true;
+            draggingState = DragState.CREATE;
         }
+    }
+
+    /**
+     * react to mousedown events on a drop location to start moving it
+     *
+     * @param dropLocation {object} the drop location to move
+     */
+    function dropLocationMouseDown(dropLocation) {
+        var clickLayer = $(".click-layer");
+        var backgroundWidth = clickLayer.width();
+        var backgroundHeight = clickLayer.height();
+
+        var dropLocationX = dropLocation.posX / 100 * backgroundWidth;
+        var dropLocationY = dropLocation.posY / 100 * backgroundHeight;
+
+        // save offset of mouse in drop location
+        mouse.offsetX = dropLocationX - mouse.x;
+        mouse.offsetY = dropLocationY - mouse.y;
+
+        // update state
+        currentDropLocation = dropLocation;
+        draggingState = DragState.MOVE;
+    }
+
+    /**
+     * Delete the given drop location
+     * @param dropLocationToDelete {object} the drop location to delete
+     */
+    function deleteDropLocation(dropLocationToDelete) {
+        vm.question.dropLocations = vm.question.dropLocations.filter(function (dropLocation) {
+            return dropLocation !== dropLocationToDelete;
+        });
+    }
+
+    /**
+     * Add an identical drop location to the question
+     * @param dropLocation {object} the drop location to duplicate
+     */
+    function duplicateDropLocation(dropLocation) {
+        vm.question.dropLocations.push({
+            posX: dropLocation.posX,
+            posY: dropLocation.posY,
+            width: dropLocation.width,
+            height: dropLocation.height
+        });
     }
 
     /**

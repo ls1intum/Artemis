@@ -142,7 +142,8 @@
         padding: 0;
     }
 
-    .delete-button {
+    .delete-button,
+    .duplicate-button {
         cursor: pointer;
         display: flex;
         align-items: center;
@@ -151,6 +152,10 @@
 
     .delete-button:hover {
         color: red;
+    }
+
+    .duplicate-button:hover {
+        color: #0F6AB4;
     }
 
     .question-title {
@@ -310,6 +315,17 @@
                 border: 1px dashed rebeccapurple;
                 background: rgba(255, 255, 255, 0.4);
                 z-index: 1;
+
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: flex-end;
+
+                cursor: move !important;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.6);
+                }
             }
         }
 
