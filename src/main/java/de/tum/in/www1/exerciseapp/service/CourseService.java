@@ -1,6 +1,9 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.Course;
+import de.tum.in.www1.exerciseapp.domain.Exercise;
+import de.tum.in.www1.exerciseapp.domain.Participation;
+import de.tum.in.www1.exerciseapp.domain.Result;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import org.slf4j.Logger;
@@ -10,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 /**
@@ -54,20 +56,7 @@ public class CourseService {
     @Transactional(readOnly = true)
     public List<Course> findAll() {
         log.debug("Request to get all Courses");
-        List<Course> result = courseRepository.findAll();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        Authority adminAuthority = new Authority();
-        adminAuthority.setName("ROLE_ADMIN");
-        Authority taAuthority = new Authority();
-        taAuthority.setName("ROLE_TA");
-        Stream<Course> userCourses = result.stream().filter(
-            course -> user.getGroups().contains(course.getStudentGroupName())
-                || user.getGroups().contains(course.getTeachingAssistantGroupName())
-                || user.getAuthorities().contains(adminAuthority)
-        );
-        List<Course> userAuthorizedCourses = userCourses.collect(Collectors.toList());
-        userAuthorizedCourses = moveTutorialToTop(userAuthorizedCourses);
-        return userAuthorizedCourses;
+        return courseRepository.findAll();
     }
 
     /**

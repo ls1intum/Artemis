@@ -55,6 +55,7 @@
     "karma-script-launcher": "1.0.0",
     "lazypipe": "1.0.1",
     "lodash": "4.15.0",
+    "marked": "0.3.9",
     "main-bower-files": "2.13.1",
     "map-stream": "0.0.6",
     "protractor": "5.1.2",

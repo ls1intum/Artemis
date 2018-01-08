@@ -22,7 +22,7 @@ import java.io.IOException;
 
 @RestController
 @RequestMapping({"/api", "/api_basic"})
-@PreAuthorize("hasAnyRole('USER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
 public class PlantUmlResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);

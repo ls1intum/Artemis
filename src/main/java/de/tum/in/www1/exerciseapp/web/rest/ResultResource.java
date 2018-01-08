@@ -1,12 +1,8 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.exerciseapp.domain.Feedback;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.QuizExercise;
-import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
-import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -15,10 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,19 +33,28 @@ public class ResultResource {
 
     private final ResultRepository resultRepository;
     private final Optional<LtiService> ltiService;
+    private final CourseService courseService;
     private final ParticipationService participationService;
     private final ResultService resultService;
+    private final ExerciseService exerciseService;
+    private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final FeedbackService feedbackService;
 
-    public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService, ResultService resultService, Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService) {
+    public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService,
+                          ResultService resultService, AuthorizationCheckService authCheckService,
+                          Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService,
+                          ExerciseService exerciseService, CourseService courseService) {
 
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.participationService = participationService;
         this.resultService = resultService;
+        this.courseService = courseService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.feedbackService = feedbackService;
+        this.exerciseService = exerciseService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -63,10 +65,17 @@ public class ResultResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/results")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> createResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to save Result : {}", result);
+        Participation participation = result.getParticipation();
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (result.getId() != null) {
             throw new BadRequestAlertException("A new result cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -120,9 +129,17 @@ public class ResultResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/results")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
+        Participation participation = result.getParticipation();
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (result.getId() == null) {
             return createResult(result);
         }
@@ -156,26 +173,30 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participations/{participationId}/results")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Result> getResultsForParticipation(@PathVariable Long courseId,
+    public ResponseEntity<List<Result>> getResultsForParticipation(@PathVariable Long courseId,
                                                    @PathVariable Long exerciseId,
                                                    @PathVariable Long participationId,
-                                                   @RequestParam(defaultValue = "true") boolean showAllResults,
-                                                   Authentication authentication) {
+                                                   @RequestParam(defaultValue = "true") boolean showAllResults) {
         log.debug("REST request to get Results for Participation : {}", participationId);
-        AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
-        GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-        GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
+
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
-        if (participation != null && (participation.getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority)))) {
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (participation != null) {
             // if exercise is quiz => only give out results if quiz is over
             if (participation.getExercise() instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) participation.getExercise();
                 if (quizExercise.shouldFilterForStudents()) {
                     // return empty list
-                    return results;
+                    return ResponseEntity.ok().body(results);
                 }
             }
             if (showAllResults) {
@@ -186,7 +207,7 @@ public class ResultResource {
                     .orElse(new ArrayList<>());
             }
         }
-        return results;
+        return ResponseEntity.ok().body(results);
     }
 
     /**
@@ -197,12 +218,21 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Result> getResultsForExercise(@PathVariable Long courseId,
+    public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
                                               @RequestParam(defaultValue = "false") boolean showAllResults) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
+
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        Course course = exercise.getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         List<Result> results;
         if (showAllResults) {
             results = resultRepository.findLatestResultsForExercise(exerciseId);
@@ -224,7 +254,7 @@ public class ResultResource {
                 }
             }));
 
-        return results;
+        return ResponseEntity.ok().body(results);
     }
 
     /**
@@ -234,12 +264,18 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and the list of results in body
      */
     @GetMapping(value = "/courses/{courseId}/results")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Result> getResultsForCourse(@PathVariable Long courseId) {
+    public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Results for Course : {}", courseId);
-        List<Result> results;
-        return resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+        Course course = courseService.findOne(courseId);
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+        return ResponseEntity.ok().body(results);
     }
 
 
@@ -250,11 +286,18 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping("/results/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
+        Participation participation = result.getParticipation();
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return Optional.ofNullable(result)
             .map(foundResult -> new ResponseEntity<>(
                 foundResult,
@@ -269,27 +312,31 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
     @GetMapping(value = "/results/{id}/details")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional
     public ResponseEntity<Set<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
-        AbstractAuthenticationToken user = (AbstractAuthenticationToken) authentication;
-        GrantedAuthority adminAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.ADMIN);
-        GrantedAuthority taAuthority = new SimpleGrantedAuthority(AuthoritiesConstants.TEACHING_ASSISTANT);
-        if (result.getParticipation().getStudent().getLogin().equals(user.getName()) || (user.getAuthorities().contains(adminAuthority) || user.getAuthorities().contains(taAuthority))) {
-            try {
-                Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
-                return Optional.ofNullable(feedbacks)
-                    .map(resultDetails -> new ResponseEntity<>(feedbacks, HttpStatus.OK))
-                    .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-            } catch (Exception e) {
-                log.error("REST request to get Result failed : {}", id, e);
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-        } else {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        if(result == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+        Participation participation = result.getParticipation();
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        try {
+            Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
+            return Optional.ofNullable(feedbacks)
+                .map(resultDetails -> new ResponseEntity<>(feedbacks, HttpStatus.OK))
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+        } catch (Exception e) {
+            log.error("REST request to get Result failed : {}", id, e);
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -300,10 +347,18 @@ public class ResultResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/results/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);
+        Result result = resultRepository.findOne(id);
+        Participation participation = result.getParticipation();
+        Course course = participation.getExercise().getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+             !authCheckService.isInstructorInCourse(course) &&
+             !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         resultRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }

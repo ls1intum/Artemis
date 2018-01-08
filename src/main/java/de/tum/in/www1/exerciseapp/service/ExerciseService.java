@@ -4,7 +4,6 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.exception.BambooException;
 import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
-import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -138,11 +137,6 @@ public class ExerciseService {
     @Transactional
     public void delete(Long id) {
         log.debug("Request to delete Exercise : {}", id);
-        Exercise exercise = exerciseRepository.findOne(id);
-
-        if (Optional.ofNullable(exercise).isPresent()) {
-            reset(exercise);
-        }
         exerciseRepository.delete(id);
     }
 
