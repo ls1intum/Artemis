@@ -8563,6 +8563,11 @@ body.editor .navbar-brand span {
       cursor: move !important; }
       .edit-dnd-question .background-area .click-layer .drop-location:hover {
         background: rgba(255, 255, 255, 0.6); }
+      .edit-dnd-question .background-area .click-layer .drop-location .dimensions {
+        position: absolute;
+        left: 2px;
+        bottom: 0;
+        font-size: 14px; }
   .edit-dnd-question .background-area img {
     width: 100%; }
 

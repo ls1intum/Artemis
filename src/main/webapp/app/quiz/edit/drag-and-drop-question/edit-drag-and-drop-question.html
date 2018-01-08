@@ -46,6 +46,9 @@
                 ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                 ng-mousedown="vm.dropLocationMouseDown(dropLocation)"
             >
+                <div class="dimensions">
+                    {{dropLocation.width}}x{{dropLocation.height}}
+                </div>
                 <div class="duplicate-button" title="Duplicate" ng-click="vm.duplicateDropLocation(dropLocation)">
                     <i class="fa fa-copy fa-2x"></i>
                 </div>

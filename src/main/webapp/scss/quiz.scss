@@ -326,6 +326,13 @@
                 &:hover {
                     background: rgba(255, 255, 255, 0.6);
                 }
+
+                .dimensions {
+                    position: absolute;
+                    left: 2px;
+                    bottom: 0;
+                    font-size: 14px;
+                }
             }
         }
 
