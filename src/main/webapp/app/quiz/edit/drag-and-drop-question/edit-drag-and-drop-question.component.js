@@ -84,7 +84,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     /**
      * unbind mouse events when this component is removed
      */
-    $scope.$on('$destroy', function() {
+    $scope.$on('$destroy', function () {
         $document.unbind("mousemove", mouseMove);
         $document.unbind("mouseup", mouseUp);
     });
@@ -101,6 +101,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         var ev = e || window.event; //Moz || IE
         var clickLayer = $(".click-layer");
         var backgroundOffset = clickLayer.offset();
+        var backgroundWidth = clickLayer.width();
+        var backgroundHeight = clickLayer.height();
         if (ev.pageX) { //Moz
             mouse.x = ev.pageX - backgroundOffset.left;
             mouse.y = ev.pageY - backgroundOffset.top;
@@ -108,15 +110,15 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             mouse.x = ev.clientX - backgroundOffset.left;
             mouse.y = ev.clientY - backgroundOffset.top;
         }
-        mouse.x = Math.min(Math.max(0, mouse.x), clickLayer.width());
-        mouse.y = Math.min(Math.max(0, mouse.y), clickLayer.height());
+        mouse.x = Math.min(Math.max(0, mouse.x), backgroundWidth);
+        mouse.y = Math.min(Math.max(0, mouse.y), backgroundHeight);
 
         if (isDragging && currentDropLocation) {
             // update current drop locations postion and size
-            currentDropLocation.posX = Math.min(mouse.x, mouse.startX);
-            currentDropLocation.posY = Math.min(mouse.y, mouse.startY);
-            currentDropLocation.width = Math.abs(mouse.x - mouse.startX);
-            currentDropLocation.height = Math.abs(mouse.y - mouse.startY);
+            currentDropLocation.posX = 100 * Math.min(mouse.x, mouse.startX) / backgroundWidth;
+            currentDropLocation.posY = 100 * Math.min(mouse.y, mouse.startY) / backgroundHeight;
+            currentDropLocation.width = 100 * Math.abs(mouse.x - mouse.startX) / backgroundWidth;
+            currentDropLocation.height = 100 * Math.abs(mouse.y - mouse.startY) / backgroundHeight;
 
             // update view
             $scope.$apply();
@@ -128,9 +130,12 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      */
     function mouseUp() {
         if (isDragging) {
+            var clickLayer = $(".click-layer");
+            var backgroundWidth = clickLayer.width();
+            var backgroundHeight = clickLayer.height();
             // remove drop Location if minimum dimensions are not met,
             // notify parent of new drop location otherwise
-            if (currentDropLocation.width < 10 || currentDropLocation.height < 10) {
+            if (currentDropLocation.width / 100 * backgroundWidth < 10 || currentDropLocation.height / 100 * backgroundHeight < 10) {
                 vm.question.dropLocations.pop();
             } else {
                 vm.onUpdated();
