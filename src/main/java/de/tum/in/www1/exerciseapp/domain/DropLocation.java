@@ -23,16 +23,16 @@ public class DropLocation implements Serializable {
     private Long id;
 
     @Column(name = "pos_x")
-    private Double posX;
+    private Integer posX;
 
     @Column(name = "pos_y")
-    private Double posY;
+    private Integer posY;
 
     @Column(name = "width")
-    private Double width;
+    private Integer width;
 
     @Column(name = "height")
-    private Double height;
+    private Integer height;
 
     @ManyToOne
     @JsonIgnoreProperties({"dragItems", "dropLocations"})
@@ -47,55 +47,55 @@ public class DropLocation implements Serializable {
         this.id = id;
     }
 
-    public Double getPosX() {
+    public Integer getPosX() {
         return posX;
     }
 
-    public DropLocation posX(Double posX) {
+    public DropLocation posX(Integer posX) {
         this.posX = posX;
         return this;
     }
 
-    public void setPosX(Double posX) {
+    public void setPosX(Integer posX) {
         this.posX = posX;
     }
 
-    public Double getPosY() {
+    public Integer getPosY() {
         return posY;
     }
 
-    public DropLocation posY(Double posY) {
+    public DropLocation posY(Integer posY) {
         this.posY = posY;
         return this;
     }
 
-    public void setPosY(Double posY) {
+    public void setPosY(Integer posY) {
         this.posY = posY;
     }
 
-    public Double getWidth() {
+    public Integer getWidth() {
         return width;
     }
 
-    public DropLocation width(Double width) {
+    public DropLocation width(Integer width) {
         this.width = width;
         return this;
     }
 
-    public void setWidth(Double width) {
+    public void setWidth(Integer width) {
         this.width = width;
     }
 
-    public Double getHeight() {
+    public Integer getHeight() {
         return height;
     }
 
-    public DropLocation height(Double height) {
+    public DropLocation height(Integer height) {
         this.height = height;
         return this;
     }
 
-    public void setHeight(Double height) {
+    public void setHeight(Integer height) {
         this.height = height;
     }
 

@@ -43,7 +43,7 @@
             <div
                 class="drop-location"
                 ng-repeat="dropLocation in vm.question.dropLocations"
-                ng-style="{top: dropLocation.posY + '%', left: dropLocation.posX + '%', width: dropLocation.width + '%', height: dropLocation.height + '%'}"
+                ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                 ng-mousedown="vm.dropLocationMouseDown(dropLocation)"
             >
                 <div class="duplicate-button" title="Duplicate" ng-click="vm.duplicateDropLocation(dropLocation)">
