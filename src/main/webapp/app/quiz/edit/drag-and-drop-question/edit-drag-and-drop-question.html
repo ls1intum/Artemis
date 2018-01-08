@@ -39,6 +39,9 @@
     </div>
     <div class="background-area">
         <img ng-src="{{vm.question.backgroundFilePath}}" alt="Please upload a background picture.">
+        <div class="click-layer" ng-mousedown="vm.backgroundMouseDown()">
+            <div class="drop-location" ng-repeat="dropLocation in vm.question.dropLocations" ng-style="{top: dropLocation.posY + 'px', left: dropLocation.posX + 'px', width: dropLocation.width + 'px', height: dropLocation.height + 'px'}"></div>
+        </div>
     </div>
 </div>
 <div class="preview-dnd-question" ng-if="vm.showPreview">

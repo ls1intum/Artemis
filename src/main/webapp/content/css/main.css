@@ -8534,8 +8534,27 @@ body.editor .navbar-brand span {
   margin: 10px 0;
   font-weight: bold; }
 
-.edit-dnd-question .background-area img {
-  width: 100%; }
+.edit-dnd-question .background-area {
+  position: relative;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
+  .edit-dnd-question .background-area .click-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    cursor: crosshair !important;
+    z-index: 1; }
+    .edit-dnd-question .background-area .click-layer .drop-location {
+      position: absolute;
+      border: 1px dashed rebeccapurple;
+      background: rgba(255, 255, 255, 0.4);
+      z-index: 1; }
+  .edit-dnd-question .background-area img {
+    width: 100%; }
 
 .quiz-header,
 .quiz-content,

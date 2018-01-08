@@ -5,14 +5,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A DragAndDropQuestion.
@@ -28,15 +23,17 @@ public class DragAndDropQuestion extends Question implements Serializable {
     @Column(name = "background_file_path")
     private String backgroundFilePath;
 
-    @OneToMany(mappedBy = "question")
-    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn
+    @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DropLocation> dropLocations = new HashSet<>();
+    private List<DropLocation> dropLocations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "question")
-    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn
+    @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DragItem> dragItems = new HashSet<>();
+    private List<DragItem> dragItems = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
 
@@ -53,11 +50,11 @@ public class DragAndDropQuestion extends Question implements Serializable {
         this.backgroundFilePath = backgroundFilePath;
     }
 
-    public Set<DropLocation> getDropLocations() {
+    public List<DropLocation> getDropLocations() {
         return dropLocations;
     }
 
-    public DragAndDropQuestion dropLocations(Set<DropLocation> dropLocations) {
+    public DragAndDropQuestion dropLocations(List<DropLocation> dropLocations) {
         this.dropLocations = dropLocations;
         return this;
     }
@@ -74,15 +71,15 @@ public class DragAndDropQuestion extends Question implements Serializable {
         return this;
     }
 
-    public void setDropLocations(Set<DropLocation> dropLocations) {
+    public void setDropLocations(List<DropLocation> dropLocations) {
         this.dropLocations = dropLocations;
     }
 
-    public Set<DragItem> getDragItems() {
+    public List<DragItem> getDragItems() {
         return dragItems;
     }
 
-    public DragAndDropQuestion dragItems(Set<DragItem> dragItems) {
+    public DragAndDropQuestion dragItems(List<DragItem> dragItems) {
         this.dragItems = dragItems;
         return this;
     }
@@ -99,7 +96,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
         return this;
     }
 
-    public void setDragItems(Set<DragItem> dragItems) {
+    public void setDragItems(List<DragItem> dragItems) {
         this.dragItems = dragItems;
     }
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove

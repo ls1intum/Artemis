@@ -1,6 +1,6 @@
-EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload'];
+EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document'];
 
-function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload) {
+function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document) {
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('dragAndDropQuestion');
@@ -19,6 +19,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.isUploadingBackgroundFile = false;
     vm.togglePreview = togglePreview;
     vm.uploadBackground = uploadBackground;
+    vm.backgroundMouseDown = backgroundMouseDown;
 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
@@ -54,6 +55,120 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
                 alert(error);
                 vm.isUploadingBackgroundFile = false;
             });
+    }
+
+    /**
+     * keep track of whether the user is currently dragging a dropLocation
+     * @type {boolean}
+     */
+    var isDragging = false;
+
+    /**
+     * keep track of the currently edited / created drop location
+     * @type {object | null}
+     */
+    var currentDropLocation = null;
+
+    /**
+     * keep track of the current mouse location
+     * @type {object}
+     */
+    var mouse = {};
+
+    /**
+     * bind to mouse events
+     */
+    $document.bind("mousemove", mouseMove);
+    $document.bind("mouseup", mouseUp);
+
+    /**
+     * unbind mouse events when this component is removed
+     */
+    $scope.$on('$destroy', function() {
+        $document.unbind("mousemove", mouseMove);
+        $document.unbind("mouseup", mouseUp);
+    });
+
+    /**
+     * react to mousemove events on the entire page to update:
+     * - mouse object (always)
+     * - current drop location (only while dragging)
+     *
+     * @param e {object} the mouse move event
+     */
+    function mouseMove(e) {
+        // update mouse x and y value
+        var ev = e || window.event; //Moz || IE
+        var clickLayer = $(".click-layer");
+        var backgroundOffset = clickLayer.offset();
+        if (ev.pageX) { //Moz
+            mouse.x = ev.pageX - backgroundOffset.left;
+            mouse.y = ev.pageY - backgroundOffset.top;
+        } else if (ev.clientX) { //IE
+            mouse.x = ev.clientX - backgroundOffset.left;
+            mouse.y = ev.clientY - backgroundOffset.top;
+        }
+        mouse.x = Math.min(Math.max(0, mouse.x), clickLayer.width());
+        mouse.y = Math.min(Math.max(0, mouse.y), clickLayer.height());
+
+        if (isDragging && currentDropLocation) {
+            // update current drop locations postion and size
+            currentDropLocation.posX = Math.min(mouse.x, mouse.startX);
+            currentDropLocation.posY = Math.min(mouse.y, mouse.startY);
+            currentDropLocation.width = Math.abs(mouse.x - mouse.startX);
+            currentDropLocation.height = Math.abs(mouse.y - mouse.startY);
+
+            // update view
+            $scope.$apply();
+        }
+    }
+
+    /**
+     * react to mouseup events to finish dragging operations
+     */
+    function mouseUp() {
+        if (isDragging) {
+            // remove drop Location if minimum dimensions are not met,
+            // notify parent of new drop location otherwise
+            if (currentDropLocation.width < 10 || currentDropLocation.height < 10) {
+                vm.question.dropLocations.pop();
+            } else {
+                vm.onUpdated();
+            }
+            // update view
+            $scope.$apply();
+        }
+        // update state
+        isDragging = false;
+        currentDropLocation = null;
+    }
+
+    /**
+     * react to mouse down events on the background to start dragging
+     */
+    function backgroundMouseDown() {
+        if (vm.question.backgroundFilePath && !isDragging) {
+            // save current mouse position as starting position
+            mouse.startX = mouse.x;
+            mouse.startY = mouse.y;
+
+            // create new drop location
+            currentDropLocation = {
+                posX: mouse.x,
+                posY: mouse.y,
+                width: 0,
+                height: 0
+            };
+
+            // add drop location to question
+            if (!vm.question.dropLocations) {
+                vm.question.dropLocations = [];
+            }
+            vm.question.dropLocations.push(currentDropLocation);
+
+            // update state
+            isDragging = true;
+        }
     }
 
     /**

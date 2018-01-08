@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -38,6 +39,7 @@ public class DragItem implements Serializable {
     private DropLocation correctLocation;
 
     @ManyToOne
+    @JsonIgnoreProperties({"dragItems", "dropLocations"})
     private DragAndDropQuestion question;
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
