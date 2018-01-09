@@ -33,6 +33,7 @@
           "yAxes": "Häufigkeit",
           "correct": "richtig",
           "incorrect": "falsch"
-      }
+      },
+      "invalid": "(ungültig)"
   }
 }

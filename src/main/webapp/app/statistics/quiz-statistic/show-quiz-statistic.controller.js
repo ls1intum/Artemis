@@ -145,6 +145,18 @@
                 unratedAverage = unratedAverage + (vm.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * vm.quizExercise.questions[i].score);
             }
 
+            //set Background for invalid questions = grey
+            for (var j = 0; j < vm.quizExercise.questions.length; j++) {
+                if (vm.quizExercise.questions[j].invalid) {
+                    backgroundColor[j] = (
+                        {backgroundColor: "#949494",
+                            borderColor: "#949494",
+                            pointBackgroundColor: "#949494",
+                            pointBorderColor: "#949494"
+                        });
+                }
+            }
+
             //add data for the last bar (Average)
             backgroundColor.push(
                 {backgroundColor: "#1e3368",

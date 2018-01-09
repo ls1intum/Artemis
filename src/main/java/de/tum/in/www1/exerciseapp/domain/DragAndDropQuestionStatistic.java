@@ -116,6 +116,8 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
     public void resetStatistic() {
         setParticipantsRated(0);
         setParticipantsUnrated(0);
+        setRatedCorrectCounter(0);
+        setUnRatedCorrectCounter(0);
         for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
             dropLocationCounter.setRatedCounter(0);
             dropLocationCounter.setUnRatedCounter(0);

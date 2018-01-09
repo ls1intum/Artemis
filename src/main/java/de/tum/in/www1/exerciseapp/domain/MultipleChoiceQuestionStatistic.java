@@ -217,6 +217,8 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
     public void resetStatistic() {
         setParticipantsRated(0);
         setParticipantsUnrated(0);
+        setRatedCorrectCounter(0);
+        setUnRatedCorrectCounter(0);
         for (AnswerCounter answerCounter : answerCounters) {
             answerCounter.setRatedCounter(0);
             answerCounter.setUnRatedCounter(0);

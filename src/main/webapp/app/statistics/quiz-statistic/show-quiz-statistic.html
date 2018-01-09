@@ -8,7 +8,7 @@
             <div class="col-md-4 text-left">
                 <h4>Quiz-description?</h4>
                 <ol>
-                <li style="font-size: 15px" ng-repeat="question in vm.quizExercise.questions"><p><span>{{question.title}}&nbsp &nbsp({{question.score}}P)</span></p></li>
+                <li style="font-size: 15px" ng-repeat="question in vm.quizExercise.questions"><p><span>{{question.title}}&nbsp <span ng-show="question.invalid" data-translate="showStatistic.invalid"></span> &nbsp({{question.score}}P)</span></p></li>
                 </ol>
 
             </div>

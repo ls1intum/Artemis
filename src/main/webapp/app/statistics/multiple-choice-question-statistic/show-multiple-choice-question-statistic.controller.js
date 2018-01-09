@@ -173,16 +173,40 @@
                 vm.labels = label;
             });
 
+            //set Background for invalid answers = grey
+            for (var j = 0; j < vm.question.answerOptions.length; j++) {
+                if (vm.question.answerOptions[j].invalid) {
+                    backgroundColor[j] = (
+                        {backgroundColor: "#838383",
+                            borderColor: "#838383",
+                            pointBackgroundColor: "#838383",
+                            pointBorderColor: "#838383"
+                        });
+                }
+            }
+
             //add correct-text to the label based on the language
             $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel) {
                 for(var i = 0; i < vm.question.answerOptions.length; i++) {
                     if (vm.question.answerOptions[i].isCorrect) {
-                        backgroundSolutionColor[i] = (
-                            {backgroundColor: "#5cb85c",
-                                borderColor: "#5cb85c",
-                                pointBackgroundColor: "#5cb85c",
-                                pointBorderColor: "#5cb85c"
-                            });
+                        // check if the answer is valid, otherwise: set the backgroundColor = grey-green
+                        if (vm.question.answerOptions[i].invalid) {
+                            backgroundSolutionColor[i] = (
+                                {backgroundColor: "#758B73",
+                                    borderColor: "#758B73",
+                                    pointBackgroundColor: "#758B73",
+                                    pointBorderColor: "#758B73"
+                                });
+                        }
+                        else {
+                            backgroundSolutionColor[i] = (
+                                {
+                                    backgroundColor: "#5cb85c",
+                                    borderColor: "#5cb85c",
+                                    pointBackgroundColor: "#5cb85c",
+                                    pointBorderColor: "#5cb85c"
+                                });
+                        }
                         solutionLabel[i] = ([String.fromCharCode(65 + i) + ".", " (" + correctLabel + ")"]);
                     }
                 }
@@ -192,12 +216,23 @@
             $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel) {
                 for(var i = 0; i < vm.question.answerOptions.length; i++) {
                     if (!vm.question.answerOptions[i].isCorrect) {
-                        backgroundSolutionColor[i] = (
-                            {backgroundColor: "#d9534f",
-                                borderColor: "#d9534f",
-                                pointBackgroundColor: "#d9534f",
-                                pointBorderColor: "#d9534f"
-                            });
+                        // check if the answer is valid, otherwise: set the backgroundColor = grey-red
+                        if (vm.question.answerOptions[i].invalid) {
+                            backgroundSolutionColor[i] = (
+                                {backgroundColor: "#885656",
+                                    borderColor: "#885656",
+                                    pointBackgroundColor: "#885656",
+                                    pointBorderColor: "#885656"
+                                });
+                        }
+                        else {
+                            backgroundSolutionColor[i] = (
+                                {backgroundColor: "#d9534f",
+                                    borderColor: "#d9534f",
+                                    pointBackgroundColor: "#d9534f",
+                                    pointBorderColor: "#d9534f"
+                                });
+                        }
                         solutionLabel[i] = ([String.fromCharCode(65 + i) + ".", " (" + incorrectLabel + ")"]);
                     }
                 }

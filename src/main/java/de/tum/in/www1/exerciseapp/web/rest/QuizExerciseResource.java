@@ -327,7 +327,7 @@ public class QuizExerciseResource {
 
         //remove added Questions, which are not allowed to be added
         // and check the changes -> updates of statistics and results necessary?
-        Set<Question> addedQuestions = new HashSet<Question>();
+        Set<Question> addedQuestions = new HashSet<>();
 
         for (Question question : quizExercise.getQuestions()) {
             if (originalQuizExercise.getQuestions().contains(question)) {
@@ -340,34 +340,38 @@ public class QuizExerciseResource {
                         question.setInvalid(question.isInvalid() || originalQuestion.isInvalid());
                         ;
 
-                        // check in a question is  set invalid orif the scoringType has changed
+                        // check in a question is  set invalid or if the scoringType has changed
                         if ((question.isInvalid() && !originalQuestion.isInvalid()) ||
                             !question.getScoringType().equals(originalQuestion.getScoringType())) {
                             updateResultsAndStatistics = true;
                         }
 
                         if (question instanceof MultipleChoiceQuestion) {
-                            //remove added Answers, which are not allowed to be added
-                            Set<AnswerOption> addedAnswers = new HashSet<AnswerOption>();
+                            //find added Answers, which are not allowed to be added
+                            Set<AnswerOption> notAllowedAddedAnswers = new HashSet<AnswerOption>();
                             for (AnswerOption answer : (((MultipleChoiceQuestion) question).getAnswerOptions())) {
                                 if (((MultipleChoiceQuestion) originalQuestion).getAnswerOptions().contains(answer)) {
-                                    //find original answer and reset invalid if it already set to true;
+                                    //find original answer
                                     for (AnswerOption originalAnswer : ((MultipleChoiceQuestion) originalQuestion).getAnswerOptions()) {
                                         if (answer.getId().equals(originalAnswer.getId())) {
+                                            //reset invalid answer if it already set to true (it's not possible to set an answer valid again)
                                             answer.setInvalid(answer.isInvalid() || originalAnswer.isInvalid());
+
+                                            // check if an answer is  set invalid or if the correctness has changed
+                                            if ((answer.isInvalid() && !originalAnswer.isInvalid() && !question.isInvalid())||
+                                                (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
+                                                updateResultsAndStatistics = true;
+                                            }
                                         }
 
-                                        // check if an answer is  set invalid or if the correctness has changed
-                                        if ((answer.isInvalid() && !originalAnswer.isInvalid()) ||
-                                            (!answer.isIsCorrect().equals(originalAnswer.isIsCorrect()))) {
-                                            updateResultsAndStatistics = true;
-                                        }
                                     }
                                 } else {
-                                    addedAnswers.add(answer);
+                                    //note the added Answers
+                                    notAllowedAddedAnswers.add(answer);
                                 }
                             }
-                            ((MultipleChoiceQuestion) question).getAnswerOptions().removeAll(addedAnswers);
+                            //remove the added Answers
+                            ((MultipleChoiceQuestion) question).getAnswerOptions().removeAll(notAllowedAddedAnswers);
 
                             // check if an answer was deleted
                             if (((MultipleChoiceQuestion) question).getAnswerOptions().size() <
@@ -382,6 +386,7 @@ public class QuizExerciseResource {
                 addedQuestions.add(question);
             }
         }
+        // remove all added questions
         quizExercise.getQuestions().removeAll(addedQuestions);
 
         //update QuizExercise
@@ -441,6 +446,11 @@ public class QuizExerciseResource {
                     //recalculate existing score
                     ((QuizSubmission) result.getSubmission()).calculateAndUpdateScores(quizExercise);
                     result.setScore(Math.round(((QuizSubmission) result.getSubmission()).getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
+                    if (result.getScore() == 100) {
+                        result.setSuccessful(true);
+                    } else {
+                        result.setSuccessful(false);
+                    }
                     resultRepository.save(result);
                     quizSubmissionRepository.save((QuizSubmission) result.getSubmission());
 
