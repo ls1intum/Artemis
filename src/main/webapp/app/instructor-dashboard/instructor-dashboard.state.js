@@ -83,7 +83,11 @@
                                     score: 100,
                                     id: null
                                 };
-                            }
+                            },
+                            translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                                $translatePartialLoader.addPart('error');
+                                return $translate.refresh();
+                            }]
                         },
                     }).result.then(function () {
                         $state.go('instructor-dashboard', $state.params, {reload: true});
