@@ -90,7 +90,7 @@
          * @returns {boolean} true if the User is an Admin/Instructor, false if not.
          */
         function userIsInstructor() {
-            return Principal.hasAnyAuthority(['ROLE_ADMIN']);
+            return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         }
 
         /**

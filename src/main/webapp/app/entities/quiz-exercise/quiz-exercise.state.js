@@ -212,7 +212,7 @@
             parent: 'quiz-exercise',
             url: '/course/{courseid}/quiz-exercise/re-evaluate/{id}',
             data: {
-                authorities: ['ROLE_ADMIN'],
+                authorities: ['ROLE_ADMIN','ROLE_INSTRUCTOR'],
             },
             views: {
                 'content@': {
@@ -246,7 +246,7 @@
             parent: 'quiz-exercise-re-evaluate',
             url: '{id}/warning',
             data: {
-                authorities: ['ROLE_ADMIN']
+                authorities: ['ROLE_ADMIN','ROLE_INSTRUCTOR']
             },
             onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
                 $uibModal.open({

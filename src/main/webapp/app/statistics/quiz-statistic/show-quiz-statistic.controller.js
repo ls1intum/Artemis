@@ -38,7 +38,7 @@
          */
         function init() {
             // use different REST-call if the User is a Student
-            if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
+            if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
             }
             else{
@@ -55,7 +55,7 @@
 
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
-                if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) {
+                if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                     QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
                 }
                 else{
@@ -67,7 +67,7 @@
             JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
                 vm.quizExercise.quizPointStatistic.released = payload;
                 // send students back to courses if the statistic was revoked
-                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']) && !payload) {
+                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !payload) {
                     $state.go('courses');
                 }
             });
@@ -94,7 +94,7 @@
          */
         function loadQuizSuccess(quiz) {
             // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
                 $state.go('courses');
             }
             vm.quizExercise = quiz;
