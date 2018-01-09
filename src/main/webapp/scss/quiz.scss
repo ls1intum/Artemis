@@ -312,7 +312,7 @@
 
             .drop-location {
                 position: absolute;
-                border: 1px dashed rebeccapurple;
+                border: 1px dashed mediumpurple;
                 background: rgba(255, 255, 255, 0.4);
                 z-index: 1;
 
@@ -332,6 +332,49 @@
                     left: 2px;
                     bottom: 0;
                     font-size: 14px;
+                }
+
+                .resize {
+                    position: absolute;
+                    width: 6px;
+                    height: 6px;
+                    background: mediumpurple;
+
+                    &.top {
+                        top: -3px;
+                    }
+
+                    &.middle {
+                        top: calc(50% - 3px);
+                        cursor: col-resize;
+                    }
+
+                    &.bottom {
+                        bottom: -3px;
+                    }
+
+                    &.left {
+                        left: -3px;
+                    }
+
+                    &.center {
+                        left: calc(50% - 3px);
+                        cursor: row-resize;
+                    }
+
+                    &.right {
+                        right: -3px;
+                    }
+
+                    &.top.left,
+                    &.bottom.right {
+                        cursor: nwse-resize;
+                    }
+
+                    &.top.right,
+                    &.bottom.left {
+                        cursor: nesw-resize;
+                    }
                 }
             }
         }

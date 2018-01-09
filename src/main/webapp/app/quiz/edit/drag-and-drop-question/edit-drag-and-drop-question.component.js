@@ -37,6 +37,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.dropLocationMouseDown = dropLocationMouseDown;
     vm.deleteDropLocation = deleteDropLocation;
     vm.duplicateDropLocation = duplicateDropLocation;
+    vm.resizeMouseDown = resizeMouseDown;
 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
@@ -82,7 +83,6 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
 
     /**
      * keep track of the currently dragged drop location
-     * @type {object | null}
      */
     var currentDropLocation = null;
 
@@ -130,37 +130,35 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         mouse.x = Math.min(Math.max(0, mouse.x), backgroundWidth);
         mouse.y = Math.min(Math.max(0, mouse.y), backgroundHeight);
 
-        if (currentDropLocation) {
+        if (draggingState !== DragState.NONE) {
             switch (draggingState) {
                 case DragState.CREATE:
+                case DragState.RESIZE_BOTH:
                     // update current drop location's position and size
                     currentDropLocation.posX = Math.round(200 * Math.min(mouse.x, mouse.startX) / backgroundWidth);
                     currentDropLocation.posY = Math.round(200 * Math.min(mouse.y, mouse.startY) / backgroundHeight);
                     currentDropLocation.width = Math.round(200 * Math.abs(mouse.x - mouse.startX) / backgroundWidth);
                     currentDropLocation.height = Math.round(200 * Math.abs(mouse.y - mouse.startY) / backgroundHeight);
-
-                    // update view
-                    $scope.$apply();
                     break;
                 case DragState.MOVE:
                     // update current drop location's position
                     currentDropLocation.posX = Math.round(Math.min(Math.max(0, 200 * (mouse.x + mouse.offsetX) / backgroundWidth), 200 - currentDropLocation.width));
                     currentDropLocation.posY = Math.round(Math.min(Math.max(0, 200 * (mouse.y + mouse.offsetY) / backgroundHeight), 200 - currentDropLocation.height));
-
-                    // update view
-                    $scope.$apply();
-                    break;
-                case DragState.RESIZE_BOTH:
-                    // TODO
                     break;
                 case DragState.RESIZE_X:
-                    // TODO
+                    // update current drop location's position and size (only x-axis)
+                    currentDropLocation.posX = Math.round(200 * Math.min(mouse.x, mouse.startX) / backgroundWidth);
+                    currentDropLocation.width = Math.round(200 * Math.abs(mouse.x - mouse.startX) / backgroundWidth);
                     break;
                 case DragState.RESIZE_Y:
-                    // TODO
+                    // update current drop location's position and size (only y-axis)
+                    currentDropLocation.posY = Math.round(200 * Math.min(mouse.y, mouse.startY) / backgroundHeight);
+                    currentDropLocation.height = Math.round(200 * Math.abs(mouse.y - mouse.startY) / backgroundHeight);
                     break;
             }
 
+            // update view
+            $scope.$apply();
         }
     }
 
@@ -168,38 +166,31 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      * react to mouseup events to finish dragging operations
      */
     function mouseUp() {
-        if (currentDropLocation) {
+        if (draggingState !== DragState.NONE) {
             switch (draggingState) {
                 case DragState.CREATE:
                     var clickLayer = $(".click-layer");
                     var backgroundWidth = clickLayer.width();
                     var backgroundHeight = clickLayer.height();
-                    // remove drop Location if minimum dimensions are not met,
-                    // notify parent of new drop location otherwise
-                    if (currentDropLocation.width / 200 * backgroundWidth < 10 || currentDropLocation.height / 200 * backgroundHeight < 10) {
+                    if (currentDropLocation.width / 200 * backgroundWidth < 14 && currentDropLocation.height / 200 * backgroundHeight < 14) {
+                        // remove drop Location if too small (assume it was an accidental click/drag),
                         vm.question.dropLocations.pop();
                     } else {
+                        // notify parent of new drop location
                         vm.onUpdated();
                     }
-                    // update view
-                    $scope.$apply();
                     break;
                 case DragState.MOVE:
+                case DragState.RESIZE_BOTH:
+                case DragState.RESIZE_X:
+                case DragState.RESIZE_Y:
                     // notify parent of changed drop location
                     vm.onUpdated();
-                    // update view
-                    $scope.$apply();
-                    break;
-                case DragState.RESIZE_BOTH:
-                    // TODO
-                    break;
-                case DragState.RESIZE_X:
-                    // TODO
-                    break;
-                case DragState.RESIZE_Y:
-                    // TODO
                     break;
             }
+
+            // update view
+            $scope.$apply();
         }
         // update state
         draggingState = DragState.NONE;
@@ -240,20 +231,22 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      * @param dropLocation {object} the drop location to move
      */
     function dropLocationMouseDown(dropLocation) {
-        var clickLayer = $(".click-layer");
-        var backgroundWidth = clickLayer.width();
-        var backgroundHeight = clickLayer.height();
+        if (draggingState === DragState.NONE) {
+            var clickLayer = $(".click-layer");
+            var backgroundWidth = clickLayer.width();
+            var backgroundHeight = clickLayer.height();
 
-        var dropLocationX = dropLocation.posX / 200 * backgroundWidth;
-        var dropLocationY = dropLocation.posY / 200 * backgroundHeight;
+            var dropLocationX = dropLocation.posX / 200 * backgroundWidth;
+            var dropLocationY = dropLocation.posY / 200 * backgroundHeight;
 
-        // save offset of mouse in drop location
-        mouse.offsetX = dropLocationX - mouse.x;
-        mouse.offsetY = dropLocationY - mouse.y;
+            // save offset of mouse in drop location
+            mouse.offsetX = dropLocationX - mouse.x;
+            mouse.offsetY = dropLocationY - mouse.y;
 
-        // update state
-        currentDropLocation = dropLocation;
-        draggingState = DragState.MOVE;
+            // update state
+            currentDropLocation = dropLocation;
+            draggingState = DragState.MOVE;
+        }
     }
 
     /**
@@ -277,6 +270,55 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             width: dropLocation.width,
             height: dropLocation.height
         });
+    }
+
+    /**
+     * react to mousedown events on the resize handles to start resizing the drop location
+     *
+     * @param dropLocation {object} the drop location that will be resized
+     * @param resizeLocationY {string} "top", "middle" or "bottom"
+     * @param resizeLocationX {string} "left", "center" or "right"
+     */
+    function resizeMouseDown(dropLocation, resizeLocationY, resizeLocationX) {
+        if (draggingState === DragState.NONE) {
+            var clickLayer = $(".click-layer");
+            var backgroundWidth = clickLayer.width();
+            var backgroundHeight = clickLayer.height();
+
+            // update state
+            draggingState = DragState.RESIZE_BOTH;  // default is both, will be overwritten later, if needed
+            currentDropLocation = dropLocation;
+
+            switch (resizeLocationY) {
+                case "top":
+                    // use opposite end as startY
+                    mouse.startY = (dropLocation.posY + dropLocation.height) / 200 * backgroundHeight;
+                    break;
+                case "middle":
+                    // limit to x-axis, startY will not be used
+                    draggingState = DragState.RESIZE_X;
+                    break;
+                case "bottom":
+                    // use opposite end as startY
+                    mouse.startY = dropLocation.posY / 200 * backgroundHeight;
+                    break;
+            }
+
+            switch (resizeLocationX) {
+                case "left":
+                    // use opposite end as startX
+                    mouse.startX = (dropLocation.posX + dropLocation.width) / 200 * backgroundWidth;
+                    break;
+                case "center":
+                    // limit to y-axis, startX will not be used
+                    draggingState = DragState.RESIZE_Y;
+                    break;
+                case "right":
+                    // use opposite end as startX
+                    mouse.startX = dropLocation.posX / 200 * backgroundWidth;
+                    break;
+            }
+        }
     }
 
     /**

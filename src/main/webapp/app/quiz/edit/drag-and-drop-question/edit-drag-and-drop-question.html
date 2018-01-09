@@ -50,11 +50,19 @@
                     {{dropLocation.width}}x{{dropLocation.height}}
                 </div>
                 <div class="duplicate-button" title="Duplicate" ng-click="vm.duplicateDropLocation(dropLocation)">
-                    <i class="fa fa-copy fa-2x"></i>
+                    <i class="fa fa-copy fa-lg"></i>
                 </div>
                 <div class="delete-button" title="Delete" ng-click="vm.deleteDropLocation(dropLocation)">
-                    <i class="fa fa-trash fa-2x"></i>
+                    <i class="fa fa-trash fa-lg"></i>
                 </div>
+                <div class="resize top left" ng-mousedown="vm.resizeMouseDown(dropLocation, 'top', 'left')"></div>
+                <div class="resize top center" ng-mousedown="vm.resizeMouseDown(dropLocation, 'top', 'center')"></div>
+                <div class="resize top right" ng-mousedown="vm.resizeMouseDown(dropLocation, 'top', 'right')"></div>
+                <div class="resize middle left" ng-mousedown="vm.resizeMouseDown(dropLocation, 'middle', 'left')"></div>
+                <div class="resize middle right" ng-mousedown="vm.resizeMouseDown(dropLocation, 'middle', 'right')"></div>
+                <div class="resize bottom left" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
+                <div class="resize bottom center" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
+                <div class="resize bottom right" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
             </div>
         </div>
     </div>
