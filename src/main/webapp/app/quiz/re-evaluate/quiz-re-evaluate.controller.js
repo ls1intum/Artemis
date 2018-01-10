@@ -117,7 +117,7 @@
                 templateUrl: 'app/quiz/re-evaluate/quiz-re-evaluate-warning.html',
                 controller: 'QuizReEvaluateWarningController',
                 controllerAs: 'vm',
-                size: 'md',
+                windowClass: 'warning-modal-window',
                 resolve: {
                     entity:  function() {
                         return vm.quizExercise;

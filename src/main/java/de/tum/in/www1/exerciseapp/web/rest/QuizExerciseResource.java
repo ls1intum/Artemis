@@ -338,7 +338,7 @@ public class QuizExerciseResource {
                         question.setScore(originalQuestion.getScore());
                         //reset invalid if the question is already invalid;
                         question.setInvalid(question.isInvalid() || originalQuestion.isInvalid());
-                        ;
+
 
                         // check in a question is  set invalid or if the scoringType has changed
                         if ((question.isInvalid() && !originalQuestion.isInvalid()) ||
@@ -412,36 +412,6 @@ public class QuizExerciseResource {
                 Result lastUnratedResult = null;
 
                 for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
-
-                    // manipulate existing results if the question or answer is set invalid
-                    for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
-                        if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                            if (submittedAnswer.getQuestion().isInvalid()) {
-                                // if question is set invalid -> change question-result, so that it is perfect
-                                ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(new HashSet<>());
-                                for (AnswerOption answer : ((MultipleChoiceQuestion) submittedAnswer.getQuestion()).getAnswerOptions()) {
-                                    if (answer.isIsCorrect()) {
-                                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).addSelectedOptions(answer);
-                                    }
-                                }
-                            } else {
-                                //check if an answer is set invalid
-                                for (AnswerOption answer : ((MultipleChoiceQuestion) submittedAnswer.getQuestion()).getAnswerOptions()) {
-                                    if (answer.isInvalid()) {
-                                        if (answer.isIsCorrect()) {
-                                            // if the answer is invalid and correct -> add answer if it's not already contained
-                                            if (!((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().contains(answer)) {
-                                                ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().add(answer);
-                                            }
-                                        } else {
-                                            // if the answer is incorrect remove the answer
-                                            ((MultipleChoiceSubmittedAnswer) submittedAnswer).getSelectedOptions().remove(answer);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
 
                     //recalculate existing score
                     ((QuizSubmission) result.getSubmission()).calculateAndUpdateScores(quizExercise);

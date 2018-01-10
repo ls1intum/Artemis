@@ -125,7 +125,8 @@
             "cleanup": "Aufräumen",
             "archive": "Archivieren",
             "submit": "Absenden",
-            "re-evaluate": "Überarbeiten"
+            "re-evaluate": "Überarbeiten",
+            "close": "Schließen"
         },
         "detail": {
             "field": "Feld",

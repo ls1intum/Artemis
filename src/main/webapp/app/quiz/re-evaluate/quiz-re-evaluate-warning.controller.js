@@ -10,6 +10,9 @@
     function QuizReEvaluateWarningController($uibModalInstance, entity, QuizExercise, QuizExerciseReEvaluate) {
         var vm = this;
 
+        vm.successful = false;
+        vm.failed = false
+
         vm.answerDeleted = false;
         vm.answerInvalid = false;
         vm.answerCorrectess = false;
@@ -21,6 +24,7 @@
 
         vm.clear = clear;
         vm.confirmChange = confirmChange;
+        vm.close =  close;
 
         var backUpQuiz;
 
@@ -104,14 +108,25 @@
 
         /**
          * Confirm changes
-         *  => send changes to server and close modal
+         *  => send changes to server and wait for result
+         *  if saving failed -> show failed massage
          */
         function confirmChange() {
 
             QuizExerciseReEvaluate.update(vm.quizExercise,
                 function () {
-                    $uibModalInstance.close(true);
+                    vm.successful = true;
+                },
+                function () {
+                    vm.failed = true;
                 });
+        }
+
+        /**
+         * close modal and go back to QuizExercise-Overview
+         */
+        function close() {
+            $uibModalInstance.close(true);
         }
     }
 })();

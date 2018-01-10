@@ -79,7 +79,9 @@
                         "question_deleted": "Die Frage wird aus allen Ergebnissen entfernt",
                         "question_invalid": "Alle Teilnehmer erhalten die Punkte für die ungültige Frage",
                         "scoring_change": "Die erreichte Punktzahl wird neu berechnet, dabei kann ein Teilnehmer auch Punkte verlieren"
-                    }
+                    },
+                    "confirmtext": "Möchten Sie die Änderungen wirklich übernehmen?",
+                    "succesfully_confirm": "Änderungen erfolgreich übernommen!"
                 }
             }
         }

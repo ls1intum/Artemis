@@ -6,10 +6,10 @@
         <h3>{{vm.quizExercise.title}}</h3>
         <div class="row">
             <div class="col-md-4 text-left">
-                <h3>{{vm.question.title}} <span ng-show="vm.question.invalid" data-translate="showStatistic.invalid"></span></h3>
+                <h3>{{vm.question.title}} <span style="color:red;" ng-show="vm.question.invalid" data-translate="showStatistic.invalid"></span></h3>
                 <h4>{{vm.question.text}}</h4>
                 <ol type=A>
-                <li ng-repeat="answer in vm.question.answerOptions"><span> {{answer.text}}</span>&nbsp<span ng-show="answer.invalid" data-translate="showStatistic.invalid"></span></li>
+                <li ng-repeat="answer in vm.question.answerOptions"><span> {{answer.text}}</span>&nbsp<span style="color:red;" ng-show="answer.invalid" data-translate="showStatistic.invalid"></span></li>
                 </ol>
 
             </div>

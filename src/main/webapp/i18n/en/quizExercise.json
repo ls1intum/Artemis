@@ -79,7 +79,9 @@
                         "question_deleted": "The question will be removed from all results",
                         "question_invalid": "All participants receive the points for the invalid question",
                         "scoring_change": "The scores will be recalculated. A participant could also lose points"
-                    }
+                    },
+                    "confirmtext": "Do you really want to perform these changes?",
+                    "succesfully_confirm": "Changes successfully adopted!"
                 }
             }
         }

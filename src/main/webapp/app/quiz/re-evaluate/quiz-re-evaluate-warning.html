@@ -35,18 +35,28 @@
             <li ng-show="vm.scoringChanged" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.scoring_change"></span>
                 <ul style="padding-left: 15px">
                     <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
-                        <p style="margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p></li>
+                        <p style="color:red; margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p></li>
                 </ul></li>
             <li ng-show="!(vm.answerInvalid || vm.answerDeleted || vm.answerCorrectess || vm.questionInvalid || vm.questionDeleted || vm.scoringChanged )"
                 style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.no_changes"></span></li>
         </ul>
     </div>
-    <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
-            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel">Cancel</span>
+    <div class="edit-quiz-footer-content">
+        <h4>
+            <span ng-show="!vm.successful && !vm.failed" data-translate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
+            <span ng-show="vm.successful" style="color:green"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span data-translate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span></span>
+            <span ng-show="vm.failed" style="color:red"><span class="glyphicon glyphicon-remove"></span>&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
+        </h4>
+        &nbsp
+        <div class="form-group">
+        <button ng-show="!vm.successful" type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
+            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel"></span>
         </button>
-        <button type="submit" ng-click="vm.confirmChange()" class="btn btn-success">
-            <span class="glyphicon glyphicon-ok-circle"></span>&nbsp;<span data-translate="artemisApp.quizExercise.re-evaluate.warning.confirm">Delete</span>
+        <button ng-show="!vm.successful && !vm.failed" type="submit" ng-click="vm.confirmChange()" class="btn btn-success">
+            <span class="glyphicon glyphicon-ok-circle"></span>&nbsp;<span data-translate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
         </button>
+        <button ng-show="vm.successful && !vm.failed" type="submit" ng-click="vm.close()" class="btn btn-default">
+            <span class="glyphicon glyphicon-ok-circle"></span>&nbsp;<span data-translate="entity.action.close"></span>
+        </button></div>
     </div>
 </div>
