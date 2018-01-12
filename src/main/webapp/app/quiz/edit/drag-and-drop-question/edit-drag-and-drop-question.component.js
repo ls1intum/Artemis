@@ -31,6 +31,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.backgroundFile = null;
     vm.showPreview = false;
     vm.isUploadingBackgroundFile = false;
+    vm.dragItemFile = null;
+    vm.isUploadingDragItemFile = false;
     vm.togglePreview = togglePreview;
     vm.uploadBackground = uploadBackground;
     vm.backgroundMouseDown = backgroundMouseDown;
@@ -38,6 +40,9 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.deleteDropLocation = deleteDropLocation;
     vm.duplicateDropLocation = duplicateDropLocation;
     vm.resizeMouseDown = resizeMouseDown;
+    vm.addTextDragItem = addTextDragItem;
+    vm.uploadDragItem = uploadDragItem;
+    vm.deleteDragItem = deleteDragItem;
 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
@@ -69,9 +74,11 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             function (result) {
                 vm.question.backgroundFilePath = result.data.path;
                 vm.isUploadingBackgroundFile = false;
+                vm.backgroundFile = null;
             }, function (error) {
                 alert(error);
                 vm.isUploadingBackgroundFile = false;
+                vm.backgroundFile = null;
             });
     }
 
@@ -319,6 +326,71 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
                     break;
             }
         }
+    }
+
+    /**
+     * Add an empty Text Drag Item to the question
+     */
+    function addTextDragItem() {
+        // add drag item to question
+        if (!vm.question.dragItems) {
+            vm.question.dragItems = [];
+        }
+        vm.question.dragItems.push({
+            text: ""
+        });
+        vm.onUpdated();
+    }
+
+    /**
+     * Add a Picture Drag Item with the selected file as its picture to the question
+     */
+    function uploadDragItem() {
+        var file = vm.dragItemFile;
+
+        var fileExtension = file.name.split('.').pop().toLocaleLowerCase();
+        if (fileExtension !== "png" && fileExtension !== "jpg" && fileExtension !== "jpeg" && fileExtension !== "svg") {
+            alert('Unsupported file-type! Only files of type ".png", ".jpg" or ".svg" allowed.');
+            return;
+        }
+        if (file.size > 5000000) {
+            alert('File is too big! Maximum allowed file size: 5 MB.');
+            return;
+        }
+
+        if (!file) {
+            alert("Please select a file to upload first.");
+            return;
+        }
+
+        vm.isUploadingDragItemFile = true;
+        FileUpload(file).then(
+            function (result) {
+                // add drag item to question
+                if (!vm.question.dragItems) {
+                    vm.question.dragItems = [];
+                }
+                vm.question.dragItems.push({
+                    pictureFilePath: result.data.path
+                });
+                vm.onUpdated();
+                vm.isUploadingDragItemFile = false;
+                vm.dragItemFile = null;
+            }, function (error) {
+                alert(error);
+                vm.isUploadingDragItemFile = false;
+                vm.dragItemFile = null;
+            });
+    }
+
+    /**
+     * Delete the drag item from the question
+     * @param dragItemToDelete {object} the drag item that should be deleted
+     */
+    function deleteDragItem(dragItemToDelete) {
+        vm.question.dragItems = vm.question.dragItems.filter(function (dragItem) {
+            return dragItem !== dragItemToDelete;
+        });
     }
 
     /**

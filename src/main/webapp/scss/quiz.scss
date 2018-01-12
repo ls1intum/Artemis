@@ -383,6 +383,52 @@
             width: 100%;
         }
     }
+
+    .drag-items {
+        margin: 6px 0;
+
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+
+        .drag-item {
+
+            position: relative;
+            height: 160px;
+            width: 160px;
+            margin: 4px;
+            overflow: hidden;
+            border: 1px solid dimgrey;
+            background: #fafafa;
+
+            img {
+                max-height: 100%;
+                max-width: 100%;
+                margin: auto;
+                position: absolute;
+                transform: translate(-50%, -50%);
+                top: 50%;
+                left: 50%;
+            }
+
+            textarea {
+                width: 158px;
+                height: 98px;
+                margin: 30px 0;
+                padding: 0 14px;
+                text-align: center;
+                border: none;
+                resize: none;
+            }
+
+            .delete-button {
+                position: absolute;
+                top: 4px;
+                right: 2px;
+            }
+        }
+    }
 }
 
 .quiz-header,

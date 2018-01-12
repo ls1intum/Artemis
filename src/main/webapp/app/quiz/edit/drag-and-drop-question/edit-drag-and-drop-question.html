@@ -31,7 +31,9 @@
         <div class="form-group">
             <span data-translate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink"></span>
             <input type="file" accept="image/*" file-model="vm.backgroundFile"/>
-            <button ng-disabled="vm.isUploadingBackgroundFile || !vm.backgroundFile" class="btn btn-default" ng-click="vm.uploadBackground()">{{vm.isUploadingBackgroundFile ? "Uploading..." : "Upload"}}</button>
+            <button ng-disabled="vm.isUploadingBackgroundFile || !vm.backgroundFile" class="btn btn-default" ng-click="vm.uploadBackground()">
+                {{vm.isUploadingBackgroundFile ? "Uploading..." : "Upload"}}
+            </button>
         </div>
     </div>
     <div class="instructions" ng-if="vm.question.backgroundFilePath">
@@ -40,12 +42,7 @@
     <div class="background-area">
         <img ng-src="{{vm.question.backgroundFilePath}}" alt="Please upload a background picture.">
         <div class="click-layer" ng-mousedown="vm.backgroundMouseDown()">
-            <div
-                class="drop-location"
-                ng-repeat="dropLocation in vm.question.dropLocations"
-                ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
-                ng-mousedown="vm.dropLocationMouseDown(dropLocation)"
-            >
+            <div class="drop-location" ng-repeat="dropLocation in vm.question.dropLocations" ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}" ng-mousedown="vm.dropLocationMouseDown(dropLocation)">
                 <div class="dimensions">
                     {{dropLocation.width}}x{{dropLocation.height}}
                 </div>
@@ -64,6 +61,43 @@
                 <div class="resize bottom center" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
                 <div class="resize bottom right" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
             </div>
+        </div>
+    </div>
+    <hr/>
+    <div>
+        <span class="colon-suffix" data-translate="artemisApp.dragAndDropQuestion.dragItems"></span>
+    </div>
+    <div class="drag-items">
+        <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems">
+            <div ng-if="dragItem.pictureFilePath">
+                <img ng-src="{{dragItem.pictureFilePath}}">
+            </div>
+            <div ng-if="!dragItem.pictureFilePath">
+                <textarea ng-model="dragItem.text" ng-change="vm.onUpdated()"></textarea>
+            </div>
+            <div class="delete-button" title="Delete" ng-click="vm.deleteDragItem(dragItem)">
+                <i class="fa fa-trash fa-lg"></i>
+            </div>
+        </div>
+        <div ng-if="!vm.question.dragItems || !vm.question.dragItems.length" class="instructions">
+            Add Drag Items using the buttons below.
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <button ng-disabled="vm.isUploadingDragItemFile || !vm.dragItemFile" class="btn btn-default" ng-click="vm.uploadDragItem()">
+                <i class="fa fa-plus"></i>
+                {{vm.isUploadingDragItemFile ? "Uploading..." : "Add Picture Drag Item"}}
+            </button>
+            <input type="file" accept="image/*" file-model="vm.dragItemFile"/>
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <button class="btn btn-default" ng-click="vm.addTextDragItem()">
+                <i class="fa fa-plus"></i>
+                Add Text Drag Item
+            </button>
         </div>
     </div>
 </div>

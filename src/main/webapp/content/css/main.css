@@ -8594,6 +8594,41 @@ body.editor .navbar-brand span {
   .edit-dnd-question .background-area img {
     width: 100%; }
 
+.edit-dnd-question .drag-items {
+  margin: 6px 0;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly; }
+  .edit-dnd-question .drag-items .drag-item {
+    position: relative;
+    height: 160px;
+    width: 160px;
+    margin: 4px;
+    overflow: hidden;
+    border: 1px solid dimgrey;
+    background: #fafafa; }
+    .edit-dnd-question .drag-items .drag-item img {
+      max-height: 100%;
+      max-width: 100%;
+      margin: auto;
+      position: absolute;
+      transform: translate(-50%, -50%);
+      top: 50%;
+      left: 50%; }
+    .edit-dnd-question .drag-items .drag-item textarea {
+      width: 158px;
+      height: 98px;
+      margin: 30px 0;
+      padding: 0 14px;
+      text-align: center;
+      border: none;
+      resize: none; }
+    .edit-dnd-question .drag-items .drag-item .delete-button {
+      position: absolute;
+      top: 4px;
+      right: 2px; }
+
 .quiz-header,
 .quiz-content,
 .quiz-footer-content {

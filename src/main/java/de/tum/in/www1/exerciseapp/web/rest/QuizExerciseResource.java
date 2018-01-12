@@ -102,11 +102,28 @@ public class QuizExerciseResource {
                         }
                     }
                 }
+                if (question instanceof DragAndDropQuestion) {
+                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
+                    // TODO: @Moritz: Reconnect whatever needs to be reconnected
+
+                    // reconnect dropLocations
+                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
+                        if (dropLocation.getId() != null) {
+                            dropLocation.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect dragItems
+                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
+                        if (dragItem.getId() != null) {
+                            dragItem.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                }
             }
-            // TODO: Valentin: do the same for dragItems and dropLocations (if question is drag and drop)
         }
         //reconnect pointCounters
-        for (PointCounter pointCounter: quizExercise.getQuizPointStatistic().getPointCounters()) {
+        for (PointCounter pointCounter : quizExercise.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getId() != null) {
                 pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
             }
@@ -193,7 +210,7 @@ public class QuizExerciseResource {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
             for (Question question : quizExercise.getQuestions()) {
                 question.setExplanation(null);
-                if(!question.getQuestionStatistic().isReleased()) {
+                if (!question.getQuestionStatistic().isReleased()) {
                     question.setQuestionStatistic(null);
                 }
 
@@ -208,7 +225,7 @@ public class QuizExerciseResource {
             }
         }
         // filter out the statistic information if the statistic is not released
-        if(!quizExercise.getQuizPointStatistic().isReleased()) {
+        if (!quizExercise.getQuizPointStatistic().isReleased()) {
             // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
             quizExercise.getQuizPointStatistic().setPointCounters(null);
             quizExercise.getQuizPointStatistic().setParticipantsRated(null);
@@ -230,9 +247,9 @@ public class QuizExerciseResource {
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
 
-        List<Participation> participationsToDelete= participationRepository.findByExerciseId(id);
+        List<Participation> participationsToDelete = participationRepository.findByExerciseId(id);
 
-        for(Participation participation: participationsToDelete){
+        for (Participation participation : participationsToDelete) {
             participationRepository.delete(participation.getId());
         }
 
