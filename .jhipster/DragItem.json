@@ -24,14 +24,6 @@
         {
             "fieldName": "text",
             "fieldType": "String"
-        },
-        {
-            "fieldName": "correctScore",
-            "fieldType": "Integer"
-        },
-        {
-            "fieldName": "incorrectScore",
-            "fieldType": "Integer"
         }
     ],
     "changelogDate": "20170831094155",

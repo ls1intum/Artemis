@@ -17,8 +17,6 @@
             },
             "pictureFilePath": "Picture File Path",
             "text": "Text",
-            "correctScore": "Correct Score",
-            "incorrectScore": "Incorrect Score",
             "correctLocation": "Correct Location",
             "question": "Question"
         }

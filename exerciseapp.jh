@@ -126,8 +126,6 @@ entity DropLocation {
 entity DragItem {
 	pictureFilePath String
     text String
-    correctScore Integer
-    incorrectScore Integer
 }
 
 entity Participation (participation) {

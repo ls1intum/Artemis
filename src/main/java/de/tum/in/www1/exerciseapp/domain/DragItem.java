@@ -28,12 +28,6 @@ public class DragItem implements Serializable {
     @Column(name = "text")
     private String text;
 
-    @Column(name = "correct_score")
-    private Integer correctScore;
-
-    @Column(name = "incorrect_score")
-    private Integer incorrectScore;
-
     @OneToOne
     @JoinColumn(unique = true)
     private DropLocation correctLocation;
@@ -42,7 +36,6 @@ public class DragItem implements Serializable {
     @JsonIgnoreProperties({"dragItems", "dropLocations"})
     private DragAndDropQuestion question;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -77,32 +70,6 @@ public class DragItem implements Serializable {
         this.text = text;
     }
 
-    public Integer getCorrectScore() {
-        return correctScore;
-    }
-
-    public DragItem correctScore(Integer correctScore) {
-        this.correctScore = correctScore;
-        return this;
-    }
-
-    public void setCorrectScore(Integer correctScore) {
-        this.correctScore = correctScore;
-    }
-
-    public Integer getIncorrectScore() {
-        return incorrectScore;
-    }
-
-    public DragItem incorrectScore(Integer incorrectScore) {
-        this.incorrectScore = incorrectScore;
-        return this;
-    }
-
-    public void setIncorrectScore(Integer incorrectScore) {
-        this.incorrectScore = incorrectScore;
-    }
-
     public DropLocation getCorrectLocation() {
         return correctLocation;
     }
@@ -128,7 +95,6 @@ public class DragItem implements Serializable {
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -156,8 +122,6 @@ public class DragItem implements Serializable {
             "id=" + getId() +
             ", pictureFilePath='" + getPictureFilePath() + "'" +
             ", text='" + getText() + "'" +
-            ", correctScore='" + getCorrectScore() + "'" +
-            ", incorrectScore='" + getIncorrectScore() + "'" +
             "}";
     }
 }
