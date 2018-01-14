@@ -17,7 +17,8 @@
             },
             "item": "Item",
             "location": "Location",
-            "submittedAnswer": "Submitted Answer"
+            "submittedAnswer": "Submitted Answer",
+            "question": "Question"
         }
     }
 }

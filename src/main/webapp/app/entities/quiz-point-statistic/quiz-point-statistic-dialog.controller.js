@@ -34,7 +34,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('arTeMiSApp:quizPointStatisticUpdate', result);
+            $scope.$emit('artemisApp:quizPointStatisticUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

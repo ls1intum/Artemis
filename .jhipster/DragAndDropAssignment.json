@@ -18,6 +18,12 @@
             "relationshipName": "submittedAnswer",
             "otherEntityName": "dragAndDropSubmittedAnswer",
             "otherEntityField": "id"
+        },
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "dragAndDropQuestion",
+            "otherEntityField": "id"
         }
     ],
     "fields": [],

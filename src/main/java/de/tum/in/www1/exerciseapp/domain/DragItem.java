@@ -28,10 +28,6 @@ public class DragItem implements Serializable {
     @Column(name = "text")
     private String text;
 
-    @OneToOne
-    @JoinColumn(unique = true)
-    private DropLocation correctLocation;
-
     @ManyToOne
     @JsonIgnoreProperties({"dragItems", "dropLocations"})
     private DragAndDropQuestion question;
@@ -68,19 +64,6 @@ public class DragItem implements Serializable {
 
     public void setText(String text) {
         this.text = text;
-    }
-
-    public DropLocation getCorrectLocation() {
-        return correctLocation;
-    }
-
-    public DragItem correctLocation(DropLocation dropLocation) {
-        this.correctLocation = dropLocation;
-        return this;
-    }
-
-    public void setCorrectLocation(DropLocation dropLocation) {
-        this.correctLocation = dropLocation;
     }
 
     public DragAndDropQuestion getQuestion() {

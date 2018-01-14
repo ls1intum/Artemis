@@ -42,7 +42,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('arTeMiSApp:dropLocationCounterUpdate', result);
+            $scope.$emit('artemisApp:dropLocationCounterUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

@@ -14,7 +14,7 @@
             url: '/quiz-point-statistic',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.quizPointStatistic.home.title'
+                pageTitle: 'artemisApp.quizPointStatistic.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/quiz-point-statistic/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.quizPointStatistic.detail.title'
+                pageTitle: 'artemisApp.quizPointStatistic.detail.title'
             },
             views: {
                 'content@': {

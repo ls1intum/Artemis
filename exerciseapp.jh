@@ -207,7 +207,8 @@ relationship OneToMany {
   DragAndDropQuestion{dropLocations} to DropLocation{question},
   DragAndDropQuestion{dragItems} to DragItem{question},
   QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
-  DragAndDropSubmittedAnswer{assignments} to DragAndDropAssignment{submittedAnswer}
+  DragAndDropSubmittedAnswer{assignments} to DragAndDropAssignment{submittedAnswer},
+  DragAndDropQuestion{correctAssignments} to DragAndDropAssignment{question}
 }
 
 relationship OneToOne {
@@ -216,7 +217,6 @@ relationship OneToOne {
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
     Result{submission} to Submission,
-    DragItem{correctLocation} to DropLocation,
     LtiUserId{user} to User
 }
 

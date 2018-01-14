@@ -14,7 +14,7 @@
             url: '/point-counter',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.pointCounter.home.title'
+                pageTitle: 'artemisApp.pointCounter.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/point-counter/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.pointCounter.detail.title'
+                pageTitle: 'artemisApp.pointCounter.detail.title'
             },
             views: {
                 'content@': {

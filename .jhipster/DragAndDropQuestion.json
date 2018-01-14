@@ -12,6 +12,12 @@
             "relationshipName": "dragItems",
             "otherEntityName": "dragItem",
             "otherEntityRelationshipName": "question"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "correctAssignments",
+            "otherEntityName": "dragAndDropAssignment",
+            "otherEntityRelationshipName": "question"
         }
     ],
     "fields": [

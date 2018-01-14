@@ -35,7 +35,11 @@ public class DragAndDropQuestion extends Question implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<DragItem> dragItems = new ArrayList<>();
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OrderColumn
+    @JoinColumn(name = "question_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<DragAndDropAssignment> correctAssignments = new ArrayList<>();
 
     public String getBackgroundFilePath() {
         return backgroundFilePath;
@@ -99,7 +103,31 @@ public class DragAndDropQuestion extends Question implements Serializable {
     public void setDragItems(List<DragItem> dragItems) {
         this.dragItems = dragItems;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    public List<DragAndDropAssignment> getCorrectAssignments() {
+        return correctAssignments;
+    }
+
+    public DragAndDropQuestion correctAssignments(List<DragAndDropAssignment> dragAndDropAssignments) {
+        this.correctAssignments = dragAndDropAssignments;
+        return this;
+    }
+
+    public DragAndDropQuestion addCorrectAssignments(DragAndDropAssignment dragAndDropAssignment) {
+        this.correctAssignments.add(dragAndDropAssignment);
+        dragAndDropAssignment.setQuestion(this);
+        return this;
+    }
+
+    public DragAndDropQuestion removeCorrectAssignments(DragAndDropAssignment dragAndDropAssignment) {
+        this.correctAssignments.remove(dragAndDropAssignment);
+        dragAndDropAssignment.setQuestion(null);
+        return this;
+    }
+
+    public void setCorrectAssignments(List<DragAndDropAssignment> dragAndDropAssignments) {
+        this.correctAssignments = dragAndDropAssignments;
+    }
 
     @Override
     public boolean equals(Object o) {

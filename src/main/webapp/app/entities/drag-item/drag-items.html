@@ -21,7 +21,6 @@
                     <th><span data-translate="global.field.id">ID</span></th>
                     <th><span data-translate="artemisApp.dragItem.pictureFilePath">Picture File Path</span></th>
                     <th><span data-translate="artemisApp.dragItem.text">Text</span></th>
-                    <th><span data-translate="artemisApp.dragItem.correctLocation">Correct Location</span></th>
                     <th><span data-translate="artemisApp.dragItem.question">Question</span></th>
                     <th></th>
                 </tr>
@@ -31,9 +30,6 @@
                     <td><a ui-sref="drag-item-detail({id:dragItem.id})">{{dragItem.id}}</a></td>
                     <td>{{dragItem.pictureFilePath}}</td>
                     <td>{{dragItem.text}}</td>
-                    <td>
-                        <a ui-sref="drop-location-detail({id:dragItem.correctLocation.id})">{{dragItem.correctLocation.id}}</a>
-                    </td>
                     <td>
                         <a ui-sref="drag-and-drop-question-detail({id:dragItem.question.id})">{{dragItem.question.id}}</a>
                     </td>

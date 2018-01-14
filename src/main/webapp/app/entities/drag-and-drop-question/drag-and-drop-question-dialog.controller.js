@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('DragAndDropQuestionDialogController', DragAndDropQuestionDialogController);
 
-    DragAndDropQuestionDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'DragAndDropQuestion', 'DropLocation', 'DragItem'];
+    DragAndDropQuestionDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'DragAndDropQuestion', 'DropLocation', 'DragItem', 'DragAndDropAssignment'];
 
-    function DragAndDropQuestionDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, DragAndDropQuestion, DropLocation, DragItem) {
+    function DragAndDropQuestionDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, DragAndDropQuestion, DropLocation, DragItem, DragAndDropAssignment) {
         var vm = this;
 
         vm.dragAndDropQuestion = entity;
@@ -15,6 +15,7 @@
         vm.save = save;
         vm.droplocations = DropLocation.query();
         vm.dragitems = DragItem.query();
+        vm.draganddropassignments = DragAndDropAssignment.query();
 
         $timeout(function (){
             angular.element('.form-group:eq(1)>input').focus();

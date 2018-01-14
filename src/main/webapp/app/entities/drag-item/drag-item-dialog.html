@@ -27,12 +27,6 @@
         </div>
 
         <div class="form-group">
-            <label data-translate="artemisApp.dragItem.correctLocation" for="field_correctLocation">Correct Location</label>
-            <select class="form-control" id="field_correctLocation" name="correctLocation" ng-model="vm.dragItem.correctLocation" ng-options="dropLocation as dropLocation.id for dropLocation in vm.correctlocations | orderBy:'id' track by dropLocation.id">
-                <option value=""></option>
-            </select>
-        </div>
-        <div class="form-group">
             <label data-translate="artemisApp.dragItem.question" for="field_question">Question</label>
             <select class="form-control" id="field_question" name="question" ng-model="vm.dragItem.question" ng-options="dragAndDropQuestion as dragAndDropQuestion.id for dragAndDropQuestion in vm.draganddropquestions track by dragAndDropQuestion.id">
                 <option value=""></option>

@@ -30,7 +30,9 @@ public class DragAndDropAssignment implements Serializable {
     @ManyToOne
     private DragAndDropSubmittedAnswer submittedAnswer;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
+    @ManyToOne
+    private DragAndDropQuestion question;
+
     public Long getId() {
         return id;
     }
@@ -77,7 +79,19 @@ public class DragAndDropAssignment implements Serializable {
     public void setSubmittedAnswer(DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) {
         this.submittedAnswer = dragAndDropSubmittedAnswer;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    public DragAndDropQuestion getQuestion() {
+        return question;
+    }
+
+    public DragAndDropAssignment question(DragAndDropQuestion dragAndDropQuestion) {
+        this.question = dragAndDropQuestion;
+        return this;
+    }
+
+    public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
+        this.question = dragAndDropQuestion;
+    }
 
     @Override
     public boolean equals(Object o) {

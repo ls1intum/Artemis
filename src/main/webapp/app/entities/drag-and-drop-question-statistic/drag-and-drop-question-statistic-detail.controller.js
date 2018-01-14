@@ -13,7 +13,7 @@
         vm.dragAndDropQuestionStatistic = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('arTeMiSApp:dragAndDropQuestionStatisticUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:dragAndDropQuestionStatisticUpdate', function(event, result) {
             vm.dragAndDropQuestionStatistic = result;
         });
         $scope.$on('$destroy', unsubscribe);
