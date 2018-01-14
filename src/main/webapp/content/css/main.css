@@ -8554,7 +8554,7 @@ body.editor .navbar-brand span {
     .edit-dnd-question .background-area .click-layer .drop-location {
       position: absolute;
       border: 1px dashed mediumpurple;
-      background: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.5);
       z-index: 1;
       display: flex;
       flex-direction: row;
@@ -8562,7 +8562,11 @@ body.editor .navbar-brand span {
       justify-content: flex-end;
       cursor: move !important; }
       .edit-dnd-question .background-area .click-layer .drop-location:hover {
-        background: rgba(255, 255, 255, 0.6); }
+        background: rgba(255, 255, 255, 0.8); }
+      .edit-dnd-question .background-area .click-layer .drop-location.drop-allowed {
+        background: rgba(173, 216, 230, 0.8); }
+      .edit-dnd-question .background-area .click-layer .drop-location.drop-hover {
+        background: rgba(144, 238, 144, 0.8); }
       .edit-dnd-question .background-area .click-layer .drop-location .dimensions {
         position: absolute;
         left: 2px;
@@ -8628,6 +8632,14 @@ body.editor .navbar-brand span {
       position: absolute;
       top: 4px;
       right: 2px; }
+    .edit-dnd-question .drag-items .drag-item .drag-handle-wrapper {
+      position: absolute;
+      top: 4px;
+      left: 2px;
+      cursor: move;
+      display: flex;
+      align-items: center;
+      padding: 4px; }
 
 .quiz-header,
 .quiz-content,

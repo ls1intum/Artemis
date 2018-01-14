@@ -313,7 +313,7 @@
             .drop-location {
                 position: absolute;
                 border: 1px dashed mediumpurple;
-                background: rgba(255, 255, 255, 0.4);
+                background: rgba(255, 255, 255, 0.5);
                 z-index: 1;
 
                 display: flex;
@@ -324,7 +324,15 @@
                 cursor: move !important;
 
                 &:hover {
-                    background: rgba(255, 255, 255, 0.6);
+                    background: rgba(255, 255, 255, 0.8);
+                }
+
+                &.drop-allowed {
+                    background: rgba(173, 216, 230, 0.8);
+                }
+
+                &.drop-hover {
+                    background: rgba(144, 238, 144, 0.8);
                 }
 
                 .dimensions {
@@ -426,6 +434,16 @@
                 position: absolute;
                 top: 4px;
                 right: 2px;
+            }
+
+            .drag-handle-wrapper {
+                position: absolute;
+                top: 4px;
+                left: 2px;
+                cursor: move;
+                display: flex;
+                align-items: center;
+                padding: 4px;
             }
         }
     }

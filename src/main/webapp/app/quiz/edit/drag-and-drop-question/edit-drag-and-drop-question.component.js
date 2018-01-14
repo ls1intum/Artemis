@@ -43,6 +43,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.addTextDragItem = addTextDragItem;
     vm.uploadDragItem = uploadDragItem;
     vm.deleteDragItem = deleteDragItem;
+    vm.onDragDrop = onDragDrop;
 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
@@ -392,6 +393,18 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             return dragItem !== dragItemToDelete;
         });
     }
+
+    /**
+     * React to a drag item being dropped on a drop location
+     * @param dropLocation {object} the drop location involved
+     * @param dragItem {object} the drag item involved
+     */
+    function onDragDrop(dropLocation, dragItem) {
+        console.log(dropLocation);
+        console.log(dragItem);
+        // TODO: save connection as correct assignment and remove other assignments involving the drag item or drop location
+    }
+
 
     /**
      * watch for any changes to the question model and notify listener

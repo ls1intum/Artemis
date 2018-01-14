@@ -42,7 +42,15 @@
     <div class="background-area">
         <img ng-src="{{vm.question.backgroundFilePath}}" alt="Please upload a background picture.">
         <div class="click-layer" ng-mousedown="vm.backgroundMouseDown()">
-            <div class="drop-location" ng-repeat="dropLocation in vm.question.dropLocations" ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}" ng-mousedown="vm.dropLocationMouseDown(dropLocation)">
+            <div
+                class="drop-location"
+                ng-repeat="dropLocation in vm.question.dropLocations"
+                ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                ng-mousedown="vm.dropLocationMouseDown(dropLocation)"
+                ui-on-drop="vm.onDragDrop(dropLocation, $data)"
+                drag-enter-class="drop-allowed"
+                drag-hover-class="drop-hover"
+            >
                 <div class="dimensions">
                     {{dropLocation.width}}x{{dropLocation.height}}
                 </div>
@@ -68,7 +76,7 @@
         <span class="colon-suffix" data-translate="artemisApp.dragAndDropQuestion.dragItems"></span>
     </div>
     <div class="drag-items">
-        <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems">
+        <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
             <div ng-if="dragItem.pictureFilePath">
                 <img ng-src="{{dragItem.pictureFilePath}}">
             </div>
@@ -77,6 +85,9 @@
             </div>
             <div class="delete-button" title="Delete" ng-click="vm.deleteDragItem(dragItem)">
                 <i class="fa fa-trash fa-lg"></i>
+            </div>
+            <div class="drag-handle drag-handle-wrapper">
+                <i class="fa fa-bars fa-lg drag-handle"></i>
             </div>
         </div>
         <div ng-if="!vm.question.dragItems || !vm.question.dragItems.length" class="instructions">
