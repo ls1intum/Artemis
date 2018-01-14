@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -28,9 +29,11 @@ public class DragAndDropAssignment implements Serializable {
     private DropLocation location;
 
     @ManyToOne
+    @JsonIgnore
     private DragAndDropSubmittedAnswer submittedAnswer;
 
     @ManyToOne
+    @JsonIgnore
     private DragAndDropQuestion question;
 
     public Long getId() {

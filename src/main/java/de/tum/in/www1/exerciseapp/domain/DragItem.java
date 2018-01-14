@@ -1,12 +1,14 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A DragItem.
@@ -29,8 +31,28 @@ public class DragItem implements Serializable {
     private String text;
 
     @ManyToOne
-    @JsonIgnoreProperties({"dragItems", "dropLocations"})
+    @JsonIgnore
     private DragAndDropQuestion question;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JsonIgnore
+    @JoinColumn(name = "item_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<DragAndDropAssignment> assignments = new HashSet<>();
+
+    @Transient
+    // variable name must be different from Getter name,
+    // so that Jackson ignores the @Transient annotation,
+    // but Hibernate still respects it
+    private Long tempIDTransient;
+
+    public Long getTempID() {
+        return tempIDTransient;
+    }
+
+    public void setTempID(Long tempID) {
+        this.tempIDTransient = tempID;
+    }
 
     public Long getId() {
         return id;
@@ -79,6 +101,27 @@ public class DragItem implements Serializable {
         this.question = dragAndDropQuestion;
     }
 
+    public Set<DragAndDropAssignment> getAssignments() {
+        return assignments;
+    }
+
+    public DragItem assignments(Set<DragAndDropAssignment> assignments) {
+        this.assignments = assignments;
+        return this;
+    }
+
+    public DragItem addAssignments(DragAndDropAssignment assignment) {
+        this.assignments.add(assignment);
+        assignment.setItem(this);
+        return this;
+    }
+
+    public DragItem removeAssignments(DragAndDropAssignment assignment) {
+        this.assignments.remove(assignment);
+        assignment.setItem(null);
+        return this;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -88,6 +131,9 @@ public class DragItem implements Serializable {
             return false;
         }
         DragItem dragItem = (DragItem) o;
+        if (dragItem.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), dragItem.getTempID())) {
+            return true;
+        }
         if (dragItem.getId() == null || getId() == null) {
             return false;
         }

@@ -16,6 +16,10 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         RESIZE_Y: 5
     };
 
+    function pseudoRandomLong() {
+        return Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+    }
+
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('dragAndDropQuestion');
     $translate.refresh();
@@ -44,6 +48,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.uploadDragItem = uploadDragItem;
     vm.deleteDragItem = deleteDragItem;
     vm.onDragDrop = onDragDrop;
+    vm.getAssignmentIndex = getAssignmentIndex;
+    vm.deleteAssignmentFor = deleteAssignmentFor;
 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
@@ -182,7 +188,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
                     var backgroundHeight = clickLayer.height();
                     if (currentDropLocation.width / 200 * backgroundWidth < 14 && currentDropLocation.height / 200 * backgroundHeight < 14) {
                         // remove drop Location if too small (assume it was an accidental click/drag),
-                        vm.question.dropLocations.pop();
+                        deleteDropLocation(currentDropLocation);
                     } else {
                         // notify parent of new drop location
                         vm.onUpdated();
@@ -216,6 +222,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
 
             // create new drop location
             currentDropLocation = {
+                tempID: pseudoRandomLong(),
                 posX: mouse.x,
                 posY: mouse.y,
                 width: 0,
@@ -265,6 +272,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.question.dropLocations = vm.question.dropLocations.filter(function (dropLocation) {
             return dropLocation !== dropLocationToDelete;
         });
+        deleteAssignmentFor(dropLocationToDelete);
     }
 
     /**
@@ -273,6 +281,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      */
     function duplicateDropLocation(dropLocation) {
         vm.question.dropLocations.push({
+            tempID: pseudoRandomLong(),
             posX: dropLocation.posX,
             posY: dropLocation.posY,
             width: dropLocation.width,
@@ -338,6 +347,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             vm.question.dragItems = [];
         }
         vm.question.dragItems.push({
+            tempID: pseudoRandomLong(),
             text: ""
         });
         vm.onUpdated();
@@ -372,6 +382,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
                     vm.question.dragItems = [];
                 }
                 vm.question.dragItems.push({
+                    tempID: pseudoRandomLong(),
                     pictureFilePath: result.data.path
                 });
                 vm.onUpdated();
@@ -392,19 +403,80 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.question.dragItems = vm.question.dragItems.filter(function (dragItem) {
             return dragItem !== dragItemToDelete;
         });
+        deleteAssignmentFor(dragItemToDelete);
     }
 
     /**
      * React to a drag item being dropped on a drop location
      * @param dropLocation {object} the drop location involved
-     * @param dragItem {object} the drag item involved
+     * @param dragItem {object} the drag item involved (may be a copy at this point)
      */
     function onDragDrop(dropLocation, dragItem) {
-        console.log(dropLocation);
-        console.log(dragItem);
-        // TODO: save connection as correct assignment and remove other assignments involving the drag item or drop location
+        console.log(vm.question.correctAssignments);
+        // replace dragItem with original (because it may be a copy)
+        dragItem = vm.question.dragItems.find(function (originalDragItem) {
+            return dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID;
+        });
+        if (!dragItem) {
+            // drag item was not found in question => do nothing
+            return;
+        }
+
+        if (!vm.question.correctAssignments) {
+            vm.question.correctAssignments = [];
+        }
+
+        // remove assignments that contain the dropLocation or dragItem
+        deleteAssignmentFor(dropLocation);
+        deleteAssignmentFor(dragItem);
+
+        // add this assignment
+        vm.question.correctAssignments.push({
+            location: dropLocation,
+            item: dragItem
+        });
+
+        vm.onUpdated();
     }
 
+    /**
+     * Get the assignment index for the given drop location or drag item
+     * @param dropLocationOrDragItem {object} a drop location or drag item
+     * @return {number} the index of the assignment (starting with 1), or 0 if unassigned
+     */
+    function getAssignmentIndex(dropLocationOrDragItem) {
+        if (!vm.question.correctAssignments) {
+            vm.question.correctAssignments = [];
+        }
+        return vm.question.correctAssignments.findIndex(function (assignment) {
+            return isSameDropLocationOrDragItem(assignment.location, dropLocationOrDragItem) ||
+                isSameDropLocationOrDragItem(assignment.item, dropLocationOrDragItem);
+        }) + 1;
+    }
+
+    /**
+     * Remove the assignment for the given drop location or drag item
+     * @param dropLocationOrDragItem {object} a drop location or drag item
+     */
+    function deleteAssignmentFor(dropLocationOrDragItem) {
+        if (!vm.question.correctAssignments) {
+            vm.question.correctAssignments = [];
+        }
+        vm.question.correctAssignments = vm.question.correctAssignments.filter(function (assignment) {
+            return !isSameDropLocationOrDragItem(assignment.location, dropLocationOrDragItem) &&
+                !isSameDropLocationOrDragItem(assignment.item, dropLocationOrDragItem);
+        });
+    }
+
+    /**
+     * compare if the two objects are the same drag item or drop location
+     * @param a {object} a drag item or drop location
+     * @param b {object} another drag item or drop location
+     * @return {boolean}
+     */
+    function isSameDropLocationOrDragItem(a, b) {
+        return a === b || (a && b && (a.id && b.id && a.id === b.id || a.tempID && b.tempID && a.tempID === b.tempID));
+    }
 
     /**
      * watch for any changes to the question model and notify listener

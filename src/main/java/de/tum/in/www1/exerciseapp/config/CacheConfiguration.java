@@ -97,6 +97,8 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic.class.getName() + ".answerCounters", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropQuestionStatistic.class.getName() + ".dropLocationCounters", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropQuestion.class.getName() + ".correctAssignments", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragItem.class.getName() + ".assignments", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DropLocation.class.getName() + ".assignments", jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
         };
     }

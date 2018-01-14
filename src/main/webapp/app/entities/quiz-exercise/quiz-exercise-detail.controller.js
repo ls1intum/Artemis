@@ -128,7 +128,8 @@
                 score: 1,
                 type: "drag-and-drop",
                 dropLocations: [],
-                dragItems: []
+                dragItems: [],
+                correctAssignments: []
             }]);
         }
 

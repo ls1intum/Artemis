@@ -292,6 +292,70 @@
         font-weight: bold;
     }
 
+    .assignment-number {
+        position: absolute;
+        z-index: 10;
+        left: 50%;
+        top: 50%;
+        -webkit-transform: translate3d(-50%, -50%, 0);
+        -moz-transform: translate3d(-50%, -50%, 0);
+        -ms-transform: translate3d(-50%, -50%, 0);
+        -o-transform: translate3d(-50%, -50%, 0);
+        transform: translate3d(-50%, -50%, 0);
+
+        width: 40px;
+        height: 40px;
+        line-height: 40px;
+        background-color: dimgrey;
+        color: white;
+        border-radius: 50%;
+        text-align: center;
+
+        .unlink-assignment {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            color: white;
+            background-color: rgba(0, 0, 0, 0.5);
+            cursor: pointer;
+            border-radius: 50%;
+            text-align: center;
+
+            opacity: 0;
+            &:hover {
+                opacity: 1;
+            }
+        }
+    }
+
+    .assignment-color-1 {
+        background: #2980b9;
+    }
+    .assignment-color-2 {
+        background: #c0392b;
+    }
+    .assignment-color-3 {
+        background: #27ae60;
+    }
+    .assignment-color-4 {
+        background: #f1c40f;
+    }
+    .assignment-color-5 {
+        background: #e67e22;
+    }
+    .assignment-color-6 {
+        background: #8e44ad;
+    }
+    .assignment-color-7 {
+        background: #1abc9c;
+    }
+    .assignment-color-0 {
+        background: #2c3e50;
+    }
+
     .background-area {
         position: relative;
 
@@ -421,13 +485,19 @@
             }
 
             textarea {
+                position: absolute;
+                left: 0;
+                top: 30px;
                 width: 158px;
                 height: 98px;
-                margin: 30px 0;
                 padding: 0 14px;
                 text-align: center;
                 border: none;
                 resize: none;
+
+                &:focus {
+                    z-index: 20;
+                }
             }
 
             .delete-button {

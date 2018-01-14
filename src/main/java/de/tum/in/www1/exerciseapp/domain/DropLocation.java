@@ -1,12 +1,14 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A DropLocation.
@@ -35,10 +37,29 @@ public class DropLocation implements Serializable {
     private Integer height;
 
     @ManyToOne
-    @JsonIgnoreProperties({"dragItems", "dropLocations"})
+    @JsonIgnore
     private DragAndDropQuestion question;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JsonIgnore
+    @JoinColumn(name = "location_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<DragAndDropAssignment> assignments = new HashSet<>();
+
+    @Transient
+    // variable name must be different from Getter name,
+    // so that Jackson ignores the @Transient annotation,
+    // but Hibernate still respects it
+    private Long tempIDTransient;
+
+    public Long getTempID() {
+        return tempIDTransient;
+    }
+
+    public void setTempID(Long tempID) {
+        this.tempIDTransient = tempID;
+    }
+
     public Long getId() {
         return id;
     }
@@ -111,7 +132,27 @@ public class DropLocation implements Serializable {
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    public Set<DragAndDropAssignment> getAssignments() {
+        return assignments;
+    }
+
+    public DropLocation assignments(Set<DragAndDropAssignment> assignments) {
+        this.assignments = assignments;
+        return this;
+    }
+
+    public DropLocation addAssignments(DragAndDropAssignment assignment) {
+        this.assignments.add(assignment);
+        assignment.setLocation(this);
+        return this;
+    }
+
+    public DropLocation removeAssignments(DragAndDropAssignment assignment) {
+        this.assignments.remove(assignment);
+        assignment.setLocation(null);
+        return this;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -122,6 +163,9 @@ public class DropLocation implements Serializable {
             return false;
         }
         DropLocation dropLocation = (DropLocation) o;
+        if (dropLocation.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), dropLocation.getTempID())) {
+            return true;
+        }
         if (dropLocation.getId() == null || getId() == null) {
             return false;
         }

@@ -55,6 +55,15 @@ public class QuizExerciseResource {
         if (quizExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
+
+        // fix references in all drag and drop questions
+        for (Question question : quizExercise.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                updateCorrectAssignmentsReferences(dragAndDropQuestion);
+            }
+        }
+
         QuizExercise result = quizExerciseRepository.save(quizExercise);
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -119,6 +128,15 @@ public class QuizExerciseResource {
                             dragItem.setQuestion(dragAndDropQuestion);
                         }
                     }
+                    // reconnect correctAssignments
+                    for (DragAndDropAssignment assignment : dragAndDropQuestion.getCorrectAssignments()) {
+                        if (assignment.getId() != null) {
+                            assignment.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+
+                    // fix references in correctAssignments
+                    updateCorrectAssignmentsReferences(dragAndDropQuestion);
                 }
             }
         }
@@ -255,5 +273,41 @@ public class QuizExerciseResource {
 
         quizExerciseRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     * replace drop locations and drag items in correctAssignments with actual objects
+     *
+     * @param dragAndDropQuestion the question for which to fix the references
+     */
+    private void updateCorrectAssignmentsReferences(DragAndDropQuestion dragAndDropQuestion) {
+        for (DragAndDropAssignment assignment : dragAndDropQuestion.getCorrectAssignments()) {
+            // replace drag item
+            DragItem dragItem = assignment.getItem();
+            boolean dragItemFound = false;
+            for (DragItem questionDragItem : dragAndDropQuestion.getDragItems()) {
+                if (dragItem.equals(questionDragItem)) {
+                    dragItemFound = true;
+                    assignment.setItem(questionDragItem);
+                    break;
+                }
+            }
+
+            // replace drop location
+            DropLocation dropLocation = assignment.getLocation();
+            boolean dropLocationFound = false;
+            for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {
+                if (dropLocation.equals(questionDropLocation)) {
+                    dropLocationFound = true;
+                    assignment.setLocation(questionDropLocation);
+                    break;
+                }
+            }
+
+            // if one of them couldn't be found, remove the assignment entirely
+            if (!dragItemFound || !dropLocationFound) {
+                dragAndDropQuestion.removeCorrectAssignments(assignment);
+            }
+        }
     }
 }
