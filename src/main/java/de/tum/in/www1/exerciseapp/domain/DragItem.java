@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.tum.in.www1.exerciseapp.config.Constants;
+import de.tum.in.www1.exerciseapp.domain.util.FileManagement;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -19,6 +21,9 @@ import java.util.Set;
 public class DragItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    @Transient
+    private String prevPictureFilePath;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -119,6 +124,42 @@ public class DragItem implements Serializable {
         this.mappings.remove(mapping);
         mapping.setDragItem(null);
         return this;
+    }
+
+    @PostLoad
+    public void onLoad() {
+        // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)
+        if (pictureFilePath != null && pictureFilePath.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+            pictureFilePath = pictureFilePath.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        }
+        // save current path as old path (needed to know old path in onUpdate() and onDelete())
+        prevPictureFilePath = pictureFilePath;
+    }
+
+    @PrePersist
+    public void beforeCreate() {
+        // move file if necessary (id at this point will be null, so placeholder will be inserted)
+        pictureFilePath = FileManagement.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, Constants.DRAG_ITEM_FILEPATH, getId());
+    }
+
+    @PostPersist
+    public void afterCreate() {
+        // replace placeholder with actual id if necessary (id is no longer null at this point)
+        if (pictureFilePath != null && pictureFilePath.contains(Constants.FILEPATH_ID_PLACHEOLDER)) {
+            pictureFilePath = pictureFilePath.replace(Constants.FILEPATH_ID_PLACHEOLDER, getId().toString());
+        }
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        // move file and delete old file if necessary
+        pictureFilePath = FileManagement.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, Constants.DRAG_ITEM_FILEPATH, getId());
+    }
+
+    @PostRemove
+    public void onDelete() {
+        // delete old file if necessary
+        FileManagement.manageFilesForUpdatedFilePath(prevPictureFilePath, null, Constants.DRAG_ITEM_FILEPATH, getId());
     }
 
     @Override

@@ -163,7 +163,10 @@ public class QuizExerciseResource {
         if (quizExercise != null && (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0)) {
             quizExercise.getQuizPointStatistic().setReleased(false);
             for (Question question : quizExercise.getQuestions()) {
-                question.getQuestionStatistic().setReleased(false);
+                // TODO: @Moritz: fix this for DragAndDropQuestions (getQuestionStatistic() returns null)
+                if (question.getQuestionStatistic() != null) {
+                    question.getQuestionStatistic().setReleased(false);
+                }
             }
         }
         //notify clients via websocket about the release state of the statistics.

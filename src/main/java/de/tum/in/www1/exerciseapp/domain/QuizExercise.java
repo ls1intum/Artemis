@@ -290,9 +290,8 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
-    public Boolean getIsVisibleToStudents() {
-        //TODO: what happens if release date is null?
-        return isVisibleBeforeStart || (isPlannedToStart && releaseDate.isBefore(ZonedDateTime.now()));
+    public Boolean isVisibleToStudents() {
+        return isVisibleBeforeStart || (isPlannedToStart && releaseDate != null && releaseDate.isBefore(ZonedDateTime.now()));
     }
 
     /**
