@@ -8540,7 +8540,7 @@ body.editor .navbar-brand span {
   margin: 10px 0;
   font-weight: bold; }
 
-.edit-dnd-question .assignment-numbers-wrapper {
+.edit-dnd-question .mapping-numbers-wrapper {
   position: absolute;
   display: flex;
   justify-content: space-evenly;
@@ -8553,7 +8553,7 @@ body.editor .navbar-brand span {
   -ms-transform: translate3d(0, 15px, 0);
   -o-transform: translate3d(0, 15px, 0);
   transform: translate3d(0, 15px, 0); }
-  .edit-dnd-question .assignment-numbers-wrapper .assignment-number {
+  .edit-dnd-question .mapping-numbers-wrapper .mapping-number {
     position: static;
     -webkit-transform: translate3d(0, 0, 0);
     -moz-transform: translate3d(0, 0, 0);
@@ -8561,7 +8561,7 @@ body.editor .navbar-brand span {
     -o-transform: translate3d(0, 0, 0);
     transform: translate3d(0, 0, 0); }
 
-.edit-dnd-question .assignment-number {
+.edit-dnd-question .mapping-number {
   position: absolute;
   z-index: 10;
   left: 50%;
@@ -8578,7 +8578,7 @@ body.editor .navbar-brand span {
   color: white;
   border-radius: 50%;
   text-align: center; }
-  .edit-dnd-question .assignment-number .unlink-assignment {
+  .edit-dnd-question .mapping-number .unlink-mapping {
     position: absolute;
     left: 0;
     top: 0;
@@ -8591,31 +8591,31 @@ body.editor .navbar-brand span {
     border-radius: 50%;
     text-align: center;
     opacity: 0; }
-    .edit-dnd-question .assignment-number .unlink-assignment:hover {
+    .edit-dnd-question .mapping-number .unlink-mapping:hover {
       opacity: 1; }
 
-.edit-dnd-question .assignment-color-1 {
+.edit-dnd-question .mapping-color-1 {
   background: #2980b9; }
 
-.edit-dnd-question .assignment-color-2 {
+.edit-dnd-question .mapping-color-2 {
   background: #c0392b; }
 
-.edit-dnd-question .assignment-color-3 {
+.edit-dnd-question .mapping-color-3 {
   background: #27ae60; }
 
-.edit-dnd-question .assignment-color-4 {
+.edit-dnd-question .mapping-color-4 {
   background: #f1c40f; }
 
-.edit-dnd-question .assignment-color-5 {
+.edit-dnd-question .mapping-color-5 {
   background: #e67e22; }
 
-.edit-dnd-question .assignment-color-6 {
+.edit-dnd-question .mapping-color-6 {
   background: #8e44ad; }
 
-.edit-dnd-question .assignment-color-7 {
+.edit-dnd-question .mapping-color-7 {
   background: #1abc9c; }
 
-.edit-dnd-question .assignment-color-0 {
+.edit-dnd-question .mapping-color-0 {
   background: #2c3e50; }
 
 .edit-dnd-question .background-area {

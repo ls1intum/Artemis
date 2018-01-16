@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('DragAndDropSubmittedAnswerDetailController', DragAndDropSubmittedAnswerDetailController);
 
-    DragAndDropSubmittedAnswerDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'DragAndDropSubmittedAnswer', 'DragAndDropAssignment'];
+    DragAndDropSubmittedAnswerDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'DragAndDropSubmittedAnswer', 'DragAndDropMapping'];
 
-    function DragAndDropSubmittedAnswerDetailController($scope, $rootScope, $stateParams, previousState, entity, DragAndDropSubmittedAnswer, DragAndDropAssignment) {
+    function DragAndDropSubmittedAnswerDetailController($scope, $rootScope, $stateParams, previousState, entity, DragAndDropSubmittedAnswer, DragAndDropMapping) {
         var vm = this;
 
         vm.dragAndDropSubmittedAnswer = entity;

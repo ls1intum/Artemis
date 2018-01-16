@@ -15,8 +15,8 @@
         },
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "correctAssignments",
-            "otherEntityName": "dragAndDropAssignment",
+            "relationshipName": "correctMappings",
+            "otherEntityName": "dragAndDropMapping",
             "otherEntityRelationshipName": "question"
         }
     ],

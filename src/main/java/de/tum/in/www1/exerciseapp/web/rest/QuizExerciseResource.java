@@ -2,7 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
-import de.tum.in.www1.exerciseapp.repository.DragAndDropAssignmentRepository;
+import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
@@ -35,13 +35,13 @@ public class QuizExerciseResource {
     private final QuizExerciseRepository quizExerciseRepository;
     private final ParticipationRepository participationRepository;
     private final StatisticService statisticService;
-    private final DragAndDropAssignmentRepository dragAndDropAssignmentRepository;
+    private final DragAndDropMappingRepository dragAndDropMappingRepository;
 
-    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, ParticipationRepository participationRepository, StatisticService statisticService, DragAndDropAssignmentRepository dragAndDropAssignmentRepository) {
+    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, ParticipationRepository participationRepository, StatisticService statisticService, DragAndDropMappingRepository dragAndDropMappingRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.statisticService = statisticService;
-        this.dragAndDropAssignmentRepository = dragAndDropAssignmentRepository;
+        this.dragAndDropMappingRepository = dragAndDropMappingRepository;
     }
 
     /**
@@ -65,7 +65,7 @@ public class QuizExerciseResource {
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                 // save references as index to prevent Hibernate Persistence problem
-                updateCorrectAssignmentIndexes(dragAndDropQuestion);
+                saveCorrectMappingsInIndices(dragAndDropQuestion);
             }
         }
 
@@ -76,7 +76,7 @@ public class QuizExerciseResource {
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                 // restore references from index after save
-                updateCorrectAssignmentObjects(dragAndDropQuestion);
+                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
             }
         }
 
@@ -143,10 +143,10 @@ public class QuizExerciseResource {
                             dragItem.setQuestion(dragAndDropQuestion);
                         }
                     }
-                    // reconnect correctAssignments
-                    for (DragAndDropAssignment assignment : dragAndDropQuestion.getCorrectAssignments()) {
-                        if (assignment.getId() != null) {
-                            assignment.setQuestion(dragAndDropQuestion);
+                    // reconnect correctMappings
+                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+                        if (mapping.getId() != null) {
+                            mapping.setQuestion(dragAndDropQuestion);
                         }
                     }
                 }
@@ -174,7 +174,7 @@ public class QuizExerciseResource {
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                 // save references as index to prevent Hibernate Persistence problem
-                updateCorrectAssignmentIndexes(dragAndDropQuestion);
+                saveCorrectMappingsInIndices(dragAndDropQuestion);
             }
         }
 
@@ -188,7 +188,7 @@ public class QuizExerciseResource {
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                 // restore references from index after save
-                updateCorrectAssignmentObjects(dragAndDropQuestion);
+                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
             }
         }
 
@@ -307,69 +307,69 @@ public class QuizExerciseResource {
     }
 
     /**
-     * remove item and location from correct assignments and set itemIndex and locationIndex instead
+     * remove dragItem and dropLocation from correct mappings and set dragItemIndex and dropLocationIndex instead
      *
      * @param dragAndDropQuestion the question for which to perform these actions
      */
-    private void updateCorrectAssignmentIndexes(DragAndDropQuestion dragAndDropQuestion) {
-        List<DragAndDropAssignment> assignmentsToBeRemoved = new ArrayList<>();
-        for (DragAndDropAssignment assignment : dragAndDropQuestion.getCorrectAssignments()) {
+    private void saveCorrectMappingsInIndices(DragAndDropQuestion dragAndDropQuestion) {
+        List<DragAndDropMapping> mappingsToBeRemoved = new ArrayList<>();
+        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
             // check for NullPointers
-            if (assignment.getItem() == null || assignment.getLocation() == null) {
-                assignmentsToBeRemoved.add(assignment);
+            if (mapping.getDragItem() == null || mapping.getDropLocation() == null) {
+                mappingsToBeRemoved.add(mapping);
                 continue;
             }
 
             // drag item index
-            DragItem dragItem = assignment.getItem();
+            DragItem dragItem = mapping.getDragItem();
             boolean dragItemFound = false;
             for (DragItem questionDragItem : dragAndDropQuestion.getDragItems()) {
                 if (dragItem.equals(questionDragItem)) {
                     dragItemFound = true;
-                    assignment.setItemIndex(dragAndDropQuestion.getDragItems().indexOf(questionDragItem));
-                    assignment.setItem(null);
+                    mapping.setDragItemIndex(dragAndDropQuestion.getDragItems().indexOf(questionDragItem));
+                    mapping.setDragItem(null);
                     break;
                 }
             }
 
             // replace drop location
-            DropLocation dropLocation = assignment.getLocation();
+            DropLocation dropLocation = mapping.getDropLocation();
             boolean dropLocationFound = false;
             for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {
                 if (dropLocation.equals(questionDropLocation)) {
                     dropLocationFound = true;
-                    assignment.setLocationIndex(dragAndDropQuestion.getDropLocations().indexOf(questionDropLocation));
-                    assignment.setLocation(null);
+                    mapping.setDropLocationIndex(dragAndDropQuestion.getDropLocations().indexOf(questionDropLocation));
+                    mapping.setDropLocation(null);
                     break;
                 }
             }
 
-            // if one of them couldn't be found, remove the assignment entirely
+            // if one of them couldn't be found, remove the mapping entirely
             if (!dragItemFound || !dropLocationFound) {
-                assignmentsToBeRemoved.add(assignment);
+                mappingsToBeRemoved.add(mapping);
             }
         }
 
-        for (DragAndDropAssignment assignment : assignmentsToBeRemoved) {
-            dragAndDropQuestion.removeCorrectAssignments(assignment);
+        for (DragAndDropMapping mapping : mappingsToBeRemoved) {
+            dragAndDropQuestion.removeCorrectMappings(mapping);
         }
     }
 
     /**
-     * restore item and location for correct assignments using itemIndex and locationIndex
+     * restore dragItem and dropLocation for correct mappings using dragItemIndex and dropLocationIndex
      *
      * @param dragAndDropQuestion the question for which to perform these actions
      */
-    private void updateCorrectAssignmentObjects(DragAndDropQuestion dragAndDropQuestion) {
-        for (DragAndDropAssignment assignment : dragAndDropQuestion.getCorrectAssignments()) {
+    private void restoreCorrectMappingsFromIndices(DragAndDropQuestion dragAndDropQuestion) {
+        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
             // drag item
-            assignment.setItem(dragAndDropQuestion.getDragItems().get(assignment.getItemIndex()));
+            mapping.setDragItem(dragAndDropQuestion.getDragItems().get(mapping.getDragItemIndex()));
             // drop location
-            assignment.setLocation(dragAndDropQuestion.getDropLocations().get(assignment.getLocationIndex()));
+            mapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(mapping.getDropLocationIndex()));
             // set question
-            assignment.setQuestion(dragAndDropQuestion);
-            // save assignment
-            dragAndDropAssignmentRepository.save(assignment);
+            mapping.setQuestion(dragAndDropQuestion);
+            // save mapping
+            dragAndDropMappingRepository.save(mapping);
         }
     }
 }

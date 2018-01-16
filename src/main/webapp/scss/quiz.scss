@@ -296,7 +296,7 @@
         font-weight: bold;
     }
 
-    .assignment-numbers-wrapper {
+    .mapping-numbers-wrapper {
         position: absolute;
         display: flex;
         justify-content: space-evenly;
@@ -310,7 +310,7 @@
         -o-transform: translate3d(0, 15px, 0);
         transform: translate3d(0, 15px, 0);
 
-        .assignment-number {
+        .mapping-number {
             position: static;
             -webkit-transform: translate3d(0, 0, 0);
             -moz-transform: translate3d(0, 0, 0);
@@ -320,7 +320,7 @@
         }
     }
 
-    .assignment-number {
+    .mapping-number {
         position: absolute;
         z-index: 10;
         left: 50%;
@@ -339,7 +339,7 @@
         border-radius: 50%;
         text-align: center;
 
-        .unlink-assignment {
+        .unlink-mapping {
             position: absolute;
             left: 0;
             top: 0;
@@ -359,28 +359,28 @@
         }
     }
 
-    .assignment-color-1 {
+    .mapping-color-1 {
         background: #2980b9;
     }
-    .assignment-color-2 {
+    .mapping-color-2 {
         background: #c0392b;
     }
-    .assignment-color-3 {
+    .mapping-color-3 {
         background: #27ae60;
     }
-    .assignment-color-4 {
+    .mapping-color-4 {
         background: #f1c40f;
     }
-    .assignment-color-5 {
+    .mapping-color-5 {
         background: #e67e22;
     }
-    .assignment-color-6 {
+    .mapping-color-6 {
         background: #8e44ad;
     }
-    .assignment-color-7 {
+    .mapping-color-7 {
         background: #1abc9c;
     }
-    .assignment-color-0 {
+    .mapping-color-0 {
         background: #2c3e50;
     }
 

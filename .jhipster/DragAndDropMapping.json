@@ -3,13 +3,13 @@
     "relationships": [
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "item",
+            "relationshipName": "dragItem",
             "otherEntityName": "dragItem",
             "otherEntityField": "id"
         },
         {
             "relationshipType": "many-to-one",
-            "relationshipName": "location",
+            "relationshipName": "dropLocation",
             "otherEntityName": "dropLocation",
             "otherEntityField": "id"
         },
@@ -26,9 +26,18 @@
             "otherEntityField": "id"
         }
     ],
-    "fields": [],
-    "changelogDate": "20170831094203",
-    "entityTableName": "drag_and_drop_assignment",
+    "fields": [
+        {
+            "fieldName": "dragItemIndex",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "dropLocationIndex",
+            "fieldType": "Integer"
+        }
+    ],
+    "changelogDate": "20180116141221",
+    "entityTableName": "drag_and_drop_mapping",
     "dto": "no",
     "pagination": "no",
     "service": "no"

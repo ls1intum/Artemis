@@ -51,10 +51,10 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.uploadDragItem = uploadDragItem;
     vm.deleteDragItem = deleteDragItem;
     vm.onDragDrop = onDragDrop;
-    vm.getAssignmentsFor = getAssignmentsFor;
-    vm.getAssignmentIndex = getAssignmentIndex;
-    vm.deleteAssignmentsFor = deleteAssignmentsFor;
-    vm.deleteAssignment = deleteAssignment;
+    vm.getMappingsFor = getMappingsFor;
+    vm.getMappingIndex = getMappingIndex;
+    vm.deleteMappingsFor = deleteMappingsFor;
+    vm.deleteMapping = deleteMapping;
 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
@@ -374,7 +374,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.question.dropLocations = vm.question.dropLocations.filter(function (dropLocation) {
             return dropLocation !== dropLocationToDelete;
         });
-        deleteAssignmentsFor(dropLocationToDelete);
+        deleteMappingsFor(dropLocationToDelete);
     }
 
     /**
@@ -505,7 +505,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.question.dragItems = vm.question.dragItems.filter(function (dragItem) {
             return dragItem !== dragItemToDelete;
         });
-        deleteAssignmentsFor(dragItemToDelete);
+        deleteMappingsFor(dragItemToDelete);
     }
 
     /**
@@ -514,7 +514,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      * @param dragItem {object} the drag item involved (may be a copy at this point)
      */
     function onDragDrop(dropLocation, dragItem) {
-        console.log(vm.question.correctAssignments);
+        console.log(vm.question.correctMappings);
         // replace dragItem with original (because it may be a copy)
         dragItem = vm.question.dragItems.find(function (originalDragItem) {
             return dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID;
@@ -524,78 +524,78 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             return;
         }
 
-        if (!vm.question.correctAssignments) {
-            vm.question.correctAssignments = [];
+        if (!vm.question.correctMappings) {
+            vm.question.correctMappings = [];
         }
 
-        // remove assignments that contain the dropLocation or dragItem
-        // deleteAssignmentsFor(dropLocation);
-        // deleteAssignmentsFor(dragItem);
+        // remove mappings that contain the dropLocation or dragItem
+        // deleteMappingsFor(dropLocation);
+        // deleteMappingsFor(dragItem);
 
-        // add this assignment
-        vm.question.correctAssignments.push({
-            location: dropLocation,
-            item: dragItem
+        // add this mapping
+        vm.question.correctMappings.push({
+            dropLocation: dropLocation,
+            dragItem: dragItem
         });
 
         vm.onUpdated();
     }
 
     /**
-     * Get the assignment index for the given assignment
-     * @param assignment {object} the assignment we want to get an index for
-     * @return {number} the index of the assignment (starting with 1), or 0 if unassigned
+     * Get the mapping index for the given mapping
+     * @param mapping {object} the mapping we want to get an index for
+     * @return {number} the index of the mapping (starting with 1), or 0 if unassigned
      */
-    function getAssignmentIndex(assignment) {
-        var visitedLocations = [];
-        if (vm.question.correctAssignments.some(function (correctAssignment) {
-                if (!visitedLocations.some(function (location) {
-                        return isSameDropLocationOrDragItem(location, correctAssignment.location);
+    function getMappingIndex(mapping) {
+        var visitedDropLocations = [];
+        if (vm.question.correctMappings.some(function (correctMapping) {
+                if (!visitedDropLocations.some(function (dropLocation) {
+                        return isSameDropLocationOrDragItem(dropLocation, correctMapping.dropLocation);
                     })) {
-                    visitedLocations.push(correctAssignment.location);
+                    visitedDropLocations.push(correctMapping.dropLocation);
                 }
-                return isSameDropLocationOrDragItem(correctAssignment.location, assignment.location);
+                return isSameDropLocationOrDragItem(correctMapping.dropLocation, mapping.dropLocation);
             })) {
-            return visitedLocations.length;
+            return visitedDropLocations.length;
         } else {
             return 0;
         }
     }
 
-    function getAssignmentsFor(dropLocationOrDragItem) {
-        if (!vm.question.correctAssignments) {
-            vm.question.correctAssignments = [];
+    function getMappingsFor(dropLocationOrDragItem) {
+        if (!vm.question.correctMappings) {
+            vm.question.correctMappings = [];
         }
-        return vm.question.correctAssignments.filter(function (assignment) {
-            return isSameDropLocationOrDragItem(assignment.location, dropLocationOrDragItem) ||
-                isSameDropLocationOrDragItem(assignment.item, dropLocationOrDragItem);
+        return vm.question.correctMappings.filter(function (mapping) {
+            return isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) ||
+                isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
         });
     }
 
     /**
-     * Remove the assignment for the given drop location or drag item
+     * Remove the mapping for the given drop location or drag item
      * @param dropLocationOrDragItem {object} a drop location or drag item
      */
-    function deleteAssignmentsFor(dropLocationOrDragItem) {
-        if (!vm.question.correctAssignments) {
-            vm.question.correctAssignments = [];
+    function deleteMappingsFor(dropLocationOrDragItem) {
+        if (!vm.question.correctMappings) {
+            vm.question.correctMappings = [];
         }
-        vm.question.correctAssignments = vm.question.correctAssignments.filter(function (assignment) {
-            return !isSameDropLocationOrDragItem(assignment.location, dropLocationOrDragItem) &&
-                !isSameDropLocationOrDragItem(assignment.item, dropLocationOrDragItem);
+        vm.question.correctMappings = vm.question.correctMappings.filter(function (mapping) {
+            return !isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) &&
+                !isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
         });
     }
 
     /**
-     * delete the given assignment from the question
-     * @param assignmentToDelete {object} the assignment to delete
+     * delete the given mapping from the question
+     * @param mappingToDelete {object} the mapping to delete
      */
-    function deleteAssignment(assignmentToDelete) {
-        if (!vm.question.correctAssignments) {
-            vm.question.correctAssignments = [];
+    function deleteMapping(mappingToDelete) {
+        if (!vm.question.correctMappings) {
+            vm.question.correctMappings = [];
         }
-        vm.question.correctAssignments = vm.question.correctAssignments.filter(function (assignment) {
-            return assignment !== assignmentToDelete;
+        vm.question.correctMappings = vm.question.correctMappings.filter(function (mapping) {
+            return mapping !== mappingToDelete;
         });
     }
 

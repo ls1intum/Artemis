@@ -190,8 +190,9 @@ entity DragAndDropSubmittedAnswer {      //extends SubmittedAnswer
 
 }
 
-entity DragAndDropAssignment {
-
+entity DragAndDropMapping {
+	dragItemIndex Integer
+    dropLocationIndex Integer
 }
 
 relationship OneToMany {
@@ -207,8 +208,8 @@ relationship OneToMany {
   DragAndDropQuestion{dropLocations} to DropLocation{question},
   DragAndDropQuestion{dragItems} to DragItem{question},
   QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
-  DragAndDropSubmittedAnswer{assignments} to DragAndDropAssignment{submittedAnswer},
-  DragAndDropQuestion{correctAssignments} to DragAndDropAssignment{question}
+  DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
+  DragAndDropQuestion{correctMappings} to DragAndDropMapping{question}
 }
 
 relationship OneToOne {
@@ -225,8 +226,8 @@ relationship ManyToOne {
   LtiOutcomeUrl{user} to User,
   LtiOutcomeUrl{exercise} to Exercise,
   SubmittedAnswer{question} to Question
-  DragAndDropAssignment{item} to DragItem,
-  DragAndDropAssignment{location} to DropLocation
+  DragAndDropMapping{dragItem} to DragItem,
+  DragAndDropMapping{dropLocation} to DropLocation
 }
 
 relationship ManyToMany {

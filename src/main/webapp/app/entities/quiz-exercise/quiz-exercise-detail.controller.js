@@ -129,7 +129,7 @@
                 type: "drag-and-drop",
                 dropLocations: [],
                 dragItems: [],
-                correctAssignments: []
+                correctMappings: []
             }]);
         }
 

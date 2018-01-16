@@ -39,8 +39,9 @@ public class DragAndDropQuestion extends Question implements Serializable {
     @OrderColumn
     @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private List<DragAndDropAssignment> correctAssignments = new ArrayList<>();
+    private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
+    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public String getBackgroundFilePath() {
         return backgroundFilePath;
     }
@@ -104,30 +105,31 @@ public class DragAndDropQuestion extends Question implements Serializable {
         this.dragItems = dragItems;
     }
 
-    public List<DragAndDropAssignment> getCorrectAssignments() {
-        return correctAssignments;
+    public List<DragAndDropMapping> getCorrectMappings() {
+        return correctMappings;
     }
 
-    public DragAndDropQuestion correctAssignments(List<DragAndDropAssignment> dragAndDropAssignments) {
-        this.correctAssignments = dragAndDropAssignments;
+    public DragAndDropQuestion correctMappings(List<DragAndDropMapping> dragAndDropMappings) {
+        this.correctMappings = dragAndDropMappings;
         return this;
     }
 
-    public DragAndDropQuestion addCorrectAssignments(DragAndDropAssignment dragAndDropAssignment) {
-        this.correctAssignments.add(dragAndDropAssignment);
-        dragAndDropAssignment.setQuestion(this);
+    public DragAndDropQuestion addCorrectMappings(DragAndDropMapping dragAndDropMapping) {
+        this.correctMappings.add(dragAndDropMapping);
+        dragAndDropMapping.setQuestion(this);
         return this;
     }
 
-    public DragAndDropQuestion removeCorrectAssignments(DragAndDropAssignment dragAndDropAssignment) {
-        this.correctAssignments.remove(dragAndDropAssignment);
-        dragAndDropAssignment.setQuestion(null);
+    public DragAndDropQuestion removeCorrectMappings(DragAndDropMapping dragAndDropMapping) {
+        this.correctMappings.remove(dragAndDropMapping);
+        dragAndDropMapping.setQuestion(null);
         return this;
     }
 
-    public void setCorrectAssignments(List<DragAndDropAssignment> dragAndDropAssignments) {
-        this.correctAssignments = dragAndDropAssignments;
+    public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
+        this.correctMappings = dragAndDropMappings;
     }
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {

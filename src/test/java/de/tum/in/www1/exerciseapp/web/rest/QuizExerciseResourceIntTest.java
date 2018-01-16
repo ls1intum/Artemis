@@ -2,7 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import de.tum.in.www1.exerciseapp.domain.QuizExercise;
-import de.tum.in.www1.exerciseapp.repository.DragAndDropAssignmentRepository;
+import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
@@ -70,7 +70,7 @@ public class QuizExerciseResourceIntTest {
     private ParticipationRepository participationRepository;
 
     @Autowired
-    private DragAndDropAssignmentRepository dragAndDropAssignmentRepository;
+    private DragAndDropMappingRepository dragAndDropMappingRepository;
 
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -91,7 +91,7 @@ public class QuizExerciseResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, new StatisticService( new SimpMessagingTemplate(null)), dragAndDropAssignmentRepository);
+        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, new StatisticService( new SimpMessagingTemplate(null)), dragAndDropMappingRepository);
         this.restQuizExerciseMockMvc = MockMvcBuilders.standaloneSetup(quizExerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)

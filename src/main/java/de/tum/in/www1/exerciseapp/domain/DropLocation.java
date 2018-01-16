@@ -40,10 +40,10 @@ public class DropLocation implements Serializable {
     @JsonIgnore
     private DragAndDropQuestion question;
 
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "location")
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "dropLocation")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DragAndDropAssignment> assignments = new HashSet<>();
+    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     @Transient
     // variable name must be different from Getter name,
@@ -132,24 +132,24 @@ public class DropLocation implements Serializable {
         this.question = dragAndDropQuestion;
     }
 
-    public Set<DragAndDropAssignment> getAssignments() {
-        return assignments;
+    public Set<DragAndDropMapping> getMappings() {
+        return mappings;
     }
 
-    public DropLocation assignments(Set<DragAndDropAssignment> assignments) {
-        this.assignments = assignments;
+    public DropLocation mappings(Set<DragAndDropMapping> mappings) {
+        this.mappings = mappings;
         return this;
     }
 
-    public DropLocation addAssignments(DragAndDropAssignment assignment) {
-        this.assignments.add(assignment);
-        assignment.setLocation(this);
+    public DropLocation addMappings(DragAndDropMapping mapping) {
+        this.mappings.add(mapping);
+        mapping.setDropLocation(this);
         return this;
     }
 
-    public DropLocation removeAssignments(DragAndDropAssignment assignment) {
-        this.assignments.remove(assignment);
-        assignment.setLocation(null);
+    public DropLocation removeMappings(DragAndDropMapping mapping) {
+        this.mappings.remove(mapping);
+        mapping.setDropLocation(null);
         return this;
     }
 

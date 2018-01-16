@@ -34,10 +34,10 @@ public class DragItem implements Serializable {
     @JsonIgnore
     private DragAndDropQuestion question;
 
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "item")
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "dragItem")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    private Set<DragAndDropAssignment> assignments = new HashSet<>();
+    private Set<DragAndDropMapping> mappings = new HashSet<>();
 
     @Transient
     // variable name must be different from Getter name,
@@ -100,24 +100,24 @@ public class DragItem implements Serializable {
         this.question = dragAndDropQuestion;
     }
 
-    public Set<DragAndDropAssignment> getAssignments() {
-        return assignments;
+    public Set<DragAndDropMapping> getMappings() {
+        return mappings;
     }
 
-    public DragItem assignments(Set<DragAndDropAssignment> assignments) {
-        this.assignments = assignments;
+    public DragItem mappings(Set<DragAndDropMapping> mappings) {
+        this.mappings = mappings;
         return this;
     }
 
-    public DragItem addAssignments(DragAndDropAssignment assignment) {
-        this.assignments.add(assignment);
-        assignment.setItem(this);
+    public DragItem addMappings(DragAndDropMapping mapping) {
+        this.mappings.add(mapping);
+        mapping.setDragItem(this);
         return this;
     }
 
-    public DragItem removeAssignments(DragAndDropAssignment assignment) {
-        this.assignments.remove(assignment);
-        assignment.setItem(null);
+    public DragItem removeMappings(DragAndDropMapping mapping) {
+        this.mappings.remove(mapping);
+        mapping.setDragItem(null);
         return this;
     }
 

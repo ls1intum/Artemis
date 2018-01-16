@@ -20,7 +20,7 @@
             "dragItems": "Drag Items",
             "uploadBackgroundPicture": "Upload Background",
             "drawOnBackgroundInstructions": "Draw on the background picture to define drop locations.",
-            "correctAssignments": "Correct Assignments",
+            "correctMappings": "Correct Mappings",
             "randomizeOrder": "Present Drag Items in Random Order"
         }
     }
