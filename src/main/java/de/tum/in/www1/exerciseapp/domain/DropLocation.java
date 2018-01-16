@@ -40,9 +40,8 @@ public class DropLocation implements Serializable {
     @JsonIgnore
     private DragAndDropQuestion question;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "location")
     @JsonIgnore
-    @JoinColumn(name = "location_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropAssignment> assignments = new HashSet<>();
 

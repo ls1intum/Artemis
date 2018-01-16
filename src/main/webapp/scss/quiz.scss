@@ -287,9 +287,37 @@
 }
 
 .edit-dnd-question {
+    .markupEditorArea {
+        margin-bottom: 14px;
+    }
+
     .instructions {
         margin: 10px 0;
         font-weight: bold;
+    }
+
+    .assignment-numbers-wrapper {
+        position: absolute;
+        display: flex;
+        justify-content: space-evenly;
+        align-items: center;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        -webkit-transform: translate3d(0, 15px, 0);
+        -moz-transform: translate3d(0, 15px, 0);
+        -ms-transform: translate3d(0, 15px, 0);
+        -o-transform: translate3d(0, 15px, 0);
+        transform: translate3d(0, 15px, 0);
+
+        .assignment-number {
+            position: static;
+            -webkit-transform: translate3d(0, 0, 0);
+            -moz-transform: translate3d(0, 0, 0);
+            -ms-transform: translate3d(0, 0, 0);
+            -o-transform: translate3d(0, 0, 0);
+            transform: translate3d(0, 0, 0);
+        }
     }
 
     .assignment-number {
@@ -373,6 +401,10 @@
 
             cursor: crosshair !important;
             z-index: 1;
+
+            &.disabled {
+                cursor: not-allowed !important;
+            }
 
             .drop-location {
                 position: absolute;
@@ -469,8 +501,7 @@
             position: relative;
             height: 160px;
             width: 160px;
-            margin: 4px;
-            overflow: hidden;
+            margin: 4px 4px 18px;
             border: 1px solid dimgrey;
             background: #fafafa;
 

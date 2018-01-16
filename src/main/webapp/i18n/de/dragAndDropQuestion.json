@@ -20,7 +20,8 @@
             "dragItems": "Drag Items",
             "uploadBackgroundPicture": "Hintergrund Hochladen",
             "drawOnBackgroundInstructions": "Malen Sie auf den Hintergrund um Drop Locations zu definieren.",
-            "correctAssignments": "Correct Assignments"
+            "correctAssignments": "Correct Assignments",
+            "randomizeOrder": "Drag Items in zufälliger Reihenfolge anzeigen"
         }
     }
 }

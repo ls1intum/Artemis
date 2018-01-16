@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.repository.DragAndDropAssignmentRepository;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,11 +35,13 @@ public class QuizExerciseResource {
     private final QuizExerciseRepository quizExerciseRepository;
     private final ParticipationRepository participationRepository;
     private final StatisticService statisticService;
+    private final DragAndDropAssignmentRepository dragAndDropAssignmentRepository;
 
-    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, ParticipationRepository participationRepository, StatisticService statisticService) {
+    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, ParticipationRepository participationRepository, StatisticService statisticService, DragAndDropAssignmentRepository dragAndDropAssignmentRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.statisticService = statisticService;
+        this.dragAndDropAssignmentRepository = dragAndDropAssignmentRepository;
     }
 
     /**
@@ -56,15 +60,26 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
 
-        // fix references in all drag and drop questions
+        // fix references in all drag and drop questions (step 1/2)
         for (Question question : quizExercise.getQuestions()) {
             if (question instanceof DragAndDropQuestion) {
                 DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                updateCorrectAssignmentsReferences(dragAndDropQuestion);
+                // save references as index to prevent Hibernate Persistence problem
+                updateCorrectAssignmentIndexes(dragAndDropQuestion);
             }
         }
 
         QuizExercise result = quizExerciseRepository.save(quizExercise);
+
+        // fix references in all drag and drop questions (step 2/2)
+        for (Question question : result.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // restore references from index after save
+                updateCorrectAssignmentObjects(dragAndDropQuestion);
+            }
+        }
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
@@ -134,9 +149,6 @@ public class QuizExerciseResource {
                             assignment.setQuestion(dragAndDropQuestion);
                         }
                     }
-
-                    // fix references in correctAssignments
-                    updateCorrectAssignmentsReferences(dragAndDropQuestion);
                 }
             }
         }
@@ -157,10 +169,29 @@ public class QuizExerciseResource {
         //notify clients via websocket about the release state of the statistics.
         statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
 
+        // fix references in all drag and drop questions (step 1/2)
+        for (Question question : quizExercise.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // save references as index to prevent Hibernate Persistence problem
+                updateCorrectAssignmentIndexes(dragAndDropQuestion);
+            }
+        }
+
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         //       and delete the now orphaned entries from the database
         QuizExercise result = quizExerciseRepository.save(quizExercise);
+
+        // fix references in all drag and drop questions (step 2/2)
+        for (Question question : result.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // restore references from index after save
+                updateCorrectAssignmentObjects(dragAndDropQuestion);
+            }
+        }
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
@@ -276,19 +307,27 @@ public class QuizExerciseResource {
     }
 
     /**
-     * replace drop locations and drag items in correctAssignments with actual objects
+     * remove item and location from correct assignments and set itemIndex and locationIndex instead
      *
-     * @param dragAndDropQuestion the question for which to fix the references
+     * @param dragAndDropQuestion the question for which to perform these actions
      */
-    private void updateCorrectAssignmentsReferences(DragAndDropQuestion dragAndDropQuestion) {
+    private void updateCorrectAssignmentIndexes(DragAndDropQuestion dragAndDropQuestion) {
+        List<DragAndDropAssignment> assignmentsToBeRemoved = new ArrayList<>();
         for (DragAndDropAssignment assignment : dragAndDropQuestion.getCorrectAssignments()) {
-            // replace drag item
+            // check for NullPointers
+            if (assignment.getItem() == null || assignment.getLocation() == null) {
+                assignmentsToBeRemoved.add(assignment);
+                continue;
+            }
+
+            // drag item index
             DragItem dragItem = assignment.getItem();
             boolean dragItemFound = false;
             for (DragItem questionDragItem : dragAndDropQuestion.getDragItems()) {
                 if (dragItem.equals(questionDragItem)) {
                     dragItemFound = true;
-                    assignment.setItem(questionDragItem);
+                    assignment.setItemIndex(dragAndDropQuestion.getDragItems().indexOf(questionDragItem));
+                    assignment.setItem(null);
                     break;
                 }
             }
@@ -299,15 +338,38 @@ public class QuizExerciseResource {
             for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {
                 if (dropLocation.equals(questionDropLocation)) {
                     dropLocationFound = true;
-                    assignment.setLocation(questionDropLocation);
+                    assignment.setLocationIndex(dragAndDropQuestion.getDropLocations().indexOf(questionDropLocation));
+                    assignment.setLocation(null);
                     break;
                 }
             }
 
             // if one of them couldn't be found, remove the assignment entirely
             if (!dragItemFound || !dropLocationFound) {
-                dragAndDropQuestion.removeCorrectAssignments(assignment);
+                assignmentsToBeRemoved.add(assignment);
             }
+        }
+
+        for (DragAndDropAssignment assignment : assignmentsToBeRemoved) {
+            dragAndDropQuestion.removeCorrectAssignments(assignment);
+        }
+    }
+
+    /**
+     * restore item and location for correct assignments using itemIndex and locationIndex
+     *
+     * @param dragAndDropQuestion the question for which to perform these actions
+     */
+    private void updateCorrectAssignmentObjects(DragAndDropQuestion dragAndDropQuestion) {
+        for (DragAndDropAssignment assignment : dragAndDropQuestion.getCorrectAssignments()) {
+            // drag item
+            assignment.setItem(dragAndDropQuestion.getDragItems().get(assignment.getItemIndex()));
+            // drop location
+            assignment.setLocation(dragAndDropQuestion.getDropLocations().get(assignment.getLocationIndex()));
+            // set question
+            assignment.setQuestion(dragAndDropQuestion);
+            // save assignment
+            dragAndDropAssignmentRepository.save(assignment);
         }
     }
 }

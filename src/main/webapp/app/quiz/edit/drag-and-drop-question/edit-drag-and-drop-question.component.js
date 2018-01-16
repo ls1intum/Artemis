@@ -22,6 +22,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('dragAndDropQuestion');
+    $translatePartialLoader.addPart('multipleChoiceQuestion');
     $translate.refresh();
 
     var vm = this;
@@ -37,6 +38,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.isUploadingBackgroundFile = false;
     vm.dragItemFile = null;
     vm.isUploadingDragItemFile = false;
+    vm.addHintAtCursor = addHintAtCursor;
+    vm.addExplanationAtCursor = addExplanationAtCursor;
     vm.togglePreview = togglePreview;
     vm.uploadBackground = uploadBackground;
     vm.backgroundMouseDown = backgroundMouseDown;
@@ -48,11 +51,110 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.uploadDragItem = uploadDragItem;
     vm.deleteDragItem = deleteDragItem;
     vm.onDragDrop = onDragDrop;
+    vm.getAssignmentsFor = getAssignmentsFor;
     vm.getAssignmentIndex = getAssignmentIndex;
-    vm.deleteAssignmentFor = deleteAssignmentFor;
+    vm.deleteAssignmentsFor = deleteAssignmentsFor;
+    vm.deleteAssignment = deleteAssignment;
 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
+    }
+
+    // set up editor
+    vm.random = pseudoRandomLong();
+    var editor;
+    requestAnimationFrame(function () {
+        editor = ace.edit("question-content-editor-" + vm.random);
+        editor.setTheme("ace/theme/chrome");
+        editor.getSession().setMode("ace/mode/markdown");
+        editor.renderer.setShowGutter(false);
+        editor.renderer.setPadding(10);
+        editor.renderer.setScrollMargin(8, 8);
+        editor.setHighlightActiveLine(false);
+        editor.setShowPrintMargin(false);
+
+        generateMarkdown();
+
+        editor.on("blur", function () {
+            parseMarkdown(editor.getValue());
+            vm.onUpdated();
+            $scope.$apply();
+        });
+    });
+
+    /**
+     * generate the markdown text for this question
+     *
+     * The markdown is generated according to these rules:
+     *
+     * 1. First the question text is inserted
+     * 2. If hint and/or explanation exist, they are added after the text with a linebreak and tab in front of them
+     *
+     */
+    function generateMarkdown() {
+        var markdownText = (
+            vm.question.text +
+            (vm.question.hint ? "\n\t[-h] " + vm.question.hint : "") +
+            (vm.question.explanation ? "\n\t[-e] " + vm.question.explanation : "")
+        );
+        editor.setValue(markdownText);
+        editor.clearSelection();
+    }
+
+    /**
+     * Parse the markdown and apply the result to the question's data
+     *
+     * The question text is split at [-h] and [-e] tags.
+     *  => First part is text. Everything after [-h] is Hint, anything after [-e] is explanation
+     *
+     * @param questionText {string} the markdown text to parse
+     */
+    function parseMarkdown(questionText) {
+        // split question into main text, hint and explanation
+        var questionTextParts = questionText.split(/\[\-e\]|\[\-h\]/g);
+        vm.question.text = questionTextParts[0].trim();
+        if (questionText.indexOf("[-h]") !== -1 && questionText.indexOf("[-e]") !== -1) {
+            if (questionText.indexOf("[-h]") < questionText.indexOf("[-e]")) {
+                vm.question.hint = questionTextParts[1].trim();
+                vm.question.explanation = questionTextParts[2].trim();
+            } else {
+                vm.question.hint = questionTextParts[2].trim();
+                vm.question.explanation = questionTextParts[1].trim();
+            }
+        } else if (questionText.indexOf("[-h]") !== -1) {
+            vm.question.hint = questionTextParts[1].trim();
+            vm.question.explanation = null;
+        } else if (questionText.indexOf("[-e]") !== -1) {
+            vm.question.hint = null;
+            vm.question.explanation = questionTextParts[1].trim();
+        } else {
+            vm.question.hint = null;
+            vm.question.explanation = null;
+        }
+    }
+
+    /**
+     * add the markdown for a hint at the current cursor location
+     */
+    function addHintAtCursor() {
+        var addedText = "\n\t[-h] Add a hint here (visible during the quiz via \"?\"-Button)";
+        editor.focus();
+        editor.insert(addedText);
+        var range = editor.selection.getRange();
+        range.setStart(range.start.row, range.start.column - addedText.length + 7);
+        editor.selection.setRange(range);
+    }
+
+    /**
+     * add the markdown for an explanation at the current cursor location
+     */
+    function addExplanationAtCursor() {
+        var addedText = "\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)";
+        editor.focus();
+        editor.insert(addedText);
+        var range = editor.selection.getRange();
+        range.setStart(range.start.row, range.start.column - addedText.length + 7);
+        editor.selection.setRange(range);
     }
 
     /**
@@ -130,7 +232,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     function mouseMove(e) {
         // update mouse x and y value
         var ev = e || window.event; //Moz || IE
-        var clickLayer = $(".click-layer");
+        var clickLayer = $("#click-layer-" + vm.random);
         var backgroundOffset = clickLayer.offset();
         var backgroundWidth = clickLayer.width();
         var backgroundHeight = clickLayer.height();
@@ -183,7 +285,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         if (draggingState !== DragState.NONE) {
             switch (draggingState) {
                 case DragState.CREATE:
-                    var clickLayer = $(".click-layer");
+                    var clickLayer = $("#click-layer-" + vm.random);
                     var backgroundWidth = clickLayer.width();
                     var backgroundHeight = clickLayer.height();
                     if (currentDropLocation.width / 200 * backgroundWidth < 14 && currentDropLocation.height / 200 * backgroundHeight < 14) {
@@ -247,7 +349,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      */
     function dropLocationMouseDown(dropLocation) {
         if (draggingState === DragState.NONE) {
-            var clickLayer = $(".click-layer");
+            var clickLayer = $("#click-layer-" + vm.random);
             var backgroundWidth = clickLayer.width();
             var backgroundHeight = clickLayer.height();
 
@@ -272,7 +374,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.question.dropLocations = vm.question.dropLocations.filter(function (dropLocation) {
             return dropLocation !== dropLocationToDelete;
         });
-        deleteAssignmentFor(dropLocationToDelete);
+        deleteAssignmentsFor(dropLocationToDelete);
     }
 
     /**
@@ -298,7 +400,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      */
     function resizeMouseDown(dropLocation, resizeLocationY, resizeLocationX) {
         if (draggingState === DragState.NONE) {
-            var clickLayer = $(".click-layer");
+            var clickLayer = $("#click-layer-" + vm.random);
             var backgroundWidth = clickLayer.width();
             var backgroundHeight = clickLayer.height();
 
@@ -348,7 +450,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         }
         vm.question.dragItems.push({
             tempID: pseudoRandomLong(),
-            text: ""
+            text: "Text"
         });
         vm.onUpdated();
     }
@@ -403,7 +505,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.question.dragItems = vm.question.dragItems.filter(function (dragItem) {
             return dragItem !== dragItemToDelete;
         });
-        deleteAssignmentFor(dragItemToDelete);
+        deleteAssignmentsFor(dragItemToDelete);
     }
 
     /**
@@ -427,8 +529,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         }
 
         // remove assignments that contain the dropLocation or dragItem
-        deleteAssignmentFor(dropLocation);
-        deleteAssignmentFor(dragItem);
+        // deleteAssignmentsFor(dropLocation);
+        // deleteAssignmentsFor(dragItem);
 
         // add this assignment
         vm.question.correctAssignments.push({
@@ -440,31 +542,60 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     }
 
     /**
-     * Get the assignment index for the given drop location or drag item
-     * @param dropLocationOrDragItem {object} a drop location or drag item
+     * Get the assignment index for the given assignment
+     * @param assignment {object} the assignment we want to get an index for
      * @return {number} the index of the assignment (starting with 1), or 0 if unassigned
      */
-    function getAssignmentIndex(dropLocationOrDragItem) {
+    function getAssignmentIndex(assignment) {
+        var visitedLocations = [];
+        if (vm.question.correctAssignments.some(function (correctAssignment) {
+                if (!visitedLocations.some(function (location) {
+                        return isSameDropLocationOrDragItem(location, correctAssignment.location);
+                    })) {
+                    visitedLocations.push(correctAssignment.location);
+                }
+                return isSameDropLocationOrDragItem(correctAssignment.location, assignment.location);
+            })) {
+            return visitedLocations.length;
+        } else {
+            return 0;
+        }
+    }
+
+    function getAssignmentsFor(dropLocationOrDragItem) {
         if (!vm.question.correctAssignments) {
             vm.question.correctAssignments = [];
         }
-        return vm.question.correctAssignments.findIndex(function (assignment) {
+        return vm.question.correctAssignments.filter(function (assignment) {
             return isSameDropLocationOrDragItem(assignment.location, dropLocationOrDragItem) ||
                 isSameDropLocationOrDragItem(assignment.item, dropLocationOrDragItem);
-        }) + 1;
+        });
     }
 
     /**
      * Remove the assignment for the given drop location or drag item
      * @param dropLocationOrDragItem {object} a drop location or drag item
      */
-    function deleteAssignmentFor(dropLocationOrDragItem) {
+    function deleteAssignmentsFor(dropLocationOrDragItem) {
         if (!vm.question.correctAssignments) {
             vm.question.correctAssignments = [];
         }
         vm.question.correctAssignments = vm.question.correctAssignments.filter(function (assignment) {
             return !isSameDropLocationOrDragItem(assignment.location, dropLocationOrDragItem) &&
                 !isSameDropLocationOrDragItem(assignment.item, dropLocationOrDragItem);
+        });
+    }
+
+    /**
+     * delete the given assignment from the question
+     * @param assignmentToDelete {object} the assignment to delete
+     */
+    function deleteAssignment(assignmentToDelete) {
+        if (!vm.question.correctAssignments) {
+            vm.question.correctAssignments = [];
+        }
+        vm.question.correctAssignments = vm.question.correctAssignments.filter(function (assignment) {
+            return assignment !== assignmentToDelete;
         });
     }
 

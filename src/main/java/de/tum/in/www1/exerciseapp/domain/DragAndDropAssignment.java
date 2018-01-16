@@ -36,6 +36,10 @@ public class DragAndDropAssignment implements Serializable {
     @JsonIgnore
     private DragAndDropQuestion question;
 
+    private Integer itemIndex;
+
+    private Integer locationIndex;
+
     public Long getId() {
         return id;
     }
@@ -94,6 +98,32 @@ public class DragAndDropAssignment implements Serializable {
 
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
+    }
+
+    public Integer getItemIndex() {
+        return itemIndex;
+    }
+
+    public DragAndDropAssignment itemIndex(Integer itemIndex) {
+        this.itemIndex = itemIndex;
+        return this;
+    }
+
+    public void setItemIndex(Integer itemIndex) {
+        this.itemIndex = itemIndex;
+    }
+
+    public Integer getLocationIndex() {
+        return locationIndex;
+    }
+
+    public DragAndDropAssignment locationIndex(Integer locationIndex) {
+        this.locationIndex = locationIndex;
+        return this;
+    }
+
+    public void setLocationIndex(Integer locationIndex) {
+        this.locationIndex = locationIndex;
     }
 
     @Override

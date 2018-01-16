@@ -8533,9 +8533,33 @@ body.editor .navbar-brand span {
     color: dimgrey;
     background: #fafafa; }
 
+.edit-dnd-question .markupEditorArea {
+  margin-bottom: 14px; }
+
 .edit-dnd-question .instructions {
   margin: 10px 0;
   font-weight: bold; }
+
+.edit-dnd-question .assignment-numbers-wrapper {
+  position: absolute;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  -webkit-transform: translate3d(0, 15px, 0);
+  -moz-transform: translate3d(0, 15px, 0);
+  -ms-transform: translate3d(0, 15px, 0);
+  -o-transform: translate3d(0, 15px, 0);
+  transform: translate3d(0, 15px, 0); }
+  .edit-dnd-question .assignment-numbers-wrapper .assignment-number {
+    position: static;
+    -webkit-transform: translate3d(0, 0, 0);
+    -moz-transform: translate3d(0, 0, 0);
+    -ms-transform: translate3d(0, 0, 0);
+    -o-transform: translate3d(0, 0, 0);
+    transform: translate3d(0, 0, 0); }
 
 .edit-dnd-question .assignment-number {
   position: absolute;
@@ -8608,6 +8632,8 @@ body.editor .navbar-brand span {
     right: 0;
     cursor: crosshair !important;
     z-index: 1; }
+    .edit-dnd-question .background-area .click-layer.disabled {
+      cursor: not-allowed !important; }
     .edit-dnd-question .background-area .click-layer .drop-location {
       position: absolute;
       border: 1px dashed mediumpurple;
@@ -8665,8 +8691,7 @@ body.editor .navbar-brand span {
     position: relative;
     height: 160px;
     width: 160px;
-    margin: 4px;
-    overflow: hidden;
+    margin: 4px 4px 18px;
     border: 1px solid dimgrey;
     background: #fafafa; }
     .edit-dnd-question .drag-items .drag-item img {

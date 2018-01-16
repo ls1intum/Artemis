@@ -18,7 +18,7 @@
             <div class="checkbox">
                 <label>
                     <input type="checkbox" ng-model="vm.question.randomizeOrder"/>
-                    <span data-translate="artemisApp.question.randomizeOrder"></span>
+                    <span data-translate="artemisApp.dragAndDropQuestion.randomizeOrder"></span>
                 </label>
             </div>
         </div>
@@ -27,6 +27,18 @@
             <input class="form-control" title="score" type="number" min="0" max="9999" ng-model="vm.question.score"/>
         </div>
     </div>
+    <div class="markupEditorArea">
+        <div class="toolbar">
+            <div class="btn-group">
+                <div class="btn btn-default" data-translate="artemisApp.multipleChoiceQuestion.editor.addHint" ng-click="vm.addHintAtCursor()"></div>
+                <div class="btn btn-default" data-translate="artemisApp.multipleChoiceQuestion.editor.addExplanation" ng-click="vm.addExplanationAtCursor()"></div>
+            </div>
+        </div>
+        <div class="question-content">
+            <div id="{{'question-content-editor-' + vm.random}}" class="form-control"></div>
+        </div>
+    </div>
+    <hr/>
     <div class="question-options">
         <div class="form-group">
             <span data-translate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink"></span>
@@ -36,12 +48,15 @@
             </button>
         </div>
     </div>
+    <div class="instructions" ng-if="!vm.question.backgroundFilePath">
+        Please upload a background picture.
+    </div>
     <div class="instructions" ng-if="vm.question.backgroundFilePath">
         <span data-translate="artemisApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
     </div>
     <div class="background-area">
-        <img ng-src="{{vm.question.backgroundFilePath}}" alt="Please upload a background picture.">
-        <div class="click-layer" ng-mousedown="vm.backgroundMouseDown()">
+        <img ng-src="{{vm.question.backgroundFilePath}}" alt="No background picture.">
+        <div id="{{'click-layer-' + vm.random}}" class="click-layer" ng-mousedown="vm.backgroundMouseDown()" ng-class="{disabled: !vm.question.backgroundFilePath}">
             <div
                 class="drop-location"
                 ng-repeat="dropLocation in vm.question.dropLocations"
@@ -68,9 +83,9 @@
                 <div class="resize bottom left" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
                 <div class="resize bottom center" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
                 <div class="resize bottom right" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
-                <div ng-class="'assignment-number assignment-color-' + (vm.getAssignmentIndex(dropLocation) % 8)" ng-if="vm.getAssignmentIndex(dropLocation)">
-                    {{vm.getAssignmentIndex(dropLocation)}}
-                    <div class="unlink-assignment" ng-click="vm.deleteAssignmentFor(dropLocation)">
+                <div ng-class="'assignment-number assignment-color-' + (vm.getAssignmentIndex(vm.getAssignmentsFor(dropLocation)[0]) % 8)" ng-if="vm.getAssignmentsFor(dropLocation).length">
+                    {{vm.getAssignmentIndex(vm.getAssignmentsFor(dropLocation)[0])}}
+                    <div class="unlink-assignment" ng-click="vm.deleteAssignmentsFor(dropLocation)">
                         <i class="fa fa-chain-broken fa-lg"></i>
                     </div>
                 </div>
@@ -78,8 +93,11 @@
         </div>
     </div>
     <hr/>
-    <div>
-        <span class="colon-suffix" data-translate="artemisApp.dragAndDropQuestion.dragItems"></span>
+    <div ng-if="!vm.question.dragItems || !vm.question.dragItems.length" class="instructions">
+        Add Drag Items using the buttons below.
+    </div>
+    <div ng-if="vm.question.dragItems && vm.question.dragItems.length" class="instructions">
+        Drag items onto drop locations to define correct solutions.
     </div>
     <div class="drag-items">
         <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
@@ -95,15 +113,14 @@
             <div class="drag-handle drag-handle-wrapper">
                 <i class="fa fa-bars fa-lg drag-handle"></i>
             </div>
-            <div ng-class="'assignment-number assignment-color-' + (vm.getAssignmentIndex(dragItem) % 8)" ng-if="vm.getAssignmentIndex(dragItem)">
-                {{vm.getAssignmentIndex(dragItem)}}
-                <div class="unlink-assignment" ng-click="vm.deleteAssignmentFor(dragItem)">
-                    <i class="fa fa-chain-broken fa-lg"></i>
+            <div class="assignment-numbers-wrapper">
+                <div ng-repeat="assignment in vm.getAssignmentsFor(dragItem) | orderBy: vm.getAssignmentIndex" ng-class="'assignment-number assignment-color-' + (vm.getAssignmentIndex(assignment) % 8)">
+                    {{vm.getAssignmentIndex(assignment)}}
+                    <div class="unlink-assignment" ng-click="vm.deleteAssignment(assignment)">
+                        <i class="fa fa-chain-broken fa-lg"></i>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div ng-if="!vm.question.dragItems || !vm.question.dragItems.length" class="instructions">
-            Add Drag Items using the buttons below.
         </div>
     </div>
     <div class="question-options">
