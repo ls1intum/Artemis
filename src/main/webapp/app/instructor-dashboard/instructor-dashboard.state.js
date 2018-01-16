@@ -111,6 +111,10 @@
                         resolve: {
                             entity: ['Exercise', function (Exercise) {
                                 return Exercise.get({id: $stateParams.exerciseId}).$promise;
+                            }],
+                            translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                                $translatePartialLoader.addPart('error');
+                                return $translate.refresh();
                             }]
                         }
                     }).result.then(function () {
@@ -135,6 +139,10 @@
                     resolve: {
                         entity: ['Exercise', function (Exercise) {
                             return Exercise.get({id: $stateParams.exerciseId}).$promise;
+                        }],
+                        translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                            $translatePartialLoader.addPart('error');
+                            return $translate.refresh();
                         }]
                     }
                 }).result.then(function () {
