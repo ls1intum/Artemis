@@ -8658,6 +8658,28 @@ code-error {
   border-radius: 4px;
   font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
 
+code-success {
+  padding: 2px 4px;
+  font-size: 90%;
+  color: green;
+  background-color: #f2f9f2;
+  border-radius: 4px;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
+
+.negative {
+  padding: 2px 4px;
+  color: #c7254e;
+  background-color: #f9f2f4;
+  border-radius: 4px;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
+
+.positive {
+  padding: 2px 4px;
+  color: green;
+  background-color: #f2f9f2;
+  border-radius: 4px;
+  font-family: Menlo, Monaco, Consolas, "Courier New", monospace; }
+
 /* ==========================================================================
 Hide ng-cloak on page load, https://docs.angularjs.org/api/ng/directive/ngCloak
 ========================================================================== */

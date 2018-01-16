@@ -50,14 +50,26 @@
         <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
         <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
             <div class="form-group">
-                <label class="control-label">Feedback #{{index + 1}} Text</label>
+                <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
+                    Feedback #{{index + 1}} Text
+                </label>
                 <input class="form-control" name="feedbackText" ng-required="vm.addFeedbackClicked" ng-model="vm.result.feedbacks[index].text"/>
                 <span class="help-block" ng-show="editForm.feedbackText.$dirty && editForm.feedbackText.$error.required">Feedback text is required.</span>
             </div>
             <div class="form-group">
-                <label class="control-label">Feedback #{{index + 1}} Detail Text</label>
+                <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
+                    Feedback #{{index + 1}} Detail Text
+                </label>
                 <input class="form-control" name="feedbackErrorText" ng-required="vm.addFeedbackClicked" ng-model="vm.result.feedbacks[index].detailText"/>
                 <span class="help-block" ng-show="editForm.feedbackErrorText.$dirty && editForm.feedbackErrorText.$error.required">Feedback detail text is required.</span>
+            </div>
+            <div class="form-group">
+                <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
+                    Feedback #{{index + 1}} Positive
+                </label>
+                <input type="checkbox" class="form-control" name="positive" id="field_positive"
+                       ng-model="vm.result.feedbacks[index].positive"
+                />
             </div>
             <br/>
         </div>

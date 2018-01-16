@@ -358,6 +358,7 @@ public class BambooService implements ContinuousIntegrationService {
                 feedback.setText(methodName);
                 feedback.setDetailText(errorMessageString);
                 feedback.setType(FeedbackType.AUTOMATIC);
+                feedback.setPositive(false);
                 feedback = feedbackRepository.save(feedback);
                 result.addFeedbacks(feedback);
             }
