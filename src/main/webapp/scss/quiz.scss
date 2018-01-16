@@ -120,6 +120,16 @@
             margin: 0 4px;
         }
     }
+
+    .invalid-reasons-tooltip .tooltip-inner {
+        text-align: left;
+        max-width: 300px;
+
+        p {
+            margin: 4px 0;
+            padding: 4px;
+        }
+    }
 }
 
 .question:first-of-type {

@@ -184,6 +184,9 @@
                         ng-if="!vm.validQuiz()"
                         data-translate="artemisApp.quizExercise.edit.invalidInput"
                         class="label label-danger"
+                        uib-tooltip-html="vm.invalidReasonsHTML()"
+                        tooltip-placement="top-right"
+                        tooltip-class="invalid-reasons-tooltip"
                     ></span>
                     <button
                         class="btn btn-default"

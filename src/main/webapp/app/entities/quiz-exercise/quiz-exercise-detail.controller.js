@@ -59,6 +59,7 @@
         vm.showDropdown = showDropdown;
         vm.pendingChanges = pendingChanges;
         vm.validQuiz = validQuiz;
+        vm.invalidReasonsHTML = invalidReasonsHTML;
         vm.openCalendar = openCalendar;
         vm.addMultipleChoiceQuestion = addMultipleChoiceQuestion;
         vm.addDragAndDropQuestion = addDragAndDropQuestion;
@@ -173,7 +174,65 @@
          * @returns {boolean} true if valid, false otherwise
          */
         function validQuiz() {
-            return vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration;
+            var isGenerallyValid = vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration;
+            var areAllQuestionsValid = vm.quizExercise.questions.every(function (question) {
+                switch (question.type) {
+                    case "multiple-choice":
+                        return question.title && question.title !== "" && question.answerOptions.some(function (answerOption) {
+                            return answerOption.isCorrect;
+                        });
+                    case "drag-and-drop":
+                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0;
+                    default:
+                        return question.title && question.title !== "";
+                }
+            });
+
+            return isGenerallyValid && areAllQuestionsValid;
+        }
+
+        /**
+         * Get the reasons, why the quiz is invalid
+         *
+         * @returns {[string]} array of strings, each string being a reason for why the quiz is invalid
+         */
+        function invalidReasons() {
+            var reasons = [];
+            if (!vm.quizExercise.title || vm.quizExercise.title === "") {
+                reasons.push("Quiz: Title is missing.");
+            }
+            if (!vm.quizExercise.duration) {
+                reasons.push("Quiz: Duration is missing or invalid.");
+            }
+            vm.quizExercise.questions.forEach(function (question, index) {
+                if (!question.title || question.title === "") {
+                    reasons.push("Question " + (index + 1) + ": Title is missing.");
+                }
+                if (question.type === "multiple-choice") {
+                    if (!question.answerOptions.some(function (answerOption) {
+                            return answerOption.isCorrect;
+                        })) {
+                        reasons.push("Question " + (index + 1) + ": No correct answer option.");
+                    }
+                }
+                if (question.type === "drag-and-drop") {
+                    if (!question.correctMappings || question.correctMappings.length === 0) {
+                        reasons.push("Question " + (index + 1) + ": No correct mapping.");
+                    }
+                }
+            });
+            return reasons;
+        }
+
+        /**
+         * Get the reasons, why the quiz is invalid as an HTML string
+         *
+         * @return {string} the reasons in HTML
+         */
+        function invalidReasonsHTML() {
+            return invalidReasons().map(function (string) {
+                    return "<p>" + string + "</p>";
+                }).join("");
         }
 
         /**

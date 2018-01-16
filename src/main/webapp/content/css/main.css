@@ -8429,6 +8429,14 @@ body.editor .navbar-brand span {
     .edit-quiz-footer-content .form-group > *,
     .quiz-footer-content .form-group > * {
       margin: 0 4px; }
+  .edit-quiz-footer-content .invalid-reasons-tooltip .tooltip-inner,
+  .quiz-footer-content .invalid-reasons-tooltip .tooltip-inner {
+    text-align: left;
+    max-width: 300px; }
+    .edit-quiz-footer-content .invalid-reasons-tooltip .tooltip-inner p,
+    .quiz-footer-content .invalid-reasons-tooltip .tooltip-inner p {
+      margin: 4px 0;
+      padding: 4px; }
 
 .question:first-of-type {
   margin-top: 18px; }
