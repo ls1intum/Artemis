@@ -1,5 +1,5 @@
 import _root_.io.gatling.core.scenario.Simulation
-import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.{Level, LoggerContext}
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import org.slf4j.LoggerFactory
@@ -72,7 +72,7 @@ class FeedbackGatlingTest extends Simulation {
             .exec(http("Create new feedback")
             .post("/api/feedbacks")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "text":"SAMPLE_TEXT", "detailText":"SAMPLE_TEXT", "type":null}""")).asJSON
+            .body(StringBody("""{"id":null, "text":"SAMPLE_TEXT", "detailText":"SAMPLE_TEXT", "positive":null, "type":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_feedback_url"))).exitHereIfFailed
             .pause(10)

@@ -21,6 +21,7 @@
                     <th><span data-translate="global.field.id">ID</span></th>
                     <th><span data-translate="artemisApp.feedback.text">Text</span></th>
                     <th><span data-translate="artemisApp.feedback.detailText">Detail Text</span></th>
+                    <th><span data-translate="artemisApp.feedback.positive">Positive</span></th>
                     <th><span data-translate="artemisApp.feedback.type">Type</span></th>
                     <th><span data-translate="artemisApp.feedback.result">Result</span></th>
                     <th></th>
@@ -31,6 +32,7 @@
                     <td><a ui-sref="feedback-detail({id:feedback.id})">{{feedback.id}}</a></td>
                     <td>{{feedback.text}}</td>
                     <td>{{feedback.detailText}}</td>
+                    <td>{{feedback.positive}}</td>
                     <td data-translate="{{'artemisApp.feedbackType.' + feedback.type}}">{{feedback.type}}</td>
                     <td>
                         <a ui-sref="result-detail({id:feedback.result.id})">{{feedback.result.id}}</a>

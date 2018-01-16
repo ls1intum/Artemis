@@ -18,6 +18,10 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "positive",
+            "fieldType": "Boolean"
+        },
+        {
             "fieldName": "type",
             "fieldType": "FeedbackType",
             "fieldValues": "AUTOMATIC,MANUAL"

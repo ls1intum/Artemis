@@ -152,6 +152,7 @@ entity Result (result) {
 entity Feedback(feedback) {
 	text String,
 	detailText String,
+	positive Boolean,
 	type FeedbackType
 }
 

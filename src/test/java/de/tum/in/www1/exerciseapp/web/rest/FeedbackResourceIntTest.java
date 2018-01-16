@@ -40,6 +40,9 @@ public class FeedbackResourceIntTest {
     private static final String DEFAULT_DETAIL_TEXT = "AAAAAAAAAA";
     private static final String UPDATED_DETAIL_TEXT = "BBBBBBBBBB";
 
+    private static final Boolean DEFAULT_POSITIVE = false;
+    private static final Boolean UPDATED_POSITIVE = true;
+
     private static final FeedbackType DEFAULT_TYPE = FeedbackType.AUTOMATIC;
     private static final FeedbackType UPDATED_TYPE = FeedbackType.MANUAL;
 
@@ -82,6 +85,7 @@ public class FeedbackResourceIntTest {
         Feedback feedback = new Feedback()
             .text(DEFAULT_TEXT)
             .detailText(DEFAULT_DETAIL_TEXT)
+            .positive(DEFAULT_POSITIVE)
             .type(DEFAULT_TYPE);
         return feedback;
     }
@@ -108,6 +112,7 @@ public class FeedbackResourceIntTest {
         Feedback testFeedback = feedbackList.get(feedbackList.size() - 1);
         assertThat(testFeedback.getText()).isEqualTo(DEFAULT_TEXT);
         assertThat(testFeedback.getDetailText()).isEqualTo(DEFAULT_DETAIL_TEXT);
+        assertThat(testFeedback.isPositive()).isEqualTo(DEFAULT_POSITIVE);
         assertThat(testFeedback.getType()).isEqualTo(DEFAULT_TYPE);
     }
 
@@ -143,6 +148,7 @@ public class FeedbackResourceIntTest {
             .andExpect(jsonPath("$.[*].id").value(hasItem(feedback.getId().intValue())))
             .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())))
             .andExpect(jsonPath("$.[*].detailText").value(hasItem(DEFAULT_DETAIL_TEXT.toString())))
+            .andExpect(jsonPath("$.[*].positive").value(hasItem(DEFAULT_POSITIVE.booleanValue())))
             .andExpect(jsonPath("$.[*].type").value(hasItem(DEFAULT_TYPE.toString())));
     }
 
@@ -159,6 +165,7 @@ public class FeedbackResourceIntTest {
             .andExpect(jsonPath("$.id").value(feedback.getId().intValue()))
             .andExpect(jsonPath("$.text").value(DEFAULT_TEXT.toString()))
             .andExpect(jsonPath("$.detailText").value(DEFAULT_DETAIL_TEXT.toString()))
+            .andExpect(jsonPath("$.positive").value(DEFAULT_POSITIVE.booleanValue()))
             .andExpect(jsonPath("$.type").value(DEFAULT_TYPE.toString()));
     }
 
@@ -182,6 +189,7 @@ public class FeedbackResourceIntTest {
         updatedFeedback
             .text(UPDATED_TEXT)
             .detailText(UPDATED_DETAIL_TEXT)
+            .positive(UPDATED_POSITIVE)
             .type(UPDATED_TYPE);
 
         restFeedbackMockMvc.perform(put("/api/feedbacks")
@@ -195,6 +203,7 @@ public class FeedbackResourceIntTest {
         Feedback testFeedback = feedbackList.get(feedbackList.size() - 1);
         assertThat(testFeedback.getText()).isEqualTo(UPDATED_TEXT);
         assertThat(testFeedback.getDetailText()).isEqualTo(UPDATED_DETAIL_TEXT);
+        assertThat(testFeedback.isPositive()).isEqualTo(UPDATED_POSITIVE);
         assertThat(testFeedback.getType()).isEqualTo(UPDATED_TYPE);
     }
 
