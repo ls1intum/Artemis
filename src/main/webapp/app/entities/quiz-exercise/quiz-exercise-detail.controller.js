@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizExerciseDetailController', QuizExerciseDetailController);
 
-    QuizExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity'];
+    QuizExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity', '$translate'];
 
-    function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity) {
+    function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity, $translate) {
         var vm = this;
 
         prepareEntity(entity);
@@ -194,30 +194,45 @@
         /**
          * Get the reasons, why the quiz is invalid
          *
-         * @returns {[string]} array of strings, each string being a reason for why the quiz is invalid
+         * @returns {Array} array of objects with fields "translateKey" and "translateValues"
          */
         function invalidReasons() {
             var reasons = [];
             if (!vm.quizExercise.title || vm.quizExercise.title === "") {
-                reasons.push("Quiz: Title is missing.");
+                reasons.push({
+                    translateKey: "artemisApp.quizExercise.invalidReasons.quizTitle",
+                    translateValues: {}
+                });
             }
             if (!vm.quizExercise.duration) {
-                reasons.push("Quiz: Duration is missing or invalid.");
+                reasons.push({
+                    translateKey: "artemisApp.quizExercise.invalidReasons.quizDuration",
+                    translateValues: {}
+                });
             }
             vm.quizExercise.questions.forEach(function (question, index) {
                 if (!question.title || question.title === "") {
-                    reasons.push("Question " + (index + 1) + ": Title is missing.");
+                    reasons.push({
+                        translateKey: "artemisApp.quizExercise.invalidReasons.questionTitle",
+                        translateValues: {index: index + 1}
+                    });
                 }
                 if (question.type === "multiple-choice") {
                     if (!question.answerOptions.some(function (answerOption) {
                             return answerOption.isCorrect;
                         })) {
-                        reasons.push("Question " + (index + 1) + ": No correct answer option.");
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.questionCorrectAnswerOption",
+                            translateValues: {index: index + 1}
+                        });
                     }
                 }
                 if (question.type === "drag-and-drop") {
                     if (!question.correctMappings || question.correctMappings.length === 0) {
-                        reasons.push("Question " + (index + 1) + ": No correct mapping.");
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.questionCorrectMapping",
+                            translateValues: {index: index + 1}
+                        });
                     }
                 }
             });
@@ -230,15 +245,19 @@
          * @return {string} the reasons in HTML
          */
         function invalidReasonsHTML() {
-            return invalidReasons().map(function (string) {
-                    return "<p>" + string + "</p>";
-                }).join("");
+            return invalidReasons().map(function (reason) {
+                return "<p>" + $translate.instant(reason.translateKey, reason.translateValues) + "</p>";
+            }).join("");
         }
 
         /**
          * Save the quiz to the server
          */
         function save() {
+            if (!validQuiz()) {
+                alert("Error: Cannot save invalid quiz.");
+                return;
+            }
             vm.isSaving = true;
             if (vm.quizExercise.id) {
                 QuizExercise.update(vm.quizExercise, onSaveSuccess, onSaveError);

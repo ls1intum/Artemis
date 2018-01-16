@@ -54,7 +54,14 @@
             "submitted": "Submitted",
             "statistics": "Statistics",
             "statisticsNotPublished": "The instructor has not published any statistics.",
-            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended."
+            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended.",
+            "invalidReasons" : {
+                "quizTitle": "Quiz: Title is missing.",
+                "quizDuration": "Quiz: Duration is missing or invalid.",
+                "questionTitle": "Question {{index}}: Title is missing.",
+                "questionCorrectAnswerOption": "Question {{index}}: No correct answer option.",
+                "questionCorrectMapping": "Question {{index}}: No correct mapping."
+            }
         }
     }
 }

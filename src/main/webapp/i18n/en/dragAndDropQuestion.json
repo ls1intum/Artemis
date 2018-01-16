@@ -18,10 +18,18 @@
             "backgroundFilePath": "Background File Path",
             "dropLocations": "Drop Locations",
             "dragItems": "Drag Items",
-            "uploadBackgroundPicture": "Upload Background",
-            "drawOnBackgroundInstructions": "Draw on the background picture to define drop locations.",
             "correctMappings": "Correct Mappings",
-            "randomizeOrder": "Present Drag Items in Random Order"
+            "randomizeOrder": "Present Drag Items in Random Order",
+            "uploadBackgroundPicture": "Upload Background",
+            "upload": "Upload",
+            "uploading": "Uploading...",
+            "uploadBackgroundInstructions": "Please upload a background picture.",
+            "drawOnBackgroundInstructions": "Draw on the background picture to define drop locations.",
+            "noBackgroundPicture": "No Background Picture",
+            "addDragItemsInstructions": "Add Drag Items using the buttons below.",
+            "addMappingsInstructions": "Drag items onto drop locations to define correct solutions.",
+            "addDragItemPicture": "Add Picture Drag Item",
+            "addDragItemText": "Add Text Drag Item"
         }
     }
 }

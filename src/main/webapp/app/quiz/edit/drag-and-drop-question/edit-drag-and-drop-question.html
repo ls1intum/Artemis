@@ -44,18 +44,19 @@
             <span data-translate="artemisApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink"></span>
             <input type="file" accept="image/*" file-model="vm.backgroundFile"/>
             <button ng-disabled="vm.isUploadingBackgroundFile || !vm.backgroundFile" class="btn btn-default" ng-click="vm.uploadBackground()">
-                {{vm.isUploadingBackgroundFile ? "Uploading..." : "Upload"}}
+                <span ng-if="vm.isUploadingBackgroundFile" data-translate="artemisApp.dragAndDropQuestion.uploading"></span>
+                <span ng-if="!vm.isUploadingBackgroundFile" data-translate="artemisApp.dragAndDropQuestion.upload"></span>
             </button>
         </div>
     </div>
     <div class="instructions" ng-if="!vm.question.backgroundFilePath">
-        Please upload a background picture.
+        <span data-translate="artemisApp.dragAndDropQuestion.uploadBackgroundInstructions"></span>
     </div>
     <div class="instructions" ng-if="vm.question.backgroundFilePath">
         <span data-translate="artemisApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
     </div>
     <div class="background-area">
-        <img ng-src="{{vm.question.backgroundFilePath}}" alt="No background picture.">
+        <img ng-src="{{vm.question.backgroundFilePath}}" alt="{{'artemisApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">
         <div id="{{'click-layer-' + vm.random}}" class="click-layer" ng-mousedown="vm.backgroundMouseDown()" ng-class="{disabled: !vm.question.backgroundFilePath}">
             <div
                 class="drop-location"
@@ -94,10 +95,10 @@
     </div>
     <hr/>
     <div ng-if="!vm.question.dragItems || !vm.question.dragItems.length" class="instructions">
-        Add Drag Items using the buttons below.
+        <span data-translate="artemisApp.dragAndDropQuestion.addDragItemsInstructions"></span>
     </div>
     <div ng-if="vm.question.dragItems && vm.question.dragItems.length" class="instructions">
-        Drag items onto drop locations to define correct solutions.
+        <span data-translate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
     </div>
     <div class="drag-items">
         <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
@@ -110,7 +111,7 @@
             <div class="delete-button" title="Delete" ng-click="vm.deleteDragItem(dragItem)">
                 <i class="fa fa-trash fa-lg"></i>
             </div>
-            <div class="drag-handle drag-handle-wrapper">
+            <div class="drag-handle drag-handle-wrapper" title="Move">
                 <i class="fa fa-bars fa-lg drag-handle"></i>
             </div>
             <div class="mapping-numbers-wrapper">
@@ -127,7 +128,8 @@
         <div class="form-group">
             <button ng-disabled="vm.isUploadingDragItemFile || !vm.dragItemFile" class="btn btn-default" ng-click="vm.uploadDragItem()">
                 <i class="fa fa-plus"></i>
-                {{vm.isUploadingDragItemFile ? "Uploading..." : "Add Picture Drag Item"}}
+                <span ng-if="vm.isUploadingDragItemFile" data-translate="artemisApp.dragAndDropQuestion.uploading"></span>
+                <span ng-if="!vm.isUploadingDragItemFile" data-translate="artemisApp.dragAndDropQuestion.addDragItemPicture"></span>
             </button>
             <input type="file" accept="image/*" file-model="vm.dragItemFile"/>
         </div>
@@ -136,11 +138,11 @@
         <div class="form-group">
             <button class="btn btn-default" ng-click="vm.addTextDragItem()">
                 <i class="fa fa-plus"></i>
-                Add Text Drag Item
+                <span data-translate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
             </button>
         </div>
     </div>
 </div>
 <div class="preview-dnd-question" ng-if="vm.showPreview">
-    TODO
+    <!--TODO-->
 </div>
