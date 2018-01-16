@@ -384,8 +384,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     function duplicateDropLocation(dropLocation) {
         vm.question.dropLocations.push({
             tempID: pseudoRandomLong(),
-            posX: dropLocation.posX,
-            posY: dropLocation.posY,
+            posX: dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3),
+            posY: dropLocation.posY + dropLocation.height < 197 ? dropLocation.posY + 3 : Math.max(0, dropLocation.posY - 3),
             width: dropLocation.width,
             height: dropLocation.height
         });
