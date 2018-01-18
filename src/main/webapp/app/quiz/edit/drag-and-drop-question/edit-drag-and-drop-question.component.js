@@ -1,6 +1,6 @@
-EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document', 'MAX_FILE_SIZE'];
+EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document', 'MAX_FILE_SIZE', 'ArtemisMarkdown'];
 
-function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document, MAX_FILE_SIZE) {
+function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document, MAX_FILE_SIZE, ArtemisMarkdown) {
 
     /**
      * enum for the different drag operations
@@ -73,88 +73,30 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         editor.setHighlightActiveLine(false);
         editor.setShowPrintMargin(false);
 
-        generateMarkdown();
+        // generate markdown from question and show result in editor
+        editor.setValue(ArtemisMarkdown.generateTextHintExplanation(vm.question));
+        editor.clearSelection();
 
         editor.on("blur", function () {
-            parseMarkdown(editor.getValue());
+            // parse the markdown in the editor and update question accordingly
+            ArtemisMarkdown.parseTextHintExplanation(editor.getValue(), vm.question);
             vm.onUpdated();
             $scope.$apply();
         });
     });
 
     /**
-     * generate the markdown text for this question
-     *
-     * The markdown is generated according to these rules:
-     *
-     * 1. First the question text is inserted
-     * 2. If hint and/or explanation exist, they are added after the text with a linebreak and tab in front of them
-     *
-     */
-    function generateMarkdown() {
-        var markdownText = (
-            vm.question.text +
-            (vm.question.hint ? "\n\t[-h] " + vm.question.hint : "") +
-            (vm.question.explanation ? "\n\t[-e] " + vm.question.explanation : "")
-        );
-        editor.setValue(markdownText);
-        editor.clearSelection();
-    }
-
-    /**
-     * Parse the markdown and apply the result to the question's data
-     *
-     * The question text is split at [-h] and [-e] tags.
-     *  => First part is text. Everything after [-h] is Hint, anything after [-e] is explanation
-     *
-     * @param questionText {string} the markdown text to parse
-     */
-    function parseMarkdown(questionText) {
-        // split question into main text, hint and explanation
-        var questionTextParts = questionText.split(/\[\-e\]|\[\-h\]/g);
-        vm.question.text = questionTextParts[0].trim();
-        if (questionText.indexOf("[-h]") !== -1 && questionText.indexOf("[-e]") !== -1) {
-            if (questionText.indexOf("[-h]") < questionText.indexOf("[-e]")) {
-                vm.question.hint = questionTextParts[1].trim();
-                vm.question.explanation = questionTextParts[2].trim();
-            } else {
-                vm.question.hint = questionTextParts[2].trim();
-                vm.question.explanation = questionTextParts[1].trim();
-            }
-        } else if (questionText.indexOf("[-h]") !== -1) {
-            vm.question.hint = questionTextParts[1].trim();
-            vm.question.explanation = null;
-        } else if (questionText.indexOf("[-e]") !== -1) {
-            vm.question.hint = null;
-            vm.question.explanation = questionTextParts[1].trim();
-        } else {
-            vm.question.hint = null;
-            vm.question.explanation = null;
-        }
-    }
-
-    /**
      * add the markdown for a hint at the current cursor location
      */
     function addHintAtCursor() {
-        var addedText = "\n\t[-h] Add a hint here (visible during the quiz via \"?\"-Button)";
-        editor.focus();
-        editor.insert(addedText);
-        var range = editor.selection.getRange();
-        range.setStart(range.start.row, range.start.column - addedText.length + 7);
-        editor.selection.setRange(range);
+        ArtemisMarkdown.addHintAtCursor(editor);
     }
 
     /**
      * add the markdown for an explanation at the current cursor location
      */
     function addExplanationAtCursor() {
-        var addedText = "\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)";
-        editor.focus();
-        editor.insert(addedText);
-        var range = editor.selection.getRange();
-        range.setStart(range.start.row, range.start.column - addedText.length + 7);
-        editor.selection.setRange(range);
+        ArtemisMarkdown.addExplanationAtCursor(editor);
     }
 
     /**
