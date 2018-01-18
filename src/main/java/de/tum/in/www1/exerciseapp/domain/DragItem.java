@@ -44,6 +44,10 @@ public class DragItem implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
+    /**
+     * tempID is needed to refer to drag items that have not been persisted yet
+     * in the correctMappings of a question (so user can create mappings in the UI before saving new drag items)
+     */
     @Transient
     // variable name must be different from Getter name,
     // so that Jackson ignores the @Transient annotation,
@@ -126,6 +130,36 @@ public class DragItem implements Serializable {
         return this;
     }
 
+    /*
+     * NOTE:
+     *
+     * The file management is necessary to differentiate between temporary and used files
+     * and to delete used files when the corresponding drag item is deleted or it is replaced by
+     * another file.
+     *
+     * The workflow is as follows
+     *
+     * 1. user uploads a file -> this is a temporary file,
+     *           because at this point the corresponding drag item
+     *           might not exist yet.
+     * 2. user saves the drag item -> now we move the temporary file
+     *           which is addressed in pictureFilePath to a permanent
+     *           location and update the value in pictureFilePath accordingly.
+     *           => This happens in @PrePersist and @PostPersist
+     * 3. user might upload another file to replace the existing file
+     *           -> this new file is a temporary file at first
+     * 4. user saves changes (with the new pictureFilePath pointing to the new temporary file)
+     *           -> now we delete the old file in the permanent location
+     *              and move the new file to a permanent location and update
+     *              the value in pictureFilePath accordingly.
+     *           => This happens in @PreUpdate and uses @PostLoad to know the old path
+     * 5. When drag item is deleted, the file in the permanent location is deleted
+     *           => This happens in @PostRemove
+     *
+     *
+     * NOTE: Number 3 and 4 are not possible for drag items with the current UI, but might be possible in the future
+     *       and are implemented here to prevent unexpected behaviour when UI changes and to keep code similar to DragAndDropQuestion.java
+     */
     @PostLoad
     public void onLoad() {
         // replace placeholder with actual id if necessary (this is needed because changes made in afterCreate() are not persisted)

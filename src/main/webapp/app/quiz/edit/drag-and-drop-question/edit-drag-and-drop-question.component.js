@@ -1,6 +1,6 @@
-EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document'];
+EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document', 'MAX_FILE_SIZE'];
 
-function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document) {
+function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document, MAX_FILE_SIZE) {
 
     /**
      * enum for the different drag operations
@@ -168,8 +168,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             alert('Unsupported file-type! Only files of type ".png", ".jpg" or ".svg" allowed.');
             return;
         }
-        if (file.size > 5000000) {
-            alert('File is too big! Maximum allowed file size: 5 MB.');
+        if (file.size > MAX_FILE_SIZE) {
+            alert('File is too big! Maximum allowed file size: ' + MAX_FILE_SIZE / (1024 * 1024) + ' MB.');
             return;
         }
 
@@ -466,8 +466,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             alert('Unsupported file-type! Only files of type ".png", ".jpg" or ".svg" allowed.');
             return;
         }
-        if (file.size > 5000000) {
-            alert('File is too big! Maximum allowed file size: 5 MB.');
+        if (file.size > MAX_FILE_SIZE) {
+            alert('File is too big! Maximum allowed file size: ' + MAX_FILE_SIZE / (1024 * 1024) + ' MB.');
             return;
         }
 

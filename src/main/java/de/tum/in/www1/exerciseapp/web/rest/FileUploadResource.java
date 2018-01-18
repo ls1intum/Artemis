@@ -52,13 +52,8 @@ public class FileUploadResource {
     @PostMapping("/fileUpload")
     @PreAuthorize("hasAnyRole('ADMIN', 'INSTRUCTOR', 'TA')")
     @Timed
-    public ResponseEntity<String> saveUserDataAndFile(@RequestParam(value = "file") MultipartFile file) throws URISyntaxException {
+    public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
-
-        // check for size of file
-        if (file.getSize() > 5000000) {
-            return ResponseEntity.badRequest().body("File size too large. Maximum file size: 5 MB.");
-        }
 
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());

@@ -45,6 +45,10 @@ public class DropLocation implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
+    /**
+     * tempID is needed to refer to drop locations that have not been persisted yet
+     * in the correctMappings of a question (so user can create mappings in the UI before saving new drop locations)
+     */
     @Transient
     // variable name must be different from Getter name,
     // so that Jackson ignores the @Transient annotation,
