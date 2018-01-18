@@ -5,15 +5,15 @@
         .module('artemisApp')
         .controller('DragAndDropSubmittedAnswerDialogController', DragAndDropSubmittedAnswerDialogController);
 
-    DragAndDropSubmittedAnswerDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'DragAndDropSubmittedAnswer', 'DragAndDropAssignment'];
+    DragAndDropSubmittedAnswerDialogController.$inject = ['$timeout', '$scope', '$stateParams', '$uibModalInstance', 'entity', 'DragAndDropSubmittedAnswer', 'DragAndDropMapping'];
 
-    function DragAndDropSubmittedAnswerDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, DragAndDropSubmittedAnswer, DragAndDropAssignment) {
+    function DragAndDropSubmittedAnswerDialogController ($timeout, $scope, $stateParams, $uibModalInstance, entity, DragAndDropSubmittedAnswer, DragAndDropMapping) {
         var vm = this;
 
         vm.dragAndDropSubmittedAnswer = entity;
         vm.clear = clear;
         vm.save = save;
-        vm.draganddropassignments = DragAndDropAssignment.query();
+        vm.draganddropmappings = DragAndDropMapping.query();
 
         $timeout(function (){
             angular.element('.form-group:eq(1)>input').focus();

@@ -33,7 +33,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('arTeMiSApp:multipleChoiceQuestionStatisticUpdate', result);
+            $scope.$emit('artemisApp:multipleChoiceQuestionStatisticUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

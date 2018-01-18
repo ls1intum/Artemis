@@ -1,5 +1,5 @@
 import _root_.io.gatling.core.scenario.Simulation
-import ch.qos.logback.classic.LoggerContext
+import ch.qos.logback.classic.{Level, LoggerContext}
 import io.gatling.core.Predef._
 import io.gatling.http.Predef._
 import org.slf4j.LoggerFactory
@@ -7,9 +7,9 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.duration._
 
 /**
- * Performance test for the DragAndDropAssignment entity.
+ * Performance test for the DragAndDropMapping entity.
  */
-class DragAndDropAssignmentGatlingTest extends Simulation {
+class DragAndDropMappingGatlingTest extends Simulation {
 
     val context: LoggerContext = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     // Log all HTTP requests
@@ -17,7 +17,7 @@ class DragAndDropAssignmentGatlingTest extends Simulation {
     // Log failed HTTP requests
     //context.getLogger("io.gatling.http").setLevel(Level.valueOf("DEBUG"))
 
-    val baseURL = Option(System.getProperty("baseURL")) getOrElse """http://127.0.0.1:8080"""
+    val baseURL = Option(System.getProperty("baseURL")) getOrElse """http://localhost:8080"""
 
     val httpConf = http
         .baseURL(baseURL)
@@ -37,7 +37,12 @@ class DragAndDropAssignmentGatlingTest extends Simulation {
         "X-XSRF-TOKEN" -> "${xsrf_token}"
     )
 
-    val scn = scenario("Test the DragAndDropAssignment entity")
+    val keycloakHeaders = Map(
+        "Accept" -> "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Upgrade-Insecure-Requests" -> "1"
+    )
+
+    val scn = scenario("Test the DragAndDropMapping entity")
         .exec(http("First unauthenticated request")
         .get("/api/account")
         .headers(headers_http)
@@ -59,26 +64,26 @@ class DragAndDropAssignmentGatlingTest extends Simulation {
         .check(status.is(200)))
         .pause(10)
         .repeat(2) {
-            exec(http("Get all dragAndDropAssignments")
-            .get("/api/drag-and-drop-assignments")
+            exec(http("Get all dragAndDropMappings")
+            .get("/api/drag-and-drop-mappings")
             .headers(headers_http_authenticated)
             .check(status.is(200)))
             .pause(10 seconds, 20 seconds)
-            .exec(http("Create new dragAndDropAssignment")
-            .post("/api/drag-and-drop-assignments")
+            .exec(http("Create new dragAndDropMapping")
+            .post("/api/drag-and-drop-mappings")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null}""")).asJSON
+            .body(StringBody("""{"id":null, "dragItemIndex":"0", "dropLocationIndex":"0"}""")).asJSON
             .check(status.is(201))
-            .check(headerRegex("Location", "(.*)").saveAs("new_dragAndDropAssignment_url"))).exitHereIfFailed
+            .check(headerRegex("Location", "(.*)").saveAs("new_dragAndDropMapping_url"))).exitHereIfFailed
             .pause(10)
             .repeat(5) {
-                exec(http("Get created dragAndDropAssignment")
-                .get("${new_dragAndDropAssignment_url}")
+                exec(http("Get created dragAndDropMapping")
+                .get("${new_dragAndDropMapping_url}")
                 .headers(headers_http_authenticated))
                 .pause(10)
             }
-            .exec(http("Delete created dragAndDropAssignment")
-            .delete("${new_dragAndDropAssignment_url}")
+            .exec(http("Delete created dragAndDropMapping")
+            .delete("${new_dragAndDropMapping_url}")
             .headers(headers_http_authenticated))
             .pause(10)
         }

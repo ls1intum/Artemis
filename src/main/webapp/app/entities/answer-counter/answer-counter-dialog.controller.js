@@ -42,7 +42,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('arTeMiSApp:answerCounterUpdate', result);
+            $scope.$emit('artemisApp:answerCounterUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

@@ -15,7 +15,7 @@ describe('Controller Tests', function() {
             MockDropLocationCounter = jasmine.createSpy('MockDropLocationCounter');
             MockDragAndDropQuestionStatistic = jasmine.createSpy('MockDragAndDropQuestionStatistic');
             MockDropLocation = jasmine.createSpy('MockDropLocation');
-            
+
 
             var locals = {
                 '$scope': $scope,
@@ -34,7 +34,7 @@ describe('Controller Tests', function() {
 
         describe('Root Scope Listening', function() {
             it('Unregisters root scope listener upon scope destruction', function() {
-                var eventType = 'arTeMiSApp:dropLocationCounterUpdate';
+                var eventType = 'artemisApp:dropLocationCounterUpdate';
 
                 createController();
                 expect($rootScope.$$listenerCount[eventType]).toEqual(1);

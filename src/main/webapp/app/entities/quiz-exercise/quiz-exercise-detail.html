@@ -91,19 +91,44 @@
                 </div>
             </div>
         </div>
-        <edit-multiple-choice-question
-            class="question"
-            ng-repeat="question in vm.quizExercise.questions"
-            question="question"
-            question-index="$index + 1"
-            on-delete="vm.deleteQuestion(question)"
-            on-updated="vm.onQuestionUpdated()"
-        ></edit-multiple-choice-question>
-        <button
-            class="btn btn-default"
-            ng-click="vm.addQuestion()"
-            data-translate="artemisApp.quizExercise.edit.addQuestion"
-        ></button>
+        <div class="question" ng-repeat="question in vm.quizExercise.questions">
+            <edit-multiple-choice-question
+                ng-if="question.type === 'multiple-choice'"
+                question="question"
+                question-index="$index + 1"
+                on-delete="vm.deleteQuestion(question)"
+                on-updated="vm.onQuestionUpdated()"
+            ></edit-multiple-choice-question>
+            <edit-drag-and-drop-question
+                ng-if="question.type === 'drag-and-drop'"
+                question="question"
+                question-index="$index + 1"
+                on-delete="vm.deleteQuestion(question)"
+                on-updated="vm.onQuestionUpdated()"
+            ></edit-drag-and-drop-question>
+        </div>
+        <div class="btn-group" uib-dropdown>
+            <button
+                type="button"
+                class="btn btn-default"
+                aria-haspopup="true"
+                aria-expanded="false"
+                uib-dropdown-toggle
+            >
+                <span data-translate="artemisApp.quizExercise.edit.addQuestion"></span>
+                <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" uib-dropdown-menu>
+                <li><a
+                    ng-click="vm.addMultipleChoiceQuestion()"
+                    data-translate="artemisApp.quizExercise.multipleChoiceQuestion"
+                ></a></li>
+                <li><a
+                    ng-click="vm.addDragAndDropQuestion()"
+                    data-translate="artemisApp.quizExercise.dragAndDropQuestion"
+                ></a></li>
+            </ul>
+        </div>
     </div>
     <div class="edit-quiz-footer">
         <div class="container">
@@ -159,6 +184,9 @@
                         ng-if="!vm.validQuiz()"
                         data-translate="artemisApp.quizExercise.edit.invalidInput"
                         class="label label-danger"
+                        uib-tooltip-html="vm.invalidReasonsHTML()"
+                        tooltip-placement="top-right"
+                        tooltip-class="invalid-reasons-tooltip"
                     ></span>
                     <button
                         class="btn btn-default"

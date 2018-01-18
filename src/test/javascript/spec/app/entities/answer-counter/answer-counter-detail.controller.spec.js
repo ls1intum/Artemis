@@ -15,7 +15,7 @@ describe('Controller Tests', function() {
             MockAnswerCounter = jasmine.createSpy('MockAnswerCounter');
             MockMultipleChoiceQuestionStatistic = jasmine.createSpy('MockMultipleChoiceQuestionStatistic');
             MockAnswerOption = jasmine.createSpy('MockAnswerOption');
-            
+
 
             var locals = {
                 '$scope': $scope,
@@ -34,7 +34,7 @@ describe('Controller Tests', function() {
 
         describe('Root Scope Listening', function() {
             it('Unregisters root scope listener upon scope destruction', function() {
-                var eventType = 'arTeMiSApp:answerCounterUpdate';
+                var eventType = 'artemisApp:answerCounterUpdate';
 
                 createController();
                 expect($rootScope.$$listenerCount[eventType]).toEqual(1);

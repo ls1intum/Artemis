@@ -4,7 +4,7 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 ng-click="vm.clear()">&times;</button>
-        <h4 class="modal-title" id="myDropLocationCounterLabel" data-translate="arTeMiSApp.dropLocationCounter.home.createOrEditLabel">Create or edit a Drop Location Counter</h4>
+        <h4 class="modal-title" id="myDropLocationCounterLabel" data-translate="artemisApp.dropLocationCounter.home.createOrEditLabel">Create or edit a Drop Location Counter</h4>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
@@ -15,13 +15,13 @@
         </div>
 
         <div class="form-group">
-            <label data-translate="arTeMiSApp.dropLocationCounter.dropLocation" for="field_dropLocation">Drop Location</label>
+            <label data-translate="artemisApp.dropLocationCounter.dropLocation" for="field_dropLocation">Drop Location</label>
             <select class="form-control" id="field_dropLocation" name="dropLocation" ng-model="vm.dropLocationCounter.dropLocation" ng-options="dropLocation as dropLocation.id for dropLocation in vm.droplocations | orderBy:'id' track by dropLocation.id">
                 <option value=""></option>
             </select>
         </div>
         <div class="form-group">
-            <label data-translate="arTeMiSApp.dropLocationCounter.dragAndDropQuestionStatistic" for="field_dragAndDropQuestionStatistic">Drag And Drop Question Statistic</label>
+            <label data-translate="artemisApp.dropLocationCounter.dragAndDropQuestionStatistic" for="field_dragAndDropQuestionStatistic">Drag And Drop Question Statistic</label>
             <select class="form-control" id="field_dragAndDropQuestionStatistic" name="dragAndDropQuestionStatistic" ng-model="vm.dropLocationCounter.dragAndDropQuestionStatistic" ng-options="dragAndDropQuestionStatistic as dragAndDropQuestionStatistic.id for dragAndDropQuestionStatistic in vm.draganddropquestionstatistics track by dragAndDropQuestionStatistic.id">
                 <option value=""></option>
             </select>
