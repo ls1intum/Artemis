@@ -127,7 +127,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
                 vm.isUploadingBackgroundFile = false;
                 vm.backgroundFile = null;
             }, function (error) {
-                alert(error);
+                alert(error.data.message);
                 vm.isUploadingBackgroundFile = false;
                 vm.backgroundFile = null;
             });
@@ -433,7 +433,7 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
                 vm.isUploadingDragItemFile = false;
                 vm.dragItemFile = null;
             }, function (error) {
-                alert(error);
+                alert(error.data.message);
                 vm.isUploadingDragItemFile = false;
                 vm.dragItemFile = null;
             });

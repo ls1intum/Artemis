@@ -55,6 +55,9 @@ public class FileUploadResource {
     public ResponseEntity<String> saveFile(@RequestParam(value = "file") MultipartFile file) throws URISyntaxException {
         log.debug("REST request to upload file : {}", file.getOriginalFilename());
 
+        // NOTE: Maximum file size is set in resources/config/application.yml
+        // Currently set to 5 MB
+
         // check for file type
         String fileExtension = FilenameUtils.getExtension(file.getOriginalFilename());
         if (!fileExtension.equalsIgnoreCase("png")
