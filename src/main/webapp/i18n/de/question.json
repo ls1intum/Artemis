@@ -20,7 +20,7 @@
             "hint": "Hinweis",
             "explanation": "Erklärung",
             "score": "Punkte",
-            "randomizeOrder": "Fragen in zufälliger Reihenfolge anzeigen",
+            "randomizeOrder": "Antworten in zufälliger Reihenfolge anzeigen",
             "scoringType": "Bewertungsweise",
             "questionStatistic": "Frage-Statistik",
             "exercise": "Übung",

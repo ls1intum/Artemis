@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.DragAndDropQuestion;
+
 import de.tum.in.www1.exerciseapp.repository.DragAndDropQuestionRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +29,7 @@ public class DragAndDropQuestionResource {
     private static final String ENTITY_NAME = "dragAndDropQuestion";
 
     private final DragAndDropQuestionRepository dragAndDropQuestionRepository;
+
     public DragAndDropQuestionResource(DragAndDropQuestionRepository dragAndDropQuestionRepository) {
         this.dragAndDropQuestionRepository = dragAndDropQuestionRepository;
     }
@@ -83,7 +86,7 @@ public class DragAndDropQuestionResource {
     public List<DragAndDropQuestion> getAllDragAndDropQuestions() {
         log.debug("REST request to get all DragAndDropQuestions");
         return dragAndDropQuestionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /drag-and-drop-questions/:id : get the "id" dragAndDropQuestion.

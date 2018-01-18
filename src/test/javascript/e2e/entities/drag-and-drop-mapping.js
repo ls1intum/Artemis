@@ -1,6 +1,6 @@
 'use strict';
 
-describe('DragAndDropAssignment e2e test', function () {
+describe('DragAndDropMapping e2e test', function () {
 
     var username = element(by.id('username'));
     var password = element(by.id('password'));
@@ -20,19 +20,19 @@ describe('DragAndDropAssignment e2e test', function () {
         element(by.css('button[type=submit]')).click();
     });
 
-    it('should load DragAndDropAssignments', function () {
+    it('should load DragAndDropMappings', function () {
         entityMenu.click();
-        element.all(by.css('[ui-sref="drag-and-drop-assignment"]')).first().click().then(function() {
+        element.all(by.css('[ui-sref="drag-and-drop-mapping"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/artemisApp.dragAndDropAssignment.home.title/);
+                expect(value).toMatch(/artemisApp.dragAndDropMapping.home.title/);
             });
         });
     });
 
-    it('should load create DragAndDropAssignment dialog', function () {
-        element(by.css('[ui-sref="drag-and-drop-assignment.new"]')).click().then(function() {
+    it('should load create DragAndDropMapping dialog', function () {
+        element(by.css('[ui-sref="drag-and-drop-mapping.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/artemisApp.dragAndDropAssignment.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.dragAndDropMapping.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

@@ -2,14 +2,6 @@
     "fluentMethods": true,
     "relationships": [
         {
-            "relationshipType": "one-to-one",
-            "relationshipName": "correctLocation",
-            "otherEntityName": "dropLocation",
-            "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "dragItem"
-        },
-        {
             "relationshipType": "many-to-one",
             "relationshipName": "question",
             "otherEntityName": "dragAndDropQuestion",
@@ -24,14 +16,6 @@
         {
             "fieldName": "text",
             "fieldType": "String"
-        },
-        {
-            "fieldName": "correctScore",
-            "fieldType": "Integer"
-        },
-        {
-            "fieldName": "incorrectScore",
-            "fieldType": "Integer"
         }
     ],
     "changelogDate": "20170831094155",

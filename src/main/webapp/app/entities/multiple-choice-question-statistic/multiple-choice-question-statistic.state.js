@@ -14,7 +14,7 @@
             url: '/multiple-choice-question-statistic',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.multipleChoiceQuestionStatistic.home.title'
+                pageTitle: 'artemisApp.multipleChoiceQuestionStatistic.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/multiple-choice-question-statistic/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.multipleChoiceQuestionStatistic.detail.title'
+                pageTitle: 'artemisApp.multipleChoiceQuestionStatistic.detail.title'
             },
             views: {
                 'content@': {

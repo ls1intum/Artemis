@@ -14,7 +14,7 @@
             url: '/drag-and-drop-question-statistic',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.dragAndDropQuestionStatistic.home.title'
+                pageTitle: 'artemisApp.dragAndDropQuestionStatistic.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/drag-and-drop-question-statistic/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.dragAndDropQuestionStatistic.detail.title'
+                pageTitle: 'artemisApp.dragAndDropQuestionStatistic.detail.title'
             },
             views: {
                 'content@': {

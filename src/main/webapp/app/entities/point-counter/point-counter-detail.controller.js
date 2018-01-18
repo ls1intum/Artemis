@@ -13,7 +13,7 @@
         vm.pointCounter = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('arTeMiSApp:pointCounterUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:pointCounterUpdate', function(event, result) {
             vm.pointCounter = result;
         });
         $scope.$on('$destroy', unsubscribe);

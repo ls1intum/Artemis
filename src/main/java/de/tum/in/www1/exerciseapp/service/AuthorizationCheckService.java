@@ -24,6 +24,7 @@ public class AuthorizationCheckService {
 
     /**
      * Method used to check whether the current logged in user is instructor of this course
+     *
      * @param course course to check the rights for
      * @return true, if user is instructor of this course, otherwise false
      */
@@ -35,6 +36,7 @@ public class AuthorizationCheckService {
 
     /**
      * Method used to check whether the current logged in user is teaching assistant of this course
+     *
      * @param course course to check the rights for
      * @return true, if user is teaching assistant of this course, otherwise false
      */
@@ -46,6 +48,7 @@ public class AuthorizationCheckService {
 
     /**
      * Method used to check whether the current logged in user is student of this course
+     *
      * @param course course to check the rights for
      * @return true, if user is student of this course, otherwise false
      */
@@ -57,6 +60,7 @@ public class AuthorizationCheckService {
 
     /**
      * Method used to check whether the current logged in user is owner of this participation
+     *
      * @param participation participation to check the rights for
      * @return true, if user is student is owner of this participation, otherwise false
      */
@@ -67,7 +71,23 @@ public class AuthorizationCheckService {
     }
 
     /**
+     * Method used to check whether the current logged in user is allowed to see this exercise
+     *
+     * @param exercise exercise to check the rights for
+     * @return true, if user is allowed to see this exercise, otherwise false
+     */
+    public boolean isAllowedToSeeExercise(Exercise exercise) {
+        log.debug("Request to check access rights to exercise with id: {}", exercise.getId());
+        Course course = exercise.getCourse();
+        return isAdmin() ||
+            isInstructorInCourse(course) ||
+            isTeachingAssistantInCourse(course) ||
+            (isStudentInCourse(course) && exercise.isVisibleToStudents());
+    }
+
+    /**
      * Method used to check whether the current logged in user is application admin
+     *
      * @return true, if user is admin, otherwise false
      */
     public boolean isAdmin() {

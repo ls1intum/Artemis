@@ -45,6 +45,11 @@ spring:
             enabled: false
     thymeleaf:
         mode: XHTML
+    http:
+        multipart:
+            max-file-size: 5MB # this should match the value in webapp/app/blocks/config/constants.config.js MAX_FILE_SIZE
+            max-request-size: 10MB
+
 security:
     basic:
         enabled: false

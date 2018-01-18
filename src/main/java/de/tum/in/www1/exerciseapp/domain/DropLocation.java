@@ -1,11 +1,14 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * A DropLocation.
@@ -34,9 +37,32 @@ public class DropLocation implements Serializable {
     private Integer height;
 
     @ManyToOne
+    @JsonIgnore
     private DragAndDropQuestion question;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
+    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "dropLocation")
+    @JsonIgnore
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<DragAndDropMapping> mappings = new HashSet<>();
+
+    /**
+     * tempID is needed to refer to drop locations that have not been persisted yet
+     * in the correctMappings of a question (so user can create mappings in the UI before saving new drop locations)
+     */
+    @Transient
+    // variable name must be different from Getter name,
+    // so that Jackson ignores the @Transient annotation,
+    // but Hibernate still respects it
+    private Long tempIDTransient;
+
+    public Long getTempID() {
+        return tempIDTransient;
+    }
+
+    public void setTempID(Long tempID) {
+        this.tempIDTransient = tempID;
+    }
+
     public Long getId() {
         return id;
     }
@@ -109,7 +135,27 @@ public class DropLocation implements Serializable {
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    public Set<DragAndDropMapping> getMappings() {
+        return mappings;
+    }
+
+    public DropLocation mappings(Set<DragAndDropMapping> mappings) {
+        this.mappings = mappings;
+        return this;
+    }
+
+    public DropLocation addMappings(DragAndDropMapping mapping) {
+        this.mappings.add(mapping);
+        mapping.setDropLocation(this);
+        return this;
+    }
+
+    public DropLocation removeMappings(DragAndDropMapping mapping) {
+        this.mappings.remove(mapping);
+        mapping.setDropLocation(null);
+        return this;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -120,6 +166,9 @@ public class DropLocation implements Serializable {
             return false;
         }
         DropLocation dropLocation = (DropLocation) o;
+        if (dropLocation.getTempID() != null && getTempID() != null && Objects.equals(getTempID(), dropLocation.getTempID())) {
+            return true;
+        }
         if (dropLocation.getId() == null || getId() == null) {
             return false;
         }

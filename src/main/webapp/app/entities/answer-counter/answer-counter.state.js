@@ -14,7 +14,7 @@
             url: '/answer-counter',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.answerCounter.home.title'
+                pageTitle: 'artemisApp.answerCounter.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/answer-counter/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.answerCounter.detail.title'
+                pageTitle: 'artemisApp.answerCounter.detail.title'
             },
             views: {
                 'content@': {
