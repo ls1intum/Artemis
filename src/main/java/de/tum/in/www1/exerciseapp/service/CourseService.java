@@ -144,15 +144,17 @@ public class CourseService {
 
             for (Participation participation : participations) {
 
-                //id of user in the datbase to reference to the user
+                //id of user in the database to reference to the user
                 long userID = participation.getStudent().getId();
                 Result bestResult = choseResultInParticipation(participation, exerciseHasDueDate);
 
+                //TODO: it might happen that there are two participations for one student and one exercise, e.g. a FINISHED one and an INITIALIZED one.
+                // Make sure to use only one of them
+
                 //if student already appeared, once add the new score to the old one
                 if (allOverallSummedScoresOfCourse.containsKey(userID)) {
-                    long oldScore = allOverallSummedScoresOfCourse.get(userID).getScore();
-                    bestResult.setScore(oldScore + bestResult.getScore());
-                    allOverallSummedScoresOfCourse.remove(userID);
+                    long currentScore = allOverallSummedScoresOfCourse.get(userID).getScore();
+                    bestResult.setScore(currentScore + bestResult.getScore());
                 }
                 allOverallSummedScoresOfCourse.put(userID, bestResult);
             }
@@ -181,7 +183,7 @@ public class CourseService {
 
         Result chosenResult;
         //edge case of no result submitted to a participation
-        if(results.size() <= 0){
+        if(results.size() <= 0) {
             chosenResult = new Result();
             chosenResult.setScore((long) 0);
             chosenResult.setParticipation(participation);
@@ -191,13 +193,14 @@ public class CourseService {
         //sorting in descending order to have the last result at the beginning
         results.sort(Comparator.comparing(Result::getCompletionDate).reversed());
 
-        if(hasDueDate){
+        if(hasDueDate) {
             //find the first result that is before the due date otherwise handles the case where all results were submitted after the due date,
             chosenResult = results.stream()
                 .filter(x -> x.getCompletionDate().isBefore(participation.getExercise().getDueDate()))
                 .findFirst()
                 .orElse(new Result());
-        }else{
+        }
+        else {
             chosenResult = results.remove(0); //no due date use last result
         }
 
