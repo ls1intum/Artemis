@@ -24,7 +24,8 @@
             "scoringType": "Scoring Type",
             "exercise": "Exercise",
             "yourScore": "Your Score",
-            "invalid": "Invalid"
+            "invalid": "Invalid",
+            "invalidText": "This question is invalid and will be assess as complete correct"
         }
     }
 }

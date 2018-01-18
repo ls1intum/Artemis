@@ -43,16 +43,17 @@
     </div>
     <div class="edit-quiz-footer-content">
         <h4>
-            <span ng-show="!vm.successful && !vm.failed" data-translate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
-            <span ng-show="vm.successful" style="color:green"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span data-translate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span></span>
-            <span ng-show="vm.failed" style="color:red"><span class="glyphicon glyphicon-remove"></span>&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
+            <span ng-show="!vm.successful && !vm.failed && !vm.busy" data-translate="artemisApp.quizExercise.re-evaluate.warning.confirmtext"></span>
+            <span ng-show="vm.successful && !vm.busy" style="color:green"><span class="glyphicon glyphicon-ok"></span>&nbsp;<span data-translate="artemisApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span></span>
+            <span ng-show="vm.failed && !vm.busy" style="color:red"><span class="glyphicon glyphicon-remove"></span>&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
+            <span ng-show="vm.busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait, conducting changes!</span></span>
         </h4>
         &nbsp
         <div class="form-group">
-        <button ng-show="!vm.successful" type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
+        <button ng-disabled="vm.busy" ng-show="!vm.successful" type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel"></span>
         </button>
-        <button ng-show="!vm.successful && !vm.failed" type="submit" ng-click="vm.confirmChange()" class="btn btn-success">
+        <button ng-disabled="vm.busy" ng-show="!vm.successful && !vm.failed" type="submit" ng-click="vm.confirmChange()" class="btn btn-success">
             <span class="glyphicon glyphicon-ok-circle"></span>&nbsp;<span data-translate="artemisApp.quizExercise.re-evaluate.warning.confirm"></span>
         </button>
         <button ng-show="vm.successful && !vm.failed" type="submit" ng-click="vm.close()" class="btn btn-default">

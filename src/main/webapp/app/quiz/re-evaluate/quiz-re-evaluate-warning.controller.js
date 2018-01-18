@@ -11,7 +11,8 @@
         var vm = this;
 
         vm.successful = false;
-        vm.failed = false
+        vm.failed = false;
+        vm.busy = false;
 
         vm.answerDeleted = false;
         vm.answerInvalid = false;
@@ -113,11 +114,15 @@
          */
         function confirmChange() {
 
+            vm.busy = true;
+
             QuizExerciseReEvaluate.update(vm.quizExercise,
                 function () {
+                    vm.busy = false;
                     vm.successful = true;
                 },
                 function () {
+                    vm.busy = false;
                     vm.failed = true;
                 });
         }

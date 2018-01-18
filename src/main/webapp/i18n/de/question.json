@@ -25,7 +25,8 @@
             "questionStatistic": "Frage-Statistik",
             "exercise": "Übung",
             "yourScore": "Erreichte Punktzahl",
-            "invalid": "ungültig"
+            "invalid": "Ungültig",
+            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet"
         }
     }
 }

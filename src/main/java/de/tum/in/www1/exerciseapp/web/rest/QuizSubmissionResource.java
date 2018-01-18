@@ -296,7 +296,7 @@ public class QuizSubmissionResource {
                 quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
 
             } catch (InterruptedException e) {
-                //TO-DO
+                log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
             } finally {
                 statisticSemaphore.release();
             }
@@ -329,6 +329,7 @@ public class QuizSubmissionResource {
         Result oldResult = null;
 
         for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
+            //find the latest Result, which is presented in the Statistics
             if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult) &&
                 (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
                 oldResult = result;
