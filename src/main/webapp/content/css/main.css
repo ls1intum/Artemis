@@ -8810,7 +8810,8 @@ table.answer-options-result {
 
 .re-evaluate-button {
   display: inline-block;
-  padding: 4px; }
+  padding: 4px;
+  cursor: move; }
 
 .re-evaluate-button:hover {
   color: blue; }

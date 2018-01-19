@@ -33,10 +33,11 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
     vm.isAnswerInvalid = isAnswerInvalid;
 
     vm.sortableOptions = {
-        handle: '.handle',
+        handle: '.answer-handle',
         ignore: '.question-options',
         axis: "y",
         tolerance: 'pointer',
+        cursor: 'move',
         start: function (e, ui) {
             ui.item.startPos = ui.item.index();
         },
