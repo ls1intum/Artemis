@@ -7,12 +7,11 @@
             <div class="delete-button" ng-click="vm.delete()">
                 <i class="fa fa-trash fa-2x"></i>
             </div>
-
         </div>
     </div>
     <div class="question-options">
         <div class="form-group">
-        <span data-translate="artemisApp.multipleChoiceQuestion.scoringType" class="colon-suffix no-flex-shrink"></span>
+            <span data-translate="artemisApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
             <select class="form-control" ng-options="option.key as option.label for option in vm.scoringTypeOptions" ng-model="vm.question.scoringType" title="scoring type"></select>
         </div>
         <div class="form-group">
@@ -24,7 +23,7 @@
             </div>
         </div>
         <div class="form-group">
-        <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
+            <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" ng-model="vm.question.score"/>
         </div>
     </div>

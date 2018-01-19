@@ -38,6 +38,7 @@
                 "dragAndDropStatistic": "Drag And Drop Statistic",
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
+                "dragAndDropMapping": "Drag And Drop Mapping",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {

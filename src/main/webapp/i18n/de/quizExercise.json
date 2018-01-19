@@ -36,6 +36,8 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Fragen",
+            "multipleChoiceQuestion": "Multiple-Choice Frage",
+            "dragAndDropQuestion": "Drag-And-Drop Frage",
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
             "startTime": "Startzeit",
@@ -82,7 +84,13 @@
                     },
                     "confirmtext": "Möchten Sie die Änderungen wirklich übernehmen?",
                     "succesfully_confirm": "Änderungen erfolgreich übernommen!"
-                }
+                },
+            "invalidReasons" : {
+                "quizTitle": "Quiz: Titel fehlt.",
+                "quizDuration": "Quiz: Dauer fehlt oder ungültig.",
+                "questionTitle": "Frage {{index}}: Titel fehlt.",
+                "questionCorrectAnswerOption": "Frage {{index}}: Keine korrekte Antwortmöglichkeit.",
+                "questionCorrectMapping": "Frage {{index}}: Keine korrekte Zuordnung."
             }
         }
     }

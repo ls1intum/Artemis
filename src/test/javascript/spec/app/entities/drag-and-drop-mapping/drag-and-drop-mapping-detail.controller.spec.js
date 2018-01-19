@@ -2,9 +2,9 @@
 
 describe('Controller Tests', function() {
 
-    describe('DragAndDropAssignment Management Detail Controller', function() {
+    describe('DragAndDropMapping Management Detail Controller', function() {
         var $scope, $rootScope;
-        var MockEntity, MockPreviousState, MockDragAndDropAssignment, MockDragItem, MockDropLocation, MockDragAndDropSubmittedAnswer;
+        var MockEntity, MockPreviousState, MockDragAndDropMapping, MockDragItem, MockDropLocation, MockDragAndDropSubmittedAnswer, MockDragAndDropQuestion;
         var createController;
 
         beforeEach(inject(function($injector) {
@@ -12,31 +12,33 @@ describe('Controller Tests', function() {
             $scope = $rootScope.$new();
             MockEntity = jasmine.createSpy('MockEntity');
             MockPreviousState = jasmine.createSpy('MockPreviousState');
-            MockDragAndDropAssignment = jasmine.createSpy('MockDragAndDropAssignment');
+            MockDragAndDropMapping = jasmine.createSpy('MockDragAndDropMapping');
             MockDragItem = jasmine.createSpy('MockDragItem');
             MockDropLocation = jasmine.createSpy('MockDropLocation');
             MockDragAndDropSubmittedAnswer = jasmine.createSpy('MockDragAndDropSubmittedAnswer');
-            
+            MockDragAndDropQuestion = jasmine.createSpy('MockDragAndDropQuestion');
+
 
             var locals = {
                 '$scope': $scope,
                 '$rootScope': $rootScope,
                 'entity': MockEntity,
                 'previousState': MockPreviousState,
-                'DragAndDropAssignment': MockDragAndDropAssignment,
+                'DragAndDropMapping': MockDragAndDropMapping,
                 'DragItem': MockDragItem,
                 'DropLocation': MockDropLocation,
-                'DragAndDropSubmittedAnswer': MockDragAndDropSubmittedAnswer
+                'DragAndDropSubmittedAnswer': MockDragAndDropSubmittedAnswer,
+                'DragAndDropQuestion': MockDragAndDropQuestion
             };
             createController = function() {
-                $injector.get('$controller')("DragAndDropAssignmentDetailController", locals);
+                $injector.get('$controller')("DragAndDropMappingDetailController", locals);
             };
         }));
 
 
         describe('Root Scope Listening', function() {
             it('Unregisters root scope listener upon scope destruction', function() {
-                var eventType = 'artemisApp:dragAndDropAssignmentUpdate';
+                var eventType = 'artemisApp:dragAndDropMappingUpdate';
 
                 createController();
                 expect($rootScope.$$listenerCount[eventType]).toEqual(1);

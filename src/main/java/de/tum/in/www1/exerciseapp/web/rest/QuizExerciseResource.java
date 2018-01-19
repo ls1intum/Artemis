@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.sun.org.apache.regexp.internal.RE;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.*;
+
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -39,6 +41,7 @@ public class QuizExerciseResource {
     private final QuizPointStatisticRepository quizPointStatisticRepository;
     private final QuestionStatisticRepository questionStatisticRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
+    private final DragAndDropMappingRepository dragAndDropMappingRepository;
 
     public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository,
                                 ParticipationRepository participationRepository,
@@ -46,7 +49,8 @@ public class QuizExerciseResource {
                                 ResultRepository resultRepository,
                                 QuizPointStatisticRepository quizPointStatisticRepository,
                                 QuestionStatisticRepository questionStatisticRepository,
-                                QuizSubmissionRepository quizSubmissionRepository) {
+                                QuizSubmissionRepository quizSubmissionRepository,
+                                DragAndDropMappingRepository dragAndDropMappingRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.statisticService = statisticService;
@@ -54,6 +58,7 @@ public class QuizExerciseResource {
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.questionStatisticRepository = questionStatisticRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.dragAndDropMappingRepository = dragAndDropMappingRepository;
     }
 
     /**
@@ -71,7 +76,27 @@ public class QuizExerciseResource {
         if (quizExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
+
+        // fix references in all drag and drop questions (step 1/2)
+        for (Question question : quizExercise.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // save references as index to prevent Hibernate Persistence problem
+                saveCorrectMappingsInIndices(dragAndDropQuestion);
+            }
+        }
+
         QuizExercise result = quizExerciseRepository.save(quizExercise);
+
+        // fix references in all drag and drop questions (step 2/2)
+        for (Question question : result.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // restore references from index after save
+                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
+            }
+        }
+
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
@@ -120,8 +145,31 @@ public class QuizExerciseResource {
                         }
                     }
                 }
+                if (question instanceof DragAndDropQuestion) {
+                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
+                    // TODO: @Moritz: Reconnect whatever needs to be reconnected
+
+                    // reconnect dropLocations
+                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
+                        if (dropLocation.getId() != null) {
+                            dropLocation.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect dragItems
+                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
+                        if (dragItem.getId() != null) {
+                            dragItem.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect correctMappings
+                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+                        if (mapping.getId() != null) {
+                            mapping.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                }
             }
-            // TODO: Valentin: do the same for dragItems and dropLocations (if question is drag and drop)
         }
         //reconnect quizPointStatistic
         quizExercise.getQuizPointStatistic().setQuiz(quizExercise);
@@ -136,16 +184,38 @@ public class QuizExerciseResource {
         if (quizExercise != null && (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0)) {
             quizExercise.getQuizPointStatistic().setReleased(false);
             for (Question question : quizExercise.getQuestions()) {
-                question.getQuestionStatistic().setReleased(false);
+                // TODO: @Moritz: fix this for DragAndDropQuestions (getQuestionStatistic() returns null)
+                if (question.getQuestionStatistic() != null) {
+                    question.getQuestionStatistic().setReleased(false);
+                }
             }
         }
         //notify clients via websocket about the release state of the statistics.
         statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
 
+        // fix references in all drag and drop questions (step 1/2)
+        for (Question question : quizExercise.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // save references as index to prevent Hibernate Persistence problem
+                saveCorrectMappingsInIndices(dragAndDropQuestion);
+            }
+        }
+
         // save result
         // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
         //       and delete the now orphaned entries from the database
         QuizExercise result = quizExerciseRepository.save(quizExercise);
+
+        // fix references in all drag and drop questions (step 2/2)
+        for (Question question : result.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // restore references from index after save
+                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
+            }
+        }
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
@@ -500,6 +570,73 @@ public class QuizExerciseResource {
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
         for (Question question : quizExercise.getQuestions()) {
             questionStatisticRepository.save(question.getQuestionStatistic());
+        }
+    }
+
+    /**
+     * remove dragItem and dropLocation from correct mappings and set dragItemIndex and dropLocationIndex instead
+     *
+     * @param dragAndDropQuestion the question for which to perform these actions
+     */
+    private void saveCorrectMappingsInIndices(DragAndDropQuestion dragAndDropQuestion) {
+        List<DragAndDropMapping> mappingsToBeRemoved = new ArrayList<>();
+        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+            // check for NullPointers
+            if (mapping.getDragItem() == null || mapping.getDropLocation() == null) {
+                mappingsToBeRemoved.add(mapping);
+                continue;
+            }
+
+            // drag item index
+            DragItem dragItem = mapping.getDragItem();
+            boolean dragItemFound = false;
+            for (DragItem questionDragItem : dragAndDropQuestion.getDragItems()) {
+                if (dragItem.equals(questionDragItem)) {
+                    dragItemFound = true;
+                    mapping.setDragItemIndex(dragAndDropQuestion.getDragItems().indexOf(questionDragItem));
+                    mapping.setDragItem(null);
+                    break;
+                }
+            }
+
+            // replace drop location
+            DropLocation dropLocation = mapping.getDropLocation();
+            boolean dropLocationFound = false;
+            for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {
+                if (dropLocation.equals(questionDropLocation)) {
+                    dropLocationFound = true;
+                    mapping.setDropLocationIndex(dragAndDropQuestion.getDropLocations().indexOf(questionDropLocation));
+                    mapping.setDropLocation(null);
+                    break;
+                }
+            }
+
+            // if one of them couldn't be found, remove the mapping entirely
+            if (!dragItemFound || !dropLocationFound) {
+                mappingsToBeRemoved.add(mapping);
+            }
+        }
+
+        for (DragAndDropMapping mapping : mappingsToBeRemoved) {
+            dragAndDropQuestion.removeCorrectMappings(mapping);
+        }
+    }
+
+    /**
+     * restore dragItem and dropLocation for correct mappings using dragItemIndex and dropLocationIndex
+     *
+     * @param dragAndDropQuestion the question for which to perform these actions
+     */
+    private void restoreCorrectMappingsFromIndices(DragAndDropQuestion dragAndDropQuestion) {
+        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+            // drag item
+            mapping.setDragItem(dragAndDropQuestion.getDragItems().get(mapping.getDragItemIndex()));
+            // drop location
+            mapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(mapping.getDropLocationIndex()));
+            // set question
+            mapping.setQuestion(dragAndDropQuestion);
+            // save mapping
+            dragAndDropMappingRepository.save(mapping);
         }
     }
 }

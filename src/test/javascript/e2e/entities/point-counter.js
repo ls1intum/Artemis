@@ -24,7 +24,7 @@ describe('PointCounter e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="point-counter"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/arTeMiSApp.pointCounter.home.title/);
+                expect(value).toMatch(/artemisApp.pointCounter.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('PointCounter e2e test', function () {
     it('should load create PointCounter dialog', function () {
         element(by.css('[ui-sref="point-counter.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/arTeMiSApp.pointCounter.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.pointCounter.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

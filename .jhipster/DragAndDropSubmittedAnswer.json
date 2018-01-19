@@ -3,8 +3,8 @@
     "relationships": [
         {
             "relationshipType": "one-to-many",
-            "relationshipName": "assignments",
-            "otherEntityName": "dragAndDropAssignment",
+            "relationshipName": "mappings",
+            "otherEntityName": "dragAndDropMapping",
             "otherEntityRelationshipName": "submittedAnswer"
         }
     ],

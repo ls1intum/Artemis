@@ -73,8 +73,6 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.exerciseapp.domain.QuizSubmission.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.QuizSubmission.class.getName() + ".submittedAnswers", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropSubmittedAnswer.class.getName(), jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropSubmittedAnswer.class.getName() + ".assignments", jcacheConfiguration);
-            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropAssignment.class.getName(), jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.Question.class.getName() + ".quizExercises", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.Result.class.getName() + ".feedbacks", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.Feedback.class.getName(), jcacheConfiguration);
@@ -96,6 +94,11 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.exerciseapp.domain.QuizPointStatistic.class.getName() + ".pointCounters", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestionStatistic.class.getName() + ".answerCounters", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropQuestionStatistic.class.getName() + ".dropLocationCounters", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragItem.class.getName() + ".mappings", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DropLocation.class.getName() + ".mappings", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropQuestion.class.getName() + ".correctMappings", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropSubmittedAnswer.class.getName() + ".mappings", jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropMapping.class.getName(), jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
         };
     }

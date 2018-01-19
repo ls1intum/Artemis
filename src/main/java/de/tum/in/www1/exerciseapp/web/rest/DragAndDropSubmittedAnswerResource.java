@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +28,7 @@ public class DragAndDropSubmittedAnswerResource {
     private static final String ENTITY_NAME = "dragAndDropSubmittedAnswer";
 
     private final DragAndDropSubmittedAnswerRepository dragAndDropSubmittedAnswerRepository;
+
     public DragAndDropSubmittedAnswerResource(DragAndDropSubmittedAnswerRepository dragAndDropSubmittedAnswerRepository) {
         this.dragAndDropSubmittedAnswerRepository = dragAndDropSubmittedAnswerRepository;
     }

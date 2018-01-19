@@ -36,6 +36,8 @@
             "minutesShort": "min",
             "secondsShort": "s",
             "questions": "Questions",
+            "multipleChoiceQuestion": "Multiple-Choice Question",
+            "dragAndDropQuestion": "Drag-And-Drop Question",
             "status": "Status",
             "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic",
@@ -82,7 +84,13 @@
                     },
                     "confirmtext": "Do you really want to perform these changes?",
                     "succesfully_confirm": "Changes successfully adopted!"
-                }
+                },
+            "invalidReasons" : {
+                "quizTitle": "Quiz: Title is missing.",
+                "quizDuration": "Quiz: Duration is missing or invalid.",
+                "questionTitle": "Question {{index}}: Title is missing.",
+                "questionCorrectAnswerOption": "Question {{index}}: No correct answer option.",
+                "questionCorrectMapping": "Question {{index}}: No correct mapping."
             }
         }
     }

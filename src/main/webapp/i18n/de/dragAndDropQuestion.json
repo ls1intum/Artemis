@@ -17,7 +17,19 @@
             },
             "backgroundFilePath": "Background File Path",
             "dropLocations": "Drop Locations",
-            "dragItems": "Drag Items"
+            "dragItems": "Drag Items",
+            "correctMappings": "Korrekte Zuordnungen",
+            "randomizeOrder": "Drag Items in zufälliger Reihenfolge anzeigen",
+            "uploadBackgroundPicture": "Hintergrund Hochladen",
+            "upload": "Hochladen",
+            "uploading": "Lade hoch...",
+            "uploadBackgroundInstructions": "Bitte laden Sie ein Hintergrundbild hoch.",
+            "drawOnBackgroundInstructions": "Malen Sie auf den Hintergrund um Drop Locations zu definieren.",
+            "noBackgroundPicture": "Kein Hintergrundbild",
+            "addDragItemsInstructions": "Benutzen Sie die Schaltflächen unten um Drag Items hinzuzufügen.",
+            "addMappingsInstructions": "Ziehen Sie Drag Items auf Drop Locations um korrekte Zuordnungen zu definieren.",
+            "addDragItemPicture": "Drag Item mit Bild Hinzufügen",
+            "addDragItemText": "Drag Item mit Text Hinzufügen"
         }
     }
 }

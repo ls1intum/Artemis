@@ -14,7 +14,7 @@
             url: '/question-statistic',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.questionStatistic.home.title'
+                pageTitle: 'artemisApp.questionStatistic.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/question-statistic/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.questionStatistic.detail.title'
+                pageTitle: 'artemisApp.questionStatistic.detail.title'
             },
             views: {
                 'content@': {

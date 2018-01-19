@@ -14,7 +14,7 @@
             url: '/statistic-counter',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.statisticCounter.home.title'
+                pageTitle: 'artemisApp.statisticCounter.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/statistic-counter/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.statisticCounter.detail.title'
+                pageTitle: 'artemisApp.statisticCounter.detail.title'
             },
             views: {
                 'content@': {

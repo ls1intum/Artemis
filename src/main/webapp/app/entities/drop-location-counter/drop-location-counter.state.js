@@ -14,7 +14,7 @@
             url: '/drop-location-counter',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.dropLocationCounter.home.title'
+                pageTitle: 'artemisApp.dropLocationCounter.home.title'
             },
             views: {
                 'content@': {
@@ -36,7 +36,7 @@
             url: '/drop-location-counter/{id}',
             data: {
                 authorities: ['ROLE_USER'],
-                pageTitle: 'arTeMiSApp.dropLocationCounter.detail.title'
+                pageTitle: 'artemisApp.dropLocationCounter.detail.title'
             },
             views: {
                 'content@': {
