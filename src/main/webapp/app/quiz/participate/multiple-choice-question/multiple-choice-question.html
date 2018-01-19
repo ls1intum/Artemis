@@ -60,7 +60,12 @@
             <td class="solution">
                 <span ng-if="!answerOption.invalid && !vm.question.invalid && answerOption.isCorrect" class="correct">Correct</span>
                 <span ng-if="!answerOption.invalid && !vm.question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
-                <span ng-if="answerOption.invalid || vm.question.invalid" class="wrong" data-translate="artemisApp.question.invalid"></span>&nbsp<span title="Invalid answers will be assessed as correct." style="color:black;" class="fa fa-question-circle" ng-if="answerOption.invalid || vm.question.invalid"></span>
+                <span ng-if="answerOption.invalid || vm.question.invalid" class="wrong" data-translate="artemisApp.question.invalid"></span>
+                &nbsp<span uib-tooltip="Invalid answers will be assessed as correct."
+                           tooltip-placement="top-right"
+                           style="color:black;"
+                           class="fa fa-question-circle"
+                           ng-if="answerOption.invalid || vm.question.invalid"></span>
             </td>
             <td class="result-symbol">
                 <i class="fa fa-2x fa-exclamation-triangle warning" ng-if=" !vm.question.invalid && !answerOption.invalid && ((vm.isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!vm.isAnswerOptionSelected(answerOption) && answerOption.isCorrect )) "></i>
