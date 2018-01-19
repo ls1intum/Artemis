@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -38,7 +39,7 @@ public class FileManagement {
                 return newFilePath;
             } else {
                 // delete old file
-                File oldFile = new File(actualPathForPublicPath(oldFilePath));
+                File oldFile = new File(Paths.get(actualPathForPublicPath(oldFilePath)).toString());
                 if (!oldFile.delete()) {
                     log.warn("Could not delete file: {}", oldFile);
                 } else {
@@ -50,8 +51,7 @@ public class FileManagement {
         if (newFilePath != null && newFilePath.contains("files/temp")) {
             // rename and move file
             try {
-                File newFile = new File(actualPathForPublicPath(newFilePath));
-                Path source = newFile.toPath();
+                Path source = Paths.get(actualPathForPublicPath(newFilePath));
                 File targetFile = generateTargetFile(newFilePath, targetFolder);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
@@ -140,7 +140,7 @@ public class FileManagement {
         String fileExtension = FilenameUtils.getExtension(originalFilename);
 
         // create folder if necessary
-        File folder = new File(targetFolder);
+        File folder = new File(Paths.get(targetFolder).toString());
         if (!folder.exists()) {
             if (!folder.mkdirs()) {
                 log.error("Could not create directory: {}", targetFolder);
@@ -156,7 +156,7 @@ public class FileManagement {
             filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23) + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
             String path = targetFolder + filename;
 
-            newFile = new File(path);
+            newFile = new File(Paths.get(path).toString());
             fileCreated = newFile.createNewFile();
         } while (!fileCreated);
 
