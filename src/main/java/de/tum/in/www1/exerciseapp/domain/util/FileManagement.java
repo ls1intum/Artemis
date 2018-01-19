@@ -153,7 +153,7 @@ public class FileManagement {
         File newFile;
         String filename;
         do {
-            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23) + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
+            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
             String path = targetFolder + filename;
 
             newFile = new File(Paths.get(path).toString());

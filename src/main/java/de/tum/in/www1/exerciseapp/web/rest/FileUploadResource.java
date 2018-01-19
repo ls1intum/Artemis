@@ -83,7 +83,7 @@ public class FileUploadResource {
             File newFile;
             String filename;
             do {
-                filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23) + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
+                filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
                 String path = Constants.TEMP_FILEPATH + filename;
 
                 newFile = new File(Paths.get(path).toString());
