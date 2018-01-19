@@ -374,7 +374,12 @@
         else{
             for (var i = 0; i < vm.quizExercise.questions.length; i++) {
                 if(vm.quizExercise.questions[i].id === vm.question.id) {
-                    $state.go('multiple-choice-question-statistic-chart', {quizId: vm.quizExercise.id, questionId: vm.quizExercise.questions[i-1].id});
+                    if(vm.quizExercise.question[i+1].type === "multiple-choice") {
+                        $state.go('multiple-choice-question-statistic-chart', {
+                            quizId: vm.quizExercise.id,
+                            questionId: vm.quizExercise.questions[i - 1].id
+                        });
+                    }
                 }
             }
         }
@@ -386,20 +391,25 @@
          * if last QuestionStatistic -> go to the Quiz-Point-Statistic
          */
         function nextStatistic() {
-            if(vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id === vm.question.id) {
-                $state.go('quiz-point-statistic-chart',{quizId: vm.quizExercise.id});
+            if (vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id === vm.question.id) {
+                $state.go('quiz-point-statistic-chart', {quizId: vm.quizExercise.id});
             }
-            else{
+            else {
                 for (var i = 0; i < vm.quizExercise.questions.length; i++) {
-                    if(vm.quizExercise.questions[i].id === vm.question.id) {
-                        $state.go('multiple-choice-question-statistic-chart', {quizId: vm.quizExercise.id, questionId: vm.quizExercise.questions[i+1].id});
+                    if (vm.quizExercise.questions[i].id === vm.question.id) {
+                        if (vm.quizExercise.question[i + 1].type === "multiple-choice") {
+                            $state.go('multiple-choice-question-statistic-chart', {
+                                quizId: vm.quizExercise.id,
+                                questionId: vm.quizExercise.questions[i + 1].id
+                            });
+                        }
                     }
                 }
             }
         }
 
         /**
-         * release of revoke the all statistics of the quizExercise
+         * release of revoke all statistics of the quizExercise
          *
          * @param {boolean} released: true to release, false to revoke
          */

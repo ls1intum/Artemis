@@ -55,8 +55,11 @@
                                data-translate="showStatistic.quizPointStatisticTitle"></a></li>
                         <li><a ui-sref="quiz-statistic-chart({quizId: vm.quizExercise.id})"
                                data-translate="showStatistic.quizStatisticTitle"></a></li>
-                        <li ng-repeat="question in vm.quizExercise.questions"><a ui-sref="multiple-choice-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
-                        ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a></li>
+                        <li ng-repeat="question in vm.quizExercise.questions">
+                            <a ng-if="question.type === 'multiple-choice'" ui-sref="multiple-choice-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
+                            ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a>
+                            <a ng-if="!question.type === 'multiple-choice'"
+                            ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a></li>
                     </ul>
                 </div>
             </div>

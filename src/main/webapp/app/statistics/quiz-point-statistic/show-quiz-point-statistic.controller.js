@@ -226,7 +226,12 @@
                 $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
             }
             else{
-                $state.go('multiple-choice-question-statistic-chart', {quizId: vm.quizExercise.id, questionId: vm.quizExercise.questions[vm.quizExercise.questions.length -1].id});
+                if(vm.quizExercise.question[i+1].type === "multiple-choice") {
+                    $state.go('multiple-choice-question-statistic-chart', {
+                        quizId: vm.quizExercise.id,
+                        questionId: vm.quizExercise.questions[i - 1].id
+                    });
+                }
             }
         }
 
