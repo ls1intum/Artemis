@@ -84,7 +84,8 @@
                     },
                     "confirmtext": "Do you really want to perform these changes?",
                     "succesfully_confirm": "Changes successfully adopted!"
-                },
+                }
+            },
             "invalidReasons" : {
                 "quizTitle": "Quiz: Title is missing.",
                 "quizDuration": "Quiz: Duration is missing or invalid.",

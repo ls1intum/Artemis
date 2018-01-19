@@ -84,7 +84,8 @@
                     },
                     "confirmtext": "Möchten Sie die Änderungen wirklich übernehmen?",
                     "succesfully_confirm": "Änderungen erfolgreich übernommen!"
-                },
+                }
+            },
             "invalidReasons" : {
                 "quizTitle": "Quiz: Titel fehlt.",
                 "quizDuration": "Quiz: Dauer fehlt oder ungültig.",

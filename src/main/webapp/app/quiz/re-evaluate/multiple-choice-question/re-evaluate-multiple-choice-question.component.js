@@ -1,6 +1,6 @@
-ReEvaluateMultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$timeout'];
+ReEvaluateMultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$timeout', 'ArtemisMarkdown'];
 
-function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartialLoader, $scope, $timeout) {
+function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartialLoader, $scope, $timeout, ArtemisMarkdown) {
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('multipleChoiceQuestion');
@@ -66,7 +66,8 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
             editor.setHighlightActiveLine(false);
             editor.setShowPrintMargin(false);
 
-            generateQuestionMarkdown();
+            editor.setValue(ArtemisMarkdown.generateTextHintExplanation(vm.question));
+            editor.clearSelection();
 
             editor.on("blur", function () {
                 parseQuestionMarkdown(editor.getValue());
@@ -111,25 +112,6 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
 
     }
 
-    /**
-     * generate the markdown text for this question
-     *
-     * The markdown is generated according to these rules:
-     *
-     * 1. First the question text is inserted
-     * 2. If hint and/or explanation exist, they are added after the text with a linebreak and tab in front of them
-     *
-     */
-    function generateQuestionMarkdown() {
-        var editor = ace.edit("question-content-editor-" + vm.random);
-        var markdownText = (
-            vm.question.text +
-            (vm.question.hint ? "\n\t[-h] " + vm.question.hint : "") +
-            (vm.question.explanation ? "\n\t[-e] " + vm.question.explanation : "")
-        );
-        editor.setValue(markdownText);
-        editor.clearSelection();
-    }
 
     /**
      * generate the markdown text for this question
@@ -145,9 +127,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
         var answerEditor = ace.edit("answer-content-editor-" + answer.id);
         var markdownText = (
             (answer.isCorrect ? "[x]" : "[ ]") + " " +
-            answer.text +
-            (answer.hint ? "\n\t[-h] " + answer.hint : "") +
-            (answer.explanation ? "\n\t[-e] " + answer.explanation : "")
+            ArtemisMarkdown.generateTextHintExplanation(answer)
         );
         answerEditor.setValue(markdownText);
         answerEditor.clearSelection();
@@ -160,8 +140,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      *
      * 1. Text is split at [x] and [ ] (also accepts [X] and [])
      *    => The first part (any text before the first [x] or [ ]) is the question text
-     * 2. The question text is split at [-h] and [-e] tags.
-     *    => First part is text. Everything after [-h] is Hint, anything after [-e] is explanation
+     * 2. The question text is parsed with ArtemisMarkdown
      *
      * @param text {string} the markdown text to parse
      */
@@ -170,27 +149,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
         var questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
         var questionText = questionParts[0];
 
-        // split question into main text, hint and explanation
-        var questionTextParts = questionText.split(/\[\-e\]|\[\-h\]/g);
-        vm.question.text = questionTextParts[0].trim();
-        if (questionText.indexOf("[-h]") !== -1 && questionText.indexOf("[-e]") !== -1) {
-            if (questionText.indexOf("[-h]") < questionText.indexOf("[-e]")) {
-                vm.question.hint = questionTextParts[1].trim();
-                vm.question.explanation = questionTextParts[2].trim();
-            } else {
-                vm.question.hint = questionTextParts[2].trim();
-                vm.question.explanation = questionTextParts[1].trim();
-            }
-        } else if (questionText.indexOf("[-h]") !== -1) {
-            vm.question.hint = questionTextParts[1].trim();
-            vm.question.explanation = null;
-        } else if (questionText.indexOf("[-e]") !== -1) {
-            vm.question.hint = null;
-            vm.question.explanation = questionTextParts[1].trim();
-        } else {
-            vm.question.hint = null;
-            vm.question.explanation = null;
-        }
+        ArtemisMarkdown.parseTextHintExplanation(questionText, vm.question);
     }
 
     /**
@@ -200,8 +159,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      *
      * 1. Text starts with [x] or [ ] (also accepts [X] and [])
      *    => Answer options are marked as isCorrect depending on [ ] or [x]
-     * 2. The answer text is split at [-h] and [-e] tags.
-     *    => First part is text. Everything after [-h] is Hint, anything after [-e] is explanation
+     * 2. The answer text is parsed with ArtemisMarkdown
      *
      * @param text {string} the markdown text to parse
      * @param answer {answerOption} the answer, where to save the result
@@ -219,27 +177,7 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
         // check if box says this answer option is correct or not
         answer.isCorrect = (box === "[x]" || box === "[X]");
 
-        // parse this answerOption
-        answerParts = answerOptionText.split(/\[\-e\]|\[\-h\]/g);
-        answer.text = answerParts[0].trim();
-        if (answerOptionText.indexOf("[-h]") !== -1 && answerOptionText.indexOf("[-e]") !== -1) {
-            if (answerOptionText.indexOf("[-h]") < answerOptionText.indexOf("[-e]")) {
-                answer.hint = answerParts[1].trim();
-                answer.explanation = answerParts[2].trim();
-            } else {
-                answer.hint = answerParts[2].trim();
-                answer.explanation = answerParts[1].trim();
-            }
-        } else if (answerOptionText.indexOf("[-h]") !== -1) {
-            answer.hint = answerParts[1].trim();
-            answer.expalanation = null;
-        } else if (answerOptionText.indexOf("[-e]") !== -1) {
-            answer.hint = null;
-            answer.explanation = answerParts[1].trim();
-        } else {
-            answer.hint = null;
-            answer.explanation = null;
-        }
+        ArtemisMarkdown.parseTextHintExplanation(answerOptionText, answer);
     }
 
     /**

@@ -217,10 +217,10 @@
                 $state.go('quiz-point-statistic-chart',{quizId: vm.quizExercise.id});
             }
             else{
-                if(vm.quizExercise.question[i+1].type === "multiple-choice") {
+                if(vm.quizExercise.questions[0].type === "multiple-choice") {
                     $state.go('multiple-choice-question-statistic-chart', {
                         quizId: vm.quizExercise.id,
-                        questionId: vm.quizExercise.questions[i - 1].id
+                        questionId: vm.quizExercise.questions[0].id
                     });
                 }
             }
