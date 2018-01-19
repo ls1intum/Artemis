@@ -55,7 +55,7 @@ public class FileManagement {
                 File targetFile = generateTargetFile(newFilePath, targetFolder);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
-                newFilePath = publicPathForActualPath(target.toString(), entityId);
+                newFilePath = publicPathForActualPath(target, entityId);
                 log.debug("Moved File from {} to {}", source, target);
             } catch (IOException e) {
                 log.error("Error moving file: {}", newFilePath);
@@ -96,21 +96,24 @@ public class FileManagement {
      * @param entityId   the id of the entity associated with the file (may be null)
      * @return the public path that can be used by users to access the file from outside
      */
-    private static String publicPathForActualPath(String actualPath, Long entityId) {
+    private static String publicPathForActualPath(Path actualPath, Long entityId) {
         // first extract filename
-        String filename = actualPath.substring(actualPath.lastIndexOf(File.separator) + 1);
+        String filename = actualPath.getFileName().toString();
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACHEOLDER : entityId.toString();
 
+        // convert path to unix style path (to compare with Constants)
+        String pathInUnix = FilenameUtils.separatorsToUnix(actualPath.toString());
+
         // check for known path to convert
-        if (actualPath.contains(Constants.TEMP_FILEPATH.replaceAll("/", File.separator))) {
+        if (pathInUnix.contains(Constants.TEMP_FILEPATH)) {
             return "/api/files/temp/" + filename;
         }
-        if (actualPath.contains(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH.replaceAll("/", File.separator))) {
+        if (pathInUnix.contains(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH)) {
             return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
         }
-        if (actualPath.contains(Constants.DRAG_ITEM_FILEPATH.replaceAll("/", File.separator))) {
+        if (pathInUnix.contains(Constants.DRAG_ITEM_FILEPATH)) {
             return "/api/files/drag-and-drop/drag-items/" + id + "/" + filename;
         }
 
