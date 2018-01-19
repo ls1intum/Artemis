@@ -98,19 +98,19 @@ public class FileManagement {
      */
     private static String publicPathForActualPath(String actualPath, Long entityId) {
         // first extract filename
-        String filename = actualPath.substring(actualPath.lastIndexOf("/") + 1);
+        String filename = actualPath.substring(actualPath.lastIndexOf(File.separator) + 1);
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACHEOLDER : entityId.toString();
 
         // check for known path to convert
-        if (actualPath.contains(Constants.TEMP_FILEPATH)) {
+        if (actualPath.contains(Constants.TEMP_FILEPATH.replaceAll("/", File.separator))) {
             return "/api/files/temp/" + filename;
         }
-        if (actualPath.contains(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH)) {
+        if (actualPath.contains(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH.replaceAll("/", File.separator))) {
             return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
         }
-        if (actualPath.contains(Constants.DRAG_ITEM_FILEPATH)) {
+        if (actualPath.contains(Constants.DRAG_ITEM_FILEPATH.replaceAll("/", File.separator))) {
             return "/api/files/drag-and-drop/drag-items/" + id + "/" + filename;
         }
 
