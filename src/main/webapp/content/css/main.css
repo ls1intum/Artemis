@@ -8810,10 +8810,17 @@ table.answer-options-result {
 
 .re-evaluate-button {
   display: inline-block;
+  padding: 4px; }
+
+.re-evaluate-button:hover {
+  color: blue; }
+
+.re-evaluate-order-button {
+  display: inline-block;
   padding: 4px;
   cursor: move; }
 
-.re-evaluate-button:hover {
+.re-evaluate-order-button:hover {
   color: blue; }
 
 .answer-border {

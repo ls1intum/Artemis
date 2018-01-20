@@ -72,6 +72,24 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
         return false;
     }
 
+    /**
+     * Check if answerOptions were deleted and delete reference to in selectedOptions
+     * @param question the changed question with the answerOptions
+     */
+    public void checkForDeletedAnswerOptions(MultipleChoiceQuestion question) {
+
+        if( question != null) {
+            // Check if an answerOption was deleted and delete reference to in selectedOptions
+            Set<AnswerOption> selectedOptionsToDelete = new HashSet<>();
+            for (AnswerOption answerOption : this.getSelectedOptions()) {
+                if (!question.getAnswerOptions().contains(answerOption)) {
+                    selectedOptionsToDelete.add(answerOption);
+                }
+            }
+            this.getSelectedOptions().removeAll(selectedOptionsToDelete);
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

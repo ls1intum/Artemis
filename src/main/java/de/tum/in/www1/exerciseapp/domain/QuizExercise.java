@@ -327,6 +327,26 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
+     * Get question by ID
+     *
+     * @param questionId the ID of the question, which should be found
+     * @return the question with the given ID, or null if the question is not contained in the quizExercise
+     */
+    public Question findQuestionById (Long questionId) {
+
+        if (questionId != null) {
+            // iterate through all questions of this quiz
+            for (Question question : questions) {
+                // return question if the IDs are equal
+                if (question.getId().equals(questionId)) {
+                    return question;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
      * Get the maximum total score for this quiz
      *
      * @return the sum of all the questions' maximum scores

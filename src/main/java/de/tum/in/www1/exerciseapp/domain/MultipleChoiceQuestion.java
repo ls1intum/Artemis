@@ -117,6 +117,26 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         mcStatistic.getAnswerCounters().removeAll(answerCounterToDelete);
 
     }
+
+    /**
+     * Get answerOption by ID
+     *
+     * @param answerOptionId the ID of the answerOption, which should be found
+     * @return the answerOption with the given ID, or null if the answerOption is not contained in this question
+     */
+    public AnswerOption findAnswerOptionById (Long answerOptionId) {
+
+        if (answerOptionId != null) {
+            // iterate through all questions of this quiz
+            for (AnswerOption answer : answerOptions) {
+                // return question if the IDs are equal
+                if (answer.getId().equals(answerOptionId)) {
+                    return answer;
+                }
+            }
+        }
+        return null;
+    }
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override
