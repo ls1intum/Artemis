@@ -456,7 +456,6 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      * @param dragItem {object} the drag item involved (may be a copy at this point)
      */
     function onDragDrop(dropLocation, dragItem) {
-        console.log(vm.question.correctMappings);
         // replace dragItem with original (because it may be a copy)
         dragItem = vm.question.dragItems.find(function (originalDragItem) {
             return dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID;
@@ -470,17 +469,23 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             vm.question.correctMappings = [];
         }
 
-        // remove mappings that contain the dropLocation or dragItem
-        // deleteMappingsFor(dropLocation);
-        // deleteMappingsFor(dragItem);
+        // check if this mapping already exists
+        if (!vm.question.correctMappings.some(function (existingMapping) {
+                return (
+                    isSameDropLocationOrDragItem(existingMapping.dropLocation, dropLocation)
+                    &&
+                    isSameDropLocationOrDragItem(existingMapping.dragItem, dragItem)
+                );
+            })) {
+            // mapping doesn't exit yet => add this mapping
+            vm.question.correctMappings.push({
+                dropLocation: dropLocation,
+                dragItem: dragItem
+            });
 
-        // add this mapping
-        vm.question.correctMappings.push({
-            dropLocation: dropLocation,
-            dragItem: dragItem
-        });
-
-        vm.onUpdated();
+            // notify parent of changes
+            vm.onUpdated();
+        }
     }
 
     /**
