@@ -70,10 +70,10 @@ public class FileUploadResource {
 
         try {
             // create folder if necessary
-            File folder = new File(Paths.get(Constants.TEMP_FILEPATH).toString());
+            File folder = new File(Constants.TEMP_FILEPATH);
             if (!folder.exists()) {
                 if (!folder.mkdirs()) {
-                    log.error("Could not create directory \"uploads/images/temp\".");
+                    log.error("Could not create directory: {}", Constants.TEMP_FILEPATH);
                     return ResponseEntity.status(500).build();
                 }
             }
@@ -86,7 +86,7 @@ public class FileUploadResource {
                 filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
                 String path = Constants.TEMP_FILEPATH + filename;
 
-                newFile = new File(Paths.get(path).toString());
+                newFile = new File(path);
                 fileCreated = newFile.createNewFile();
             } while (!fileCreated);
             String responsePath = "/api/files/temp/" + filename;
@@ -115,7 +115,7 @@ public class FileUploadResource {
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
 
-        File file = new File(Paths.get(Constants.TEMP_FILEPATH + filename).toString());
+        File file = new File(Constants.TEMP_FILEPATH + filename);
         return responseEntityForFile(file);
     }
 
@@ -137,7 +137,7 @@ public class FileUploadResource {
             return ResponseEntity.notFound().build();
         }
         if (authCheckService.isAllowedToSeeExercise(question.getExercise())) {
-            File file = new File(Paths.get(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename).toString());
+            File file = new File(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename);
             return responseEntityForFile(file);
         } else {
             return ResponseEntity.status(403).build(); // 403 FORBIDDEN
@@ -162,7 +162,7 @@ public class FileUploadResource {
             return ResponseEntity.notFound().build();
         }
         if (authCheckService.isAllowedToSeeExercise(dragItem.getQuestion().getExercise())) {
-            File file = new File(Paths.get(Constants.DRAG_ITEM_FILEPATH + filename).toString());
+            File file = new File(Constants.DRAG_ITEM_FILEPATH + filename);
             return responseEntityForFile(file);
         } else {
             return ResponseEntity.status(403).build(); // 403 FORBIDDEN
