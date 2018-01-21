@@ -82,6 +82,9 @@ public class ProgrammingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new programmingExercise cannot already have an ID")).body(null);
         }
         Course course = programmingExercise.getCourse();
+        // NOTE (Valentin): I don't think this check is secure, because the course object is parsed from JSON,
+        // not fetched from the Database, so the client can put whatever they want as the TA or instructor group
+        // TODO: fetch course from Database using its courseId instead of taking it directly from the Exercise
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
             !authCheckService.isInstructorInCourse(course) &&
             !authCheckService.isAdmin()) {
@@ -115,6 +118,9 @@ public class ProgrammingExerciseResource {
             return createProgrammingExercise(programmingExercise);
         }
         Course course = programmingExercise.getCourse();
+        // NOTE (Valentin): I don't think this check is secure, because the course object is parsed from JSON,
+        // not fetched from the Database, so the client can put whatever they want as the TA or instructor group
+        // TODO: fetch course from Database using its courseId instead of taking it directly from the Exercise
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
             !authCheckService.isInstructorInCourse(course) &&
             !authCheckService.isAdmin()) {

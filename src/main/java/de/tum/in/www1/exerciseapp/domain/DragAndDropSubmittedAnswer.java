@@ -54,6 +54,22 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    /**
+     * Get the drag item that was drag-and-dropped on the given drop location
+     *
+     * @param dropLocation the drop location
+     * @return the selected drag item for the given drop location
+     *         (may be null if no drag item was dropped on this drop location)
+     */
+    public DragItem getSelectedDragItemForDropLocation(DropLocation dropLocation) {
+        for (DragAndDropMapping mapping : mappings) {
+            if (mapping.getDropLocation().equals(dropLocation)) {
+                return mapping.getDragItem();
+            }
+        }
+        return null;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

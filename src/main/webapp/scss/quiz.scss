@@ -611,6 +611,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            text-align: center;
             width: 100%;
             height: 100%;
         }
@@ -674,6 +675,7 @@
     text-align: center;
     font-weight: bold;
     border-color: #3c763d;
+    z-index: 8;
 }
 
 table.answer-options-result {

@@ -8797,6 +8797,7 @@ body.editor .navbar-brand span {
     display: flex;
     align-items: center;
     justify-content: center;
+    text-align: center;
     width: 100%;
     height: 100%; }
 
@@ -8843,7 +8844,8 @@ body.editor .navbar-brand span {
   font-size: 16px;
   text-align: center;
   font-weight: bold;
-  border-color: #3c763d; }
+  border-color: #3c763d;
+  z-index: 8; }
 
 table.answer-options-result {
   width: 100%; }
