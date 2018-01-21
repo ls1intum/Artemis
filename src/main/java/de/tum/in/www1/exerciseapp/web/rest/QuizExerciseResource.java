@@ -262,7 +262,7 @@ public class QuizExerciseResource {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
             for (Question question : quizExercise.getQuestions()) {
                 question.setExplanation(null);
-                if (!question.getQuestionStatistic().isReleased()) {
+                if (question.getQuestionStatistic() != null && !question.getQuestionStatistic().isReleased()) {
                     question.setQuestionStatistic(null);
                 }
 

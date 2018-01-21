@@ -100,7 +100,7 @@
     <div ng-if="vm.question.dragItems && vm.question.dragItems.length" class="instructions">
         <span data-translate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
     </div>
-    <div class="drag-items">
+    <div class="drag-items" ng-if="vm.question.dragItems && vm.question.dragItems.length">
         <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
             <div ng-if="dragItem.pictureFilePath">
                 <img ng-src="{{dragItem.pictureFilePath}}">

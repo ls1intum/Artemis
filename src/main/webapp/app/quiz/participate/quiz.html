@@ -6,7 +6,8 @@
 </div>
 <div class="quiz-content container">
     <div ng-repeat="question in vm.quizExercise.questions">
-        <multiple-choice-question question="question" selected-answer-options="vm.selectedAnswerOptions[question.id]" on-selection="vm.onSelectionChanged()" click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0" show-result="vm.showingResult" question-index="$index + 1" score="vm.questionScores[question.id]"></multiple-choice-question>
+        <multiple-choice-question ng-if="question.type === 'multiple-choice'" question="question" selected-answer-options="vm.selectedAnswerOptions[question.id]" on-selection="vm.onSelectionChanged()" click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0" show-result="vm.showingResult" question-index="$index + 1" score="vm.questionScores[question.id]"></multiple-choice-question>
+        <drag-and-drop-question ng-if="question.type === 'drag-and-drop'" question="question" mappings="vm.dragAndDropMappings[question.id]" on-mapping-update="vm.onSelectionChanged()" click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0" show-result="vm.showingResult" question-index="$index + 1" score="vm.questionScores[question.id]"></drag-and-drop-question>
     </div>
 </div>
 <div class="quiz-footer">

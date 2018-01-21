@@ -1,0 +1,55 @@
+<div class="dnd-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult, incorrect: (vm.score || 0) < vm.question.score}">
+    <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
+    <p ng-bind-html="vm.rendered.text"></p>
+    <h4>
+        <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
+            <i class="fa fa-question-circle-o"></i>
+            <span data-translate="artemisApp.question.hint"></span>
+        </span> &nbsp;
+        <span class="label label-primary" uib-popover-html="vm.rendered.explanation" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.explanation">
+            <i class="fa fa-exclamation-circle"></i>
+            <span data-translate="artemisApp.question.explanation"></span>
+        </span>
+    </h4>
+    <div class="question-score" ng-if="!vm.showResult">
+        <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
+        <span>{{vm.question.score}}</span>
+    </div>
+    <div class="question-score result" ng-if="vm.showResult" ng-class="{incorrect: (vm.score || 0) < vm.question.score}">
+        <span data-translate="artemisApp.question.yourScore" class="colon-suffix"></span>
+        <span>{{vm.score || 0}}/{{vm.question.score}}</span>
+    </div>
+    <div class="drag-and-drop-area" ng-if="!vm.showResult">
+        <div class="background-area">
+            <img ng-src="{{vm.question.backgroundFilePath}}">
+            <div class="click-layer">
+                <div
+                    class="drop-location"
+                    ng-repeat="dropLocation in vm.question.dropLocations"
+                    ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                    ui-on-drop="vm.onDragDrop(dropLocation, $data)"
+                    drag-enter-class="drop-allowed"
+                    drag-hover-class="drop-hover"
+                >
+                    <div class="drag-item" ng-if="vm.dragItemForDropLocation(dropLocation)" ui-draggable="true" drag="vm.dragItemForDropLocation(dropLocation)">
+                        <img ng-if="vm.dragItemForDropLocation(dropLocation).pictureFilePath" ng-src="{{vm.dragItemForDropLocation(dropLocation).pictureFilePath}}">
+                        <div ng-if="!vm.dragItemForDropLocation(dropLocation).pictureFilePath">
+                            {{vm.dragItemForDropLocation(dropLocation).text}}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="drag-items" ui-on-drop="vm.onDragDrop(null, $data)" drag-enter-class="drop-allowed" drag-hover-class="drop-hover">
+            <div ng-repeat="dragItem in vm.getUnassignedDragItems()" class="drag-item" ui-draggable="true" drag="dragItem">
+                <img ng-if="dragItem.pictureFilePath" ng-src="{{dragItem.pictureFilePath}}">
+                <div ng-if="!dragItem.pictureFilePath">
+                    {{dragItem.text}}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="result" ng-if="vm.showResult">
+        <!--TODO-->
+    </div>
+</div>
