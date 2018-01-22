@@ -94,7 +94,7 @@
                     <span ng-switch-when="false">
                         <span class="text-danger">
                             <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
-                             <span ng-switch on="result.feedbacks.length === 0">
+                             <span ng-switch on=""result.feedbacks === null || result.feedbacks.length === 0">
                                 <span ng-switch-when="true">
                                     {{result.resultString}}
                                 </span>
