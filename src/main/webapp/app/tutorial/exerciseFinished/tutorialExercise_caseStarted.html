@@ -15,7 +15,7 @@
         <td class="col-xs-6">
             <span class="text-muted" ng-switch-when="uninitialized">You have not started this exercise yet.</span>
             <span ng-switch-when="initialized"
-                  tour-step
+                  tour-step="32"
                   tour-step-backdrop="false"
                   tour-step-title="Understanding Results"
                   tour-step-content="If your submission isn't complete or you are missing something your result appears red. Click it to see what you are missing or doing wrong."
@@ -30,7 +30,7 @@
         </td>
         <!--$ctrl.endTour();-->
         <td class="text-center" class="col-xs-1"
-            tour-step
+            tour-step="30"
             tour-step-backdrop="false"
             tour-step-title="Open Exercise"
             tour-step-content="Click on the start exercise button to start your exercise"
@@ -83,7 +83,7 @@
                 </button>
                 <div ng-switch-when="initialized">
                     <a ui-sref="editor({participationId:exercise.participation.id})" class="btn btn-primary btn-sm btn-block" id="btn-online-editor" ng-if="exercise.allowOnlineEditor"><i class="fa fa-folder-open fa-fw"
-                        tour-step
+                        tour-step="31"
                         tour-step-backdrop="false"
                         tour-step-title="Open Exercise"
                         tour-step-content="If the online editor is availiable you can directly use your browser to finish your exercise. Click on the online editor and finish the described Task on the right"

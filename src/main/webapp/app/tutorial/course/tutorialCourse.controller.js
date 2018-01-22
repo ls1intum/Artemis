@@ -40,21 +40,28 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
             tour.start();
         }
 
+        tour.on('started', function (data) {
+            var stepID = $cookies.getObject('tutorialStep');
+
+            if(stepID) {
+                //tour.goTo(stepID);
+            }
+        });
+
         tour.on('ended', function (data) {
             $cookies.put("tutorialDone", 'finished');
+            $cookies.remove('tutorialStep');
             self.do = false;
         });
 
         tour.on('paused', function (data) {
+            console.log(data);
             $cookies.putObject('tutorialStep', data.order);
             $cookies.put("tutorialDone", 'skipped');
         });
 
         tour.on('stepChanged', function (data) {
-           if(data.order == 30){
-               console.log("Tout go to 31");
-               tour.goTo(31);
-           }
+
         });
 
     };
@@ -120,7 +127,13 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
     };
 
     self.continueTutorial = function () {
-        doTutorial($cookies.getObject('tutorialStep'));
+        self.do = true;
+
+        if(self.loaded && self.do){
+            doTutorial('' + $cookies.getObject('tutorialStep'));
+        }else{
+            doTutorial();
+        }
     };
 
     self.startTutorialAt = function (tutorialStepId) {

@@ -1,6 +1,6 @@
 <table class="table exercise-table" ng-hide="$ctrl.exercises.length === 0">
     <tbody
-        tour-step
+        tour-step="40"
         tour-step-backdrop="false"
         tour-step-title="Cloning a repository"
         tour-step-content="In order to complete this exercise you need to have installed git (https://git-scm.com/) and SourceTree (https://www.sourcetreeapp.com/)."
@@ -26,19 +26,29 @@
             <span class="text-muted" ng-switch-when="quiz-submitted">You have already submitted. Wait for the quiz to end to see results.</span>
             <span ng-switch-when="quiz-finished"><result participation="exercise.participation" show-score="true"></result></span>
         </td>
-        <td class="text-center" class="col-xs-1">
+        <td class="text-center" class="col-xs-1"
+            tour-step="41"
+            tour-step-backdrop="false"
+            tour-step-title="Cloning a repository"
+            tour-step-content="Start by clicking the button Start exercise"
+            tour-step-order="41"
+        >
+            <div
+                tour-step="42"
+                tour-step-backdrop="false"
+                tour-step-title="Cloning a repository"
+                tour-step-content="This time you have to press Clone repository"
+                tour-step-order="42"></div>
+            <div             tour-step="43"
+                             tour-step-backdrop="false"
+                             tour-step-title="Cloning a repository"
+                             tour-step-content="If you have Sourcetree installed simply press Cloning with SourceTree"
+                             tour-step-order="43"></div>
             <div class="btn-group flex-btn-group-container">
                 <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
                         ng-switch-when="uninitialized"
                         ng-click="$ctrl.start(exercise)"
-                        ng-disabled="$ctrl.loading[exercise.id.toString()]"
-
-                        tour-step
-                        tour-step-backdrop="false"
-                        tour-step-title="Cloning a repository"
-                        tour-step-content="Start by clicking the button Start exercise"
-                        tour-step-order="41"
-                >
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
                     <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
                     <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
                 </button>
@@ -85,18 +95,6 @@
                             popover-trigger="outsideClick"
                             type="button" class="btn btn-primary btn-sm btn-block"><i
                         class="fa fa-download fa-fw"
-
-                        tour-step
-                        tour-step-backdrop="false"
-                        tour-step-title="Cloning a repository"
-                        tour-step-content="This time you have to press Clone repository"
-                        tour-step-order="42"
-
-                        tour-step
-                        tour-step-backdrop="false"
-                        tour-step-title="Cloning a repository"
-                        tour-step-content="If you have Sourcetree installed simply press Cloning with SourceTree"
-                        tour-step-order="40"
                     ></i>&nbsp;Clone
                         repository
                     </button>

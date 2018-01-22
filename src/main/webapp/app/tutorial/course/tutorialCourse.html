@@ -1,7 +1,7 @@
 <div ui-tour="courseTour" ui-tour-placement="bottom">
     <div class="panel panel-primary">
         <div class="panel-heading"
-             tour-step
+             tour-step="0"
              tour-step-title="Course"
              tour-step-content="This is a course, in each course you are enrolled by your Instructor"
              tour-step-order="0"
@@ -10,7 +10,8 @@
             <h4 class="panel-title">{{tutorial.course.title}}</h4>
         </div>
         <div class="panel-body"
-             tour-step tour-step-title="Exercises"
+             tour-step="1"
+             tour-step-title="Exercises"
              tour-step-content="Each course has exercises which you need to complete"
              tour-step-order="1"
              tour-step-backdrop="true"
