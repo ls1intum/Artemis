@@ -8,15 +8,57 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
 
     var self = this;
 
-    self.loaded=false;
+    self.loaded = false;
     self.do = false;
     self.course = {};
     self.tour = {};
     self.exercise = {};
     self.amountOfExercises = 0;
 
-    loadTutorial();
-    askForTutorial();
+    init();
+
+
+    function init() {
+        loadTutorial();
+        askForTutorial();
+    }
+
+    function doTutorial(step, name) {
+        self.do = true;
+
+        var tour = {};
+
+        if(name){
+            tour = uiTourService.getTourByName(name);
+        } else {
+            tour = uiTourService.getTour();
+        }
+
+        if (step) {
+            tour.startAt(step);
+        } else {
+            tour.start();
+        }
+
+        tour.on('ended', function (data) {
+            $cookies.put("tutorialDone", 'finished');
+            self.do = false;
+        });
+
+        tour.on('paused', function (data) {
+            $cookies.putObject('tutorialStep', data.order);
+            $cookies.put("tutorialDone", 'skipped');
+        });
+
+        tour.on('stepChanged', function (data) {
+           if(data.order == 30){
+               console.log("Tout go to 31");
+               tour.goTo(31);
+           }
+        });
+
+    };
+
 
     function askForTutorial() {
         var tutorialState = $cookies.get("tutorialDone");
@@ -31,7 +73,7 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
 
             Modal.showModal({}, modalOptions).then(function (result) {
                 if (result.result == 'ok') {
-                   $cookies.put("tutorialDone", 'started');
+                    $cookies.put("tutorialDone", 'started');
                     tutorialState = 'started';
                     doTutorial();
                 } else {
@@ -41,7 +83,7 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
             });
         }
 
-        switch(tutorialState){
+        switch (tutorialState) {
             case 'skipped':
                 self.skipped = true;
                 break;
@@ -58,62 +100,35 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
     function loadTutorial() {
         Course.query().$promise.then(function (courses) {
             self.course = _.first(courses);
-            self.loaded=true;
+            self.loaded = true;
             loadExercises();
         });
     };
 
-    function loadExercises(){
+    function loadExercises() {
         CourseExercises.query({
             courseId: self.course.id,
             withLtiOutcomeUrlExisting: true
-        }).$promise.then(function(exercises){
-           self.exercise = exercises;
-           self.amountOfExercises = _.size(self.exercise);
+        }).$promise.then(function (exercises) {
+            self.exercise = exercises;
+            self.amountOfExercises = _.size(self.exercise);
         });
     }
 
-    $scope.startTutorial = function () {
+    self.startTutorial = function () {
         doTutorial();
     };
 
-    $scope.continueTutorial = function () {
+    self.continueTutorial = function () {
         doTutorial($cookies.getObject('tutorialStep'));
     };
 
-    $scope.startTutorialAt = function (tutorialStepId) {
-      doTutorial(tutorialStepId);
+    self.startTutorialAt = function (tutorialStepId) {
+       doTutorial(tutorialStepId);
     };
 
-    function doTutorial(step){
-        self.do = true;
-        var tour = uiTourService.getTour();
 
-        if(step){
-            tour.startAt(step);
-        }else{
-            tour.start();
-        }
-
-        tour.on('ended', function (data) {
-            tutorialState = "finished";
-            $cookies.put("tutorialDone", 'finished');
-            self.do = false;
-        });
-
-        tour.on('paused', function (data) {
-            $cookies.putObject('tutorialStep', data.order);
-            $cookies.put("tutorialDone", 'skipped');
-        });
-
-    };
-
-    $scope.stopTutorial = function () {
-        console.log("End tour");
-        uiTourService.endAllTours();
-    };
-
-    $scope.getFilterId = function (exercisePos){
+    self.getFilterId = function getFilterId(exercisePos) {
         return _.toArray(self.exercise)[exercisePos].id;
     }
 }
