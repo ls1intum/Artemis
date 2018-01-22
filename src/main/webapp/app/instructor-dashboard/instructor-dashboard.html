@@ -75,20 +75,70 @@
         <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
         <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
-        <td ng-switch on="result.successful">
+        <td ng-switch on="result.score === null">
             <span ng-switch-when="true">
-                <span class="text-success">
-                    <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                    <a class="text-success" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
-                </span> (<span am-time-ago="result.completionDate"></span>)
+                <span ng-switch on="result.successful">
+                    <span ng-switch-when="true">
+                        <span class="text-success">
+                            <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                            <a class="text-success" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+                        </span> (<span am-time-ago="result.completionDate"></span>)
+                    </span>
+                    <span ng-switch-when="false">
+                        <span class="text-danger">
+                            <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                            <a class="text-danger" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+                        </span> (<span am-time-ago="result.completionDate"></span>)
+                    </span>
+                </span>
             </span>
             <span ng-switch-when="false">
-                <span class="text-danger">
-                    <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
-                    <a class="text-danger" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
-                </span> (<span am-time-ago="result.completionDate"></span>)
+                <span ng-if="result.score > 80">
+                    <span class="text-success">
+                        <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                        <a class="text-success" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+                    </span>  (<span am-time-ago="result.completionDate"></span>)
+                </span>
+                <span ng-if="result.score > 60 && result.score <= 80">
+                    <span  class="result-light-green">
+                        <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                        <a class="result-light-green" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+                    </span>  (<span am-time-ago="result.completionDate"></span>)
+                </span>
+                <span ng-if="result.score > 40 && result.score <= 60">
+                    <span class="result-orange">
+                        <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                        <a class="result-orange" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+                    </span>  (<span am-time-ago="result.completionDate"></span>)
+                </span>
+                <span ng-if="result.score > 20 && result.score <= 40">
+                    <span class="result-light-red">
+                        <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                        <a class="result-light-red" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+                    </span>  (<span am-time-ago="result.completionDate"></span>)
+                </span>
+                <span ng-if="result.score > 0 && result.score <= 20">
+                    <span class="text-danger">
+                        <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                        <a class="text-danger" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+                    </span>  (<span am-time-ago="result.completionDate"></span>)
+                </span>
             </span>
         </td>
+      <!--td ng-switch on="result.successful">
+          <span ng-switch-when="true">
+              <span class="text-success">
+                  <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                  <a class="text-success" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+              </span> (<span am-time-ago="result.completionDate"></span>)
+          </span>
+          <span ng-switch-when="false">
+              <span class="text-danger">
+                  <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                  <a class="text-danger" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
+              </span> (<span am-time-ago="result.completionDate"></span>)
+          </span>
+      </td-->
         <td>{{ result.submissionCount }}</td>
         <td>
             <span ng-show="result.score != null">{{result.score}}%</span>

@@ -46,7 +46,6 @@
                     vm.result.feedbacks[i].positive = false;
                 }
             }
-            console.log(JSON.stringify(vm.result));
             if (vm.result.id !== null) {
                 Result.update(vm.result, onSaveSuccess, onSaveError);
             } else {
