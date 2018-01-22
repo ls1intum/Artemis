@@ -46,7 +46,7 @@ public class Result implements Serializable {
     private Submission submission;
 
     //TODO: we might want to store it as a list (see quizzes)
-    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
     @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Feedback> feedbacks = new HashSet<>();
