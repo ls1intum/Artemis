@@ -251,6 +251,10 @@ public class ResultResource {
             results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
         }
 
+        // refresh feedbacks
+        results.forEach(result -> {
+            result.setFeedbacks(feedbackService.getFeedbackForBuildResult(result));
+        });
 
         //Each object array in the list contains two Long values, participation id (index 0) and
         //number of results for this participation (index 1)

@@ -82,21 +82,7 @@
                 templateUrl: 'app/courses/results/result-detail.html',
                 controller: ['$http', 'result', function ($http, result) {
                     var vm = this;
-
-                    vm.$onInit = init;
-
-                    function init() {
-                        vm.loading = true;
-                        $http.get('api/results/' + result.id + '/details', {
-                            params: {
-                                username: result.participation.student.login
-                            }
-                        }).then(function (response) {
-                            vm.details = response.data;
-                        }).finally(function () {
-                            vm.loading = false;
-                        });
-                    }
+                    vm.details = result.feedbacks;
                 }],
                 resolve: {
                     result: result
