@@ -50,6 +50,52 @@
         </div>
     </div>
     <div class="result" ng-if="vm.showResult">
-        <!--TODO-->
+        <div class="background-area">
+            <img ng-src="{{vm.question.backgroundFilePath}}">
+            <div class="click-layer">
+                <div
+                    ng-if="!vm.showingSampleSolution"
+                    class="drop-location results"
+                    ng-repeat="dropLocation in vm.question.dropLocations"
+                    ng-class="{incorrect: !vm.isLocationCorrect(dropLocation)}"
+                    ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                >
+                    <div class="drag-item results" ng-if="vm.dragItemForDropLocation(dropLocation)">
+                        <img ng-if="vm.dragItemForDropLocation(dropLocation).pictureFilePath" ng-src="{{vm.dragItemForDropLocation(dropLocation).pictureFilePath}}">
+                        <div ng-if="!vm.dragItemForDropLocation(dropLocation).pictureFilePath">
+                            {{vm.dragItemForDropLocation(dropLocation).text}}
+                        </div>
+                    </div>
+                    <div class="drag-item results" ng-if="!vm.dragItemForDropLocation(dropLocation)">
+                        <div></div>
+                    </div>
+                </div>
+                <div
+                    ng-if="vm.showingSampleSolution"
+                    class="drop-location sampleSolution"
+                    ng-repeat="dropLocation in vm.question.dropLocations"
+                    ng-class="{incorrect: !vm.isLocationCorrect(dropLocation)}"
+                    ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                >
+                    <div class="drag-item results" ng-if="vm.correctDragItemForDropLocation(dropLocation)">
+                        <img ng-if="vm.correctDragItemForDropLocation(dropLocation).pictureFilePath" ng-src="{{vm.correctDragItemForDropLocation(dropLocation).pictureFilePath}}">
+                        <div ng-if="!vm.correctDragItemForDropLocation(dropLocation).pictureFilePath">
+                            {{vm.correctDragItemForDropLocation(dropLocation).text}}
+                        </div>
+                    </div>
+                    <div class="drag-item results" ng-if="!vm.correctDragItemForDropLocation(dropLocation)">
+                        <div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div>
+            <div class="btn btn-default" ng-if="!vm.showingSampleSolution" ng-click="vm.showSampleSolution()">
+                Show Sample Solution
+            </div>
+            <div class="btn btn-default" ng-if="vm.showingSampleSolution" ng-click="vm.hideSampleSolution()">
+                Hide Sample Solution
+            </div>
+        </div>
     </div>
 </div>

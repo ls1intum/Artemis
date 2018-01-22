@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizExerciseDetailController', QuizExerciseDetailController);
 
-    QuizExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity', '$translate'];
+    QuizExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity', '$translate', 'DragAndDropQuestionUtil'];
 
-    function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity, $translate) {
+    function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity, $translate, DragAndDropQuestionUtil) {
         var vm = this;
 
         prepareEntity(entity);
@@ -182,7 +182,7 @@
                             return answerOption.isCorrect;
                         });
                     case "drag-and-drop":
-                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0;
+                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0 && DragAndDropQuestionUtil.solve(question).length;
                     default:
                         return question.title && question.title !== "";
                 }
@@ -231,6 +231,11 @@
                     if (!question.correctMappings || question.correctMappings.length === 0) {
                         reasons.push({
                             translateKey: "artemisApp.quizExercise.invalidReasons.questionCorrectMapping",
+                            translateValues: {index: index + 1}
+                        });
+                    } else if (DragAndDropQuestionUtil.solve(question).length === 0) {
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.questionUnsolvable",
                             translateValues: {index: index + 1}
                         });
                     }

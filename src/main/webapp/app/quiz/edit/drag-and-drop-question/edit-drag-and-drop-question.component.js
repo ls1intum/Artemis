@@ -1,6 +1,6 @@
-EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document', 'MAX_FILE_SIZE', 'ArtemisMarkdown'];
+EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document', 'MAX_FILE_SIZE', 'ArtemisMarkdown', 'DragAndDropQuestionUtil'];
 
-function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document, MAX_FILE_SIZE, ArtemisMarkdown) {
+function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document, MAX_FILE_SIZE, ArtemisMarkdown, DragAndDropQuestionUtil) {
 
     /**
      * enum for the different drag operations
@@ -472,9 +472,9 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         // check if this mapping already exists
         if (!vm.question.correctMappings.some(function (existingMapping) {
                 return (
-                    isSameDropLocationOrDragItem(existingMapping.dropLocation, dropLocation)
+                    DragAndDropQuestionUtil.isSameDropLocationOrDragItem(existingMapping.dropLocation, dropLocation)
                     &&
-                    isSameDropLocationOrDragItem(existingMapping.dragItem, dragItem)
+                    DragAndDropQuestionUtil.isSameDropLocationOrDragItem(existingMapping.dragItem, dragItem)
                 );
             })) {
             // mapping doesn't exit yet => add this mapping
@@ -497,11 +497,11 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         var visitedDropLocations = [];
         if (vm.question.correctMappings.some(function (correctMapping) {
                 if (!visitedDropLocations.some(function (dropLocation) {
-                        return isSameDropLocationOrDragItem(dropLocation, correctMapping.dropLocation);
+                        return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(dropLocation, correctMapping.dropLocation);
                     })) {
                     visitedDropLocations.push(correctMapping.dropLocation);
                 }
-                return isSameDropLocationOrDragItem(correctMapping.dropLocation, mapping.dropLocation);
+                return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(correctMapping.dropLocation, mapping.dropLocation);
             })) {
             return visitedDropLocations.length;
         } else {
@@ -514,8 +514,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             vm.question.correctMappings = [];
         }
         return vm.question.correctMappings.filter(function (mapping) {
-            return isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) ||
-                isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) ||
+                DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
         });
     }
 
@@ -528,8 +528,8 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             vm.question.correctMappings = [];
         }
         vm.question.correctMappings = vm.question.correctMappings.filter(function (mapping) {
-            return !isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) &&
-                !isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
+            return !DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) &&
+                !DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
         });
     }
 
@@ -544,16 +544,6 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.question.correctMappings = vm.question.correctMappings.filter(function (mapping) {
             return mapping !== mappingToDelete;
         });
-    }
-
-    /**
-     * compare if the two objects are the same drag item or drop location
-     * @param a {object} a drag item or drop location
-     * @param b {object} another drag item or drop location
-     * @return {boolean}
-     */
-    function isSameDropLocationOrDragItem(a, b) {
-        return a === b || (a && b && (a.id && b.id && a.id === b.id || a.tempID && b.tempID && a.tempID === b.tempID));
     }
 
     /**

@@ -60,7 +60,8 @@
                 "quizDuration": "Quiz: Dauer fehlt oder ungültig.",
                 "questionTitle": "Frage {{index}}: Titel fehlt.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Keine korrekte Antwortmöglichkeit.",
-                "questionCorrectMapping": "Frage {{index}}: Keine korrekte Zuordnung."
+                "questionCorrectMapping": "Frage {{index}}: Keine korrekte Zuordnung.",
+                "questionUnsolvable": "Frage {{index}}: Unmöglich richtig zu beantworten."
             }
         }
     }

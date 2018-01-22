@@ -60,7 +60,8 @@
                 "quizDuration": "Quiz: Duration is missing or invalid.",
                 "questionTitle": "Question {{index}}: Title is missing.",
                 "questionCorrectAnswerOption": "Question {{index}}: No correct answer option.",
-                "questionCorrectMapping": "Question {{index}}: No correct mapping."
+                "questionCorrectMapping": "Question {{index}}: No correct mapping.",
+                "questionUnsolvable": "Question {{index}}: Impossible to answer correctly."
             }
         }
     }

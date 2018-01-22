@@ -1,6 +1,6 @@
-DragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$sanitize', '$timeout', 'ArtemisMarkdown'];
+DragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$timeout', 'ArtemisMarkdown', 'DragAndDropQuestionUtil'];
 
-function DragAndDropQuestionController($translate, $translatePartialLoader, $scope, $sanitize, $timeout, ArtemisMarkdown) {
+function DragAndDropQuestionController($translate, $translatePartialLoader, $scope, $timeout, ArtemisMarkdown, DragAndDropQuestionUtil) {
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('dragAndDropQuestion');
@@ -13,10 +13,17 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
         hint: ArtemisMarkdown.htmlForMarkdown(vm.question.hint),
         explanation: ArtemisMarkdown.htmlForMarkdown(vm.question.explanation)
     };
+    vm.showingSampleSolution = false;
 
     vm.onDragDrop = onDragDrop;
     vm.dragItemForDropLocation = dragItemForDropLocation;
     vm.getUnassignedDragItems = getUnassignedDragItems;
+    vm.isLocationCorrect = isLocationCorrect;
+    vm.showSampleSolution = showSampleSolution;
+    vm.hideSampleSolution = hideSampleSolution;
+    vm.correctDragItemForDropLocation = correctDragItemForDropLocation;
+
+    var sampleSolutionMappings = DragAndDropQuestionUtil.solve(vm.question);
 
     /**
      * react to the drop event of a drag item
@@ -84,6 +91,65 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
         });
     }
 
+    /**
+     * Check if the assigned drag item fro the given location is correct
+     * (Only possible if vm.question.correctMappings is available)
+     *
+     * @param dropLocation {object} the drop location to check for correctness
+     * @return {boolean} true, if the drop location is correct, otherwise false
+     */
+    function isLocationCorrect(dropLocation) {
+        if (!vm.question.correctMappings) {
+            return false;
+        }
+        var validDragItems = vm.question.correctMappings
+            .filter(function (mapping) {
+                return mapping.dropLocation.id === dropLocation.id;
+            })
+            .map(function (mapping) {
+                return mapping.dragItem;
+            });
+        var selectedItem = dragItemForDropLocation(dropLocation);
+
+        if (selectedItem === null) {
+            return validDragItems.length === 0;
+        } else {
+            return validDragItems.some(function (dragItem) {
+                return dragItem.id === selectedItem.id;
+            });
+        }
+    }
+
+    /**
+     * Display a sample solution instead of the student's answer
+     */
+    function showSampleSolution() {
+        vm.showingSampleSolution = true;
+    }
+
+    /**
+     * Display the student's answer again
+     */
+    function hideSampleSolution() {
+        vm.showingSampleSolution = false;
+    }
+
+    /**
+     * Get the drag item that was mapped to the given drop location in the sample solution
+     *
+     * @param dropLocation {object} the drop location that the drag item should be mapped to
+     * @return {object | null} the mapped drag item, or null, if no drag item has been mapped to this location
+     */
+    function correctDragItemForDropLocation(dropLocation) {
+        var mapping = sampleSolutionMappings.find(function (mapping) {
+            return mapping.dropLocation.id === dropLocation.id;
+        });
+        if (mapping) {
+            return mapping.dragItem;
+        } else {
+            return null;
+        }
+    }
 }
 
 angular.module('artemisApp').component('dragAndDropQuestion', {

@@ -592,6 +592,26 @@
                 &.drop-hover > *{
                     opacity: 0.5;
                 }
+
+                &.results {
+                    border-color: green;
+                    background: rgb(170, 255, 170);
+
+                    > * {
+                        opacity: 0.8;
+                    }
+
+                    &.incorrect {
+                        border-color: red;
+                        background: rgb(255, 170, 170);
+                    }
+                }
+
+                &.sampleSolution {
+                    &.incorrect {
+                        border-color: orange;
+                    }
+                }
             }
         }
     }
@@ -606,6 +626,10 @@
 
     .drag-item {
         cursor: move;
+
+        &.results {
+            cursor: default;
+        }
 
         div {
             display: flex;
