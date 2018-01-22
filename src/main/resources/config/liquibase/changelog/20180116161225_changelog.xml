@@ -1,0 +1,44 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="Vale (generated)" id="1516115559434-1">
+        <createTable tableName="drag_and_drop_mapping">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints primaryKey="true" primaryKeyName="drag_and_drop_mappingPK"/>
+            </column>
+            <column name="drag_item_index" type="INT"/>
+            <column name="drop_location_index" type="INT"/>
+            <column name="drag_item_id" type="BIGINT"/>
+            <column name="drop_location_id" type="BIGINT"/>
+            <column name="question_id" type="BIGINT"/>
+            <column name="submitted_answer_id" type="BIGINT"/>
+            <column name="correct_mappings_order" type="INT"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-2">
+        <addForeignKeyConstraint baseColumnNames="drag_item_id" baseTableName="drag_and_drop_mapping" constraintName="FK5qmi3mh5y1mt9ysht4nx34nvf" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="drag_item"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-3">
+        <addForeignKeyConstraint baseColumnNames="question_id" baseTableName="drag_and_drop_mapping" constraintName="FK7p8h4scvkiilws9d5dxsdxkwy" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="question"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-4">
+        <addForeignKeyConstraint baseColumnNames="submitted_answer_id" baseTableName="drag_and_drop_mapping" constraintName="FKa9cfgroc0t8ujct9ux7ub1nyo" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="submitted_answer"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-5">
+        <addForeignKeyConstraint baseColumnNames="drop_location_id" baseTableName="drag_and_drop_mapping" constraintName="FKawq05c6hvxl400ouw5sg89xp9" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="drop_location"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-6">
+        <dropForeignKeyConstraint baseTableName="drag_and_drop_assignment" constraintName="FK3i875k6hd2xt8r30aljeuxyra"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-7">
+        <dropForeignKeyConstraint baseTableName="drag_and_drop_assignment" constraintName="FK5hleb1iju5w10rt1pxkvdkj6j"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-8">
+        <dropForeignKeyConstraint baseTableName="drag_and_drop_assignment" constraintName="FK826ppkt4idlhts2bpo5ipg881"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-9">
+        <dropForeignKeyConstraint baseTableName="drag_and_drop_assignment" constraintName="FKjoafuadgwc0jipk0adfno7w2l"/>
+    </changeSet>
+    <changeSet author="Vale (generated)" id="1516115559434-10">
+        <dropTable tableName="drag_and_drop_assignment"/>
+    </changeSet>
+</databaseChangeLog>

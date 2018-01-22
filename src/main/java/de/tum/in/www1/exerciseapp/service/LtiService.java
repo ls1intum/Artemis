@@ -219,7 +219,7 @@ public class LtiService {
             Optional<String> usernameLookupByEmail = artemisAuthenticationProvider.get().getUsernameForEmail(email);
 
             if (usernameLookupByEmail.isPresent()) {
-                log.debug("Signing in as {}", usernameLookupByEmail.get());
+                log.info("Signing in as {}", usernameLookupByEmail.get());
                 User user = artemisAuthenticationProvider.get().getOrCreateUser(new UsernamePasswordAuthenticationToken(usernameLookupByEmail.get(), ""), true);
 
                 return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(AuthoritiesConstants.USER))));
@@ -241,7 +241,7 @@ public class LtiService {
 
                 userRepository.save(newUser);
 
-                log.debug("Created user {}", username);
+                log.info("Created user {}", username);
 
                 return newUser;
             });

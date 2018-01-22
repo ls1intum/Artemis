@@ -3,14 +3,14 @@
 
     angular
         .module('artemisApp')
-        .controller('DragAndDropAssignmentDeleteController',DragAndDropAssignmentDeleteController);
+        .controller('DragAndDropMappingDeleteController',DragAndDropMappingDeleteController);
 
-    DragAndDropAssignmentDeleteController.$inject = ['$uibModalInstance', 'entity', 'DragAndDropAssignment'];
+    DragAndDropMappingDeleteController.$inject = ['$uibModalInstance', 'entity', 'DragAndDropMapping'];
 
-    function DragAndDropAssignmentDeleteController($uibModalInstance, entity, DragAndDropAssignment) {
+    function DragAndDropMappingDeleteController($uibModalInstance, entity, DragAndDropMapping) {
         var vm = this;
 
-        vm.dragAndDropAssignment = entity;
+        vm.dragAndDropMapping = entity;
         vm.clear = clear;
         vm.confirmDelete = confirmDelete;
 
@@ -19,7 +19,7 @@
         }
 
         function confirmDelete (id) {
-            DragAndDropAssignment.delete({id: id},
+            DragAndDropMapping.delete({id: id},
                 function () {
                     $uibModalInstance.close(true);
                 });

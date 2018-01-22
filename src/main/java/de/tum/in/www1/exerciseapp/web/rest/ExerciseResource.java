@@ -200,7 +200,7 @@ public class ExerciseResource {
             // user is student for this course
             result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal) : exerciseRepository.findByCourseId(courseId);
             // filter out exercises that are not released (or explicitly made visible to students) yet
-            result = result.stream().filter(Exercise::getIsVisibleToStudents).collect(Collectors.toList());
+            result = result.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         } else {
             result = exerciseRepository.findByCourseId(courseId);
         }

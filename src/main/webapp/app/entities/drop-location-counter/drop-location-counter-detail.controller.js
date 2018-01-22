@@ -13,7 +13,7 @@
         vm.dropLocationCounter = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('arTeMiSApp:dropLocationCounterUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:dropLocationCounterUpdate', function(event, result) {
             vm.dropLocationCounter = result;
         });
         $scope.$on('$destroy', unsubscribe);

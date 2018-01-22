@@ -13,7 +13,7 @@
         vm.answerCounter = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('arTeMiSApp:answerCounterUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:answerCounterUpdate', function(event, result) {
             vm.answerCounter = result;
         });
         $scope.$on('$destroy', unsubscribe);

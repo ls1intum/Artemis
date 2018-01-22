@@ -2,12 +2,12 @@
     'use strict';
     angular
         .module('artemisApp')
-        .factory('DragAndDropAssignment', DragAndDropAssignment);
+        .factory('DragAndDropMapping', DragAndDropMapping);
 
-    DragAndDropAssignment.$inject = ['$resource'];
+    DragAndDropMapping.$inject = ['$resource'];
 
-    function DragAndDropAssignment ($resource) {
-        var resourceUrl =  'api/drag-and-drop-assignments/:id';
+    function DragAndDropMapping ($resource) {
+        var resourceUrl =  'api/drag-and-drop-mappings/:id';
 
         return $resource(resourceUrl, {}, {
             'query': { method: 'GET', isArray: true},

@@ -33,7 +33,7 @@
         }
 
         function onSaveSuccess (result) {
-            $scope.$emit('arTeMiSApp:pointCounterUpdate', result);
+            $scope.$emit('artemisApp:pointCounterUpdate', result);
             $uibModalInstance.close(result);
             vm.isSaving = false;
         }

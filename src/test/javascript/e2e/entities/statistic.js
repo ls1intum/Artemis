@@ -24,7 +24,7 @@ describe('Statistic e2e test', function () {
         entityMenu.click();
         element.all(by.css('[ui-sref="statistic"]')).first().click().then(function() {
             element.all(by.css('h2')).first().getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/arTeMiSApp.statistic.home.title/);
+                expect(value).toMatch(/artemisApp.statistic.home.title/);
             });
         });
     });
@@ -32,7 +32,7 @@ describe('Statistic e2e test', function () {
     it('should load create Statistic dialog', function () {
         element(by.css('[ui-sref="statistic.new"]')).click().then(function() {
             element(by.css('h4.modal-title')).getAttribute('data-translate').then(function (value) {
-                expect(value).toMatch(/arTeMiSApp.statistic.home.createOrEditLabel/);
+                expect(value).toMatch(/artemisApp.statistic.home.createOrEditLabel/);
             });
             element(by.css('button.close')).click();
         });

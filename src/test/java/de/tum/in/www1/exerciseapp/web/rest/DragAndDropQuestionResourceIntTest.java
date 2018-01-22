@@ -1,9 +1,11 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
+
 import de.tum.in.www1.exerciseapp.domain.DragAndDropQuestion;
 import de.tum.in.www1.exerciseapp.repository.DragAndDropQuestionRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+import static de.tum.in.www1.exerciseapp.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -64,6 +67,7 @@ public class DragAndDropQuestionResourceIntTest {
         this.restDragAndDropQuestionMockMvc = MockMvcBuilders.standaloneSetup(dragAndDropQuestionResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
+            .setConversionService(createFormattingConversionService())
             .setMessageConverters(jacksonMessageConverter).build();
     }
 
@@ -116,7 +120,7 @@ public class DragAndDropQuestionResourceIntTest {
             .content(TestUtil.convertObjectToJsonBytes(dragAndDropQuestion)))
             .andExpect(status().isBadRequest());
 
-        // Validate the Alice in the database
+        // Validate the DragAndDropQuestion in the database
         List<DragAndDropQuestion> dragAndDropQuestionList = dragAndDropQuestionRepository.findAll();
         assertThat(dragAndDropQuestionList).hasSize(databaseSizeBeforeCreate);
     }

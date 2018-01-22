@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.DragItem;
+
 import de.tum.in.www1.exerciseapp.repository.DragItemRepository;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -27,6 +29,7 @@ public class DragItemResource {
     private static final String ENTITY_NAME = "dragItem";
 
     private final DragItemRepository dragItemRepository;
+
     public DragItemResource(DragItemRepository dragItemRepository) {
         this.dragItemRepository = dragItemRepository;
     }
@@ -83,7 +86,7 @@ public class DragItemResource {
     public List<DragItem> getAllDragItems() {
         log.debug("REST request to get all DragItems");
         return dragItemRepository.findAll();
-        }
+    }
 
     /**
      * GET  /drag-items/:id : get the "id" dragItem.
