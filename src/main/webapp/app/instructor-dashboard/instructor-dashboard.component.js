@@ -83,6 +83,8 @@
                 controller: ['$http', 'result', function ($http, result) {
                     var vm = this;
                     vm.details = result.feedbacks;
+                    console.log('details ', JSON.stringify(vm.details));
+
                 }],
                 resolve: {
                     result: result
