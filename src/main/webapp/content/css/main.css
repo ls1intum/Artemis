@@ -8619,6 +8619,8 @@ body.editor .navbar-brand span {
 
 .edit-dnd-question .markupEditorArea {
   margin-bottom: 14px; }
+  .edit-dnd-question .markupEditorArea .question-content > div {
+    height: 8em; }
 
 .edit-dnd-question .instructions {
   margin: 10px 0;

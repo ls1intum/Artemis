@@ -367,6 +367,12 @@
 .edit-dnd-question {
     .markupEditorArea {
         margin-bottom: 14px;
+
+        .question-content {
+            > div {
+                height: 8em;
+            }
+        }
     }
 
     .instructions {
