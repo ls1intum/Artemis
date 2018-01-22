@@ -33,9 +33,7 @@
                 >
                     <div class="drag-item" ng-if="vm.dragItemForDropLocation(dropLocation)" ui-draggable="true" drag="vm.dragItemForDropLocation(dropLocation)">
                         <img ng-if="vm.dragItemForDropLocation(dropLocation).pictureFilePath" ng-src="{{vm.dragItemForDropLocation(dropLocation).pictureFilePath}}">
-                        <div ng-if="!vm.dragItemForDropLocation(dropLocation).pictureFilePath">
-                            {{vm.dragItemForDropLocation(dropLocation).text}}
-                        </div>
+                        <div ng-if="!vm.dragItemForDropLocation(dropLocation).pictureFilePath" textfill="{{vm.dragItemForDropLocation(dropLocation).text}}"></div>
                     </div>
                 </div>
             </div>
@@ -46,9 +44,7 @@
         <div class="drag-items" ui-on-drop="vm.onDragDrop(null, $data)" drag-enter-class="drop-allowed" drag-hover-class="drop-hover">
             <div ng-repeat="dragItem in vm.getUnassignedDragItems()" class="drag-item" ui-draggable="true" drag="dragItem">
                 <img ng-if="dragItem.pictureFilePath" ng-src="{{dragItem.pictureFilePath}}">
-                <div ng-if="!dragItem.pictureFilePath">
-                    {{dragItem.text}}
-                </div>
+                <div ng-if="!dragItem.pictureFilePath" textfill="{{dragItem.text}}"></div>
             </div>
         </div>
     </div>
@@ -65,9 +61,7 @@
                 >
                     <div class="drag-item results" ng-if="vm.dragItemForDropLocation(dropLocation)">
                         <img ng-if="vm.dragItemForDropLocation(dropLocation).pictureFilePath" ng-src="{{vm.dragItemForDropLocation(dropLocation).pictureFilePath}}">
-                        <div ng-if="!vm.dragItemForDropLocation(dropLocation).pictureFilePath">
-                            {{vm.dragItemForDropLocation(dropLocation).text}}
-                        </div>
+                        <div ng-if="!vm.dragItemForDropLocation(dropLocation).pictureFilePath" textfill="{{vm.dragItemForDropLocation(dropLocation).text}}"></div>
                     </div>
                     <div class="drag-item results" ng-if="!vm.dragItemForDropLocation(dropLocation)">
                         <div></div>
@@ -82,9 +76,7 @@
                 >
                     <div class="drag-item results" ng-if="vm.correctDragItemForDropLocation(dropLocation)">
                         <img ng-if="vm.correctDragItemForDropLocation(dropLocation).pictureFilePath" ng-src="{{vm.correctDragItemForDropLocation(dropLocation).pictureFilePath}}">
-                        <div ng-if="!vm.correctDragItemForDropLocation(dropLocation).pictureFilePath">
-                            {{vm.correctDragItemForDropLocation(dropLocation).text}}
-                        </div>
+                        <div ng-if="!vm.correctDragItemForDropLocation(dropLocation).pictureFilePath" textfill="{{vm.correctDragItemForDropLocation(dropLocation).text}}"></div>
                     </div>
                     <div class="drag-item results" ng-if="!vm.correctDragItemForDropLocation(dropLocation)">
                         <div></div>

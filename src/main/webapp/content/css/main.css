@@ -8814,7 +8814,8 @@ body.editor .navbar-brand span {
     justify-content: center;
     text-align: center;
     width: 100%;
-    height: 100%; }
+    height: 100%;
+    padding: 10px; }
 
 .quiz-header,
 .quiz-content,
