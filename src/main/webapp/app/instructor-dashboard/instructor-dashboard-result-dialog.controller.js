@@ -26,6 +26,7 @@
 
         if(participationEntity) {
             entity.participation = participationEntity;
+            console.log('participation ' + JSON.stringify(entity.participation));
         } else {
             clear();
         }
