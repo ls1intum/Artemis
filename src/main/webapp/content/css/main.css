@@ -8589,6 +8589,11 @@ body.editor .navbar-brand span {
   .dnd-question .background-area img {
     width: 100%; }
 
+.edit-dnd-question .instructions,
+.dnd-question .instructions {
+  margin: 10px 0;
+  font-weight: bold; }
+
 .edit-dnd-question .drag-items,
 .dnd-question .drag-items {
   margin: 6px 0;
@@ -8621,10 +8626,6 @@ body.editor .navbar-brand span {
   margin-bottom: 14px; }
   .edit-dnd-question .markupEditorArea .question-content > div {
     height: 8em; }
-
-.edit-dnd-question .instructions {
-  margin: 10px 0;
-  font-weight: bold; }
 
 .edit-dnd-question .mapping-numbers-wrapper {
   position: absolute;

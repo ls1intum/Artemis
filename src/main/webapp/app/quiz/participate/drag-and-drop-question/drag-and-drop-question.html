@@ -40,6 +40,9 @@
                 </div>
             </div>
         </div>
+        <div class="instructions">
+            <span data-translate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
+        </div>
         <div class="drag-items" ui-on-drop="vm.onDragDrop(null, $data)" drag-enter-class="drop-allowed" drag-hover-class="drop-hover">
             <div ng-repeat="dragItem in vm.getUnassignedDragItems()" class="drag-item" ui-draggable="true" drag="dragItem">
                 <img ng-if="dragItem.pictureFilePath" ng-src="{{dragItem.pictureFilePath}}">

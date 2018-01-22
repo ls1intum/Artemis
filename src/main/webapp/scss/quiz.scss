@@ -332,6 +332,11 @@
         }
     }
 
+    .instructions {
+        margin: 10px 0;
+        font-weight: bold;
+    }
+
     .drag-items {
         margin: 6px 0;
 
@@ -373,11 +378,6 @@
                 height: 8em;
             }
         }
-    }
-
-    .instructions {
-        margin: 10px 0;
-        font-weight: bold;
     }
 
     .mapping-numbers-wrapper {
