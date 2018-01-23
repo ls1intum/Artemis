@@ -9,6 +9,7 @@
         var service = {
             solve: solve,
             allItemOptionsPossible: allItemOptionsPossible,
+            isMappedTogether: isMappedTogether,
             isSameDropLocationOrDragItem: isSameDropLocationOrDragItem
         };
 
@@ -18,14 +19,16 @@
          * Get a sample solution for the given drag and drop question
          *
          * @param question {object} the drag and drop question we want to solve
+         * @param [mappings] {Array} (optional) the mappings we try to use in the sample solution (this may contain incorrect mappings - they will be filtered out)
          * @return {Array} array of mappings that would solve this question (may be empty, if question is unsolvable)
          */
-        function solve(question) {
+        function solve(question, mappings) {
             if (!question.correctMappings) {
                 return [];
             }
 
             var sampleMappings = [];
+            var availableDragItems = question.dragItems;
 
             // filter out dropLocations that do not need to be mapped
             var remainingDropLocations = question.dropLocations.filter(function (dropLocation) {
@@ -34,8 +37,24 @@
                 });
             });
 
+            if (mappings) {
+                // add mappings that are already correct
+                mappings.forEach(function (mapping) {
+                    var correctMapping = getMapping(question.correctMappings, mapping.dragItem, mapping.dropLocation);
+                    if (correctMapping) {
+                        sampleMappings.push(correctMapping);
+                        remainingDropLocations = remainingDropLocations.filter(function (dropLocation) {
+                            return !isSameDropLocationOrDragItem(dropLocation, mapping.dropLocation);
+                        });
+                        availableDragItems = availableDragItems.filter(function (dragItem) {
+                            return !isSameDropLocationOrDragItem(dragItem, mapping.dragItem);
+                        });
+                    }
+                });
+            }
+
             // solve recursively
-            var solved = solveRec(question.correctMappings, remainingDropLocations, question.dragItems, sampleMappings);
+            var solved = solveRec(question.correctMappings, remainingDropLocations, availableDragItems, sampleMappings);
 
             if (solved) {
                 return sampleMappings;

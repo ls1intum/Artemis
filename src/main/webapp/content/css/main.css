@@ -8786,9 +8786,12 @@ body.editor .navbar-brand span {
     height: 100%;
     margin: 0;
     background: white; }
-    .dnd-question .background-area .click-layer .drop-location .drag-item div span,
-    .dnd-question .background-area .click-layer .drop-location drag-item div span {
-      border: none; }
+  .dnd-question .background-area .click-layer .drop-location .drag-item div {
+    padding: 6px; }
+    .dnd-question .background-area .click-layer .drop-location .drag-item div span {
+      border: none;
+      padding: 0;
+      width: 100%; }
   .dnd-question .background-area .click-layer .drop-location.drop-allowed > *,
   .dnd-question .background-area .click-layer .drop-location.drop-hover > * {
     opacity: 0.5; }

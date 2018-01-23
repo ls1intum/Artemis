@@ -23,7 +23,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
     vm.hideSampleSolution = hideSampleSolution;
     vm.correctDragItemForDropLocation = correctDragItemForDropLocation;
 
-    var sampleSolutionMappings = DragAndDropQuestionUtil.solve(vm.question);
+    var sampleSolutionMappings = DragAndDropQuestionUtil.solve(vm.question, vm.mappings);
 
     /**
      * react to the drop event of a drag item
@@ -34,9 +34,25 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
      */
     function onDragDrop(dropLocation, dragItem) {
         if (dropLocation) {
-            // remove existing mappings that contain the drop location or the drag item
+            // check if this mapping is new
+            if (DragAndDropQuestionUtil.isMappedTogether(vm.mappings, dragItem, dropLocation)) {
+                // Do nothing
+                return;
+            }
+
+            // remove existing mappings that contain the drop location or drag item and save their old partners
+            var oldDragItem;
+            var oldDropLocation;
             vm.mappings = vm.mappings.filter(function (mapping) {
-                return mapping.dropLocation.id !== dropLocation.id && mapping.dragItem.id !== dragItem.id;
+                if (DragAndDropQuestionUtil.isSameDropLocationOrDragItem(dropLocation, mapping.dropLocation)) {
+                    oldDragItem = mapping.dragItem;
+                    return false;
+                }
+                if (DragAndDropQuestionUtil.isSameDropLocationOrDragItem(dragItem, mapping.dragItem)) {
+                    oldDropLocation = mapping.dropLocation;
+                    return false;
+                }
+                return true;
             });
 
             // add new mapping
@@ -44,6 +60,15 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
                 dropLocation: dropLocation,
                 dragItem: dragItem
             });
+
+            // map oldDragItem and oldDropLocation, if they exist
+            // this flips positions of drag items when a drag item is dropped on a drop location with an existing drag item
+            if (oldDragItem && oldDropLocation) {
+                vm.mappings.push({
+                    dropLocation: oldDropLocation,
+                    dragItem: oldDragItem
+                });
+            }
         } else {
             var lengthBefore = vm.mappings.length;
             // remove existing mapping that contains the drag item

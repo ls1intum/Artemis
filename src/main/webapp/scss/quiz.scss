@@ -594,10 +594,16 @@
                     height: 100%;
                     margin: 0;
                     background: white;
+                }
 
+                .drag-item {
                     div {
+                        padding: 6px;
+
                         span {
                             border: none;
+                            padding: 0;
+                            width: 100%;
                         }
                     }
                 }
