@@ -8779,8 +8779,9 @@ body.editor .navbar-brand span {
 
 .dnd-question .background-area .click-layer .drop-location {
   background: white;
-  border: 2px solid mediumpurple; }
-  .dnd-question .background-area .click-layer .drop-location .drag-item {
+  border: 1px dashed black; }
+  .dnd-question .background-area .click-layer .drop-location .drag-item,
+  .dnd-question .background-area .click-layer .drop-location drag-item {
     width: 100%;
     height: 100%;
     margin: 0; }
@@ -8791,12 +8792,15 @@ body.editor .navbar-brand span {
     border-color: green;
     background: #aaffaa; }
     .dnd-question .background-area .click-layer .drop-location.results > * {
-      opacity: 0.8; }
+      opacity: 0.9; }
     .dnd-question .background-area .click-layer .drop-location.results.incorrect {
       border-color: red;
       background: #ffaaaa; }
-  .dnd-question .background-area .click-layer .drop-location.sampleSolution.incorrect {
-    border-color: orange; }
+  .dnd-question .background-area .click-layer .drop-location.sampleSolution {
+    border-color: black;
+    background: lightgrey; }
+    .dnd-question .background-area .click-layer .drop-location.sampleSolution > * {
+      opacity: 0.9; }
 
 .dnd-question .drop-allowed {
   background: lightblue !important; }
@@ -8804,10 +8808,20 @@ body.editor .navbar-brand span {
 .dnd-question .drop-hover {
   background: lightgreen !important; }
 
+.dnd-question .drag-items {
+  background: #eee; }
+
 .dnd-question .drag-item {
-  cursor: move; }
-  .dnd-question .drag-item.results {
-    cursor: default; }
+  background: transparent;
+  border: none; }
+  .dnd-question .drag-item.no-click * {
+    cursor: default !important; }
+  .dnd-question .drag-item .drag-item-picture {
+    cursor: move;
+    width: 0;
+    height: 0;
+    padding: 0;
+    margin: 0; }
   .dnd-question .drag-item div {
     display: flex;
     align-items: center;
@@ -8817,6 +8831,12 @@ body.editor .navbar-brand span {
     height: 100%;
     padding: 10px;
     white-space: pre-wrap; }
+    .dnd-question .drag-item div span {
+      cursor: move;
+      color: black;
+      background: white;
+      border: 1px solid black;
+      padding: 5px; }
 
 .quiz-header,
 .quiz-content,

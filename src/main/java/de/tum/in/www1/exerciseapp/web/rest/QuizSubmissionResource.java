@@ -111,10 +111,13 @@ public class QuizSubmissionResource {
                 }
                 if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
-                    // get submission from cache, if it exists
-                    QuizSubmission cachedSubmission = QuizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
-                    if (cachedSubmission != null) {
-                        submission = cachedSubmission;
+                    // get submission from cache, if it exists and submission is not submitted already
+                    QuizSubmission cachedSubmission = null;
+                    if (!submission.isSubmitted()) {
+                        cachedSubmission = QuizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
+                        if (cachedSubmission != null) {
+                            submission = cachedSubmission;
+                        }
                     }
 
                     // remove scores from submission if quiz hasn't ended yet

@@ -18,7 +18,7 @@
             scope: {
                 textfill: '@'
             },
-            template: '<span>{{textfill}}</span>',
+            template: '',
             link: function (scope, element, attr) {
                 var options = {
                     innerTag: attr.innerTag || "span",
@@ -40,16 +40,12 @@
                 scope.$watch('textfill', runTextFill);
 
                 // react to resize event
-                function onResize() {
-                    runTextFill();
-                    scope.$digest();
-                }
-                angular.element($window).bind('resize', onResize);
-
-                // clean up when element is removed
-                scope.$on('$destroy', function () {
-                    angular.element($window).unbind('resize', onResize);
-                });
+                scope.$watch(
+                    function () {
+                        return [element[0].offsetWidth, element[0].offsetHeight].join('x');
+                    },
+                    runTextFill
+                );
             }
         };
     }
