@@ -30,7 +30,9 @@
             "addMappingsInstructions": "Drag items onto drop locations to define correct solutions.",
             "addDragItemPicture": "Add Picture Drag Item",
             "addDragItemText": "Add Text Drag Item",
-            "studentInstructions": "Drag & Drop: Place the items below on the marked areas above."
+            "studentInstructions": "Drag & Drop: Place the items below on the marked areas above.",
+            "showingYourAnswer": "Your Submission:",
+            "showingSampleSolution": "Sample Solution:"
         }
     }
 }

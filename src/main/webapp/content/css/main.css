@@ -8784,7 +8784,11 @@ body.editor .navbar-brand span {
   .dnd-question .background-area .click-layer .drop-location drag-item {
     width: 100%;
     height: 100%;
-    margin: 0; }
+    margin: 0;
+    background: white; }
+    .dnd-question .background-area .click-layer .drop-location .drag-item div span,
+    .dnd-question .background-area .click-layer .drop-location drag-item div span {
+      border: none; }
   .dnd-question .background-area .click-layer .drop-location.drop-allowed > *,
   .dnd-question .background-area .click-layer .drop-location.drop-hover > * {
     opacity: 0.5; }
@@ -8792,15 +8796,27 @@ body.editor .navbar-brand span {
     border-color: green;
     background: #aaffaa; }
     .dnd-question .background-area .click-layer .drop-location.results > * {
-      opacity: 0.9; }
+      opacity: 0.8; }
     .dnd-question .background-area .click-layer .drop-location.results.incorrect {
       border-color: red;
       background: #ffaaaa; }
   .dnd-question .background-area .click-layer .drop-location.sampleSolution {
     border-color: black;
-    background: lightgrey; }
+    background: white; }
     .dnd-question .background-area .click-layer .drop-location.sampleSolution > * {
-      opacity: 0.9; }
+      opacity: 1; }
+  .dnd-question .background-area .click-layer .drop-location .result-symbol {
+    color: orange;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 1;
+    opacity: 1;
+    -webkit-transform: translate3d(-63%, -63%, 0);
+    -moz-transform: translate3d(-63%, -63%, 0);
+    -ms-transform: translate3d(-63%, -63%, 0);
+    -o-transform: translate3d(-63%, -63%, 0);
+    transform: translate3d(-63%, -63%, 0); }
 
 .dnd-question .drop-allowed {
   background: lightblue !important; }
@@ -8815,7 +8831,11 @@ body.editor .navbar-brand span {
   background: transparent;
   border: none; }
   .dnd-question .drag-item.no-click * {
-    cursor: default !important; }
+    cursor: default !important;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none; }
   .dnd-question .drag-item .drag-item-picture {
     cursor: move;
     width: 0;
@@ -8829,14 +8849,13 @@ body.editor .navbar-brand span {
     text-align: center;
     width: 100%;
     height: 100%;
-    padding: 10px;
     white-space: pre-wrap; }
     .dnd-question .drag-item div span {
       cursor: move;
       color: black;
       background: white;
       border: 1px solid black;
-      padding: 5px; }
+      padding: 10px; }
 
 .quiz-header,
 .quiz-content,

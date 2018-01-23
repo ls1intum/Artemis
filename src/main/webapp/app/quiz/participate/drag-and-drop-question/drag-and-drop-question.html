@@ -1,7 +1,7 @@
 <div class="dnd-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult, incorrect: (vm.score || 0) < vm.question.score}">
     <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
     <p ng-bind-html="vm.rendered.text"></p>
-    <h4>
+    <h4 ng-if="vm.question.hint || vm.question.explanation">
         <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
             <i class="fa fa-question-circle-o"></i>
             <span data-translate="artemisApp.question.hint"></span>
@@ -44,6 +44,10 @@
         </div>
     </div>
     <div class="result" ng-if="vm.showResult">
+        <div class="instructions">
+            <span data-translate="artemisApp.dragAndDropQuestion.showingSampleSolution" ng-if="vm.showingSampleSolution"></span>
+            <span data-translate="artemisApp.dragAndDropQuestion.showingYourAnswer" ng-if="!vm.showingSampleSolution"></span>
+        </div>
         <div class="background-area">
             <img ng-src="{{vm.question.backgroundFilePath}}">
             <div class="click-layer">
@@ -54,6 +58,9 @@
                     ng-class="{incorrect: !vm.isLocationCorrect(dropLocation)}"
                     ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                 >
+                    <div class="result-symbol" ng-if="!vm.isLocationCorrect(dropLocation)">
+                        <i class="fa fa-2x fa-exclamation-triangle warning"></i>
+                    </div>
                     <drag-item ng-if="vm.dragItemForDropLocation(dropLocation)" drag-item="vm.dragItemForDropLocation(dropLocation)" click-disabled="true"></drag-item>
                     <div class="drag-item no-click" ng-if="!vm.dragItemForDropLocation(dropLocation)">
                         <div></div>
@@ -66,6 +73,9 @@
                     ng-class="{incorrect: !vm.isLocationCorrect(dropLocation)}"
                     ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                 >
+                    <div class="result-symbol" ng-if="!vm.isLocationCorrect(dropLocation)">
+                        <i class="fa fa-2x fa-exclamation-triangle warning"></i>
+                    </div>
                     <drag-item ng-if="vm.correctDragItemForDropLocation(dropLocation)" drag-item="vm.correctDragItemForDropLocation(dropLocation)" click-disabled="true"></drag-item>
                     <div class="drag-item no-click" ng-if="!vm.correctDragItemForDropLocation(dropLocation)">
                         <div></div>
