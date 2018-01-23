@@ -59,6 +59,7 @@
         vm.showDropdown = showDropdown;
         vm.pendingChanges = pendingChanges;
         vm.validQuiz = validQuiz;
+        vm.invalidReasons = invalidReasons;
         vm.invalidReasonsHTML = invalidReasonsHTML;
         vm.openCalendar = openCalendar;
         vm.addMultipleChoiceQuestion = addMultipleChoiceQuestion;
@@ -182,7 +183,7 @@
                             return answerOption.isCorrect;
                         });
                     case "drag-and-drop":
-                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0 && DragAndDropQuestionUtil.solve(question).length;
+                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0 && DragAndDropQuestionUtil.solve(question).length && DragAndDropQuestionUtil.allItemOptionsPossible(question);
                     default:
                         return question.title && question.title !== "";
                 }
@@ -239,6 +240,12 @@
                             translateValues: {index: index + 1}
                         });
                     }
+                    if (!DragAndDropQuestionUtil.allItemOptionsPossible(question)) {
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.notAllItemOptionsPossible",
+                            translateValues: {index: index + 1}
+                        });
+                    }
                 }
             });
             return reasons;
@@ -260,7 +267,6 @@
          */
         function save() {
             if (!validQuiz()) {
-                alert("Error: Cannot save invalid quiz.");
                 return;
             }
             vm.isSaving = true;

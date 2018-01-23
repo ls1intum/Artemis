@@ -8,6 +8,7 @@
     function DragAndDropQuestionUtil() {
         var service = {
             solve: solve,
+            allItemOptionsPossible: allItemOptionsPossible,
             isSameDropLocationOrDragItem: isSameDropLocationOrDragItem
         };
 
@@ -59,12 +60,9 @@
 
             var dropLocation = remainingDropLocations[0];
             return availableDragItems.some(function (dragItem, index) {
-                var newMapping = correctMappings.find(function (mapping) {
-                    return isSameDropLocationOrDragItem(dropLocation, mapping.dropLocation) &&
-                        isSameDropLocationOrDragItem(dragItem, mapping.dragItem);
-                });
-                if (newMapping) {
-                    sampleMappings.push(newMapping); // add new mapping
+                var correctMapping = getMapping(correctMappings, dragItem, dropLocation);
+                if (correctMapping) {
+                    sampleMappings.push(correctMapping); // add new mapping
                     remainingDropLocations.splice(0, 1); // remove first dropLocation
                     availableDragItems.splice(index, 1); // remove the used dragItem
                     var solved = solveRec(correctMappings, remainingDropLocations, availableDragItems, sampleMappings);
@@ -81,7 +79,119 @@
         }
 
         /**
+         * Check if when there are multiple options for a drop location, you can actually place each of them
+         * and still end up with a 100% correct solution
+         *
+         * @param question {object} the question to check
+         * @return {boolean} true, if it is possible, otherwise false
+         */
+        function allItemOptionsPossible(question) {
+            if (!question.dragItems || !question.dropLocations || !question.correctMappings) {
+                // incomplete question
+                return true;
+            }
+            // go through all pairs of drag items
+            for (var i = 0; i < question.dragItems.length; i++) {
+                for (var j = 0; j < i; j++) {
+                    // if these two drag items have one common drop location, they must share all drop locations
+                    var dragItem1 = question.dragItems[i];
+                    var dragItem2 = question.dragItems[j];
+                    var shareOneDropLocation = question.dropLocations.some(function (dropLocation) {
+                        var isMappedWithDragItem1 = isMappedTogether(question.correctMappings, dragItem1, dropLocation);
+                        var isMappedWithDragItem2 = isMappedTogether(question.correctMappings, dragItem2, dropLocation);
+
+                        return isMappedWithDragItem1 && isMappedWithDragItem2;
+                    });
+                    if (shareOneDropLocation) {
+                        var allDropLocationsForDragItem1 = getAllDropLocationsForDragItem(question.correctMappings, dragItem1);
+                        var allDropLocationsForDragItem2 = getAllDropLocationsForDragItem(question.correctMappings, dragItem2);
+                        if (!isSameSetOfDropLocationsOrDragItems(allDropLocationsForDragItem1, allDropLocationsForDragItem2)) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Check if the given dragItem and dropLocation are mapped together in the given mappings
+         *
+         * @param mappings {Array} the existing mappings to consider
+         * @param dragItem {object} the drag item to search for
+         * @param dropLocation {object} the drop location to search for
+         * @return {boolean} true if they are mapped together, otherwise false
+         */
+        function isMappedTogether(mappings, dragItem, dropLocation) {
+            return !!getMapping(mappings, dragItem, dropLocation);
+        }
+
+        /**
+         * Get the mapping that maps the given dragItem and dropLocation together
+         *
+         * @param mappings {Array} the existing mappings to consider
+         * @param dragItem {object} the drag item to search for
+         * @param dropLocation {object} the drop location to search for
+         * @return {object | null} the found mapping, or null if it doesn't exist
+         */
+        function getMapping(mappings, dragItem, dropLocation) {
+            return mappings.find(function (mapping) {
+                return (
+                    isSameDropLocationOrDragItem(dropLocation, mapping.dropLocation)
+                    &&
+                    isSameDropLocationOrDragItem(dragItem, mapping.dragItem)
+                );
+            });
+        }
+
+        /**
+         * Get all drop locations that are mapped to the given drag items
+         *
+         * @param mappings {Array} the existing mappings to consider
+         * @param dragItem {object} the drag item that the returned drop locations have to be mapped to
+         * @return {Array} the resulting drop locations
+         */
+        function getAllDropLocationsForDragItem(mappings, dragItem) {
+            return mappings
+                .filter(function (mapping) {
+                    return isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
+                })
+                .map(function (mapping) {
+                    return mapping.dropLocation;
+                });
+        }
+
+        /**
+         * Check if set1 and set2 contain the same drag items or drop locations
+         *
+         * @param set1 {Array} one set of drag items or drop locations
+         * @param set2 {Array} another set of drag items or drop locations
+         * @return {boolean} true if the sets contain the same items, otherwise false
+         */
+        function isSameSetOfDropLocationsOrDragItems(set1, set2) {
+            if (set1.length !== set2.length) {
+                // different number of elements => impossible to contain the same elements
+                return false;
+            }
+            return (
+                // for every element in set1 there has to be an identical element in set2 and vice versa
+                set1.every(function (element1) {
+                    return set2.some(function (element2) {
+                        return isSameDropLocationOrDragItem(element1, element2);
+                    });
+                })
+                &&
+                set2.every(function (element2) {
+                    return set1.some(function (element1) {
+                        return isSameDropLocationOrDragItem(element1, element2);
+                    });
+                })
+            );
+        }
+
+        /**
          * compare if the two objects are the same drag item or drop location
+         *
          * @param a {object} a drag item or drop location
          * @param b {object} another drag item or drop location
          * @return {boolean}

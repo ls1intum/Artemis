@@ -15,7 +15,7 @@
             "edit": {
                 "title": "Edit Quiz Exercise for {{ param }}",
                 "addQuestion": "Add Question",
-                "invalidInput": "Invalid Input!",
+                "invalidInput": "Invalid Input",
                 "pendingChanges": "Unsaved Changes",
                 "saving": "Saving…",
                 "saved": "Saved!"
@@ -61,7 +61,8 @@
                 "questionTitle": "Question {{index}}: Title is missing.",
                 "questionCorrectAnswerOption": "Question {{index}}: No correct answer option.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
-                "questionUnsolvable": "Question {{index}}: Impossible to answer correctly."
+                "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
+                "notAllItemOptionsPossible": "Question {{index}}: You have defined correct mappings, that when used make it impossible to answer the question correctly."
             }
         }
     }
