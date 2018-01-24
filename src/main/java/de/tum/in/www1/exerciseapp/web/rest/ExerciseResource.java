@@ -195,8 +195,9 @@ public class ExerciseResource {
         }
 
         List<Exercise> result;
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (user.getGroups().contains(course.getStudentGroupName())) {
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
             // user is student for this course
             result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal) : exerciseRepository.findByCourseId(courseId);
             // filter out exercises that are not released (or explicitly made visible to students) yet
