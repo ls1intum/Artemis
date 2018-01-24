@@ -8448,7 +8448,8 @@ body.editor .navbar-brand span {
   margin-bottom: 18px;
   padding: 20px;
   background: #fefefe; }
-  .question .mc-question {
+  .question .mc-question,
+  .question .dnd-question {
     width: 100%;
     box-sizing: border-box;
     border: none;
@@ -8475,7 +8476,8 @@ body.editor .navbar-brand span {
   .question .question-content > div {
     height: 12em; }
 
-.mc-question {
+.mc-question,
+.dnd-question {
   position: relative;
   width: 100%;
   box-sizing: border-box;
@@ -8483,70 +8485,147 @@ body.editor .navbar-brand span {
   margin-bottom: 18px;
   padding: 20px;
   background: #fefefe; }
-  .mc-question h2 {
+  .mc-question h2,
+  .dnd-question h2 {
     margin: 0 90px 0 0; }
-    .mc-question h2 span {
+    .mc-question h2 span,
+    .dnd-question h2 span {
       color: grey; }
-  .mc-question p {
+  .mc-question p,
+  .dnd-question p {
     margin: 10px 0;
     font-size: 16px; }
-  .mc-question.result {
+  .mc-question.result,
+  .dnd-question.result {
     border-color: green; }
-    .mc-question.result.incorrect {
+    .mc-question.result.incorrect,
+    .dnd-question.result.incorrect {
       border-color: orange; }
-  .mc-question .question-score {
+  .mc-question .question-score,
+  .dnd-question .question-score {
     position: absolute;
     top: 20px;
     right: 20px; }
-    .mc-question .question-score.result {
+    .mc-question .question-score.result,
+    .dnd-question .question-score.result {
       font-weight: bold;
       color: green; }
-      .mc-question .question-score.result.incorrect {
+      .mc-question .question-score.result.incorrect,
+      .dnd-question .question-score.result.incorrect {
         color: orange; }
-  .mc-question .label {
+  .mc-question .label,
+  .dnd-question .label {
     cursor: pointer;
     margin: 2px 0; }
-  .mc-question .answer-options {
+  .mc-question .answer-options,
+  .dnd-question .answer-options {
     margin-top: 20px; }
-  .mc-question .answer-option {
+  .mc-question .answer-option,
+  .dnd-question .answer-option {
     display: flex;
     align-items: center;
     outline: none !important;
     border: 1px solid lightgrey;
     margin: 4px 0;
     padding: 6px 10px; }
-    .mc-question .answer-option .selection {
+    .mc-question .answer-option .selection,
+    .dnd-question .answer-option .selection {
       width: 36px;
       margin-left: 16px; }
-    .mc-question .answer-option .content {
+    .mc-question .answer-option .content,
+    .dnd-question .answer-option .content {
       display: flex;
       flex: 1;
       align-items: center; }
-      .mc-question .answer-option .content .text {
+      .mc-question .answer-option .content .text,
+      .dnd-question .answer-option .content .text {
         flex: 1;
         padding-right: 8px;
         font-size: 16px; }
-      .mc-question .answer-option .content .hint {
+      .mc-question .answer-option .content .hint,
+      .dnd-question .answer-option .content .hint {
         display: flex;
         flex-direction: column;
         align-items: flex-end;
         font-size: 18px; }
-    .mc-question .answer-option:hover {
+    .mc-question .answer-option:hover,
+    .dnd-question .answer-option:hover {
       background: #fafafa; }
-    .mc-question .answer-option.click-disabled {
+    .mc-question .answer-option.click-disabled,
+    .dnd-question .answer-option.click-disabled {
       cursor: not-allowed; }
-      .mc-question .answer-option.click-disabled:hover {
+      .mc-question .answer-option.click-disabled:hover,
+      .dnd-question .answer-option.click-disabled:hover {
         background: inherit; }
-  .mc-question.disabled {
+  .mc-question.disabled,
+  .dnd-question.disabled {
     color: dimgrey;
     background: #fafafa; }
 
-.edit-dnd-question .markupEditorArea {
-  margin-bottom: 14px; }
+.edit-dnd-question .background-area,
+.dnd-question .background-area {
+  position: relative;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none; }
+  .edit-dnd-question .background-area .click-layer,
+  .dnd-question .background-area .click-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 1; }
+    .edit-dnd-question .background-area .click-layer .drop-location,
+    .dnd-question .background-area .click-layer .drop-location {
+      position: absolute;
+      z-index: 1;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      justify-content: flex-end; }
+  .edit-dnd-question .background-area img,
+  .dnd-question .background-area img {
+    width: 100%; }
 
-.edit-dnd-question .instructions {
+.edit-dnd-question .instructions,
+.dnd-question .instructions {
   margin: 10px 0;
   font-weight: bold; }
+
+.edit-dnd-question .drag-items,
+.dnd-question .drag-items {
+  margin: 6px 0;
+  width: 100%;
+  min-height: 180px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-evenly; }
+
+.edit-dnd-question .drag-item,
+.dnd-question .drag-item {
+  position: relative;
+  height: 160px;
+  width: 160px;
+  margin: 10px 4px;
+  border: 1px solid dimgrey;
+  background: #fafafa; }
+  .edit-dnd-question .drag-item img,
+  .dnd-question .drag-item img {
+    max-height: 100%;
+    max-width: 100%;
+    margin: auto;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%; }
+
+.edit-dnd-question .markupEditorArea {
+  margin-bottom: 14px; }
+  .edit-dnd-question .markupEditorArea .question-content > div {
+    height: 8em; }
 
 .edit-dnd-question .mapping-numbers-wrapper {
   position: absolute;
@@ -8626,114 +8705,160 @@ body.editor .navbar-brand span {
 .edit-dnd-question .mapping-color-0 {
   background: #2c3e50; }
 
-.edit-dnd-question .background-area {
-  position: relative;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none; }
-  .edit-dnd-question .background-area .click-layer {
+.edit-dnd-question .background-area .click-layer {
+  cursor: crosshair !important; }
+  .edit-dnd-question .background-area .click-layer.disabled {
+    cursor: not-allowed !important; }
+  .edit-dnd-question .background-area .click-layer .drop-location {
+    border: 1px dashed mediumpurple;
+    cursor: move !important;
+    background: rgba(255, 255, 255, 0.5); }
+    .edit-dnd-question .background-area .click-layer .drop-location:hover {
+      background: rgba(255, 255, 255, 0.8); }
+    .edit-dnd-question .background-area .click-layer .drop-location .dimensions {
+      position: absolute;
+      left: 2px;
+      bottom: 0;
+      font-size: 14px; }
+    .edit-dnd-question .background-area .click-layer .drop-location .resize {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: mediumpurple; }
+      .edit-dnd-question .background-area .click-layer .drop-location .resize.top {
+        top: -3px; }
+      .edit-dnd-question .background-area .click-layer .drop-location .resize.middle {
+        top: calc(50% - 3px);
+        cursor: col-resize; }
+      .edit-dnd-question .background-area .click-layer .drop-location .resize.bottom {
+        bottom: -3px; }
+      .edit-dnd-question .background-area .click-layer .drop-location .resize.left {
+        left: -3px; }
+      .edit-dnd-question .background-area .click-layer .drop-location .resize.center {
+        left: calc(50% - 3px);
+        cursor: row-resize; }
+      .edit-dnd-question .background-area .click-layer .drop-location .resize.right {
+        right: -3px; }
+      .edit-dnd-question .background-area .click-layer .drop-location .resize.top.left, .edit-dnd-question .background-area .click-layer .drop-location .resize.bottom.right {
+        cursor: nwse-resize; }
+      .edit-dnd-question .background-area .click-layer .drop-location .resize.top.right, .edit-dnd-question .background-area .click-layer .drop-location .resize.bottom.left {
+        cursor: nesw-resize; }
+
+.edit-dnd-question .drop-allowed {
+  background: rgba(173, 216, 230, 0.8) !important; }
+
+.edit-dnd-question .drop-hover {
+  background: rgba(144, 238, 144, 0.8) !important; }
+
+.edit-dnd-question .drag-item textarea {
+  position: absolute;
+  left: 0;
+  top: 30px;
+  width: 158px;
+  height: 98px;
+  padding: 0 14px;
+  text-align: center;
+  border: none;
+  resize: none; }
+  .edit-dnd-question .drag-item textarea:focus {
+    z-index: 20; }
+
+.edit-dnd-question .drag-item .delete-button {
+  position: absolute;
+  top: 4px;
+  right: 2px; }
+
+.edit-dnd-question .drag-item .drag-handle-wrapper {
+  position: absolute;
+  top: 4px;
+  left: 2px;
+  cursor: move;
+  display: flex;
+  align-items: center;
+  padding: 4px; }
+
+.dnd-question .background-area .click-layer .drop-location {
+  background: white;
+  border: 1px dashed black; }
+  .dnd-question .background-area .click-layer .drop-location .drag-item,
+  .dnd-question .background-area .click-layer .drop-location drag-item {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: white; }
+  .dnd-question .background-area .click-layer .drop-location .drag-item div {
+    padding: 6px; }
+    .dnd-question .background-area .click-layer .drop-location .drag-item div span {
+      border: none;
+      padding: 0;
+      width: 100%; }
+  .dnd-question .background-area .click-layer .drop-location.drop-allowed > *,
+  .dnd-question .background-area .click-layer .drop-location.drop-hover > * {
+    opacity: 0.5; }
+  .dnd-question .background-area .click-layer .drop-location.results {
+    border-color: green;
+    background: #aaffaa; }
+    .dnd-question .background-area .click-layer .drop-location.results > * {
+      opacity: 0.8; }
+    .dnd-question .background-area .click-layer .drop-location.results.incorrect {
+      border-color: red;
+      background: #ffaaaa; }
+  .dnd-question .background-area .click-layer .drop-location.sampleSolution {
+    border-color: black;
+    background: white; }
+    .dnd-question .background-area .click-layer .drop-location.sampleSolution > * {
+      opacity: 1; }
+  .dnd-question .background-area .click-layer .drop-location .result-symbol {
+    color: orange;
     position: absolute;
     top: 0;
     left: 0;
-    bottom: 0;
-    right: 0;
-    cursor: crosshair !important;
-    z-index: 1; }
-    .edit-dnd-question .background-area .click-layer.disabled {
-      cursor: not-allowed !important; }
-    .edit-dnd-question .background-area .click-layer .drop-location {
-      position: absolute;
-      border: 1px dashed mediumpurple;
-      background: rgba(255, 255, 255, 0.5);
-      z-index: 1;
-      display: flex;
-      flex-direction: row;
-      align-items: flex-start;
-      justify-content: flex-end;
-      cursor: move !important; }
-      .edit-dnd-question .background-area .click-layer .drop-location:hover {
-        background: rgba(255, 255, 255, 0.8); }
-      .edit-dnd-question .background-area .click-layer .drop-location.drop-allowed {
-        background: rgba(173, 216, 230, 0.8); }
-      .edit-dnd-question .background-area .click-layer .drop-location.drop-hover {
-        background: rgba(144, 238, 144, 0.8); }
-      .edit-dnd-question .background-area .click-layer .drop-location .dimensions {
-        position: absolute;
-        left: 2px;
-        bottom: 0;
-        font-size: 14px; }
-      .edit-dnd-question .background-area .click-layer .drop-location .resize {
-        position: absolute;
-        width: 6px;
-        height: 6px;
-        background: mediumpurple; }
-        .edit-dnd-question .background-area .click-layer .drop-location .resize.top {
-          top: -3px; }
-        .edit-dnd-question .background-area .click-layer .drop-location .resize.middle {
-          top: calc(50% - 3px);
-          cursor: col-resize; }
-        .edit-dnd-question .background-area .click-layer .drop-location .resize.bottom {
-          bottom: -3px; }
-        .edit-dnd-question .background-area .click-layer .drop-location .resize.left {
-          left: -3px; }
-        .edit-dnd-question .background-area .click-layer .drop-location .resize.center {
-          left: calc(50% - 3px);
-          cursor: row-resize; }
-        .edit-dnd-question .background-area .click-layer .drop-location .resize.right {
-          right: -3px; }
-        .edit-dnd-question .background-area .click-layer .drop-location .resize.top.left, .edit-dnd-question .background-area .click-layer .drop-location .resize.bottom.right {
-          cursor: nwse-resize; }
-        .edit-dnd-question .background-area .click-layer .drop-location .resize.top.right, .edit-dnd-question .background-area .click-layer .drop-location .resize.bottom.left {
-          cursor: nesw-resize; }
-  .edit-dnd-question .background-area img {
-    width: 100%; }
+    z-index: 1;
+    opacity: 1;
+    -webkit-transform: translate3d(-63%, -63%, 0);
+    -moz-transform: translate3d(-63%, -63%, 0);
+    -ms-transform: translate3d(-63%, -63%, 0);
+    -o-transform: translate3d(-63%, -63%, 0);
+    transform: translate3d(-63%, -63%, 0); }
 
-.edit-dnd-question .drag-items {
-  margin: 6px 0;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-evenly; }
-  .edit-dnd-question .drag-items .drag-item {
-    position: relative;
-    height: 160px;
-    width: 160px;
-    margin: 4px 4px 18px;
-    border: 1px solid dimgrey;
-    background: #fafafa; }
-    .edit-dnd-question .drag-items .drag-item img {
-      max-height: 100%;
-      max-width: 100%;
-      margin: auto;
-      position: absolute;
-      transform: translate(-50%, -50%);
-      top: 50%;
-      left: 50%; }
-    .edit-dnd-question .drag-items .drag-item textarea {
-      position: absolute;
-      left: 0;
-      top: 30px;
-      width: 158px;
-      height: 98px;
-      padding: 0 14px;
-      text-align: center;
-      border: none;
-      resize: none; }
-      .edit-dnd-question .drag-items .drag-item textarea:focus {
-        z-index: 20; }
-    .edit-dnd-question .drag-items .drag-item .delete-button {
-      position: absolute;
-      top: 4px;
-      right: 2px; }
-    .edit-dnd-question .drag-items .drag-item .drag-handle-wrapper {
-      position: absolute;
-      top: 4px;
-      left: 2px;
+.dnd-question .drop-allowed {
+  background: lightblue !important; }
+
+.dnd-question .drop-hover {
+  background: lightgreen !important; }
+
+.dnd-question .drag-items {
+  background: #eee; }
+
+.dnd-question .drag-item {
+  background: transparent;
+  border: none; }
+  .dnd-question .drag-item.no-click * {
+    cursor: default !important;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none; }
+  .dnd-question .drag-item .drag-item-picture {
+    cursor: move;
+    width: 0;
+    height: 0;
+    padding: 0;
+    margin: 0; }
+  .dnd-question .drag-item div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+    height: 100%;
+    white-space: pre-wrap; }
+    .dnd-question .drag-item div span {
       cursor: move;
-      display: flex;
-      align-items: center;
-      padding: 4px; }
+      color: black;
+      background: white;
+      border: 1px solid black;
+      padding: 10px; }
 
 .quiz-header,
 .quiz-content,
@@ -8778,7 +8903,8 @@ body.editor .navbar-brand span {
   font-size: 16px;
   text-align: center;
   font-weight: bold;
-  border-color: #3c763d; }
+  border-color: #3c763d;
+  z-index: 8; }
 
 table.answer-options-result {
   width: 100%; }

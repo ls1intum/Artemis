@@ -5,13 +5,16 @@
         .module('artemisApp')
         .factory('ArtemisMarkdown', ArtemisMarkdown);
 
-    function ArtemisMarkdown() {
+    ArtemisMarkdown.$inject = ['$sanitize'];
+
+    function ArtemisMarkdown($sanitize) {
 
         var service = {
             parseTextHintExplanation: parseTextHintExplanation,
             generateTextHintExplanation: generateTextHintExplanation,
             addHintAtCursor: addHintAtCursor,
-            addExplanationAtCursor: addExplanationAtCursor
+            addExplanationAtCursor: addExplanationAtCursor,
+            htmlForMarkdown: htmlForMarkdown
         };
 
         return service;
@@ -97,6 +100,25 @@
             editor.selection.setRange(range);
         }
 
+        /**
+         * converts markdown into html
+         * @param {string} markdownText the original markdown text
+         * @returns {string} the resulting html as a string
+         */
+        function htmlForMarkdown(markdownText) {
+            var converter = new showdown.Converter({
+                parseImgDimensions: true,
+                headerLevelStart: 3,
+                simplifiedAutoLink: true,
+                excludeTrailingPunctuationFromURLs: true,
+                strikethrough: true,
+                tables: true,
+                openLinksInNewWindow: true,
+                backslashEscapesHTMLTags: true
+            });
+            var html = converter.makeHtml(markdownText);
+            return $sanitize(html);
+        }
     }
 
 })();

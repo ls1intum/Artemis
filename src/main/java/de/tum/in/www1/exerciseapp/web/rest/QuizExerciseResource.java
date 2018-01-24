@@ -4,12 +4,13 @@ import com.codahale.metrics.annotation.Timed;
 import com.sun.org.apache.regexp.internal.RE;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.*;
-
+import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +23,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * REST controller for managing QuizExercise.
@@ -42,6 +45,7 @@ public class QuizExerciseResource {
     private final QuestionStatisticRepository questionStatisticRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
+    private final AuthorizationCheckService authCheckService;
 
     public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository,
                                 ParticipationRepository participationRepository,
@@ -50,7 +54,8 @@ public class QuizExerciseResource {
                                 QuizPointStatisticRepository quizPointStatisticRepository,
                                 QuestionStatisticRepository questionStatisticRepository,
                                 QuizSubmissionRepository quizSubmissionRepository,
-                                DragAndDropMappingRepository dragAndDropMappingRepository) {
+                                DragAndDropMappingRepository dragAndDropMappingRepository,
+                                AuthorizationCheckService authCheckService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.statisticService = statisticService;
@@ -59,6 +64,7 @@ public class QuizExerciseResource {
         this.questionStatisticRepository = questionStatisticRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -75,6 +81,16 @@ public class QuizExerciseResource {
         log.debug("REST request to save QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
+        }
+
+        Course course = quizExercise.getCourse();
+        // NOTE (Valentin): I don't think this check is secure, because the course object is parsed from JSON,
+        // not fetched from the Database, so the client can put whatever they want as the TA or instructor group
+        // TODO: fetch course from Database using its courseId instead of taking it directly from the Exercise
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         // fix references in all drag and drop questions (step 1/2)
@@ -118,6 +134,16 @@ public class QuizExerciseResource {
         log.debug("REST request to update QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
             return createQuizExercise(quizExercise);
+        }
+
+        Course course = quizExercise.getCourse();
+        // NOTE (Valentin): I don't think this check is secure, because the course object is parsed from JSON,
+        // not fetched from the Database, so the client can put whatever they want as the TA or instructor group
+        // TODO: fetch course from Database using its courseId instead of taking it directly from the Exercise
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         // iterate through questions to add missing pointer back to quizExercise
@@ -183,7 +209,7 @@ public class QuizExerciseResource {
         }
 
         // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
-        if (quizExercise != null && (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0)) {
+        if (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0) {
             quizExercise.getQuizPointStatistic().setReleased(false);
             for (Question question : quizExercise.getQuestions()) {
                 // TODO: @Moritz: fix this for DragAndDropQuestions (getQuestionStatistic() returns null)
@@ -233,7 +259,16 @@ public class QuizExerciseResource {
     @Timed
     public List<QuizExercise> getAllQuizExercises() {
         log.debug("REST request to get all QuizExercises");
-        return quizExerciseRepository.findAll();
+        List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
+        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
+            exercise -> {
+                Course course = exercise.getCourse();
+                return authCheckService.isTeachingAssistantInCourse(course) ||
+                    authCheckService.isInstructorInCourse(course) ||
+                    authCheckService.isAdmin();
+            }
+        );
+        return authorizedExercises.collect(Collectors.toList());
     }
 
     /**
@@ -247,9 +282,16 @@ public class QuizExerciseResource {
     @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
-        //TODO Valentin: apply the same filtering as in getProgrammingExercisesForCourse(...),
-        //this call is only used in the admin interface and there, tutors should not see exercise of courses in which they are only students
-        return quizExerciseRepository.findByCourseId(courseId);
+        List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
+        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
+            exercise -> {
+                Course course = exercise.getCourse();
+                return authCheckService.isTeachingAssistantInCourse(course) ||
+                    authCheckService.isInstructorInCourse(course) ||
+                    authCheckService.isAdmin();
+            }
+        );
+        return authorizedExercises.collect(Collectors.toList());
     }
 
     /**
@@ -264,6 +306,9 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
     }
 
@@ -279,13 +324,19 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (quizExercise == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
 
         // only filter out information if quiz hasn't ended yet
-        if (quizExercise != null && quizExercise.shouldFilterForStudents()) {
+        if (quizExercise.shouldFilterForStudents()) {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
             for (Question question : quizExercise.getQuestions()) {
                 question.setExplanation(null);
-                if (!question.getQuestionStatistic().isReleased()) {
+                if (question.getQuestionStatistic() != null && !question.getQuestionStatistic().isReleased()) {
                     question.setQuestionStatistic(null);
                 }
 
@@ -297,17 +348,23 @@ public class QuizExerciseResource {
                         answerOption.setExplanation(null);
                     }
                 }
+
+                // filter out "correctMappings" from DragAndDropQuestions
+                if (question instanceof DragAndDropQuestion) {
+                    DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
+                    dndQuestion.setCorrectMappings(null);
+                }
             }
         }
         // filter out the statistic information if the statistic is not released
-        if (!quizExercise.getQuizPointStatistic().isReleased()) {
+        if (quizExercise.getQuizPointStatistic() != null && !quizExercise.getQuizPointStatistic().isReleased()) {
             // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
             quizExercise.getQuizPointStatistic().setPointCounters(null);
             quizExercise.getQuizPointStatistic().setParticipantsRated(null);
             quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
         }
 
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
+        return ResponseEntity.ok(quizExercise);
     }
 
     /**
@@ -321,6 +378,18 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
+
+        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        if (quizExercise == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        Course course = quizExercise.getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
 
         List<Participation> participationsToDelete = participationRepository.findByExerciseId(id);
 

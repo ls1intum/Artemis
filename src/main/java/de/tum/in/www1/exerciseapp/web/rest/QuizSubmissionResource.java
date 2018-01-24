@@ -113,10 +113,13 @@ public class QuizSubmissionResource {
                 }
                 if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
-                    // get submission from cache, if it exists
-                    QuizSubmission cachedSubmission = QuizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
-                    if (cachedSubmission != null) {
-                        submission = cachedSubmission;
+                    // get submission from cache, if it exists and submission is not submitted already
+                    QuizSubmission cachedSubmission = null;
+                    if (!submission.isSubmitted()) {
+                        cachedSubmission = QuizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
+                        if (cachedSubmission != null) {
+                            submission = cachedSubmission;
+                        }
                     }
 
                     // remove scores from submission if quiz hasn't ended yet
@@ -206,7 +209,7 @@ public class QuizSubmissionResource {
                         .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
                         .body(quizSubmission);
                 } else {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The quizExercise for this submission has already ended.")).body(null);
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The quiz has ended or you have already submitted your answers for this quiz.")).body(null);
                 }
             } else {
                 return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "The submission belongs to a different user.")).body(null);
@@ -218,12 +221,10 @@ public class QuizSubmissionResource {
 
     /**
      * 1. Overwrite current submission with quizSubmission (if quizSubmission is not null and participation state is not FINISHED)
-     *
      * 2. Mark the submission as final (submitted), calculate the score and save the result.
-     *
      * 3. Notify socket subscriptions for new result in participation and changed submission
      *
-     * @param participation the participation object that the submission belongs to
+     * @param participation  the participation object that the submission belongs to
      * @param quizSubmission (optional) the new submission to overwrite the existing one with
      * @return The updated QuizSubmission (submitted is true; submissionDate and type are updated)
      */
@@ -276,7 +277,9 @@ public class QuizSubmissionResource {
             // critical part locked with Semaphore statisticSemaphore
             try {
                 statisticSemaphore.acquire();
+
                 QuizExercise quiz = quizExerciseRepository.findOne(participation.getExercise().getId());
+
 
                 for (Question question: quiz.getQuestions()) {
                     if(previousResult != null) {
@@ -286,6 +289,21 @@ public class QuizSubmissionResource {
                     // add the new Result to QuestionStatistics
                     question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
                     questionStatisticRepository.save(question.getQuestionStatistic());
+//=======
+//                    // add the new Result to the quizPointStatistic and remove the previous one
+//                    if (previousResult != null) {
+//                        ((QuizExercise) previousResult.getParticipation().getExercise()).getQuizPointStatistic().removeOldResult(previousResult.getScore(), true);
+//                    }
+//                    ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(), true);
+//                    quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
+//                    // remove the previous Result from the QuestionStatistics
+//                    if (previousResult != null) {
+//                        for (SubmittedAnswer submittedAnswer : ((QuizSubmission) previousResult.getSubmission()).getSubmittedAnswers()) {
+//                            if (submittedAnswer.getQuestion() != null && submittedAnswer.getQuestion().getQuestionStatistic() != null) {
+//                                submittedAnswer.getQuestion().getQuestionStatistic().removeOldResult(submittedAnswer, true);
+//                                questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
+//                    }
+//>>>>>>> develop
                 }
 
                 // add the new Result to the quizPointStatistic and remove the previous one
@@ -301,6 +319,13 @@ public class QuizSubmissionResource {
                 statisticSemaphore.release();
             }
 
+            // add the new Result to QuestionStatistics
+            for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
+                if (submittedAnswer.getQuestion() != null && submittedAnswer.getQuestion().getQuestionStatistic() != null) {
+                    submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
+                    questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
+                }
+            }
             // notify statistics about new Result
             statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
         }
