@@ -289,21 +289,7 @@ public class QuizSubmissionResource {
                     // add the new Result to QuestionStatistics
                     question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
                     questionStatisticRepository.save(question.getQuestionStatistic());
-//=======
-//                    // add the new Result to the quizPointStatistic and remove the previous one
-//                    if (previousResult != null) {
-//                        ((QuizExercise) previousResult.getParticipation().getExercise()).getQuizPointStatistic().removeOldResult(previousResult.getScore(), true);
-//                    }
-//                    ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(), true);
-//                    quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
-//                    // remove the previous Result from the QuestionStatistics
-//                    if (previousResult != null) {
-//                        for (SubmittedAnswer submittedAnswer : ((QuizSubmission) previousResult.getSubmission()).getSubmittedAnswers()) {
-//                            if (submittedAnswer.getQuestion() != null && submittedAnswer.getQuestion().getQuestionStatistic() != null) {
-//                                submittedAnswer.getQuestion().getQuestionStatistic().removeOldResult(submittedAnswer, true);
-//                                questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
-//                    }
-//>>>>>>> develop
+                    //TODO: test if this works
                 }
 
                 // add the new Result to the quizPointStatistic and remove the previous one
