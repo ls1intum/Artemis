@@ -8,7 +8,7 @@
     function DragAndDropQuestionUtil() {
         var service = {
             solve: solve,
-            allItemOptionsPossible: allItemOptionsPossible,
+            validateNoMisleadingCorrectMapping: validateNoMisleadingCorrectMapping,
             isMappedTogether: isMappedTogether,
             isSameDropLocationOrDragItem: isSameDropLocationOrDragItem
         };
@@ -98,18 +98,20 @@
         }
 
         /**
-         * Check if when there are multiple options for a drop location, you can actually place each of them
-         * and still end up with a 100% correct solution
+         * Validate that all correct mappings (and any combination of them that doesn't use a dropLocation or dragItem twice)
+         * can be used in a 100% correct solution.
+         * This means that if any pair of dragItems share a possible dropLocation, then they must share all dropLocations,
+         * or in other words the sets of possible dropLocations for these two dragItems must be identical
          *
          * @param question {object} the question to check
-         * @return {boolean} true, if it is possible, otherwise false
+         * @return {boolean} true, if the condition is met, otherwise false
          */
-        function allItemOptionsPossible(question) {
-            if (!question.dragItems || !question.dropLocations || !question.correctMappings) {
-                // incomplete question
+        function validateNoMisleadingCorrectMapping(question) {
+            if (!question.correctMappings) {
+                // no correct mappings at all means there can be no misleading mappings
                 return true;
             }
-            // go through all pairs of drag items
+            // iterate through all pairs of drag items
             for (var i = 0; i < question.dragItems.length; i++) {
                 for (var j = 0; j < i; j++) {
                     // if these two drag items have one common drop location, they must share all drop locations
@@ -118,18 +120,19 @@
                     var shareOneDropLocation = question.dropLocations.some(function (dropLocation) {
                         var isMappedWithDragItem1 = isMappedTogether(question.correctMappings, dragItem1, dropLocation);
                         var isMappedWithDragItem2 = isMappedTogether(question.correctMappings, dragItem2, dropLocation);
-
                         return isMappedWithDragItem1 && isMappedWithDragItem2;
                     });
                     if (shareOneDropLocation) {
                         var allDropLocationsForDragItem1 = getAllDropLocationsForDragItem(question.correctMappings, dragItem1);
                         var allDropLocationsForDragItem2 = getAllDropLocationsForDragItem(question.correctMappings, dragItem2);
                         if (!isSameSetOfDropLocationsOrDragItems(allDropLocationsForDragItem1, allDropLocationsForDragItem2)) {
+                            // condition is violated for this pair of dragItems
                             return false;
                         }
                     }
                 }
             }
+            // condition was met for all pairs of drag items
             return true;
         }
 

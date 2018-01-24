@@ -183,7 +183,7 @@
                             return answerOption.isCorrect;
                         });
                     case "drag-and-drop":
-                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0 && DragAndDropQuestionUtil.solve(question).length && DragAndDropQuestionUtil.allItemOptionsPossible(question);
+                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0 && DragAndDropQuestionUtil.solve(question).length && DragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question);
                     default:
                         return question.title && question.title !== "";
                 }
@@ -240,9 +240,9 @@
                             translateValues: {index: index + 1}
                         });
                     }
-                    if (!DragAndDropQuestionUtil.allItemOptionsPossible(question)) {
+                    if (!DragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question)) {
                         reasons.push({
-                            translateKey: "artemisApp.quizExercise.invalidReasons.notAllItemOptionsPossible",
+                            translateKey: "artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping",
                             translateValues: {index: index + 1}
                         });
                     }

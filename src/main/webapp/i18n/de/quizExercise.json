@@ -62,7 +62,7 @@
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten um die Frage richtig zu beantworten.",
-                "notAllItemOptionsPossible": "Frage {{index}}: Es gibt korrekte Mappings, die wenn verwendet, keine korrekte Gesamtlösung mehr zulassen."
+                "misleadingCorrectMapping": "Frage {{index}}: Es gibt mindestens eine korrekte Zuordnung (oder Kombination an korrekten Zuordnungen), die wenn sie verwendet wird, keine korrekte Gesamtlösung mehr zulässt."
             }
         }
     }
