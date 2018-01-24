@@ -105,7 +105,7 @@ public class QuizExerciseResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, new StatisticService( new SimpMessagingTemplate(null)), resultRepository, quizPointStatisticRepository, questionStatisticRepository, quizSubmissionRepository, dragAndDropMappingRepository, authorizationCheckService));
+        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, new StatisticService( new SimpMessagingTemplate(null)), resultRepository, quizPointStatisticRepository, questionStatisticRepository, quizSubmissionRepository, dragAndDropMappingRepository, authorizationCheckService);
         this.restQuizExerciseMockMvc = MockMvcBuilders.standaloneSetup(quizExerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
