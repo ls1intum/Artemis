@@ -34,28 +34,31 @@
          * loads latest submission from server and sets up socket connection
          */
         function init() {
-            load(function() {
+            load(function () {
                 var submissionChannel = '/topic/quizSubmissions/' + vm.submission.id;
                 var participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
 
                 // submission channel => react to new submissions
                 JhiWebsocketService.subscribe(submissionChannel);
-                JhiWebsocketService.receive(submissionChannel).then(null, null, function(payload) {
+                JhiWebsocketService.receive(submissionChannel).then(null, null, function (payload) {
                     onSaveSuccess(payload);
                 });
 
                 // save answers (submissions) through websocket
-                vm.sendWebsocket = function(data) {
+                vm.sendWebsocket = function (data) {
                     JhiWebsocketService.send(submissionChannel + '/save', data);
                 };
 
                 // participation channel => react to new results
                 JhiWebsocketService.subscribe(participationChannel);
-                JhiWebsocketService.receive(participationChannel).then(null, null, function() {
-                    load();
+                JhiWebsocketService.receive(participationChannel).then(null, null, function () {
+                    if (vm.remainingTimeSeconds <= 0) {
+                        // only reload if quiz is over to prevent jumping ui during participation
+                        load();
+                    }
                 });
 
-                $scope.$on('$destroy', function() {
+                $scope.$on('$destroy', function () {
                     JhiWebsocketService.unsubscribe(submissionChannel);
                     JhiWebsocketService.unsubscribe(participationChannel);
                 });
@@ -104,17 +107,29 @@
          * this needs to be done when we get new submission data, e.g. through the websocket connection
          */
         function applySubmission() {
-            // create a dictionary (key: questionID, value: Array of selected answerOptions)
-            // for the submittedAnswers to hand the selected options in individual arrays to the question components
+            // create dictionaries (key: questionID, value: Array of selected answerOptions / mappings)
+            // for the submittedAnswers to hand the selected options / mappings in individual arrays to the question components
             vm.selectedAnswerOptions = {};
+            vm.dragAndDropMappings = {};
+
             // iterate through all questions of this quiz
             vm.quizExercise.questions.forEach(function (question) {
                 // find the submitted answer that belongs to this question
                 var submittedAnswer = vm.submission.submittedAnswers.find(function (submittedAnswer) {
                     return submittedAnswer.question.id === question.id;
                 });
-                // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
+                switch (question.type) {
+                    case "multiple-choice":
+                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
+                        break;
+                    case "drag-and-drop":
+                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                        vm.dragAndDropMappings[question.id] = submittedAnswer ? submittedAnswer.mappings : [];
+                        break;
+                    default:
+                        console.error("Unknown question type: " + question.type);
+                }
             });
         }
 
@@ -127,23 +142,44 @@
          * or for submitting (through REST call)
          */
         function applySelection() {
-            // convert the selection dictionary (key: questionID, value: Array of selected answerOptions)
+            // convert the selection dictionary (key: questionID, value: Array of selected answerOptions / mappings)
             // into an array of submittedAnswer objects and save it as the submittedAnswers of the submission
-            vm.submission.submittedAnswers = Object.keys(vm.selectedAnswerOptions).map(function (questionID) {
+            vm.submission.submittedAnswers = [];
+
+            // for multiple-choice questions
+            Object.keys(vm.selectedAnswerOptions).forEach(function (questionID) {
                 // find the question object for the given question id
                 var question = vm.quizExercise.questions.find(function (question) {
                     return question.id === Number(questionID);
                 });
                 if (!question) {
                     console.error("question not found for ID: " + questionID);
-                    return null;
+                    return;
                 }
                 // generate the submittedAnswer object
-                return {
+                vm.submission.submittedAnswers.push({
                     question: question,
                     selectedOptions: vm.selectedAnswerOptions[questionID],
                     type: question.type
-                };
+                });
+            });
+
+            // for drag-and-drop questions
+            Object.keys(vm.dragAndDropMappings).forEach(function (questionID) {
+                // find the question object for the given question id
+                var question = vm.quizExercise.questions.find(function (question) {
+                    return question.id === Number(questionID);
+                });
+                if (!question) {
+                    console.error("question not found for ID: " + questionID);
+                    return;
+                }
+                // generate the submittedAnswer object
+                vm.submission.submittedAnswers.push({
+                    question: question,
+                    mappings: vm.dragAndDropMappings[questionID],
+                    type: question.type
+                });
             });
         }
 
@@ -177,7 +213,7 @@
                     ExerciseParticipation.get({
                         courseId: vm.quizExercise.course.id,
                         exerciseId: vm.quizExercise.id
-                    }).$promise.then(function(participation) {
+                    }).$promise.then(function (participation) {
                         vm.participation = participation;
 
                         if (vm.quizExercise.remainingTime < 0) {
@@ -190,7 +226,7 @@
                             }).$promise.then(showResult);
                         }
 
-                        if(callback) {
+                        if (callback) {
                             callback();
                         }
                     });
@@ -212,7 +248,7 @@
 
                 // create dictionary with scores for each question
                 vm.questionScores = {};
-                vm.result.submission.submittedAnswers.forEach(function(submittedAnswer) {
+                vm.result.submission.submittedAnswers.forEach(function (submittedAnswer) {
                     vm.questionScores[submittedAnswer.question.id] = submittedAnswer.scoreInPoints;
                 });
             }
@@ -250,7 +286,7 @@
          * debounced function to reset "vm.justSubmitted", so that time since last submission is displayed again when no submission has been made for at least 2 seconds
          * @type {Function}
          */
-        var timeoutJustSaved = _.debounce(function() {
+        var timeoutJustSaved = _.debounce(function () {
             vm.justSaved = false;
         }, 2000);
 

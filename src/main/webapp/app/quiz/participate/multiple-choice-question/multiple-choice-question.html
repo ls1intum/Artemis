@@ -1,4 +1,4 @@
-<div class="mc-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult, incorrect: vm.getUserScore() < vm.question.score}">
+<div class="mc-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult, incorrect: (vm.score || 0) < vm.question.score}">
     <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
     <p ng-bind-html="vm.rendered.text"></p>
     <h4>
@@ -15,9 +15,9 @@
         <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
         <span>{{vm.question.score}}</span>
     </div>
-    <div class="question-score result" ng-if="vm.showResult" ng-class="{incorrect: vm.getUserScore() < vm.question.score}">
+    <div class="question-score result" ng-if="vm.showResult" ng-class="{incorrect: (vm.score || 0) < vm.question.score}">
         <span data-translate="artemisApp.question.yourScore" class="colon-suffix"></span>
-        <span>{{vm.getUserScore()}}/{{vm.question.score}}</span>
+        <span>{{vm.score || 0}}/{{vm.question.score}}</span>
     </div>
     <div class="answer-options" ng-if="!vm.showResult">
         <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-class="{'click-disabled': vm.clickDisabled}" ng-click="vm.toggleSelection(answerOption)">

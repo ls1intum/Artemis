@@ -29,7 +29,10 @@
             "addDragItemsInstructions": "Benutzen Sie die Schaltflächen unten um Drag Items hinzuzufügen.",
             "addMappingsInstructions": "Ziehen Sie Drag Items auf Drop Locations um korrekte Zuordnungen zu definieren.",
             "addDragItemPicture": "Drag Item mit Bild Hinzufügen",
-            "addDragItemText": "Drag Item mit Text Hinzufügen"
+            "addDragItemText": "Drag Item mit Text Hinzufügen",
+            "studentInstructions": "Drag & Drop: Platzieren Sie die Elemente (unten) auf die markierten Bereiche (oben).",
+            "showingYourAnswer": "Ihre Abgabe:",
+            "showingSampleSolution": "Musterlösung:"
         }
     }
 }
