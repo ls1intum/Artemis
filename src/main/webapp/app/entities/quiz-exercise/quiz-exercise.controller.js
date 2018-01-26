@@ -75,7 +75,7 @@
          * @returns {string} The status as a string
          */
         function statusForQuiz(quizExercise) {
-            if (quizExercise.isPlannedToStart && !isNaN(quizExercise.remainingTime)) {
+            if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
                 if (quizExercise.remainingTime <= 0) {
                     // the quiz is over
                     return quizExercise.isOpenForPractice ? vm.QuizStatus.OPEN_FOR_PRACTICE : vm.QuizStatus.CLOSED;
@@ -95,9 +95,17 @@
         function startQuiz(quizExercise) {
             QuizExercise.start({
                 id: quizExercise.id
-            }, {}, function () {
-                load();
-            });
+            }, {}).$promise.then(
+                function () {
+                    // success
+                    load();
+                },
+                function (error) {
+                    // error
+                    alert(error && error.data && error.data.message);
+                    load();
+                }
+            );
         }
 
         /**
@@ -108,9 +116,17 @@
         function showQuiz(quizExercise) {
             QuizExercise.setVisible({
                 id: quizExercise.id
-            }, {}, function () {
-                load();
-            });
+            }, {}).$promise.then(
+                function () {
+                    // success
+                    load();
+                },
+                function (error) {
+                    // error
+                    alert(error && error.data && error.data.message);
+                    load();
+                }
+            );
         }
 
         /**

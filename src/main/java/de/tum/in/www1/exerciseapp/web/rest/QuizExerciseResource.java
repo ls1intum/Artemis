@@ -187,7 +187,7 @@ public class QuizExerciseResource {
         }
 
         // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
-        if (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0) {
+        if (!quizExercise.hasStarted() || quizExercise.getRemainingTime() > 0) {
             quizExercise.getQuizPointStatistic().setReleased(false);
             for (Question question : quizExercise.getQuestions()) {
                 // TODO: @Moritz: fix this for DragAndDropQuestions (getQuestionStatistic() returns null)
@@ -355,7 +355,7 @@ public class QuizExerciseResource {
     @PostMapping("/quiz-exercises/{id}/{action}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Void> performActionForQuizExercise(@PathVariable Long id, @PathVariable String action) {
+    public ResponseEntity<String> performActionForQuizExercise(@PathVariable Long id, @PathVariable String action) {
         log.debug("REST request to immediately start QuizExercise : {}", id);
 
         // find quiz exercise
@@ -376,7 +376,7 @@ public class QuizExerciseResource {
             case "start-now":
                 // check if quiz hasn't already started
                 if (quizExercise.hasStarted()) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz has already started.\"}");
                 }
 
                 // set release date to now
@@ -386,14 +386,14 @@ public class QuizExerciseResource {
             case "set-visible":
                 // check if quiz is already visible
                 if (quizExercise.isVisibleToStudents()) {
-                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz is already visible to students.\"}");
                 }
 
                 // set quiz to visible
                 quizExercise.setIsVisibleBeforeStart(true);
                 break;
             default:
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Unknown action: " + action + "\"}");
         }
 
         // save quiz exercise

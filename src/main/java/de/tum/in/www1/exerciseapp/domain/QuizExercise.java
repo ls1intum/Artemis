@@ -200,7 +200,7 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
      */
     public Long getRemainingTime() {
-        return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+        return hasStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
     }
 
     /**
