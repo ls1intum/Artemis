@@ -30,6 +30,8 @@
             "isVisibleBeforeStart": "Vor dem Start sichtbar",
             "isOpenForPractice": "Zum Üben freigegeben",
             "isPlannedToStart": "Geplante Startzeit",
+            "startNow": "Jetzt Starten",
+            "showNow": "Für Studenten Anzeigen",
             "duration": "Dauer",
             "minutes": "Minuten",
             "seconds": "Sekunden",

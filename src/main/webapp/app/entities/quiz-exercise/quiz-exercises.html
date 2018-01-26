@@ -43,16 +43,26 @@
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"
+                                    ng-click="vm.startQuiz(quizExercise)"
                                     class="btn btn-success btn-sm"
+                                    ng-if="vm.statusForQuiz(quizExercise) === vm.QuizStatus.VISIBLE"
+                            >
+                                <span class="glyphicon glyphicon-play-circle"></span>
+                                <span class="hidden-sm-down" data-translate="artemisApp.quizExercise.startNow"></span>
+                            </button>
+                            <button type="submit"
+                                    ng-click="vm.showQuiz(quizExercise)"
+                                    class="btn btn-success btn-sm"
+                                    ng-if="vm.statusForQuiz(quizExercise) === vm.QuizStatus.HIDDEN"
+                            >
+                                <span class="glyphicon glyphicon-eye-open"></span>
+                                <span class="hidden-sm-down" data-translate="artemisApp.quizExercise.showNow"></span>
+                            </button>
+                            <button type="submit"
+                                    class="btn btn-info btn-sm"
                                     ui-sref="quiz-point-statistic-chart({quizId:quizExercise.id})">
                                 <span class="fa fa-signal"></span>
                                 <span class="hidden-sm-down" data-translate="global.menu.entities.statistic"></span>
-                            </button>
-                            <button type="submit"
-                                    onclick="alert('TODO');"
-                                    class="btn btn-info btn-sm">
-                                <span class="glyphicon glyphicon-eye-open"></span>
-                                <span class="hidden-sm-down" data-translate="entity.action.view"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="quiz-exercise-for-course-detail({id:quizExercise.id, courseid:vm.course.id})"

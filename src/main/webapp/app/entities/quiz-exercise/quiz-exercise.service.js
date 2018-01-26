@@ -1,4 +1,4 @@
-(function() {
+(function () {
     'use strict';
     angular
         .module('artemisApp')
@@ -7,11 +7,11 @@
 
     QuizExercise.$inject = ['$resource'];
 
-    function QuizExercise ($resource) {
-        var resourceUrl =  'api/quiz-exercises/:id';
+    function QuizExercise($resource) {
+        var resourceUrl = 'api/quiz-exercises/:id';
 
         return $resource(resourceUrl, {}, {
-            'query': { method: 'GET', isArray: true},
+            'query': {method: 'GET', isArray: true},
             'get': {
                 method: 'GET',
                 transformResponse: function (data) {
@@ -26,8 +26,16 @@
                 transformRequest: addType
             },
             'update': {
-                method:'PUT',
+                method: 'PUT',
                 transformRequest: addType
+            },
+            'start': {
+                url: resourceUrl + "/start-now",
+                method: 'POST'
+            },
+            'setVisible': {
+                url: resourceUrl + "/set-visible",
+                method: 'POST'
             }
         });
     }
@@ -35,16 +43,16 @@
 
     // Type property has to be added to the exercise so that Jackson can
     // deserialize the data into correct concrete implementation of Exercise class
-    var addType = function(data) {
-            data.type = "quiz-exercise";
-            data = angular.toJson(data);
-            return data;
-        };
+    var addType = function (data) {
+        data.type = "quiz-exercise";
+        data = angular.toJson(data);
+        return data;
+    };
 
     QuizExerciseForStudent.$inject = ['$resource'];
 
-    function QuizExerciseForStudent ($resource) {
-        var resourceUrl =  'api/quiz-exercises/:id/for-student';
+    function QuizExerciseForStudent($resource) {
+        var resourceUrl = 'api/quiz-exercises/:id/for-student';
 
         return $resource(resourceUrl, {}, {
             'get': {

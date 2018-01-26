@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -342,6 +343,63 @@ public class QuizExerciseResource {
         }
 
         return ResponseEntity.ok(quizExercise);
+    }
+
+    /**
+     * POST /quiz-exercises/:id/:action : perform the specified action for the quiz now
+     *
+     * @param id     the id of the quiz exercise to start
+     * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible")
+     * @return the response entity with status 204 if quiz was started, appropriate error code otherwise
+     */
+    @PostMapping("/quiz-exercises/{id}/{action}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Void> performActionForQuizExercise(@PathVariable Long id, @PathVariable String action) {
+        log.debug("REST request to immediately start QuizExercise : {}", id);
+
+        // find quiz exercise
+        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        if (quizExercise == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // check permissions
+        Course course = quizExercise.getCourse();
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        switch (action) {
+            case "start-now":
+                // check if quiz hasn't already started
+                if (quizExercise.hasStarted()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                }
+
+                // set release date to now
+                quizExercise.setReleaseDate(ZonedDateTime.now());
+                quizExercise.setIsPlannedToStart(true);
+                break;
+            case "set-visible":
+                // check if quiz is already visible
+                if (quizExercise.isVisibleToStudents()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                }
+
+                // set quiz to visible
+                quizExercise.setIsVisibleBeforeStart(true);
+                break;
+            default:
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+
+        // save quiz exercise
+        quizExerciseRepository.save(quizExercise);
+
+        return ResponseEntity.noContent().build();
     }
 
     /**

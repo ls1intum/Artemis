@@ -30,6 +30,8 @@
             "isVisibleBeforeStart": "Is Visible Before Start",
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
+            "startNow": "Start Now",
+            "showNow": "Set Visible",
             "duration": "Duration",
             "minutes": "minutes",
             "seconds": "seconds",
