@@ -204,6 +204,15 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
+     * Get the remaining time until the quiz starts in seconds
+     *
+     * @return null, if the quiz isn't planned to start, otherwise the time until the quiz starts in seconds (negative if the quiz has already started)
+     */
+    public Long getTimeUntilPlannedStart() {
+        return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getReleaseDate()) : null;
+    }
+
+    /**
      * Check if the quiz has started
      * @return true if quiz has started, false otherwise
      */

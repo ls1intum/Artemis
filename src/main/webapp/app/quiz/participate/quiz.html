@@ -1,8 +1,8 @@
 <div class="quiz-header container">
     <h1>{{vm.quizExercise.course.title}} - {{vm.quizExercise.title}}</h1>
-    <p ng-if="!vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.default"></p>
-    <p ng-if="vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.wait"></p>
-    <p ng-if="vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.result" data-translate-values="{userScore: vm.userScore, maxScore: vm.totalScore, percentage: vm.result.score}"></p>
+    <p ng-if="!vm.waitingForQuizStart && !vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.default"></p>
+    <p ng-if="!vm.waitingForQuizStart && vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.wait"></p>
+    <p ng-if="!vm.waitingForQuizStart && vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.result" data-translate-values="{userScore: vm.userScore, maxScore: vm.totalScore, percentage: vm.result.score}"></p>
 </div>
 <div class="quiz-content container">
     <div ng-repeat="question in vm.quizExercise.questions">
@@ -10,7 +10,7 @@
         <drag-and-drop-question ng-if="question.type === 'drag-and-drop'" question="question" mappings="vm.dragAndDropMappings[question.id]" on-mapping-update="vm.onSelectionChanged()" click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0" show-result="vm.showingResult" question-index="$index + 1" score="vm.questionScores[question.id]"></drag-and-drop-question>
     </div>
 </div>
-<div class="quiz-footer">
+<div class="quiz-footer" ng-if="!vm.waitingForQuizStart">
     <div class="container">
         <div class="quiz-footer-content">
             <div>
@@ -50,6 +50,16 @@
         </div>
     </div>
 </div>
-<div class="quiz-submitted-overlay alert alert-success" ng-if="vm.submission.submitted && !vm.showingResult">
+<div class="quiz-submitted-overlay alert alert-success" ng-if="!vm.waitingForQuizStart && vm.submission.submitted && !vm.showingResult">
     <span data-translate="artemisApp.quizExercise.successfullySubmittedText"></span>
+</div>
+<div class="quiz-waiting-for-start-overlay alert alert-info" ng-if="vm.waitingForQuizStart">
+    <span data-translate="artemisApp.quizExercise.quizInstructions.waitForStart"></span>
+    <div ng-if="vm.quizExercise.adjustedReleaseDate">
+        <hr/>
+        <span data-translate="artemisApp.quizExercise.quizInstructions.timeUntilPlannedStart"></span>
+        <span class="text-bold">{{vm.timeUntilStart}}</span>
+        <br>
+        <span>({{vm.quizExercise.releaseDate.format("LT")}})</span>
+    </div>
 </div>

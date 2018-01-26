@@ -8867,7 +8867,8 @@ body.editor .navbar-brand span {
 
 .quiz-content {
   margin-top: 6px;
-  margin-bottom: 120px; }
+  margin-bottom: 120px;
+  min-height: calc(100vh - 320px); }
   .quiz-content .question-index {
     padding: 2px 6px; }
 
@@ -8890,7 +8891,8 @@ body.editor .navbar-brand span {
 .quiz-footer-content .time-critical {
   color: red; }
 
-.quiz-submitted-overlay {
+.quiz-submitted-overlay,
+.quiz-waiting-for-start-overlay {
   position: fixed;
   bottom: 50%;
   left: 50%;

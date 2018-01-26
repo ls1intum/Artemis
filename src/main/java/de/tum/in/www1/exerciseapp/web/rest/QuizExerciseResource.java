@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -42,13 +43,20 @@ public class QuizExerciseResource {
     private final StatisticService statisticService;
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
     private final AuthorizationCheckService authCheckService;
+    private final SimpMessageSendingOperations messagingTemplate;
 
-    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, ParticipationRepository participationRepository, StatisticService statisticService, DragAndDropMappingRepository dragAndDropMappingRepository, AuthorizationCheckService authCheckService) {
+    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository,
+                                ParticipationRepository participationRepository,
+                                StatisticService statisticService,
+                                DragAndDropMappingRepository dragAndDropMappingRepository,
+                                AuthorizationCheckService authCheckService,
+                                SimpMessageSendingOperations messagingTemplate) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.statisticService = statisticService;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.authCheckService = authCheckService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -222,6 +230,9 @@ public class QuizExerciseResource {
             }
         }
 
+        // notify websocket channel of changes to the quiz exercise
+        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
@@ -307,6 +318,11 @@ public class QuizExerciseResource {
         }
         if (quizExercise == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+
+        // filter out all questions, if quiz hasn't started yet
+        if (!quizExercise.hasStarted()) {
+            quizExercise.setQuestions(new ArrayList<>());
         }
 
         // only filter out information if quiz hasn't ended yet
@@ -398,6 +414,9 @@ public class QuizExerciseResource {
 
         // save quiz exercise
         quizExerciseRepository.save(quizExercise);
+
+        // notify websocket channel of changes to the quiz exercise
+        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
 
         return ResponseEntity.noContent().build();
     }

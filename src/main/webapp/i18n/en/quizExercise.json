@@ -50,7 +50,9 @@
             "quizInstructions": {
                 "default": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
                 "wait": "Please wait until the quiz has ended to see your results.",
-                "result": "You have finished the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %)."
+                "result": "You have finished the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
+                "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
+                "timeUntilPlannedStart": "Time until planned start:"
             },
             "lastSaved": "Saved",
             "submitted": "Submitted",
