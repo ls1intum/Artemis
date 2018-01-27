@@ -2,8 +2,11 @@ package de.tum.in.www1.exerciseapp.domain.scoring;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 
+/**
+ * All or nothing means the full score is given if the answer is 100% correct,
+ * otherwise a score of 0 is given
+ */
 public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrategy {
-    // All or nothing means we get the full score if the answer is 100% correct, and 0 points otherwise
     @Override
     public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && question instanceof MultipleChoiceQuestion) {

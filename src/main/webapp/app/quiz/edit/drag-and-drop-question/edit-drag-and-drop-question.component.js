@@ -30,6 +30,10 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         {
             key: "ALL_OR_NOTHING",
             label: "All or Nothing"
+        },
+        {
+            key: "PROPORTIONAL_WITH_PENALTY",
+            label: "Proportional with Penalty"
         }
     ];
 

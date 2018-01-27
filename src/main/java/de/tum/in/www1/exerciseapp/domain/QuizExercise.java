@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.exerciseapp.config.Constants;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -242,6 +243,7 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return true if the quiz is valid, otherwise false
      */
+    @JsonIgnore
     public Boolean isValid() {
         // check title
         if (getTitle() == null || getTitle().equals("")){

@@ -62,7 +62,10 @@
             quizExerciseChannel = '/topic/quizExercise/' + $stateParams.id;
             JhiWebsocketService.subscribe(quizExerciseChannel);
             JhiWebsocketService.receive(quizExerciseChannel).then(null, null, function () {
-                load();
+                if (vm.waitingForQuizStart) {
+                    // only reload if quiz is hasn't started to prevent jumping ui during participation
+                    load();
+                }
             });
 
             // load the quiz (and existing submission if quiz has started)
@@ -158,6 +161,33 @@
         }
 
         /**
+         * Initialize the selections / mappings for each question with an empty array
+         */
+        function initQuiz() {
+            if (!vm.selectedAnswerOptions && !vm.dragAndDropMappings) {
+                vm.selectedAnswerOptions = {};
+                vm.dragAndDropMappings = {};
+
+                if (vm.quizExercise.questions) {
+                    vm.quizExercise.questions.forEach(function (question) {
+                        switch (question.type) {
+                            case "multiple-choice":
+                                // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                                vm.selectedAnswerOptions[question.id] = [];
+                                break;
+                            case "drag-and-drop":
+                                // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                                vm.dragAndDropMappings[question.id] = [];
+                                break;
+                            default:
+                                console.error("Unknown question type: " + question.type);
+                        }
+                    });
+                }
+            }
+        }
+
+        /**
          * applies the data from the model to the UI (reverse of applySelection):
          *
          * Sets the checkmarks (selected answers) for all questions according to the submission data
@@ -246,6 +276,7 @@
         function load() {
             QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
                 vm.quizExercise = quizExercise;
+                initQuiz();
                 if (quizExercise.remainingTime != null) {
                     QuizSubmissionForExercise.get({
                         courseId: 1,

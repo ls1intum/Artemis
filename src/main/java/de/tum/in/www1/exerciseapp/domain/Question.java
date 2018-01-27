@@ -218,6 +218,7 @@ public abstract class Question implements Serializable {
      *
      * @return true, if the question is valid, otherwise false
      */
+    @JsonIgnore
     public Boolean isValid() {
         // check title
         return getTitle() != null && !getTitle().equals("");

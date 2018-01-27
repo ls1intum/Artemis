@@ -13,12 +13,8 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
             label: "All or Nothing"
         },
         {
-            key: "PROPORTIONAL_CORRECT_OPTIONS",
-            label: "Proportional Points for Correct Answer Options"
-        },
-        {
-            key: "TRUE_FALSE_NEUTRAL",
-            label: "True / False / No Answer"
+            key: "PROPORTIONAL_WITH_PENALTY",
+            label: "Proportional with Penalty"
         }
     ];
     vm.addCorrectAnswerOption = addCorrectAnswerOption;
