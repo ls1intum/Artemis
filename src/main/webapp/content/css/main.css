@@ -8650,7 +8650,7 @@ body.editor .navbar-brand span {
 
 .edit-dnd-question .mapping-number {
   position: absolute;
-  z-index: 10;
+  z-index: 2;
   left: 50%;
   top: 50%;
   -webkit-transform: translate3d(-50%, -50%, 0);
@@ -8761,7 +8761,7 @@ body.editor .navbar-brand span {
   border: none;
   resize: none; }
   .edit-dnd-question .drag-item textarea:focus {
-    z-index: 20; }
+    z-index: 3; }
 
 .edit-dnd-question .drag-item .delete-button {
   position: absolute;
@@ -8891,8 +8891,18 @@ body.editor .navbar-brand span {
 .quiz-footer-content .time-critical {
   color: red; }
 
+.quiz-is-active-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  z-index: 6;
+  background: rgba(0, 0, 0, 0.4); }
+
 .quiz-submitted-overlay,
-.quiz-waiting-for-start-overlay {
+.quiz-waiting-for-start-overlay,
+.quiz-is-active-overlay {
   position: fixed;
   bottom: 50%;
   left: 50%;

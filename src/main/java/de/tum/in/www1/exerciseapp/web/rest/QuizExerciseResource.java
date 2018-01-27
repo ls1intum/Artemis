@@ -154,6 +154,15 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
+        // check if quiz is currently active
+        QuizExercise originalQuiz = quizExerciseRepository.findOne(quizExercise.getId());
+        if (originalQuiz == null) {
+            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
+        }
+        if (originalQuiz.isSubmissionAllowed()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizIsActive", "The quiz is currently active. No changes are allowed until the quiz has finished.")).body(null);
+        }
+
         // iterate through questions to add missing pointer back to quizExercise
         // Note: This is necessary because of the @IgnoreJSON in question and answerOption
         //       that prevents infinite recursive JSON serialization.

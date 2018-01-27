@@ -199,7 +199,7 @@
                     <button
                         class="btn btn-success"
                         ng-click="vm.save()"
-                        ng-class="{disabled: !vm.pendingChanges() || !vm.validQuiz() || vm.isSaving}"
+                        ng-class="{disabled: !vm.pendingChanges() || !vm.validQuiz() || vm.isSavedQuizActive() || vm.isSaving}"
                         data-translate="entity.action.save"
                         uib-tooltip-html="!vm.validQuiz() && vm.invalidReasonsHTML()"
                         tooltip-placement="top-right"
@@ -208,5 +208,11 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+<div ng-if="vm.isSavedQuizActive()">
+    <div class="quiz-is-active-background"></div>
+    <div class="quiz-is-active-overlay alert alert-warning" >
+        <span data-translate="artemisApp.quizExercise.edit.quizIsActive"></span>
     </div>
 </div>

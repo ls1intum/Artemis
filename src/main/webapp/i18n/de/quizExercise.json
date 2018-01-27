@@ -18,7 +18,8 @@
                 "invalidInput": "Ungültige Eingabe",
                 "pendingChanges": "Ungespeicherte Änderungen",
                 "saving": "Speichern …",
-                "saved": "Gespeichert!"
+                "saved": "Gespeichert!",
+                "quizIsActive": "Das Quiz hat angefangen. Es sind keine Änderungen mehr möglich.<br><br>Nachträgliche Korrekturen können vorgenommen werden, sobald das Quiz beendet wurde."
             },
             "new": {
                 "title": "Quiz für {{ param }} erstellen"

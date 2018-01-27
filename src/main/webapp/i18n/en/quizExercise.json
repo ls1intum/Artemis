@@ -18,7 +18,8 @@
                 "invalidInput": "Invalid Input",
                 "pendingChanges": "Unsaved Changes",
                 "saving": "Saving…",
-                "saved": "Saved!"
+                "saved": "Saved!",
+                "quizIsActive": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended."
             },
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
