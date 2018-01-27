@@ -51,9 +51,10 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.uploadDragItem = uploadDragItem;
     vm.deleteDragItem = deleteDragItem;
     vm.onDragDrop = onDragDrop;
-    vm.getMappingsFor = getMappingsFor;
+    vm.getMappingsForDropLocation = getMappingsForDropLocation;
+    vm.getMappingsForDragItem = getMappingsForDragItem;
     vm.getMappingIndex = getMappingIndex;
-    vm.deleteMappingsFor = deleteMappingsFor;
+    vm.deleteMappingsForDropLocation = deleteMappingsForDropLocation;
     vm.deleteMapping = deleteMapping;
 
     function togglePreview() {
@@ -509,27 +510,47 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         }
     }
 
-    function getMappingsFor(dropLocationOrDragItem) {
+    /**
+     * Get all mappings that involve the given drop location
+     *
+     * @param dropLocation {object} the drop location for which we want to get all mappings
+     * @return {Array} all mappings that belong to the given drop location
+     */
+    function getMappingsForDropLocation(dropLocation) {
         if (!vm.question.correctMappings) {
             vm.question.correctMappings = [];
         }
         return vm.question.correctMappings.filter(function (mapping) {
-            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) ||
-                DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
         });
     }
 
     /**
-     * Remove the mapping for the given drop location or drag item
-     * @param dropLocationOrDragItem {object} a drop location or drag item
+     * Get all mappings that involve the given drag item
+     *
+     * @param dragItem {object} the drag item for which we want to get all mappings
+     * @return {Array} all mappings that belong to the given drag item
      */
-    function deleteMappingsFor(dropLocationOrDragItem) {
+    function getMappingsForDragItem(dragItem) {
+        if (!vm.question.correctMappings) {
+            vm.question.correctMappings = [];
+        }
+        return vm.question.correctMappings.filter(function (mapping) {
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
+        });
+    }
+
+    /**
+     * Delete all mappings for the given drop location
+     *
+     * @param dropLocation {object} the drop location for which we want to delete all mappings
+     */
+    function deleteMappingsForDropLocation(dropLocation) {
         if (!vm.question.correctMappings) {
             vm.question.correctMappings = [];
         }
         vm.question.correctMappings = vm.question.correctMappings.filter(function (mapping) {
-            return !DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) &&
-                !DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
+            return !DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
         });
     }
 

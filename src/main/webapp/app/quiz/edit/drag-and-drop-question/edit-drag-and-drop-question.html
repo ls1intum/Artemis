@@ -84,9 +84,9 @@
                 <div class="resize bottom left" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
                 <div class="resize bottom center" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
                 <div class="resize bottom right" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
-                <div ng-class="'mapping-number mapping-color-' + (vm.getMappingIndex(vm.getMappingsFor(dropLocation)[0]) % 8)" ng-if="vm.getMappingsFor(dropLocation).length">
-                    {{vm.getMappingIndex(vm.getMappingsFor(dropLocation)[0])}}
-                    <div class="unlink-mapping" ng-click="vm.deleteMappingsFor(dropLocation)">
+                <div ng-class="'mapping-number mapping-color-' + (vm.getMappingIndex(vm.getMappingsForDropLocation(dropLocation)[0]) % 8)" ng-if="vm.getMappingsForDropLocation(dropLocation).length">
+                    {{vm.getMappingIndex(vm.getMappingsForDropLocation(dropLocation)[0])}}
+                    <div class="unlink-mapping" ng-click="vm.deleteMappingsForDropLocation(dropLocation)">
                         <i class="fa fa-chain-broken fa-lg"></i>
                     </div>
                 </div>
@@ -115,7 +115,7 @@
                 <i class="fa fa-bars fa-lg drag-handle"></i>
             </div>
             <div class="mapping-numbers-wrapper">
-                <div ng-repeat="mapping in vm.getMappingsFor(dragItem) | orderBy: vm.getMappingIndex" ng-class="'mapping-number mapping-color-' + (vm.getMappingIndex(mapping) % 8)">
+                <div ng-repeat="mapping in vm.getMappingsForDragItem(dragItem) | orderBy: vm.getMappingIndex" ng-class="'mapping-number mapping-color-' + (vm.getMappingIndex(mapping) % 8)">
                     {{vm.getMappingIndex(mapping)}}
                     <div class="unlink-mapping" ng-click="vm.deleteMapping(mapping)">
                         <i class="fa fa-chain-broken fa-lg"></i>

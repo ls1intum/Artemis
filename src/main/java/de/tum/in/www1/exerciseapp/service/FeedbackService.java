@@ -40,7 +40,9 @@ public class FeedbackService {
     @Transactional
     public Set<Feedback> getFeedbackForBuildResult(Result result) {
 
-        //Provide access to results with no feedback
+        // Please note: this is a migration for the old case when we did not store feedback in the database
+        // Provide access to results with no feedback in the database
+        // TODO: only execute the code if the exercise is a programming exercise
         if(result.getFeedbacks() == null || result.getFeedbacks().size() == 0) {
             // if the result does not contain any feedback, try to retrieve them from Bamboo and store them in the result and return these.
             return continuousIntegrationService.get().getLatestBuildResultDetails(result);
