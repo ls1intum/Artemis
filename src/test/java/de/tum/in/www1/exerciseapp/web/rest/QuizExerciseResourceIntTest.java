@@ -6,6 +6,7 @@ import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
+import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
 import org.junit.Before;
@@ -72,6 +73,9 @@ public class QuizExerciseResourceIntTest {
     private ParticipationRepository participationRepository;
 
     @Autowired
+    private CourseService courseService;
+
+    @Autowired
     private DragAndDropMappingRepository dragAndDropMappingRepository;
 
     @Autowired
@@ -99,7 +103,7 @@ public class QuizExerciseResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, new StatisticService( new SimpMessagingTemplate(null)), dragAndDropMappingRepository, authorizationCheckService, messagingTemplate);
+        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, courseService, new StatisticService( new SimpMessagingTemplate(null)), dragAndDropMappingRepository, authorizationCheckService, messagingTemplate);
         this.restQuizExerciseMockMvc = MockMvcBuilders.standaloneSetup(quizExerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)

@@ -6,6 +6,7 @@ import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
+import de.tum.in.www1.exerciseapp.service.CourseService;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -40,6 +41,7 @@ public class QuizExerciseResource {
 
     private final QuizExerciseRepository quizExerciseRepository;
     private final ParticipationRepository participationRepository;
+    private final CourseService courseService;
     private final StatisticService statisticService;
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
     private final AuthorizationCheckService authCheckService;
@@ -47,12 +49,14 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository,
                                 ParticipationRepository participationRepository,
+                                CourseService courseService,
                                 StatisticService statisticService,
                                 DragAndDropMappingRepository dragAndDropMappingRepository,
                                 AuthorizationCheckService authCheckService,
                                 SimpMessageSendingOperations messagingTemplate) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
+        this.courseService = courseService;
         this.statisticService = statisticService;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.authCheckService = authCheckService;
@@ -75,10 +79,11 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
         }
 
-        Course course = quizExercise.getCourse();
-        // NOTE (Valentin): I don't think this check is secure, because the course object is parsed from JSON,
-        // not fetched from the Database, so the client can put whatever they want as the TA or instructor group
-        // TODO: fetch course from Database using its courseId instead of taking it directly from the Exercise
+        // fetch course from database to make sure client didn't change groups
+        Course course = courseService.findOne(quizExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
+        }
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
             !authCheckService.isInstructorInCourse(course) &&
             !authCheckService.isAdmin()) {
@@ -133,10 +138,11 @@ public class QuizExerciseResource {
             return createQuizExercise(quizExercise);
         }
 
-        Course course = quizExercise.getCourse();
-        // NOTE (Valentin): I don't think this check is secure, because the course object is parsed from JSON,
-        // not fetched from the Database, so the client can put whatever they want as the TA or instructor group
-        // TODO: fetch course from Database using its courseId instead of taking it directly from the Exercise
+        // fetch course from database to make sure client didn't change groups
+        Course course = courseService.findOne(quizExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
+        }
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
             !authCheckService.isInstructorInCourse(course) &&
             !authCheckService.isAdmin()) {
