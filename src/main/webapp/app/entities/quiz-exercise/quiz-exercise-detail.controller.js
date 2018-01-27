@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizExerciseDetailController', QuizExerciseDetailController);
 
-    QuizExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity', '$translate'];
+    QuizExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity', '$translate', 'DragAndDropQuestionUtil'];
 
-    function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity, $translate) {
+    function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity, $translate, DragAndDropQuestionUtil) {
         var vm = this;
 
         prepareEntity(entity);
@@ -59,6 +59,7 @@
         vm.showDropdown = showDropdown;
         vm.pendingChanges = pendingChanges;
         vm.validQuiz = validQuiz;
+        vm.invalidReasons = invalidReasons;
         vm.invalidReasonsHTML = invalidReasonsHTML;
         vm.openCalendar = openCalendar;
         vm.addMultipleChoiceQuestion = addMultipleChoiceQuestion;
@@ -182,7 +183,7 @@
                             return answerOption.isCorrect;
                         });
                     case "drag-and-drop":
-                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0;
+                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0 && DragAndDropQuestionUtil.solve(question).length && DragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question);
                     default:
                         return question.title && question.title !== "";
                 }
@@ -233,6 +234,17 @@
                             translateKey: "artemisApp.quizExercise.invalidReasons.questionCorrectMapping",
                             translateValues: {index: index + 1}
                         });
+                    } else if (DragAndDropQuestionUtil.solve(question).length === 0) {
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.questionUnsolvable",
+                            translateValues: {index: index + 1}
+                        });
+                    }
+                    if (!DragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question)) {
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping",
+                            translateValues: {index: index + 1}
+                        });
                     }
                 }
             });
@@ -255,7 +267,6 @@
          */
         function save() {
             if (!validQuiz()) {
-                alert("Error: Cannot save invalid quiz.");
                 return;
             }
             vm.isSaving = true;

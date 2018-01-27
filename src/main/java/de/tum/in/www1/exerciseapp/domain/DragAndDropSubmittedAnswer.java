@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
@@ -24,8 +22,8 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
 
     private static final long serialVersionUID = 1L;
 
-    @OneToMany(mappedBy = "submittedAnswer")
-    @JsonIgnore
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JoinColumn(name = "submitted_answer_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropMapping> mappings = new HashSet<>();
 
@@ -55,6 +53,22 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
         this.mappings = dragAndDropMappings;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    /**
+     * Get the drag item that was drag-and-dropped on the given drop location
+     *
+     * @param dropLocation the drop location
+     * @return the selected drag item for the given drop location
+     *         (may be null if no drag item was dropped on this drop location)
+     */
+    public DragItem getSelectedDragItemForDropLocation(DropLocation dropLocation) {
+        for (DragAndDropMapping mapping : mappings) {
+            if (mapping.getDropLocation().equals(dropLocation)) {
+                return mapping.getDragItem();
+            }
+        }
+        return null;
+    }
 
     @Override
     public boolean equals(Object o) {
