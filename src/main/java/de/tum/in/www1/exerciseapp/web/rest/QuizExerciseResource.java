@@ -85,6 +85,11 @@ public class QuizExerciseResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
+        // check if quiz is valid
+        if (!quizExercise.isValid()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+        }
+
         // fix references in all drag and drop questions (step 1/2)
         for (Question question : quizExercise.getQuestions()) {
             if (question instanceof DragAndDropQuestion) {
@@ -136,6 +141,11 @@ public class QuizExerciseResource {
             !authCheckService.isInstructorInCourse(course) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        // check if quiz is valid
+        if (!quizExercise.isValid()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
         // iterate through questions to add missing pointer back to quizExercise

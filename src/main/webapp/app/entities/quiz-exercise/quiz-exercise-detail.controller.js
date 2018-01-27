@@ -175,7 +175,7 @@
          * @returns {boolean} true if valid, false otherwise
          */
         function validQuiz() {
-            var isGenerallyValid = vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration;
+            var isGenerallyValid = vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration && vm.quizExercise.questions && vm.quizExercise.questions.length;
             var areAllQuestionsValid = vm.quizExercise.questions.every(function (question) {
                 switch (question.type) {
                     case "multiple-choice":
@@ -208,6 +208,12 @@
             if (!vm.quizExercise.duration) {
                 reasons.push({
                     translateKey: "artemisApp.quizExercise.invalidReasons.quizDuration",
+                    translateValues: {}
+                });
+            }
+            if (!vm.quizExercise.questions || vm.quizExercise.questions.length === 0) {
+                reasons.push({
+                    translateKey: "artemisApp.quizExercise.invalidReasons.noQuestion",
                     translateValues: {}
                 });
             }

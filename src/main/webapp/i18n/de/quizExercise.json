@@ -60,9 +60,10 @@
             "statisticsNotPublished": "Der Übungsleiter hat keine Statistiken freigegeben.",
             "successfullySubmittedText": "Ihre Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, sobald das Quiz beendet ist.",
             "invalidReasons" : {
-                "quizTitle": "Quiz: Titel fehlt.",
-                "quizDuration": "Quiz: Dauer fehlt oder ungültig.",
-                "questionTitle": "Frage {{index}}: Titel fehlt.",
+                "quizTitle": "Quiz: Der Titel fehlt.",
+                "quizDuration": "Quiz: Die Dauer fehlt oder ist ungültig.",
+                "noQuestion": "Quiz: Das Quiz hat keine Fragen.",
+                "questionTitle": "Frage {{index}}: Der Titel fehlt.",
                 "questionCorrectAnswerOption": "Frage {{index}}: Es existiert keine korrekte Antwortmöglichkeit.",
                 "questionCorrectMapping": "Frage {{index}}: Es existiert keine korrekte Zuordnung.",
                 "questionUnsolvable": "Frage {{index}}: Es gibt Drag Items, die auf mehrere Drop Locations gleichzeitig platziert werden müssten um die Frage richtig zu beantworten.",

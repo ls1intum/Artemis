@@ -59,7 +59,7 @@ public abstract class Question implements Serializable {
     @Column(name = "randomize_order")
     private Boolean randomizeOrder;
 
-    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(unique = true)
     private QuestionStatistic questionStatistic;
 
@@ -194,6 +194,7 @@ public abstract class Question implements Serializable {
 
     /**
      * Calculate the score for the given answer
+     *
      * @param submittedAnswer The answer given for this question
      * @return the resulting score
      */
@@ -203,11 +204,23 @@ public abstract class Question implements Serializable {
 
     /**
      * Checks if the given answer is 100 % correct. This is independent of the scoring type
+     *
      * @param submittedAnswer The answer given for this question
      * @return true, if the answer is 100% correct, false otherwise
      */
     public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
         return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getScore();
+    }
+
+    /**
+     * Check if the question is valid. This means the question has a title
+     * and fulfills any additional requirements by the specific subclass
+     *
+     * @return true, if the question is valid, otherwise false
+     */
+    public Boolean isValid() {
+        // check title
+        return getTitle() != null && !getTitle().equals("");
     }
 
     @Override

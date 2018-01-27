@@ -236,6 +236,37 @@ public class QuizExercise extends Exercise implements Serializable {
         return !hasStarted() || isSubmissionAllowed();
     }
 
+    /**
+     * Check if the quiz is valid. This means, the quiz needs a title, a valid duration,
+     * at least one question, and all questions must be valid
+     *
+     * @return true if the quiz is valid, otherwise false
+     */
+    public Boolean isValid() {
+        // check title
+        if (getTitle() == null || getTitle().equals("")){
+            return false;
+        }
+
+        // check duration
+        if (getDuration() == null || getDuration() < 0) {
+            return false;
+        }
+
+        // check questions
+        if (getQuestions() == null || getQuestions().isEmpty()) {
+            return false;
+        }
+        for (Question question : getQuestions()) {
+            if (!question.isValid()) {
+                return false;
+            }
+        }
+
+        // passed all checks
+        return true;
+    }
+
     public List<Question> getQuestions() {
         return questions;
     }
