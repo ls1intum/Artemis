@@ -137,6 +137,68 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
         }
         return null;
     }
+
+    /**
+     * undo all answer-changes which are not allowed ( adding Answers)
+     *
+     * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
+     *
+     */
+    public void undoUnallowedAnswerChanges ( MultipleChoiceQuestion originalQuestion){
+
+        //find added Answers, which are not allowed to be added
+        Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
+        //check every answer of the question
+        for (AnswerOption answer : this.getAnswerOptions()) {
+            //check if the answer were already in the originalQuizExercise -> if not it's an added answer
+            if (originalQuestion.getAnswerOptions().contains(answer)) {
+                //find original answer
+                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
+                //reset invalid answer if it already set to true (it's not possible to set an answer valid again)
+                answer.setInvalid(answer.isInvalid() || originalAnswer.isInvalid());
+            } else {
+                //mark the added Answers (adding questions is not allowed)
+                notAllowedAddedAnswers.add(answer);
+            }
+        }
+        //remove the added Answers
+        this.getAnswerOptions().removeAll(notAllowedAddedAnswers);
+    }
+
+    /**
+     * check if an update of the Results and Statistics is necessary
+     *
+     * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
+     *
+     * @return a boolean which is true if the answer-changes make an update necessary and false if not
+     */
+    public boolean checkAnswersIfRecalculationIsNecessary (MultipleChoiceQuestion originalQuestion){
+
+        boolean updateNecessary = false;
+
+        //check every answer of the question
+        for (AnswerOption answer : this.getAnswerOptions()) {
+            //check if the answer were already in the originalQuizExercise
+            if (originalQuestion.getAnswerOptions().contains(answer)) {
+                //find original answer
+                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
+
+                // check if an answer is set invalid or if the correctness has changed
+                // if true an update of the Statistics and Results is necessary
+                if ((answer.isInvalid() && !originalAnswer.isInvalid() && !this.isInvalid()) ||
+                    (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
+                    updateNecessary = true;
+                }
+            }
+        }
+        // check if an answer was deleted (not allowed added answers are not relevant)
+        // if true an update of the Statistics and Results is necessary
+        if ( this.getAnswerOptions().size() < originalQuestion.getAnswerOptions().size()) {
+            updateNecessary = true;
+        }
+        return updateNecessary;
+    }
+
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
     @Override

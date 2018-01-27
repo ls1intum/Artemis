@@ -38,8 +38,6 @@ public class QuizExerciseResource {
     private final ParticipationRepository participationRepository;
     private final StatisticService statisticService;
     private final ResultRepository resultRepository;
-    private final QuizPointStatisticRepository quizPointStatisticRepository;
-    private final QuestionStatisticRepository questionStatisticRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
 
@@ -47,16 +45,12 @@ public class QuizExerciseResource {
                                 ParticipationRepository participationRepository,
                                 StatisticService statisticService,
                                 ResultRepository resultRepository,
-                                QuizPointStatisticRepository quizPointStatisticRepository,
-                                QuestionStatisticRepository questionStatisticRepository,
                                 QuizSubmissionRepository quizSubmissionRepository,
                                 DragAndDropMappingRepository dragAndDropMappingRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.statisticService = statisticService;
         this.resultRepository = resultRepository;
-        this.quizPointStatisticRepository = quizPointStatisticRepository;
-        this.questionStatisticRepository = questionStatisticRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
     }
@@ -355,7 +349,8 @@ public class QuizExerciseResource {
             return createQuizExercise(quizExercise);
         }
         QuizExercise originalQuizExercise = quizExerciseRepository.findOne(quizExercise.getId());
-        boolean updateOfResultsAndStatisticsNecessary = undoUnallowedChangesAndCheckIfRecalculationIsNecessary(quizExercise, originalQuizExercise);
+        quizExercise.undoUnallowedChanges(originalQuizExercise);
+        boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
         //change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
@@ -388,195 +383,10 @@ public class QuizExerciseResource {
 
         // update Statistics and Results
         if (updateOfResultsAndStatisticsNecessary) {
-            updateStatisticsAndResults(quizExercise);
+            statisticService.updateStatisticsAndResults(quizExercise);
         }
 
         return methodResult;
-    }
-
-    /**
-     * 1. undo all changes which are not allowed ( dueDate, releaseDate, question.points, adding Questions and Answers)
-     * 2. check if an update of the Results and Statistics is necessary
-     *
-     * @param quizExercise the changed QuizExercise object
-     * @param originalQuizExercise the original QuizExercise object, which will be compared with the new changed quizExercise
-     *
-     * @return a boolean which is true if an update is necessary and false if not
-     */
-    private boolean undoUnallowedChangesAndCheckIfRecalculationIsNecessary (QuizExercise quizExercise, QuizExercise originalQuizExercise){
-
-        boolean updateOfResultsAndStatisticsNecessary = false;
-
-        //reset unchangeable attributes: ( dueDate, releaseDate, question.points)
-        quizExercise.setDueDate(originalQuizExercise.getDueDate());
-        quizExercise.setReleaseDate(originalQuizExercise.getReleaseDate());
-
-        //remove added Questions, which are not allowed to be added
-        // and check the changes -> updates of statistics and results necessary?
-        Set<Question> addedQuestions = new HashSet<>();
-
-        //check every question
-        for (Question question : quizExercise.getQuestions()) {
-            //check if the question were already in the originalQuizExercise -> if not it's an added question
-            if (originalQuizExercise.getQuestions().contains(question)) {
-                // find original unchanged question
-                Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
-                //reset score (not allowed to change)
-                question.setScore(originalQuestion.getScore());
-                //reset invalid if the question is already invalid;
-                question.setInvalid(question.isInvalid() || originalQuestion.isInvalid());
-
-                // check if a question is  set invalid or if the scoringType has changed
-                // if true an update of the Statistics and Results is necessary
-                updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
-                    (question.isInvalid() && !originalQuestion.isInvalid()) ||
-                    !question.getScoringType().equals(originalQuestion.getScoringType());
-
-                //undo all not allowed changes in the answers of the MultipleChoiceQuestion
-                // and check if the answers effect make an update of the statistics and results necessary
-                if (question instanceof MultipleChoiceQuestion) {
-                    updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
-                        undoUnallowedChangesAndCheckMultipleChoiceQuestionAnswers((MultipleChoiceQuestion) question, (MultipleChoiceQuestion) originalQuestion);
-                }
-
-                if (question instanceof DragAndDropQuestion) {
-                    // TODO: @Moritz: check changes in DragAndDropQuestions
-                }
-
-            } else {
-                // question is added (not allowed), mark question for remove
-                addedQuestions.add(question);
-            }
-        }
-        // remove all added questions
-        quizExercise.getQuestions().removeAll(addedQuestions);
-
-        // check if an question was deleted (not allowed added quistions are not relevant)
-        // if true an update of the Statistics and Results is necessary
-        if (quizExercise.getQuestions().size() != originalQuizExercise.getQuestions().size()) {
-            updateOfResultsAndStatisticsNecessary = true;
-        }
-        return updateOfResultsAndStatisticsNecessary;
-    }
-
-    /**
-     * 1. undo all changes which are not allowed ( adding Answers)
-     * 2. check if an update of the Results and Statistics is necessary
-     *
-     * @param question the changed MultipleChoiceQuestion-object
-     * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with the new changed question
-     *
-     * @return a boolean which is true if the answer-changes make an update necessary and false if not
-     */
-    private boolean undoUnallowedChangesAndCheckMultipleChoiceQuestionAnswers (MultipleChoiceQuestion question, MultipleChoiceQuestion originalQuestion){
-
-        boolean updateNecessary = false;
-
-        //find added Answers, which are not allowed to be added
-        Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
-        //check every answer of the question
-        for (AnswerOption answer : question.getAnswerOptions()) {
-            //check if the answer were already in the originalQuizExercise -> if not it's an added answer
-            if (originalQuestion.getAnswerOptions().contains(answer)) {
-                //find original answer
-                AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
-                //reset invalid answer if it already set to true (it's not possible to set an answer valid again)
-                answer.setInvalid(answer.isInvalid() || originalAnswer.isInvalid());
-
-                // check if an answer is set invalid or if the correctness has changed
-                // if true an update of the Statistics and Results is necessary
-                if ((answer.isInvalid() && !originalAnswer.isInvalid() && !question.isInvalid()) ||
-                    (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
-                    updateNecessary = true;
-                }
-            } else {
-                //mark the added Answers (adding questions is not allowed)
-                notAllowedAddedAnswers.add(answer);
-            }
-        }
-        //remove the added Answers
-        question.getAnswerOptions().removeAll(notAllowedAddedAnswers);
-
-        // check if an answer was deleted (not allowed added answers are not relevant)
-        // if true an update of the Statistics and Results is necessary
-        if ( question.getAnswerOptions().size() < originalQuestion.getAnswerOptions().size()) {
-            updateNecessary = true;
-        }
-        return updateNecessary;
-    }
-
-    /**
-     * 1. Go through all Results in the Participation and recalculate the score
-     * 2. recalculate the statistic the given quizExercise
-     *
-     * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
-     */
-    private void updateStatisticsAndResults(QuizExercise quizExercise){
-
-        //reset all statistic
-        quizExercise.getQuizPointStatistic().resetStatistic();
-        for (Question question : quizExercise.getQuestions()) {
-            question.getQuestionStatistic().resetStatistic();
-        }
-
-        // update the Results in every participation of the given quizExercise
-        for (Participation participation : participationRepository.findByExerciseId(quizExercise.getId())) {
-
-            Result latestRatedResult = null;
-            Result latestUnratedResult = null;
-
-            // update all Results of a participation
-            for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
-
-                //recalculate existing score
-                ((QuizSubmission) result.getSubmission()).calculateAndUpdateScores(quizExercise);
-                //update Successful-Flag in Result
-                result.setScore(Math.round(((QuizSubmission) result.getSubmission()).getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
-                if (result.getScore() == 100) {
-                    result.setSuccessful(true);
-                } else {
-                    result.setSuccessful(false);
-                }
-                // save the updated Result and its Submission
-                resultRepository.save(result);
-                quizSubmissionRepository.save((QuizSubmission) result.getSubmission());
-
-                //save latest rated Result for Statistic update
-                if (result.getCompletionDate().isBefore(quizExercise.getDueDate())
-                    && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
-                    latestRatedResult = result;
-                }
-                //save latest unrated Result for Statistic update
-                if (result.getCompletionDate().isAfter(quizExercise.getDueDate())
-                    && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
-                    latestUnratedResult = result;
-                }
-            }
-
-            // update QuizPointStatistic with the latest rated Result
-            if (latestRatedResult != null) {
-                quizExercise.getQuizPointStatistic().addResult(latestRatedResult.getScore(), true);
-            }
-            // update QuizPointStatistic with the latest unrated Result
-            if (latestUnratedResult != null) {
-                quizExercise.getQuizPointStatistic().addResult(latestUnratedResult.getScore(), false);
-            }
-            for (Question question : quizExercise.getQuestions()) {
-                // update QuestionStatistics with the latest rated Result
-                if (latestRatedResult != null) {
-                    question.getQuestionStatistic().addResult(((QuizSubmission) latestRatedResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
-                }
-                // update QuestionStatistics with the latest unrated Result
-                if (latestUnratedResult != null) {
-                    question.getQuestionStatistic().addResult(((QuizSubmission) latestUnratedResult.getSubmission()).getSubmittedAnswerForQuestion(question), false);
-                }
-            }
-        }
-        //save changed Statistics
-        quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
-        for (Question question : quizExercise.getQuestions()) {
-            questionStatisticRepository.save(question.getQuestionStatistic());
-        }
     }
 
     /**

@@ -347,6 +347,95 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
+     * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, question.points, adding Questions and Answers)
+     *
+     * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise
+     *
+     */
+    public void undoUnallowedChanges ( QuizExercise originalQuizExercise){
+
+        //reset unchangeable attributes: ( dueDate, releaseDate, question.points)
+        this.setDueDate(originalQuizExercise.getDueDate());
+        this.setReleaseDate(originalQuizExercise.getReleaseDate());
+
+        //remove added Questions, which are not allowed to be added
+        // and check the changes -> updates of statistics and results necessary?
+        Set<Question> addedQuestions = new HashSet<>();
+
+        //check every question
+        for (Question question : questions) {
+            //check if the question were already in the originalQuizExercise -> if not it's an added question
+            if (originalQuizExercise.getQuestions().contains(question)) {
+                // find original unchanged question
+                Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
+                //reset score (not allowed to change)
+                question.setScore(originalQuestion.getScore());
+                //reset invalid if the question is already invalid;
+                question.setInvalid(question.isInvalid() || originalQuestion.isInvalid());
+
+                //undo all not allowed changes in the answers of the MultipleChoiceQuestion
+                if (question instanceof MultipleChoiceQuestion) {
+                    ((MultipleChoiceQuestion) question).undoUnallowedAnswerChanges((MultipleChoiceQuestion) originalQuestion);
+                }
+
+                if (question instanceof DragAndDropQuestion) {
+                    // TODO: @Moritz: check changes in DragAndDropQuestions
+                }
+
+            } else {
+                // question is added (not allowed), mark question for remove
+                addedQuestions.add(question);
+            }
+        }
+        // remove all added questions
+        questions.removeAll(addedQuestions);
+    }
+
+    /**
+     * check if an update of the Results and Statistics is necessary after the re-evaluation of this quiz
+     *
+     * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise
+     *
+     * @return a boolean which is true if an update is necessary and false if not
+     */
+    public boolean checkIfRecalculationIsNecessary (QuizExercise originalQuizExercise){
+
+        boolean updateOfResultsAndStatisticsNecessary = false;
+
+        //check every question
+        for (Question question : questions) {
+            //check if the question were already in the originalQuizExercise
+            if (originalQuizExercise.getQuestions().contains(question)) {
+                // find original unchanged question
+                Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
+
+                // check if a question is  set invalid or if the scoringType has changed
+                // if true an update of the Statistics and Results is necessary
+                updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
+                    (question.isInvalid() && !originalQuestion.isInvalid()) ||
+                    !question.getScoringType().equals(originalQuestion.getScoringType());
+
+                // check if the answers-changes make an update of the statistics and results necessary
+                if (question instanceof MultipleChoiceQuestion) {
+                    updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
+                        ((MultipleChoiceQuestion) question).checkAnswersIfRecalculationIsNecessary((MultipleChoiceQuestion) originalQuestion);
+                }
+
+                if (question instanceof DragAndDropQuestion) {
+                    // TODO: @Moritz: check changes in DragAndDropQuestions
+                }
+
+            }
+        }
+        // check if an question was deleted (not allowed added quistions are not relevant)
+        // if true an update of the Statistics and Results is necessary
+        if (questions.size() != originalQuizExercise.getQuestions().size()) {
+            updateOfResultsAndStatisticsNecessary = true;
+        }
+        return updateOfResultsAndStatisticsNecessary;
+    }
+
+    /**
      * Get the maximum total score for this quiz
      *
      * @return the sum of all the questions' maximum scores
