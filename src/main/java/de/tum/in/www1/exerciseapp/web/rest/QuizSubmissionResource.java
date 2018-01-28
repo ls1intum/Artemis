@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 /**
  * REST controller for managing QuizSubmission.
@@ -34,6 +35,7 @@ public class QuizSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
 
     private static final String ENTITY_NAME = "quizSubmission";
+    private static Semaphore statisticSemaphore = new Semaphore(1);
 
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizExerciseRepository quizExerciseRepository;
@@ -111,10 +113,13 @@ public class QuizSubmissionResource {
                 }
                 if (result != null) {
                     QuizSubmission submission = (QuizSubmission) result.getSubmission();
-                    // get submission from cache, if it exists
-                    QuizSubmission cachedSubmission = QuizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
-                    if (cachedSubmission != null) {
-                        submission = cachedSubmission;
+                    // get submission from cache, if it exists and submission is not submitted already
+                    QuizSubmission cachedSubmission = null;
+                    if (!submission.isSubmitted()) {
+                        cachedSubmission = QuizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
+                        if (cachedSubmission != null) {
+                            submission = cachedSubmission;
+                        }
                     }
 
                     // remove scores from submission if quiz hasn't ended yet
@@ -204,7 +209,7 @@ public class QuizSubmissionResource {
                         .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
                         .body(quizSubmission);
                 } else {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The quizExercise for this submission has already ended.")).body(null);
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseHasEnded", "The quiz has ended or you have already submitted your answers for this quiz.")).body(null);
                 }
             } else {
                 return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "The submission belongs to a different user.")).body(null);
@@ -216,12 +221,10 @@ public class QuizSubmissionResource {
 
     /**
      * 1. Overwrite current submission with quizSubmission (if quizSubmission is not null and participation state is not FINISHED)
-     *
      * 2. Mark the submission as final (submitted), calculate the score and save the result.
-     *
      * 3. Notify socket subscriptions for new result in participation and changed submission
      *
-     * @param participation the participation object that the submission belongs to
+     * @param participation  the participation object that the submission belongs to
      * @param quizSubmission (optional) the new submission to overwrite the existing one with
      * @return The updated QuizSubmission (submitted is true; submissionDate and type are updated)
      */
@@ -270,23 +273,44 @@ public class QuizSubmissionResource {
             result = resultRepository.save(result);
             // get previous Result
             Result previousResult = getPreviousResult(result);
-            // add the new Result to the quizPointStatistic and remove the previous one
-            if(previousResult != null) {
-                ((QuizExercise) previousResult.getParticipation().getExercise()).getQuizPointStatistic().removeOldResult(previousResult.getScore(),true);
+
+            // critical part locked with Semaphore statisticSemaphore
+            try {
+                statisticSemaphore.acquire();
+
+                QuizExercise quiz = quizExerciseRepository.findOne(participation.getExercise().getId());
+
+
+                for (Question question: quiz.getQuestions()) {
+                    if(previousResult != null) {
+                        // remove the previous Result from the QuestionStatistics
+                        question.getQuestionStatistic().removeOldResult(((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
+                    }
+                    // add the new Result to QuestionStatistics
+                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
+                    questionStatisticRepository.save(question.getQuestionStatistic());
+                    //TODO: test if this works
+                }
+
+                // add the new Result to the quizPointStatistic and remove the previous one
+                if (previousResult != null) {
+                    quiz.getQuizPointStatistic().removeOldResult(previousResult.getScore(), true);
+                }
+                quiz.getQuizPointStatistic().addResult(result.getScore(), true);
+                quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
+
+            } catch (InterruptedException e) {
+                log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
+            } finally {
+                statisticSemaphore.release();
             }
-            ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(),true);
-            quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
-            // remove the previous Result from the QuestionStatistics
-            if(previousResult != null) {
-                for(SubmittedAnswer submittedAnswer: ((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswers()) {
-                    submittedAnswer.getQuestion().getQuestionStatistic().removeOldResult(submittedAnswer, true);
+
+            // add the new Result to QuestionStatistics
+            for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
+                if (submittedAnswer.getQuestion() != null && submittedAnswer.getQuestion().getQuestionStatistic() != null) {
+                    submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
                     questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
                 }
-            }
-            // add the new Result to QuestionStatistics
-            for(SubmittedAnswer submittedAnswer: ((QuizSubmission)result.getSubmission()).getSubmittedAnswers()) {
-                submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
-                questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
             }
             // notify statistics about new Result
             statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
@@ -316,7 +340,8 @@ public class QuizSubmissionResource {
         Result oldResult = null;
 
         for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
-            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) &&
+            //find the latest Result, which is presented in the Statistics
+            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult) &&
                 (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
                 oldResult = result;
             }

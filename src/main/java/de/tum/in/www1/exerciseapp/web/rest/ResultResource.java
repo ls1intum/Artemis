@@ -322,6 +322,7 @@ public class ResultResource {
 
     /**
      * GET  /results/:id/details : get the build result details from Bamboo for the "id" result.
+     * This method is only invoked if the result actually includes details (e.g. feedback or build errors)
      *
      * @param id the id of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)

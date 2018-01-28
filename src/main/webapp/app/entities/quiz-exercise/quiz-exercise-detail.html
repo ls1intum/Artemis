@@ -182,12 +182,15 @@
                     ></span>
                     <span
                         ng-if="!vm.validQuiz()"
-                        data-translate="artemisApp.quizExercise.edit.invalidInput"
                         class="label label-danger"
                         uib-tooltip-html="vm.invalidReasonsHTML()"
                         tooltip-placement="top-right"
                         tooltip-class="invalid-reasons-tooltip"
-                    ></span>
+                    >
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span data-translate="artemisApp.quizExercise.edit.invalidInput"></span>
+                        <span>({{vm.invalidReasons().length}})</span>
+                    </span>
                     <button
                         class="btn btn-default"
                         ui-sref="quiz-exercise-for-course({courseid:vm.quizExercise.course.id})"
@@ -196,8 +199,11 @@
                     <button
                         class="btn btn-success"
                         ng-click="vm.save()"
-                        ng-disabled="!vm.pendingChanges() || !vm.validQuiz() || vm.isSaving"
+                        ng-class="{disabled: !vm.pendingChanges() || !vm.validQuiz() || vm.isSaving}"
                         data-translate="entity.action.save"
+                        uib-tooltip-html="!vm.validQuiz() && vm.invalidReasonsHTML()"
+                        tooltip-placement="top-right"
+                        tooltip-class="invalid-reasons-tooltip"
                     ></button>
                 </div>
             </div>

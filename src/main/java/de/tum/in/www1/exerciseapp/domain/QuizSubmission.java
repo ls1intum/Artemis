@@ -94,6 +94,7 @@ public class QuizSubmission extends Submission implements Serializable {
             }
         }
         // set total score
+
         setScoreInPoints(quizExercise.getScoreInPointsForSubmission(this));
     }
 

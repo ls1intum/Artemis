@@ -8,5 +8,5 @@
         .constant('DEBUG_INFO_ENABLED', false)
         .constant('BUILD_TIMESTAMP', 1509203409638)
 
-;
+    ;
 })();
