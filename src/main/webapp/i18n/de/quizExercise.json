@@ -55,6 +55,37 @@
             "statistics": "Statistiken",
             "statisticsNotPublished": "Der Übungsleiter hat keine Statistiken freigegeben.",
             "successfullySubmittedText": "Ihre Antworten wurden erfolgreich abgegeben.<br><br>Die Ergebnisse werden angezeigt, sobald das Quiz beendet ist.",
+            "re-evaluate": {
+                "title": "Quiz für {{ param }} überarbeiten",
+                "resetQuiz": "Setze Quiz zurück",
+                "setQuestionInvalid": "Frage ungültig setzen",
+                "questionIsInvalid": "Frage ist ungültig",
+                "setAnswerInvalid": "Antwort ungültig setzen",
+                "answerIsInvalid": "Antwort ist ungültig",
+                "warning": {
+                    "warning": "Warnung!",
+                    "confirm": "Änderungen bestätigen",
+                    "problems": "Folgende Probleme können auftreten:",
+                    "answer_deleted": "Antwortmöglichkeit gelöscht:",
+                    "answer_invalid": "Antwortmöglichkeit ungültig gesetzt:",
+                    "answer_correctness": "Lösung einer Antwort verändert:",
+                    "question_deleted": "Frage gelöscht:",
+                    "question_invalid": "Frage ungültig gesetzt:",
+                    "scoring_change": "Bewertungsart verändert:",
+                    "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
+                    "statistic": "Die bestehende Statistiken müssen neu berechnet werden!",
+                    "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
+                    "resulttext":{
+                        "answer_deleted": "Die Antwortmöglichkeit wird aus allen Ergebnissen entfernt",
+                        "answer_invalid": "Alle Teilnehmer erhalten die Punkte für die ungültige Antwort",
+                        "question_deleted": "Die Frage wird aus allen Ergebnissen entfernt",
+                        "question_invalid": "Alle Teilnehmer erhalten die Punkte für die ungültige Frage",
+                        "scoring_change": "Die erreichte Punktzahl wird neu berechnet, dabei kann ein Teilnehmer auch Punkte verlieren"
+                    },
+                    "confirmtext": "Möchten Sie die Änderungen wirklich übernehmen?",
+                    "succesfully_confirm": "Änderungen erfolgreich übernommen!"
+                }
+            },
             "invalidReasons" : {
                 "quizTitle": "Quiz: Titel fehlt.",
                 "quizDuration": "Quiz: Dauer fehlt oder ungültig.",

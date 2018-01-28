@@ -27,6 +27,7 @@ module.exports = function (config) {
             // bower:js
             'src/main/webapp/bower_components/jquery/dist/jquery.js',
             'src/main/webapp/bower_components/messageformat/messageformat.js',
+            'src/main/webapp/bower_components/jquery-ui/jquery-ui.js',
             'src/main/webapp/bower_components/json3/lib/json3.js',
             'src/main/webapp/bower_components/lodash/lodash.js',
             'src/main/webapp/bower_components/sockjs-client/dist/sockjs.js',
@@ -74,6 +75,7 @@ module.exports = function (config) {
             'src/main/webapp/bower_components/angular-file-saver/dist/angular-file-saver.bundle.js',
             'src/main/webapp/bower_components/angular-resizable/src/angular-resizable.js',
             'src/main/webapp/bower_components/angular-chart.js/dist/angular-chart.js',
+            'src/main/webapp/bower_components/angular-ui-sortable/sortable.js',
             'src/main/webapp/bower_components/angular-mocks/angular-mocks.js',
             // endbower
             'src/main/webapp/app/app.module.js',

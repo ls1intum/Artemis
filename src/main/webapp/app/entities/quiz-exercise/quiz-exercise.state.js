@@ -207,6 +207,64 @@
                     $state.go('^');
                 });
             }]
+        })
+        .state('quiz-exercise-re-evaluate', {
+            parent: 'quiz-exercise',
+            url: '/course/{courseid}/quiz-exercise/re-evaluate/{id}',
+            data: {
+                authorities: ['ROLE_ADMIN','ROLE_INSTRUCTOR'],
+            },
+            views: {
+                'content@': {
+                    templateUrl: 'app/quiz/re-evaluate/quiz-re-evaluate.html',
+                    controller: 'QuizReEvaluateController',
+                    controllerAs: 'vm'
+                }
+            },
+            resolve: {
+                translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                    $translatePartialLoader.addPart('quizExercise');
+                    return $translate.refresh();
+                }],
+                entity: ['$stateParams', 'QuizExercise', function($stateParams, QuizExercise) {
+                    return QuizExercise.get({id : $stateParams.id}).$promise;
+                }],
+                courseEntity: ['$stateParams', 'Course', function ($stateParams, Course) {
+                    return Course.get({id: $stateParams.courseid}).$promise;
+                }],
+                previousState: ["$state", function ($state) {
+                    var currentStateData = {
+                        name: $state.current.name || 'quiz-exercise-for-course',
+                        params: $state.params,
+                        url: $state.href($state.current.name, $state.params)
+                    };
+                    return currentStateData;
+                }]
+            }
+        })
+        .state('quiz-exercise-re-evaluate.warning', {
+            parent: 'quiz-exercise-re-evaluate',
+            url: '{id}/warning',
+            data: {
+                authorities: ['ROLE_ADMIN','ROLE_INSTRUCTOR']
+            },
+            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
+                $uibModal.open({
+                    templateUrl: 'app/quiz/re-evaluate/quiz-re-evaluate-warning.html',
+                    controller: 'QuizReEvaluateWarningController',
+                    controllerAs: 'vm',
+                    size: 'md',
+                    resolve: {
+                        entity: ['QuizExercise', function(QuizExercise) {
+                            return QuizExercise.get({id : $stateParams.id}).$promise;
+                        }]
+                    }
+                }).result.then(function() {
+                    $state.go('quiz-exercise-for-course', $state.params, {reload: true});
+                }, function() {
+                    $state.go('^');
+                });
+            }]
         });
     }
 

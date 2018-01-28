@@ -67,7 +67,7 @@
                     });
 
                     //if the User is a student: subscribe the release Websocket of every quizExercise
-                    if(exercise.type === 'quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']))){
+                    if(exercise.type === 'quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
                         var websocketChannel = '/topic/statistic/'+ exercise.id +'/release';
 
                         JhiWebsocketService.subscribe(websocketChannel);
@@ -83,7 +83,7 @@
             //if the User is a student: unsubscribe the release Websocket of every quizExercise
             $scope.$on('$destroy', function() {
                 vm.exercises.forEach(function (exercise) {
-                    if(exercise.typa ==='quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']))){
+                    if(exercise.typa ==='quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
                     JhiWebsocketService.unsubscribe('/topic/statistic/'+ exercise.id +'/release');
                     }
                 })
@@ -220,7 +220,7 @@
          */
         function canOpenStatistic(exercise){
             if(exercise.type === 'quiz'){
-                return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']) ||  exercise.quizPointStatistic.released == true;
+                return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) ||  exercise.quizPointStatistic.released == true;
             }
             return false;
         }

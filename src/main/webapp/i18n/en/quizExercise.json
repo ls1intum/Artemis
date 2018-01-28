@@ -55,6 +55,37 @@
             "statistics": "Statistics",
             "statisticsNotPublished": "The instructor has not published any statistics.",
             "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended.",
+            "re-evaluate": {
+                "title": "Re-evaluate Quiz Exercise for {{ param }}",
+                "resetQuiz": "Reset Quiz Exercise",
+                "setQuestionInvalid": "Set question invalid",
+                "questionIsInvalid": "Question is invalid",
+                "setAnswerInvalid": "Set answer invalid",
+                "answerIsInvalid": "Answer is invalid",
+                "warning": {
+                    "warning": "Warning!",
+                    "confirm": "Confirm changes",
+                    "problems": "The following problems may occur:",
+                    "answer_deleted": "Answer option deleted:",
+                    "answer_invalid": "Answer option set invalid:",
+                    "answer_correctness": "Solution of an answer option changed:",
+                    "question_deleted": "Question deleted:",
+                    "question_invalid": "Question set invalid:",
+                    "scoring_change": "Scoring changed:",
+                    "no_changes": "No changes, which affect the existing results",
+                    "statistic": "The existing statistics must be recalculated!",
+                    "results": "The existing results must be recalculated!",
+                    "resulttext":{
+                        "answer_deleted": "The answer option will be removed from all results",
+                        "answer_invalid": "All participants receive the points for the invalid answer",
+                        "question_deleted": "The question will be removed from all results",
+                        "question_invalid": "All participants receive the points for the invalid question",
+                        "scoring_change": "The scores will be recalculated. A participant could also lose points"
+                    },
+                    "confirmtext": "Do you really want to perform these changes?",
+                    "succesfully_confirm": "Changes successfully adopted!"
+                }
+            },
             "invalidReasons" : {
                 "quizTitle": "Quiz: Title is missing.",
                 "quizDuration": "Quiz: Duration is missing or invalid.",

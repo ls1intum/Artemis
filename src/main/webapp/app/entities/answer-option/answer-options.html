@@ -24,6 +24,7 @@
                     <th><span data-translate="artemisApp.answerOption.explanation">Explanation</span></th>
                     <th><span data-translate="artemisApp.answerOption.isCorrect">Is Correct</span></th>
                     <th><span data-translate="artemisApp.answerOption.question">Question</span></th>
+                    <th><span data-translate="artemisApp.answerOption.invalid">Invalid</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -34,6 +35,7 @@
                     <td>{{answerOption.hint}}</td>
                     <td>{{answerOption.explanation}}</td>
                     <td>{{answerOption.isCorrect}}</td>
+                    <td>{{answerOption.invalid}}</td>
                     <td>
                         <a ui-sref="multiple-choice-question-detail({id:answerOption.question.id})">{{answerOption.question.id}}</a>
                     </td>

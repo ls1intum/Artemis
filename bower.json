@@ -44,6 +44,7 @@
     "showdown": "^1.7.6",
     "chart.js": "^2.7.0",
     "angular-chart.js": "^1.1.1",
+    "angular-ui-sortable": "^0.17.0",
     "angular-native-dragdrop": "^1.2.2",
     "jquery-textfill": "^0.6.0"
   },

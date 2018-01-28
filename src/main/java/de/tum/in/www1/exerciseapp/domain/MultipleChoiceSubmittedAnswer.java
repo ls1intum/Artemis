@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Cascade;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -69,6 +70,24 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
         }
         // we didn't find the answer option => it wasn't selected
         return false;
+    }
+
+    /**
+     * Check if answerOptions were deleted and delete reference to in selectedOptions
+     * @param question the changed question with the answerOptions
+     */
+    public void checkForDeletedAnswerOptions(MultipleChoiceQuestion question) {
+
+        if( question != null) {
+            // Check if an answerOption was deleted and delete reference to in selectedOptions
+            Set<AnswerOption> selectedOptionsToDelete = new HashSet<>();
+            for (AnswerOption answerOption : this.getSelectedOptions()) {
+                if (!question.getAnswerOptions().contains(answerOption)) {
+                    selectedOptionsToDelete.add(answerOption);
+                }
+            }
+            this.getSelectedOptions().removeAll(selectedOptionsToDelete);
+        }
     }
 
     @Override

@@ -125,7 +125,9 @@
             "preview": "Vorschau",
             "cleanup": "Aufräumen",
             "archive": "Archivieren",
-            "submit": "Absenden"
+            "submit": "Absenden",
+            "re-evaluate": "Überarbeiten",
+            "close": "Schließen"
         },
         "detail": {
             "field": "Feld",

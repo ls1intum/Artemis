@@ -34,6 +34,9 @@ public class AnswerOption implements Serializable {
     @Column(name = "is_correct")
     private Boolean isCorrect;
 
+    @Column(name = "invalid")
+    private Boolean invalid = false;
+
     @ManyToOne
     @JsonIgnore
     private MultipleChoiceQuestion question;
@@ -98,6 +101,19 @@ public class AnswerOption implements Serializable {
         this.isCorrect = isCorrect;
     }
 
+    public Boolean isInvalid() {
+        return invalid;
+    }
+
+    public AnswerOption invalid(Boolean invalid) {
+        this.invalid = invalid;
+        return this;
+    }
+
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
+    }
+
     public MultipleChoiceQuestion getQuestion() {
         return question;
     }
@@ -139,6 +155,7 @@ public class AnswerOption implements Serializable {
             ", hint='" + getHint() + "'" +
             ", explanation='" + getExplanation() + "'" +
             ", isCorrect='" + isIsCorrect() + "'" +
+            ", invalid='" + isInvalid() + "'" +
             "}";
     }
 }
