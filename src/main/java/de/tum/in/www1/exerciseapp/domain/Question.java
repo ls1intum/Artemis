@@ -59,6 +59,9 @@ public abstract class Question implements Serializable {
     @Column(name = "randomize_order")
     private Boolean randomizeOrder;
 
+    @Column(name = "invalid")
+    private Boolean invalid = false;
+
     @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @JoinColumn(unique = true)
     private QuestionStatistic questionStatistic;
@@ -166,6 +169,19 @@ public abstract class Question implements Serializable {
         this.randomizeOrder = randomizeOrder;
     }
 
+    public Boolean isInvalid() {
+        return invalid;
+    }
+
+    public Question invalid(Boolean invalid) {
+        this.invalid = invalid;
+        return this;
+    }
+
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
+    }
+
     public QuestionStatistic getQuestionStatistic() {
         return questionStatistic;
     }
@@ -255,6 +271,7 @@ public abstract class Question implements Serializable {
             ", score='" + getScore() + "'" +
             ", scoringType='" + getScoringType() + "'" +
             ", randomizeOrder='" + isRandomizeOrder() + "'" +
+            ", invalid='" + isInvalid() + "'" +
             "}";
     }
 }

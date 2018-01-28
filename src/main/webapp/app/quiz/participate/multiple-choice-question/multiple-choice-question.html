@@ -1,6 +1,6 @@
 <div class="mc-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult, incorrect: (vm.score || 0) < vm.question.score}">
     <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
-    <p ng-bind-html="vm.rendered.text"></p>
+    <p ng-bind-html="vm.rendered.text"></p><span style="color:red;" ng-if="vm.question.invalid" data-translate="artemisApp.question.invalidText"></span>
     <h4>
         <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
             <i class="fa fa-question-circle-o"></i>
@@ -58,11 +58,17 @@
                 </div>
             </td>
             <td class="solution">
-                <span ng-if="answerOption.isCorrect" class="correct">Correct</span>
-                <span ng-if="!answerOption.isCorrect" class="wrong">Wrong</span>
+                <span ng-if="!answerOption.invalid && !vm.question.invalid && answerOption.isCorrect" class="correct">Correct</span>
+                <span ng-if="!answerOption.invalid && !vm.question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
+                <span ng-if="answerOption.invalid || vm.question.invalid" class="wrong" data-translate="artemisApp.question.invalid"></span>
+                &nbsp<span uib-tooltip="Invalid answers will be assessed as correct."
+                           tooltip-placement="top-right"
+                           style="color:black;"
+                           class="fa fa-question-circle"
+                           ng-if="answerOption.invalid || vm.question.invalid"></span>
             </td>
             <td class="result-symbol">
-                <i class="fa fa-2x fa-exclamation-triangle warning" ng-if="(vm.isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!vm.isAnswerOptionSelected(answerOption) && answerOption.isCorrect)"></i>
+                <i class="fa fa-2x fa-exclamation-triangle warning" ng-if=" !vm.question.invalid && !answerOption.invalid && ((vm.isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!vm.isAnswerOptionSelected(answerOption) && answerOption.isCorrect )) "></i>
             </td>
             <td class="selection">
                 <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>

@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizExerciseController', QuizExerciseController);
 
-    QuizExerciseController.$inject = ['QuizExercise', 'courseEntity', 'CourseQuizExercises'];
+    QuizExerciseController.$inject = ['Principal', 'QuizExercise', 'courseEntity', 'CourseQuizExercises'];
 
-    function QuizExerciseController(QuizExercise, courseEntity, CourseQuizExercises) {
+    function QuizExerciseController(Principal, QuizExercise, courseEntity, CourseQuizExercises) {
 
         var vm = this;
 
@@ -18,6 +18,8 @@
         vm.course = courseEntity;
         vm.statusForQuiz = statusForQuiz;
         vm.fullMinutesForSeconds = fullMinutesForSeconds;
+        vm.userIsInstructor = userIsInstructor;
+        vm.quizIsOver = quizIsOver;
         vm.startQuiz = startQuiz;
         vm.showQuiz = showQuiz;
 
@@ -136,6 +138,29 @@
          */
         function fullMinutesForSeconds(seconds) {
             return Math.floor(seconds / 60);
+        }
+
+        /**
+         * Checks if the User is Admin/Instructor or Teaching Assistant
+         * @returns {boolean} true if the User is an Admin/Instructor, false if not.
+         */
+        function userIsInstructor() {
+            return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
+        }
+
+        /**
+         * Checks if the quiz exercise is over
+         * @param quizExercise The quiz exercise we want to know if it's over
+         * @returns {boolean} true if the quiz exercise is over, false if not.
+         */
+        function quizIsOver(quizExercise) {
+            if (quizExercise.isPlannedToStart) {
+                var plannedEndMoment = moment(quizExercise.releaseDate).add(quizExercise.duration, "seconds");
+                return plannedEndMoment.isBefore(moment());
+                    // the quiz is over
+            }
+            // the quiz hasn't started yet
+            return false;
         }
     }
 })();

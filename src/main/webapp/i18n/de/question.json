@@ -24,7 +24,9 @@
             "scoringType": "Bewertungsweise",
             "questionStatistic": "Frage-Statistik",
             "exercise": "Übung",
-            "yourScore": "Erreichte Punktzahl"
+            "yourScore": "Erreichte Punktzahl",
+            "invalid": "Ungültig",
+            "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet"
         }
     }
 }

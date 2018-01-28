@@ -2,12 +2,8 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.ArTEMiSApp;
 import de.tum.in.www1.exerciseapp.domain.QuizExercise;
-import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
-import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
-import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
-import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
-import de.tum.in.www1.exerciseapp.service.CourseService;
-import de.tum.in.www1.exerciseapp.service.StatisticService;
+import de.tum.in.www1.exerciseapp.repository.*;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.ExceptionTranslator;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +15,6 @@ import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -76,6 +71,12 @@ public class QuizExerciseResourceIntTest {
     private CourseService courseService;
 
     @Autowired
+    private ResultRepository resultRepository;
+
+    @Autowired
+    private QuizSubmissionRepository quizSubmissionRepository;
+
+    @Autowired
     private DragAndDropMappingRepository dragAndDropMappingRepository;
 
     @Autowired
@@ -83,6 +84,9 @@ public class QuizExerciseResourceIntTest {
 
     @Autowired
     private SimpMessageSendingOperations messagingTemplate;
+
+    @Autowired
+    private StatisticService statisticService;
 
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -103,7 +107,7 @@ public class QuizExerciseResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, courseService, new StatisticService( new SimpMessagingTemplate(null)), dragAndDropMappingRepository, authorizationCheckService, messagingTemplate);
+        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, courseService, statisticService, resultRepository, quizSubmissionRepository, dragAndDropMappingRepository, authorizationCheckService, messagingTemplate);
         this.restQuizExerciseMockMvc = MockMvcBuilders.standaloneSetup(quizExerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)

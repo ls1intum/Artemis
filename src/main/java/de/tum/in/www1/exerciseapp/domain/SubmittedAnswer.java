@@ -43,7 +43,7 @@ public abstract class SubmittedAnswer implements Serializable {
     @Column(name = "score_in_points")
     private Double scoreInPoints;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
     private Question question;
 
     @ManyToOne

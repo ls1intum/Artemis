@@ -65,10 +65,19 @@
                                 <span class="hidden-sm-down" data-translate="global.menu.entities.statistic"></span>
                             </button>
                             <button type="submit"
+                                    ng-show ="!vm.quizIsOver(quizExercise) || !vm.userIsInstructor()"
+                                    ng-disabled = "vm.statusForQuiz(quizExercise) == 'Active' || (vm.quizIsOver(quizExercise) && !vm.userIsInstructor())"
                                     ui-sref="quiz-exercise-for-course-detail({id:quizExercise.id, courseid:vm.course.id})"
                                     class="btn btn-primary btn-sm">
                                 <span class="glyphicon glyphicon-pencil"></span>
                                 <span class="hidden-sm-down" data-translate="entity.action.edit"></span>
+                            </button>
+                            <button type="submit"
+                                    ng-show ="vm.quizIsOver(quizExercise) && vm.userIsInstructor()"
+                                    ui-sref="quiz-exercise-re-evaluate({id:quizExercise.id, courseid:vm.course.id})"
+                                    class="btn btn-primary btn-sm">
+                                <span class="glyphicon glyphicon-pencil"></span>
+                                <span class="hidden-sm-down" data-translate="entity.action.re-evaluate"></span>
                             </button>
                             <button type="submit"
                                     ui-sref="quiz-exercise-for-course.delete({id:quizExercise.id})"

@@ -19,7 +19,8 @@
             "hint": "Hint",
             "explanation": "Explanation",
             "isCorrect": "Is Correct",
-            "question": "Question"
+            "question": "Question",
+            "invalid": "ungültig"
         }
     }
 }

@@ -23,6 +23,7 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 
 /**
  * REST controller for managing QuizSubmission.
@@ -34,6 +35,7 @@ public class QuizSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
 
     private static final String ENTITY_NAME = "quizSubmission";
+    private static Semaphore statisticSemaphore = new Semaphore(1);
 
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizExerciseRepository quizExerciseRepository;
@@ -271,21 +273,38 @@ public class QuizSubmissionResource {
             result = resultRepository.save(result);
             // get previous Result
             Result previousResult = getPreviousResult(result);
-            // add the new Result to the quizPointStatistic and remove the previous one
-            if (previousResult != null) {
-                ((QuizExercise) previousResult.getParticipation().getExercise()).getQuizPointStatistic().removeOldResult(previousResult.getScore(), true);
-            }
-            ((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic().addResult(result.getScore(), true);
-            quizPointStatisticRepository.save(((QuizExercise) result.getParticipation().getExercise()).getQuizPointStatistic());
-            // remove the previous Result from the QuestionStatistics
-            if (previousResult != null) {
-                for (SubmittedAnswer submittedAnswer : ((QuizSubmission) previousResult.getSubmission()).getSubmittedAnswers()) {
-                    if (submittedAnswer.getQuestion() != null && submittedAnswer.getQuestion().getQuestionStatistic() != null) {
-                        submittedAnswer.getQuestion().getQuestionStatistic().removeOldResult(submittedAnswer, true);
-                        questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
+
+            // critical part locked with Semaphore statisticSemaphore
+            try {
+                statisticSemaphore.acquire();
+
+                QuizExercise quiz = quizExerciseRepository.findOne(participation.getExercise().getId());
+
+
+                for (Question question: quiz.getQuestions()) {
+                    if(previousResult != null) {
+                        // remove the previous Result from the QuestionStatistics
+                        question.getQuestionStatistic().removeOldResult(((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
                     }
+                    // add the new Result to QuestionStatistics
+                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
+                    questionStatisticRepository.save(question.getQuestionStatistic());
+                    //TODO: test if this works
                 }
+
+                // add the new Result to the quizPointStatistic and remove the previous one
+                if (previousResult != null) {
+                    quiz.getQuizPointStatistic().removeOldResult(previousResult.getScore(), true);
+                }
+                quiz.getQuizPointStatistic().addResult(result.getScore(), true);
+                quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
+
+            } catch (InterruptedException e) {
+                log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
+            } finally {
+                statisticSemaphore.release();
             }
+
             // add the new Result to QuestionStatistics
             for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
                 if (submittedAnswer.getQuestion() != null && submittedAnswer.getQuestion().getQuestionStatistic() != null) {
@@ -320,8 +339,9 @@ public class QuizSubmissionResource {
     private Result getPreviousResult(Result newResult) {
         Result oldResult = null;
 
-        for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
-            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) &&
+        for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
+            //find the latest Result, which is presented in the Statistics
+            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult) &&
                 (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
                 oldResult = result;
             }

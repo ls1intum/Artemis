@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -72,7 +73,7 @@ public class FileUploadResource {
             File folder = new File(Constants.TEMP_FILEPATH);
             if (!folder.exists()) {
                 if (!folder.mkdirs()) {
-                    log.error("Could not create directory \"uploads/images/temp\".");
+                    log.error("Could not create directory: {}", Constants.TEMP_FILEPATH);
                     return ResponseEntity.status(500).build();
                 }
             }
@@ -82,7 +83,7 @@ public class FileUploadResource {
             File newFile;
             String filename;
             do {
-                filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23) + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
+                filename = "Temp_" + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
                 String path = Constants.TEMP_FILEPATH + filename;
 
                 newFile = new File(path);
