@@ -108,6 +108,7 @@
                                 hint: null,
                                 explanation: null,
                                 isCorrect: null,
+                                invalid: null,
                                 id: null
                             };
                         }

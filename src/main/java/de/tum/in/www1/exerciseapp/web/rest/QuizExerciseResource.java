@@ -1,10 +1,9 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
+import com.sun.org.apache.regexp.internal.RE;
 import de.tum.in.www1.exerciseapp.domain.*;
-import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
-import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
-import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
+import de.tum.in.www1.exerciseapp.repository.*;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -19,9 +18,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -39,13 +40,23 @@ public class QuizExerciseResource {
     private final QuizExerciseRepository quizExerciseRepository;
     private final ParticipationRepository participationRepository;
     private final StatisticService statisticService;
+    private final ResultRepository resultRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
     private final AuthorizationCheckService authCheckService;
 
-    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository, ParticipationRepository participationRepository, StatisticService statisticService, DragAndDropMappingRepository dragAndDropMappingRepository, AuthorizationCheckService authCheckService) {
+    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository,
+                                ParticipationRepository participationRepository,
+                                StatisticService statisticService,
+                                ResultRepository resultRepository,
+                                QuizSubmissionRepository quizSubmissionRepository,
+                                DragAndDropMappingRepository dragAndDropMappingRepository,
+                                AuthorizationCheckService authCheckService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.statisticService = statisticService;
+        this.resultRepository = resultRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.authCheckService = authCheckService;
     }
@@ -135,6 +146,10 @@ public class QuizExerciseResource {
         for (Question question : quizExercise.getQuestions()) {
             if (question.getId() != null) {
                 question.setExercise(quizExercise);
+                //reconnect QuestionStatistics
+                if (question.getQuestionStatistic() != null){
+                    question.getQuestionStatistic().setQuestion(question);
+                }
                 // do the same for answerOptions (if question is multiple choice)
                 if (question instanceof MultipleChoiceQuestion) {
                     MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
@@ -178,6 +193,8 @@ public class QuizExerciseResource {
                 }
             }
         }
+        //reconnect quizPointStatistic
+        quizExercise.getQuizPointStatistic().setQuiz(quizExercise);
         //reconnect pointCounters
         for (PointCounter pointCounter : quizExercise.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getId() != null) {
@@ -376,6 +393,69 @@ public class QuizExerciseResource {
 
         quizExerciseRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     * PUT  /quiz-exercises-re-evaluate : Re-evaluates an existing quizExercise.
+     *
+     * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary
+     * 2. save changed quizExercise
+     * 3. if flag is set: -> change results if an answer or a question is set invalid
+     *                    -> recalculate statistics and results and save them.
+     *
+     * @param quizExercise the quizExercise to re-evaluate
+     * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise,
+     * or with status 400 (Bad Request) if the quizExercise is not valid,
+     * or with status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PutMapping("/quiz-exercises-re-evaluate")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
+        log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
+        if (quizExercise.getId() == null) {
+            return createQuizExercise(quizExercise);
+        }
+        QuizExercise originalQuizExercise = quizExerciseRepository.findOne(quizExercise.getId());
+        quizExercise.undoUnallowedChanges(originalQuizExercise);
+        boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
+
+        //change existing results if an answer or and question was deleted
+        for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
+
+            Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
+
+            for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
+                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                    // Delete all references to question and answers if the question was deleted
+                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
+                        submittedAnswer.setQuestion(null);
+                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(null);
+                        submittedAnswersToDelete.add(submittedAnswer);
+                    } else {
+                        // find same question in quizExercise
+                        Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
+
+                        // Check if an answerOption was deleted and delete reference to in selectedOptions
+                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
+                    }
+                    // TODO: @Moritz: DragAndDrop Question
+                }
+            }
+            ((QuizSubmission) result.getSubmission()).getSubmittedAnswers().removeAll(submittedAnswersToDelete);
+            quizSubmissionRepository.save((QuizSubmission) result.getSubmission());
+        }
+
+        //update QuizExercise
+        ResponseEntity<QuizExercise> methodResult = updateQuizExercise(quizExercise);
+
+        // update Statistics and Results
+        if (updateOfResultsAndStatisticsNecessary) {
+            statisticService.updateStatisticsAndResults(quizExercise);
+        }
+
+        return methodResult;
     }
 
     /**

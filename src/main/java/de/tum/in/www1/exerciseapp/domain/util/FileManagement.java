@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.UUID;
 
@@ -50,8 +51,7 @@ public class FileManagement {
         if (newFilePath != null && newFilePath.contains("files/temp")) {
             // rename and move file
             try {
-                File newFile = new File(actualPathForPublicPath(newFilePath));
-                Path source = newFile.toPath();
+                Path source = Paths.get(actualPathForPublicPath(newFilePath));
                 File targetFile = generateTargetFile(newFilePath, targetFolder);
                 Path target = targetFile.toPath();
                 Files.move(source, target, REPLACE_EXISTING);
@@ -65,28 +65,28 @@ public class FileManagement {
     }
 
     /**
-     * Convert the given public path to its corresponding local path
+     * Convert the given public file url to its corresponding local path
      *
-     * @param filePath the public file path to convert
+     * @param publicPath the public file url to convert
      * @return the actual path to that file in the local filesystem
      */
-    private static String actualPathForPublicPath(String filePath) {
-        // first extract filename
-        String filename = filePath.substring(filePath.lastIndexOf("/") + 1);
+    private static String actualPathForPublicPath(String publicPath) {
+        // first extract the filename from the url
+        String filename = publicPath.substring(publicPath.lastIndexOf("/") + 1);
 
         // check for known path to convert
-        if (filePath.contains("files/temp")) {
+        if (publicPath.contains("files/temp")) {
             return Constants.TEMP_FILEPATH + filename;
         }
-        if (filePath.contains("files/drag-and-drop/backgrounds")) {
+        if (publicPath.contains("files/drag-and-drop/backgrounds")) {
             return Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename;
         }
-        if (filePath.contains("files/drag-and-drop/drag-items")) {
+        if (publicPath.contains("files/drag-and-drop/drag-items")) {
             return Constants.DRAG_ITEM_FILEPATH + filename;
         }
 
         // path is unknown => cannot convert
-        throw new RuntimeException("Unknown Filepath: " + filePath);
+        throw new RuntimeException("Unknown Filepath: " + publicPath);
     }
 
     /**
@@ -94,11 +94,11 @@ public class FileManagement {
      *
      * @param actualPath the path to the file in the local filesystem
      * @param entityId   the id of the entity associated with the file (may be null)
-     * @return the public path that can be used by users to access the file from outside
+     * @return the public file url that can be used by users to access the file from outside
      */
     private static String publicPathForActualPath(String actualPath, Long entityId) {
         // first extract filename
-        String filename = actualPath.substring(actualPath.lastIndexOf("/") + 1);
+        String filename = Paths.get(actualPath).getFileName().toString();
 
         // generate part for id
         String id = entityId == null ? Constants.FILEPATH_ID_PLACHEOLDER : entityId.toString();
@@ -153,7 +153,7 @@ public class FileManagement {
         File newFile;
         String filename;
         do {
-            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23) + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
+            filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "." + fileExtension;
             String path = targetFolder + filename;
 
             newFile = new File(path);

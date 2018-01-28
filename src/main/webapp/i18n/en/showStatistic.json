@@ -33,6 +33,7 @@
             "yAxes": "Amount",
             "correct": "correct",
             "incorrect": "incorrect"
-        }
+        },
+        "invalid": "(invalid)"
     }
 }

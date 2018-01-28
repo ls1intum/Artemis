@@ -82,13 +82,14 @@ entity SubmittedAnswer {            //abstract
 }
 
 entity Question {                   //abstract
-	title String
-    text String
-    hint String
-    explanation String
-    score Integer
-    scoringType ScoringType
-    randomizeOrder Boolean
+	title String,
+    text String,
+    hint String,
+    explanation String,
+    score Integer,
+    scoringType ScoringType,
+    randomizeOrder Boolean,
+    invalid Boolean
 }
 
 enum ScoringType {
@@ -102,10 +103,11 @@ entity MultipleChoiceQuestion {             //extends Question
 }
 
 entity AnswerOption {
-	text String
-    hint String
-    explanation String
-    isCorrect Boolean
+	text String,
+    hint String,
+    explanation String,
+    isCorrect Boolean,
+    invalid Boolean
 }
 
 entity MultipleChoiceSubmittedAnswer {      //extends SubmittedAnswer

@@ -33,6 +33,14 @@
             <span>{{vm.question.randomizeOrder}}</span>
         </dd>
         <dt><span data-translate="artemisApp.question.exercise">Exercise</span></dt>
+        <dt><span data-translate="artemisApp.question.invalid">Invalid</span></dt>
+        <dd>
+            <span>{{vm.question.invalid}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.question.questionStatistic">Question Statistic</span></dt>
+        <dd>
+            <a ui-sref="question-statistic-detail({id:vm.question.questionStatistic.id})">{{vm.question.questionStatistic.id}}</a>
+        </dd>
         <dd>
             <a ui-sref="quiz-exercise-detail({id:vm.question.exercise.id})">{{vm.question.exercise.id}}</a>
         </dd>
