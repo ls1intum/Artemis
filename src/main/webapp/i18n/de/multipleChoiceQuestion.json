@@ -16,6 +16,7 @@
                 "title": "Multiple Choice Question"
             },
             "answerOptions": "Answer Options",
+            "randomizeOrder": "Antwortmöglichkeiten in zufälliger Reihenfolge anzeigen",
             "scoringType": "Type / Scoring",
             "editor": {
                 "addCorrectAnswerOption": "[X] Correct Option",

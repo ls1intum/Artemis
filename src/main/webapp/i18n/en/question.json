@@ -20,7 +20,7 @@
             "hint": "Hint",
             "explanation": "Explanation",
             "score": "Points",
-            "randomizeOrder": "Present Answers in Random Order",
+            "randomizeOrder": "Random Order",
             "scoringType": "Scoring Type",
             "exercise": "Exercise",
             "yourScore": "Your Score",

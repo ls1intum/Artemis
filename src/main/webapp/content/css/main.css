@@ -8346,6 +8346,7 @@ body.editor .navbar-brand span {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   width: 100%; }
   .edit-quiz .quiz-options input,
   .edit-quiz .quiz-options .input-group-btn,
@@ -8364,7 +8365,8 @@ body.editor .navbar-brand span {
   .edit-quiz .quiz-options .form-group,
   .question-options .form-group {
     display: flex;
-    align-items: center; }
+    align-items: center;
+    margin: 0 5px 15px; }
     .edit-quiz .quiz-options .form-group > *,
     .question-options .form-group > * {
       margin: 0 4px; }
@@ -8904,13 +8906,13 @@ body.editor .navbar-brand span {
 .quiz-waiting-for-start-overlay,
 .quiz-is-active-overlay {
   position: fixed;
-  bottom: 50%;
+  top: 50%;
   left: 50%;
-  -webkit-transform: translateX(-50%);
-  -moz-transform: translateX(-50%);
-  -ms-transform: translateX(-50%);
-  -o-transform: translateX(-50%);
-  transform: translateX(-50%);
+  -webkit-transform: translate3d(-50%, -50%, 0);
+  -moz-transform: translate3d(-50%, -50%, 0);
+  -ms-transform: translate3d(-50%, -50%, 0);
+  -o-transform: translate3d(-50%, -50%, 0);
+  transform: translate3d(-50%, -50%, 0);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
   font-size: 16px;
   text-align: center;

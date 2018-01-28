@@ -164,7 +164,7 @@
          * Initialize the selections / mappings for each question with an empty array
          */
         function initQuiz() {
-            if (!vm.selectedAnswerOptions && !vm.dragAndDropMappings) {
+            if (!vm.submission) {
                 vm.selectedAnswerOptions = {};
                 vm.dragAndDropMappings = {};
 
@@ -278,6 +278,10 @@
                 vm.quizExercise = quizExercise;
                 initQuiz();
                 if (quizExercise.remainingTime != null) {
+                    if (quizExercise.remainingTime > 0) {
+                        // apply randomized order where necessary
+                        randomizeOrder(quizExercise);
+                    }
                     QuizSubmissionForExercise.get({
                         courseId: 1,
                         exerciseId: $stateParams.id
@@ -344,14 +348,58 @@
             if (vm.result) {
                 vm.showingResult = true;
 
-                // assign user score
-                vm.userScore = vm.result.submission.scoreInPoints || 0;
+                // assign user score (limit decimal places to 2)
+                vm.userScore = vm.result.submission.scoreInPoints ? Math.round(vm.result.submission.scoreInPoints * 100) / 100 : 0;
 
                 // create dictionary with scores for each question
                 vm.questionScores = {};
                 vm.result.submission.submittedAnswers.forEach(function (submittedAnswer) {
-                    vm.questionScores[submittedAnswer.question.id] = submittedAnswer.scoreInPoints;
+                    // limit decimal places to 2
+                    vm.questionScores[submittedAnswer.question.id] = Math.round(submittedAnswer.scoreInPoints * 100) / 100;
                 });
+            }
+        }
+
+        /**
+         * Randomize the order of the questions
+         * (and answerOptions or dragItems within each question)
+         * if randomizeOrder is true
+         *
+         * @param quizExercise {object} the quizExercise to randomize elements in
+         */
+        function randomizeOrder(quizExercise) {
+            if (quizExercise.questions) {
+                // shuffle questions
+                if (quizExercise.randomizeQuestionOrder) {
+                    shuffle(quizExercise.questions);
+                }
+
+                // shuffle answerOptions / dragItems within questions
+                quizExercise.questions.forEach(function (question) {
+                    if (question.randomizeOrder) {
+                        switch (question.type) {
+                            case "multiple-choice":
+                                shuffle(question.answerOptions);
+                                break;
+                            case "drag-and-drop":
+                                shuffle(question.dragItems);
+                                break;
+                        }
+                    }
+                });
+            }
+        }
+
+        /**
+         * Shuffles array in place.
+         * @param {Array} items An array containing the items.
+         */
+        function shuffle(items) {
+            for (var i = items.length - 1; i > 0; i--) {
+                var pickedIndex = Math.floor(Math.random() * (i + 1));
+                var picked = items[pickedIndex];
+                items[pickedIndex] = items[i];
+                items[i] = picked;
             }
         }
 

@@ -26,7 +26,7 @@
             },
             "description": "Description",
             "explanation": "Explanation",
-            "randomizeQuestionOrder": "Randomize Question Order",
+            "randomizeQuestionOrder": "Present Questions in Random Order",
             "allowedNumberOfAttempts": "Allowed Number Of Attempts",
             "isVisibleBeforeStart": "Is Visible Before Start",
             "isOpenForPractice": "Is Open For Practice",
