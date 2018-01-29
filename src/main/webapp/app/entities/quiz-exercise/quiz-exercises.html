@@ -43,6 +43,14 @@
                     <td class="text-right">
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"
+                                    ng-click="vm.openForPractice(quizExercise)"
+                                    class="btn btn-success btn-sm"
+                                    ng-if="vm.statusForQuiz(quizExercise) === vm.QuizStatus.CLOSED"
+                            >
+                                <span class="glyphicon glyphicon-play-circle"></span>
+                                <span class="hidden-sm-down" data-translate="artemisApp.quizExercise.openForPractice"></span>
+                            </button>
+                            <button type="submit"
                                     ng-click="vm.startQuiz(quizExercise)"
                                     class="btn btn-success btn-sm"
                                     ng-if="vm.statusForQuiz(quizExercise) === vm.QuizStatus.VISIBLE"

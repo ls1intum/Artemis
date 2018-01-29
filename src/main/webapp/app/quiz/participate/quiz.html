@@ -1,5 +1,8 @@
 <div class="quiz-header container">
-    <h1>{{vm.quizExercise.course.title}} - {{vm.quizExercise.title}}</h1>
+    <h1>
+        {{vm.quizExercise.course.title}} - {{vm.quizExercise.title}}
+        <span ng-if="vm.practiceMode">(Practice Mode)</span>
+    </h1>
     <p ng-if="!vm.waitingForQuizStart && !vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.default"></p>
     <p ng-if="!vm.waitingForQuizStart && vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.wait"></p>
     <p ng-if="!vm.waitingForQuizStart && vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.result" data-translate-values="{userScore: vm.userScore, maxScore: vm.totalScore, percentage: vm.result.score}"></p>
@@ -30,7 +33,7 @@
                         {{vm.remainingTimeText}}
                     </span>
                 </div>
-                <div>
+                <div ng-if="!vm.practiceMode">
                     <span ng-if="vm.isSaving">Saving Answers...</span>
                     <span ng-if="!vm.isSaving" uib-tooltip="{{vm.submission.adjustedSubmissionDate | date:'MMM d, y HH:mm:ss'}}" tooltip-placement="right">
                         <span ng-if="!vm.submission.submitted" data-translate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
@@ -38,6 +41,9 @@
                         <span ng-if="vm.justSaved" data-translate="justNow"></span>
                         <span ng-if="!vm.justSaved">{{vm.lastSavedTimeText}}</span>
                     </span>
+                </div>
+                <div ng-if="vm.practiceMode">
+                    Practice Mode
                 </div>
             </div>
             <div ng-if="vm.showingResult" id="quiz-score" ng-class="{incorrect: vm.userScore < vm.totalScore}">

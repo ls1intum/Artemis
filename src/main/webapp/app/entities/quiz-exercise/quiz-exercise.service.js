@@ -37,6 +37,10 @@
             'setVisible': {
                 url: resourceUrl + "/set-visible",
                 method: 'POST'
+            },
+            'openForPractice': {
+                url: resourceUrl + "/open-for-practice",
+                method: 'POST'
             }
         });
     }

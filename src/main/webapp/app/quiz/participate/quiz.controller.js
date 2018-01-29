@@ -5,13 +5,15 @@
         .module('artemisApp')
         .controller('QuizController', QuizController);
 
-    QuizController.$inject = ['$scope', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult', '$timeout'];
+    QuizController.$inject = ['$scope', '$state', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult', '$timeout'];
 
-    function QuizController($scope, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult, $timeout) {
+    function QuizController($scope, $state, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult, $timeout) {
         var vm = this;
 
         var timeDifference = 0;
         var outstandingWebsocketResponses = 0;
+
+        vm.practiceMode = $state.current.data.practiceMode;
 
         vm.isSubmitting = false;
         vm.isSaving = false;
@@ -30,7 +32,11 @@
         vm.onSelectionChanged = onSelectionChanged;
         vm.onSubmit = onSubmit;
 
-        init();
+        if (vm.practiceMode) {
+            initPracticeMode();
+        } else {
+            init();
+        }
         $interval(updateDisplayedTimes, 100);  // update displayed times in UI regularly
 
         /**
@@ -71,6 +77,33 @@
 
             // load the quiz (and existing submission if quiz has started)
             load();
+        }
+
+        /**
+         * loads quizExercise and starts practice mode
+         */
+        function initPracticeMode() {
+            QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
+                if (quizExercise.isOpenForPractice) {
+                    // init quiz
+                    vm.quizExercise = quizExercise;
+                    initQuiz();
+
+                    // randomize order
+                    randomizeOrder(quizExercise);
+
+                    // init empty submission
+                    vm.submission = {};
+
+                    // adjust end date
+                    vm.quizExercise.adjustedDueDate = moment().add(quizExercise.duration, "seconds");
+
+                    // auto submit when time is up
+                    $timeout(onSubmit, quizExercise.duration * 1000);
+                } else {
+                    alert("Error: This quiz is not open for practice!");
+                }
+            });
         }
 
         /**
@@ -163,6 +196,12 @@
          * Initialize the selections / mappings for each question with an empty array
          */
         function initQuiz() {
+            // calculate score
+            vm.totalScore = vm.quizExercise.questions.reduce(function (score, question) {
+                return score + question.score;
+            }, 0);
+
+            // prepare selection arrays for each question
             if (!vm.submission) {
                 vm.selectedAnswerOptions = {};
                 vm.dragAndDropMappings = {};
@@ -276,6 +315,7 @@
             QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
                 vm.quizExercise = quizExercise;
                 initQuiz();
+
                 if (quizExercise.remainingTime != null) {
                     if (quizExercise.remainingTime > 0) {
                         // apply randomized order where necessary
@@ -294,11 +334,6 @@
                     }).$promise.then(function (quizSubmission) {
                         vm.submission = quizSubmission;
                         vm.waitingForQuizStart = false;
-
-                        // calculate score
-                        vm.totalScore = quizExercise.questions.reduce(function (score, question) {
-                            return score + question.score;
-                        }, 0);
 
                         // update timeDifference
                         vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
@@ -525,7 +560,11 @@
         function onSubmit() {
             applySelection();
             vm.isSubmitting = true;
-            QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+            if (vm.practiceMode) {
+                // TODO
+            } else {
+                QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+            }
         }
 
         /**

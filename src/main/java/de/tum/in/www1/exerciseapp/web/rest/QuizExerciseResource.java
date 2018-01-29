@@ -177,7 +177,7 @@ public class QuizExerciseResource {
             if (question.getId() != null) {
                 question.setExercise(quizExercise);
                 //reconnect QuestionStatistics
-                if (question.getQuestionStatistic() != null){
+                if (question.getQuestionStatistic() != null) {
                     question.getQuestionStatistic().setQuestion(question);
                 }
                 // do the same for answerOptions (if question is multiple choice)
@@ -403,7 +403,7 @@ public class QuizExerciseResource {
      * POST /quiz-exercises/:id/:action : perform the specified action for the quiz now
      *
      * @param id     the id of the quiz exercise to start
-     * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible")
+     * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
      * @return the response entity with status 204 if quiz was started, appropriate error code otherwise
      */
     @PostMapping("/quiz-exercises/{id}/{action}")
@@ -445,6 +445,19 @@ public class QuizExerciseResource {
 
                 // set quiz to visible
                 quizExercise.setIsVisibleBeforeStart(true);
+                break;
+            case "open-for-practice":
+                // check if quiz has ended
+                if (!quizExercise.hasStarted() || quizExercise.getRemainingTime() > 0) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz hasn't ended yet.\"}");
+                }
+                // check if quiz is already open for practice
+                if (quizExercise.isIsOpenForPractice()) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz is already open for practice.\"}");
+                }
+
+                // set quiz to open for practice
+                quizExercise.setIsOpenForPractice(true);
                 break;
             default:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Unknown action: " + action + "\"}");

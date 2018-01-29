@@ -22,6 +22,7 @@
         vm.quizIsOver = quizIsOver;
         vm.startQuiz = startQuiz;
         vm.showQuiz = showQuiz;
+        vm.openForPractice = openForPractice;
 
         /**
          * Display texts for the possible quiz states. Can be used like an enum.
@@ -117,6 +118,27 @@
          */
         function showQuiz(quizExercise) {
             QuizExercise.setVisible({
+                id: quizExercise.id
+            }, {}).$promise.then(
+                function () {
+                    // success
+                    load();
+                },
+                function (error) {
+                    // error
+                    alert(error && error.data && error.data.message);
+                    load();
+                }
+            );
+        }
+
+        /**
+         * Set the quiz open for practice
+         *
+         * @param quizExercise {object} the quiz exercise to release for practice
+         */
+        function openForPractice(quizExercise) {
+            QuizExercise.openForPractice({
                 id: quizExercise.id
             }, {}).$promise.then(
                 function () {
