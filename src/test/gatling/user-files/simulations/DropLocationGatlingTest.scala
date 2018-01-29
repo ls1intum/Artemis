@@ -67,7 +67,7 @@ class DropLocationGatlingTest extends Simulation {
             .exec(http("Create new dropLocation")
             .post("/api/drop-locations")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "posX":"0", "posY":"0", "width":"0", "height":"0"}""")).asJSON
+            .body(StringBody("""{"id":null, "posX":"0", "posY":"0", "width":"0", "height":"0", "invalid":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_dropLocation_url"))).exitHereIfFailed
             .pause(10)

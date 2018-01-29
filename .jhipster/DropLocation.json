@@ -24,6 +24,10 @@
         {
             "fieldName": "height",
             "fieldType": "Integer"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20170831094154",

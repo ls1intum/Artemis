@@ -35,6 +35,9 @@ public class DragItem implements Serializable {
     @Column(name = "text")
     private String text;
 
+    @Column(name = "invalid")
+    private Boolean invalid = false;
+
     @ManyToOne
     @JsonIgnore
     private DragAndDropQuestion question;
@@ -100,13 +103,26 @@ public class DragItem implements Serializable {
         return question;
     }
 
+    public Boolean isInvalid() {
+        return invalid;
+    }
+
     public DragItem question(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
         return this;
     }
 
+    public DragItem invalid(Boolean invalid) {
+        this.invalid = invalid;
+        return this;
+    }
+
     public void setQuestion(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
+    }
+
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
     }
 
     public Set<DragAndDropMapping> getMappings() {
@@ -225,6 +241,7 @@ public class DragItem implements Serializable {
             "id=" + getId() +
             ", pictureFilePath='" + getPictureFilePath() + "'" +
             ", text='" + getText() + "'" +
+            ", invalid='" + isInvalid() + "'" +
             "}";
     }
 }

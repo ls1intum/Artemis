@@ -34,6 +34,10 @@
         {
             "fieldName": "dropLocationIndex",
             "fieldType": "Integer"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20180116141221",

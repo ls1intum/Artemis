@@ -41,6 +41,9 @@ public class DragItemResourceIntTest {
     private static final String DEFAULT_TEXT = "AAAAAAAAAA";
     private static final String UPDATED_TEXT = "BBBBBBBBBB";
 
+    private static final Boolean DEFAULT_INVALID = false;
+    private static final Boolean UPDATED_INVALID = true;
+
     @Autowired
     private DragItemRepository dragItemRepository;
 
@@ -79,7 +82,8 @@ public class DragItemResourceIntTest {
     public static DragItem createEntity(EntityManager em) {
         DragItem dragItem = new DragItem()
             .pictureFilePath(DEFAULT_PICTURE_FILE_PATH)
-            .text(DEFAULT_TEXT);
+            .text(DEFAULT_TEXT)
+            .invalid(DEFAULT_INVALID);
         return dragItem;
     }
 
@@ -105,6 +109,7 @@ public class DragItemResourceIntTest {
         DragItem testDragItem = dragItemList.get(dragItemList.size() - 1);
         assertThat(testDragItem.getPictureFilePath()).isEqualTo(DEFAULT_PICTURE_FILE_PATH);
         assertThat(testDragItem.getText()).isEqualTo(DEFAULT_TEXT);
+        assertThat(testDragItem.isInvalid()).isEqualTo(DEFAULT_INVALID);
     }
 
     @Test
@@ -138,7 +143,8 @@ public class DragItemResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(dragItem.getId().intValue())))
             .andExpect(jsonPath("$.[*].pictureFilePath").value(hasItem(DEFAULT_PICTURE_FILE_PATH.toString())))
-            .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())));
+            .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())))
+            .andExpect(jsonPath("$.[*].invalid").value(hasItem(DEFAULT_INVALID.booleanValue())));
     }
 
     @Test
@@ -153,7 +159,8 @@ public class DragItemResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(dragItem.getId().intValue()))
             .andExpect(jsonPath("$.pictureFilePath").value(DEFAULT_PICTURE_FILE_PATH.toString()))
-            .andExpect(jsonPath("$.text").value(DEFAULT_TEXT.toString()));
+            .andExpect(jsonPath("$.text").value(DEFAULT_TEXT.toString()))
+            .andExpect(jsonPath("$.invalid").value(DEFAULT_INVALID.booleanValue()));
     }
 
     @Test
@@ -175,7 +182,8 @@ public class DragItemResourceIntTest {
         DragItem updatedDragItem = dragItemRepository.findOne(dragItem.getId());
         updatedDragItem
             .pictureFilePath(UPDATED_PICTURE_FILE_PATH)
-            .text(UPDATED_TEXT);
+            .text(UPDATED_TEXT)
+            .invalid(UPDATED_INVALID);
 
         restDragItemMockMvc.perform(put("/api/drag-items")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -188,6 +196,7 @@ public class DragItemResourceIntTest {
         DragItem testDragItem = dragItemList.get(dragItemList.size() - 1);
         assertThat(testDragItem.getPictureFilePath()).isEqualTo(UPDATED_PICTURE_FILE_PATH);
         assertThat(testDragItem.getText()).isEqualTo(UPDATED_TEXT);
+        assertThat(testDragItem.isInvalid()).isEqualTo(UPDATED_INVALID);
     }
 
     @Test

@@ -44,6 +44,9 @@ public class DragAndDropMappingResourceIntTest {
     private static final Integer DEFAULT_DROP_LOCATION_INDEX = 1;
     private static final Integer UPDATED_DROP_LOCATION_INDEX = 2;
 
+    private static final Boolean DEFAULT_INVALID = false;
+    private static final Boolean UPDATED_INVALID = true;
+
     @Autowired
     private DragAndDropMappingRepository dragAndDropMappingRepository;
 
@@ -83,7 +86,8 @@ public class DragAndDropMappingResourceIntTest {
     public static DragAndDropMapping createEntity(EntityManager em) {
         DragAndDropMapping dragAndDropMapping = new DragAndDropMapping()
             .dragItemIndex(DEFAULT_DRAG_ITEM_INDEX)
-            .dropLocationIndex(DEFAULT_DROP_LOCATION_INDEX);
+            .dropLocationIndex(DEFAULT_DROP_LOCATION_INDEX)
+            .invalid(DEFAULT_INVALID);
         return dragAndDropMapping;
     }
 
@@ -109,6 +113,7 @@ public class DragAndDropMappingResourceIntTest {
         DragAndDropMapping testDragAndDropMapping = dragAndDropMappingList.get(dragAndDropMappingList.size() - 1);
         assertThat(testDragAndDropMapping.getDragItemIndex()).isEqualTo(DEFAULT_DRAG_ITEM_INDEX);
         assertThat(testDragAndDropMapping.getDropLocationIndex()).isEqualTo(DEFAULT_DROP_LOCATION_INDEX);
+        assertThat(testDragAndDropMapping.isInvalid()).isEqualTo(DEFAULT_INVALID);
     }
 
     @Test
@@ -142,7 +147,8 @@ public class DragAndDropMappingResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(dragAndDropMapping.getId().intValue())))
             .andExpect(jsonPath("$.[*].dragItemIndex").value(hasItem(DEFAULT_DRAG_ITEM_INDEX)))
-            .andExpect(jsonPath("$.[*].dropLocationIndex").value(hasItem(DEFAULT_DROP_LOCATION_INDEX)));
+            .andExpect(jsonPath("$.[*].dropLocationIndex").value(hasItem(DEFAULT_DROP_LOCATION_INDEX)))
+            .andExpect(jsonPath("$.[*].invalid").value(hasItem(DEFAULT_INVALID.booleanValue())));
     }
 
     @Test
@@ -157,7 +163,8 @@ public class DragAndDropMappingResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.id").value(dragAndDropMapping.getId().intValue()))
             .andExpect(jsonPath("$.dragItemIndex").value(DEFAULT_DRAG_ITEM_INDEX))
-            .andExpect(jsonPath("$.dropLocationIndex").value(DEFAULT_DROP_LOCATION_INDEX));
+            .andExpect(jsonPath("$.dropLocationIndex").value(DEFAULT_DROP_LOCATION_INDEX))
+            .andExpect(jsonPath("$.invalid").value(DEFAULT_INVALID.booleanValue()));
     }
 
     @Test
@@ -179,7 +186,8 @@ public class DragAndDropMappingResourceIntTest {
         DragAndDropMapping updatedDragAndDropMapping = dragAndDropMappingRepository.findOne(dragAndDropMapping.getId());
         updatedDragAndDropMapping
             .dragItemIndex(UPDATED_DRAG_ITEM_INDEX)
-            .dropLocationIndex(UPDATED_DROP_LOCATION_INDEX);
+            .dropLocationIndex(UPDATED_DROP_LOCATION_INDEX)
+            .invalid(UPDATED_INVALID);
 
         restDragAndDropMappingMockMvc.perform(put("/api/drag-and-drop-mappings")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -192,6 +200,7 @@ public class DragAndDropMappingResourceIntTest {
         DragAndDropMapping testDragAndDropMapping = dragAndDropMappingList.get(dragAndDropMappingList.size() - 1);
         assertThat(testDragAndDropMapping.getDragItemIndex()).isEqualTo(UPDATED_DRAG_ITEM_INDEX);
         assertThat(testDragAndDropMapping.getDropLocationIndex()).isEqualTo(UPDATED_DROP_LOCATION_INDEX);
+        assertThat(testDragAndDropMapping.isInvalid()).isEqualTo(UPDATED_INVALID);
     }
 
     @Test

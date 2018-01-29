@@ -25,6 +25,11 @@
                     ng-model="vm.dragItem.text"
                     />
         </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="arTeMiSApp.dragItem.invalid" for="field_invalid">Invalid</label>
+                <input type="checkbox" name="invalid" id="field_invalid"
+                          ng-model="vm.dragItem.invalid"/>
+        </div>
 
         <div class="form-group">
             <label data-translate="artemisApp.dragItem.question" for="field_question">Question</label>

@@ -72,7 +72,7 @@ class DragAndDropMappingGatlingTest extends Simulation {
             .exec(http("Create new dragAndDropMapping")
             .post("/api/drag-and-drop-mappings")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "dragItemIndex":"0", "dropLocationIndex":"0"}""")).asJSON
+            .body(StringBody("""{"id":null, "dragItemIndex":"0", "dropLocationIndex":"0", "invalid":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_dragAndDropMapping_url"))).exitHereIfFailed
             .pause(10)
