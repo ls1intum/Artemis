@@ -287,9 +287,11 @@ public class QuizSubmissionResource {
                         question.getQuestionStatistic().removeOldResult(((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
                     }
                     // add the new Result to QuestionStatistics
-                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
-                    questionStatisticRepository.save(question.getQuestionStatistic());
-                    //TODO: test if this works
+                    if (question.getQuestionStatistic() != null) {
+                        question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
+                        questionStatisticRepository.save(question.getQuestionStatistic());
+                        //TODO: test if this works
+                    }
                 }
 
                 // add the new Result to the quizPointStatistic and remove the previous one

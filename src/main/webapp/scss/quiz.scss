@@ -3,7 +3,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 120px;
+    margin-bottom: 100px;
 }
 
 #quiz-title {
@@ -86,7 +86,7 @@
 .edit-quiz-footer,
 .quiz-footer {
     position: fixed;
-    height: 100px;
+    height: 80px;
     bottom: 0;
     left: 0;
     right: 0;
@@ -605,7 +605,6 @@
                         span {
                             border: none;
                             padding: 0;
-                            width: 100%;
                         }
                     }
                 }
@@ -717,7 +716,7 @@
 
 .quiz-content {
     margin-top: 6px;
-    margin-bottom: 120px;
+    margin-bottom: 100px;
 
     min-height: calc(100vh - 320px);
 

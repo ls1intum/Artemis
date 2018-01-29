@@ -8336,7 +8336,7 @@ body.editor .navbar-brand span {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 120px; }
+  margin-bottom: 100px; }
 
 #quiz-title {
   margin-bottom: 8px; }
@@ -8401,7 +8401,7 @@ body.editor .navbar-brand span {
 .edit-quiz-footer,
 .quiz-footer {
   position: fixed;
-  height: 100px;
+  height: 80px;
   bottom: 0;
   left: 0;
   right: 0;
@@ -8792,8 +8792,7 @@ body.editor .navbar-brand span {
     padding: 6px; }
     .dnd-question .background-area .click-layer .drop-location .drag-item div span {
       border: none;
-      padding: 0;
-      width: 100%; }
+      padding: 0; }
   .dnd-question .background-area .click-layer .drop-location.drop-allowed > *,
   .dnd-question .background-area .click-layer .drop-location.drop-hover > * {
     opacity: 0.5; }
@@ -8869,7 +8868,7 @@ body.editor .navbar-brand span {
 
 .quiz-content {
   margin-top: 6px;
-  margin-bottom: 120px;
+  margin-bottom: 100px;
   min-height: calc(100vh - 320px); }
   .quiz-content .question-index {
     padding: 2px 6px; }

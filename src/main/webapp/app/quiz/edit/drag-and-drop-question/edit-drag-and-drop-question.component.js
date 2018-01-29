@@ -65,6 +65,13 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.showPreview = !vm.showPreview;
     }
 
+    /**
+     * Prevent page from jumping back to last clicked/selected element on drop
+     */
+    $scope.$on('ANGULAR_DRAG_START', function () {
+        window.getSelection().removeAllRanges();
+    });
+
     // set up editor
     vm.random = pseudoRandomLong();
     var editor;

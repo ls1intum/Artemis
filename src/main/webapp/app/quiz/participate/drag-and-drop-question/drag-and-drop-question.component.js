@@ -23,7 +23,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
     vm.hideSampleSolution = hideSampleSolution;
     vm.correctDragItemForDropLocation = correctDragItemForDropLocation;
 
-    var sampleSolutionMappings = DragAndDropQuestionUtil.solve(vm.question, vm.mappings);
+    var sampleSolutionMappings = [];
 
     /**
      * react to the drop event of a drag item
@@ -85,6 +85,13 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
         // so we wait for one javascript event cycle before we inform the parent of changes
         $timeout(vm.onMappingUpdate, 0);
     }
+
+    /**
+     * Prevent page from jumping back to last clicked/selected element on drop
+     */
+    $scope.$on('ANGULAR_DRAG_START', function () {
+        window.getSelection().removeAllRanges();
+    });
 
     /**
      * Get the drag item that was mapped to the given drop location
@@ -149,6 +156,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
      * Display a sample solution instead of the student's answer
      */
     function showSampleSolution() {
+        sampleSolutionMappings = DragAndDropQuestionUtil.solve(vm.question, vm.mappings);
         vm.showingSampleSolution = true;
     }
 
