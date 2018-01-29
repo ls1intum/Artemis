@@ -25,12 +25,12 @@
                     debug: attr.debug || false,
                     minFontPixels: parseInt(attr.minFontPixels) || 6,
                     maxFontPixels: parseInt(attr.maxFontPixels) || 30,
-                    widthOnly: attr.widthOnly || false,
-                    explicitHeight: attr.explicitHeight || null,
-                    explicitWidth: attr.explicitWidth || null
+                    widthOnly: attr.widthOnly || false
                 };
 
                 function runTextFill() {
+                    options.explicitHeight = attr.explicitHeight || element[0].offsetHeight;
+                    options.explicitWidth = attr.explicitWidth || element[0].offsetWidth;
                     element.textfill(options);
                 }
 

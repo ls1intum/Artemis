@@ -73,7 +73,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
             var lengthBefore = vm.mappings.length;
             // remove existing mapping that contains the drag item
             vm.mappings = vm.mappings.filter(function (mapping) {
-                return mapping.dragItem.id !== dragItem.id;
+                return !DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
             });
             if (vm.mappings.length === lengthBefore) {
                 // nothing changed => return here to skip calling vm.onMappingUpdate()
@@ -94,7 +94,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
      */
     function dragItemForDropLocation(dropLocation) {
         var mapping = vm.mappings.find(function (mapping) {
-            return mapping.dropLocation.id === dropLocation.id;
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
         });
         if (mapping) {
             return mapping.dragItem;
@@ -111,7 +111,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
     function getUnassignedDragItems() {
         return vm.question.dragItems.filter(function (dragItem) {
             return !vm.mappings.some(function (mapping) {
-                return mapping.dragItem.id === dragItem.id;
+                return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
             });
         });
     }
@@ -129,7 +129,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
         }
         var validDragItems = vm.question.correctMappings
             .filter(function (mapping) {
-                return mapping.dropLocation.id === dropLocation.id;
+                return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
             })
             .map(function (mapping) {
                 return mapping.dragItem;
@@ -140,7 +140,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
             return validDragItems.length === 0;
         } else {
             return validDragItems.some(function (dragItem) {
-                return dragItem.id === selectedItem.id;
+                return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(dragItem, selectedItem);
             });
         }
     }
@@ -167,7 +167,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
      */
     function correctDragItemForDropLocation(dropLocation) {
         var mapping = sampleSolutionMappings.find(function (mapping) {
-            return mapping.dropLocation.id === dropLocation.id;
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
         });
         if (mapping) {
             return mapping.dragItem;
