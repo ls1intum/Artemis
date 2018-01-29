@@ -19,7 +19,7 @@
                 "pendingChanges": "Ungespeicherte Änderungen",
                 "saving": "Speichern …",
                 "saved": "Gespeichert!",
-                "quizIsActive": "Das Quiz hat angefangen. Es sind keine Änderungen mehr möglich.<br><br>Nachträgliche Korrekturen können vorgenommen werden, sobald das Quiz beendet wurde."
+                "quizHasStarted": "Das Quiz hat angefangen. Es sind keine Änderungen mehr möglich.<br><br>Nachträgliche Korrekturen können vorgenommen werden, sobald das Quiz beendet wurde. Gehen Sie zurück zur Übersicht und klicken Sie auf \"Re-evaluate\", sobald das Quiz beendet wurde. (\"Re-evaluate\" ist nicht für TAs verfügbar.)"
             },
             "new": {
                 "title": "Quiz für {{ param }} erstellen"

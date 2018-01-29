@@ -68,7 +68,7 @@
         vm.onQuestionUpdated = onQuestionUpdated;
         vm.save = save;
         vm.onDurationChange = onDurationChange;
-        vm.isSavedQuizActive = isSavedQuizActive;
+        vm.hasSavedQuizStarted = hasSavedQuizStarted;
 
         var unsubscribe = $rootScope.$on('artemisApp:quizExerciseUpdate', function (event, result) {
             vm.quizExercise = result;
@@ -273,7 +273,7 @@
          * Save the quiz to the server
          */
         function save() {
-            if (isSavedQuizActive() || !pendingChanges() || !validQuiz()) {
+            if (hasSavedQuizStarted() || !pendingChanges() || !validQuiz()) {
                 return;
             }
             vm.isSaving = true;
@@ -330,16 +330,15 @@
         }
 
         /**
-         * Check if the saved quiz is active
+         * Check if the saved quiz has started
          *
-         * @return {boolean} true if the saved quiz is active, otherwise false
+         * @return {boolean} true if the saved quiz has started, otherwise false
          */
-        function isSavedQuizActive() {
+        function hasSavedQuizStarted() {
             return !!(
                 savedEntity &&
                 savedEntity.isPlannedToStart &&
-                moment(savedEntity.releaseDate).isBefore(moment()) &&
-                moment(savedEntity.releaseDate).add(savedEntity.duration, "seconds").isAfter(moment())
+                moment(savedEntity.releaseDate).isBefore(moment())
             );
         }
     }

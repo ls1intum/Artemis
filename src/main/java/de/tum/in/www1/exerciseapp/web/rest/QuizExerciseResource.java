@@ -161,13 +161,13 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        // check if quiz is currently active
+        // check if quiz is has already started
         QuizExercise originalQuiz = quizExerciseRepository.findOne(quizExercise.getId());
         if (originalQuiz == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }
-        if (originalQuiz.isSubmissionAllowed()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizIsActive", "The quiz is currently active. No changes are allowed until the quiz has finished.")).body(null);
+        if (originalQuiz.hasStarted()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizHasStarted", "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
         }
 
         // iterate through questions to add missing pointer back to quizExercise

@@ -19,7 +19,7 @@
                 "pendingChanges": "Unsaved Changes",
                 "saving": "Saving…",
                 "saved": "Saved!",
-                "quizIsActive": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended."
+                "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\", once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)"
             },
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
