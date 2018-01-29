@@ -170,8 +170,12 @@ public class QuizExerciseResource {
                 if (question instanceof DragAndDropQuestion) {
                     DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                     DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
-                    // TODO: @Moritz: Reconnect whatever needs to be reconnected
-
+                    //reconnect dropLocationCounters
+                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
+                        if (dropLocationCounter.getId() != null) {
+                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
+                        }
+                    }
                     // reconnect dropLocations
                     for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
                         if (dropLocation.getId() != null) {
@@ -206,7 +210,6 @@ public class QuizExerciseResource {
         if (!quizExercise.isIsPlannedToStart() || quizExercise.getRemainingTime() > 0) {
             quizExercise.getQuizPointStatistic().setReleased(false);
             for (Question question : quizExercise.getQuestions()) {
-                // TODO: @Moritz: fix this for DragAndDropQuestions (getQuestionStatistic() returns null)
                 if (question.getQuestionStatistic() != null) {
                     question.getQuestionStatistic().setReleased(false);
                 }

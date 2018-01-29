@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.OneToMany;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
@@ -18,15 +16,13 @@ import java.util.Set;
  */
 @Entity
 @DiscriminatorValue(value="DD")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeName("drag-and-drop")
 public class DragAndDropQuestionStatistic extends QuestionStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
 
-    @OneToMany(mappedBy = "dragAndDropQuestionStatistic")
-    @JsonIgnore
+    @OneToMany(cascade= CascadeType.ALL, fetch= FetchType.EAGER, orphanRemoval=true, mappedBy = "dragAndDropQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DropLocationCounter> dropLocationCounters = new HashSet<>();
 
@@ -84,6 +80,30 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
     }
 
     /**
+     * 1. creates the DropLocationCounter for the new DropLocation
+     *          if where is already an DropLocationCounter with the given DropLocation -> nothing happens
+     *
+     * @param dropLocation the dropLocation-object which will be added to the DragAndDropQuestionStatistic
+     */
+    public void addDropLocation(DropLocation dropLocation) {
+
+        if(dropLocation == null) {
+            return;
+        }
+
+        for(DropLocationCounter counter: dropLocationCounters) {
+            if(dropLocation.equals(counter.getDropLocation())) {
+                return;
+            }
+        }
+        DropLocationCounter dropLocationCounter = new DropLocationCounter();
+        dropLocationCounter.setDropLocation(dropLocation);
+        addDropLocationCounters(dropLocationCounter);
+
+    }
+
+
+    /**
      * 1. check if the Result is rated or unrated
      * 2. increase participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than increase the correctCounter
      *
@@ -93,7 +113,48 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
      */
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        //TO-DO: Moritz Issig
+
+        if(submittedAnswer == null) {
+            return;
+        }
+
+        DragAndDropSubmittedAnswer ddSubmittedAnswer = (DragAndDropSubmittedAnswer)submittedAnswer;
+
+        if(rated) {
+            //increase the rated participants
+            setParticipantsRated(getParticipantsRated() + 1);
+
+            if(ddSubmittedAnswer.getMappings() != null) {
+                // increase rated dropLocationCounter if dropLocation is correct
+                for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
+                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
+                        dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + 1);
+                    }
+                }
+            }
+            // increase rated correctCounter if answer is complete correct
+            if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
+                setRatedCorrectCounter(getRatedCorrectCounter() + 1);
+            }
+        }
+        // Result is unrated
+        else{
+            //increase the unrated participants
+            setParticipantsRated(getParticipantsUnrated() + 1);
+
+            if(ddSubmittedAnswer.getMappings() != null) {
+                // increase unrated dropLocationCounter if dropLocation is correct
+                for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
+                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
+                        dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + 1);
+                    }
+                }
+            }
+            // increase unrated correctCounter if answer is complete correct
+            if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
+                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + 1);
+            }
+        }
     }
 
     /**
@@ -106,7 +167,48 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
      */
     @Override
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
-        //TO-DO: Moritz Issig
+
+        if(submittedAnswer == null) {
+            return;
+        }
+
+        DragAndDropSubmittedAnswer ddSubmittedAnswer = (DragAndDropSubmittedAnswer)submittedAnswer;
+
+        if(rated) {
+            //decrease the rated participants
+            setParticipantsRated(getParticipantsRated() - 1);
+
+            if(ddSubmittedAnswer.getMappings() != null) {
+                // decrease rated dropLocationCounter if dropLocation is correct
+                for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
+                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
+                        dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() - 1);
+                    }
+                }
+            }
+            // decrease rated correctCounter if answer is complete correct
+            if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
+                setRatedCorrectCounter(getRatedCorrectCounter() - 1);
+            }
+        }
+        // Result is unrated
+        else{
+            //decrease the unrated participants
+            setParticipantsRated(getParticipantsUnrated() - 1);
+
+            if(ddSubmittedAnswer.getMappings() != null) {
+                // decrease unrated dropLocationCounter if dropLocation is correct
+                for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
+                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
+                        dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() - 1);
+                    }
+                }
+            }
+            // decrease unrated correctCounter if answer is complete correct
+            if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
+                setUnRatedCorrectCounter(getUnRatedCorrectCounter() - 1);
+            }
+        }
     }
 
     /**

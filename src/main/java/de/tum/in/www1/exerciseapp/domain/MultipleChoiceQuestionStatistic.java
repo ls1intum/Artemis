@@ -86,7 +86,7 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
      */
     public void addAnswerOption(AnswerOption answer) {
 
-        if(answer ==null) {
+        if(answer == null) {
             return;
         }
 

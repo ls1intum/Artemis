@@ -171,6 +171,22 @@ public class DropLocation implements Serializable {
         return this;
     }
 
+    /**
+     * check if the DropLocation is solved correctly
+     *
+     * @param submittedMappings the new List of submittedMappings from the Result
+     */
+    public boolean isDropLocationCorrect(Set<DragAndDropMapping> submittedMappings) {
+
+        for (DragAndDropMapping submittedMapping : submittedMappings) {
+            if (this.equals(submittedMapping.getDropLocation())
+                && question.getCorrectDragItemsForDropLocation(this).contains(submittedMapping.getDragItem())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
