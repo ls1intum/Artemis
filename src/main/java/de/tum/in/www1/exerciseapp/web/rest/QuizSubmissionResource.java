@@ -24,7 +24,6 @@ import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.Semaphore;
 
 /**
  * REST controller for managing QuizSubmission.
@@ -36,7 +35,6 @@ public class QuizSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
 
     private static final String ENTITY_NAME = "quizSubmission";
-    private static Semaphore statisticSemaphore = new Semaphore(1);
 
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizExerciseRepository quizExerciseRepository;
@@ -194,8 +192,12 @@ public class QuizSubmissionResource {
                     // save result
                     resultRepository.save(result);
 
-                    // TODO: Update Statistics (unrated)
+                    // get previous Result
+                    Result previousResult = getPreviousResult(result);
 
+                    if (!statisticService.addAndRemoveResultToStatistics(participation, result, previousResult)) {
+                        log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
+                    }
                     // return quizSubmission
                     quizSubmission.setSubmissionDate(result.getCompletionDate());
                     return ResponseEntity.created(new URI("/api/quiz-submissions/" + quizSubmission.getId())).body(quizSubmission);
@@ -314,51 +316,13 @@ public class QuizSubmissionResource {
             result.evaluateSubmission();
             // save result
             result = resultRepository.save(result);
+
             // get previous Result
             Result previousResult = getPreviousResult(result);
 
-            // critical part locked with Semaphore statisticSemaphore
-            try {
-                statisticSemaphore.acquire();
-
-                QuizExercise quiz = quizExerciseRepository.findOne(participation.getExercise().getId());
-
-
-                for (Question question: quiz.getQuestions()) {
-                    if(previousResult != null) {
-                        // remove the previous Result from the QuestionStatistics
-                        question.getQuestionStatistic().removeOldResult(((QuizSubmission)previousResult.getSubmission()).getSubmittedAnswerForQuestion(question), true);
-                    }
-                    // add the new Result to QuestionStatistics
-                    if (question.getQuestionStatistic() != null) {
-                        question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), true);
-                        questionStatisticRepository.save(question.getQuestionStatistic());
-                        //TODO: test if this works
-                    }
-                }
-
-                // add the new Result to the quizPointStatistic and remove the previous one
-                if (previousResult != null) {
-                    quiz.getQuizPointStatistic().removeOldResult(previousResult.getScore(), true);
-                }
-                quiz.getQuizPointStatistic().addResult(result.getScore(), true);
-                quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
-
-            } catch (InterruptedException e) {
-                log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
-            } finally {
-                statisticSemaphore.release();
-            }
-
-            // add the new Result to QuestionStatistics
-            for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
-                if (submittedAnswer.getQuestion() != null && submittedAnswer.getQuestion().getQuestionStatistic() != null) {
-                    submittedAnswer.getQuestion().getQuestionStatistic().addResult(submittedAnswer, true);
-                    questionStatisticRepository.save(submittedAnswer.getQuestion().getQuestionStatistic());
-                }
-            }
-            // notify statistics about new Result
-            statisticService.updateStatistic((QuizExercise) result.getParticipation().getExercise());
+           if (!statisticService.addAndRemoveResultToStatistics(participation, result, previousResult)) {
+               log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
+           }
         }
         // prepare submission for sending
         // Note: We get submission from result because if submission was already submitted
@@ -386,8 +350,10 @@ public class QuizSubmissionResource {
 
         for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
             //find the latest Result, which is presented in the Statistics
-            if (result.getCompletionDate().isBefore(newResult.getCompletionDate()) && !result.equals(newResult) &&
-                (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
+            if (result.isRated() == newResult.isRated()
+                && result.getCompletionDate().isBefore(newResult.getCompletionDate())
+                && !result.equals(newResult)
+                && (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
                 oldResult = result;
             }
         }

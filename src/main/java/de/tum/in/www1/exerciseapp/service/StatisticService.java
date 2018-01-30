@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Semaphore;
 
 /**
  * Created by Moritz Issig on 22.11.17.
@@ -20,10 +21,12 @@ import java.util.TimerTask;
 public class StatisticService {
 
     private static Set<Long> semaphorSetUpdateStatistic = new HashSet<Long>();
+    private static Semaphore statisticSemaphore = new Semaphore(1);
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
+    private final QuizExerciseRepository quizExerciseRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizPointStatisticRepository quizPointStatisticRepository;
     private final QuestionStatisticRepository questionStatisticRepository;
@@ -31,12 +34,14 @@ public class StatisticService {
     public StatisticService(SimpMessageSendingOperations messagingTemplate,
                             ParticipationRepository participationRepository,
                             ResultRepository resultRepository,
+                            QuizExerciseRepository quizExerciseRepository,
                             QuizSubmissionRepository quizSubmissionRepository,
                             QuizPointStatisticRepository quizPointStatisticRepository,
                             QuestionStatisticRepository questionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.questionStatisticRepository = questionStatisticRepository;
@@ -120,19 +125,17 @@ public class StatisticService {
                 quizSubmissionRepository.save(quizSubmission);
 
                 // find latest rated Result
-                if (result.getCompletionDate().isBefore(quizExercise.getDueDate())
-                    && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;
                 }
                 // find latest unrated Result
-                if (result.getCompletionDate().isAfter(quizExercise.getDueDate())
-                    && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                if (!result.isRated() && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestUnratedResult = result;
                 }
             }
             // update statistics with latest rated und unrated Result
-            this.addResultToAllStatistics(quizExercise, latestRatedResult, true);
-            this.addResultToAllStatistics(quizExercise, latestUnratedResult, false);
+            this.addResultToAllStatistics(quizExercise, latestRatedResult);
+            this.addResultToAllStatistics(quizExercise, latestUnratedResult);
 
         }
         //save changed Statistics
@@ -142,22 +145,55 @@ public class StatisticService {
         }
     }
 
+    public boolean addAndRemoveResultToStatistics(Participation participation, Result newResult, Result oldResult) {
+        // critical part locked with Semaphore statisticSemaphore
+        try {
+            statisticSemaphore.acquire();
+
+            QuizExercise quiz = quizExerciseRepository.findOne(participation.getExercise().getId());
+
+            if (oldResult != null) {
+                for (Question question : quiz.getQuestions()) {
+
+                    // remove the previous Result from the QuestionStatistics
+                    question.getQuestionStatistic().removeOldResult(((QuizSubmission) oldResult.getSubmission()).getSubmittedAnswerForQuestion(question), oldResult.isRated());
+                }
+                // add the new Result to the quizPointStatistic and remove the previous one
+
+                quiz.getQuizPointStatistic().removeOldResult(oldResult.getScore(), oldResult.isRated());
+            }
+            addResultToAllStatistics(quiz, newResult);
+
+            quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
+            for (Question question : quiz.getQuestions()) {
+                questionStatisticRepository.save(question.getQuestionStatistic());
+            }
+
+        } catch (InterruptedException e) {
+            return false;
+        } finally {
+            statisticSemaphore.release();
+        }
+        // notify statistics about new Result
+        this.updateStatistic((QuizExercise) newResult.getParticipation().getExercise());
+        return true;
+    }
+
     /**
      * add Result to all Statistics of the given QuizExercise
      *
      * @param quizExercise contains the object of the quiz, where the Results will be added
      * @param result the result which will be added
-     * @param rated defines if the given Result is rated or unrated
      */
-    private void addResultToAllStatistics(QuizExercise quizExercise, Result result, boolean rated) {
+    private void addResultToAllStatistics(QuizExercise quizExercise, Result result) {
         // update QuizPointStatistic with the result
         if (result != null) {
-            quizExercise.getQuizPointStatistic().addResult(result.getScore(), rated);
+            quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
         }
         for (Question question : quizExercise.getQuestions()) {
             // update QuestionStatistics with the result
             if (result != null) {
-                question.getQuestionStatistic().addResult(((QuizSubmission) result.getSubmission()).getSubmittedAnswerForQuestion(question), rated);
+                question.getQuestionStatistic().addResult(((QuizSubmission) result.getSubmission()).getSubmittedAnswerForQuestion(question), result.isRated());
             }
         }
     }
