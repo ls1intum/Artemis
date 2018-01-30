@@ -59,6 +59,8 @@
             "lastSaved": "Gespeichert",
             "submitted": "Abgegeben",
             "statistics": "Statistiken",
+            "practiceMode": "Übung",
+            "previewMode": "Vorschau",
             "preview": "Quiz Vorschau",
             "solution": "Musterlösung",
             "statisticsNotPublished": "Der Übungsleiter hat keine Statistiken freigegeben.",

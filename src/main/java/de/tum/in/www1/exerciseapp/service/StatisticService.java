@@ -102,7 +102,9 @@ public class StatisticService {
         //reset all statistics
         quizExercise.getQuizPointStatistic().resetStatistic();
         for (Question question : quizExercise.getQuestions()) {
-            question.getQuestionStatistic().resetStatistic();
+            if (question.getQuestionStatistic() != null) {
+                question.getQuestionStatistic().resetStatistic();
+            }
         }
 
         // update the Results in every participation of the given quizExercise
@@ -141,7 +143,9 @@ public class StatisticService {
         //save changed Statistics
         quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
         for (Question question : quizExercise.getQuestions()) {
-            questionStatisticRepository.save(question.getQuestionStatistic());
+            if (question.getQuestionStatistic() != null) {
+                questionStatisticRepository.save(question.getQuestionStatistic());
+            }
         }
     }
 
@@ -154,19 +158,21 @@ public class StatisticService {
 
             if (oldResult != null) {
                 for (Question question : quiz.getQuestions()) {
-
-                    // remove the previous Result from the QuestionStatistics
-                    question.getQuestionStatistic().removeOldResult(((QuizSubmission) oldResult.getSubmission()).getSubmittedAnswerForQuestion(question), oldResult.isRated());
+                    if (question.getQuestionStatistic() != null) {
+                        // remove the previous Result from the QuestionStatistics
+                        question.getQuestionStatistic().removeOldResult(((QuizSubmission) oldResult.getSubmission()).getSubmittedAnswerForQuestion(question), oldResult.isRated());
+                    }
                 }
                 // add the new Result to the quizPointStatistic and remove the previous one
-
                 quiz.getQuizPointStatistic().removeOldResult(oldResult.getScore(), oldResult.isRated());
             }
             addResultToAllStatistics(quiz, newResult);
 
             quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
             for (Question question : quiz.getQuestions()) {
-                questionStatisticRepository.save(question.getQuestionStatistic());
+                if (question.getQuestionStatistic() != null) {
+                    questionStatisticRepository.save(question.getQuestionStatistic());
+                }
             }
 
         } catch (InterruptedException e) {
@@ -192,7 +198,7 @@ public class StatisticService {
         }
         for (Question question : quizExercise.getQuestions()) {
             // update QuestionStatistics with the result
-            if (result != null) {
+            if (result != null && question.getQuestionStatistic() != null) {
                 question.getQuestionStatistic().addResult(((QuizSubmission) result.getSubmission()).getSubmittedAnswerForQuestion(question), result.isRated());
             }
         }

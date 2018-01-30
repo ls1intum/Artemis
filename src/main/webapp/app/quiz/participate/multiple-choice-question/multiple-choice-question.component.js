@@ -63,6 +63,7 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
         showResult: '<',
         questionIndex: '<',
         score:'<',
+        forceSampleSolution: '<',
         onSelection: '&'
     }
 });
