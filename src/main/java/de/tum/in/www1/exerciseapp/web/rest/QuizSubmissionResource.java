@@ -68,9 +68,9 @@ public class QuizSubmissionResource {
     }
 
     /**
-     * GET  /courses/{courseId}/exercises/{exerciseId}/submissions/my-latest : Get the latest quizSubmission for the given course.
+     * GET  /courses/{courseId}/exercises/{exerciseId}/submissions/my-latest : Get the latest rated quizSubmission for the given course.
      * This endpoint is used when a user starts or resumes a quiz exercise, so that they can get the latest submission for that quiz exercise.
-     * If no submission exists yet, a participation, result, and submission are created so that the user can use PUT with the given submission id to submit.
+     * If no rated submission exists yet, a participation, rated result, and submission are created so that the user can use PUT with the given submission id to submit.
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to init a participation
@@ -91,12 +91,13 @@ public class QuizSubmissionResource {
             // check if user is allowed to take part in this exercise
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
                 Participation participation = participationService.init(quizExercise, principal.getName());
-                Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
+                Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
                 if (quizExercise.isSubmissionAllowed() && result == null) {
                     // no result exists yet => create a new one
                     QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
                     newSubmission = quizSubmissionRepository.save(newSubmission);
                     result = new Result().participation(participation).submission(newSubmission);
+                    result.setRated(true);
                     result = resultRepository.save(result);
 
                     // create timer to score this submission when exercise times out.
@@ -146,25 +147,24 @@ public class QuizSubmissionResource {
     }
 
     /**
-     * POST  /quiz-submissions : Create a new quizSubmission.
+     * POST  /quiz-submissions : Create a new quizSubmission for practice mode.
      *
      * @param quizSubmission the quizSubmission to create
      * @return the ResponseEntity with status 201 (Created) and with body the new quizSubmission, or with status 400 (Bad Request) if the quizSubmission has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/quiz-submissions")
+    @PostMapping("/quiz-submissions/practice")
     @Timed
-    public ResponseEntity<QuizSubmission> createQuizSubmission(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
+    public ResponseEntity<QuizSubmission> submitQuizSubmissionForPractice(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
         log.debug("REST request to save QuizSubmission : {}", quizSubmission);
-        return ResponseEntity.notFound().headers(HeaderUtil.createAlert("Unsupported Operation", "")).build();
-        // TODO: Valentin: implement for starting practice quiz
-//        if (quizSubmission.getId() != null) {
-//            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
-//        }
-//        QuizSubmission result = quizSubmissionRepository.save(quizSubmission);
-//        return ResponseEntity.created(new URI("/api/quiz-submissions/" + result.getId()))
-//            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-//            .body(result);
+
+        if (quizSubmission.getId() != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
+        }
+
+        // TODO: implement submission for practice
+
+        return null;
     }
 
     /**
@@ -188,7 +188,7 @@ public class QuizSubmissionResource {
         }
 
         if (quizSubmission.getId() == null) {
-            return createQuizSubmission(quizSubmission);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "missingId", "The submission has no ID. Use GET /courses/:courseId/exercises/:exerciseId/submissions/my-latest to get a submission and use its Id to update it.")).body(null);
         }
 
         // update corresponding result
