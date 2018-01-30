@@ -36,7 +36,9 @@
       },
       "dragAndDropQuestionStatistic": {
           "xAxes": "DropLocation",
-          "yAxes": "Häufigkeit"
+          "yAxes": "Häufigkeit",
+          "showSampleSolution": "Zeige Beispiellösung",
+          "hideSampleSolution": "Verberge Beispiellösung"
       },
       "invalid": "(ungültig)"
   }

@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowDragAndDropStatisticController', ShowDragAndDropStatisticController);
 
-    ShowDragAndDropStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'DragAndDropQuestionStatistic', 'DragAndDropQuestionStatisticForStudent'];
+    ShowDragAndDropStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'DragAndDropQuestionStatistic', 'DragAndDropQuestionStatisticForStudent', 'DragAndDropQuestionUtil'];
 
-    function ShowDragAndDropStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionStatistic, DragAndDropQuestionStatisticForStudent) {
+    function ShowDragAndDropStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionStatistic, DragAndDropQuestionStatisticForStudent, DragAndDropQuestionUtil) {
 
         var vm = this;
 
@@ -27,9 +27,11 @@
         vm.switchSolution = switchSolution;
         vm.switchRated = switchRated;
         vm.nextStatistic = nextStatistic;
+        vm.getLetter = getLetter;
         vm.previousStatistic = previousStatistic;
         vm.releaseStatistics = releaseStatistics;
         vm.releaseButtonDisabled = releaseButtonDisabled;
+        vm.correctDragItemForDropLocation = correctDragItemForDropLocation;
 
         vm.showSolution = false;
         vm.rated = true;
@@ -111,8 +113,8 @@
             if(vm.question === null) {
                 $state.go('courses');
             }
-            vm.questionStatistic = vm.question.questionStatistic;
             loadLayout();
+            vm.questionStatistic = vm.question.questionStatistic;
             loadData();
         }
 
@@ -135,10 +137,12 @@
          */
         function loadLayout(){
 
+            orderDropLocationByPos();
+
             // reset old data
             label = new Array(vm.question.dropLocations.length + 1);
             backgroundColor = [];
-            backgroundSolutionColor = new Array(vm.question.dropLocations.length + 1);
+            backgroundSolutionColor = [];
 
             //set label and backgroundcolor based on the AnswerOptions
             for(var i = 0; i < vm.question.dropLocations.length; i++) {
@@ -323,6 +327,52 @@
                     vm.data.push(unratedCorrectData);
                 }
                 vm.showSolution = true;
+            }
+        }
+
+        /**
+         * converts a number in a letter (0 -> A, 1 -> B, ...)
+         *
+         * @param index the given number
+         */
+        function getLetter(index) {
+            return String.fromCharCode(65 + index);
+        }
+
+        /**
+         * order DropLocations by Postion
+         */
+        function orderDropLocationByPos() {
+            var change = true;
+            while (change) {
+                change = false;
+                for(var i = 0; i < vm.question.dropLocations.length-1; i ++) {
+                    if((vm.question.dropLocations[i].posX ) > vm.question.dropLocations[i+1].posX){
+                        // switch DropLocations
+                        var temp = vm.question.dropLocations[i];
+                        vm.question.dropLocations[i] = vm.question.dropLocations[i+1];
+                        vm.question.dropLocations[i+1] = temp;
+                        change = true;
+                    }
+                }
+            }
+        }
+
+        /**
+         * Get the drag item that was mapped to the given drop location in the sample solution
+         *
+         * @param dropLocation {object} the drop location that the drag item should be mapped to
+         * @return {object | null} the mapped drag item, or null, if no drag item has been mapped to this location
+         */
+        function correctDragItemForDropLocation(dropLocation) {
+            console.log("Bla");
+            var mapping = DragAndDropQuestionUtil.solve(vm.question, null).find(function (mapping) {
+                return mapping.dropLocation.id === dropLocation.id;
+            });
+            if (mapping) {
+                return mapping.dragItem;
+            } else {
+                return null;
             }
         }
 

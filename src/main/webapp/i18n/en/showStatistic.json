@@ -36,7 +36,9 @@
         },
         "dragAndDropQuestionStatistic": {
             "xAxes": "DropLocation",
-            "yAxes": "Amount"
+            "yAxes": "Amount",
+            "showSampleSolution": "Show Sample Solution",
+            "hideSampleSolution": "Hide Sample Solution"
         },
         "invalid": "(invalid)"
     }
