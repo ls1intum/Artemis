@@ -223,6 +223,12 @@
                         questionId: vm.quizExercise.questions[0].id
                     });
                 }
+                if(vm.quizExercise.questions[0].type === "drag-and-drop") {
+                    $state.go('drag-and-drop-question-statistic-chart', {
+                        quizId: vm.quizExercise.id,
+                        questionId: vm.quizExercise.questions[0].id
+                    });
+                }
             }
         }
 

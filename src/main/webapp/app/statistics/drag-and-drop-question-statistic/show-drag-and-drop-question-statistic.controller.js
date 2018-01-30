@@ -3,11 +3,11 @@
 
     angular
         .module('artemisApp')
-        .controller('ShowMultipleChoiceQuestionStatisticController', ShowMultipleChoiceQuestionStatisticController);
+        .controller('ShowDragAndDropStatisticController', ShowDragAndDropStatisticController);
 
-    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'MultipleChoiceQuestionStatistic', 'MultipleChoiceQuestionStatisticForStudent'];
+    ShowDragAndDropStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'DragAndDropQuestionStatistic', 'DragAndDropQuestionStatisticForStudent'];
 
-    function ShowMultipleChoiceQuestionStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, MultipleChoiceQuestionStatistic, MultipleChoiceQuestionStatisticForStudent) {
+    function ShowDragAndDropStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionStatistic, DragAndDropQuestionStatisticForStudent) {
 
         var vm = this;
 
@@ -17,7 +17,6 @@
         vm.colors = [];
 
         var label;
-        var solutionLabel;
         var ratedData;
         var unratedData;
         var backgroundColor;
@@ -59,10 +58,10 @@
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    MultipleChoiceQuestionStatistic.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
+                    DragAndDropQuestionStatistic.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
                 }
                 else{
-                    MultipleChoiceQuestionStatisticForStudent.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
+                    DragAndDropQuestionStatisticForStudent.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
                 }
 
             });
@@ -82,10 +81,10 @@
             });
 
             // add Axes-labels based on selected language
-            $translate('showStatistic.multipleChoiceQuestionStatistic.xAxes').then(function (xLabel) {
+            $translate('showStatistic.dragAndDropQuestionStatistic.xAxes').then(function (xLabel) {
                 vm.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
             });
-            $translate('showStatistic.multipleChoiceQuestionStatistic.yAxes').then(function (yLabel) {
+            $translate('showStatistic.dragAndDropQuestionStatistic.yAxes').then(function (yLabel) {
                 vm.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
             });
         }
@@ -112,16 +111,15 @@
             if(vm.question === null) {
                 $state.go('courses');
             }
-            //MultipleChoiceQuestion.get({id: _.get($state,"params.questionId")}).$promise.then(loadQuestionSuccess);
             vm.questionStatistic = vm.question.questionStatistic;
             loadLayout();
             loadData();
         }
 
         /**
-         * load the new multipleChoiceQuestionStatistic from the server if the Websocket has been notified
+         * load the new dragAndDropQuestionStatistic from the server if the Websocket has been notified
          *
-         * @param {MultipleChoiceQuestionStatistic} statistic: the new multipleChoiceQuestionStatistic from the server with the new Data.
+         * @param {DragAndDropQuestionStatistic} statistic: the new multipleChoiceQuestionStatistic from the server with the new Data.
          */
         function loadNewData(statistic) {
             // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
@@ -138,19 +136,24 @@
         function loadLayout(){
 
             // reset old data
-            label = new Array(vm.question.answerOptions.length + 1);
+            label = new Array(vm.question.dropLocations.length + 1);
             backgroundColor = [];
-            backgroundSolutionColor = new Array(vm.question.answerOptions.length + 1);
-            solutionLabel = new Array(vm.question.answerOptions.length + 1);
+            backgroundSolutionColor = new Array(vm.question.dropLocations.length + 1);
 
             //set label and backgroundcolor based on the AnswerOptions
-            for(var i = 0; i < vm.question.answerOptions.length; i++) {
+            for(var i = 0; i < vm.question.dropLocations.length; i++) {
                 label[i] = (String.fromCharCode(65 + i) + ".");
                 backgroundColor.push(
                     {backgroundColor: "#428bca",
                         borderColor: "#428bca",
                         pointBackgroundColor: "#428bca",
                         pointBorderColor: "#428bca"
+                    });
+                backgroundSolutionColor.push(
+                    {backgroundColor: "#5cb85c",
+                        borderColor: "#5cb85c",
+                        pointBackgroundColor: "#5cb85c",
+                        pointBorderColor: "#5cb85c"
                     });
             }
             backgroundColor.push(
@@ -159,7 +162,7 @@
                     pointBackgroundColor: "#5bc0de",
                     pointBorderColor: "#5bc0de"
                 });
-            backgroundSolutionColor[vm.question.answerOptions.length] =
+            backgroundSolutionColor[vm.question.dropLocations.length] =
                 {backgroundColor: "#5bc0de",
                     borderColor: "#5bc0de",
                     pointBackgroundColor: "#5bc0de",
@@ -168,15 +171,14 @@
 
             //add Text for last label based on the language
             $translate('showStatistic.quizStatistic.yAxes').then(function (lastLabel) {
-                solutionLabel[vm.question.answerOptions.length] = (lastLabel.split(" "));
-                label[vm.question.answerOptions.length] = (lastLabel.split(" "));
+                label[vm.question.dropLocations.length] = (lastLabel.split(" "));
                 vm.labels = label;
             });
 
             //set Background for invalid answers = grey
             $translate('showStatistic.invalid').then(function (invalidLabel) {
-                for (var j = 0; j < vm.question.answerOptions.length; j++) {
-                    if (vm.question.answerOptions[j].invalid) {
+                for (var j = 0; j < vm.question.dropLocations.length; j++) {
+                    if (vm.question.dropLocations[j].invalid) {
                         backgroundColor[j] = (
                             {backgroundColor: "#838383",
                                 borderColor: "#838383",
@@ -190,43 +192,7 @@
                                 pointBorderColor: "#838383"
                             });
 
-                        solutionLabel[j] = ([String.fromCharCode(65 + i) + ".", " " + invalidLabel]);
-                    }
-                }
-            });
-
-            //add correct-text to the label based on the language
-            $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel) {
-                for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                    if (vm.question.answerOptions[i].isCorrect) {
-                        // check if the answer is valid and if true change solution-label and -color
-                        if (!vm.question.answerOptions[i].invalid) {
-                            backgroundSolutionColor[i] = (
-                                {backgroundColor: "#5cb85c",
-                                    borderColor: "#5cb85c",
-                                    pointBackgroundColor: "#5cb85c",
-                                    pointBorderColor: "#5cb85c"
-                                });
-                            solutionLabel[i] = ([String.fromCharCode(65 + i) + ".", " (" + correctLabel + ")"]);
-                        }
-                    }
-                }
-            });
-
-            //add incorrect-text to the label based on the language
-            $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel) {
-                for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                    if (!vm.question.answerOptions[i].isCorrect) {
-                        // check if the answer is valid and if true change solution-label and -color
-                        if (!vm.question.answerOptions[i].invalid) {
-                            backgroundSolutionColor[i] = (
-                                {backgroundColor: "#d9534f",
-                                    borderColor: "#d9534f",
-                                    pointBackgroundColor: "#d9534f",
-                                    pointBorderColor: "#d9534f"
-                                });
-                            solutionLabel[i] = ([String.fromCharCode(65 + i) + ".", " (" + incorrectLabel + ")"]);
-                        }
+                        label[j] = ([String.fromCharCode(65 + i) + ".", " " + invalidLabel]);
                     }
                 }
             });
@@ -242,11 +208,11 @@
             unratedData = [];
 
             //set data based on the answerCounters for each AnswerOption
-            for(var i = 0; i < vm.question.answerOptions.length; i++) {
-                for(var j = 0; j < vm.questionStatistic.answerCounters.length; j++) {
-                    if (vm.question.answerOptions[i].id === (vm.questionStatistic.answerCounters[j].answer.id)) {
-                        ratedData.push(vm.questionStatistic.answerCounters[j].ratedCounter);
-                        unratedData.push(vm.questionStatistic.answerCounters[j].unRatedCounter);
+            for(var i = 0; i < vm.question.dropLocations.length; i++) {
+                for(var j = 0; j < vm.questionStatistic.dropLocationCounters.length; j++) {
+                    if (vm.question.dropLocations[i].id === (vm.questionStatistic.dropLocationCounters[j].dropLocation.id)) {
+                        ratedData.push(vm.questionStatistic.dropLocationCounters[j].ratedCounter);
+                        unratedData.push(vm.questionStatistic.dropLocationCounters[j].unRatedCounter);
                     }
                 }
             }
@@ -254,10 +220,11 @@
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;
             unratedCorrectData = vm.questionStatistic.unRatedCorrectCounter;
 
+            vm.labels = label;
+
             // if show Solution is true use the label, backgroundColor and Data, which show the solution
             if(vm.showSolution) {
                 // show Solution
-                vm.labels = solutionLabel;
                 // if show Solution is true use the backgroundColor which shows the solution
                 vm.colors = backgroundSolutionColor;
                 if (vm.rated) {
@@ -275,7 +242,6 @@
             }
             else {
                 // don't show Solution
-                vm.labels = label;
                 // if show Solution is false use the backgroundColor which doesn't show the solution
                 vm.colors = backgroundColor;
                 // if rated is true use the rated Data
@@ -325,13 +291,11 @@
 
         /**
          * switch between showing and hiding the solution in the chart
-         *  1. change the BackgroundColor of the bars
-         *  2. change the bar-Labels
-          */
+         *  1. change the bar-Labels
+         */
         function switchSolution() {
             if(vm.showSolution) {
-                // don't show Solution
-                vm.labels = label;
+                // Hide solution
                 // if show Solution is false use the backgroundColor which doesn't show the solution
                 vm.colors = backgroundColor;
                 // if rated is true use the rated Data
@@ -346,7 +310,6 @@
             }
             else {
                 // show Solution
-                vm.labels = solutionLabel;
                 // if show Solution is true use the backgroundColor which shows the solution
                 vm.colors = backgroundSolutionColor;
                 if (vm.rated) {
@@ -369,26 +332,26 @@
          */
         function previousStatistic() {
             if(vm.quizExercise.questions[0].id === vm.question.id) {
-            $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
-        }
-        else{
-            for (var i = 0; i < vm.quizExercise.questions.length; i++) {
-                if(vm.quizExercise.questions[i].id === vm.question.id) {
-                    if(vm.quizExercise.question[i - 1].type === "multiple-choice") {
-                        $state.go('multiple-choice-question-statistic-chart', {
-                            quizId: vm.quizExercise.id,
-                            questionId: vm.quizExercise.questions[i - 1].id
-                        });
-                    }
-                    if (vm.quizExercise.question[i - 1].type === "drag-and-drop") {
-                        $state.go('drag-and-drop-question-statistic-chart', {
-                            quizId: vm.quizExercise.id,
-                            questionId: vm.quizExercise.questions[i - 1].id
-                        });
+                $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
+            }
+            else{
+                for (var i = 0; i < vm.quizExercise.questions.length; i++) {
+                    if(vm.quizExercise.questions[i].id === vm.question.id) {
+                        if(vm.quizExercise.question[i - 1].type === "multiple-choice") {
+                            $state.go('multiple-choice-question-statistic-chart', {
+                                quizId: vm.quizExercise.id,
+                                questionId: vm.quizExercise.questions[i - 1].id
+                            });
+                        }
+                        if (vm.quizExercise.question[i - 1].type === "drag-and-drop") {
+                            $state.go('drag-and-drop-question-statistic-chart', {
+                                quizId: vm.quizExercise.id,
+                                questionId: vm.quizExercise.questions[i - 1].id
+                            });
+                        }
                     }
                 }
             }
-        }
 
         }
 

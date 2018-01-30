@@ -106,6 +106,33 @@ public class DragAndDropQuestionStatisticResource {
     }
 
     /**
+     * GET  /drag-and-drop-question-statistic/:id : get the "id" dragAndDropQuestionStatistic.
+     *
+     * @param id the id of the dragAndDropQuestionStatistic to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the dragAndDropQuestionStatistic, or with status 404 (Not Found)
+     */
+    @GetMapping("/drag-and-drop-question-statistics/{id}/for-student")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
+    @Timed
+    public ResponseEntity<DragAndDropQuestionStatistic> getQuizExerciseForStudent(@PathVariable Long id) {
+        log.debug("REST request to get QuizPointStatistic : {}", id);
+        DragAndDropQuestionStatistic dragAndDropQuestionStatistic = dragAndDropQuestionStatisticRepository.findOne(id);
+
+        // only filter out the information if the statistic is not released
+        if(!dragAndDropQuestionStatistic.isReleased()) {
+            // filter out all Information about the Statistic except if it is released (so students can't get the information before the Statistic is released)
+            dragAndDropQuestionStatistic.setQuestion(null);
+            dragAndDropQuestionStatistic.setDropLocationCounters(null);
+            dragAndDropQuestionStatistic.setRatedCorrectCounter(null);
+            dragAndDropQuestionStatistic.setUnRatedCorrectCounter(null);
+            dragAndDropQuestionStatistic.setParticipantsRated(null);
+            dragAndDropQuestionStatistic.setParticipantsUnrated(null);
+        }
+
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(dragAndDropQuestionStatistic));
+    }
+
+    /**
      * DELETE  /drag-and-drop-question-statistics/:id : delete the "id" dragAndDropQuestionStatistic.
      *
      * @param id the id of the dragAndDropQuestionStatistic to delete

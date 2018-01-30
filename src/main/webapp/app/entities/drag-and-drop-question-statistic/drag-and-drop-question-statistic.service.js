@@ -2,7 +2,8 @@
     'use strict';
     angular
         .module('artemisApp')
-        .factory('DragAndDropQuestionStatistic', DragAndDropQuestionStatistic);
+        .factory('DragAndDropQuestionStatistic', DragAndDropQuestionStatistic)
+        .factory('DragAndDropQuestionStatisticForStudent', DragAndDropQuestionStatisticForStudent);
 
     DragAndDropQuestionStatistic.$inject = ['$resource'];
 
@@ -21,6 +22,24 @@
                 }
             },
             'update': { method:'PUT' }
+        });
+    }
+
+    DragAndDropQuestionStatisticForStudent.$inject = ['$resource'];
+
+    function DragAndDropQuestionStatisticForStudent ($resource) {
+        var resourceUrl =  'api/drag-and-drop-question-statistics/:id/for-student';
+
+        return $resource(resourceUrl, {}, {
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                    }
+                    return data;
+                }
+            }
         });
     }
 })();

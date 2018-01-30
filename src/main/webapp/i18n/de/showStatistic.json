@@ -34,6 +34,10 @@
           "correct": "richtig",
           "incorrect": "falsch"
       },
+      "dragAndDropQuestionStatistic": {
+          "xAxes": "DropLocation",
+          "yAxes": "Häufigkeit"
+      },
       "invalid": "(ungültig)"
   }
 }

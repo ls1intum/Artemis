@@ -8,9 +8,7 @@
             <div class="col-md-4 text-left">
                 <h3>{{vm.question.title}} <span style="color:red;" ng-show="vm.question.invalid" data-translate="showStatistic.invalid"></span></h3>
                 <h4>{{vm.question.text}}</h4>
-                <ol type=A>
-                <li ng-repeat="answer in vm.question.answerOptions"><span> {{answer.text}}</span>&nbsp<span style="color:red;" ng-show="answer.invalid" data-translate="showStatistic.invalid"></span></li>
-                </ol>
+                <h2>TO-D0: Show question-picture and DragItems</h2>
 
             </div>
             <div class="col-md-8 text-center">
@@ -64,7 +62,7 @@
                                data-translate="showStatistic.quizStatisticTitle"></a></li>
                         <li ng-repeat="question in vm.quizExercise.questions">
                             <a ng-if="question.type === 'multiple-choice'" ui-sref="multiple-choice-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
-                        ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a>
+                            ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a>
                             <a ng-if="question.type === 'drag-and-drop'" ui-sref="drag-and-drop-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
                             ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a></li>
                     </ul>
@@ -74,10 +72,10 @@
                 <div class="btn-group flex-btn-group-container">
                     <button ng-click=vm.previousStatistic()
                             data-translate="showStatistic.previousStatistic"
-                        class="btn btn-default"></button>
+                            class="btn btn-default"></button>
                     <button ng-click=vm.nextStatistic()
                             data-translate="showStatistic.nextStatistic"
-                        class="btn btn-default"></button>
+                            class="btn btn-default"></button>
                 </div>
             </div>
             <div class="form-group">
