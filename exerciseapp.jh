@@ -123,11 +123,13 @@ entity DropLocation {
     posY Integer
     width Integer
     height Integer
+    invalid Boolean
 }
 
 entity DragItem {
 	pictureFilePath String
     text String
+    invalid Boolean
 }
 
 entity Participation (participation) {
@@ -195,6 +197,7 @@ entity DragAndDropSubmittedAnswer {      //extends SubmittedAnswer
 entity DragAndDropMapping {
 	dragItemIndex Integer
     dropLocationIndex Integer
+    invalid Boolean
 }
 
 relationship OneToMany {
