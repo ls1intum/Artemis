@@ -7,13 +7,16 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
     $translate.refresh();
 
     var vm = this;
-
-    vm.rendered = {
-        text: ArtemisMarkdown.htmlForMarkdown(vm.question.text),
-        hint: ArtemisMarkdown.htmlForMarkdown(vm.question.hint),
-        explanation: ArtemisMarkdown.htmlForMarkdown(vm.question.explanation)
-    };
     vm.showingSampleSolution = false;
+
+    $scope.$watchCollection('vm.question', function () {
+        // update html for text, hint and explanation
+        vm.rendered = {
+            text: ArtemisMarkdown.htmlForMarkdown(vm.question.text),
+            hint: ArtemisMarkdown.htmlForMarkdown(vm.question.hint),
+            explanation: ArtemisMarkdown.htmlForMarkdown(vm.question.explanation)
+        };
+    });
 
     vm.onDragDrop = onDragDrop;
     vm.dragItemForDropLocation = dragItemForDropLocation;

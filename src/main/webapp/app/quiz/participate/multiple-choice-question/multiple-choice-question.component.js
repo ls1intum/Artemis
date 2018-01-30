@@ -8,18 +8,21 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
 
     var vm = this;
 
-    vm.rendered = {
-        text: ArtemisMarkdown.htmlForMarkdown(vm.question.text),
-        hint: ArtemisMarkdown.htmlForMarkdown(vm.question.hint),
-        explanation: ArtemisMarkdown.htmlForMarkdown(vm.question.explanation),
-        answerOptions: vm.question.answerOptions.map(function(answerOption){
-            return {
-                text: ArtemisMarkdown.htmlForMarkdown(answerOption.text),
-                hint: ArtemisMarkdown.htmlForMarkdown(answerOption.hint),
-                explanation: ArtemisMarkdown.htmlForMarkdown(answerOption.explanation)
-            };
-        })
-    };
+    $scope.$watchCollection('vm.question', function () {
+        // update html for text, hint and explanation for the question and every answer option
+        vm.rendered = {
+            text: ArtemisMarkdown.htmlForMarkdown(vm.question.text),
+            hint: ArtemisMarkdown.htmlForMarkdown(vm.question.hint),
+            explanation: ArtemisMarkdown.htmlForMarkdown(vm.question.explanation),
+            answerOptions: vm.question.answerOptions.map(function(answerOption){
+                return {
+                    text: ArtemisMarkdown.htmlForMarkdown(answerOption.text),
+                    hint: ArtemisMarkdown.htmlForMarkdown(answerOption.hint),
+                    explanation: ArtemisMarkdown.htmlForMarkdown(answerOption.explanation)
+                };
+            })
+        };
+    });
 
     vm.toggleSelection = toggleSelection;
 

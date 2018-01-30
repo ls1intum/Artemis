@@ -387,7 +387,9 @@
                         // load quiz when it is planned to start (at most once every second)
                         runningTimeouts.push(
                             $timeout(function () {
-                                load();
+                                if (vm.waitingForQuizStart) {
+                                    load();
+                                }
                             }, Math.max(1, quizExercise.timeUntilPlannedStart) * 1000)
                         );
                     }
