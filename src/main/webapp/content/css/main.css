@@ -8618,6 +8618,8 @@ body.editor .navbar-brand span {
   .dnd-question .drag-item img {
     max-height: 100%;
     max-width: 100%;
+    height: auto;
+    width: auto;
     margin: auto;
     position: absolute;
     transform: translate(-50%, -50%);
