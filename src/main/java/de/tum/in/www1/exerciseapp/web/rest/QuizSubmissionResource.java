@@ -19,6 +19,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.time.ZonedDateTime;
@@ -147,24 +148,66 @@ public class QuizSubmissionResource {
     }
 
     /**
-     * POST  /quiz-submissions : Create a new quizSubmission for practice mode.
+     * POST  /courses/:courseId/exercises/:exerciseId/submissions/practice : Submit a new quizSubmission for practice mode.
      *
-     * @param quizSubmission the quizSubmission to create
+     * @param courseId   only included for API consistency, not actually used
+     * @param exerciseId the id of the exercise for which to init a participation
+     * @param principal  the current user principal
+     * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 201 (Created) and with body the new quizSubmission, or with status 400 (Bad Request) if the quizSubmission has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/quiz-submissions/practice")
+    @PostMapping("/courses/{courseId}/exercises/{exerciseId}/submissions/practice")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<QuizSubmission> submitQuizSubmissionForPractice(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
-        log.debug("REST request to save QuizSubmission : {}", quizSubmission);
+    public ResponseEntity<QuizSubmission> submitQuizSubmissionForPractice(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
+        log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
+
+        // recreate pointers back to submission in each submitted answer
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+            submittedAnswer.setSubmission(quizSubmission);
+        }
 
         if (quizSubmission.getId() != null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
         }
 
-        // TODO: implement submission for practice
+        QuizExercise quizExercise = quizExerciseRepository.findOne(exerciseId);
+        if (Optional.ofNullable(quizExercise).isPresent()) {
+            User user = userService.getUserWithGroupsAndAuthorities();
+            // check if user is allowed to take part in this exercise
+            if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
+                Participation participation = participationService.init(quizExercise, principal.getName());
+                if (quizExercise.hasStarted() && quizExercise.getRemainingTime() < 0 && quizExercise.isIsOpenForPractice()) {
+                    // update and save submission
+                    quizSubmission.setSubmitted(true);
+                    quizSubmission.setType(SubmissionType.MANUAL);
+                    quizSubmission.calculateAndUpdateScores((QuizExercise) participation.getExercise());
+                    quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
-        return null;
+                    // create and save result
+                    Result result = new Result().participation(participation).submission(quizSubmission);
+                    result.setRated(false);
+                    result.setCompletionDate(ZonedDateTime.now());
+                    // calculate score and update result accordingly
+                    result.evaluateSubmission();
+                    // save result
+                    resultRepository.save(result);
+
+                    // TODO: Update Statistics (unrated)
+
+                    // return quizSubmission
+                    quizSubmission.setSubmissionDate(result.getCompletionDate());
+                    return ResponseEntity.created(new URI("/api/quiz-submissions/" + quizSubmission.getId())).body(quizSubmission);
+                } else {
+                    return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotOpenForPractice", "The exercise is not open for practice or hasn't ended yet.")).body(null);
+                }
+            } else {
+                return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "You are not part of the students group for this course")).body(null);
+            }
+        } else {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID")).body(null);
+        }
     }
 
     /**
@@ -255,7 +298,7 @@ public class QuizSubmissionResource {
             }
         }
         if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
-            // update participation state => no further submissions allowed
+            // update participation state => no further rated submissions allowed
             participation.setInitializationState(ParticipationState.FINISHED);
             participation = participationService.save(participation);
             // update submission

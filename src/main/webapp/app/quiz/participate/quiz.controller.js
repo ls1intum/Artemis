@@ -13,6 +13,8 @@
         var timeDifference = 0;
         var outstandingWebsocketResponses = 0;
 
+        var runningTimeouts = [];
+
         vm.practiceMode = $state.current.data.practiceMode;
 
         vm.isSubmitting = false;
@@ -50,6 +52,10 @@
          * unsubscribe from all subscribed websocket channels when page is closed
          */
         $scope.$on('$destroy', function () {
+            runningTimeouts.forEach(function (timeout) {
+                $timeout.cancel(timeout);
+            });
+
             if (submissionChannel) {
                 JhiWebsocketService.unsubscribe(submissionChannel);
             }
@@ -99,7 +105,7 @@
                     vm.quizExercise.adjustedDueDate = moment().add(quizExercise.duration, "seconds");
 
                     // auto submit when time is up
-                    $timeout(onSubmit, quizExercise.duration * 1000);
+                    runningTimeouts.push($timeout(onSubmit, quizExercise.duration * 1000));
                 } else {
                     alert("Error: This quiz is not open for practice!");
                 }
@@ -322,11 +328,13 @@
                         randomizeOrder(quizExercise);
 
                         // automatically load results 5 seconds after quiz has ended (in case websocket didn't work)
-                        $timeout(function () {
-                            if (!vm.showingResult) {
-                                loadResults();
-                            }
-                        }, (quizExercise.remainingTime + 5) * 1000);
+                        runningTimeouts.push(
+                            $timeout(function () {
+                                if (!vm.showingResult) {
+                                    loadResults();
+                                }
+                            }, (quizExercise.remainingTime + 5) * 1000)
+                        );
                     }
                     QuizSubmissionForExercise.get({
                         courseId: 1,
@@ -360,7 +368,8 @@
                                     courseId: vm.participation.exercise.course.id,
                                     exerciseId: vm.participation.exercise.id,
                                     participationId: vm.participation.id,
-                                    showAllResults: false
+                                    showAllResults: false,
+                                    ratedOnly: true
                                 }).$promise.then(showResult);
                             }
 
@@ -376,9 +385,11 @@
                         vm.quizExercise.adjustedReleaseDate = moment().add(quizExercise.timeUntilPlannedStart, "seconds");
 
                         // load quiz when it is planned to start (at most once every second)
-                        $timeout(function () {
-                            load();
-                        }, Math.max(1, quizExercise.timeUntilPlannedStart) * 1000);
+                        runningTimeouts.push(
+                            $timeout(function () {
+                                load();
+                            }, Math.max(1, quizExercise.timeUntilPlannedStart) * 1000)
+                        );
                     }
                 }
             });
@@ -408,7 +419,8 @@
                             courseId: vm.participation.exercise.course.id,
                             exerciseId: vm.participation.exercise.id,
                             participationId: vm.participation.id,
-                            showAllResults: false
+                            showAllResults: false,
+                            ratedOnly: true
                         }).$promise.then(showResult);
                     });
                 }
@@ -561,7 +573,12 @@
             applySelection();
             vm.isSubmitting = true;
             if (vm.practiceMode) {
-                // TODO
+                if (!vm.submission.id) {
+                    QuizSubmission.submitForPractice({
+                        courseId: 1,
+                        exerciseId: $stateParams.id
+                    }, vm.submission, onSubmitPracticeSuccess, onSubmitError);
+                }
             } else {
                 QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
             }
@@ -582,6 +599,32 @@
                     timeoutJustSaved();
                 }
             }
+        }
+
+        /**
+         * Callback function for handling response after submitting for practice
+         * @param response
+         */
+        function onSubmitPracticeSuccess(response) {
+            vm.isSubmitting = false;
+            vm.submission = response;
+            applySubmission();
+
+            // load participation
+            ExerciseParticipation.get({
+                courseId: vm.quizExercise.course.id,
+                exerciseId: vm.quizExercise.id
+            }).$promise.then(function (participation) {
+                vm.participation = participation;
+                // load result
+                ParticipationResult.query({
+                    courseId: vm.participation.exercise.course.id,
+                    exerciseId: vm.participation.exercise.id,
+                    participationId: vm.participation.id,
+                    showAllResults: false,
+                    ratedOnly: false
+                }).$promise.then(showResult);
+            });
         }
 
         /**

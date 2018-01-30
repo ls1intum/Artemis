@@ -21,7 +21,11 @@
                     return data;
                 }
             },
-            'update': { method:'PUT' }
+            'update': { method:'PUT' },
+            'submitForPractice': {
+                url: 'api/courses/:courseId/exercises/:exerciseId/submissions/practice',
+                method: 'POST'
+            }
         });
     }
 

@@ -56,7 +56,8 @@
                         courseId: vm.participation.exercise.course.id,
                         exerciseId: vm.participation.exercise.id,
                         participationId: vm.participation.id,
-                        showAllResults: false
+                        showAllResults: false,
+                        ratedOnly: vm.participation.exercise.type === "quiz"
                     }, function (results) {
                         if(vm.onNewResult) {
                             vm.onNewResult({ $event: {

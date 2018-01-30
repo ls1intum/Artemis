@@ -19,6 +19,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     List<Result> findByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
+    List<Result> findByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
+
     List<Result> findByParticipationExerciseIdOrderByCompletionDateAsc(Long exerciseId);
 
     // TODO: What if select max ... doesn't work?
