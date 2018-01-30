@@ -59,6 +59,8 @@
             "lastSaved": "Saved",
             "submitted": "Submitted",
             "statistics": "Statistics",
+            "preview": "Preview Quiz",
+            "solution": "Sample Solution",
             "statisticsNotPublished": "The instructor has not published any statistics.",
             "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended.",
             "re-evaluate": {

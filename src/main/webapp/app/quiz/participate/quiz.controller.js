@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizController', QuizController);
 
-    QuizController.$inject = ['$scope', '$state', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult', '$timeout'];
+    QuizController.$inject = ['$scope', '$state', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizExercise', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult', '$timeout'];
 
-    function QuizController($scope, $state, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult, $timeout) {
+    function QuizController($scope, $state, $stateParams, $interval, QuizExerciseForStudent, QuizExercise, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult, $timeout) {
         var vm = this;
 
         var timeDifference = 0;
@@ -15,7 +15,8 @@
 
         var runningTimeouts = [];
 
-        vm.practiceMode = $state.current.data.practiceMode;
+        // set correct mode
+        vm.mode = $state.current.data.mode;
 
         vm.isSubmitting = false;
         vm.isSaving = false;
@@ -34,11 +35,22 @@
         vm.onSelectionChanged = onSelectionChanged;
         vm.onSubmit = onSubmit;
 
-        if (vm.practiceMode) {
-            initPracticeMode();
-        } else {
-            init();
+        // init according to mode
+        switch (vm.mode) {
+            case "practice":
+                initPracticeMode();
+                break;
+            case "preview":
+                initPreview();
+                break;
+            case "solution":
+                initShowSolution();
+                break;
+            case "default":
+                init();
+                break;
         }
+
         $interval(updateDisplayedTimes, 100);  // update displayed times in UI regularly
 
         /**
@@ -91,25 +103,43 @@
         function initPracticeMode() {
             QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
                 if (quizExercise.isOpenForPractice) {
-                    // init quiz
-                    vm.quizExercise = quizExercise;
-                    initQuiz();
-
-                    // randomize order
-                    randomizeOrder(quizExercise);
-
-                    // init empty submission
-                    vm.submission = {};
-
-                    // adjust end date
-                    vm.quizExercise.adjustedDueDate = moment().add(quizExercise.duration, "seconds");
-
-                    // auto submit when time is up
-                    runningTimeouts.push($timeout(onSubmit, quizExercise.duration * 1000));
+                    startQuizPreviewOrPractice(quizExercise);
                 } else {
                     alert("Error: This quiz is not open for practice!");
                 }
             });
+        }
+
+        /**
+         * loads quiz exercise and starts preview mode
+         */
+        function initPreview() {
+            QuizExercise.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
+                startQuizPreviewOrPractice(quizExercise);
+            });
+        }
+
+        /**
+         * Start the given quiz in practice or preview mode
+         *
+         * @param quizExercise {object} the quizExercise to start
+         */
+        function startQuizPreviewOrPractice(quizExercise) {
+            // init quiz
+            vm.quizExercise = quizExercise;
+            initQuiz();
+
+            // randomize order
+            randomizeOrder(quizExercise);
+
+            // init empty submission
+            vm.submission = {};
+
+            // adjust end date
+            vm.quizExercise.adjustedDueDate = moment().add(quizExercise.duration, "seconds");
+
+            // auto submit when time is up
+            runningTimeouts.push($timeout(onSubmit, quizExercise.duration * 1000));
         }
 
         /**
@@ -574,15 +604,26 @@
         function onSubmit() {
             applySelection();
             vm.isSubmitting = true;
-            if (vm.practiceMode) {
-                if (!vm.submission.id) {
-                    QuizSubmission.submitForPractice({
-                        courseId: 1,
-                        exerciseId: $stateParams.id
-                    }, vm.submission, onSubmitPracticeSuccess, onSubmitError);
-                }
-            } else {
-                QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+            switch (vm.mode) {
+                case "practice":
+                    if (!vm.submission.id) {
+                        QuizSubmission.submitForPractice({
+                            courseId: 1,
+                            exerciseId: $stateParams.id
+                        }, vm.submission, onSubmitPracticeSuccess, onSubmitError);
+                    }
+                    break;
+                case "preview":
+                    if (!vm.submission.id) {
+                        QuizSubmission.submitForPreview({
+                            courseId: 1,
+                            exerciseId: $stateParams.id
+                        }, vm.submission, onSubmitPreviewSuccess, onSubmitError);
+                    }
+                    break;
+                case "default":
+                    QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+                    break;
             }
         }
 
@@ -627,6 +668,14 @@
                     ratedOnly: false
                 }).$promise.then(showResult);
             });
+        }
+
+        /**
+         * Callback function for handling response after submitting for preview
+         * @param response
+         */
+        function onSubmitPreviewSuccess(response) {
+            showResult([response]);
         }
 
         /**

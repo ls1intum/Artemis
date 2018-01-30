@@ -1,7 +1,8 @@
 <div class="quiz-header container">
-    <h1>
+    <h1 ng-switch="vm.mode">
         {{vm.quizExercise.course.title}} - {{vm.quizExercise.title}}
-        <span ng-if="vm.practiceMode">(Practice Mode)</span>
+        <span ng-switch-when="practice">(Practice Mode)</span>
+        <span ng-switch-when="preview">(Preview Mode)</span>
     </h1>
     <p ng-if="!vm.waitingForQuizStart && !vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.default"></p>
     <p ng-if="!vm.waitingForQuizStart && vm.submission.submitted && !vm.showingResult" data-translate="artemisApp.quizExercise.quizInstructions.wait"></p>
@@ -26,14 +27,14 @@
                     {{vm.totalScore}}
                 </div>
             </div>
-            <div ng-if="!vm.showingResult" id="remaining-time">
+            <div ng-if="!vm.showingResult" id="remaining-time" ng-switch="vm.mode">
                 <div>
                     <span data-translate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                     <span id="remaining-time-value" ng-class="{'time-critical': vm.remainingTimeSeconds < 60 || vm.remainingTimeSeconds < vm.quizExercise.duration / 4, 'time-warning': vm.remainingTimeSeconds < 120 || vm.remainingTimeSeconds < vm.quizExercise.duration / 2}">
                         {{vm.remainingTimeText}}
                     </span>
                 </div>
-                <div ng-if="!vm.practiceMode">
+                <div ng-switch-when="default">
                     <span ng-if="vm.isSaving">Saving Answers...</span>
                     <span ng-if="!vm.isSaving" uib-tooltip="{{vm.submission.adjustedSubmissionDate | date:'MMM d, y HH:mm:ss'}}" tooltip-placement="right">
                         <span ng-if="!vm.submission.submitted" data-translate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
@@ -42,8 +43,11 @@
                         <span ng-if="!vm.justSaved">{{vm.lastSavedTimeText}}</span>
                     </span>
                 </div>
-                <div ng-if="vm.practiceMode">
+                <div ng-switch-when="practice">
                     Practice Mode
+                </div>
+                <div ng-switch-when="preview">
+                    Preview Mode
                 </div>
             </div>
             <div ng-if="vm.showingResult" id="quiz-score" ng-class="{incorrect: vm.userScore < vm.totalScore}">
