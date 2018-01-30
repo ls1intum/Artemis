@@ -6,6 +6,7 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.*;
+import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.service.UserService;
@@ -14,6 +15,7 @@ import de.tum.in.www1.exerciseapp.web.websocket.QuizSubmissionService;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -45,6 +47,7 @@ public class QuizSubmissionResource {
     private final UserService userService;
     private final StatisticService statisticService;
     private final SimpMessageSendingOperations messagingTemplate;
+    private final AuthorizationCheckService authCheckService;
 
     public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository,
                                   QuizExerciseRepository quizExerciseRepository,
@@ -54,7 +57,8 @@ public class QuizSubmissionResource {
                                   ParticipationService participationService,
                                   UserService userService,
                                   SimpMessageSendingOperations messagingTemplate,
-                                  StatisticService statisticService) {
+                                  StatisticService statisticService,
+                                  AuthorizationCheckService authCheckService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -64,6 +68,7 @@ public class QuizSubmissionResource {
         this.statisticService = statisticService;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.questionStatisticRepository = questionStatisticRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -207,6 +212,55 @@ public class QuizSubmissionResource {
             } else {
                 return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "You are not part of the students group for this course")).body(null);
             }
+        } else {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID")).body(null);
+        }
+    }
+
+    /**
+     * POST  /courses/:courseId/exercises/:exerciseId/submissions/preview : Submit a new quizSubmission for preview mode.
+     * Nothing will be saved in database.
+     *
+     * @param courseId   only included for API consistency, not actually used
+     * @param exerciseId the id of the exercise for which to init a participation
+     * @param quizSubmission the quizSubmission to submit
+     * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
+     */
+    @PostMapping("/courses/{courseId}/exercises/{exerciseId}/submissions/preview")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Result> getResultForSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, @RequestBody QuizSubmission quizSubmission) {
+        log.debug("REST request to submit QuizSubmission for preview : {}", quizSubmission);
+
+        if (quizSubmission.getId() != null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
+        }
+
+        QuizExercise quizExercise = quizExerciseRepository.findOne(exerciseId);
+        if (Optional.ofNullable(quizExercise).isPresent()) {
+            Course course = quizExercise.getCourse();
+            if (!authCheckService.isTeachingAssistantInCourse(course) &&
+                !authCheckService.isInstructorInCourse(course) &&
+                !authCheckService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+
+            // update submission
+            quizSubmission.setSubmitted(true);
+            quizSubmission.setType(SubmissionType.MANUAL);
+            quizSubmission.calculateAndUpdateScores(quizExercise);
+
+            // create Participation stub
+            Participation participation = new Participation().exercise(quizExercise);
+
+            // create result
+            Result result = new Result().participation(participation).submission(quizSubmission);
+            result.setRated(false);
+            result.setCompletionDate(ZonedDateTime.now());
+            // calculate score and update result accordingly
+            result.evaluateSubmission();
+
+            return ResponseEntity.ok(result);
         } else {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID")).body(null);
         }

@@ -44,7 +44,7 @@
                         <div class="btn-group flex-btn-group-container">
                             <button type="submit"
                                     ng-click="vm.openForPractice(quizExercise)"
-                                    class="btn btn-success btn-sm"
+                                    class="btn btn-warning btn-sm"
                                     ng-if="vm.statusForQuiz(quizExercise) === vm.QuizStatus.CLOSED"
                             >
                                 <span class="glyphicon glyphicon-play-circle"></span>
@@ -52,7 +52,7 @@
                             </button>
                             <button type="submit"
                                     ng-click="vm.startQuiz(quizExercise)"
-                                    class="btn btn-success btn-sm"
+                                    class="btn btn-warning btn-sm"
                                     ng-if="vm.statusForQuiz(quizExercise) === vm.QuizStatus.VISIBLE"
                             >
                                 <span class="glyphicon glyphicon-play-circle"></span>
@@ -60,14 +60,39 @@
                             </button>
                             <button type="submit"
                                     ng-click="vm.showQuiz(quizExercise)"
-                                    class="btn btn-success btn-sm"
+                                    class="btn btn-warning btn-sm"
                                     ng-if="vm.statusForQuiz(quizExercise) === vm.QuizStatus.HIDDEN"
                             >
                                 <span class="glyphicon glyphicon-eye-open"></span>
                                 <span class="hidden-sm-down" data-translate="artemisApp.quizExercise.showNow"></span>
                             </button>
-                            <button type="submit"
+                            <div class="btn-group" uib-dropdown>
+                                <button
+                                    type="button"
                                     class="btn btn-info btn-sm"
+                                    aria-haspopup="true"
+                                    aria-expanded="false"
+                                    uib-dropdown-toggle
+                                >
+                                    <span class="glyphicon glyphicon-eye-open"></span>
+                                    &nbsp;
+                                    <span class="caret"></span>
+                                </button>
+                                <ul class="dropdown-menu" uib-dropdown-menu>
+                                    <li><a
+                                        ui-sref="quiz-preview({id:quizExercise.id})"
+                                    >
+                                        <span class="hidden-sm-down" data-translate="artemisApp.quizExercise.preview"></span>
+                                    </a></li>
+                                    <li><a
+                                        ui-sref="quiz-solution({id:quizExercise.id})"
+                                    >
+                                        <span class="hidden-sm-down" data-translate="artemisApp.quizExercise.solution"></span>
+                                    </a></li>
+                                </ul>
+                            </div>
+                            <button type="submit"
+                                    class="btn btn-success btn-sm"
                                     ui-sref="quiz-point-statistic-chart({quizId:quizExercise.id})">
                                 <span class="fa fa-signal"></span>
                                 <span class="hidden-sm-down" data-translate="global.menu.entities.statistic"></span>
