@@ -110,6 +110,7 @@
                                 successful: null,
                                 buildArtifact: null,
                                 score: null,
+                                rated: null,
                                 id: null
                             };
                         }

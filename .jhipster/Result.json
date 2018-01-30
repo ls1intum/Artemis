@@ -42,11 +42,16 @@
         {
             "fieldName": "score",
             "fieldType": "Long"
+        },
+        {
+            "fieldName": "rated",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20160609110918",
     "entityTableName": "result",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }
