@@ -33,13 +33,12 @@ public class ScoringStrategyDragAndDropProportionalWithPenalty implements Scorin
                 }
 
                 // count the number of correct and incorrect mappings
-                if ((correctDragItems.size() == 0 && selectedDragItem == null) ||
-                    (selectedDragItem != null && correctDragItems.contains(selectedDragItem))) {
-                    // this drop location was meant to stay empty and user didn't drag anything onto it
-                    // OR the user dragged one of the correct drag items onto this drop location
+                if (selectedDragItem != null && correctDragItems.contains(selectedDragItem)) {
+                    // the user dragged one of the correct drag items onto this drop location
+                    // NOTE: we ignore dropLocations that were meant to be empty and were left empty
                     // => this is correct
                     correctMappings++;
-                } else {
+                } else if (!(correctDragItems.size() == 0 && selectedDragItem == null)) {
                     // incorrect
                     incorrectMappings++;
                 }

@@ -120,7 +120,7 @@
 
         function participationStatus(exercise) {
             if (exercise.type && exercise.type === "quiz") {
-                if (!exercise.isPlannedToStart || moment(exercise.releaseDate).isAfter(moment()) && exercise.visibleToStudents) {
+                if ((!exercise.isPlannedToStart || moment(exercise.releaseDate).isAfter(moment())) && exercise.visibleToStudents) {
                     return "quiz-not-started";
                 } else if (angular.equals({}, exercise.participation) && (!exercise.isPlannedToStart || moment(exercise.dueDate).isAfter(moment())) && exercise.visibleToStudents) {
                     return "quiz-uninitialized";
