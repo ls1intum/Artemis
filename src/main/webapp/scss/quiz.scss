@@ -3,7 +3,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-bottom: 120px;
+    margin-bottom: 100px;
 }
 
 #quiz-title {
@@ -15,6 +15,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
     width: 100%;
 
     input,
@@ -35,6 +36,7 @@
     .form-group {
         display: flex;
         align-items: center;
+        margin: 0 5px 15px;
 
         > * {
             margin: 0 4px;
@@ -84,7 +86,7 @@
 .edit-quiz-footer,
 .quiz-footer {
     position: fixed;
-    height: 100px;
+    height: 80px;
     bottom: 0;
     left: 0;
     right: 0;
@@ -360,6 +362,8 @@
         img {
             max-height: 100%;
             max-width: 100%;
+            height: auto;
+            width: auto;
             margin: auto;
             position: absolute;
             transform: translate(-50%, -50%);
@@ -406,7 +410,7 @@
 
     .mapping-number {
         position: absolute;
-        z-index: 10;
+        z-index: 2;
         left: 50%;
         top: 50%;
         -webkit-transform: translate3d(-50%, -50%, 0);
@@ -559,7 +563,7 @@
             resize: none;
 
             &:focus {
-                z-index: 20;
+                z-index: 3;
             }
         }
 
@@ -603,7 +607,6 @@
                         span {
                             border: none;
                             padding: 0;
-                            width: 100%;
                         }
                     }
                 }
@@ -715,7 +718,9 @@
 
 .quiz-content {
     margin-top: 6px;
-    margin-bottom: 120px;
+    margin-bottom: 100px;
+
+    min-height: calc(100vh - 320px);
 
     .question-index {
         padding: 2px 6px;
@@ -750,15 +755,28 @@
     }
 }
 
-.quiz-submitted-overlay {
+.quiz-is-active-background {
     position: fixed;
-    bottom: 50%;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    z-index: 6;
+
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.quiz-submitted-overlay,
+.quiz-waiting-for-start-overlay,
+.quiz-is-active-overlay {
+    position: fixed;
+    top: 50%;
     left: 50%;
-    -webkit-transform: translateX(-50%);
-    -moz-transform: translateX(-50%);
-    -ms-transform: translateX(-50%);
-    -o-transform: translateX(-50%);
-    transform: translateX(-50%);
+    -webkit-transform: translate3d(-50%, -50%, 0);
+    -moz-transform: translate3d(-50%, -50%, 0);
+    -ms-transform: translate3d(-50%, -50%, 0);
+    -o-transform: translate3d(-50%, -50%, 0);
+    transform: translate3d(-50%, -50%, 0);
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
     font-size: 16px;
     text-align: center;
@@ -808,6 +826,14 @@ table.answer-options-result {
 
 .colon-suffix:after {
     content: ":";
+}
+
+.in-parentheses:before {
+    content: "(";
+}
+
+.in-parentheses:after {
+    content: ")";
 }
 
 .no-flex-shrink {

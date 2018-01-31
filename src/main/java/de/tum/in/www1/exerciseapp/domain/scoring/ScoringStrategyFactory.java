@@ -17,11 +17,14 @@ public class ScoringStrategyFactory {
         if (question instanceof MultipleChoiceQuestion) {
             if (question.getScoringType() == ScoringType.ALL_OR_NOTHING) {
                 return new ScoringStrategyMultipleChoiceAllOrNothing();
+            } else if (question.getScoringType() == ScoringType.PROPORTIONAL_WITH_PENALTY) {
+                return new ScoringStrategyMultipleChoiceProportionalWithPenalty();
             }
-        }
-        if (question instanceof DragAndDropQuestion) {
+        } else if (question instanceof DragAndDropQuestion) {
             if (question.getScoringType() == ScoringType.ALL_OR_NOTHING) {
                 return new ScoringStrategyDragAndDropAllOrNothing();
+            } else if (question.getScoringType() == ScoringType.PROPORTIONAL_WITH_PENALTY) {
+                return new ScoringStrategyDragAndDropProportionalWithPenalty();
             }
         }
         throw new NotImplementedException();

@@ -4,8 +4,11 @@ import de.tum.in.www1.exerciseapp.domain.*;
 
 import java.util.Set;
 
+/**
+ * All or nothing means the full score is given if the answer is 100% correct,
+ * otherwise a score of 0 is given
+ */
 public class ScoringStrategyDragAndDropAllOrNothing implements ScoringStrategy {
-    // All or nothing means we get the full score if the answer is 100% correct, and 0 points otherwise
     @Override
     public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
         if (submittedAnswer instanceof DragAndDropSubmittedAnswer && question instanceof DragAndDropQuestion) {

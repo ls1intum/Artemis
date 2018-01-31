@@ -148,7 +148,8 @@ entity Result (result) {
   completionDate ZonedDateTime,
   successful Boolean,
   buildArtifact Boolean,
-  score Long
+  score Long,
+  rated Boolean
 }
 
 entity Feedback(feedback) {

@@ -80,9 +80,11 @@
         function addHintAtCursor(editor) {
             var addedText = "\n\t[-h] Add a hint here (visible during the quiz via \"?\"-Button)";
             editor.focus();
+            editor.clearSelection();
+            editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
             editor.insert(addedText);
             var range = editor.selection.getRange();
-            range.setStart(range.start.row, range.start.column - addedText.length + 7);
+            range.setStart(range.start.row, 6);
             editor.selection.setRange(range);
         }
 
@@ -94,9 +96,11 @@
         function addExplanationAtCursor(editor) {
             var addedText = "\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)";
             editor.focus();
+            editor.clearSelection();
+            editor.moveCursorTo(editor.getCursorPosition().row, Number.POSITIVE_INFINITY);
             editor.insert(addedText);
             var range = editor.selection.getRange();
-            range.setStart(range.start.row, range.start.column - addedText.length + 7);
+            range.setStart(range.start.row, 6);
             editor.selection.setRange(range);
         }
 

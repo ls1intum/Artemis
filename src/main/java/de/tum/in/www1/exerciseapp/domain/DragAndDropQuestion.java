@@ -199,6 +199,19 @@ public class DragAndDropQuestion extends Question implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+    @Override
+    public Boolean isValid() {
+        // check general validity (using superclass)
+        if (!super.isValid()) {
+            return false;
+        }
+
+        // check if at least one correct mapping exists
+        return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
+
+        // TODO (?): Add checks for "is solvable" and "no misleading correct mapping"
+    }
+
     /*
      * NOTE:
      *
