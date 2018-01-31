@@ -197,6 +197,22 @@ public class DragAndDropQuestion extends Question implements Serializable {
         FileManagement.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
     }
 
+    /**
+     * Get all drag items that are mapped to the given drop location
+     *
+     * @param dropLocation the drop location we want to find the correct drag items for
+     * @return all drag items that are defined as correct for this drop location
+     */
+    public Set<DragItem> getCorrectDragItemsForDropLocation(DropLocation dropLocation) {
+        Set<DragItem> result = new HashSet<>();
+        for (DragAndDropMapping mapping : correctMappings) {
+            if (mapping.getDropLocation().equals(dropLocation)) {
+                result.add(mapping.getDragItem());
+            }
+        }
+        return result;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

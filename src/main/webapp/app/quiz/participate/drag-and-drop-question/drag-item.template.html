@@ -1,0 +1,8 @@
+<div class="drag-item" ng-class="{'no-click': clickDisabled}">
+    <div class="drag-item-picture" ng-if="dragItem.pictureFilePath" ui-draggable="!clickDisabled" drag="dragItem">
+        <img ng-src="{{dragItem.pictureFilePath}}">
+    </div>
+    <div ng-if="!dragItem.pictureFilePath" textfill>
+        <span ui-draggable="!clickDisabled" drag="dragItem">{{dragItem.text}}</span>
+    </div>
+</div>

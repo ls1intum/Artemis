@@ -144,7 +144,8 @@
     padding: 20px;
     background: #fefefe;
 
-    .mc-question {
+    .mc-question,
+    .dnd-question {
         width: 100%;
         box-sizing: border-box;
         border: none;
@@ -191,7 +192,8 @@
     }
 }
 
-.mc-question {
+.mc-question,
+.dnd-question {
     position: relative;
     width: 100%;
     box-sizing: border-box;
@@ -296,14 +298,86 @@
     }
 }
 
-.edit-dnd-question {
-    .markupEditorArea {
-        margin-bottom: 14px;
+.edit-dnd-question,
+.dnd-question {
+    .background-area {
+        position: relative;
+
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+
+        .click-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            z-index: 1;
+
+            .drop-location {
+                position: absolute;
+                z-index: 1;
+
+                display: flex;
+                flex-direction: row;
+                align-items: flex-start;
+                justify-content: flex-end;
+            }
+        }
+
+        img {
+            width: 100%;
+        }
     }
 
     .instructions {
         margin: 10px 0;
         font-weight: bold;
+    }
+
+    .drag-items {
+        margin: 6px 0;
+
+        width: 100%;
+        min-height: 180px;
+
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-evenly;
+    }
+
+    .drag-item {
+        position: relative;
+        height: 160px;
+        width: 160px;
+        margin: 10px 4px;
+        border: 1px solid dimgrey;
+        background: #fafafa;
+
+        img {
+            max-height: 100%;
+            max-width: 100%;
+            margin: auto;
+            position: absolute;
+            transform: translate(-50%, -50%);
+            top: 50%;
+            left: 50%;
+        }
+    }
+}
+
+.edit-dnd-question {
+    .markupEditorArea {
+        margin-bottom: 14px;
+
+        .question-content {
+            > div {
+                height: 8em;
+            }
+        }
     }
 
     .mapping-numbers-wrapper {
@@ -395,50 +469,20 @@
     }
 
     .background-area {
-        position: relative;
-
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
-        user-select: none;
-
         .click-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            bottom: 0;
-            right: 0;
-
             cursor: crosshair !important;
-            z-index: 1;
 
             &.disabled {
                 cursor: not-allowed !important;
             }
 
             .drop-location {
-                position: absolute;
                 border: 1px dashed mediumpurple;
-                background: rgba(255, 255, 255, 0.5);
-                z-index: 1;
-
-                display: flex;
-                flex-direction: row;
-                align-items: flex-start;
-                justify-content: flex-end;
-
                 cursor: move !important;
+                background: rgba(255, 255, 255, 0.5);
 
                 &:hover {
                     background: rgba(255, 255, 255, 0.8);
-                }
-
-                &.drop-allowed {
-                    background: rgba(173, 216, 230, 0.8);
-                }
-
-                &.drop-hover {
-                    background: rgba(144, 238, 144, 0.8);
                 }
 
                 .dimensions {
@@ -492,69 +536,172 @@
                 }
             }
         }
+    }
 
-        img {
-            width: 100%;
+    .drop-allowed {
+        background: rgba(173, 216, 230, 0.8) !important;
+    }
+
+    .drop-hover {
+        background: rgba(144, 238, 144, 0.8) !important;
+    }
+
+    .drag-item {
+        textarea {
+            position: absolute;
+            left: 0;
+            top: 30px;
+            width: 158px;
+            height: 98px;
+            padding: 0 14px;
+            text-align: center;
+            border: none;
+            resize: none;
+
+            &:focus {
+                z-index: 20;
+            }
+        }
+
+        .delete-button {
+            position: absolute;
+            top: 4px;
+            right: 2px;
+        }
+
+        .drag-handle-wrapper {
+            position: absolute;
+            top: 4px;
+            left: 2px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            padding: 4px;
+        }
+    }
+}
+
+.dnd-question {
+    .background-area {
+        .click-layer {
+            .drop-location {
+                background: white;
+                border: 1px dashed black;
+
+                .drag-item,
+                drag-item {
+                    width: 100%;
+                    height: 100%;
+                    margin: 0;
+                    background: white;
+                }
+
+                .drag-item {
+                    div {
+                        padding: 6px;
+
+                        span {
+                            border: none;
+                            padding: 0;
+                            width: 100%;
+                        }
+                    }
+                }
+
+                &.drop-allowed > *,
+                &.drop-hover > * {
+                    opacity: 0.5;
+                }
+
+                &.results {
+                    border-color: green;
+                    background: rgb(170, 255, 170);
+
+                    > * {
+                        opacity: 0.8;
+                    }
+
+                    &.incorrect {
+                        border-color: red;
+                        background: rgb(255, 170, 170);
+                    }
+                }
+
+                &.sampleSolution {
+                    border-color: black;
+                    background: white;
+
+                    > * {
+                        opacity: 1;
+                    }
+                }
+
+                .result-symbol {
+                    color: orange;
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    z-index: 1;
+                    opacity: 1;
+                    -webkit-transform: translate3d(-63%, -63%, 0);
+                    -moz-transform: translate3d(-63%, -63%, 0);
+                    -ms-transform: translate3d(-63%, -63%, 0);
+                    -o-transform: translate3d(-63%, -63%, 0);
+                    transform: translate3d(-63%, -63%, 0);
+                }
+            }
         }
     }
 
+    .drop-allowed {
+        background: rgb(173, 216, 230) !important;
+    }
+
+    .drop-hover {
+        background: rgb(144, 238, 144) !important;
+    }
+
     .drag-items {
-        margin: 6px 0;
+        background: #eee;
+    }
 
-        display: flex;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: space-evenly;
+    .drag-item {
+        background: transparent;
+        border: none;
 
-        .drag-item {
-
-            position: relative;
-            height: 160px;
-            width: 160px;
-            margin: 4px 4px 18px;
-            border: 1px solid dimgrey;
-            background: #fafafa;
-
-            img {
-                max-height: 100%;
-                max-width: 100%;
-                margin: auto;
-                position: absolute;
-                transform: translate(-50%, -50%);
-                top: 50%;
-                left: 50%;
+        &.no-click {
+            * {
+                cursor: default !important;
+                -webkit-user-select: none;
+                -moz-user-select: none;
+                -ms-user-select: none;
+                user-select: none;
             }
+        }
 
-            textarea {
-                position: absolute;
-                left: 0;
-                top: 30px;
-                width: 158px;
-                height: 98px;
-                padding: 0 14px;
-                text-align: center;
-                border: none;
-                resize: none;
+        .drag-item-picture {
+            cursor: move;
+            width: 0;
+            height: 0;
+            padding: 0;
+            margin: 0;
+        }
 
-                &:focus {
-                    z-index: 20;
-                }
-            }
+        div {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            width: 100%;
+            height: 100%;
+            white-space: pre-wrap;
 
-            .delete-button {
-                position: absolute;
-                top: 4px;
-                right: 2px;
-            }
-
-            .drag-handle-wrapper {
-                position: absolute;
-                top: 4px;
-                left: 2px;
+            span {
                 cursor: move;
-                display: flex;
-                align-items: center;
-                padding: 4px;
+                color: black;
+                background: white;
+                border: 1px solid black;
+                padding: 10px;
             }
         }
     }
@@ -617,6 +764,7 @@
     text-align: center;
     font-weight: bold;
     border-color: #3c763d;
+    z-index: 8;
 }
 
 table.answer-options-result {
@@ -664,4 +812,35 @@ table.answer-options-result {
 
 .no-flex-shrink {
     flex-shrink: 0;
+}
+
+.re-evaluate-button{
+    display: inline-block;
+    padding: 4px;
+}
+
+.re-evaluate-button:hover {
+     color: blue;
+ }
+
+.re-evaluate-order-button{
+    display: inline-block;
+    padding: 4px;
+    cursor: move;
+}
+
+.re-evaluate-order-button:hover {
+    color: blue;
+}
+
+.answer-border {
+    padding: 10px ;
+    border-radius: .1em;
+    border-width: 1px;
+    border-style: solid;
+    border-color: lightgrey;
+    height: auto;
+}
+.warning-modal-window .modal-dialog {
+    width: 50%;
 }

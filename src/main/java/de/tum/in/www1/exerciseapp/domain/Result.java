@@ -142,8 +142,22 @@ public class Result implements Serializable {
         return this;
     }
 
+    /**
+     * 1. set score
+     * 2. set successful = true, if score is 100 or false if not
+     *
+     * @param score new score
+     */
+
     public void setScore(Long score) {
         this.score = score;
+
+        //if score is 100 set successful true, if not set it false
+        if (score == 100) {
+            successful = true;
+        } else {
+            successful = false;
+        }
     }
 
     public Submission getSubmission() {

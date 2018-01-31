@@ -3,7 +3,8 @@
     angular
         .module('artemisApp')
         .factory('QuizExercise', QuizExercise)
-        .factory('QuizExerciseForStudent', QuizExerciseForStudent);
+        .factory('QuizExerciseForStudent', QuizExerciseForStudent)
+        .factory('QuizExerciseReEvaluate', QuizExerciseReEvaluate);
 
     QuizExercise.$inject = ['$resource'];
 
@@ -55,6 +56,19 @@
                     }
                     return data;
                 }
+            }
+        });
+    }
+
+    QuizExerciseReEvaluate.$inject = ['$resource'];
+
+    function QuizExerciseReEvaluate ($resource) {
+        var resourceUrl =  'api/quiz-exercises-re-evaluate/:id';
+
+        return $resource(resourceUrl, {}, {
+            'update': {
+                method:'PUT',
+                transformRequest: addType
             }
         });
     }

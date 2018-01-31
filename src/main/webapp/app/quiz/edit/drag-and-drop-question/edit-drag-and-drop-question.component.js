@@ -1,6 +1,6 @@
-EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document', 'MAX_FILE_SIZE', 'ArtemisMarkdown'];
+EditDragAndDropQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'FileUpload', '$document', 'MAX_FILE_SIZE', 'ArtemisMarkdown', 'DragAndDropQuestionUtil'];
 
-function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document, MAX_FILE_SIZE, ArtemisMarkdown) {
+function EditDragAndDropQuestionController($translate, $translatePartialLoader, $scope, FileUpload, $document, MAX_FILE_SIZE, ArtemisMarkdown, DragAndDropQuestionUtil) {
 
     /**
      * enum for the different drag operations
@@ -51,9 +51,10 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     vm.uploadDragItem = uploadDragItem;
     vm.deleteDragItem = deleteDragItem;
     vm.onDragDrop = onDragDrop;
-    vm.getMappingsFor = getMappingsFor;
+    vm.getMappingsForDropLocation = getMappingsForDropLocation;
+    vm.getMappingsForDragItem = getMappingsForDragItem;
     vm.getMappingIndex = getMappingIndex;
-    vm.deleteMappingsFor = deleteMappingsFor;
+    vm.deleteMappingsForDropLocation = deleteMappingsForDropLocation;
     vm.deleteMapping = deleteMapping;
 
     function togglePreview() {
@@ -456,7 +457,6 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
      * @param dragItem {object} the drag item involved (may be a copy at this point)
      */
     function onDragDrop(dropLocation, dragItem) {
-        console.log(vm.question.correctMappings);
         // replace dragItem with original (because it may be a copy)
         dragItem = vm.question.dragItems.find(function (originalDragItem) {
             return dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID;
@@ -470,17 +470,23 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
             vm.question.correctMappings = [];
         }
 
-        // remove mappings that contain the dropLocation or dragItem
-        // deleteMappingsFor(dropLocation);
-        // deleteMappingsFor(dragItem);
+        // check if this mapping already exists
+        if (!vm.question.correctMappings.some(function (existingMapping) {
+                return (
+                    DragAndDropQuestionUtil.isSameDropLocationOrDragItem(existingMapping.dropLocation, dropLocation)
+                    &&
+                    DragAndDropQuestionUtil.isSameDropLocationOrDragItem(existingMapping.dragItem, dragItem)
+                );
+            })) {
+            // mapping doesn't exit yet => add this mapping
+            vm.question.correctMappings.push({
+                dropLocation: dropLocation,
+                dragItem: dragItem
+            });
 
-        // add this mapping
-        vm.question.correctMappings.push({
-            dropLocation: dropLocation,
-            dragItem: dragItem
-        });
-
-        vm.onUpdated();
+            // notify parent of changes
+            vm.onUpdated();
+        }
     }
 
     /**
@@ -492,11 +498,11 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         var visitedDropLocations = [];
         if (vm.question.correctMappings.some(function (correctMapping) {
                 if (!visitedDropLocations.some(function (dropLocation) {
-                        return isSameDropLocationOrDragItem(dropLocation, correctMapping.dropLocation);
+                        return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(dropLocation, correctMapping.dropLocation);
                     })) {
                     visitedDropLocations.push(correctMapping.dropLocation);
                 }
-                return isSameDropLocationOrDragItem(correctMapping.dropLocation, mapping.dropLocation);
+                return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(correctMapping.dropLocation, mapping.dropLocation);
             })) {
             return visitedDropLocations.length;
         } else {
@@ -504,27 +510,47 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         }
     }
 
-    function getMappingsFor(dropLocationOrDragItem) {
+    /**
+     * Get all mappings that involve the given drop location
+     *
+     * @param dropLocation {object} the drop location for which we want to get all mappings
+     * @return {Array} all mappings that belong to the given drop location
+     */
+    function getMappingsForDropLocation(dropLocation) {
         if (!vm.question.correctMappings) {
             vm.question.correctMappings = [];
         }
         return vm.question.correctMappings.filter(function (mapping) {
-            return isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) ||
-                isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
         });
     }
 
     /**
-     * Remove the mapping for the given drop location or drag item
-     * @param dropLocationOrDragItem {object} a drop location or drag item
+     * Get all mappings that involve the given drag item
+     *
+     * @param dragItem {object} the drag item for which we want to get all mappings
+     * @return {Array} all mappings that belong to the given drag item
      */
-    function deleteMappingsFor(dropLocationOrDragItem) {
+    function getMappingsForDragItem(dragItem) {
+        if (!vm.question.correctMappings) {
+            vm.question.correctMappings = [];
+        }
+        return vm.question.correctMappings.filter(function (mapping) {
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
+        });
+    }
+
+    /**
+     * Delete all mappings for the given drop location
+     *
+     * @param dropLocation {object} the drop location for which we want to delete all mappings
+     */
+    function deleteMappingsForDropLocation(dropLocation) {
         if (!vm.question.correctMappings) {
             vm.question.correctMappings = [];
         }
         vm.question.correctMappings = vm.question.correctMappings.filter(function (mapping) {
-            return !isSameDropLocationOrDragItem(mapping.dropLocation, dropLocationOrDragItem) &&
-                !isSameDropLocationOrDragItem(mapping.dragItem, dropLocationOrDragItem);
+            return !DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
         });
     }
 
@@ -539,16 +565,6 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         vm.question.correctMappings = vm.question.correctMappings.filter(function (mapping) {
             return mapping !== mappingToDelete;
         });
-    }
-
-    /**
-     * compare if the two objects are the same drag item or drop location
-     * @param a {object} a drag item or drop location
-     * @param b {object} another drag item or drop location
-     * @return {boolean}
-     */
-    function isSameDropLocationOrDragItem(a, b) {
-        return a === b || (a && b && (a.id && b.id && a.id === b.id || a.tempID && b.tempID && a.tempID === b.tempID));
     }
 
     /**

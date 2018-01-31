@@ -196,4 +196,16 @@ public class QuizPointStatistic extends Statistic implements Serializable {
             }
         }
     }
+
+    /**
+     * Reset all counters to 0
+     */
+    public void resetStatistic() {
+        setParticipantsUnrated(0);
+        setParticipantsRated(0);
+        for (PointCounter pointCounter: pointCounters) {
+            pointCounter.setRatedCounter(0);
+            pointCounter.setUnRatedCounter(0);
+        }
+    }
 }
