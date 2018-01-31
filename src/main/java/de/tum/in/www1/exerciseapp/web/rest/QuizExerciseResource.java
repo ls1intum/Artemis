@@ -1,11 +1,11 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import com.sun.org.apache.regexp.internal.RE;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.*;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.CourseService;
+import de.tum.in.www1.exerciseapp.service.QuizExerciseService;
 import de.tum.in.www1.exerciseapp.service.StatisticService;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -26,8 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * REST controller for managing QuizExercise.
@@ -40,32 +38,29 @@ public class QuizExerciseResource {
 
     private static final String ENTITY_NAME = "quizExercise";
 
-    private final QuizExerciseRepository quizExerciseRepository;
+    private final QuizExerciseService quizExerciseService;
     private final ParticipationRepository participationRepository;
     private final CourseService courseService;
     private final StatisticService statisticService;
     private final ResultRepository resultRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
-    private final DragAndDropMappingRepository dragAndDropMappingRepository;
     private final AuthorizationCheckService authCheckService;
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public QuizExerciseResource(QuizExerciseRepository quizExerciseRepository,
+    public QuizExerciseResource(QuizExerciseService quizExerciseService,
                                 ParticipationRepository participationRepository,
                                 CourseService courseService,
                                 StatisticService statisticService,
                                 ResultRepository resultRepository,
                                 QuizSubmissionRepository quizSubmissionRepository,
-                                DragAndDropMappingRepository dragAndDropMappingRepository,
                                 AuthorizationCheckService authCheckService,
                                 SimpMessageSendingOperations messagingTemplate) {
-        this.quizExerciseRepository = quizExerciseRepository;
+        this.quizExerciseService = quizExerciseService;
         this.participationRepository = participationRepository;
         this.courseService = courseService;
         this.statisticService = statisticService;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.authCheckService = authCheckService;
         this.messagingTemplate = messagingTemplate;
     }
@@ -102,7 +97,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        QuizExercise result = save(quizExercise);
+        QuizExercise result = quizExerciseService.save(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -144,7 +139,7 @@ public class QuizExerciseResource {
         }
 
         // check if quiz is has already started
-        QuizExercise originalQuiz = quizExerciseRepository.findOne(quizExercise.getId());
+        QuizExercise originalQuiz = quizExerciseService.findOne(quizExercise.getId());
         if (originalQuiz == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }
@@ -166,7 +161,7 @@ public class QuizExerciseResource {
         //notify clients via websocket about the release state of the statistics.
         statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
 
-        QuizExercise result = save(quizExercise);
+        QuizExercise result = quizExerciseService.save(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
         messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
@@ -186,16 +181,7 @@ public class QuizExerciseResource {
     @Timed
     public List<QuizExercise> getAllQuizExercises() {
         log.debug("REST request to get all QuizExercises");
-        List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
-        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course) ||
-                    authCheckService.isInstructorInCourse(course) ||
-                    authCheckService.isAdmin();
-            }
-        );
-        return authorizedExercises.collect(Collectors.toList());
+        return quizExerciseService.findAll();
     }
 
     /**
@@ -209,16 +195,7 @@ public class QuizExerciseResource {
     @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
-        List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
-        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course) ||
-                    authCheckService.isInstructorInCourse(course) ||
-                    authCheckService.isAdmin();
-            }
-        );
-        return authorizedExercises.collect(Collectors.toList());
+        return quizExerciseService.findByCourseId(courseId);
     }
 
     /**
@@ -232,7 +209,7 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        QuizExercise quizExercise = quizExerciseService.findOne(id);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -250,7 +227,7 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        QuizExercise quizExercise = quizExerciseService.findOne(id);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -313,7 +290,7 @@ public class QuizExerciseResource {
         log.debug("REST request to immediately start QuizExercise : {}", id);
 
         // find quiz exercise
-        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        QuizExercise quizExercise = quizExerciseService.findOne(id);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
@@ -364,7 +341,7 @@ public class QuizExerciseResource {
         }
 
         // save quiz exercise
-        quizExerciseRepository.save(quizExercise);
+        quizExerciseService.save(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
         messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
@@ -384,7 +361,7 @@ public class QuizExerciseResource {
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
 
-        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        QuizExercise quizExercise = quizExerciseService.findOne(id);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
@@ -402,7 +379,7 @@ public class QuizExerciseResource {
             participationRepository.delete(participation.getId());
         }
 
-        quizExerciseRepository.delete(id);
+        quizExerciseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
@@ -428,7 +405,7 @@ public class QuizExerciseResource {
         if (quizExercise.getId() == null) {
             return createQuizExercise(quizExercise);
         }
-        QuizExercise originalQuizExercise = quizExerciseRepository.findOne(quizExercise.getId());
+        QuizExercise originalQuizExercise = quizExerciseService.findOne(quizExercise.getId());
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
@@ -538,105 +515,4 @@ public class QuizExerciseResource {
         }
     }
 
-    /**
-     * Save the given quizExercise to the database
-     * and make sure that objects with references to one another
-     * are saved in the correct order to avoid PersistencyExceptions
-     *
-     * @param quizExercise the quiz exercise to save
-     * @return the saved quiz exercise including
-     */
-    private QuizExercise save(QuizExercise quizExercise) {
-        // fix references in all drag and drop questions (step 1/2)
-        for (Question question : quizExercise.getQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                // save references as index to prevent Hibernate Persistence problem
-                saveCorrectMappingsInIndices(dragAndDropQuestion);
-            }
-        }
-
-        // save result
-        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
-        //       and delete the now orphaned entries from the database
-        QuizExercise result = quizExerciseRepository.save(quizExercise);
-
-        // fix references in all drag and drop questions (step 2/2)
-        for (Question question : result.getQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                // restore references from index after save
-                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
-            }
-        }
-
-        return result;
-    }
-
-    /**
-     * remove dragItem and dropLocation from correct mappings and set dragItemIndex and dropLocationIndex instead
-     *
-     * @param dragAndDropQuestion the question for which to perform these actions
-     */
-    private void saveCorrectMappingsInIndices(DragAndDropQuestion dragAndDropQuestion) {
-        List<DragAndDropMapping> mappingsToBeRemoved = new ArrayList<>();
-        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-            // check for NullPointers
-            if (mapping.getDragItem() == null || mapping.getDropLocation() == null) {
-                mappingsToBeRemoved.add(mapping);
-                continue;
-            }
-
-            // drag item index
-            DragItem dragItem = mapping.getDragItem();
-            boolean dragItemFound = false;
-            for (DragItem questionDragItem : dragAndDropQuestion.getDragItems()) {
-                if (dragItem.equals(questionDragItem)) {
-                    dragItemFound = true;
-                    mapping.setDragItemIndex(dragAndDropQuestion.getDragItems().indexOf(questionDragItem));
-                    mapping.setDragItem(null);
-                    break;
-                }
-            }
-
-            // replace drop location
-            DropLocation dropLocation = mapping.getDropLocation();
-            boolean dropLocationFound = false;
-            for (DropLocation questionDropLocation : dragAndDropQuestion.getDropLocations()) {
-                if (dropLocation.equals(questionDropLocation)) {
-                    dropLocationFound = true;
-                    mapping.setDropLocationIndex(dragAndDropQuestion.getDropLocations().indexOf(questionDropLocation));
-                    mapping.setDropLocation(null);
-                    break;
-                }
-            }
-
-            // if one of them couldn't be found, remove the mapping entirely
-            if (!dragItemFound || !dropLocationFound) {
-                mappingsToBeRemoved.add(mapping);
-            }
-        }
-
-        for (DragAndDropMapping mapping : mappingsToBeRemoved) {
-            dragAndDropQuestion.removeCorrectMappings(mapping);
-        }
-    }
-
-    /**
-     * restore dragItem and dropLocation for correct mappings using dragItemIndex and dropLocationIndex
-     *
-     * @param dragAndDropQuestion the question for which to perform these actions
-     */
-    private void restoreCorrectMappingsFromIndices(DragAndDropQuestion dragAndDropQuestion) {
-        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-            // drag item
-            mapping.setDragItem(dragAndDropQuestion.getDragItems().get(mapping.getDragItemIndex()));
-            // drop location
-            mapping.setDropLocation(dragAndDropQuestion.getDropLocations().get(mapping.getDropLocationIndex()));
-            // set question
-            mapping.setQuestion(dragAndDropQuestion);
-            // save mapping
-            dragAndDropMappingRepository.save(mapping);
-        }
-    }
 }
