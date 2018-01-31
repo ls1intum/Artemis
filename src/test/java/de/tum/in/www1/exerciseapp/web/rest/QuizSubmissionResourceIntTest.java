@@ -76,7 +76,7 @@ public class QuizSubmissionResourceIntTest {
     private ExceptionTranslator exceptionTranslator;
 
     @Autowired
-    private QuizSubmissionResource quizSubmissionResource
+    private QuizSubmissionResource quizSubmissionResource;
 
     @Autowired
     private EntityManager em;
