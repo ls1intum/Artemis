@@ -102,25 +102,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
-        // fix references in all drag and drop questions (step 1/2)
-        for (Question question : quizExercise.getQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                // save references as index to prevent Hibernate Persistence problem
-                saveCorrectMappingsInIndices(dragAndDropQuestion);
-            }
-        }
-
-        QuizExercise result = quizExerciseRepository.save(quizExercise);
-
-        // fix references in all drag and drop questions (step 2/2)
-        for (Question question : result.getQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                // restore references from index after save
-                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
-            }
-        }
+        QuizExercise result = save(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -170,73 +152,12 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizHasStarted", "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
         }
 
-        // iterate through questions to add missing pointer back to quizExercise
-        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
-        //       that prevents infinite recursive JSON serialization.
-        for (Question question : quizExercise.getQuestions()) {
-            if (question.getId() != null) {
-                question.setExercise(quizExercise);
-                //reconnect QuestionStatistics
-                if (question.getQuestionStatistic() != null) {
-                    question.getQuestionStatistic().setQuestion(question);
-                }
-                // do the same for answerOptions (if question is multiple choice)
-                if (question instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
-                    //reconnect answerCounters
-                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-                        if (answerCounter.getId() != null) {
-                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
-                        }
-                    }
-                    // reconnect answerOptions
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        if (answerOption.getId() != null) {
-                            answerOption.setQuestion(mcQuestion);
-                        }
-                    }
-                }
-                if (question instanceof DragAndDropQuestion) {
-                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
-                    // TODO: @Moritz: Reconnect whatever needs to be reconnected
-
-                    // reconnect dropLocations
-                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
-                        if (dropLocation.getId() != null) {
-                            dropLocation.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dragItems
-                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                        if (dragItem.getId() != null) {
-                            dragItem.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                }
-            }
-        }
-        //reconnect quizPointStatistic
-        quizExercise.getQuizPointStatistic().setQuiz(quizExercise);
-        //reconnect pointCounters
-        for (PointCounter pointCounter : quizExercise.getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
-            }
-        }
+        reconnectJSONIgnoreAttributes(quizExercise);
 
         // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
         if (!quizExercise.hasStarted() || quizExercise.getRemainingTime() > 0) {
             quizExercise.getQuizPointStatistic().setReleased(false);
             for (Question question : quizExercise.getQuestions()) {
-                // TODO: @Moritz: fix this for DragAndDropQuestions (getQuestionStatistic() returns null)
                 if (question.getQuestionStatistic() != null) {
                     question.getQuestionStatistic().setReleased(false);
                 }
@@ -245,28 +166,7 @@ public class QuizExerciseResource {
         //notify clients via websocket about the release state of the statistics.
         statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
 
-        // fix references in all drag and drop questions (step 1/2)
-        for (Question question : quizExercise.getQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                // save references as index to prevent Hibernate Persistence problem
-                saveCorrectMappingsInIndices(dragAndDropQuestion);
-            }
-        }
-
-        // save result
-        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
-        //       and delete the now orphaned entries from the database
-        QuizExercise result = quizExerciseRepository.save(quizExercise);
-
-        // fix references in all drag and drop questions (step 2/2)
-        for (Question question : result.getQuestions()) {
-            if (question instanceof DragAndDropQuestion) {
-                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
-                // restore references from index after save
-                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
-            }
-        }
+        QuizExercise result = save(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
         messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
@@ -567,6 +467,110 @@ public class QuizExerciseResource {
         }
 
         return methodResult;
+    }
+
+    /**
+     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
+     *
+     * @param quizExercise the quiz exercise for which the pointers should be recreated
+     */
+    private void reconnectJSONIgnoreAttributes(QuizExercise quizExercise) {
+        // iterate through questions to add missing pointer back to quizExercise
+        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
+        //       that prevents infinite recursive JSON serialization.
+        for (Question question : quizExercise.getQuestions()) {
+            if (question.getId() != null) {
+                question.setExercise(quizExercise);
+                //reconnect QuestionStatistics
+                if (question.getQuestionStatistic() != null) {
+                    question.getQuestionStatistic().setQuestion(question);
+                }
+                // do the same for answerOptions (if question is multiple choice)
+                if (question instanceof MultipleChoiceQuestion) {
+                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
+                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuestionStatistic();
+                    //reconnect answerCounters
+                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
+                        if (answerCounter.getId() != null) {
+                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
+                        }
+                    }
+                    // reconnect answerOptions
+                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
+                        if (answerOption.getId() != null) {
+                            answerOption.setQuestion(mcQuestion);
+                        }
+                    }
+                }
+                if (question instanceof DragAndDropQuestion) {
+                    DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
+                    // TODO: @Moritz: Reconnect whatever needs to be reconnected
+
+                    // reconnect dropLocations
+                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
+                        if (dropLocation.getId() != null) {
+                            dropLocation.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect dragItems
+                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
+                        if (dragItem.getId() != null) {
+                            dragItem.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    // reconnect correctMappings
+                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+                        if (mapping.getId() != null) {
+                            mapping.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                }
+            }
+        }
+        //reconnect quizPointStatistic
+        quizExercise.getQuizPointStatistic().setQuiz(quizExercise);
+        //reconnect pointCounters
+        for (PointCounter pointCounter : quizExercise.getQuizPointStatistic().getPointCounters()) {
+            if (pointCounter.getId() != null) {
+                pointCounter.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
+            }
+        }
+    }
+
+    /**
+     * Save the given quizExercise to the database
+     * and make sure that objects with references to one another
+     * are saved in the correct order to avoid PersistencyExceptions
+     *
+     * @param quizExercise the quiz exercise to save
+     * @return the saved quiz exercise including
+     */
+    private QuizExercise save(QuizExercise quizExercise) {
+        // fix references in all drag and drop questions (step 1/2)
+        for (Question question : quizExercise.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // save references as index to prevent Hibernate Persistence problem
+                saveCorrectMappingsInIndices(dragAndDropQuestion);
+            }
+        }
+
+        // save result
+        // Note: save will automatically remove deleted questions from the exercise and deleted answer options from the questions
+        //       and delete the now orphaned entries from the database
+        QuizExercise result = quizExerciseRepository.save(quizExercise);
+
+        // fix references in all drag and drop questions (step 2/2)
+        for (Question question : result.getQuestions()) {
+            if (question instanceof DragAndDropQuestion) {
+                DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
+                // restore references from index after save
+                restoreCorrectMappingsFromIndices(dragAndDropQuestion);
+            }
+        }
+
+        return result;
     }
 
     /**
