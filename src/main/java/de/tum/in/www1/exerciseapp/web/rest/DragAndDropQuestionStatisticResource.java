@@ -114,7 +114,7 @@ public class DragAndDropQuestionStatisticResource {
     @GetMapping("/drag-and-drop-question-statistics/{id}/for-student")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
-    public ResponseEntity<DragAndDropQuestionStatistic> getQuizExerciseForStudent(@PathVariable Long id) {
+    public ResponseEntity<DragAndDropQuestionStatistic> getDragAndDropQuestionStatisticForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizPointStatistic : {}", id);
         DragAndDropQuestionStatistic dragAndDropQuestionStatistic = dragAndDropQuestionStatisticRepository.findOne(id);
 

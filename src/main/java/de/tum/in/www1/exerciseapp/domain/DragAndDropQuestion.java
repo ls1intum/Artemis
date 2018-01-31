@@ -132,7 +132,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
 
         //if an dropLocation was added then add the associated dropLocationCounter implicitly
         for (DropLocation dropLocation : getDropLocations()) {
-            ((DragAndDropQuestionStatistic) getQuestionStatistic()).addDropLocation(dropLocation);
+            ddStatistic.addDropLocation(dropLocation);
         }
 
         //if an answerOption was removed then remove the associated AnswerCounters implicitly

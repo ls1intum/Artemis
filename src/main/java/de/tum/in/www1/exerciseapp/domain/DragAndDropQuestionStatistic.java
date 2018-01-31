@@ -102,10 +102,8 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
 
     }
 
-
     /**
-     * 1. check if the Result is rated or unrated
-     * 2. increase participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than increase the correctCounter
+     * increase participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than increase the correctCounter
      *
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
@@ -114,52 +112,11 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
 
-        if(submittedAnswer == null) {
-            return;
-        }
-
-        DragAndDropSubmittedAnswer ddSubmittedAnswer = (DragAndDropSubmittedAnswer)submittedAnswer;
-
-        if(rated) {
-            //increase the rated participants
-            setParticipantsRated(getParticipantsRated() + 1);
-
-            if(ddSubmittedAnswer.getMappings() != null) {
-                // increase rated dropLocationCounter if dropLocation is correct
-                for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
-                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
-                        dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + 1);
-                    }
-                }
-            }
-            // increase rated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
-                setRatedCorrectCounter(getRatedCorrectCounter() + 1);
-            }
-        }
-        // Result is unrated
-        else{
-            //increase the unrated participants
-            setParticipantsRated(getParticipantsUnrated() + 1);
-
-            if(ddSubmittedAnswer.getMappings() != null) {
-                // increase unrated dropLocationCounter if dropLocation is correct
-                for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
-                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
-                        dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + 1);
-                    }
-                }
-            }
-            // increase unrated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + 1);
-            }
-        }
+        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
     }
 
     /**
-     * 1. check if the Result is rated or unrated
-     * 2. decrease participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than decrease the correctCounter
+     * decrease participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than decrease the correctCounter
      *
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
      * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
@@ -168,6 +125,20 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
     @Override
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
 
+        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
+    }
+
+    /**
+     * 1. check if the Result is rated or unrated
+     * 2. change participants, all the DropLocationCounter if the DragAndDropAssignment is correct and if the complete question is correct, than change the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                                  or unrated  ( participated after the dueDate of the quizExercise)
+     * @param change the int-value, which will be added to the Counter and participants
+     */
+    private void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+
         if(submittedAnswer == null) {
             return;
         }
@@ -175,38 +146,38 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
         DragAndDropSubmittedAnswer ddSubmittedAnswer = (DragAndDropSubmittedAnswer)submittedAnswer;
 
         if(rated) {
-            //decrease the rated participants
-            setParticipantsRated(getParticipantsRated() - 1);
+            //change the rated participants
+            setParticipantsRated(getParticipantsRated() + change);
 
             if(ddSubmittedAnswer.getMappings() != null) {
-                // decrease rated dropLocationCounter if dropLocation is correct
+                // change rated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
                     if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
-                        dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() - 1);
+                        dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
                     }
                 }
             }
-            // decrease rated correctCounter if answer is complete correct
+            // change rated correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
-                setRatedCorrectCounter(getRatedCorrectCounter() - 1);
+                setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
         // Result is unrated
         else{
-            //decrease the unrated participants
-            setParticipantsRated(getParticipantsUnrated() - 1);
+            //change the unrated participants
+            setParticipantsUnrated(getParticipantsUnrated() + change);
 
             if(ddSubmittedAnswer.getMappings() != null) {
-                // decrease unrated dropLocationCounter if dropLocation is correct
+                // change unrated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
                     if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
-                        dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() - 1);
+                        dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + change);
                     }
                 }
             }
-            // decrease unrated correctCounter if answer is complete correct
+            // change unrated correctCounter if answer is complete correct
             if(getQuestion().isAnswerCorrect(ddSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter() - 1);
+                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }
     }

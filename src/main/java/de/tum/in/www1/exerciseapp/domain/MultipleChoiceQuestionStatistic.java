@@ -14,14 +14,14 @@ import java.util.Set;
  * A MultipleChoiceQuestionStatistic.
  */
 @Entity
-@DiscriminatorValue(value="MC")
+@DiscriminatorValue(value = "MC")
 @JsonTypeName("multiple-choice")
 public class MultipleChoiceQuestionStatistic extends QuestionStatistic implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
 
-    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true, mappedBy = "multipleChoiceQuestionStatistic")
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "multipleChoiceQuestionStatistic")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerCounter> answerCounters = new HashSet<>();
 
@@ -80,18 +80,18 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
 
     /**
      * 1. creates the AnswerCounter for the new AnswerOption
-     *          if where is already an AnswerCounter with the given answerOption -> nothing happens
+     * if where is already an AnswerCounter with the given answerOption -> nothing happens
      *
      * @param answer the answer object which will be added to the MultipleChoiceStatistic
      */
     public void addAnswerOption(AnswerOption answer) {
 
-        if(answer == null) {
+        if (answer == null) {
             return;
         }
 
-        for(AnswerCounter counter: answerCounters) {
-            if(answer.equals(counter.getAnswer())) {
+        for (AnswerCounter counter : answerCounters) {
+            if (answer.equals(counter.getAnswer())) {
                 return;
             }
         }
@@ -102,110 +102,82 @@ public class MultipleChoiceQuestionStatistic extends QuestionStatistic implement
     }
 
     /**
-     * 1. check if the Result is rated or unrated
-     * 2. increase participants, all selected AnswerCounter and if the question is correct, than increase the correctCounter
+     * increase participants, all selected AnswerCounter and if the question is correct, than increase the correctCounter
      *
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
-     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
-     *                                  or unrated  ( participated after the dueDate of the quizExercise)
+     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                        or unrated  ( participated after the dueDate of the quizExercise)
      */
     @Override
     public void addResult(SubmittedAnswer submittedAnswer, boolean rated) {
 
-        if(submittedAnswer == null) {
-            return;
-        }
-
-        MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
-
-        if(rated) {
-            //increase the rated participants
-            setParticipantsRated(getParticipantsRated()+1);
-
-            if(mcSubmittedAnswer.getSelectedOptions() != null) {
-                // increase rated answerCounter if answer is selected
-                for (AnswerCounter answerCounter: answerCounters) {
-                    if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
-                        answerCounter.setRatedCounter(answerCounter.getRatedCounter()+1);
-                    }
-                }
-            }
-            // increase rated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
-                setRatedCorrectCounter(getRatedCorrectCounter()+1);
-            }
-        }
-        // Result is unrated
-        else{
-            //increase the unrated participants
-            setParticipantsUnrated(getParticipantsUnrated()+1);
-
-            if(mcSubmittedAnswer.getSelectedOptions() != null) {
-                for (AnswerCounter answerCounter: answerCounters) {
-                    // increase unrated answerCounter if answer is selected
-                    if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
-                        answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()+1);
-                    }
-                }
-            }
-
-            // increase unrated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter()+1);
-            }
-        }
+        changeStatisticBasedOnResult(submittedAnswer, rated, 1);
     }
 
     /**
-     * 1. check if the Result is rated or unrated
-     * 2. decrease participants, all selected AnswerCounter and if the question is correct, than decrease the correctCounter
+     * decrease participants, all selected AnswerCounter and if the question is correct, than decrease the correctCounter
      *
      * @param submittedAnswer the submittedAnswer object which contains all selected answers
-     * @param rated specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
-     *                                  or unrated  ( participated after the dueDate of the quizExercise)
+     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                        or unrated  ( participated after the dueDate of the quizExercise)
      */
     @Override
     public void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated) {
 
-        if(submittedAnswer == null) {
+        changeStatisticBasedOnResult(submittedAnswer, rated, -1);
+    }
+
+    /**
+     * 1. check if the Result is rated or unrated
+     * 2. chnage participants, all selected AnswerCounter and if the question is correct, than change the correctCounter
+     *
+     * @param submittedAnswer the submittedAnswer object which contains all selected answers
+     * @param rated           specify if the Result was rated ( participated during the releaseDate and the dueDate of the quizExercise)
+     *                        or unrated  ( participated after the dueDate of the quizExercise)
+     * @param change          the int-value, which will be added to the Counter and participants
+     */
+    private void changeStatisticBasedOnResult(SubmittedAnswer submittedAnswer, boolean rated, int change) {
+
+        if (submittedAnswer == null) {
             return;
         }
 
-        MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer)submittedAnswer;
+        MultipleChoiceSubmittedAnswer mcSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
 
-        if(rated) {
-            //decrease rated participants
-            setParticipantsRated(getParticipantsRated()-1);
+        if (rated) {
+            //change the rated participants
+            setParticipantsRated(getParticipantsRated() + change);
 
-            if(mcSubmittedAnswer.getSelectedOptions() != null) {
-                // decrease rated answerCounter if answer is selected
-                for (AnswerCounter answerCounter: answerCounters) {
-                    if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
-                        answerCounter.setRatedCounter(answerCounter.getRatedCounter()-1);
+            if (mcSubmittedAnswer.getSelectedOptions() != null) {
+                // change rated answerCounter if answer is selected
+                for (AnswerCounter answerCounter : answerCounters) {
+                    if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
+                        answerCounter.setRatedCounter(answerCounter.getRatedCounter() + change);
                     }
                 }
             }
-            // decrease rated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
-                setRatedCorrectCounter(getRatedCorrectCounter()-1);
+            // change rated correctCounter if answer is complete correct
+            if (getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
+                setRatedCorrectCounter(getRatedCorrectCounter() + change);
             }
         }
         // Result is unrated
-        else{
-            //decrease unrated participants
-            setParticipantsUnrated(getParticipantsUnrated()-1);
+        else {
+            //change the unrated participants
+            setParticipantsUnrated(getParticipantsUnrated() + change);
 
-            if(mcSubmittedAnswer.getSelectedOptions() != null) {
-                // decrease unrated answerCounter if answer is selected
-                for (AnswerCounter answerCounter: answerCounters) {
-                    if(mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
-                        answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter()-1);
+            if (mcSubmittedAnswer.getSelectedOptions() != null) {
+                for (AnswerCounter answerCounter : answerCounters) {
+                    // change unrated answerCounter if answer is selected
+                    if (mcSubmittedAnswer.getSelectedOptions().contains(answerCounter.getAnswer())) {
+                        answerCounter.setUnRatedCounter(answerCounter.getUnRatedCounter() + change);
                     }
                 }
             }
-            // decrease unrated correctCounter if answer is complete correct
-            if(getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
-                setUnRatedCorrectCounter(getUnRatedCorrectCounter()-1);
+
+            // change unrated correctCounter if answer is complete correct
+            if (getQuestion().isAnswerCorrect(mcSubmittedAnswer)) {
+                setUnRatedCorrectCounter(getUnRatedCorrectCounter() + change);
             }
         }
     }
