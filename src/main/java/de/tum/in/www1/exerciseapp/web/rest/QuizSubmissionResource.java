@@ -200,7 +200,7 @@ public class QuizSubmissionResource {
                     // get previous Result
                     Result previousResult = getPreviousResult(result);
 
-                    if (!statisticService.addAndRemoveResultToStatistics(participation, result, previousResult)) {
+                    if (!statisticService.updateStatistics(result, previousResult)) {
                         log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
                     }
                     // return quizSubmission
@@ -374,7 +374,7 @@ public class QuizSubmissionResource {
             // get previous Result
             Result previousResult = getPreviousResult(result);
 
-           if (!statisticService.addAndRemoveResultToStatistics(participation, result, previousResult)) {
+           if (!statisticService.updateStatistics(result, previousResult)) {
                log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
            }
         }

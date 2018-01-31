@@ -54,7 +54,7 @@ public class StatisticService {
      */
     @Async
 
-    public void updateStatistic(QuizExercise quizExercise) {
+    public void notifyStatisticWebsocket(QuizExercise quizExercise) {
         // notify user via websocket
         // if the quiz-timer is ending this service waits for 300ms for additional Results before its sending the Websocket
         if(quizExercise.getDueDate().isAfter(ZonedDateTime.now()) && quizExercise.getDueDate().isBefore(ZonedDateTime.now().plusSeconds(10))) {
@@ -145,12 +145,22 @@ public class StatisticService {
         }
     }
 
-    public boolean addAndRemoveResultToStatistics(Participation participation, Result newResult, Result oldResult) {
+    /**
+     * 1. lock critical part with semaphore for database transaction safety
+     * 2. remove old Result from the quiz-point-statistic and all question-statistics
+     * 3. add new Result to the quiz-point-statistic and all question-statistics
+     * 4. save statistics
+     * 5. notify statistic-websocket
+     *
+     * @param newResult the new Result, which will be added to the statistics
+     * @param oldResult the old Result, which will be removedfrom the statistics. oldResult = null, if there is no old Result
+     */
+    public boolean updateStatistics(Result newResult, Result oldResult) {
         // critical part locked with Semaphore statisticSemaphore
         try {
             statisticSemaphore.acquire();
 
-            QuizExercise quiz = quizExerciseRepository.findOne(participation.getExercise().getId());
+            QuizExercise quiz = quizExerciseRepository.findOne(newResult.getParticipation().getExercise().getId());
 
             if (oldResult != null) {
                 for (Question question : quiz.getQuestions()) {
@@ -175,7 +185,7 @@ public class StatisticService {
             statisticSemaphore.release();
         }
         // notify statistics about new Result
-        this.updateStatistic((QuizExercise) newResult.getParticipation().getExercise());
+        this.notifyStatisticWebsocket((QuizExercise) newResult.getParticipation().getExercise());
         return true;
     }
 
