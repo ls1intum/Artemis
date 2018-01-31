@@ -20,13 +20,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
-import static de.tum.in.www1.exerciseapp.web.rest.TestUtil.createFormattingConversionService;
 import static de.tum.in.www1.exerciseapp.web.rest.TestUtil.sameInstant;
+import static de.tum.in.www1.exerciseapp.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -55,6 +55,9 @@ public class ResultResourceIntTest {
 
     private static final Long DEFAULT_SCORE = 1L;
     private static final Long UPDATED_SCORE = 2L;
+
+    private static final Boolean DEFAULT_RATED = false;
+    private static final Boolean UPDATED_RATED = true;
 
     @Autowired
     private ResultRepository resultRepository;
@@ -103,7 +106,8 @@ public class ResultResourceIntTest {
             .completionDate(DEFAULT_COMPLETION_DATE)
             .successful(DEFAULT_SUCCESSFUL)
             .buildArtifact(DEFAULT_BUILD_ARTIFACT)
-            .score(DEFAULT_SCORE);
+            .score(DEFAULT_SCORE)
+            .rated(DEFAULT_RATED);
         return result;
     }
 
@@ -132,6 +136,7 @@ public class ResultResourceIntTest {
         assertThat(testResult.isSuccessful()).isEqualTo(DEFAULT_SUCCESSFUL);
         assertThat(testResult.isBuildArtifact()).isEqualTo(DEFAULT_BUILD_ARTIFACT);
         assertThat(testResult.getScore()).isEqualTo(DEFAULT_SCORE);
+        assertThat(testResult.isRated()).isEqualTo(DEFAULT_RATED);
     }
 
     @Test
@@ -168,7 +173,8 @@ public class ResultResourceIntTest {
             .andExpect(jsonPath("$.[*].completionDate").value(hasItem(sameInstant(DEFAULT_COMPLETION_DATE))))
             .andExpect(jsonPath("$.[*].successful").value(hasItem(DEFAULT_SUCCESSFUL.booleanValue())))
             .andExpect(jsonPath("$.[*].buildArtifact").value(hasItem(DEFAULT_BUILD_ARTIFACT.booleanValue())))
-            .andExpect(jsonPath("$.[*].score").value(hasItem(DEFAULT_SCORE.intValue())));
+            .andExpect(jsonPath("$.[*].score").value(hasItem(DEFAULT_SCORE.intValue())))
+            .andExpect(jsonPath("$.[*].rated").value(hasItem(DEFAULT_RATED.booleanValue())));
     }
 
     @Test
@@ -186,7 +192,8 @@ public class ResultResourceIntTest {
             .andExpect(jsonPath("$.completionDate").value(sameInstant(DEFAULT_COMPLETION_DATE)))
             .andExpect(jsonPath("$.successful").value(DEFAULT_SUCCESSFUL.booleanValue()))
             .andExpect(jsonPath("$.buildArtifact").value(DEFAULT_BUILD_ARTIFACT.booleanValue()))
-            .andExpect(jsonPath("$.score").value(DEFAULT_SCORE.intValue()));
+            .andExpect(jsonPath("$.score").value(DEFAULT_SCORE.intValue()))
+            .andExpect(jsonPath("$.rated").value(DEFAULT_RATED.booleanValue()));
     }
 
     @Test
@@ -211,7 +218,8 @@ public class ResultResourceIntTest {
             .completionDate(UPDATED_COMPLETION_DATE)
             .successful(UPDATED_SUCCESSFUL)
             .buildArtifact(UPDATED_BUILD_ARTIFACT)
-            .score(UPDATED_SCORE);
+            .score(UPDATED_SCORE)
+            .rated(UPDATED_RATED);
 
         restResultMockMvc.perform(put("/api/results")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -227,6 +235,7 @@ public class ResultResourceIntTest {
         assertThat(testResult.isSuccessful()).isEqualTo(UPDATED_SUCCESSFUL);
         assertThat(testResult.isBuildArtifact()).isEqualTo(UPDATED_BUILD_ARTIFACT);
         assertThat(testResult.getScore()).isEqualTo(UPDATED_SCORE);
+        assertThat(testResult.isRated()).isEqualTo(UPDATED_RATED);
     }
 
     @Test

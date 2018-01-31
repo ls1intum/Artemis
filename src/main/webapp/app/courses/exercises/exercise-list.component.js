@@ -32,6 +32,7 @@
         vm.participationStatus = participationStatus;
         vm.start = start;
         vm.resume = resume;
+        vm.startPractice = startPractice;
         vm.canOpenStatistic = canOpenStatistic;
         vm.now = Date.now();
         vm.numOfOverdueExercises = 0;
@@ -119,7 +120,9 @@
 
         function participationStatus(exercise) {
             if (exercise.type && exercise.type === "quiz") {
-                if (angular.equals({}, exercise.participation) && moment(exercise.dueDate).isAfter(moment())) {
+                if ((!exercise.isPlannedToStart || moment(exercise.releaseDate).isAfter(moment())) && exercise.visibleToStudents) {
+                    return "quiz-not-started";
+                } else if (angular.equals({}, exercise.participation) && (!exercise.isPlannedToStart || moment(exercise.dueDate).isAfter(moment())) && exercise.visibleToStudents) {
                     return "quiz-uninitialized";
                 } else if (angular.equals({}, exercise.participation)) {
                     return "quiz-not-participated";
@@ -204,6 +207,10 @@
             }).finally(function () {
                 vm.loading[exercise.id] = false;
             });
+        }
+
+        function startPractice(exercise) {
+            $location.url("/quiz/" + exercise.id + "/practice");
         }
 
         function toggleShowOverdueExercises() {

@@ -176,9 +176,10 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<List<Result>> getResultsForParticipation(@PathVariable Long courseId,
-                                                   @PathVariable Long exerciseId,
-                                                   @PathVariable Long participationId,
-                                                   @RequestParam(defaultValue = "true") boolean showAllResults) {
+                                                                   @PathVariable Long exerciseId,
+                                                                   @PathVariable Long participationId,
+                                                                   @RequestParam(defaultValue = "true") boolean showAllResults,
+                                                                   @RequestParam(defaultValue = "false") boolean ratedOnly) {
         log.debug("REST request to get Results for Participation : {}", participationId);
 
         List<Result> results = new ArrayList<>();
@@ -200,11 +201,22 @@ public class ResultResource {
                 }
             }
             if (showAllResults) {
-                results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
+                if (ratedOnly) {
+                    results = resultRepository.findByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true);
+                } else {
+                    results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
+                }
             } else {
-                results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId)
-                    .map(Arrays::asList)
-                    .orElse(new ArrayList<>());
+                if (ratedOnly) {
+                    results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true)
+                        .map(Arrays::asList)
+                        .orElse(new ArrayList<>());
+                } else {
+                    results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId)
+                        .map(Arrays::asList)
+                        .orElse(new ArrayList<>());
+                }
+
             }
         }
         return ResponseEntity.ok().body(results);

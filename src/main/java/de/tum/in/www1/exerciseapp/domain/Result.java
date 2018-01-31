@@ -41,6 +41,9 @@ public class Result implements Serializable {
     @Column(name = "score")
     private Long score;
 
+    @Column(name = "rated")
+    private Boolean rated;
+
     @OneToOne(cascade=CascadeType.REMOVE, orphanRemoval=true)
     @JoinColumn(unique = true)
     private Submission submission;
@@ -148,7 +151,6 @@ public class Result implements Serializable {
      *
      * @param score new score
      */
-
     public void setScore(Long score) {
         this.score = score;
 
@@ -158,6 +160,19 @@ public class Result implements Serializable {
         } else {
             successful = false;
         }
+    }
+
+    public Boolean isRated() {
+        return rated;
+    }
+
+    public Result rated(Boolean rated) {
+        this.rated = rated;
+        return this;
+    }
+
+    public void setRated(Boolean rated) {
+        this.rated = rated;
     }
 
     public Submission getSubmission() {
@@ -256,6 +271,7 @@ public class Result implements Serializable {
             ", successful='" + isSuccessful() + "'" +
             ", buildArtifact='" + isBuildArtifact() + "'" +
             ", score='" + getScore() + "'" +
+            ", rated='" + isRated() + "'" +
             "}";
     }
 }
