@@ -98,6 +98,9 @@ public class QuizExerciseResourceIntTest {
     private ExceptionTranslator exceptionTranslator;
 
     @Autowired
+    private QuizExerciseResource quizExerciseResource;
+
+    @Autowired
     private EntityManager em;
 
     private MockMvc restQuizExerciseMockMvc;
@@ -107,7 +110,6 @@ public class QuizExerciseResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        QuizExerciseResource quizExerciseResource = new QuizExerciseResource(quizExerciseRepository, participationRepository, courseService, statisticService, resultRepository, quizSubmissionRepository, dragAndDropMappingRepository, authorizationCheckService, messagingTemplate);
         this.restQuizExerciseMockMvc = MockMvcBuilders.standaloneSetup(quizExerciseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
