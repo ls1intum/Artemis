@@ -18,18 +18,22 @@
                 "invalidInput": "Invalid Input",
                 "pendingChanges": "Unsaved Changes",
                 "saving": "Saving…",
-                "saved": "Saved!"
+                "saved": "Saved!",
+                "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\", once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)"
             },
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
             },
             "description": "Description",
             "explanation": "Explanation",
-            "randomizeQuestionOrder": "Randomize Question Order",
+            "randomizeQuestionOrder": "Present Questions in Random Order",
             "allowedNumberOfAttempts": "Allowed Number Of Attempts",
             "isVisibleBeforeStart": "Is Visible Before Start",
             "isOpenForPractice": "Is Open For Practice",
             "isPlannedToStart": "Is Planned To Start",
+            "openForPractice": "Release For Practice",
+            "startNow": "Start Now",
+            "showNow": "Set Visible",
             "duration": "Duration",
             "minutes": "minutes",
             "seconds": "seconds",
@@ -48,11 +52,17 @@
             "quizInstructions": {
                 "default": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
                 "wait": "Please wait until the quiz has ended to see your results.",
-                "result": "You have finished the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %)."
+                "result": "You have finished the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
+                "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
+                "timeUntilPlannedStart": "Time until planned start:"
             },
             "lastSaved": "Saved",
             "submitted": "Submitted",
             "statistics": "Statistics",
+            "practiceMode": "Practice",
+            "previewMode": "Preview",
+            "preview": "Preview Quiz",
+            "solution": "Sample Solution",
             "statisticsNotPublished": "The instructor has not published any statistics.",
             "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended.",
             "re-evaluate": {
@@ -87,10 +97,11 @@
                 }
             },
             "invalidReasons" : {
-                "quizTitle": "Quiz: Title is missing.",
-                "quizDuration": "Quiz: Duration is missing or invalid.",
-                "questionTitle": "Question {{index}}: Title is missing.",
-                "questionCorrectAnswerOption": "Question {{index}}: No correct answer option.",
+                "quizTitle": "Quiz: The title is missing.",
+                "quizDuration": "Quiz: The duration is missing or invalid.",
+                "noQuestion": "Quiz: The quiz has no question.",
+                "questionTitle": "Question {{index}}: The title is missing.",
+                "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly."

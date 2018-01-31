@@ -52,7 +52,7 @@ public class QuestionResourceIntTest {
     private static final Integer UPDATED_SCORE = 2;
 
     private static final ScoringType DEFAULT_SCORING_TYPE = ScoringType.ALL_OR_NOTHING;
-    private static final ScoringType UPDATED_SCORING_TYPE = ScoringType.PROPORTIONAL_CORRECT_OPTIONS;
+    private static final ScoringType UPDATED_SCORING_TYPE = ScoringType.PROPORTIONAL_WITH_PENALTY;
 
     private static final Boolean DEFAULT_RANDOMIZE_ORDER = false;
     private static final Boolean UPDATED_RANDOMIZE_ORDER = true;

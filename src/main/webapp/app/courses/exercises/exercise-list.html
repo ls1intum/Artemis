@@ -35,6 +35,7 @@
             <span class="text-muted" ng-switch-when="uninitialized">You have not started this exercise yet.</span>
             <span ng-switch-when="initialized"><result participation="exercise.participation"></result></span>
             <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
+            <span class="text-muted" ng-switch-when="quiz-not-started">The quiz hasn't started yet.</span>
             <span class="text-muted" ng-switch-when="quiz-uninitialized">You have not started this quiz yet.</span>
             <span class="text-muted" ng-switch-when="quiz-not-participated">You have not participated in this quiz.</span>
             <span class="text-muted" ng-switch-when="quiz-active">You are currently participating in this quiz.</span>
@@ -43,60 +44,75 @@
         </td>
         <td class="text-center">
             <div class="btn-group flex-btn-group-container">
-            <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
-                    ng-switch-when="uninitialized"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="quiz-uninitialized"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start Quiz</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="quiz-active"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume Quiz</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="quiz-submitted"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]">View Submission</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="quiz-finished"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]">View Results</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="inactive"
-                    ng-click="$ctrl.resume(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id]"
-                    >
-                <span ng-hide="$ctrl.loading[exercise.id]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume exercise</span>
-                <i ng-show="$ctrl.loading[exercise.id]" class="fa fa-circle-o-notch fa-spin"></i>
-            </button>
-            <div ng-switch-when="initialized">
-                <a ui-sref="editor({participationId:exercise.participation.id})" class="btn btn-primary btn-sm btn-block" id="btn-online-editor" ng-if="exercise.allowOnlineEditor"><i class="fa fa-folder-open fa-fw"></i>&nbsp;Open exercise</a>
-                <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"
-                        popover-placement="{{$ctrl.clonePopover.placement}}"
-                        popover-trigger="outsideClick"
-                        type="button" class="btn btn-primary btn-sm btn-block"><i
-                    class="fa fa-download fa-fw"></i>&nbsp;Clone
-                    repository
+                <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
+                        ng-switch-when="uninitialized"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
                 </button>
-                <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan" ng-if="exercise.publishBuildPlanUrl" ng-click="$ctrl.goToBuildPlan(exercise)"><i class="fa fa-external-link fa-fw"></i>&nbsp;Go to build plan</button>
-            </div>
+                <button class="btn btn-warning btn-sm"
+                        ng-switch-when="quiz-finished"
+                        ng-if="exercise.isOpenForPractice"
+                        ng-click="$ctrl.startPractice(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-repeat fa-fw"></i>&nbsp;Practice</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-not-started"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Open Quiz</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-uninitialized"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start Quiz</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-active"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume Quiz</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-submitted"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-eye fa-fw"></i>&nbsp;View Submission</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-finished"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-eye fa-fw"></i>&nbsp;View Results</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="inactive"
+                        ng-click="$ctrl.resume(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id]"
+                        >
+                    <span ng-hide="$ctrl.loading[exercise.id]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume exercise</span>
+                    <i ng-show="$ctrl.loading[exercise.id]" class="fa fa-circle-o-notch fa-spin"></i>
+                </button>
+                <div ng-switch-when="initialized">
+                    <a ui-sref="editor({participationId:exercise.participation.id})" class="btn btn-primary btn-sm btn-block" id="btn-online-editor" ng-if="exercise.allowOnlineEditor"><i class="fa fa-folder-open fa-fw"></i>&nbsp;Open exercise</a>
+                    <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"
+                            popover-placement="{{$ctrl.clonePopover.placement}}"
+                            popover-trigger="outsideClick"
+                            type="button" class="btn btn-primary btn-sm btn-block"><i
+                        class="fa fa-download fa-fw"></i>&nbsp;Clone
+                        repository
+                    </button>
+                    <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan" ng-if="exercise.publishBuildPlanUrl" ng-click="$ctrl.goToBuildPlan(exercise)"><i class="fa fa-external-link fa-fw"></i>&nbsp;Go to build plan</button>
+                </div>
                 <button type="submit"
                         class="btn btn-success btn-sm"
                         ng-if="exercise.type ==='quiz' && $ctrl.canOpenStatistic(exercise)"

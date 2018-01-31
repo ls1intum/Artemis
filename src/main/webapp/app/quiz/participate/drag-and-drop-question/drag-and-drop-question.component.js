@@ -7,13 +7,22 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
     $translate.refresh();
 
     var vm = this;
-
-    vm.rendered = {
-        text: ArtemisMarkdown.htmlForMarkdown(vm.question.text),
-        hint: ArtemisMarkdown.htmlForMarkdown(vm.question.hint),
-        explanation: ArtemisMarkdown.htmlForMarkdown(vm.question.explanation)
-    };
     vm.showingSampleSolution = false;
+
+    $scope.$watchCollection('vm.question', function () {
+        // update html for text, hint and explanation
+        vm.rendered = {
+            text: ArtemisMarkdown.htmlForMarkdown(vm.question.text),
+            hint: ArtemisMarkdown.htmlForMarkdown(vm.question.hint),
+            explanation: ArtemisMarkdown.htmlForMarkdown(vm.question.explanation)
+        };
+    });
+
+    $scope.$watch('vm.forceSamplesolution', function () {
+        if (vm.forceSampleSolution) {
+            showSampleSolution();
+        }
+    });
 
     vm.onDragDrop = onDragDrop;
     vm.dragItemForDropLocation = dragItemForDropLocation;
@@ -23,7 +32,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
     vm.hideSampleSolution = hideSampleSolution;
     vm.correctDragItemForDropLocation = correctDragItemForDropLocation;
 
-    var sampleSolutionMappings = DragAndDropQuestionUtil.solve(vm.question, vm.mappings);
+    var sampleSolutionMappings = [];
 
     /**
      * react to the drop event of a drag item
@@ -73,7 +82,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
             var lengthBefore = vm.mappings.length;
             // remove existing mapping that contains the drag item
             vm.mappings = vm.mappings.filter(function (mapping) {
-                return mapping.dragItem.id !== dragItem.id;
+                return !DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
             });
             if (vm.mappings.length === lengthBefore) {
                 // nothing changed => return here to skip calling vm.onMappingUpdate()
@@ -87,6 +96,13 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
     }
 
     /**
+     * Prevent page from jumping back to last clicked/selected element on drop
+     */
+    $scope.$on('ANGULAR_DRAG_START', function () {
+        window.getSelection().removeAllRanges();
+    });
+
+    /**
      * Get the drag item that was mapped to the given drop location
      *
      * @param dropLocation {object} the drop location that the drag item should be mapped to
@@ -94,7 +110,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
      */
     function dragItemForDropLocation(dropLocation) {
         var mapping = vm.mappings.find(function (mapping) {
-            return mapping.dropLocation.id === dropLocation.id;
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
         });
         if (mapping) {
             return mapping.dragItem;
@@ -111,7 +127,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
     function getUnassignedDragItems() {
         return vm.question.dragItems.filter(function (dragItem) {
             return !vm.mappings.some(function (mapping) {
-                return mapping.dragItem.id === dragItem.id;
+                return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
             });
         });
     }
@@ -129,7 +145,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
         }
         var validDragItems = vm.question.correctMappings
             .filter(function (mapping) {
-                return mapping.dropLocation.id === dropLocation.id;
+                return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
             })
             .map(function (mapping) {
                 return mapping.dragItem;
@@ -140,7 +156,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
             return validDragItems.length === 0;
         } else {
             return validDragItems.some(function (dragItem) {
-                return dragItem.id === selectedItem.id;
+                return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(dragItem, selectedItem);
             });
         }
     }
@@ -149,6 +165,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
      * Display a sample solution instead of the student's answer
      */
     function showSampleSolution() {
+        sampleSolutionMappings = DragAndDropQuestionUtil.solve(vm.question, vm.mappings);
         vm.showingSampleSolution = true;
     }
 
@@ -167,7 +184,7 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
      */
     function correctDragItemForDropLocation(dropLocation) {
         var mapping = sampleSolutionMappings.find(function (mapping) {
-            return mapping.dropLocation.id === dropLocation.id;
+            return DragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
         });
         if (mapping) {
             return mapping.dragItem;
@@ -188,6 +205,7 @@ angular.module('artemisApp').component('dragAndDropQuestion', {
         showResult: '<',
         questionIndex: '<',
         score: '<',
+        forceSampleSolution: '<',
         onMappingUpdate: '&'
     }
 });
