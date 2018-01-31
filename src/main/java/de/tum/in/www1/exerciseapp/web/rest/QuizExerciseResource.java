@@ -410,31 +410,8 @@ public class QuizExerciseResource {
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
-        //change existing results if an answer or and question was deleted
-        for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
-
-            Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-
-            for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
-                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                    // Delete all references to question and answers if the question was deleted
-                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
-                        submittedAnswer.setQuestion(null);
-                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(null);
-                        submittedAnswersToDelete.add(submittedAnswer);
-                    } else {
-                        // find same question in quizExercise
-                        Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
-
-                        // Check if an answerOption was deleted and delete reference to in selectedOptions
-                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
-                    }
-                    // TODO: @Moritz: DragAndDrop Question
-                }
-            }
-            ((QuizSubmission) result.getSubmission()).getSubmittedAnswers().removeAll(submittedAnswersToDelete);
-            quizSubmissionRepository.save((QuizSubmission) result.getSubmission());
-        }
+        //adjust existing results if an answer or and question was deleted
+        quizExerciseService.adjustResultsOnQuizDeletions(quizExercise);
 
         //update QuizExercise
         ResponseEntity<QuizExercise> methodResult = updateQuizExercise(quizExercise);

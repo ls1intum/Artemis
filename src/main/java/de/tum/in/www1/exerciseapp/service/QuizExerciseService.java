@@ -3,13 +3,17 @@ package de.tum.in.www1.exerciseapp.service;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
+import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -22,13 +26,19 @@ public class QuizExerciseService {
     private final QuizExerciseRepository quizExerciseRepository;
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
     private final AuthorizationCheckService authCheckService;
+    private final ResultRepository resultRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
 
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository,
                                DragAndDropMappingRepository dragAndDropMappingRepository,
-                               AuthorizationCheckService authCheckService) {
+                               AuthorizationCheckService authCheckService,
+                               ResultRepository resultRepository,
+                               QuizSubmissionRepository quizSubmissionRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.authCheckService = authCheckService;
+        this.resultRepository = resultRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
     /**
@@ -130,6 +140,40 @@ public class QuizExerciseService {
     public void delete(Long id) {
         log.debug("Request to delete Exercise : {}", id);
         quizExerciseRepository.delete(id);
+    }
+
+    /**
+     * adjust existing results if an answer or and question was deleted
+     *
+     * @param quizExercise the changed quizExercise.
+     */
+    public void adjustResultsOnQuizDeletions(QuizExercise quizExercise) {
+        //change existing results if an answer or and question was deleted
+        for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
+
+            Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
+            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+
+            for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
+                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                    // Delete all references to question and answers if the question was deleted
+                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
+                        submittedAnswer.setQuestion(null);
+                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(null);
+                        submittedAnswersToDelete.add(submittedAnswer);
+                    } else {
+                        // find same question in quizExercise
+                        Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
+
+                        // Check if an answerOption was deleted and delete reference to in selectedOptions
+                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
+                    }
+                    // TODO: @Moritz: DragAndDrop Question
+                }
+            }
+            quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
+            quizSubmissionRepository.save(quizSubmission);
+        }
     }
 
     /**
