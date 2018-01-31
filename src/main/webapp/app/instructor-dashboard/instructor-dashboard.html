@@ -120,22 +120,9 @@
                         </span>
                     </span>  (<span am-time-ago="result.completionDate"></span>)
                 </span>
-                <span ng-if="result.score > 60 && result.score <= 80">
-                    <span  class="result-light-green">
+                <span ng-if="result.score > 40 && result.score <= 80">
+                    <span  class="result-orange">
                         <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                        <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">
-                            <span ng-switch-when="true">
-                                {{result.resultString}}
-                            </span>
-                            <span ng-switch-when="false">
-                                <a class="result-light-green" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
-                            </span>
-                        </span>
-                    </span>  (<span am-time-ago="result.completionDate"></span>)
-                </span>
-                <span ng-if="result.score > 40 && result.score <= 60">
-                    <span class="result-orange">
-                        <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
                         <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">
                             <span ng-switch-when="true">
                                 {{result.resultString}}
@@ -146,20 +133,7 @@
                         </span>
                     </span>  (<span am-time-ago="result.completionDate"></span>)
                 </span>
-                <span ng-if="result.score > 20 && result.score <= 40">
-                    <span class="result-light-red">
-                        <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
-                        <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">
-                            <span ng-switch-when="true">
-                                {{result.resultString}}
-                            </span>
-                            <span ng-switch-when="false">
-                                <a class="result-light-red" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
-                            </span>
-                        </span>
-                    </span>  (<span am-time-ago="result.completionDate"></span>)
-                </span>
-                <span ng-if="result.score > 0 && result.score <= 20">
+                <span ng-if="result.score >= 0 && result.score <= 40">
                     <span class="text-danger">
                         <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
                         <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">

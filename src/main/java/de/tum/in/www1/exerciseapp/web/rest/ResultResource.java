@@ -86,7 +86,7 @@ public class ResultResource {
         } else if(result.getScore() != 100 && result.isSuccessful()) {
             throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
         } else if(!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream()
-                .filter(feedback -> feedback.getText() == null || feedback.getDetailText() == null).count() != 0) {
+                .filter(feedback -> feedback.getText() == null).count() != 0) {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
@@ -251,14 +251,8 @@ public class ResultResource {
             results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
         }
 
-        // refresh feedbacks
-        results.forEach(result -> {
-            result.setFeedbacks(feedbackService.getFeedbackForBuildResult(result));
-        });
-
         //Each object array in the list contains two Long values, participation id (index 0) and
         //number of results for this participation (index 1)
-
         List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
 
         //Matches each result with the number of results in corresponding participation
