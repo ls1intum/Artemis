@@ -76,6 +76,9 @@ public class QuizSubmissionResourceIntTest {
     private ExceptionTranslator exceptionTranslator;
 
     @Autowired
+    private QuizSubmissionResource quizSubmissionResource;
+
+    @Autowired
     private EntityManager em;
 
     @Autowired
@@ -88,7 +91,6 @@ public class QuizSubmissionResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final QuizSubmissionResource quizSubmissionResource = new QuizSubmissionResource(quizSubmissionRepository, quizExerciseRepository, quizPointStatisticRepository, questionStatisticRepository, resultRepository, participationService, userService, messageTemplate, statisticService);
         this.restQuizSubmissionMockMvc = MockMvcBuilders.standaloneSetup(quizSubmissionResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
