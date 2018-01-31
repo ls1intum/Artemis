@@ -8946,6 +8946,12 @@ table.answer-options-result {
 .colon-suffix:after {
   content: ":"; }
 
+.in-parentheses:before {
+  content: "("; }
+
+.in-parentheses:after {
+  content: ")"; }
+
 .no-flex-shrink {
   flex-shrink: 0; }
 

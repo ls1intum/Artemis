@@ -119,6 +119,15 @@
             });
         }
 
+        function initShowSolution() {
+            QuizExercise.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
+                // init quiz
+                vm.quizExercise = quizExercise;
+                initQuiz();
+                vm.showingResult = true;
+            });
+        }
+
         /**
          * Start the given quiz in practice or preview mode
          *

@@ -18,6 +18,12 @@ function DragAndDropQuestionController($translate, $translatePartialLoader, $sco
         };
     });
 
+    $scope.$watch('vm.forceSamplesolution', function () {
+        if (vm.forceSampleSolution) {
+            showSampleSolution();
+        }
+    });
+
     vm.onDragDrop = onDragDrop;
     vm.dragItemForDropLocation = dragItemForDropLocation;
     vm.getUnassignedDragItems = getUnassignedDragItems;
@@ -199,6 +205,7 @@ angular.module('artemisApp').component('dragAndDropQuestion', {
         showResult: '<',
         questionIndex: '<',
         score: '<',
+        forceSampleSolution: '<',
         onMappingUpdate: '&'
     }
 });
