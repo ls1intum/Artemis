@@ -189,6 +189,8 @@ public class ResultResourceIntTest {
 
         // Update the result
         Result updatedResult = resultRepository.findOne(result.getId());
+        // Disconnect from session so that the updates on updatedResult are not directly saved in db
+        em.detach(updatedResult);
         updatedResult.setResultString(UPDATED_RESULT_STRING);
         updatedResult.setBuildCompletionDate(UPDATED_BUILD_COMPLETION_DATE);
         updatedResult.setBuildSuccessful(UPDATED_BUILD_SUCCESSFUL);

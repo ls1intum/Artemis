@@ -210,6 +210,8 @@ public class ExerciseResourceIntTest {
 
         // Update the exercise
         Exercise updatedExercise = exerciseRepository.findOne(exercise.getId());
+        // Disconnect from session so that the updates on updatedExercise are not directly saved in db
+        em.detach(updatedExercise);
         updatedExercise.setTitle(UPDATED_TITLE);
         updatedExercise.setBaseProjectKey(UPDATED_BASE_PROJECT_KEY);
         updatedExercise.setBaseRepositorySlug(UPDATED_BASE_REPOSITORY_SLUG);

@@ -182,6 +182,8 @@ public class ParticipationResourceIntTest {
 
         // Update the participation
         Participation updatedParticipation = participationRepository.findOne(participation.getId());
+        // Disconnect from session so that the updates on updatedParticipation are not directly saved in db
+        em.detach(updatedParticipation);
         updatedParticipation.setCloneUrl(UPDATED_CLONE_URL);
         updatedParticipation.setRepositorySlug(UPDATED_REPOSITORY_SLUG);
 

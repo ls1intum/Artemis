@@ -177,6 +177,8 @@ public class CourseResourceIntTest {
 
         // Update the course
         Course updatedCourse = courseRepository.findOne(course.getId());
+        // Disconnect from session so that the updates on updatedCourse are not directly saved in db
+        em.detach(updatedCourse);
         updatedCourse.setTitle(UPDATED_TITLE);
         updatedCourse.setStudentGroupName(UPDATED_STUDENT_GROUP_NAME);
 

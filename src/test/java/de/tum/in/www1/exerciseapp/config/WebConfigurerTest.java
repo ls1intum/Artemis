@@ -24,7 +24,6 @@ import org.xnio.OptionMap;
 import javax.servlet.*;
 import java.util.*;
 
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -344,5 +343,4 @@ public class WebConfigurerTest {
             return null;
         }
     }
-
 }
