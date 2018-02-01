@@ -9407,20 +9407,11 @@ ui bootstrap tweaks
   top: 0;
   margin-left: -14px; }
 
-.result-light-green {
-  color: limegreen; }
-
-a.result-light-green:hover {
-  color: limegreen; }
-
 .result-orange {
   color: orange; }
 
 a.result-orange:hover {
   color: orange; }
 
-.result-light-red {
-  color: #ec4545; }
-
-a.result-light-red:hover {
-  color: #ec4545; }
+#feedbackErrorText {
+  resize: vertical; }
