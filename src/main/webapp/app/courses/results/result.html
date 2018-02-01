@@ -3,8 +3,80 @@
     <span class="text-primary" ng-if="$ctrl.queued"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Build is queued</span>
     <span class="text-primary" ng-if="$ctrl.building"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Building...</span>
 </span>
-<span ng-if="$ctrl.hasResults()" ng-switch on="$ctrl.results[0].successful">
+<span ng-if="$ctrl.hasResults()" ng-switch on="$ctrl.results[0].score === null">
     <span ng-switch-when="true">
+        <span ng-switch on="$ctrl.results[0].successful">
+            <span ng-switch-when="true">
+                <span class="text-success">
+                    <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                    <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                        <span ng-switch-when="true">
+                            {{$ctrl.results[0].resultString}}
+                        </span>
+                         <span ng-switch-when="false">
+                             <a class="text-success" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
+                        </span>
+                    </span>
+                </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+            </span>
+            <span ng-switch-when="false">
+                <span class="text-danger">
+                    <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                     <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                        <span ng-switch-when="true">
+                            {{$ctrl.results[0].resultString}}
+                        </span>
+                         <span ng-switch-when="false">
+                             <a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
+                        </span>
+                    </span>
+                </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+            </span>
+        </span>
+    </span>
+    <span ng-switch-when="false">
+        <span ng-if="$ctrl.results[0].score > 80">
+            <span class="text-success">
+                <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                    <span ng-switch-when="true">
+                        {{$ctrl.results[0].resultString}}
+                    </span>
+                    <span ng-switch-when="false">
+                        <a class="text-success" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
+                    </span>
+                </span>
+            </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+        </span>
+        <span ng-if="$ctrl.results[0].score > 40 && $ctrl.results[0].score <= 80">
+            <span  class="result-orange">
+                <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                    <span ng-switch-when="true">
+                        {{$ctrl.results[0].resultString}}
+                    </span>
+                    <span ng-switch-when="false">
+                        <a class="result-orange" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
+                    </span>
+                </span>
+            </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+        </span>
+        <span ng-if="$ctrl.results[0].score >= 0 && $ctrl.results[0].score <= 40">
+            <span class="text-danger">
+                <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                    <span ng-switch-when="true">
+                        {{$ctrl.results[0].resultString}}
+                    </span>
+                    <span ng-switch-when="false">
+                        <a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
+                    </span>
+                </span>
+            </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+        </span>
+    </span>
+
+    <!--span ng-switch-when="true">
         <span class="text-success">
             <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;{{$ctrl.results[0].resultString}}
         </span>
@@ -17,7 +89,7 @@
         <span class="text-danger">
             <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;<a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.buildResultString($ctrl.results[0])}}</a>
         </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
-    </span>
+    </span-->
 </span>
 <span ng-if="$ctrl.results[0].buildArtifact">
     <a href="/api/participations/{{$ctrl.results[0].participation.id}}/buildArtifact"> &nbsp; <i class="fa fa-file"></i> Download Build Result</a>

@@ -49,7 +49,9 @@
             />
         </div>
         <br/>
-        <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
+        <div class="form-group col-md-12">
+            <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
+        </div>
         <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
             <div class="form-group col-md-12">
                 <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
