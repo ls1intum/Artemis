@@ -1,21 +1,7 @@
-const os = require('os');
-
 const HtmlScreenshotReporter = require("protractor-jasmine2-screenshot-reporter");
 const JasmineReporters = require('jasmine-reporters');
 
-const prefix = 'src/test/javascript/'.replace(/[^/]+/g,'..');
-const seleniumFolder = 'node_modules/webdriver-manager/selenium/';
-
-var webbrowserDriver= '';
-if (os.platform() === 'win32') {
-    webbrowserDriver = prefix + seleniumFolder + 'chromedriver_2.34.exe';
-} else {
-    webbrowserDriver = prefix + seleniumFolder + 'chromedriver_2.34';
-}
-
 exports.config = {
-    seleniumServerJar: prefix + seleniumFolder + 'selenium-server-standalone-3.8.1.jar',
-    chromeDriver: webbrowserDriver,
     allScriptsTimeout: 20000,
 
     suites: {
