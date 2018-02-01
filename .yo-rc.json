@@ -1,6 +1,6 @@
 {
   "generator-jhipster": {
-    "jhipsterVersion": "4.10.2",
+    "jhipsterVersion": "4.13.3",
     "baseName": "ArTEMiSApp",
     "packageName": "de.tum.in.www1.exerciseapp",
     "packageFolder": "de/tum/in/www1/exerciseapp",
@@ -33,6 +33,8 @@
     "messageBroker": false,
     "serviceDiscoveryType": false,
     "clientFramework": "angular1",
-    "clientPackageManager": "yarn"
+    "clientPackageManager": "yarn",
+    "cacheProvider": "ehcache",
+    "enableHibernateCache": true
   }
 }

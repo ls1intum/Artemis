@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.repository;
 
 import de.tum.in.www1.exerciseapp.domain.User;
+
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,6 +19,10 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
+    String USERS_BY_LOGIN_CACHE = "usersByLogin";
+
+    String USERS_BY_EMAIL_CACHE = "usersByEmail";
+
     Optional<User> findOneByActivationKey(String activationKey);
 
     List<User> findAllByActivatedIsFalseAndCreatedDateBefore(Instant dateTime);
@@ -29,11 +34,15 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findOneByLogin(String login);
 
     @EntityGraph(attributePaths = "authorities")
-    User findOneWithAuthoritiesById(Long id);
+    Optional<User> findOneWithAuthoritiesById(Long id);
 
     @EntityGraph(attributePaths = "authorities")
-    @Cacheable(cacheNames="users")
+    @Cacheable(cacheNames = USERS_BY_LOGIN_CACHE)
     Optional<User> findOneWithAuthoritiesByLogin(String login);
+
+    @EntityGraph(attributePaths = "authorities")
+    @Cacheable(cacheNames = USERS_BY_EMAIL_CACHE)
+    Optional<User> findOneWithAuthoritiesByEmail(String email);
 
     Page<User> findAllByLoginNot(Pageable pageable, String login);
 }
