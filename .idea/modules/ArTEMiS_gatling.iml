@@ -34,7 +34,7 @@
     <orderEntry type="library" name="Gradle: io.gatling:jsonpath_2.11:0.6.8" level="project" />
     <orderEntry type="library" name="Gradle: org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4" level="project" />
     <orderEntry type="library" name="Gradle: com.github.scopt:scopt_2.11:3.5.0" level="project" />
-    <orderEntry type="library" name="Gradle: org.scala-lang.modules:scala-xml_2.11:1.0.5" level="project" />
+    <orderEntry type="library" name="Gradle: org.scala-lang.modules:scala-xml_2.11:1.0.2" level="project" />
     <orderEntry type="library" name="Gradle: com.dongxiguo:fastring_2.11:0.2.4" level="project" />
     <orderEntry type="library" name="Gradle: com.softwaremill.quicklens:quicklens_2.11:1.4.8" level="project" />
     <orderEntry type="library" name="Gradle: com.typesafe.scala-logging:scala-logging_2.11:3.5.0" level="project" />
@@ -46,7 +46,7 @@
     <orderEntry type="library" name="Gradle: com.tdunning:t-digest:3.1" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.8.10" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.8.10" level="project" />
-    <orderEntry type="library" name="Gradle: org.bouncycastle:bcpkix-jdk15on:1.55" level="project" />
+    <orderEntry type="library" name="Gradle: org.bouncycastle:bcpkix-jdk15on:1.56" level="project" />
     <orderEntry type="library" name="Gradle: org.asynchttpclient:async-http-client:2.0.29" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-codec-http:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: com.github.ben-manes.caffeine:caffeine:2.3.5" level="project" />
@@ -58,7 +58,7 @@
     <orderEntry type="library" name="Gradle: org.hdrhistogram:HdrHistogram:2.1.9" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.8.0" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.8.10" level="project" />
-    <orderEntry type="library" name="Gradle: org.bouncycastle:bcprov-jdk15on:1.55" level="project" />
+    <orderEntry type="library" name="Gradle: org.bouncycastle:bcprov-jdk15on:1.56" level="project" />
     <orderEntry type="library" name="Gradle: org.asynchttpclient:netty-resolver-dns:2.0.29" level="project" />
     <orderEntry type="library" name="Gradle: org.asynchttpclient:netty-codec-dns:2.0.29" level="project" />
     <orderEntry type="library" name="Gradle: com.typesafe.netty:netty-reactive-streams:1.0.8" level="project" />
@@ -72,12 +72,13 @@
     <orderEntry type="library" name="Gradle: org.slf4j:slf4j-api:1.7.25" level="project" />
     <orderEntry type="library" name="Gradle: org.jodd:jodd-core:3.8.0" level="project" />
     <orderEntry type="library" name="Gradle: org.jodd:jodd-log:3.8.0" level="project" />
-    <orderEntry type="library" name="Gradle: org.reactivestreams:reactive-streams:1.0.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.reactivestreams:reactive-streams:1.0.1" level="project" />
     <orderEntry type="library" name="Gradle: org.javassist:javassist:3.21.0-GA" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-transport:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-buffer:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-common:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: commons-pool:commons-pool:1.6" level="project" />
     <orderEntry type="library" name="Gradle: ch.qos.logback:logback-core:1.1.11" level="project" />
+    <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-configuration-processor:1.5.9.RELEASE" level="project" />
   </component>
 </module>
