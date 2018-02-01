@@ -152,7 +152,7 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
             if(ddSubmittedAnswer.getMappings() != null) {
                 // change rated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
-                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
+                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer)) {
                         dropLocationCounter.setRatedCounter(dropLocationCounter.getRatedCounter() + change);
                     }
                 }
@@ -170,7 +170,7 @@ public class DragAndDropQuestionStatistic extends QuestionStatistic implements S
             if(ddSubmittedAnswer.getMappings() != null) {
                 // change unrated dropLocationCounter if dropLocation is correct
                 for (DropLocationCounter dropLocationCounter: dropLocationCounters) {
-                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer.getMappings())) {
+                    if(dropLocationCounter.getDropLocation().isDropLocationCorrect(ddSubmittedAnswer)) {
                         dropLocationCounter.setUnRatedCounter(dropLocationCounter.getUnRatedCounter() + change);
                     }
                 }

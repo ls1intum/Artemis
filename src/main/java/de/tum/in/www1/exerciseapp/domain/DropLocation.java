@@ -174,17 +174,18 @@ public class DropLocation implements Serializable {
     /**
      * check if the DropLocation is solved correctly
      *
-     * @param submittedMappings the new List of submittedMappings from the Result
+     * @param dndAnswer Answer from the student with the List of submittedMappings from the Result
      */
-    public boolean isDropLocationCorrect(Set<DragAndDropMapping> submittedMappings) {
+    public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer) {
 
-        for (DragAndDropMapping submittedMapping : submittedMappings) {
-            if (this.equals(submittedMapping.getDropLocation())
-                && question.getCorrectDragItemsForDropLocation(this).contains(submittedMapping.getDragItem())) {
-                return true;
-            }
-        }
-        return false;
+        Set<DragItem> correctDragItems = question.getCorrectDragItemsForDropLocation(this);
+        DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(this);
+
+        return ((correctDragItems.size() == 0 && selectedDragItem == null) ||
+            (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
+        // this drop location was meant to stay empty and user didn't drag anything onto it
+        // OR the user dragged one of the correct drag items onto this drop location
+        // => this is correct => Return true;
     }
 
     @Override
