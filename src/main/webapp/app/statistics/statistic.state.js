@@ -71,6 +71,27 @@
                         return $translate.refresh();
                     }]
                 }
+            })
+            .state('drag-and-drop-question-statistic-chart', {
+                parent: 'app',
+                url: '/quiz/{quizId}/drag-and-drop-question-statistic/{questionId}',
+                data: {
+                    authorities: []
+                },
+                views: {
+                    'content@': {
+                        templateUrl: 'app/statistics/drag-and-drop-question-statistic/show-drag-and-drop-question-statistic.html',
+                        controller: 'ShowDragAndDropStatisticController',
+                        controllerAs: 'vm'
+                    }
+                },
+                resolve: {
+                    mainTranslatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                        $translatePartialLoader.addPart('global');
+                        $translatePartialLoader.addPart('showStatistic');
+                        return $translate.refresh();
+                    }]
+                }
             });
         }
 })();

@@ -67,7 +67,7 @@ class DragItemGatlingTest extends Simulation {
             .exec(http("Create new dragItem")
             .post("/api/drag-items")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null, "pictureFilePath":"SAMPLE_TEXT", "text":"SAMPLE_TEXT"}""")).asJSON
+            .body(StringBody("""{"id":null, "pictureFilePath":"SAMPLE_TEXT", "text":"SAMPLE_TEXT", "invalid":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_dragItem_url"))).exitHereIfFailed
             .pause(10)
