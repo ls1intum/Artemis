@@ -138,7 +138,7 @@ public class AccountResourceIntTest {
         user.setImageUrl("http://placehold.it/50x50");
         user.setLangKey("en");
         user.setAuthorities(authorities);
-        when(mockUserService.getUserWithAuthorities()).thenReturn(user);
+        when(mockUserService.getUserWithAuthorities()).thenReturn(Optional.of(user));
 
         restUserMockMvc.perform(get("/api/account")
             .accept(MediaType.APPLICATION_JSON))
@@ -155,7 +155,7 @@ public class AccountResourceIntTest {
 
     @Test
     public void testGetUnknownAccount() throws Exception {
-        when(mockUserService.getUserWithAuthorities()).thenReturn(null);
+        when(mockUserService.getUserWithAuthorities()).thenReturn(Optional.empty());
 
         restUserMockMvc.perform(get("/api/account")
             .accept(MediaType.APPLICATION_JSON))
@@ -165,21 +165,17 @@ public class AccountResourceIntTest {
     @Test
     @Transactional
     public void testRegisterValid() throws Exception {
-        ManagedUserVM validUser = new ManagedUserVM(
-            null,                   // id
-            "joe",                  // login
-            "password",             // password
-            "Joe",                  // firstName
-            "Shmoe",                // lastName
-            "joe@example.com",      // email
-            true,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.USER)));
+        ManagedUserVM validUser = new ManagedUserVM();
+        validUser.setLogin("joe");
+        validUser.setPassword("password");
+        validUser.setFirstName("Joe");
+        validUser.setLastName("Shmoe");
+        validUser.setEmail("joe@example.com");
+        validUser.setActivated(true);
+        validUser.setImageUrl("http://placehold.it/50x50");
+        validUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        validUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
+        assertThat(userRepository.findOneByLogin("joe").isPresent()).isFalse();
 
         restMvc.perform(
             post("/api/register")
@@ -187,28 +183,22 @@ public class AccountResourceIntTest {
                 .content(TestUtil.convertObjectToJsonBytes(validUser)))
             .andExpect(status().isCreated());
 
-        Optional<User> user = userRepository.findOneByLogin("joe");
-        assertThat(user.isPresent()).isTrue();
+        assertThat(userRepository.findOneByLogin("joe").isPresent()).isTrue();
     }
 
     @Test
     @Transactional
     public void testRegisterInvalidLogin() throws Exception {
-        ManagedUserVM invalidUser = new ManagedUserVM(
-            null,                   // id
-            "funky-log!n",          // login <-- invalid
-            "password",             // password
-            "Funky",                // firstName
-            "One",                  // lastName
-            "funky@example.com",    // email
-            true,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.USER)));
+        ManagedUserVM invalidUser = new ManagedUserVM();
+        invalidUser.setLogin("funky-log!n");// <-- invalid
+        invalidUser.setPassword("password");
+        invalidUser.setFirstName("Funky");
+        invalidUser.setLastName("One");
+        invalidUser.setEmail("funky@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -223,21 +213,16 @@ public class AccountResourceIntTest {
     @Test
     @Transactional
     public void testRegisterInvalidEmail() throws Exception {
-        ManagedUserVM invalidUser = new ManagedUserVM(
-            null,               // id
-            "bob",              // login
-            "password",         // password
-            "Bob",              // firstName
-            "Green",            // lastName
-            "invalid",          // email <-- invalid
-            true,               // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.USER)));
+        ManagedUserVM invalidUser = new ManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("password");
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("invalid");// <-- invalid
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -252,21 +237,16 @@ public class AccountResourceIntTest {
     @Test
     @Transactional
     public void testRegisterInvalidPassword() throws Exception {
-        ManagedUserVM invalidUser = new ManagedUserVM(
-            null,               // id
-            "bob",              // login
-            "123",              // password with only 3 digits
-            "Bob",              // firstName
-            "Green",            // lastName
-            "bob@example.com",  // email
-            true,               // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.USER)));
+        ManagedUserVM invalidUser = new ManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword("123");// password with only 3 digits
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -281,21 +261,16 @@ public class AccountResourceIntTest {
     @Test
     @Transactional
     public void testRegisterNullPassword() throws Exception {
-        ManagedUserVM invalidUser = new ManagedUserVM(
-            null,               // id
-            "bob",              // login
-            null,               // invalid null password
-            "Bob",              // firstName
-            "Green",            // lastName
-            "bob@example.com",  // email
-            true,               // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.USER)));
+        ManagedUserVM invalidUser = new ManagedUserVM();
+        invalidUser.setLogin("bob");
+        invalidUser.setPassword(null);// invalid null password
+        invalidUser.setFirstName("Bob");
+        invalidUser.setLastName("Green");
+        invalidUser.setEmail("bob@example.com");
+        invalidUser.setActivated(true);
+        invalidUser.setImageUrl("http://placehold.it/50x50");
+        invalidUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        invalidUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
         restUserMockMvc.perform(
             post("/api/register")
@@ -311,25 +286,32 @@ public class AccountResourceIntTest {
     @Transactional
     public void testRegisterDuplicateLogin() throws Exception {
         // Good
-        ManagedUserVM validUser = new ManagedUserVM(
-            null,                   // id
-            "alice",                // login
-            "password",             // password
-            "Alice",                // firstName
-            "Something",            // lastName
-            "alice@example.com",    // email
-            true,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.USER)));
+        ManagedUserVM validUser = new ManagedUserVM();
+        validUser.setLogin("alice");
+        validUser.setPassword("password");
+        validUser.setFirstName("Alice");
+        validUser.setLastName("Something");
+        validUser.setEmail("alice@example.com");
+        validUser.setActivated(true);
+        validUser.setImageUrl("http://placehold.it/50x50");
+        validUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        validUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
         // Duplicate login, different email
-        ManagedUserVM duplicatedUser = new ManagedUserVM(validUser.getId(), validUser.getLogin(), validUser.getPassword(), validUser.getFirstName(), validUser.getLastName(),
-            "alicejr@example.com", true, validUser.getImageUrl(), validUser.getLangKey(), validUser.getCreatedBy(), validUser.getCreatedDate(), validUser.getLastModifiedBy(), validUser.getLastModifiedDate(), validUser.getAuthorities());
+        ManagedUserVM duplicatedUser = new ManagedUserVM();
+        duplicatedUser.setLogin(validUser.getLogin());
+        duplicatedUser.setPassword(validUser.getPassword());
+        duplicatedUser.setFirstName(validUser.getFirstName());
+        duplicatedUser.setLastName(validUser.getLastName());
+        duplicatedUser.setEmail("alicejr@example.com");
+        duplicatedUser.setActivated(validUser.isActivated());
+        duplicatedUser.setImageUrl(validUser.getImageUrl());
+        duplicatedUser.setLangKey(validUser.getLangKey());
+        duplicatedUser.setCreatedBy(validUser.getCreatedBy());
+        duplicatedUser.setCreatedDate(validUser.getCreatedDate());
+        duplicatedUser.setLastModifiedBy(validUser.getLastModifiedBy());
+        duplicatedUser.setLastModifiedDate(validUser.getLastModifiedDate());
+        duplicatedUser.setAuthorities(new HashSet<>(validUser.getAuthorities()));
 
         // Good user
         restMvc.perform(
@@ -353,25 +335,32 @@ public class AccountResourceIntTest {
     @Transactional
     public void testRegisterDuplicateEmail() throws Exception {
         // Good
-        ManagedUserVM validUser = new ManagedUserVM(
-            null,                   // id
-            "john",                 // login
-            "password",             // password
-            "John",                 // firstName
-            "Doe",                  // lastName
-            "john@example.com",     // email
-            true,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.USER)));
+        ManagedUserVM validUser = new ManagedUserVM();
+        validUser.setLogin("john");
+        validUser.setPassword("password");
+        validUser.setFirstName("John");
+        validUser.setLastName("Doe");
+        validUser.setEmail("john@example.com");
+        validUser.setActivated(true);
+        validUser.setImageUrl("http://placehold.it/50x50");
+        validUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        validUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
         // Duplicate email, different login
-        ManagedUserVM duplicatedUser = new ManagedUserVM(validUser.getId(), "johnjr", validUser.getPassword(), validUser.getLogin(), validUser.getLastName(),
-            validUser.getEmail(), true, validUser.getImageUrl(), validUser.getLangKey(), validUser.getCreatedBy(), validUser.getCreatedDate(), validUser.getLastModifiedBy(), validUser.getLastModifiedDate(), validUser.getAuthorities());
+        ManagedUserVM duplicatedUser = new ManagedUserVM();
+        duplicatedUser.setLogin("johnjr");
+        duplicatedUser.setPassword(validUser.getPassword());
+        duplicatedUser.setFirstName(validUser.getFirstName());
+        duplicatedUser.setLastName(validUser.getLastName());
+        duplicatedUser.setEmail(validUser.getEmail());
+        duplicatedUser.setActivated(validUser.isActivated());
+        duplicatedUser.setImageUrl(validUser.getImageUrl());
+        duplicatedUser.setLangKey(validUser.getLangKey());
+        duplicatedUser.setCreatedBy(validUser.getCreatedBy());
+        duplicatedUser.setCreatedDate(validUser.getCreatedDate());
+        duplicatedUser.setLastModifiedBy(validUser.getLastModifiedBy());
+        duplicatedUser.setLastModifiedDate(validUser.getLastModifiedDate());
+        duplicatedUser.setAuthorities(new HashSet<>(validUser.getAuthorities()));
 
         // Good user
         restMvc.perform(
@@ -388,8 +377,21 @@ public class AccountResourceIntTest {
             .andExpect(status().is4xxClientError());
 
         // Duplicate email - with uppercase email address
-        final ManagedUserVM userWithUpperCaseEmail = new ManagedUserVM(validUser.getId(), "johnjr", validUser.getPassword(), validUser.getLogin(), validUser.getLastName(),
-                validUser.getEmail().toUpperCase(), true, validUser.getImageUrl(), validUser.getLangKey(), validUser.getCreatedBy(), validUser.getCreatedDate(), validUser.getLastModifiedBy(), validUser.getLastModifiedDate(), validUser.getAuthorities());
+        ManagedUserVM userWithUpperCaseEmail = new ManagedUserVM();
+        userWithUpperCaseEmail.setId(validUser.getId());
+        userWithUpperCaseEmail.setLogin("johnjr");
+        userWithUpperCaseEmail.setPassword(validUser.getPassword());
+        userWithUpperCaseEmail.setFirstName(validUser.getFirstName());
+        userWithUpperCaseEmail.setLastName(validUser.getLastName());
+        userWithUpperCaseEmail.setEmail(validUser.getEmail().toUpperCase());
+        userWithUpperCaseEmail.setActivated(validUser.isActivated());
+        userWithUpperCaseEmail.setImageUrl(validUser.getImageUrl());
+        userWithUpperCaseEmail.setLangKey(validUser.getLangKey());
+        userWithUpperCaseEmail.setCreatedBy(validUser.getCreatedBy());
+        userWithUpperCaseEmail.setCreatedDate(validUser.getCreatedDate());
+        userWithUpperCaseEmail.setLastModifiedBy(validUser.getLastModifiedBy());
+        userWithUpperCaseEmail.setLastModifiedDate(validUser.getLastModifiedDate());
+        userWithUpperCaseEmail.setAuthorities(new HashSet<>(validUser.getAuthorities()));
 
         restMvc.perform(
             post("/api/register")
@@ -404,21 +406,16 @@ public class AccountResourceIntTest {
     @Test
     @Transactional
     public void testRegisterAdminIsIgnored() throws Exception {
-        ManagedUserVM validUser = new ManagedUserVM(
-            null,                   // id
-            "badguy",               // login
-            "password",             // password
-            "Bad",                  // firstName
-            "Guy",                  // lastName
-            "badguy@example.com",   // email
-            true,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.ADMIN)));
+        ManagedUserVM validUser = new ManagedUserVM();
+        validUser.setLogin("badguy");
+        validUser.setPassword("password");
+        validUser.setFirstName("Bad");
+        validUser.setLastName("Guy");
+        validUser.setEmail("badguy@example.com");
+        validUser.setActivated(true);
+        validUser.setImageUrl("http://placehold.it/50x50");
+        validUser.setLangKey(Constants.DEFAULT_LANGUAGE);
+        validUser.setAuthorities(Collections.singleton(AuthoritiesConstants.USER));
 
         restMvc.perform(
             post("/api/register")
@@ -471,21 +468,15 @@ public class AccountResourceIntTest {
 
         userRepository.saveAndFlush(user);
 
-        UserDTO userDTO = new UserDTO(
-            null,                   // id
-            "not-used",          // login
-            "firstname",                // firstName
-            "lastname",                  // lastName
-            "save-account@example.com",    // email
-            false,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.ADMIN))
-        );
+        UserDTO userDTO = new UserDTO();
+        userDTO.setLogin("not-used");
+        userDTO.setFirstName("firstname");
+        userDTO.setLastName("lastname");
+        userDTO.setEmail("save-account@example.com");
+        userDTO.setActivated(false);
+        userDTO.setImageUrl("http://placehold.it/50x50");
+        userDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
 
         restMvc.perform(
             post("/api/account")
@@ -516,21 +507,15 @@ public class AccountResourceIntTest {
 
         userRepository.saveAndFlush(user);
 
-        UserDTO userDTO = new UserDTO(
-            null,                   // id
-            "not-used",          // login
-            "firstname",                // firstName
-            "lastname",                  // lastName
-            "invalid email",    // email
-            false,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.ADMIN))
-        );
+        UserDTO userDTO = new UserDTO();
+        userDTO.setLogin("not-used");
+        userDTO.setFirstName("firstname");
+        userDTO.setLastName("lastname");
+        userDTO.setEmail("invalid email");
+        userDTO.setActivated(false);
+        userDTO.setImageUrl("http://placehold.it/50x50");
+        userDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
 
         restMvc.perform(
             post("/api/account")
@@ -561,21 +546,15 @@ public class AccountResourceIntTest {
 
         userRepository.saveAndFlush(anotherUser);
 
-        UserDTO userDTO = new UserDTO(
-            null,                   // id
-            "not-used",          // login
-            "firstname",                // firstName
-            "lastname",                  // lastName
-            "save-existing-email2@example.com",    // email
-            false,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.ADMIN))
-        );
+        UserDTO userDTO = new UserDTO();
+        userDTO.setLogin("not-used");
+        userDTO.setFirstName("firstname");
+        userDTO.setLastName("lastname");
+        userDTO.setEmail("save-existing-email2@example.com");
+        userDTO.setActivated(false);
+        userDTO.setImageUrl("http://placehold.it/50x50");
+        userDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
 
         restMvc.perform(
             post("/api/account")
@@ -599,21 +578,15 @@ public class AccountResourceIntTest {
 
         userRepository.saveAndFlush(user);
 
-        UserDTO userDTO = new UserDTO(
-            null,                   // id
-            "not-used",          // login
-            "firstname",                // firstName
-            "lastname",                  // lastName
-            "save-existing-email-and-login@example.com",    // email
-            false,                   // activated
-            "http://placehold.it/50x50", //imageUrl
-            Constants.DEFAULT_LANGUAGE,// langKey
-            null,                   // createdBy
-            null,                   // createdDate
-            null,                   // lastModifiedBy
-            null,                   // lastModifiedDate
-            new HashSet<>(Collections.singletonList(AuthoritiesConstants.ADMIN))
-        );
+        UserDTO userDTO = new UserDTO();
+        userDTO.setLogin("not-used");
+        userDTO.setFirstName("firstname");
+        userDTO.setLastName("lastname");
+        userDTO.setEmail("save-existing-email-and-login@example.com");
+        userDTO.setActivated(false);
+        userDTO.setImageUrl("http://placehold.it/50x50");
+        userDTO.setLangKey(Constants.DEFAULT_LANGUAGE);
+        userDTO.setAuthorities(Collections.singleton(AuthoritiesConstants.ADMIN));
 
         restMvc.perform(
             post("/api/account")

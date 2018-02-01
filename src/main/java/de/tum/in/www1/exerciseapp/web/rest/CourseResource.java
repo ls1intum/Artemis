@@ -7,7 +7,6 @@ import de.tum.in.www1.exerciseapp.repository.CourseRepository;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.rest.util.PaginationUtil;
-import io.swagger.annotations.ApiParam;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +90,7 @@ public class CourseResource {
      */
     @GetMapping("/courses")
     @Timed
-    public ResponseEntity<List<Course>> getAllCourses(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Course>> getAllCourses(Pageable pageable) {
         log.debug("REST request to get a page of Courses");
         Page<Course> page = courseRepository.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(page, "/api/courses");

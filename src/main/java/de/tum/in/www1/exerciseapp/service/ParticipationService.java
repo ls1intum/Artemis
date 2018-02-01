@@ -36,9 +36,9 @@ public class ParticipationService {
     }
 
     /**
-     *  Get all the participations.
+     * Get all the participations.
      *
-     *  @return the list of entities
+     * @return the list of entities
      */
     @Transactional(readOnly = true)
     public List<Participation> findAll() {
@@ -47,10 +47,10 @@ public class ParticipationService {
     }
 
     /**
-     *  Get one participation by id.
+     * Get one participation by id.
      *
-     *  @param id the id of the entity
-     *  @return the entity
+     * @param id the id of the entity
+     * @return the entity
      */
     @Transactional(readOnly = true)
     public Participation findOne(Long id) {
@@ -59,9 +59,9 @@ public class ParticipationService {
     }
 
     /**
-     *  Delete the  participation by id.
+     * Delete the participation by id.
      *
-     *  @param id the id of the entity
+     * @param id the id of the entity
      */
     public void delete(Long id) {
         log.debug("Request to delete Participation : {}", id);
