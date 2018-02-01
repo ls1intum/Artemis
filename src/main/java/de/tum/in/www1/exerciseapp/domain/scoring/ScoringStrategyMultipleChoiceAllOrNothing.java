@@ -10,8 +10,8 @@ public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrateg
     @Override
     public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
         //check if the question is invalid: if true: -> return with full points
-        if(question.isInvalid()){
-            question.getScore();
+        if (question.isInvalid()) {
+            return question.getScore();
         }
 
         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && question instanceof MultipleChoiceQuestion) {
@@ -20,8 +20,8 @@ public class ScoringStrategyMultipleChoiceAllOrNothing implements ScoringStrateg
             // iterate through each answer option and compare its correctness with the answer's selection
             for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
                 boolean isSelected = mcAnswer.isSelected(answerOption);
-                //check if the answer is invalid: if true: -> return ignore the answer in calculation
-                if(!answerOption.isInvalid()) {
+                //check if the answer is invalid: if true: -> ignore the answer in calculation
+                if (!answerOption.isInvalid()) {
                     // if the user was wrong about this answer option, the entire answer can no longer be 100% correct
                     // being wrong means either a correct option is not selected, or an incorrect option is selected
                     if ((answerOption.isIsCorrect() && !isSelected) || (!answerOption.isIsCorrect() && isSelected)) {

@@ -12,6 +12,11 @@ import de.tum.in.www1.exerciseapp.domain.*;
 public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements ScoringStrategy {
     @Override
     public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
+        //check if the question is invalid: if true: -> return with full points
+        if (question.isInvalid()) {
+            return question.getScore();
+        }
+
         if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer && question instanceof MultipleChoiceQuestion) {
             MultipleChoiceSubmittedAnswer mcAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
             MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
@@ -24,7 +29,8 @@ public class ScoringStrategyMultipleChoiceProportionalWithPenalty implements Sco
             for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
                 boolean isSelected = mcAnswer.isSelected(answerOption);
                 // correct selection means either a correct option was selected or an incorrect option was not selected
-                if ((answerOption.isIsCorrect() && isSelected) || (!answerOption.isIsCorrect() && !isSelected)) {
+                // invalid answer options are treated as if they were answered correctly
+                if (answerOption.isInvalid() || (answerOption.isIsCorrect() && isSelected) || (!answerOption.isIsCorrect() && !isSelected)) {
                     correctSelections++;
                 } else {
                     incorrectSelections++;
