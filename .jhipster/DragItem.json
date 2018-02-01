@@ -16,6 +16,10 @@
         {
             "fieldName": "text",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "invalid",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20170831094155",

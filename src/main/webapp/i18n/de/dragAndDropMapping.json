@@ -17,6 +17,7 @@
             },
             "dragItemIndex": "Drag Item Index",
             "dropLocationIndex": "Drop Location Index",
+            "invalid": "Invalid",
             "dragItem": "Drag Item",
             "dropLocation": "Drop Location",
             "submittedAnswer": "Submitted Answer",

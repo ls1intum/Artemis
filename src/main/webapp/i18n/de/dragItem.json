@@ -17,6 +17,7 @@
             },
             "pictureFilePath": "Picture File Path",
             "text": "Text",
+            "invalid": "Invalid",
             "question": "Question"
         }
     }

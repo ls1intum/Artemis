@@ -142,6 +142,7 @@ public class QuizExerciseResource {
         QuizExercise originalQuiz = quizExerciseService.findOne(quizExercise.getId());
         if (originalQuiz == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
+
         }
         if (originalQuiz.hasStarted()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizHasStarted", "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
@@ -409,31 +410,8 @@ public class QuizExerciseResource {
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
-        //change existing results if an answer or and question was deleted
-        for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
-
-            Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-
-            for (SubmittedAnswer submittedAnswer : ((QuizSubmission) result.getSubmission()).getSubmittedAnswers()) {
-                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                    // Delete all references to question and answers if the question was deleted
-                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
-                        submittedAnswer.setQuestion(null);
-                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(null);
-                        submittedAnswersToDelete.add(submittedAnswer);
-                    } else {
-                        // find same question in quizExercise
-                        Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
-
-                        // Check if an answerOption was deleted and delete reference to in selectedOptions
-                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
-                    }
-                    // TODO: @Moritz: DragAndDrop Question
-                }
-            }
-            ((QuizSubmission) result.getSubmission()).getSubmittedAnswers().removeAll(submittedAnswersToDelete);
-            quizSubmissionRepository.save((QuizSubmission) result.getSubmission());
-        }
+        //adjust existing results if an answer or and question was deleted
+        quizExerciseService.adjustResultsOnQuizDeletions(quizExercise);
 
         //update QuizExercise
         ResponseEntity<QuizExercise> methodResult = updateQuizExercise(quizExercise);
@@ -482,8 +460,12 @@ public class QuizExerciseResource {
                 if (question instanceof DragAndDropQuestion) {
                     DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                     DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
-                    // TODO: @Moritz: Reconnect whatever needs to be reconnected
-
+                    //reconnect dropLocationCounters
+                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
+                        if (dropLocationCounter.getId() != null) {
+                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
+                        }
+                    }
                     // reconnect dropLocations
                     for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
                         if (dropLocation.getId() != null) {

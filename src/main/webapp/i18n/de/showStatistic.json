@@ -34,6 +34,12 @@
           "correct": "richtig",
           "incorrect": "falsch"
       },
+      "dragAndDropQuestionStatistic": {
+          "xAxes": "DropLocation",
+          "yAxes": "Häufigkeit",
+          "showSampleSolution": "Zeige Beispiellösung",
+          "hideSampleSolution": "Verberge Beispiellösung"
+      },
       "invalid": "(ungültig)"
   }
 }
