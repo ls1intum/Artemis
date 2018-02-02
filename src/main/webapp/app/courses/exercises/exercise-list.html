@@ -21,7 +21,7 @@
     <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch on="$ctrl.participationStatus(exercise)">
         <td>
             <span>{{exercise.title}}</span>
-            <a class="text-primary" has-any-authority="ROLE_ADMIN, ROLE_TA"><i class="fa fa-info-circle fa-fw"
+            <a class="text-primary" has-any-authority="ROLE_ADMIN, ROLE_TA, ROLE_INSTRUCTOR"><i class="fa fa-info-circle fa-fw"
                ui-sref="instructor-dashboard({courseId: exercise.course.id, exerciseId: exercise.id})"></i></a>
 
             <span class="label label-warning" ng-show="!exercise.visibleToStudents" uib-tooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}"
