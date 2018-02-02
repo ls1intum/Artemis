@@ -152,7 +152,7 @@
             return exercise.type === "quiz" &&
                 exercise.isPlannedToStart &&
                 exercise.isOpenForPractice &&
-                moment(exercise.dueDate).isAfter(moment());
+                moment(exercise.dueDate).isBefore(moment());
         }
 
         function isNotOverdue(exercise) {
