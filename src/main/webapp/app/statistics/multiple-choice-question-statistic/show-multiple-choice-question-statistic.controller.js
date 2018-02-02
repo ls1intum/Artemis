@@ -374,16 +374,16 @@
         else{
             for (var i = 0; i < vm.quizExercise.questions.length; i++) {
                 if(vm.quizExercise.questions[i].id === vm.question.id) {
-                    if(vm.quizExercise.question[i - 1].type === "multiple-choice") {
+                    if(vm.quizExercise.questions[i - 1].type === "multiple-choice") {
                         $state.go('multiple-choice-question-statistic-chart', {
                             quizId: vm.quizExercise.id,
                             questionId: vm.quizExercise.questions[i - 1].id
                         });
                     }
-                    if (vm.quizExercise.question[i - 1].type === "drag-and-drop") {
+                    if (vm.quizExercise.questions[i - 1].type === "drag-and-drop") {
                         $state.go('drag-and-drop-question-statistic-chart', {
                             quizId: vm.quizExercise.id,
-                            questionId: vm.quizExercise.questions[i - 1].id
+                            questionId: vm.quizExercise.questionss[i - 1].id
                         });
                     }
                 }
@@ -403,13 +403,13 @@
             else {
                 for (var i = 0; i < vm.quizExercise.questions.length; i++) {
                     if (vm.quizExercise.questions[i].id === vm.question.id) {
-                        if (vm.quizExercise.question[i + 1].type === "multiple-choice") {
+                        if (vm.quizExercise.questions[i + 1].type === "multiple-choice") {
                             $state.go('multiple-choice-question-statistic-chart', {
                                 quizId: vm.quizExercise.id,
                                 questionId: vm.quizExercise.questions[i + 1].id
                             });
                         }
-                        if (vm.quizExercise.question[i + 1].type === "drag-and-drop") {
+                        if (vm.quizExercise.questions[i + 1].type === "drag-and-drop") {
                             $state.go('drag-and-drop-question-statistic-chart', {
                                 quizId: vm.quizExercise.id,
                                 questionId: vm.quizExercise.questions[i + 1].id
