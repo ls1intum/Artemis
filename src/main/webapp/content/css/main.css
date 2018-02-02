@@ -9415,3 +9415,9 @@ a.result-orange:hover {
 
 #feedbackErrorText {
   resize: vertical; }
+
+#field_successful, #field_positive {
+  margin-top: 20px; }
+
+.artemis-label {
+  margin-top: 27px; }
