@@ -21,7 +21,7 @@
                 &nbsp;
                 <a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.buildResultString($ctrl.results[0])}}</a>
             </span>
-            <span ng-if="$ctrl.results[0].participation.exercise.type === 'quiz'" class="text-danger">{{$ctrl.results[0].resultString}}</span>
+            <span ng-if="$ctrl.results[0].participation.exercise.type === 'quiz'">{{$ctrl.results[0].resultString}}</span>
         </span>
         (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
     </span>

@@ -78,14 +78,24 @@
         <td ng-switch on="result.successful">
             <span ng-switch-when="true">
                 <span class="text-success">
-                    <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;{{result.resultString}}
-                </span> (<span am-time-ago="result.completionDate"></span>)
+                    <span ng-if="$ctrl.exercise.type !== 'quiz'">
+                        <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                    </span>
+                    {{result.resultString}}
+                </span>
+                (<span am-time-ago="result.completionDate"></span>)
             </span>
             <span ng-switch-when="false">
                 <span class="text-danger">
-                    <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;<a class="text-danger"
-                                                                   ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>
-                </span> (<span am-time-ago="result.completionDate"></span>)
+                    <span ng-if="$ctrl.exercise.type !== 'quiz'">
+                        <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                        <a class="text-danger" ng-click="$ctrl.showDetails(result)">
+                            {{result.resultString}}
+                        </a>
+                    </span>
+                    <span ng-if="$ctrl.exercise.type === 'quiz'">{{result.resultString}}</span>
+                </span>
+                (<span am-time-ago="result.completionDate"></span>)
             </span>
         </td>
         <td>{{ result.submissionCount }}</td>
