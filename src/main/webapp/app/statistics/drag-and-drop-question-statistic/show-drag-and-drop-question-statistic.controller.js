@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowDragAndDropStatisticController', ShowDragAndDropStatisticController);
 
-    ShowDragAndDropStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'DragAndDropQuestionStatistic', 'DragAndDropQuestionStatisticForStudent', 'DragAndDropQuestionUtil'];
+    ShowDragAndDropStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'DragAndDropQuestionStatistic', 'DragAndDropQuestionStatisticForStudent', 'DragAndDropQuestionUtil', 'ArtemisMarkdown'];
 
-    function ShowDragAndDropStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionStatistic, DragAndDropQuestionStatisticForStudent, DragAndDropQuestionUtil) {
+    function ShowDragAndDropStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionStatistic, DragAndDropQuestionStatisticForStudent, DragAndDropQuestionUtil, ArtemisMarkdown) {
 
         var vm = this;
 
@@ -113,6 +113,7 @@
             if(vm.question === null) {
                 $state.go('courses');
             }
+            vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
             loadLayout();
             vm.questionStatistic = vm.question.questionStatistic;
             loadData();

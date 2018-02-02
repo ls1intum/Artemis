@@ -8,7 +8,7 @@
             <div>
                 <h3>{{vm.question.title}} <span style="color:red;" ng-show="vm.question.invalid"
                                                 data-translate="showStatistic.invalid"></span></h3>
-                <h4>{{vm.question.text}}</h4>
+                <h4 ng-bind-html="vm.questionTextRendered"></h4>
                 <div>
                     <p>&nbsp</p>
                     <div class="col-md-8 text-left"><p id="text" style="font-size: large">

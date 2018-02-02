@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowMultipleChoiceQuestionStatisticController', ShowMultipleChoiceQuestionStatisticController);
 
-    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'MultipleChoiceQuestionStatistic', 'MultipleChoiceQuestionStatisticForStudent'];
+    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'MultipleChoiceQuestionStatistic', 'MultipleChoiceQuestionStatisticForStudent', 'ArtemisMarkdown'];
 
-    function ShowMultipleChoiceQuestionStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, MultipleChoiceQuestionStatistic, MultipleChoiceQuestionStatisticForStudent) {
+    function ShowMultipleChoiceQuestionStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, MultipleChoiceQuestionStatistic, MultipleChoiceQuestionStatisticForStudent, ArtemisMarkdown) {
 
         var vm = this;
 
@@ -112,7 +112,12 @@
             if(vm.question === null) {
                 $state.go('courses');
             }
-            //MultipleChoiceQuestion.get({id: _.get($state,"params.questionId")}).$promise.then(loadQuestionSuccess);
+            //render Markdown-text
+            vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
+            vm.answerTextRendered = vm.question.answerOptions.map( function (answer) {
+                return ArtemisMarkdown.htmlForMarkdown(answer.text);
+            });
+
             vm.questionStatistic = vm.question.questionStatistic;
             loadLayout();
             loadData();
