@@ -34,6 +34,7 @@
         vm.resume = resume;
         vm.startPractice = startPractice;
         vm.canOpenStatistic = canOpenStatistic;
+        vm.isPracticeModeAvailable = isPracticeModeAvailable;
         vm.now = Date.now();
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
@@ -142,8 +143,20 @@
             return "inactive";
         }
 
+        /**
+         * Check if the practice mode is available for the given exercise
+         *
+         * @param exercise {object} the exercise to check for practice mode
+         */
+        function isPracticeModeAvailable(exercise) {
+            return exercise.type === "quiz" &&
+                exercise.isPlannedToStart &&
+                exercise.isOpenForPractice &&
+                moment(exercise.dueDate).isAfter(moment());
+        }
+
         function isNotOverdue(exercise) {
-            return vm.showOverdueExercises || _.isEmpty(exercise.dueDate) || vm.now <= Date.parse(exercise.dueDate);
+            return vm.showOverdueExercises || exercise.type === "quiz" || _.isEmpty(exercise.dueDate) || vm.now <= Date.parse(exercise.dueDate);
         }
 
         vm.isNotOverdue = isNotOverdue;

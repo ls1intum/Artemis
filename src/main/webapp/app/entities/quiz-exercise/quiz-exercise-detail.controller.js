@@ -103,7 +103,7 @@
                 title: "",
                 text: "Enter your question text here",
                 scoringType: "ALL_OR_NOTHING",
-                randomizeOrder: false,
+                randomizeOrder: true,
                 score: 1,
                 type: "multiple-choice",
                 answerOptions: [
@@ -127,7 +127,7 @@
                 title: "",
                 text: "Enter your question text here",
                 scoringType: "ALL_OR_NOTHING",
-                randomizeOrder: false,
+                randomizeOrder: true,
                 score: 1,
                 type: "drag-and-drop",
                 dropLocations: [],

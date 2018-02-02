@@ -118,7 +118,7 @@
                         isOpenForPractice: false,
                         isPlannedToStart: false,
                         releaseDate: new Date(),
-                        status: 1,
+                        randomizeQuestionOrder: true,
                         questions: []
                     };
                 },
