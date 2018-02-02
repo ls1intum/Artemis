@@ -71,8 +71,7 @@
             </div>
             <div class="btn-group flex-btn-group-container" ng-if="exercise.type ==='quiz'">
                 <button class="btn btn-warning btn-sm"
-                        ng-switch-when="quiz-finished"
-                        ng-if="exercise.isOpenForPractice"
+                        ng-if="$ctrl.isPracticeModeAvailable(exercise)"
                         ng-click="$ctrl.startPractice(exercise)"
                         ng-disabled="$ctrl.loading[exercise.id.toString()]">
                     <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-repeat fa-fw"></i>&nbsp;Practice</span>
