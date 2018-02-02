@@ -20,9 +20,10 @@ public class ScoringStrategyDragAndDropAllOrNothing implements ScoringStrategy {
             DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
             // iterate through each drop location and compare its correct mappings with the answer's mapping
             for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
+                DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(dropLocation);
                 //return 0.0 if an dropLocation is solved incorrect and the dropLocation and dragItem is valid
                 if (!dropLocation.isInvalid()
-                    && !dndAnswer.getSelectedDragItemForDropLocation(dropLocation).isInvalid()
+                    && !(selectedDragItem != null && selectedDragItem.isInvalid())
                     && !dropLocation.isDropLocationCorrect(dndAnswer)) {
                     return 0.0;
                 }

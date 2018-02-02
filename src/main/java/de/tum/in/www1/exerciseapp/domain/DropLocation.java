@@ -130,7 +130,7 @@ public class DropLocation implements Serializable {
         return question;
     }
     public Boolean isInvalid() {
-        return invalid;
+        return invalid == null ? false : invalid;
     }
 
     public DropLocation question(DragAndDropQuestion dragAndDropQuestion) {
