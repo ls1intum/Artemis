@@ -169,6 +169,8 @@
                     outstandingWebsocketResponses++;
                     JhiWebsocketService.send(submissionChannel + '/save', data);
                 };
+
+                // TODO: handle disconnect and reconnect events
             }
             if (!participationChannel) {
                 participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
@@ -584,7 +586,7 @@
          * @param quizSubmission The response data from the server
          */
         function onSaveSuccess(quizSubmission) {
-            outstandingWebsocketResponses--;
+            outstandingWebsocketResponses = Math.max(0, outstandingWebsocketResponses - 1);
             if (outstandingWebsocketResponses === 0) {
                 vm.isSaving = false;
                 vm.submission = quizSubmission;
