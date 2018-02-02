@@ -401,7 +401,6 @@ public class QuizExercise extends Exercise implements Serializable {
         this.setReleaseDate(originalQuizExercise.getReleaseDate());
 
         //remove added Questions, which are not allowed to be added
-        // and check the changes -> updates of statistics and results necessary?
         Set<Question> addedQuestions = new HashSet<>();
 
         //check every question
@@ -412,8 +411,13 @@ public class QuizExercise extends Exercise implements Serializable {
                 Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
                 //reset score (not allowed to change)
                 question.setScore(originalQuestion.getScore());
-                //reset invalid if the question is already invalid;
-                question.setInvalid(question.isInvalid() || originalQuestion.isInvalid());
+                //correct invalid = null to invalid = false
+                if (question.isInvalid() == null) {
+                    question.setInvalid(true);
+                }
+                //reset invalid if the question is already invalid
+                question.setInvalid(question.isInvalid()
+                    || (originalQuestion.isInvalid() != null && originalQuestion.isInvalid()));
 
                 //undo all not allowed changes in the answers of the MultipleChoiceQuestion
                 if (question instanceof MultipleChoiceQuestion) {
@@ -454,6 +458,7 @@ public class QuizExercise extends Exercise implements Serializable {
                 // check if a question is  set invalid or if the scoringType has changed
                 // if true an update of the Statistics and Results is necessary
                 updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
+                    (question.isInvalid() && originalQuestion.isInvalid() == null) ||
                     (question.isInvalid() && !originalQuestion.isInvalid()) ||
                     !question.getScoringType().equals(originalQuestion.getScoringType());
 

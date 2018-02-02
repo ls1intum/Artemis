@@ -41,6 +41,14 @@
             'openForPractice': {
                 url: resourceUrl + "/open-for-practice",
                 method: 'POST'
+            },
+            'releaseStatistics': {
+                url: resourceUrl + "/release-statistics",
+                method: 'POST'
+            },
+            'revokeStatistics': {
+                url: resourceUrl + "/revoke-statistics",
+                method: 'POST'
             }
         });
     }
