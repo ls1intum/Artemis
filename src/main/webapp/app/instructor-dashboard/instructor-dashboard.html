@@ -3,10 +3,10 @@
 <jhi-alert></jhi-alert>
 <div>
     <div class="button-toolbar pull-right">
-        <button class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
+        <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
             <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.archive.title">ARCHIVE</span>
         </button>
-        <button class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
+        <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
             <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.cleanup.title">CLEANUP</span>
         </button>
         <button type="submit"
@@ -67,7 +67,7 @@
                 Duration</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'duration' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'duration' && $ctrl.sortReverse}"></i>
         </th>
-        <th></th>
+        <th ng-if="$ctrl.exercise.type !== 'quiz'"></th>
     </tr>
     </thead>
     <tbody>
@@ -93,7 +93,7 @@
             <span ng-show="result.score != null">{{result.score}}%</span>
         </td>
         <td>{{$ctrl.buildDurationString(result.completionDate, result.participation.initializationDate)}} minutes</td>
-        <td>
+        <td ng-if="$ctrl.exercise.type !== 'quiz'">
             <button class="btn btn-default btn-xs" ng-click="$ctrl.goToRepository(result)"><i
                 class="fa fa-code-fork"></i>&nbsp;Repository
             </button>
