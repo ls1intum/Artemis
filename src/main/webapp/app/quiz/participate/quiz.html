@@ -44,6 +44,12 @@
                         <span ng-if="!vm.justSaved">{{vm.lastSavedTimeText}}</span>
                     </span>
                 </div>
+                <div ng-switch-when="default" class="connection-status" ng-class="{'disconnected': vm.disconnected}" ng-switch on="vm.disconnected">
+                    <i class="fa fa-sm fa-circle"></i>
+                    <span ng-switch-when="false" data-translate="artemisApp.quizExercise.connected"></span>
+                    <span ng-switch-when="true" data-translate="artemisApp.quizExercise.disconnected"></span>
+                    <span ng-if="vm.unsavedChanges" data-translate="artemisApp.quizExercise.unsavedChanges" class="in-parentheses"></span>
+                </div>
                 <div ng-switch-when="practice">
                     <span data-translate="artemisApp.quizExercise.practiceMode"></span>
                 </div>

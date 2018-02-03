@@ -27,6 +27,8 @@
         vm.remainingTimeText = "?";
         vm.remainingTimeSeconds = 0;
         vm.timeUntilStart = 0;
+        vm.disconnected = true;
+        vm.unsavedChanges = false;
 
         vm.sendWebsocket = null;
         vm.showingResult = false;
@@ -59,6 +61,8 @@
         var submissionChannel;
         var participationChannel;
         var quizExerciseChannel;
+        var onConnected;
+        var onDisconnected;
 
         /**
          * unsubscribe from all subscribed websocket channels when page is closed
@@ -77,6 +81,12 @@
             if (quizExerciseChannel) {
                 JhiWebsocketService.unsubscribe(quizExerciseChannel);
             }
+            if (onConnected) {
+                JhiWebsocketService.unbind("connect", onConnected);
+            }
+            if (onDisconnected) {
+                JhiWebsocketService.unbind("disconnect", onDisconnected);
+            }
         });
 
         /**
@@ -92,6 +102,19 @@
                     load();
                 }
             });
+
+            // listen to connect / disconnect events
+            onConnected = function () {
+                vm.disconnected = false;
+                if (vm.unsavedChanges && vm.sendWebsocket) {
+                    vm.sendWebsocket(vm.submission);
+                }
+            };
+            JhiWebsocketService.bind("connect", onConnected);
+            onDisconnected = function () {
+                vm.disconnected = true;
+            };
+            JhiWebsocketService.bind("disconnect", onDisconnected);
 
             // load the quiz (and existing submission if quiz has started)
             load();
@@ -575,9 +598,13 @@
          */
         function onSelectionChanged() {
             applySelection();
-            vm.isSaving = true;
             if (vm.sendWebsocket) {
-                vm.sendWebsocket(vm.submission);
+                if (!vm.disconnected) {
+                    vm.isSaving = true;
+                    vm.sendWebsocket(vm.submission);
+                } else {
+                    vm.unsavedChanges = true;
+                }
             }
         }
 
@@ -589,6 +616,7 @@
             outstandingWebsocketResponses = Math.max(0, outstandingWebsocketResponses - 1);
             if (outstandingWebsocketResponses === 0) {
                 vm.isSaving = false;
+                vm.unsavedChanges = false;
                 vm.submission = quizSubmission;
                 applySubmission();
                 if (vm.submission.submissionDate) {

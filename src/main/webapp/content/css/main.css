@@ -8401,7 +8401,6 @@ body.editor .navbar-brand span {
 .edit-quiz-footer,
 .quiz-footer {
   position: fixed;
-  height: 80px;
   bottom: 0;
   left: 0;
   right: 0;
@@ -8411,6 +8410,12 @@ body.editor .navbar-brand span {
   .edit-quiz-footer .container,
   .quiz-footer .container {
     height: 100%; }
+
+.edit-quiz-footer {
+  height: 80px; }
+
+.quiz-footer {
+  height: 90px; }
 
 .edit-quiz-footer-content,
 .quiz-footer-content {
@@ -8870,7 +8875,7 @@ body.editor .navbar-brand span {
 
 .quiz-content {
   margin-top: 6px;
-  margin-bottom: 100px;
+  margin-bottom: 110px;
   min-height: calc(100vh - 320px); }
   .quiz-content .question-index {
     padding: 2px 6px; }
@@ -8893,6 +8898,17 @@ body.editor .navbar-brand span {
 
 .quiz-footer-content .time-critical {
   color: red; }
+
+.quiz-footer-content .connection-status {
+  margin-top: 4px;
+  font-size: 14px;
+  color: green; }
+  .quiz-footer-content .connection-status.disconnected {
+    color: red; }
+  .quiz-footer-content .connection-status i {
+    font-size: 0.8em;
+    vertical-align: 10%;
+    margin-right: 2px; }
 
 .quiz-is-active-background {
   position: fixed;
