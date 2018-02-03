@@ -170,7 +170,7 @@ public abstract class Question implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid;
+        return invalid == null ? false : invalid;
     }
 
     public Question invalid(Boolean invalid) {

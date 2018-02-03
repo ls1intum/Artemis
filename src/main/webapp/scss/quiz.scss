@@ -86,7 +86,6 @@
 .edit-quiz-footer,
 .quiz-footer {
     position: fixed;
-    height: 80px;
     bottom: 0;
     left: 0;
     right: 0;
@@ -99,6 +98,14 @@
     .container {
         height: 100%;
     }
+}
+
+.edit-quiz-footer {
+    height: 80px;
+}
+
+.quiz-footer {
+    height: 90px;
 }
 
 .edit-quiz-footer-content,
@@ -718,7 +725,7 @@
 
 .quiz-content {
     margin-top: 6px;
-    margin-bottom: 100px;
+    margin-bottom: 110px;
 
     min-height: calc(100vh - 320px);
 
@@ -752,6 +759,22 @@
 
     .time-critical {
         color: red;
+    }
+
+    .connection-status {
+        margin-top: 4px;
+        font-size: 14px;
+        color: green;
+
+        &.disconnected {
+            color: red;
+        }
+
+        i {
+            font-size: 0.8em;
+            vertical-align: 10%;
+            margin-right: 2px;
+        }
     }
 }
 

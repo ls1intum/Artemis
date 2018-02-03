@@ -102,7 +102,7 @@ public class AnswerOption implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid;
+        return invalid == null ? false : invalid;
     }
 
     public AnswerOption invalid(Boolean invalid) {
