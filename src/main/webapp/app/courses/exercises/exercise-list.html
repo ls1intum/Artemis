@@ -26,7 +26,7 @@
 
             <span class="label label-warning" ng-if="!exercise.visibleToStudents" uib-tooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}"
                   tooltip-placement="right">Not Released</span>
-            <span class="label label-success" ng-if="$ctrl.isActiveQuiz(exercise)">Active</span>
+            <span class="label label-success" ng-if="$ctrl.isActiveQuiz(exercise)">Live</span>
         </td>
         <td>
             <span am-time-ago="exercise.dueDate" uib-tooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}"
