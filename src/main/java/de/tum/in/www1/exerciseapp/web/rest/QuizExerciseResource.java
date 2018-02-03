@@ -42,8 +42,6 @@ public class QuizExerciseResource {
     private final ParticipationRepository participationRepository;
     private final CourseService courseService;
     private final StatisticService statisticService;
-    private final ResultRepository resultRepository;
-    private final QuizSubmissionRepository quizSubmissionRepository;
     private final AuthorizationCheckService authCheckService;
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -51,16 +49,12 @@ public class QuizExerciseResource {
                                 ParticipationRepository participationRepository,
                                 CourseService courseService,
                                 StatisticService statisticService,
-                                ResultRepository resultRepository,
-                                QuizSubmissionRepository quizSubmissionRepository,
                                 AuthorizationCheckService authCheckService,
                                 SimpMessageSendingOperations messagingTemplate) {
         this.quizExerciseService = quizExerciseService;
         this.participationRepository = participationRepository;
         this.courseService = courseService;
         this.statisticService = statisticService;
-        this.resultRepository = resultRepository;
-        this.quizSubmissionRepository = quizSubmissionRepository;
         this.authCheckService = authCheckService;
         this.messagingTemplate = messagingTemplate;
     }
@@ -159,8 +153,6 @@ public class QuizExerciseResource {
                 }
             }
         }
-        //notify clients via websocket about the release state of the statistics.
-        statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
 
         QuizExercise result = quizExerciseService.save(quizExercise);
 
@@ -337,6 +329,28 @@ public class QuizExerciseResource {
                 // set quiz to open for practice
                 quizExercise.setIsOpenForPractice(true);
                 break;
+            case "release-statistics":
+                // release statistics
+                if (quizExercise.hasStarted() && quizExercise.getRemainingTime() < 0) {
+                    quizExercise.getQuizPointStatistic().setReleased(true);
+                    for ( Question question : quizExercise.getQuestions()){
+                        question.getQuestionStatistic().setReleased(true);
+                    }
+                    //notify clients via websocket about the release state of the statistics.
+                    statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
+                } else {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz hasn't ended yet.\"}");
+                }
+                break;
+            case "revoke-statistics":
+                // revoke statistics
+                quizExercise.getQuizPointStatistic().setReleased(false);
+                for (Question question : quizExercise.getQuestions()) {
+                    question.getQuestionStatistic().setReleased(false);
+                }
+                //notify clients via websocket about the release state of the statistics.
+                statisticService.releaseStatistic(quizExercise, quizExercise.getQuizPointStatistic().isReleased());
+                break;
             default:
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Unknown action: " + action + "\"}");
         }
@@ -404,9 +418,23 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
-            return createQuizExercise(quizExercise);
+            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
         }
         QuizExercise originalQuizExercise = quizExerciseService.findOne(quizExercise.getId());
+        if (originalQuizExercise == null) {
+            return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
+        }
+
+        // fetch course from database to make sure client didn't change groups
+        Course course = courseService.findOne(quizExercise.getCourse().getId());
+        if (course == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
+        }
+        if (!authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
@@ -414,14 +442,16 @@ public class QuizExerciseResource {
         quizExerciseService.adjustResultsOnQuizDeletions(quizExercise);
 
         //update QuizExercise
-        ResponseEntity<QuizExercise> methodResult = updateQuizExercise(quizExercise);
+        reconnectJSONIgnoreAttributes(quizExercise);
+        QuizExercise result = quizExerciseService.save(quizExercise);
 
         // update Statistics and Results
         if (updateOfResultsAndStatisticsNecessary) {
             statisticService.updateStatisticsAndResults(quizExercise);
         }
-
-        return methodResult;
+        return ResponseEntity.ok()
+            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
+            .body(result);
     }
 
     /**
