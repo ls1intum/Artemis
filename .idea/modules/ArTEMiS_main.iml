@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="ArTEMiS:main" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.exerciseapp" external.system.module.type="sourceSet" external.system.module.version="1.4.0" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="ArTEMiS:main" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.exerciseapp" external.system.module.type="sourceSet" external.system.module.version="1.4.1" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Spring" name="Spring">
       <configuration />
     </facet>
-    <facet type="web" name="Web Gradle : ArTEMiS-1.4.0.war">
+    <facet type="web" name="Web Gradle : ArTEMiS-1.4.1.war">
       <configuration>
         <webroots>
           <root url="file://$MODULE_DIR$/../../src/main/webapp" relative="/" />
@@ -46,43 +46,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/marketplace-cli-7.6.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/../../libs/jsap-2.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/cli-7.6.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/httpcore-4.4.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/commons-codec-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -109,7 +73,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/commons-io-2.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/cli-7.6.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -118,7 +82,36 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/commons-io-2.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.mapstruct:mapstruct-processor:1.2.0.Final" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
           <root url="jar://$MODULE_DIR$/../../libs/commons-lang-2.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" scope="PROVIDED" name="Gradle: org.hibernate:hibernate-jpamodelgen:5.2.12.Final" level="project" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/marketplace-cli-7.6.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/httpcore-4.4.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -137,6 +130,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../libs/httpmime-4.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/commons-codec-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
