@@ -35,6 +35,7 @@
         vm.startPractice = startPractice;
         vm.canOpenStatistic = canOpenStatistic;
         vm.isPracticeModeAvailable = isPracticeModeAvailable;
+        vm.isActiveQuiz = isActiveQuiz;
         vm.now = Date.now();
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
@@ -153,6 +154,19 @@
                 exercise.isPlannedToStart &&
                 exercise.isOpenForPractice &&
                 moment(exercise.dueDate).isBefore(moment());
+        }
+
+        /**
+         * Check if the given exercise is an active quiz
+         *
+         * @param exercise {object} the exercise to test
+         * @return {boolean} true, if the exercise is an active quiz, otherwise false
+         */
+        function isActiveQuiz(exercise) {
+            var participationState = participationStatus(exercise);
+            return participationState === "quiz-uninitialized" ||
+                participationState === "quiz-active" ||
+                participationState === "quiz-submitted";
         }
 
         function isNotOverdue(exercise) {
