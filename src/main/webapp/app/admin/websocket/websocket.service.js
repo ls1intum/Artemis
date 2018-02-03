@@ -70,12 +70,14 @@
                 });
                 isConnected = true;
                 consecutiveFailedAttempts = 0;
-                //(re)connect to all existing channels
-                for (var channel in listener) {
+                // (re)connect to all existing channels
+                // Note: use function instead of for-loop to prevent
+                // variable "channel" from being mutated
+                Object.keys(listener).forEach(function (channel) {
                     subscriber = stompClient.subscribe(channel, function(data) {
                         listener[channel].notify(angular.fromJson(data.body));
                     });
-                }
+                });
                 sendActivity();
                 if (!alreadyConnectedOnce) {
                     stateChangeStart = $rootScope.$on('$stateChangeStart', function () {
@@ -98,7 +100,6 @@
             }
         }
 
-        // TODO: This doesn't seem to work after reconnect
         function receive (channel) {
             if(!listener[channel]) {
                 listener[channel] = $q.defer();
