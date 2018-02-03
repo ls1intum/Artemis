@@ -1,12 +1,12 @@
 <div class="dnd-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult && !vm.forceSampleSolution, incorrect: (vm.score || 0) < vm.question.score && !vm.forceSampleSolution}">
     <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
     <p ng-bind-html="vm.rendered.text"></p>
-    <h4 ng-if="vm.question.hint || vm.question.explanation">
+    <h4 ng-if="vm.question.hint || (vm.question.explanation && vm.showResult)">
         <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
             <i class="fa fa-question-circle-o"></i>
             <span data-translate="artemisApp.question.hint"></span>
         </span> &nbsp;
-        <span class="label label-primary" uib-popover-html="vm.rendered.explanation" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.explanation">
+        <span class="label label-primary" uib-popover-html="vm.rendered.explanation" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.explanation && vm.showResult">
             <i class="fa fa-exclamation-circle"></i>
             <span data-translate="artemisApp.question.explanation"></span>
         </span>
