@@ -71,10 +71,7 @@
                 isConnected = true;
                 consecutiveFailedAttempts = 0;
                 //(re)connect to all existing channels
-                for (const channel in listener) {
-                    // NOTE: channel is "const", because "var channel" would be mutated
-                    // by for-loop before callback from stompClient.subscribe() is executed
-                    // (listener[channel] would always access last element in listener)
+                for (var channel in listener) {
                     subscriber = stompClient.subscribe(channel, function(data) {
                         listener[channel].notify(angular.fromJson(data.body));
                     });
@@ -101,6 +98,7 @@
             }
         }
 
+        // TODO: This doesn't seem to work after reconnect
         function receive (channel) {
             if(!listener[channel]) {
                 listener[channel] = $q.defer();
