@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowDragAndDropStatisticController', ShowDragAndDropStatisticController);
 
-    ShowDragAndDropStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'DragAndDropQuestionStatistic', 'DragAndDropQuestionStatisticForStudent', 'DragAndDropQuestionUtil'];
+    ShowDragAndDropStatisticController.$inject = ['$translate','$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent' , 'DragAndDropQuestionStatistic', 'DragAndDropQuestionStatisticForStudent', 'DragAndDropQuestionUtil', 'ArtemisMarkdown'];
 
-    function ShowDragAndDropStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionStatistic, DragAndDropQuestionStatisticForStudent, DragAndDropQuestionUtil) {
+    function ShowDragAndDropStatisticController ($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionStatistic, DragAndDropQuestionStatisticForStudent, DragAndDropQuestionUtil, ArtemisMarkdown) {
 
         var vm = this;
 
@@ -113,6 +113,7 @@
             if(vm.question === null) {
                 $state.go('courses');
             }
+            vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
             loadLayout();
             vm.questionStatistic = vm.question.questionStatistic;
             loadData();
@@ -365,7 +366,6 @@
          * @return {object | null} the mapped drag item, or null, if no drag item has been mapped to this location
          */
         function correctDragItemForDropLocation(dropLocation) {
-            console.log("Bla");
             var mapping = DragAndDropQuestionUtil.solve(vm.question, null).find(function (mapping) {
                 return mapping.dropLocation.id === dropLocation.id;
             });
@@ -387,13 +387,13 @@
             else{
                 for (var i = 0; i < vm.quizExercise.questions.length; i++) {
                     if(vm.quizExercise.questions[i].id === vm.question.id) {
-                        if(vm.quizExercise.question[i - 1].type === "multiple-choice") {
+                        if(vm.quizExercise.questions[i - 1].type === "multiple-choice") {
                             $state.go('multiple-choice-question-statistic-chart', {
                                 quizId: vm.quizExercise.id,
                                 questionId: vm.quizExercise.questions[i - 1].id
                             });
                         }
-                        if (vm.quizExercise.question[i - 1].type === "drag-and-drop") {
+                        if (vm.quizExercise.questions[i - 1].type === "drag-and-drop") {
                             $state.go('drag-and-drop-question-statistic-chart', {
                                 quizId: vm.quizExercise.id,
                                 questionId: vm.quizExercise.questions[i - 1].id
@@ -416,13 +416,13 @@
             else {
                 for (var i = 0; i < vm.quizExercise.questions.length; i++) {
                     if (vm.quizExercise.questions[i].id === vm.question.id) {
-                        if (vm.quizExercise.question[i + 1].type === "multiple-choice") {
+                        if (vm.quizExercise.questions[i + 1].type === "multiple-choice") {
                             $state.go('multiple-choice-question-statistic-chart', {
                                 quizId: vm.quizExercise.id,
                                 questionId: vm.quizExercise.questions[i + 1].id
                             });
                         }
-                        if (vm.quizExercise.question[i + 1].type === "drag-and-drop") {
+                        if (vm.quizExercise.questions[i + 1].type === "drag-and-drop") {
                             $state.go('drag-and-drop-question-statistic-chart', {
                                 quizId: vm.quizExercise.id,
                                 questionId: vm.quizExercise.questions[i + 1].id
@@ -444,15 +444,16 @@
             }
             // check if it's allowed to release the statistics, if not send alert and do nothing
             if (released && releaseButtonDisabled()) {
-                alert("Quiz noch nicht beendet!");
+                alert("Quiz hasn't ended yet!");
                 return;
             }
             if (vm.quizExercise.id) {
                 vm.quizExercise.quizPointStatistic.released = released;
-                for (var i = 0; i < vm.quizExercise.questions.length; i++) {
-                    vm.quizExercise.questions[i].questionStatistic.released = released;
+                if (released) {
+                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {}, function(){}, function () {alert("Error!");})
+                } else {
+                    QuizExercise.revokeStatistics({id: vm.quizExercise.id}, {});
                 }
-                QuizExercise.update(vm.quizExercise);
             }
         }
 
