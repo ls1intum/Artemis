@@ -17,6 +17,7 @@
         var connected = $q.defer();
         var alreadyConnectedOnce = false;
         var isConnected = false;
+        var consecutiveFailedAttempts = 0;
 
         var service = {
             connect: connect,
@@ -35,13 +36,23 @@
         //adapted from https://stackoverflow.com/questions/22361917/automatic-reconnect-with-stomp-js-in-node-js-application
         function stompFailureCallback(error) {
             isConnected = false;
+            consecutiveFailedAttempts++;
             disconnectListener.forEach(function (listener) {
                 listener();
             });
-            setTimeout(connect, 1000);
-            //TODO: after 5 failed attempts in row, increase the timeout to 5 seconds, after 10 failed attempts in row, increase the timeout to 10 seconds
-            console.log('Websocket: Try to reconect in 1 seconds...');
-        };
+            // NOTE: after 5 failed attempts in row, increase the timeout to 5 seconds,
+            // after 10 failed attempts in row, increase the timeout to 10 seconds
+            var timeoutSeconds;
+            if (consecutiveFailedAttempts > 10) {
+                timeoutSeconds = 10;
+            } else if (consecutiveFailedAttempts > 5) {
+                timeoutSeconds = 5;
+            } else {
+                timeoutSeconds = 1;
+            }
+            setTimeout(connect, timeoutSeconds * 1000);
+            console.log("Websocket: Try to reconnect in " + timeoutSeconds + " seconds...");
+        }
 
         function connect () {
             //building absolute path so that websocket doesn't fail when deploying with a context path
@@ -58,6 +69,7 @@
                     listener();
                 });
                 isConnected = true;
+                consecutiveFailedAttempts = 0;
                 //(re)connect to all existing channels
                 for (const channel in listener) {
                     // NOTE: channel is "const", because "var channel" would be mutated
