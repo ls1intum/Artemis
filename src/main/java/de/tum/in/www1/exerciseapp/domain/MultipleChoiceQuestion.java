@@ -156,7 +156,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
                 AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
                 //correct invalid = null to invalid = false
                 if (answer.isInvalid() == null) {
-                    answer.setInvalid(true);
+                    answer.setInvalid(false);
                 }
                 //reset invalid answer if it already set to true (it's not possible to set an answer valid again)
                 answer.setInvalid(answer.isInvalid()

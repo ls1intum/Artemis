@@ -388,7 +388,7 @@
                     if (vm.quizExercise.questions[i - 1].type === "drag-and-drop") {
                         $state.go('drag-and-drop-question-statistic-chart', {
                             quizId: vm.quizExercise.id,
-                            questionId: vm.quizExercise.questionss[i - 1].id
+                            questionId: vm.quizExercise.questions[i - 1].id
                         });
                     }
                 }

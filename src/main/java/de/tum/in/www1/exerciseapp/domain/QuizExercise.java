@@ -413,7 +413,7 @@ public class QuizExercise extends Exercise implements Serializable {
                 question.setScore(originalQuestion.getScore());
                 //correct invalid = null to invalid = false
                 if (question.isInvalid() == null) {
-                    question.setInvalid(true);
+                    question.setInvalid(false);
                 }
                 //reset invalid if the question is already invalid
                 question.setInvalid(question.isInvalid()
