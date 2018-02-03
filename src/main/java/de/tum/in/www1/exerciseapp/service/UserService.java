@@ -41,7 +41,7 @@ public class UserService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
-    private static final String USERS_CACHE = "users";
+    public static final String USERS_CACHE = "users";
 
     private final UserRepository userRepository;
 
@@ -272,7 +272,7 @@ public class UserService {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             String encryptedPassword = passwordEncoder().encode(password);
             user.setPassword(encryptedPassword);
-            cacheManager.getCache("users").evict(user.getLogin());
+            cacheManager.getCache(USERS_CACHE).evict(user.getLogin());
             log.debug("Changed password for User: {}", user);
         });
     }
