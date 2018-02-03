@@ -4,7 +4,6 @@ import de.tum.in.www1.exerciseapp.domain.DragAndDropQuestion;
 import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestion;
 import de.tum.in.www1.exerciseapp.domain.Question;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class ScoringStrategyFactory {
     /**
@@ -27,6 +26,6 @@ public class ScoringStrategyFactory {
                 return new ScoringStrategyDragAndDropProportionalWithPenalty();
             }
         }
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException("Unknown ScoringType!");
     }
 }

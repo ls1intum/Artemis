@@ -104,7 +104,7 @@ public class DragItem implements Serializable {
     }
 
     public Boolean isInvalid() {
-        return invalid;
+        return invalid == null ? false : invalid;
     }
 
     public DragItem question(DragAndDropQuestion dragAndDropQuestion) {
