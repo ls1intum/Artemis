@@ -88,7 +88,7 @@ artemis:
     url: https://jirabruegge.in.tum.de
     user: <user>
     password: <password>
-    instructor-group-name: <admin-group>
+    admin-group-name: <admin-group>
   bitbucket:
     url: https://repobruegge.in.tum.de
     user: <user>
@@ -145,7 +145,7 @@ If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can
           encryption-password: X7RNnJUzeoUpB2EQsK
           jira:
             url: http://localhost:8000
-            instructor-group-name: jira-administrators
+            admin-group-name: jira-administrators
           bitbucket:
             url: http://localhost:7990
             user: bitbucket
