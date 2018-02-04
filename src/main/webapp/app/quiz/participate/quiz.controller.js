@@ -113,6 +113,11 @@
             JhiWebsocketService.bind("connect", onConnected);
             onDisconnected = function () {
                 vm.disconnected = true;
+                if (outstandingWebsocketResponses > 0) {
+                    outstandingWebsocketResponses = 0;
+                    vm.isSaving = false;
+                    vm.unsavedChanges = true;
+                }
             };
             JhiWebsocketService.bind("disconnect", onDisconnected);
 
@@ -192,8 +197,6 @@
                     outstandingWebsocketResponses++;
                     JhiWebsocketService.send(submissionChannel + '/save', data);
                 };
-
-                // TODO: handle disconnect and reconnect events
             }
             if (!participationChannel) {
                 participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
