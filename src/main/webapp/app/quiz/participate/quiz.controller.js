@@ -617,13 +617,6 @@
          */
         function onSaveSuccess(quizSubmission) {
             outstandingWebsocketResponses = Math.max(0, outstandingWebsocketResponses - 1);
-            if (outstandingWebsocketResponses > 0) {
-                // check if received submission is identical to current selection
-                if (submissionsEqual(vm.submission, quizSubmission)) {
-                    // reset outstanding websocket responses
-                    outstandingWebsocketResponses = 0;
-                }
-            }
             if (outstandingWebsocketResponses === 0) {
                 vm.isSaving = false;
                 vm.unsavedChanges = false;
@@ -646,124 +639,6 @@
         var timeoutJustSaved = _.debounce(function () {
             vm.justSaved = false;
         }, 2000);
-
-        /**
-         * Check if the given submissions are identical
-         *
-         * @param submission1 {object} one submission to compare
-         * @param submission2 {object} the other submission to compare
-         * @return {boolean} true, if the given submissions are equal, otherwise false
-         */
-        function submissionsEqual(submission1, submission2) {
-            // stop early if lengths are different
-            if (submission1.submittedAnswers.length !== submission2.submittedAnswers.length) {
-                return false;
-            }
-
-            // find each submittedAnswer in the other submission from both sides
-            return (
-                submission1.submittedAnswers.every(function (submittedAnswer1) {
-                    // find corresponding submitted answer
-                    var submittedAnswer2 = submission2.submittedAnswers.find(function (submittedAnswer2) {
-                        return submittedAnswer1.question.id === submittedAnswer2.question.id;
-                    });
-                    if (submittedAnswer2) {
-                        return submittedAnswersEqual(submittedAnswer1, submittedAnswer2);
-                    } else {
-                        return false;
-                    }
-                })
-                &&
-                submission2.every(function (submittedAnswer2) {
-                    // find corresponding submitted answer
-                    var submittedAnswer1 = submission1.submittedAnswers.find(function (submittedAnswer1) {
-                        return submittedAnswer1.question.id === submittedAnswer2.question.id;
-                    });
-                    if (submittedAnswer1) {
-                        return submittedAnswersEqual(submittedAnswer1, submittedAnswer2);
-                    } else {
-                        return false;
-                    }
-                })
-            );
-        }
-
-        /**
-         * Check if the given submittedAnswers are identical
-         *
-         * @param submittedAnswer1 {object} one submittedAnswer to compare
-         * @param submittedAnswer2 {object} the other submittedAnswer to compare
-         * @return {boolean} true, if the given submittedAnswers are equal, otherwise false
-         */
-        function submittedAnswersEqual(submittedAnswer1, submittedAnswer2) {
-            // stop early if types are different
-            if (submittedAnswer1.type !== submittedAnswer2.type) {
-                return false;
-            }
-            switch (submittedAnswer1.type) {
-                case "multiple-choice":
-                    // check if selectedAnswerOptions are identical
-
-                    // stop early if lengths are different
-                    if (submittedAnswer1.selectedAnswerOptions.length !== submittedAnswer2.selectedAnswerOptions.length) {
-                        return false;
-                    }
-
-                    // find each selectedAnswerOption in the other submittedAnswer from both sides
-                    return (
-                        submittedAnswer1.selectedAnswerOptions.every(function (answerOption1) {
-                            return submittedAnswer2.selectedAnswerOptions.some(function (answerOption2) {
-                                return answerOption1.id === answerOption2.id;
-                            });
-                        })
-                        &&
-                        submittedAnswer2.selectedAnswerOptions.every(function (answerOption2) {
-                            return submittedAnswer1.selectedAnswerOptions.some(function (answerOption1) {
-                                return answerOption1.id === answerOption2.id;
-                            });
-                        })
-                    );
-                case "drag-and-drop":
-                    // check if mappings are identical
-
-                    // stop early if lengths are different
-                    if (submittedAnswer1.mappings.length !== submittedAnswer2.mappings.length) {
-                        return false;
-                    }
-
-                    // find each mapping in the other submittedAnswer from both sides
-                    return (
-                        submittedAnswer1.mappings.every(function (mapping1) {
-                            return submittedAnswer2.mappings.some(function (mapping2) {
-                                return mappingsEqual(mapping1, mapping2);
-                            });
-                        })
-                        &&
-                        submittedAnswer2.mappings.every(function (mapping2) {
-                            return submittedAnswer1.mappings.some(function (mapping1) {
-                                return mappingsEqual(mapping1, mapping2);
-                            });
-                        })
-                    );
-                default:
-                    return false;
-            }
-        }
-
-        /**
-         * Check if the given mappings are identical
-         *
-         * @param mapping1 {object} one mapping to compare
-         * @param mapping2 {object} the other mapping to compare
-         * @return {boolean} true, if mappings are equal, otherwise false
-         */
-        function mappingsEqual(mapping1, mapping2) {
-            return (
-                mapping1.dropLocation.id === mapping2.dropLocation.id
-                &&
-                mapping1.dragItem.id === mapping2.dragItem.id
-            );
-        }
 
         /**
          * This function is called when the user clicks the "Submit" button
