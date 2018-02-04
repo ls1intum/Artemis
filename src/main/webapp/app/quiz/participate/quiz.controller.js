@@ -468,6 +468,8 @@
          * Load the quiz results and update quizExercise with missing fields
          */
         function loadResults() {
+            // TODO: create endpoint to reduce number of REST calls to one
+
             QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
                 // only act on it if quiz has ended
                 if (quizExercise.remainingTime < 0) {
@@ -490,10 +492,20 @@
                             participationId: vm.participation.id,
                             showAllResults: false,
                             ratedOnly: true
-                        }).$promise.then(showResult);
-                    });
+                        }).$promise.then(showResult, onLoadResultError);
+                    }, onLoadResultError);
                 }
-            });
+            }, onLoadResultError);
+        }
+
+        /**
+         * handle error when loading the results
+         *
+         * @param error
+         */
+        function onLoadResultError(error) {
+            console.error(error);
+            alert("Loading results failed. Please wait a few seconds and refresh the page manually.");
         }
 
         /**
@@ -725,8 +737,8 @@
          * @param error
          */
         function onSubmitError(error) {
-            console.log(error);
-            alert("Submitting answers failed! Please try again later.");
+            console.error(error);
+            alert("Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.");
             vm.isSubmitting = false;
         }
     }
