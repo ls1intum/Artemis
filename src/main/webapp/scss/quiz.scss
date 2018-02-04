@@ -775,6 +775,14 @@
             vertical-align: 10%;
             margin-right: 2px;
         }
+
+        @media (max-width: 767px) {
+            font-size: 11px;
+        }
+    }
+
+    @media (max-width: 767px) {
+        font-size: 12px;
     }
 }
 
