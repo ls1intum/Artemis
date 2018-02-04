@@ -8909,6 +8909,13 @@ body.editor .navbar-brand span {
     font-size: 0.8em;
     vertical-align: 10%;
     margin-right: 2px; }
+  @media (max-width: 767px) {
+    .quiz-footer-content .connection-status {
+      font-size: 11px; } }
+
+@media (max-width: 767px) {
+  .quiz-footer-content {
+    font-size: 12px; } }
 
 .quiz-is-active-background {
   position: fixed;
