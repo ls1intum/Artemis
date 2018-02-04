@@ -56,7 +56,7 @@ public class QuizSubmissionService {
 
     @SubscribeMapping("/topic/quizSubmissions/{submissionId}/save")
     public void sendSubmission(@Payload QuizSubmission quizSubmission, Principal principal) {
-        log.warn("Received Submission over Websocket: {}", quizSubmission);
+        log.info("Received Submission over Websocket: {}", quizSubmission);
 
         // do nothing if id is missing
         if (quizSubmission.getId() == null) {
