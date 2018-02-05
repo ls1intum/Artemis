@@ -20,10 +20,12 @@
             "hint": "Hint",
             "explanation": "Explanation",
             "score": "Points",
-            "randomizeOrder": "Present Answers in Random Order",
+            "randomizeOrder": "Random Order",
             "scoringType": "Scoring Type",
             "exercise": "Exercise",
-            "yourScore": "Your Score"
+            "yourScore": "Your Score",
+            "invalid": "Invalid",
+            "invalidText": "This question is invalid and will be assess as complete correct"
         }
     }
 }

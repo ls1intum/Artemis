@@ -41,11 +41,8 @@ public class DragItemResourceIntTest {
     private static final String DEFAULT_TEXT = "AAAAAAAAAA";
     private static final String UPDATED_TEXT = "BBBBBBBBBB";
 
-    private static final Integer DEFAULT_CORRECT_SCORE = 1;
-    private static final Integer UPDATED_CORRECT_SCORE = 2;
-
-    private static final Integer DEFAULT_INCORRECT_SCORE = 1;
-    private static final Integer UPDATED_INCORRECT_SCORE = 2;
+    private static final Boolean DEFAULT_INVALID = false;
+    private static final Boolean UPDATED_INVALID = true;
 
     @Autowired
     private DragItemRepository dragItemRepository;
@@ -86,8 +83,7 @@ public class DragItemResourceIntTest {
         DragItem dragItem = new DragItem()
             .pictureFilePath(DEFAULT_PICTURE_FILE_PATH)
             .text(DEFAULT_TEXT)
-            .correctScore(DEFAULT_CORRECT_SCORE)
-            .incorrectScore(DEFAULT_INCORRECT_SCORE);
+            .invalid(DEFAULT_INVALID);
         return dragItem;
     }
 
@@ -113,8 +109,7 @@ public class DragItemResourceIntTest {
         DragItem testDragItem = dragItemList.get(dragItemList.size() - 1);
         assertThat(testDragItem.getPictureFilePath()).isEqualTo(DEFAULT_PICTURE_FILE_PATH);
         assertThat(testDragItem.getText()).isEqualTo(DEFAULT_TEXT);
-        assertThat(testDragItem.getCorrectScore()).isEqualTo(DEFAULT_CORRECT_SCORE);
-        assertThat(testDragItem.getIncorrectScore()).isEqualTo(DEFAULT_INCORRECT_SCORE);
+        assertThat(testDragItem.isInvalid()).isEqualTo(DEFAULT_INVALID);
     }
 
     @Test
@@ -149,8 +144,7 @@ public class DragItemResourceIntTest {
             .andExpect(jsonPath("$.[*].id").value(hasItem(dragItem.getId().intValue())))
             .andExpect(jsonPath("$.[*].pictureFilePath").value(hasItem(DEFAULT_PICTURE_FILE_PATH.toString())))
             .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())))
-            .andExpect(jsonPath("$.[*].correctScore").value(hasItem(DEFAULT_CORRECT_SCORE)))
-            .andExpect(jsonPath("$.[*].incorrectScore").value(hasItem(DEFAULT_INCORRECT_SCORE)));
+            .andExpect(jsonPath("$.[*].invalid").value(hasItem(DEFAULT_INVALID.booleanValue())));
     }
 
     @Test
@@ -166,8 +160,7 @@ public class DragItemResourceIntTest {
             .andExpect(jsonPath("$.id").value(dragItem.getId().intValue()))
             .andExpect(jsonPath("$.pictureFilePath").value(DEFAULT_PICTURE_FILE_PATH.toString()))
             .andExpect(jsonPath("$.text").value(DEFAULT_TEXT.toString()))
-            .andExpect(jsonPath("$.correctScore").value(DEFAULT_CORRECT_SCORE))
-            .andExpect(jsonPath("$.incorrectScore").value(DEFAULT_INCORRECT_SCORE));
+            .andExpect(jsonPath("$.invalid").value(DEFAULT_INVALID.booleanValue()));
     }
 
     @Test
@@ -190,8 +183,7 @@ public class DragItemResourceIntTest {
         updatedDragItem
             .pictureFilePath(UPDATED_PICTURE_FILE_PATH)
             .text(UPDATED_TEXT)
-            .correctScore(UPDATED_CORRECT_SCORE)
-            .incorrectScore(UPDATED_INCORRECT_SCORE);
+            .invalid(UPDATED_INVALID);
 
         restDragItemMockMvc.perform(put("/api/drag-items")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -204,8 +196,7 @@ public class DragItemResourceIntTest {
         DragItem testDragItem = dragItemList.get(dragItemList.size() - 1);
         assertThat(testDragItem.getPictureFilePath()).isEqualTo(UPDATED_PICTURE_FILE_PATH);
         assertThat(testDragItem.getText()).isEqualTo(UPDATED_TEXT);
-        assertThat(testDragItem.getCorrectScore()).isEqualTo(UPDATED_CORRECT_SCORE);
-        assertThat(testDragItem.getIncorrectScore()).isEqualTo(UPDATED_INCORRECT_SCORE);
+        assertThat(testDragItem.isInvalid()).isEqualTo(UPDATED_INVALID);
     }
 
     @Test

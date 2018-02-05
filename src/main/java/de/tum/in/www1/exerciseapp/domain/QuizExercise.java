@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.exerciseapp.config.Constants;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -200,7 +201,16 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
      */
     public Long getRemainingTime() {
-        return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+        return hasStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+    }
+
+    /**
+     * Get the remaining time until the quiz starts in seconds
+     *
+     * @return null, if the quiz isn't planned to start, otherwise the time until the quiz starts in seconds (negative if the quiz has already started)
+     */
+    public Long getTimeUntilPlannedStart() {
+        return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getReleaseDate()) : null;
     }
 
     /**
@@ -225,6 +235,38 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public Boolean shouldFilterForStudents() {
         return !hasStarted() || isSubmissionAllowed();
+    }
+
+    /**
+     * Check if the quiz is valid. This means, the quiz needs a title, a valid duration,
+     * at least one question, and all questions must be valid
+     *
+     * @return true if the quiz is valid, otherwise false
+     */
+    @JsonIgnore
+    public Boolean isValid() {
+        // check title
+        if (getTitle() == null || getTitle().equals("")){
+            return false;
+        }
+
+        // check duration
+        if (getDuration() == null || getDuration() < 0) {
+            return false;
+        }
+
+        // check questions
+        if (getQuestions() == null || getQuestions().isEmpty()) {
+            return false;
+        }
+        for (Question question : getQuestions()) {
+            if (!question.isValid()) {
+                return false;
+            }
+        }
+
+        // passed all checks
+        return true;
     }
 
     public List<Question> getQuestions() {
@@ -290,9 +332,8 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     @Override
-    public Boolean getIsVisibleToStudents() {
-        //TODO: what happens if release date is null?
-        return isVisibleBeforeStart || (isPlannedToStart && releaseDate.isBefore(ZonedDateTime.now()));
+    public Boolean isVisibleToStudents() {
+        return isVisibleBeforeStart || (isPlannedToStart && releaseDate != null && releaseDate.isBefore(ZonedDateTime.now()));
     }
 
     /**
@@ -325,6 +366,120 @@ public class QuizExercise extends Exercise implements Serializable {
             }
         }
         return score;
+    }
+
+    /**
+     * Get question by ID
+     *
+     * @param questionId the ID of the question, which should be found
+     * @return the question with the given ID, or null if the question is not contained in the quizExercise
+     */
+    public Question findQuestionById (Long questionId) {
+
+        if (questionId != null) {
+            // iterate through all questions of this quiz
+            for (Question question : questions) {
+                // return question if the IDs are equal
+                if (question.getId().equals(questionId)) {
+                    return question;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, question.points, adding Questions and Answers)
+     *
+     * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise
+     *
+     */
+    public void undoUnallowedChanges ( QuizExercise originalQuizExercise){
+
+        //reset unchangeable attributes: ( dueDate, releaseDate, question.points)
+        this.setDueDate(originalQuizExercise.getDueDate());
+        this.setReleaseDate(originalQuizExercise.getReleaseDate());
+
+        //remove added Questions, which are not allowed to be added
+        Set<Question> addedQuestions = new HashSet<>();
+
+        //check every question
+        for (Question question : questions) {
+            //check if the question were already in the originalQuizExercise -> if not it's an added question
+            if (originalQuizExercise.getQuestions().contains(question)) {
+                // find original unchanged question
+                Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
+                //reset score (not allowed to change)
+                question.setScore(originalQuestion.getScore());
+                //correct invalid = null to invalid = false
+                if (question.isInvalid() == null) {
+                    question.setInvalid(false);
+                }
+                //reset invalid if the question is already invalid
+                question.setInvalid(question.isInvalid()
+                    || (originalQuestion.isInvalid() != null && originalQuestion.isInvalid()));
+
+                //undo all not allowed changes in the answers of the MultipleChoiceQuestion
+                if (question instanceof MultipleChoiceQuestion) {
+                    ((MultipleChoiceQuestion) question).undoUnallowedAnswerChanges((MultipleChoiceQuestion) originalQuestion);
+                }
+
+                if (question instanceof DragAndDropQuestion) {
+                    // TODO: @Moritz: check changes in DragAndDropQuestions
+                }
+
+            } else {
+                // question is added (not allowed), mark question for remove
+                addedQuestions.add(question);
+            }
+        }
+        // remove all added questions
+        questions.removeAll(addedQuestions);
+    }
+
+    /**
+     * check if an update of the Results and Statistics is necessary after the re-evaluation of this quiz
+     *
+     * @param originalQuizExercise the original QuizExercise object, which will be compared with this quizExercise
+     *
+     * @return a boolean which is true if an update is necessary and false if not
+     */
+    public boolean checkIfRecalculationIsNecessary (QuizExercise originalQuizExercise){
+
+        boolean updateOfResultsAndStatisticsNecessary = false;
+
+        //check every question
+        for (Question question : questions) {
+            //check if the question were already in the originalQuizExercise
+            if (originalQuizExercise.getQuestions().contains(question)) {
+                // find original unchanged question
+                Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
+
+                // check if a question is  set invalid or if the scoringType has changed
+                // if true an update of the Statistics and Results is necessary
+                updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
+                    (question.isInvalid() && originalQuestion.isInvalid() == null) ||
+                    (question.isInvalid() && !originalQuestion.isInvalid()) ||
+                    !question.getScoringType().equals(originalQuestion.getScoringType());
+
+                // check if the answers-changes make an update of the statistics and results necessary
+                if (question instanceof MultipleChoiceQuestion) {
+                    updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
+                        ((MultipleChoiceQuestion) question).checkAnswersIfRecalculationIsNecessary((MultipleChoiceQuestion) originalQuestion);
+                }
+
+                if (question instanceof DragAndDropQuestion) {
+                    // TODO: @Moritz: check changes in DragAndDropQuestions
+                }
+
+            }
+        }
+        // check if an question was deleted (not allowed added quistions are not relevant)
+        // if true an update of the Statistics and Results is necessary
+        if (questions.size() != originalQuizExercise.getQuestions().size()) {
+            updateOfResultsAndStatisticsNecessary = true;
+        }
+        return updateOfResultsAndStatisticsNecessary;
     }
 
     /**

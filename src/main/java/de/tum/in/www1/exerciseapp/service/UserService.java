@@ -41,8 +41,6 @@ public class UserService {
 
     private final Logger log = LoggerFactory.getLogger(UserService.class);
 
-    private static final String USERS_CACHE = "users";
-
     private final UserRepository userRepository;
 
     private final PersistentTokenRepository persistentTokenRepository;
@@ -91,7 +89,7 @@ public class UserService {
                 // activate given user for the registration key.
                 user.setActivated(true);
                 user.setActivationKey(null);
-                cacheManager.getCache(USERS_CACHE).evict(user.getLogin());
+                cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
                 log.debug("Activated user: {}", user);
                 return user;
             });
@@ -106,7 +104,7 @@ public class UserService {
                 user.setPassword(passwordEncoder().encode(newPassword));
                 user.setResetKey(null);
                 user.setResetDate(null);
-                cacheManager.getCache(USERS_CACHE).evict(user.getLogin());
+                cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
                 return user;
            });
     }
@@ -117,7 +115,7 @@ public class UserService {
             .map(user -> {
                 user.setResetKey(RandomUtil.generateResetKey());
                 user.setResetDate(Instant.now());
-                cacheManager.getCache(USERS_CACHE).evict(user.getLogin());
+                cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
                 return user;
             });
     }
@@ -217,7 +215,7 @@ public class UserService {
             user.setEmail(email);
             user.setLangKey(langKey);
             user.setImageUrl(imageUrl);
-            cacheManager.getCache(USERS_CACHE).evict(user.getLogin());
+            cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
             log.debug("Changed Information for User: {}", user);
         });
     }
@@ -244,7 +242,7 @@ public class UserService {
                 userDTO.getAuthorities().stream()
                     .map(authorityRepository::findOne)
                     .forEach(managedAuthorities::add);
-                cacheManager.getCache(USERS_CACHE).evict(user.getLogin());
+                cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
                 log.debug("Changed Information for User: {}", user);
                 return user;
             })
@@ -254,7 +252,7 @@ public class UserService {
     public void deleteUser(String login) {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             userRepository.delete(user);
-            cacheManager.getCache(USERS_CACHE).evict(login);
+            cacheManager.getCache(UserRepository.USERS_CACHE).evict(login);
             log.debug("Deleted User: {}", user);
         });
     }
@@ -263,7 +261,7 @@ public class UserService {
         userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).ifPresent(user -> {
             String encryptedPassword = passwordEncoder().encode(password);
             user.setPassword(encryptedPassword);
-            cacheManager.getCache(USERS_CACHE).evict(user.getLogin());
+            cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
             log.debug("Changed password for User: {}", user);
         });
     }
@@ -272,7 +270,7 @@ public class UserService {
         userRepository.findOneByLogin(login).ifPresent(user -> {
             String encryptedPassword = passwordEncoder().encode(password);
             user.setPassword(encryptedPassword);
-            cacheManager.getCache("users").evict(user.getLogin());
+            cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
             log.debug("Changed password for User: {}", user);
         });
     }
@@ -368,7 +366,7 @@ public class UserService {
         for (User user : users) {
             log.debug("Deleting not activated user {}", user.getLogin());
             userRepository.delete(user);
-            cacheManager.getCache(USERS_CACHE).evict(user.getLogin());
+            cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin());
         }
     }
 

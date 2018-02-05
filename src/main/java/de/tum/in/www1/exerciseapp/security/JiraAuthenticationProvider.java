@@ -42,8 +42,8 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
     private final Logger log = LoggerFactory.getLogger(JiraAuthenticationProvider.class);
 
-    @Value("${artemis.jira.instructor-group-name}")
-    private String INSTRUCTOR_GROUP_NAME;
+    @Value("${artemis.jira.admin-group-name}")
+    private String ADMIN_GROUP_NAME;
 
     @Value("${artemis.jira.url}")
     private URL JIRA_URL;
@@ -151,15 +151,22 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
     private Set<Authority> buildAuthoritiesFromGroups(List<String> groups) {
         Set<Authority> authorities = new HashSet<>();
 
-        // Check if user is instructor
-        if (groups.contains(INSTRUCTOR_GROUP_NAME)) {
+        // Check if user is admin
+        if (groups.contains(ADMIN_GROUP_NAME)) {
             Authority adminAuthority = new Authority();
             adminAuthority.setName(AuthoritiesConstants.ADMIN);
             authorities.add(adminAuthority);
         }
 
+        // Check if user is an instructor in any course
+        if (groups.stream().anyMatch(group -> courseService.getAllInstructorGroupNames().contains(group))) {
+            Authority instructorAuthority = new Authority();
+            instructorAuthority.setName(AuthoritiesConstants.INSTRUCTOR);
+            authorities.add(instructorAuthority);
+        }
+
         // Check if user is a tutor in any course
-        if (groups.stream().anyMatch(g -> courseService.getAllTeachingAssistantGroupNames().contains(g))) {
+        if (groups.stream().anyMatch(group -> courseService.getAllTeachingAssistantGroupNames().contains(group))) {
             Authority taAuthority = new Authority();
             taAuthority.setName(AuthoritiesConstants.TEACHING_ASSISTANT);
             authorities.add(taAuthority);

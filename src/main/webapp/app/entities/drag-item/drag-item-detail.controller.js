@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('DragItemDetailController', DragItemDetailController);
 
-    DragItemDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'DragItem', 'DropLocation', 'DragAndDropQuestion'];
+    DragItemDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'DragItem', 'DragAndDropQuestion'];
 
-    function DragItemDetailController($scope, $rootScope, $stateParams, previousState, entity, DragItem, DropLocation, DragAndDropQuestion) {
+    function DragItemDetailController($scope, $rootScope, $stateParams, previousState, entity, DragItem, DragAndDropQuestion) {
         var vm = this;
 
         vm.dragItem = entity;

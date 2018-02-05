@@ -1,11 +1,13 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
+
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -50,6 +52,7 @@ public class Participation implements Serializable {
     private User student;
 
     @ManyToOne
+    @JsonIgnoreProperties({"quizPointStatistic", "questions"})
     private Exercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

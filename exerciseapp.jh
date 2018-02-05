@@ -82,13 +82,14 @@ entity SubmittedAnswer {            //abstract
 }
 
 entity Question {                   //abstract
-	title String
-    text String
-    hint String
-    explanation String
-    score Integer
-    scoringType ScoringType
-    randomizeOrder Boolean
+	title String,
+    text String,
+    hint String,
+    explanation String,
+    score Integer,
+    scoringType ScoringType,
+    randomizeOrder Boolean,
+    invalid Boolean
 }
 
 enum ScoringType {
@@ -102,10 +103,11 @@ entity MultipleChoiceQuestion {             //extends Question
 }
 
 entity AnswerOption {
-	text String
-    hint String
-    explanation String
-    isCorrect Boolean
+	text String,
+    hint String,
+    explanation String,
+    isCorrect Boolean,
+    invalid Boolean
 }
 
 entity MultipleChoiceSubmittedAnswer {      //extends SubmittedAnswer
@@ -121,13 +123,13 @@ entity DropLocation {
     posY Integer
     width Integer
     height Integer
+    invalid Boolean
 }
 
 entity DragItem {
 	pictureFilePath String
     text String
-    correctScore Integer
-    incorrectScore Integer
+    invalid Boolean
 }
 
 entity Participation (participation) {
@@ -146,7 +148,8 @@ entity Result (result) {
   completionDate ZonedDateTime,
   successful Boolean,
   buildArtifact Boolean,
-  score Long
+  score Long,
+  rated Boolean
 }
 
 entity Feedback(feedback) {
@@ -192,8 +195,10 @@ entity DragAndDropSubmittedAnswer {      //extends SubmittedAnswer
 
 }
 
-entity DragAndDropAssignment {
-
+entity DragAndDropMapping {
+	dragItemIndex Integer
+    dropLocationIndex Integer
+    invalid Boolean
 }
 
 relationship OneToMany {
@@ -209,7 +214,8 @@ relationship OneToMany {
   DragAndDropQuestion{dropLocations} to DropLocation{question},
   DragAndDropQuestion{dragItems} to DragItem{question},
   QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
-  DragAndDropSubmittedAnswer{assignments} to DragAndDropAssignment{submittedAnswer}
+  DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
+  DragAndDropQuestion{correctMappings} to DragAndDropMapping{question}
 }
 
 relationship OneToOne {
@@ -218,7 +224,6 @@ relationship OneToOne {
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
     Result{submission} to Submission,
-    DragItem{correctLocation} to DropLocation,
     LtiUserId{user} to User
 }
 
@@ -227,8 +232,8 @@ relationship ManyToOne {
   LtiOutcomeUrl{user} to User,
   LtiOutcomeUrl{exercise} to Exercise,
   SubmittedAnswer{question} to Question
-  DragAndDropAssignment{item} to DragItem,
-  DragAndDropAssignment{location} to DropLocation
+  DragAndDropMapping{dragItem} to DragItem,
+  DragAndDropMapping{dropLocation} to DropLocation
 }
 
 relationship ManyToMany {

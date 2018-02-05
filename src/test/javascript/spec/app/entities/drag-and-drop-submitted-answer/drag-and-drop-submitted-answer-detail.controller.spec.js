@@ -4,7 +4,7 @@ describe('Controller Tests', function() {
 
     describe('DragAndDropSubmittedAnswer Management Detail Controller', function() {
         var $scope, $rootScope;
-        var MockEntity, MockPreviousState, MockDragAndDropSubmittedAnswer, MockDragAndDropAssignment;
+        var MockEntity, MockPreviousState, MockDragAndDropSubmittedAnswer, MockDragAndDropMapping;
         var createController;
 
         beforeEach(inject(function($injector) {
@@ -13,8 +13,8 @@ describe('Controller Tests', function() {
             MockEntity = jasmine.createSpy('MockEntity');
             MockPreviousState = jasmine.createSpy('MockPreviousState');
             MockDragAndDropSubmittedAnswer = jasmine.createSpy('MockDragAndDropSubmittedAnswer');
-            MockDragAndDropAssignment = jasmine.createSpy('MockDragAndDropAssignment');
-            
+            MockDragAndDropMapping = jasmine.createSpy('MockDragAndDropMapping');
+
 
             var locals = {
                 '$scope': $scope,
@@ -22,7 +22,7 @@ describe('Controller Tests', function() {
                 'entity': MockEntity,
                 'previousState': MockPreviousState,
                 'DragAndDropSubmittedAnswer': MockDragAndDropSubmittedAnswer,
-                'DragAndDropAssignment': MockDragAndDropAssignment
+                'DragAndDropMapping': MockDragAndDropMapping
             };
             createController = function() {
                 $injector.get('$controller')("DragAndDropSubmittedAnswerDetailController", locals);

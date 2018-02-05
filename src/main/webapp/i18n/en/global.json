@@ -38,6 +38,7 @@
                 "dragAndDropStatistic": "Drag And Drop Statistic",
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
+                "dragAndDropMapping": "Drag And Drop Mapping",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -125,7 +126,9 @@
             "preview": "Preview",
             "cleanup": "Cleanup",
             "archive": "Archive",
-            "submit": "Submit"
+            "submit": "Submit",
+            "re-evaluate": "Re-evaluate",
+            "close": "Close"
         },
         "detail": {
             "field": "Field",
@@ -150,7 +153,8 @@
             "maxbytes": "This field cannot be more than {{ max }} bytes.",
             "pattern": "This field should follow pattern for {{ pattern }}.",
             "number": "This field should be a number.",
-            "datetimelocal": "This field should be a date and time."
+            "datetimelocal": "This field should be a date and time.",
+            "patternLogin": "This field can only contain letters, digits and e-mail addresses."
         }
     },
     "error": {

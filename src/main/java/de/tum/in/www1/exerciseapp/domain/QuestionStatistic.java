@@ -106,7 +106,7 @@ public abstract class QuestionStatistic extends Statistic implements Serializabl
 
     public abstract void addResult(SubmittedAnswer submittedAnswer, boolean rated);
     public abstract void removeOldResult(SubmittedAnswer submittedAnswer, boolean rated);
-
+    public abstract void resetStatistic();
 
 
 }

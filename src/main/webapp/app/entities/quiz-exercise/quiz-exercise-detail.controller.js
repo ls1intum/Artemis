@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizExerciseDetailController', QuizExerciseDetailController);
 
-    QuizExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity'];
+    QuizExerciseDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity', '$translate', 'DragAndDropQuestionUtil'];
 
-    function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity) {
+    function QuizExerciseDetailController($scope, $rootScope, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity, $translate, DragAndDropQuestionUtil) {
         var vm = this;
 
         prepareEntity(entity);
@@ -59,12 +59,16 @@
         vm.showDropdown = showDropdown;
         vm.pendingChanges = pendingChanges;
         vm.validQuiz = validQuiz;
+        vm.invalidReasons = invalidReasons;
+        vm.invalidReasonsHTML = invalidReasonsHTML;
         vm.openCalendar = openCalendar;
-        vm.addQuestion = addQuestion;
+        vm.addMultipleChoiceQuestion = addMultipleChoiceQuestion;
+        vm.addDragAndDropQuestion = addDragAndDropQuestion;
         vm.deleteQuestion = deleteQuestion;
         vm.onQuestionUpdated = onQuestionUpdated;
         vm.save = save;
         vm.onDurationChange = onDurationChange;
+        vm.hasSavedQuizStarted = hasSavedQuizStarted;
 
         var unsubscribe = $rootScope.$on('artemisApp:quizExerciseUpdate', function (event, result) {
             vm.quizExercise = result;
@@ -92,14 +96,14 @@
         }
 
         /**
-         * Add an empty question to the quiz
+         * Add an empty multiple choice question to the quiz
          */
-        function addQuestion() {
+        function addMultipleChoiceQuestion() {
             vm.quizExercise.questions = vm.quizExercise.questions.concat([{
                 title: "",
                 text: "Enter your question text here",
                 scoringType: "ALL_OR_NOTHING",
-                randomizeOrder: false,
+                randomizeOrder: true,
                 score: 1,
                 type: "multiple-choice",
                 answerOptions: [
@@ -112,6 +116,23 @@
                         text: "Enter an incorrect answer option here"
                     }
                 ]
+            }]);
+        }
+
+        /**
+         * Add an empty drag and drop question to the quiz
+         */
+        function addDragAndDropQuestion() {
+            vm.quizExercise.questions = vm.quizExercise.questions.concat([{
+                title: "",
+                text: "Enter your question text here",
+                scoringType: "ALL_OR_NOTHING",
+                randomizeOrder: true,
+                score: 1,
+                type: "drag-and-drop",
+                dropLocations: [],
+                dragItems: [],
+                correctMappings: []
             }]);
         }
 
@@ -155,13 +176,106 @@
          * @returns {boolean} true if valid, false otherwise
          */
         function validQuiz() {
-            return vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration;
+            var isGenerallyValid = vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration && vm.quizExercise.questions && vm.quizExercise.questions.length;
+            var areAllQuestionsValid = vm.quizExercise.questions.every(function (question) {
+                switch (question.type) {
+                    case "multiple-choice":
+                        return question.title && question.title !== "" && question.answerOptions.some(function (answerOption) {
+                            return answerOption.isCorrect;
+                        });
+                    case "drag-and-drop":
+                        return question.title && question.title !== "" && question.correctMappings && question.correctMappings.length > 0 && DragAndDropQuestionUtil.solve(question).length && DragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question);
+                    default:
+                        return question.title && question.title !== "";
+                }
+            });
+
+            return isGenerallyValid && areAllQuestionsValid;
+        }
+
+        /**
+         * Get the reasons, why the quiz is invalid
+         *
+         * @returns {Array} array of objects with fields "translateKey" and "translateValues"
+         */
+        function invalidReasons() {
+            var reasons = [];
+            if (!vm.quizExercise.title || vm.quizExercise.title === "") {
+                reasons.push({
+                    translateKey: "artemisApp.quizExercise.invalidReasons.quizTitle",
+                    translateValues: {}
+                });
+            }
+            if (!vm.quizExercise.duration) {
+                reasons.push({
+                    translateKey: "artemisApp.quizExercise.invalidReasons.quizDuration",
+                    translateValues: {}
+                });
+            }
+            if (!vm.quizExercise.questions || vm.quizExercise.questions.length === 0) {
+                reasons.push({
+                    translateKey: "artemisApp.quizExercise.invalidReasons.noQuestion",
+                    translateValues: {}
+                });
+            }
+            vm.quizExercise.questions.forEach(function (question, index) {
+                if (!question.title || question.title === "") {
+                    reasons.push({
+                        translateKey: "artemisApp.quizExercise.invalidReasons.questionTitle",
+                        translateValues: {index: index + 1}
+                    });
+                }
+                if (question.type === "multiple-choice") {
+                    if (!question.answerOptions.some(function (answerOption) {
+                            return answerOption.isCorrect;
+                        })) {
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.questionCorrectAnswerOption",
+                            translateValues: {index: index + 1}
+                        });
+                    }
+                }
+                if (question.type === "drag-and-drop") {
+                    if (!question.correctMappings || question.correctMappings.length === 0) {
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.questionCorrectMapping",
+                            translateValues: {index: index + 1}
+                        });
+                    } else if (DragAndDropQuestionUtil.solve(question).length === 0) {
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.questionUnsolvable",
+                            translateValues: {index: index + 1}
+                        });
+                    }
+                    if (!DragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question)) {
+                        reasons.push({
+                            translateKey: "artemisApp.quizExercise.invalidReasons.misleadingCorrectMapping",
+                            translateValues: {index: index + 1}
+                        });
+                    }
+                }
+            });
+            return reasons;
+        }
+
+        /**
+         * Get the reasons, why the quiz is invalid as an HTML string
+         *
+         * @return {string} the reasons in HTML
+         */
+        function invalidReasonsHTML() {
+            return invalidReasons().map(function (reason) {
+                return "<p>" + $translate.instant(reason.translateKey, reason.translateValues) + "</p>";
+            }).join("");
         }
 
         /**
          * Save the quiz to the server
          */
         function save() {
+            if (hasSavedQuizStarted() || !pendingChanges() || !validQuiz()) {
+                return;
+            }
             vm.isSaving = true;
             if (vm.quizExercise.id) {
                 QuizExercise.update(vm.quizExercise, onSaveSuccess, onSaveError);
@@ -213,6 +327,19 @@
             var duration = moment.duration(vm.quizExercise.duration, "seconds");
             vm.duration.minutes = 60 * duration.hours() + duration.minutes();
             vm.duration.seconds = duration.seconds();
+        }
+
+        /**
+         * Check if the saved quiz has started
+         *
+         * @return {boolean} true if the saved quiz has started, otherwise false
+         */
+        function hasSavedQuizStarted() {
+            return !!(
+                savedEntity &&
+                savedEntity.isPlannedToStart &&
+                moment(savedEntity.releaseDate).isBefore(moment())
+            );
         }
     }
 })();

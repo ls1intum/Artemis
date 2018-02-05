@@ -14,6 +14,7 @@
             'ngFileSaver',
             'ui.bootstrap',
             'ui.bootstrap.datetimepicker',
+            'ui.sortable',
             'ui.router',
             'infinite-scroll',
             'bm.uiTour',
@@ -23,7 +24,8 @@
             'ui.ace',
             'angularResizable',
             'chart.js',
-            'ngSanitize'
+            'ngSanitize',
+            'ang-drag-drop'
         ])
         .constant('CONTACT_EMAIL', "krusche@in.tum.de,seitz@in.tum.de,montag@in.tum.de")
         .run(run);

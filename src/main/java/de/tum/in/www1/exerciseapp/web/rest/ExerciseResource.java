@@ -159,7 +159,7 @@ public class ExerciseResource {
     @GetMapping("/exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<List<Exercise>> getAllExercises(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Exercise>> getAllExercises(Pageable pageable) {
         log.debug("REST request to get a page of Exercises");
         Page<Exercise> page = exerciseRepository.findAll(pageable);
         Stream<Exercise> authorizedExercises = page.getContent().stream().filter(
@@ -195,12 +195,13 @@ public class ExerciseResource {
         }
 
         List<Exercise> result;
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (user.getGroups().contains(course.getStudentGroupName())) {
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
             // user is student for this course
             result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal) : exerciseRepository.findByCourseId(courseId);
             // filter out exercises that are not released (or explicitly made visible to students) yet
-            result = result.stream().filter(Exercise::getIsVisibleToStudents).collect(Collectors.toList());
+            result = result.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         } else {
             result = exerciseRepository.findByCourseId(courseId);
         }

@@ -26,24 +26,11 @@
                     />
         </div>
         <div class="form-group">
-            <label class="control-label" data-translate="artemisApp.dragItem.correctScore" for="field_correctScore">Correct Score</label>
-            <input type="number" class="form-control" name="correctScore" id="field_correctScore"
-                    ng-model="vm.dragItem.correctScore"
-                    />
-        </div>
-        <div class="form-group">
-            <label class="control-label" data-translate="artemisApp.dragItem.incorrectScore" for="field_incorrectScore">Incorrect Score</label>
-            <input type="number" class="form-control" name="incorrectScore" id="field_incorrectScore"
-                    ng-model="vm.dragItem.incorrectScore"
-                    />
+            <label class="control-label" data-translate="artemisApp.dragItem.invalid" for="field_invalid">Invalid</label>
+                <input type="checkbox" name="invalid" id="field_invalid"
+                          ng-model="vm.dragItem.invalid"/>
         </div>
 
-        <div class="form-group">
-            <label data-translate="artemisApp.dragItem.correctLocation" for="field_correctLocation">Correct Location</label>
-            <select class="form-control" id="field_correctLocation" name="correctLocation" ng-model="vm.dragItem.correctLocation" ng-options="dropLocation as dropLocation.id for dropLocation in vm.correctlocations | orderBy:'id' track by dropLocation.id">
-                <option value=""></option>
-            </select>
-        </div>
         <div class="form-group">
             <label data-translate="artemisApp.dragItem.question" for="field_question">Question</label>
             <select class="form-control" id="field_question" name="question" ng-model="vm.dragItem.question" ng-options="dragAndDropQuestion as dragAndDropQuestion.id for dragAndDropQuestion in vm.draganddropquestions track by dragAndDropQuestion.id">

@@ -17,7 +17,22 @@
             },
             "backgroundFilePath": "Background File Path",
             "dropLocations": "Drop Locations",
-            "dragItems": "Drag Items"
+            "dragItems": "Drag Items",
+            "correctMappings": "Correct Mappings",
+            "randomizeOrder": "Present Drag Items in Random Order",
+            "uploadBackgroundPicture": "Upload Background",
+            "upload": "Upload",
+            "uploading": "Uploading...",
+            "uploadBackgroundInstructions": "Please upload a background picture.",
+            "drawOnBackgroundInstructions": "Draw on the background picture to define drop locations.",
+            "noBackgroundPicture": "No Background Picture",
+            "addDragItemsInstructions": "Add Drag Items using the buttons below.",
+            "addMappingsInstructions": "Drag items onto drop locations to define correct solutions.",
+            "addDragItemPicture": "Add Picture Drag Item",
+            "addDragItemText": "Add Text Drag Item",
+            "studentInstructions": "Drag & Drop: Place the suitable items below on the correct areas above.",
+            "showingYourAnswer": "Your Submission:",
+            "showingSampleSolution": "Sample Solution:"
         }
     }
 }

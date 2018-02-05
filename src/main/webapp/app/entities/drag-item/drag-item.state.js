@@ -106,8 +106,7 @@
                             return {
                                 pictureFilePath: null,
                                 text: null,
-                                correctScore: null,
-                                incorrectScore: null,
+                                invalid: null,
                                 id: null
                             };
                         }

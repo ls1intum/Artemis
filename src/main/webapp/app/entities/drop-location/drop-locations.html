@@ -24,6 +24,7 @@
                     <th><span data-translate="artemisApp.dropLocation.width">Width</span></th>
                     <th><span data-translate="artemisApp.dropLocation.height">Height</span></th>
                     <th><span data-translate="artemisApp.dropLocation.question">Question</span></th>
+                    <th><span data-translate="artemisApp.dropLocation.invalid">Invalid</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -34,6 +35,7 @@
                     <td>{{dropLocation.posY}}</td>
                     <td>{{dropLocation.width}}</td>
                     <td>{{dropLocation.height}}</td>
+                    <td>{{dropLocation.invalid}}</td>
                     <td>
                         <a ui-sref="drag-and-drop-question-detail({id:dropLocation.question.id})">{{dropLocation.question.id}}</a>
                     </td>

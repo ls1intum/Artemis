@@ -37,6 +37,7 @@
                 "dragAndDropStatistic": "Drag And Drop Statistic",
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
+                "dragAndDropMapping": "Drag And Drop Mapping",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -118,13 +119,15 @@
             "delete": "Löschen",
             "reset": "Zurücksetzen",
             "edit": "Bearbeiten",
-            "open": "Open",
+            "open": "Öffnen",
             "save": "Speichern",
             "view": "Details",
             "preview": "Vorschau",
             "cleanup": "Aufräumen",
             "archive": "Archivieren",
-            "submit": "Absenden"
+            "submit": "Absenden",
+            "re-evaluate": "Überarbeiten",
+            "close": "Schließen"
         },
         "detail": {
             "field": "Feld",

@@ -1,7 +1,5 @@
-var ChromiumRevision = require('puppeteer/package.json').puppeteer.chromium_revision;
-var Downloader = require('puppeteer/utils/ChromiumDownloader');
-var revisionInfo = Downloader.revisionInfo(Downloader.currentPlatform(), ChromiumRevision);
-process.env.CHROMIUM_BIN = revisionInfo.executablePath;
+// Karma configuration
+// http://karma-runner.github.io/0.13/config/configuration-file.html
 
 var sourcePreprocessors = ['coverage'];
 
@@ -27,6 +25,7 @@ module.exports = function (config) {
             // bower:js
             'src/main/webapp/bower_components/jquery/dist/jquery.js',
             'src/main/webapp/bower_components/messageformat/messageformat.js',
+            'src/main/webapp/bower_components/jquery-ui/jquery-ui.js',
             'src/main/webapp/bower_components/json3/lib/json3.js',
             'src/main/webapp/bower_components/lodash/lodash.js',
             'src/main/webapp/bower_components/sockjs-client/dist/sockjs.js',
@@ -84,6 +83,7 @@ module.exports = function (config) {
             'src/main/webapp/bower_components/angular-scroll/angular-scroll.js',
             'src/main/webapp/bower_components/angular-bind-html-compile/angular-bind-html-compile.js',
             'src/main/webapp/bower_components/angular-ui-tour/dist/angular-ui-tour.js',
+            'src/main/webapp/bower_components/angular-ui-sortable/sortable.js',
             'src/main/webapp/bower_components/angular-mocks/angular-mocks.js',
             // endbower
             'src/main/webapp/app/app.module.js',
@@ -133,14 +133,7 @@ module.exports = function (config) {
         // - Opera
         // - Safari (only Mac)
         // - IE (only Windows)
-        browsers: ['ChromiumHeadlessNoSandbox'],
-
-        customLaunchers: {
-            ChromiumHeadlessNoSandbox: {
-                base: 'ChromiumHeadless',
-                    flags: ['--no-sandbox']
-            }
-        },
+        browsers: ['PhantomJS'],
 
         // Continuous Integration mode
         // if true, it capture browsers, run tests and exit

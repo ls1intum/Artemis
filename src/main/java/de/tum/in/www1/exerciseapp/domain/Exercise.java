@@ -7,6 +7,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
+
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -18,12 +19,12 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "exercise")
-@Inheritance(strategy= InheritanceType.SINGLE_TABLE)
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(
-    name="discriminator",
-    discriminatorType=DiscriminatorType.STRING
+    name = "discriminator",
+    discriminatorType = DiscriminatorType.STRING
 )
-@DiscriminatorValue(value="E")
+@DiscriminatorValue(value = "E")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 
@@ -148,7 +149,7 @@ public abstract class Exercise implements Serializable {
     }
 
     public boolean isOpenForSubmission() {
-        if(dueDate != null) {
+        if (dueDate != null) {
             return ZonedDateTime.now().isBefore(dueDate);
         }
         return true;
@@ -160,7 +161,12 @@ public abstract class Exercise implements Serializable {
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
-    public Boolean getIsVisibleToStudents() {
+    /**
+     * check if students are allowed to see this exercise
+     *
+     * @return true, if students are allowed to see this exercise, otherwise false
+     */
+    public Boolean isVisibleToStudents() {
         if (releaseDate == null) {  //no release date means the exercise is visible to students
             return true;
         }

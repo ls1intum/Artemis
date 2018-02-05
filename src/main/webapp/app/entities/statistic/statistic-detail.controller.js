@@ -13,7 +13,7 @@
         vm.statistic = entity;
         vm.previousState = previousState.name;
 
-        var unsubscribe = $rootScope.$on('arTeMiSApp:statisticUpdate', function(event, result) {
+        var unsubscribe = $rootScope.$on('artemisApp:statisticUpdate', function(event, result) {
             vm.statistic = result;
         });
         $scope.$on('$destroy', unsubscribe);

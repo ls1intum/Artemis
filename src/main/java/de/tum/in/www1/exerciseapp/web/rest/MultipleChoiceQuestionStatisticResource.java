@@ -114,7 +114,7 @@ public class MultipleChoiceQuestionStatisticResource {
     @GetMapping("/multiple-choice-question-statistics/{id}/for-student")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'ADMIN')")
     @Timed
-    public ResponseEntity<MultipleChoiceQuestionStatistic> getQuizExerciseForStudent(@PathVariable Long id) {
+    public ResponseEntity<MultipleChoiceQuestionStatistic> getMultipleChoiceQuestionStatisticForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizPointStatistic : {}", id);
         MultipleChoiceQuestionStatistic multipleChoiceQuestionStatistic = multipleChoiceQuestionStatisticRepository.findOne(id);
 

@@ -33,6 +33,13 @@
             "yAxes": "Amount",
             "correct": "correct",
             "incorrect": "incorrect"
-        }
+        },
+        "dragAndDropQuestionStatistic": {
+            "xAxes": "DropLocation",
+            "yAxes": "Amount",
+            "showSampleSolution": "Show Sample Solution",
+            "hideSampleSolution": "Hide Sample Solution"
+        },
+        "invalid": "(invalid)"
     }
 }

@@ -10,10 +10,14 @@
 
     function JhiWebsocketService ($rootScope, $window, $cookies, $http, $q) {
         var stompClient = null;
-        var subscriber = null;
+        var subscriber = {};
         var listener = {};
+        var connectListener = [];
+        var disconnectListener = [];
         var connected = $q.defer();
         var alreadyConnectedOnce = false;
+        var isConnected = false;
+        var consecutiveFailedAttempts = 0;
 
         var service = {
             connect: connect,
@@ -22,17 +26,33 @@
             sendActivity: sendActivity,
             send: send,
             subscribe: subscribe,
-            unsubscribe: unsubscribe
+            unsubscribe: unsubscribe,
+            bind: bind,
+            unbind: unbind
         };
 
         return service;
 
         //adapted from https://stackoverflow.com/questions/22361917/automatic-reconnect-with-stomp-js-in-node-js-application
         function stompFailureCallback(error) {
-            setTimeout(connect, 1000);
-            //TODO: after 5 failed attempts in row, increase the timeout to 5 seconds, after 10 failed attempts in row, increase the timeout to 10 seconds
-            console.log('Websocket: Try to reconect in 1 seconds...');
-        };
+            isConnected = false;
+            consecutiveFailedAttempts++;
+            disconnectListener.forEach(function (listener) {
+                listener();
+            });
+            // NOTE: after 5 failed attempts in row, increase the timeout to 5 seconds,
+            // after 10 failed attempts in row, increase the timeout to 10 seconds
+            var timeoutSeconds;
+            if (consecutiveFailedAttempts > 10) {
+                timeoutSeconds = 10;
+            } else if (consecutiveFailedAttempts > 5) {
+                timeoutSeconds = 5;
+            } else {
+                timeoutSeconds = 1;
+            }
+            setTimeout(connect, timeoutSeconds * 1000);
+            console.log("Websocket: Try to reconnect in " + timeoutSeconds + " seconds...");
+        }
 
         function connect () {
             //building absolute path so that websocket doesn't fail when deploying with a context path
@@ -45,12 +65,19 @@
             headers[$http.defaults.xsrfHeaderName] = $cookies.get($http.defaults.xsrfCookieName);
             stompClient.connect(headers, function() {
                 connected.resolve('success');
-                //(re)connect to all existing channels
-                for (var channel in listener) {
-                    subscriber = stompClient.subscribe(channel, function(data) {
+                connectListener.forEach(function (listener) {
+                    listener();
+                });
+                isConnected = true;
+                consecutiveFailedAttempts = 0;
+                // (re)connect to all existing channels
+                // Note: use function instead of for-loop to prevent
+                // variable "channel" from being mutated
+                Object.keys(listener).forEach(function (channel) {
+                    subscriber[channel] = stompClient.subscribe(channel, function(data) {
                         listener[channel].notify(angular.fromJson(data.body));
                     });
-                }
+                });
                 sendActivity();
                 if (!alreadyConnectedOnce) {
                     stateChangeStart = $rootScope.$on('$stateChangeStart', function () {
@@ -67,6 +94,9 @@
         }
 
         function disconnect () {
+            console.log(listener);
+            Object.keys(listener).forEach(unsubscribe);
+            console.log(listener);
             if (stompClient !== null) {
                 stompClient.disconnect();
                 stompClient = null;
@@ -108,17 +138,62 @@
                 if(!listener[channel]) {
                     listener[channel] = $q.defer();
                 }
-                subscriber = stompClient.subscribe(channel, function(data) {
+                subscriber[channel] = stompClient.subscribe(channel, function(data) {
                     listener[channel].notify(angular.fromJson(data.body));
                 });
             }, null, null);
         }
 
         function unsubscribe (channel) {
-            if (subscriber !== null) {
-                subscriber.unsubscribe();
+            if (subscriber[channel] != null) {  // '!=' is necessary to also test for undefined
+                subscriber[channel].unsubscribe();
             }
-            listener[channel] = $q.defer();
+            delete listener[channel];
+            delete subscriber[channel];
+        }
+
+        /**
+         * bind the given callback function to the given event
+         *
+         * @param event {string} the event to be notified of
+         * @param callback {function} the function to call when the event is triggered
+         */
+        function bind(event, callback) {
+            switch (event) {
+                case "connect":
+                    connectListener.push(callback);
+                    if (isConnected) {
+                        callback();
+                    }
+                    break;
+                case "disconnect":
+                    disconnectListener.push(callback);
+                    if (!isConnected) {
+                        callback();
+                    }
+                    break;
+            }
+        }
+
+        /**
+         * unbind the given callback function from the given event
+         *
+         * @param event {string} the event to no longer be notified of
+         * @param callback {function} the function to no longer call when the event is triggered
+         */
+        function unbind(event, callback) {
+            switch (event) {
+                case "connect":
+                    connectListener = connectListener.filter(function(listener) {
+                        return listener !== callback;
+                    });
+                    break;
+                case "disconnect":
+                    disconnectListener = disconnectListener.filter(function(listener) {
+                        return listener !== callback;
+                    });
+                    break;
+            }
         }
     }
 })();

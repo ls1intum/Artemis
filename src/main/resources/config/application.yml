@@ -18,6 +18,9 @@ management:
     security:
         roles: ADMIN
     context-path: /management
+    info:
+        git:
+            mode: full
     health:
         mail:
             enabled: false # When using the MailService, configure an SMTP server and set this to true
@@ -45,6 +48,11 @@ spring:
             enabled: false
     thymeleaf:
         mode: XHTML
+    http:
+        multipart:
+            max-file-size: 5MB # this should match the value in webapp/app/blocks/config/constants.config.js MAX_FILE_SIZE
+            max-request-size: 10MB
+
 security:
     basic:
         enabled: false
@@ -72,9 +80,9 @@ jhipster:
     # By default CORS is disabled. Uncomment to enable.
     #cors:
         #allowed-origins: "*"
-        #allowed-methods: GET, PUT, POST, DELETE, OPTIONS
+        #allowed-methods: "*"
         #allowed-headers: "*"
-        #exposed-headers:
+        #exposed-headers: "Link,X-Total-Count"
         #allow-credentials: true
         #max-age: 1800
     mail:

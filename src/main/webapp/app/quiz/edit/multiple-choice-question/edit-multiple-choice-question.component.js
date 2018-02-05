@@ -1,6 +1,6 @@
-EditMultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope'];
+EditMultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', 'ArtemisMarkdown'];
 
-function EditMultipleChoiceQuestionController($translate, $translatePartialLoader, $scope) {
+function EditMultipleChoiceQuestionController($translate, $translatePartialLoader, $scope, ArtemisMarkdown) {
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('multipleChoiceQuestion');
@@ -13,12 +13,8 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
             label: "All or Nothing"
         },
         {
-            key: "PROPORTIONAL_CORRECT_OPTIONS",
-            label: "Proportional Points for Correct Answer Options"
-        },
-        {
-            key: "TRUE_FALSE_NEUTRAL",
-            label: "True / False / No Answer"
+            key: "PROPORTIONAL_WITH_PENALTY",
+            label: "Proportional with Penalty"
         }
     ];
     vm.addCorrectAnswerOption = addCorrectAnswerOption;
@@ -55,24 +51,19 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
      *
      * The markdown is generated according to these rules:
      *
-     * 1. First the question text is inserted
-     * 2. If hint and/or explanation exist, they are added after the text with a linebreak and tab in front of them
-     * 3. After an empty line, the answer options are inserted
-     * 4. For each answer option, hint and explanation are added (see 2.)
+     * 1. First the question text, hint, and explanation are added using ArtemisMarkdown
+     * 2. After an empty line, the answer options are added
+     * 3. For each answer option: text, hint and explanation are added using ArtemisMarkdown
      *
      */
     function generateMarkdown() {
         var markdownText = (
-            vm.question.text +
-            (vm.question.hint ? "\n\t[-h] " + vm.question.hint : "") +
-            (vm.question.explanation ? "\n\t[-e] " + vm.question.explanation : "") +
+            ArtemisMarkdown.generateTextHintExplanation(vm.question) +
             "\n\n" +
             vm.question.answerOptions.map(function (answerOption) {
                 return (
                     (answerOption.isCorrect ? "[x]" : "[ ]") + " " +
-                    answerOption.text +
-                    (answerOption.hint ? "\n\t[-h] " + answerOption.hint : "") +
-                    (answerOption.explanation ? "\n\t[-e] " + answerOption.explanation : "")
+                    ArtemisMarkdown.generateTextHintExplanation(answerOption)
                 );
             }).join("\n")
         );
@@ -87,11 +78,10 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
      *
      * 1. Text is split at [x] and [ ] (also accepts [X] and [])
      *    => The first part (any text before the first [x] or [ ]) is the question text
-     * 2. The question text is split at [-h] and [-e] tags.
-     *    => First part is text. Everything after [-h] is Hint, anything after [-e] is explanation
-     * 3. Every answer option (Parts after each [x] or [ ]) is also split at [-h] and [-e]
-     *    => Same treatment as the question text for text, hint, and explanation
-     *    => Answer options are marked as isCorrect depending on [ ] or [x]
+     * 2. The question text is split into text, hint, and explanation using ArtemisMarkdown
+     * 3. For every answer option (Parts after each [x] or [ ]):
+     *    3.a) Same treatment as the question text for text, hint, and explanation
+     *    3.b) Answer options are marked as isCorrect depending on [ ] or [x]
      *
      * Note: Existing IDs for answer options are reused in the original order.
      *
@@ -103,26 +93,7 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
         var questionText = questionParts[0];
 
         // split question into main text, hint and explanation
-        var questionTextParts = questionText.split(/\[\-e\]|\[\-h\]/g);
-        vm.question.text = questionTextParts[0].trim();
-        if (questionText.indexOf("[-h]") !== -1 && questionText.indexOf("[-e]") !== -1) {
-            if (questionText.indexOf("[-h]") < questionText.indexOf("[-e]")) {
-                vm.question.hint = questionTextParts[1].trim();
-                vm.question.explanation = questionTextParts[2].trim();
-            } else {
-                vm.question.hint = questionTextParts[2].trim();
-                vm.question.explanation = questionTextParts[1].trim();
-            }
-        } else if (questionText.indexOf("[-h]") !== -1) {
-            vm.question.hint = questionTextParts[1].trim();
-            vm.question.explanation = null;
-        } else if (questionText.indexOf("[-e]") !== -1) {
-            vm.question.hint = null;
-            vm.question.explanation = questionTextParts[1].trim();
-        } else {
-            vm.question.hint = null;
-            vm.question.explanation = null;
-        }
+        ArtemisMarkdown.parseTextHintExplanation(questionText, vm.question);
 
         // extract existing answer option IDs
         var existingAnswerOptionIDs = vm.question.answerOptions
@@ -148,26 +119,7 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
             endOfPreviusPart = startOfThisPart + answerOptionText.length;
 
             // parse this answerOption
-            var answerOptionParts = answerOptionText.split(/\[\-e\]|\[\-h\]/g);
-            answerOption.text = answerOptionParts[0].trim();
-            if (answerOptionText.indexOf("[-h]") !== -1 && answerOptionText.indexOf("[-e]") !== -1) {
-                if (answerOptionText.indexOf("[-h]") < answerOptionText.indexOf("[-e]")) {
-                    answerOption.hint = answerOptionParts[1].trim();
-                    answerOption.explanation = answerOptionParts[2].trim();
-                } else {
-                    answerOption.hint = answerOptionParts[2].trim();
-                    answerOption.explanation = answerOptionParts[1].trim();
-                }
-            } else if (answerOptionText.indexOf("[-h]") !== -1) {
-                answerOption.hint = answerOptionParts[1].trim();
-                answerOption.expalanation = null;
-            } else if (answerOptionText.indexOf("[-e]") !== -1) {
-                answerOption.hint = null;
-                answerOption.explanation = answerOptionParts[1].trim();
-            } else {
-                answerOption.hint = null;
-                answerOption.explanation = null;
-            }
+            ArtemisMarkdown.parseTextHintExplanation(answerOptionText, answerOption);
 
             // assign existing ID if available
             if (vm.question.answerOptions.length < existingAnswerOptionIDs.length) {
@@ -215,24 +167,14 @@ function EditMultipleChoiceQuestionController($translate, $translatePartialLoade
      * add the markdown for a hint at the current cursor location
      */
     function addHintAtCursor() {
-        var addedText = "\n\t[-h] Add a hint here (visible during the quiz via \"?\"-Button)";
-        editor.focus();
-        editor.insert(addedText);
-        var range = editor.selection.getRange();
-        range.setStart(range.start.row, range.start.column - addedText.length + 7);
-        editor.selection.setRange(range);
+        ArtemisMarkdown.addHintAtCursor(editor);
     }
 
     /**
      * add the markdown for an explanation at the current cursor location
      */
     function addExplanationAtCursor() {
-        var addedText = "\n\t[-e] Add an explanation here (only visible in feedback after quiz has ended)";
-        editor.focus();
-        editor.insert(addedText);
-        var range = editor.selection.getRange();
-        range.setStart(range.start.row, range.start.column - addedText.length + 7);
-        editor.selection.setRange(range);
+        ArtemisMarkdown.addExplanationAtCursor(editor);
     }
 
     function togglePreview() {

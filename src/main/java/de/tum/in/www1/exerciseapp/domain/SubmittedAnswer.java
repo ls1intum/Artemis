@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.hibernate.annotations.Cache;
@@ -43,7 +44,8 @@ public abstract class SubmittedAnswer implements Serializable {
     @Column(name = "score_in_points")
     private Double scoreInPoints;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.REMOVE)
+    @JsonIgnoreProperties({"questionStatistic"})
     private Question question;
 
     @ManyToOne

@@ -268,12 +268,13 @@ public class ParticipationResource {
      */
     @GetMapping("/participations/{id}")
     @Timed
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<Participation> getParticipation(@PathVariable Long id, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
         Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+        if (!authCheckService.isOwnerOfParticipation(participation) &&
+             !authCheckService.isTeachingAssistantInCourse(course) &&
              !authCheckService.isInstructorInCourse(course) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();

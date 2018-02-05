@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.QuizExercise;
+import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.repository.*;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -10,6 +12,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Semaphore;
 
 /**
  * Created by Moritz Issig on 22.11.17.
@@ -18,11 +21,30 @@ import java.util.TimerTask;
 public class StatisticService {
 
     private static Set<Long> semaphorSetUpdateStatistic = new HashSet<Long>();
+    private static Semaphore statisticSemaphore = new Semaphore(1);
 
     private final SimpMessageSendingOperations messagingTemplate;
+    private final ParticipationRepository participationRepository;
+    private final ResultRepository resultRepository;
+    private final QuizExerciseRepository quizExerciseRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
+    private final QuizPointStatisticRepository quizPointStatisticRepository;
+    private final QuestionStatisticRepository questionStatisticRepository;
 
-    public StatisticService(SimpMessageSendingOperations messagingTemplate) {
+    public StatisticService(SimpMessageSendingOperations messagingTemplate,
+                            ParticipationRepository participationRepository,
+                            ResultRepository resultRepository,
+                            QuizExerciseRepository quizExerciseRepository,
+                            QuizSubmissionRepository quizSubmissionRepository,
+                            QuizPointStatisticRepository quizPointStatisticRepository,
+                            QuestionStatisticRepository questionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
+        this.participationRepository = participationRepository;
+        this.resultRepository = resultRepository;
+        this.quizExerciseRepository = quizExerciseRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
+        this.quizPointStatisticRepository = quizPointStatisticRepository;
+        this.questionStatisticRepository = questionStatisticRepository;
     }
 
     /**
@@ -32,7 +54,7 @@ public class StatisticService {
      */
     @Async
 
-    public void updateStatistic(QuizExercise quizExercise) {
+    public void notifyStatisticWebsocket(QuizExercise quizExercise) {
         // notify user via websocket
         // if the quiz-timer is ending this service waits for 300ms for additional Results before its sending the Websocket
         if(quizExercise.getDueDate().isAfter(ZonedDateTime.now()) && quizExercise.getDueDate().isBefore(ZonedDateTime.now().plusSeconds(10))) {
@@ -67,6 +89,129 @@ public class StatisticService {
         // notify user via websocket
         // release: payload = true , revoke: payload = false.
         messagingTemplate.convertAndSend("/topic/statistic/" + quizExercise.getId() +"/release", payload);
+    }
+
+    /**
+     * 1. Go through all Results in the Participation and recalculate the score
+     * 2. recalculate the statistics of the given quizExercise
+     *
+     * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
+     */
+    public void updateStatisticsAndResults(QuizExercise quizExercise){
+
+        //reset all statistics
+        quizExercise.getQuizPointStatistic().resetStatistic();
+        for (Question question : quizExercise.getQuestions()) {
+            if (question.getQuestionStatistic() != null) {
+                question.getQuestionStatistic().resetStatistic();
+            }
+        }
+
+        // update the Results in every participation of the given quizExercise
+        for (Participation participation : participationRepository.findByExerciseId(quizExercise.getId())) {
+
+            Result latestRatedResult = null;
+            Result latestUnratedResult = null;
+
+            // update all Results of a participation
+            for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
+
+                QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+                //recalculate existing score
+                quizSubmission.calculateAndUpdateScores(quizExercise);
+                //update Successful-Flag in Result
+                result.setScore(Math.round(quizSubmission.getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
+
+                // save the updated Result and its Submission
+                resultRepository.save(result);
+                quizSubmissionRepository.save(quizSubmission);
+
+                // find latest rated Result
+                if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                    latestRatedResult = result;
+                }
+                // find latest unrated Result
+                if (!result.isRated() && (latestUnratedResult == null || latestUnratedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                    latestUnratedResult = result;
+                }
+            }
+            // update statistics with latest rated und unrated Result
+            this.addResultToAllStatistics(quizExercise, latestRatedResult);
+            this.addResultToAllStatistics(quizExercise, latestUnratedResult);
+
+        }
+        //save changed Statistics
+        quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
+        for (Question question : quizExercise.getQuestions()) {
+            if (question.getQuestionStatistic() != null) {
+                questionStatisticRepository.save(question.getQuestionStatistic());
+            }
+        }
+    }
+
+    /**
+     * 1. lock critical part with semaphore for database transaction safety
+     * 2. remove old Result from the quiz-point-statistic and all question-statistics
+     * 3. add new Result to the quiz-point-statistic and all question-statistics
+     * 4. save statistics
+     * 5. notify statistic-websocket
+     *
+     * @param newResult the new Result, which will be added to the statistics
+     * @param oldResult the old Result, which will be removedfrom the statistics. oldResult = null, if there is no old Result
+     */
+    public boolean updateStatistics(Result newResult, Result oldResult) {
+        // critical part locked with Semaphore statisticSemaphore
+        try {
+            statisticSemaphore.acquire();
+
+            QuizExercise quiz = quizExerciseRepository.findOne(newResult.getParticipation().getExercise().getId());
+
+            if (oldResult != null) {
+                for (Question question : quiz.getQuestions()) {
+                    if (question.getQuestionStatistic() != null) {
+                        // remove the previous Result from the QuestionStatistics
+                        question.getQuestionStatistic().removeOldResult(((QuizSubmission) oldResult.getSubmission()).getSubmittedAnswerForQuestion(question), oldResult.isRated());
+                    }
+                }
+                // add the new Result to the quizPointStatistic and remove the previous one
+                quiz.getQuizPointStatistic().removeOldResult(oldResult.getScore(), oldResult.isRated());
+            }
+            addResultToAllStatistics(quiz, newResult);
+
+            quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
+            for (Question question : quiz.getQuestions()) {
+                if (question.getQuestionStatistic() != null) {
+                    questionStatisticRepository.save(question.getQuestionStatistic());
+                }
+            }
+
+        } catch (InterruptedException e) {
+            return false;
+        } finally {
+            statisticSemaphore.release();
+        }
+        // notify statistics about new Result
+        this.notifyStatisticWebsocket((QuizExercise) newResult.getParticipation().getExercise());
+        return true;
+    }
+
+    /**
+     * add Result to all Statistics of the given QuizExercise
+     *
+     * @param quizExercise contains the object of the quiz, where the Results will be added
+     * @param result the result which will be added
+     */
+    private void addResultToAllStatistics(QuizExercise quizExercise, Result result) {
+        // update QuizPointStatistic with the result
+        if (result != null) {
+            quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
+        }
+        for (Question question : quizExercise.getQuestions()) {
+            // update QuestionStatistics with the result
+            if (result != null && question.getQuestionStatistic() != null) {
+                question.getQuestionStatistic().addResult(((QuizSubmission) result.getSubmission()).getSubmittedAnswerForQuestion(question), result.isRated());
+            }
+        }
     }
 
 }

@@ -1,6 +1,6 @@
-MultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$sanitize', '$timeout'];
+MultipleChoiceQuestionController.$inject = ['$translate', '$translatePartialLoader', '$scope', '$timeout', 'ArtemisMarkdown'];
 
-function MultipleChoiceQuestionController($translate, $translatePartialLoader, $scope, $sanitize, $timeout) {
+function MultipleChoiceQuestionController($translate, $translatePartialLoader, $scope, $timeout, ArtemisMarkdown) {
 
     $translatePartialLoader.addPart('question');
     $translatePartialLoader.addPart('multipleChoiceQuestion');
@@ -8,21 +8,23 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
 
     var vm = this;
 
-    vm.rendered = {
-        text: htmlForMarkdown(vm.question.text),
-        hint: htmlForMarkdown(vm.question.hint),
-        explanation: htmlForMarkdown(vm.question.explanation),
-        answerOptions: vm.question.answerOptions.map(function(answerOption){
-            return {
-                text: htmlForMarkdown(answerOption.text),
-                hint: htmlForMarkdown(answerOption.hint),
-                explanation: htmlForMarkdown(answerOption.explanation)
-            };
-        })
-    };
+    $scope.$watchCollection('vm.question', function () {
+        // update html for text, hint and explanation for the question and every answer option
+        vm.rendered = {
+            text: ArtemisMarkdown.htmlForMarkdown(vm.question.text),
+            hint: ArtemisMarkdown.htmlForMarkdown(vm.question.hint),
+            explanation: ArtemisMarkdown.htmlForMarkdown(vm.question.explanation),
+            answerOptions: vm.question.answerOptions.map(function(answerOption){
+                return {
+                    text: ArtemisMarkdown.htmlForMarkdown(answerOption.text),
+                    hint: ArtemisMarkdown.htmlForMarkdown(answerOption.hint),
+                    explanation: ArtemisMarkdown.htmlForMarkdown(answerOption.explanation)
+                };
+            })
+        };
+    });
 
     vm.toggleSelection = toggleSelection;
-    vm.getUserScore = getUserScore;
 
     function toggleSelection(answerOption) {
         if (vm.clickDisabled) {
@@ -48,41 +50,6 @@ function MultipleChoiceQuestionController($translate, $translatePartialLoader, $
             return selected.id === answerOption.id;
         }) !== -1;
     }
-
-    /**
-     * converts markdown into html
-     * @param {string} markdownText the original markdown text
-     * @returns {string} the resulting html as a string
-     */
-    function htmlForMarkdown(markdownText) {
-        var converter = new showdown.Converter({
-            parseImgDimensions: true,
-            headerLevelStart: 3,
-            simplifiedAutoLink: true,
-            excludeTrailingPunctuationFromURLs: true,
-            strikethrough: true,
-            tables: true,
-            openLinksInNewWindow: true,
-            backslashEscapesHTMLTags: true
-        });
-        var html = converter.makeHtml(markdownText);
-        return $sanitize(html);
-    }
-
-    /**
-     * Calculate the user's score for this question (only possible when isCorrect is set for each answer option)
-     *
-     * @return {number} the user's score
-     */
-    function getUserScore() {
-        if (vm.score) {
-            return vm.score;
-        } else {
-            return 0;
-            // TODO: @Moritz: this might be different when a question has invalid answer options or has been set to invalid altogether.
-        }
-    }
-
 }
 
 angular.module('artemisApp').component('multipleChoiceQuestion', {
@@ -90,12 +57,13 @@ angular.module('artemisApp').component('multipleChoiceQuestion', {
     controller: MultipleChoiceQuestionController,
     controllerAs: 'vm',
     bindings: {
-        question: '=',
+        question: '<',
         selectedAnswerOptions: '=',
         clickDisabled: '<',
         showResult: '<',
         questionIndex: '<',
         score:'<',
+        forceSampleSolution: '<',
         onSelection: '&'
     }
 });

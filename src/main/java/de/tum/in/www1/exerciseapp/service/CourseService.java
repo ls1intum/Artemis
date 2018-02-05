@@ -125,6 +125,11 @@ public class CourseService {
         return courses.stream().map(Course::getTeachingAssistantGroupName).collect(Collectors.toList());
     }
 
+    public List<String> getAllInstructorGroupNames() {
+        List<Course> courses = courseRepository.findAll();
+        return courses.stream().map(Course::getInstructorGroupName).collect(Collectors.toList());
+    }
+
     /**
      * Getting a Collection of Results in which the average Score of a course is returned as a result
      *
