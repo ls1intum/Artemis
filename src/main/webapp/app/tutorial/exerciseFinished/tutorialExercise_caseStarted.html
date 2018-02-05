@@ -18,7 +18,8 @@
                   tour-step="32"
                   tour-step-backdrop="false"
                   tour-step-title="Understanding Results"
-                  tour-step-content="If your submission isn't complete or you are missing something your result appears red. Click it to see what you are missing or doing wrong."
+                  tour-step-content="If your submission isn't complete or you are missing something your result appears red.
+                   <br>Click it to see what you are missing or doing wrong."
                   tour-step-order="32"
             ><result participation="exercise.participation"></result></span>
             <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
@@ -28,9 +29,9 @@
             <span class="text-muted" ng-switch-when="quiz-submitted">You have already submitted. Wait for the quiz to end to see results.</span>
             <span ng-switch-when="quiz-finished"><result participation="exercise.participation" show-score="true"></result></span>
         </td>
-        <!--$ctrl.endTour();-->
         <td class="text-center" class="col-xs-1"
             tour-step="30"
+            tour-step-placement="left"
             tour-step-backdrop="false"
             tour-step-title="Open Exercise"
             tour-step-content="Click on the start exercise button to start your exercise"
@@ -83,10 +84,11 @@
                 </button>
                 <div ng-switch-when="initialized">
                     <a ui-sref="editor({participationId:exercise.participation.id})" class="btn btn-primary btn-sm btn-block" id="btn-online-editor" ng-if="exercise.allowOnlineEditor"><i class="fa fa-folder-open fa-fw"
-                        tour-step="31"
+                        tour-step="31" tour-step-placement="left"
                         tour-step-backdrop="false"
                         tour-step-title="Open Exercise"
-                        tour-step-content="If the online editor is availiable you can directly use your browser to finish your exercise. Click on the online editor and finish the described Task on the right"
+                        tour-step-content="If the online editor is availiable you can directly use your browser to finish your exercise.
+                        <br> Click on the online editor and finish the described Task on the right"
                         tour-step-order="31"
                     ></i>&nbsp;Open exercise</a>
                     <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"

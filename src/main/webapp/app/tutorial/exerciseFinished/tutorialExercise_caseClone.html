@@ -26,8 +26,9 @@
             <span class="text-muted" ng-switch-when="quiz-submitted">You have already submitted. Wait for the quiz to end to see results.</span>
             <span ng-switch-when="quiz-finished"><result participation="exercise.participation" show-score="true"></result></span>
         </td>
-        <td class="text-center" class="col-xs-1"
+        <td class="text-center col-xs-1"
             tour-step="41"
+            tour-step-placement="left"
             tour-step-backdrop="false"
             tour-step-title="Cloning a repository"
             tour-step-content="Start by clicking the button Start exercise"
@@ -35,11 +36,13 @@
         >
             <div
                 tour-step="42"
+                tour-step-placement="left"
                 tour-step-backdrop="false"
                 tour-step-title="Cloning a repository"
                 tour-step-content="This time you have to press Clone repository"
                 tour-step-order="42"></div>
             <div             tour-step="43"
+                             tour-step-placement="left"
                              tour-step-backdrop="false"
                              tour-step-title="Cloning a repository"
                              tour-step-content="If you have Sourcetree installed simply press Cloning with SourceTree"
