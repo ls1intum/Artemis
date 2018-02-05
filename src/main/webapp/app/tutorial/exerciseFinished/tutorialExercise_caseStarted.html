@@ -1,7 +1,11 @@
 <table class="table exercise-table" ng-hide="$ctrl.exercises.length === 0">
-    <tbody>
-
-
+    <tbody
+        tour-step="34"
+        tour-step-backdrop="false"
+        tour-step-title="Open Exercise"
+        tour-step-content="Congratulations you worked on your first exercise in the editor <br> Next up is working with it on your local computer"
+        tour-step-order="34"
+    >
     <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch on="$ctrl.participationStatus(exercise)">
         <td class="col-xs-3">
             <span>{{exercise.title}}</span>
@@ -88,9 +92,14 @@
                         tour-step-backdrop="false"
                         tour-step-title="Open Exercise"
                         tour-step-content="If the online editor is availiable you can directly use your browser to finish your exercise.
-                        <br> Click on the online editor and finish the described Task on the right"
+                        <br> <strong> DON'T </strong> click on the online editor yet"
                         tour-step-order="31"
                     ></i>&nbsp;Open exercise</a>
+                    <div tour-step="33" tour-step-placement="left"
+                         tour-step-backdrop="false"
+                         tour-step-title="Open Exercise"
+                         tour-step-content="Now you can try to complete your first task by opening the online Editor"
+                         tour-step-order="33"></div>
                     <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"
                             popover-placement="{{$ctrl.clonePopover.placement}}"
                             popover-trigger="outsideClick"
