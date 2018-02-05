@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.repository.FeedbackRepository;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.*;
@@ -20,6 +21,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,6 +38,7 @@ public class ParticipationResource {
     private final ParticipationService participationService;
     private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
+    private final FeedbackRepository feedbackRepository;
     private final ExerciseService exerciseService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
@@ -43,11 +47,12 @@ public class ParticipationResource {
 
     private static final String ENTITY_NAME = "participation";
 
-    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, CourseService courseService,
+    public ParticipationResource(ParticipationService participationService, ParticipationRepository participationRepository, FeedbackRepository feedbackRepository, CourseService courseService,
                                  ResultRepository resultRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
                                  Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.participationService = participationService;
         this.participationRepository = participationRepository;
+        this.feedbackRepository = feedbackRepository;
         this.resultRepository = resultRepository;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
@@ -106,6 +111,31 @@ public class ParticipationResource {
         }
         if (Optional.ofNullable(exercise).isPresent()) {
             Participation participation = participationService.init(exercise, principal.getName());
+
+            if("Tutorial".equals(course.getTitle()) && "Exercise 2".equals(exercise.getTitle())){
+                log.debug("Saving participation for first time exercise start in tutorial course");
+                Result fakeResult = new Result();
+                fakeResult.setResultString("1 of 1 failed");
+                fakeResult.setParticipation(participation);
+                fakeResult.setSuccessful(false);
+                fakeResult.setCompletionDate(ZonedDateTime.now());
+                fakeResult = resultRepository.saveAndFlush(fakeResult);
+
+                Feedback fakeFeedback = new Feedback();
+                fakeFeedback.setResult(fakeResult);
+                fakeFeedback.setText("Not Started");
+                fakeFeedback.setDetailText("You haven't worked on the exercise in the editor yet");
+                fakeFeedback = feedbackRepository.saveAndFlush(fakeFeedback);
+
+                HashSet<Feedback> fakeFeedbacks = new HashSet<>();
+                fakeFeedbacks.add(fakeFeedback);
+                fakeResult.setFeedbacks(fakeFeedbacks);
+
+                HashSet<Result> fakeResults = new HashSet<>();
+                fakeResults.add(fakeResult);
+                participation.setResults(fakeResults);
+            }
+
             return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
                 .body(participation);
         } else {

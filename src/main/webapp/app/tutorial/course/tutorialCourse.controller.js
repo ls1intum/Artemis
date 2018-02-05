@@ -62,8 +62,10 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
         });
 
         tour.on('stepChanged', function (data) {
-            if(data.order == "31"){
-                $cookies.putObject('tutorialEditor', true);
+            switch(data.order){
+                case "30": createFakeParticipation();
+                case "31": $cookies.putObject('tutorialEditor', true); break;
+
             }
         });
 
@@ -126,10 +128,15 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
 
             var inEditor = $cookies.get("tutorialEditor");
             if(inEditor){
+                $cookies.remove("tutorialEditor");
                 self.skipped=true;
                 doTutorial('32');
             }
         });
+    }
+
+    function createFakeResult(){
+
     }
 
     self.startTutorial = function () {
@@ -149,7 +156,6 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
     self.startTutorialAt = function (tutorialStepId) {
        doTutorial(tutorialStepId);
     };
-
 
     self.getFilterId = function getFilterId(exercisePos) {
         return _.toArray(self.exercise)[exercisePos].id;
