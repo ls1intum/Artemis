@@ -35,6 +35,7 @@
 
         //adapted from https://stackoverflow.com/questions/22361917/automatic-reconnect-with-stomp-js-in-node-js-application
         function stompFailureCallback(error) {
+            console.error("Websocket disconnect due to: " + error)
             isConnected = false;
             consecutiveFailedAttempts++;
             disconnectListener.forEach(function (listener) {
@@ -42,16 +43,22 @@
             });
             // NOTE: after 5 failed attempts in row, increase the timeout to 5 seconds,
             // after 10 failed attempts in row, increase the timeout to 10 seconds
-            var timeoutSeconds;
-            if (consecutiveFailedAttempts > 10) {
-                timeoutSeconds = 10;
+            // after 20 failed attempts in row, increase the timeout to 20 seconds
+            // after 30 failed attempts in row, increase the timeout to 60 seconds
+            var waitUntilReconnectAttempt;
+            if (consecutiveFailedAttempts > 30) {
+                waitUntilReconnectAttempt = 60
+            } else if (consecutiveFailedAttempts > 20) {
+                waitUntilReconnectAttempt = 20
+            } else if (consecutiveFailedAttempts > 10) {
+                waitUntilReconnectAttempt = 10;
             } else if (consecutiveFailedAttempts > 5) {
-                timeoutSeconds = 5;
+                waitUntilReconnectAttempt = 5;
             } else {
-                timeoutSeconds = 1;
+                waitUntilReconnectAttempt = 1;
             }
-            setTimeout(connect, timeoutSeconds * 1000);
-            console.log("Websocket: Try to reconnect in " + timeoutSeconds + " seconds...");
+            setTimeout(connect, waitUntilReconnectAttempt * 1000);
+            console.log("Websocket: Try to reconnect in " + waitUntilReconnectAttempt + " seconds...");
         }
 
         function connect () {
