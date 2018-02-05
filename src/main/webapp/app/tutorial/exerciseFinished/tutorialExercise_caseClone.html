@@ -3,7 +3,11 @@
         tour-step="40"
         tour-step-backdrop="false"
         tour-step-title="Cloning a repository"
-        tour-step-content="In order to complete this exercise you need to have installed git (https://git-scm.com/) and SourceTree (https://www.sourcetreeapp.com/)."
+        tour-step-content="<div>In order to complete this exercise you need to have installed
+<a target='_blank' href='https://git-scm.com/'>Git</a>
+and
+<a target='_blank' href='https://www.sourcetreeapp.com/'>SourceTree</a>
+.</div>"
         tour-step-order="40"
     >
     <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch on="$ctrl.participationStatus(exercise)">
