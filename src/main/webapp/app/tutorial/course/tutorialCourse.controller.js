@@ -35,6 +35,7 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
         }
 
         if (step) {
+            tour.waitFor(step);
             tour.startAt(step);
         } else {
             tour.start();
@@ -61,7 +62,9 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
         });
 
         tour.on('stepChanged', function (data) {
-
+            if(data.order == "31"){
+                $cookies.putObject('tutorialEditor', true);
+            }
         });
 
     };
@@ -69,6 +72,7 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
 
     function askForTutorial() {
         var tutorialState = $cookies.get("tutorialDone");
+        var inEditor = $cookies.get("tutorialEditor");
 
         if (!tutorialState) {
             var modalOptions = {
@@ -119,6 +123,12 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
         }).$promise.then(function (exercises) {
             self.exercise = exercises;
             self.amountOfExercises = _.size(self.exercise);
+
+            var inEditor = $cookies.get("tutorialEditor");
+            if(inEditor){
+                self.skipped=true;
+                doTutorial('32');
+            }
         });
     }
 
@@ -129,7 +139,7 @@ function TutorialCourseController($scope, $q, $cookies, Modal, Course, uiTourSer
     self.continueTutorial = function () {
         self.do = true;
 
-        if(self.loaded && self.do){
+        if(self.loaded){
             doTutorial('' + $cookies.getObject('tutorialStep'));
         }else{
             doTutorial();
