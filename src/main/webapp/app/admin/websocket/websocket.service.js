@@ -94,6 +94,9 @@
         }
 
         function disconnect () {
+            console.log(listener);
+            listener = {};
+            console.log(listener);
             if (stompClient !== null) {
                 stompClient.disconnect();
                 stompClient = null;
