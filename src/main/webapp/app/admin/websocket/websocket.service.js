@@ -10,7 +10,7 @@
 
     function JhiWebsocketService ($rootScope, $window, $cookies, $http, $q) {
         var stompClient = null;
-        var subscriber = null;
+        var subscriber = {};
         var listener = {};
         var connectListener = [];
         var disconnectListener = [];
@@ -74,7 +74,7 @@
                 // Note: use function instead of for-loop to prevent
                 // variable "channel" from being mutated
                 Object.keys(listener).forEach(function (channel) {
-                    subscriber = stompClient.subscribe(channel, function(data) {
+                    subscriber[channel] = stompClient.subscribe(channel, function(data) {
                         listener[channel].notify(angular.fromJson(data.body));
                     });
                 });
@@ -95,7 +95,7 @@
 
         function disconnect () {
             console.log(listener);
-            listener = {};
+            Object.keys(listener).forEach(unsubscribe);
             console.log(listener);
             if (stompClient !== null) {
                 stompClient.disconnect();
@@ -138,17 +138,18 @@
                 if(!listener[channel]) {
                     listener[channel] = $q.defer();
                 }
-                subscriber = stompClient.subscribe(channel, function(data) {
+                subscriber[channel] = stompClient.subscribe(channel, function(data) {
                     listener[channel].notify(angular.fromJson(data.body));
                 });
             }, null, null);
         }
 
         function unsubscribe (channel) {
-            if (subscriber !== null) {
-                subscriber.unsubscribe();
+            if (subscriber[channel] != null) {  // '!=' is necessary to also test for undefined
+                subscriber[channel].unsubscribe();
             }
-            listener[channel] = $q.defer();
+            delete listener[channel];
+            delete subscriber[channel];
         }
 
         /**
