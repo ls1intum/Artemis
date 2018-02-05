@@ -47,6 +47,9 @@ public class DropLocationResourceIntTest {
     private static final Integer DEFAULT_HEIGHT = 1;
     private static final Integer UPDATED_HEIGHT = 2;
 
+    private static final Boolean DEFAULT_INVALID = false;
+    private static final Boolean UPDATED_INVALID = true;
+
     @Autowired
     private DropLocationRepository dropLocationRepository;
 
@@ -87,7 +90,8 @@ public class DropLocationResourceIntTest {
             .posX(DEFAULT_POS_X)
             .posY(DEFAULT_POS_Y)
             .width(DEFAULT_WIDTH)
-            .height(DEFAULT_HEIGHT);
+            .height(DEFAULT_HEIGHT)
+            .invalid(DEFAULT_INVALID);
         return dropLocation;
     }
 
@@ -115,6 +119,7 @@ public class DropLocationResourceIntTest {
         assertThat(testDropLocation.getPosY()).isEqualTo(DEFAULT_POS_Y);
         assertThat(testDropLocation.getWidth()).isEqualTo(DEFAULT_WIDTH);
         assertThat(testDropLocation.getHeight()).isEqualTo(DEFAULT_HEIGHT);
+        assertThat(testDropLocation.isInvalid()).isEqualTo(DEFAULT_INVALID);
     }
 
     @Test
@@ -150,7 +155,8 @@ public class DropLocationResourceIntTest {
             .andExpect(jsonPath("$.[*].posX").value(hasItem(DEFAULT_POS_X)))
             .andExpect(jsonPath("$.[*].posY").value(hasItem(DEFAULT_POS_Y)))
             .andExpect(jsonPath("$.[*].width").value(hasItem(DEFAULT_WIDTH)))
-            .andExpect(jsonPath("$.[*].height").value(hasItem(DEFAULT_HEIGHT)));
+            .andExpect(jsonPath("$.[*].height").value(hasItem(DEFAULT_HEIGHT)))
+            .andExpect(jsonPath("$.[*].invalid").value(hasItem(DEFAULT_INVALID.booleanValue())));
     }
 
     @Test
@@ -167,7 +173,8 @@ public class DropLocationResourceIntTest {
             .andExpect(jsonPath("$.posX").value(DEFAULT_POS_X))
             .andExpect(jsonPath("$.posY").value(DEFAULT_POS_Y))
             .andExpect(jsonPath("$.width").value(DEFAULT_WIDTH))
-            .andExpect(jsonPath("$.height").value(DEFAULT_HEIGHT));
+            .andExpect(jsonPath("$.height").value(DEFAULT_HEIGHT))
+            .andExpect(jsonPath("$.invalid").value(DEFAULT_INVALID.booleanValue()));
     }
 
     @Test
@@ -191,7 +198,8 @@ public class DropLocationResourceIntTest {
             .posX(UPDATED_POS_X)
             .posY(UPDATED_POS_Y)
             .width(UPDATED_WIDTH)
-            .height(UPDATED_HEIGHT);
+            .height(UPDATED_HEIGHT)
+            .invalid(UPDATED_INVALID);
 
         restDropLocationMockMvc.perform(put("/api/drop-locations")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -206,6 +214,7 @@ public class DropLocationResourceIntTest {
         assertThat(testDropLocation.getPosY()).isEqualTo(UPDATED_POS_Y);
         assertThat(testDropLocation.getWidth()).isEqualTo(UPDATED_WIDTH);
         assertThat(testDropLocation.getHeight()).isEqualTo(UPDATED_HEIGHT);
+        assertThat(testDropLocation.isInvalid()).isEqualTo(UPDATED_INVALID);
     }
 
     @Test

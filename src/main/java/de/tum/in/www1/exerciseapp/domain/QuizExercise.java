@@ -1,5 +1,6 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.exerciseapp.config.Constants;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -200,7 +201,16 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
      */
     public Long getRemainingTime() {
-        return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+        return hasStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+    }
+
+    /**
+     * Get the remaining time until the quiz starts in seconds
+     *
+     * @return null, if the quiz isn't planned to start, otherwise the time until the quiz starts in seconds (negative if the quiz has already started)
+     */
+    public Long getTimeUntilPlannedStart() {
+        return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getReleaseDate()) : null;
     }
 
     /**
@@ -225,6 +235,38 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public Boolean shouldFilterForStudents() {
         return !hasStarted() || isSubmissionAllowed();
+    }
+
+    /**
+     * Check if the quiz is valid. This means, the quiz needs a title, a valid duration,
+     * at least one question, and all questions must be valid
+     *
+     * @return true if the quiz is valid, otherwise false
+     */
+    @JsonIgnore
+    public Boolean isValid() {
+        // check title
+        if (getTitle() == null || getTitle().equals("")){
+            return false;
+        }
+
+        // check duration
+        if (getDuration() == null || getDuration() < 0) {
+            return false;
+        }
+
+        // check questions
+        if (getQuestions() == null || getQuestions().isEmpty()) {
+            return false;
+        }
+        for (Question question : getQuestions()) {
+            if (!question.isValid()) {
+                return false;
+            }
+        }
+
+        // passed all checks
+        return true;
     }
 
     public List<Question> getQuestions() {
@@ -359,7 +401,6 @@ public class QuizExercise extends Exercise implements Serializable {
         this.setReleaseDate(originalQuizExercise.getReleaseDate());
 
         //remove added Questions, which are not allowed to be added
-        // and check the changes -> updates of statistics and results necessary?
         Set<Question> addedQuestions = new HashSet<>();
 
         //check every question
@@ -370,8 +411,13 @@ public class QuizExercise extends Exercise implements Serializable {
                 Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
                 //reset score (not allowed to change)
                 question.setScore(originalQuestion.getScore());
-                //reset invalid if the question is already invalid;
-                question.setInvalid(question.isInvalid() || originalQuestion.isInvalid());
+                //correct invalid = null to invalid = false
+                if (question.isInvalid() == null) {
+                    question.setInvalid(false);
+                }
+                //reset invalid if the question is already invalid
+                question.setInvalid(question.isInvalid()
+                    || (originalQuestion.isInvalid() != null && originalQuestion.isInvalid()));
 
                 //undo all not allowed changes in the answers of the MultipleChoiceQuestion
                 if (question instanceof MultipleChoiceQuestion) {
@@ -412,6 +458,7 @@ public class QuizExercise extends Exercise implements Serializable {
                 // check if a question is  set invalid or if the scoringType has changed
                 // if true an update of the Statistics and Results is necessary
                 updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
+                    (question.isInvalid() && originalQuestion.isInvalid() == null) ||
                     (question.isInvalid() && !originalQuestion.isInvalid()) ||
                     !question.getScoringType().equals(originalQuestion.getScoringType());
 

@@ -3,10 +3,10 @@
 <jhi-alert></jhi-alert>
 <div>
     <div class="button-toolbar pull-right">
-        <button class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
+        <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
             <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.archive.title">ARCHIVE</span>
         </button>
-        <button class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
+        <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
             <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.cleanup.title">CLEANUP</span>
         </button>
         <button type="submit"
@@ -67,7 +67,7 @@
                 Duration</a>&nbsp;<i
             ng-class="{'fa fa-sort-asc': $ctrl.sortColumn === 'duration' && !$ctrl.sortReverse, 'fa fa-sort-desc': $ctrl.sortColumn === 'duration' && $ctrl.sortReverse}"></i>
         </th>
-        <th></th>
+        <th ng-if="$ctrl.exercise.type !== 'quiz'"></th>
     </tr>
     </thead>
     <tbody>
@@ -80,8 +80,8 @@
                 <span ng-switch on="result.successful">
                     <span ng-switch-when="true">
                         <span class="text-success">
-                            <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                            <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">
+                            <i ng-if="$ctrl.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                            <span ng-switch on="$ctrl.exercise.type === 'quiz' || !result.feedbacks || result.feedbacks.length === 0">
                                 <span ng-switch-when="true">
                                     {{result.resultString}}
                                 </span>
@@ -93,8 +93,8 @@
                     </span>
                     <span ng-switch-when="false">
                         <span class="text-danger">
-                            <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
-                             <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">
+                            <i ng-if="$ctrl.exercise.type !== 'quiz'" class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                             <span ng-switch on="$ctrl.exercise.type === 'quiz' || !result.feedbacks || result.feedbacks.length === 0">
                                 <span ng-switch-when="true">
                                     {{result.resultString}}
                                 </span>
@@ -109,8 +109,8 @@
             <span ng-switch-when="false">
                 <span ng-if="result.score > 80">
                     <span class="text-success">
-                        <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                        <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">
+                        <i ng-if="$ctrl.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                        <span ng-switch on="$ctrl.exercise.type === 'quiz' || !result.feedbacks || result.feedbacks.length === 0">
                             <span ng-switch-when="true">
                                 {{result.resultString}}
                             </span>
@@ -122,8 +122,8 @@
                 </span>
                 <span ng-if="result.score > 40 && result.score <= 80">
                     <span  class="result-orange">
-                        <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                        <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">
+                        <i ng-if="$ctrl.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                        <span ng-switch on="$ctrl.exercise.type === 'quiz' || !result.feedbacks || result.feedbacks.length === 0">
                             <span ng-switch-when="true">
                                 {{result.resultString}}
                             </span>
@@ -135,8 +135,8 @@
                 </span>
                 <span ng-if="result.score >= 0 && result.score <= 40">
                     <span class="text-danger">
-                        <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
-                        <span ng-switch on="!result.feedbacks || result.feedbacks.length === 0">
+                        <i ng-if="$ctrl.exercise.type !== 'quiz'" class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                        <span ng-switch on="$ctrl.exercise.type === 'quiz' || !result.feedbacks || result.feedbacks.length === 0">
                             <span ng-switch-when="true">
                                 {{result.resultString}}
                             </span>
@@ -153,7 +153,7 @@
             <span ng-show="result.score != null">{{result.score}}%</span>
         </td>
         <td>{{$ctrl.buildDurationString(result.completionDate, result.participation.initializationDate)}} minutes</td>
-        <td>
+        <td ng-if="$ctrl.exercise.type !== 'quiz'">
             <button class="btn btn-default btn-xs" ng-click="$ctrl.goToRepository(result)"><i
                 class="fa fa-code-fork"></i>&nbsp;Repository
             </button>

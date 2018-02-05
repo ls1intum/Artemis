@@ -159,7 +159,7 @@ public class ExerciseResource {
     @GetMapping("/exercises")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<List<Exercise>> getAllExercises(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Exercise>> getAllExercises(Pageable pageable) {
         log.debug("REST request to get a page of Exercises");
         Page<Exercise> page = exerciseRepository.findAll(pageable);
         Stream<Exercise> authorizedExercises = page.getContent().stream().filter(

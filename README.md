@@ -1,6 +1,6 @@
 # ArTEMiS: AuTomated assEssment Management System 
 
-**Curent version:** 1.4.0
+**Curent version:** 1.4.1
 
 The following UML diagram shows the top-level design of ArTEMiS which is decomposed into an application client and an application server. The application server then connects to a version control system (VCS), a continuous integration system (CIS) and a user management system (UMS).
 
@@ -88,7 +88,7 @@ artemis:
     url: https://jirabruegge.in.tum.de
     user: <user>
     password: <password>
-    instructor-group-name: <admin-group>
+    admin-group-name: <admin-group>
   bitbucket:
     url: https://repobruegge.in.tum.de
     user: <user>
@@ -145,7 +145,7 @@ If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can
           encryption-password: X7RNnJUzeoUpB2EQsK
           jira:
             url: http://localhost:8000
-            instructor-group-name: jira-administrators
+            admin-group-name: jira-administrators
           bitbucket:
             url: http://localhost:7990
             user: bitbucket

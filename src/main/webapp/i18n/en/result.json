@@ -1,3 +1,4 @@
+
 {
     "artemisApp": {
         "result" : {
@@ -20,6 +21,7 @@
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
             "score": "Score",
+            "rated": "Rated",
             "submission": "Submission",
             "feedbacks": "Feedbacks",
             "participation": "Participation"

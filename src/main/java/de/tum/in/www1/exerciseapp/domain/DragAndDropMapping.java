@@ -28,6 +28,9 @@ public class DragAndDropMapping implements Serializable {
     @Column(name = "drop_location_index")
     private Integer dropLocationIndex;
 
+    @Column(name = "invalid")
+    private Boolean invalid = false;
+
     @ManyToOne
     private DragItem dragItem;
 
@@ -75,6 +78,19 @@ public class DragAndDropMapping implements Serializable {
 
     public void setDropLocationIndex(Integer dropLocationIndex) {
         this.dropLocationIndex = dropLocationIndex;
+    }
+
+    public Boolean isInvalid() {
+        return invalid;
+    }
+
+    public DragAndDropMapping invalid(Boolean invalid) {
+        this.invalid = invalid;
+        return this;
+    }
+
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
     }
 
     public DragItem getDragItem() {
@@ -156,6 +172,7 @@ public class DragAndDropMapping implements Serializable {
             "id=" + getId() +
             ", dragItemIndex='" + getDragItemIndex() + "'" +
             ", dropLocationIndex='" + getDropLocationIndex() + "'" +
+            ", invalid='" + isInvalid() + "'" +
             "}";
     }
 }

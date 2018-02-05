@@ -13,6 +13,10 @@
             <span>{{vm.dragItem.text}}</span>
         </dd>
         <dt><span data-translate="artemisApp.dragItem.question">Question</span></dt>
+        <dt><span data-translate="artemisApp.dragItem.invalid">Invalid</span></dt>
+        <dd>
+            <span>{{vm.dragItem.invalid}}</span>
+        </dd>
         <dd>
             <a ui-sref="drag-and-drop-question-detail({id:vm.dragItem.question.id})">{{vm.dragItem.question.id}}</a>
         </dd>

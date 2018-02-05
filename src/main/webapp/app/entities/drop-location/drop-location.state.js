@@ -108,6 +108,7 @@
                                 posY: null,
                                 width: null,
                                 height: null,
+                                invalid: null,
                                 id: null
                             };
                         }

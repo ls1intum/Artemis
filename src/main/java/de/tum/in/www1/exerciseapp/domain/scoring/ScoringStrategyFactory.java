@@ -4,7 +4,6 @@ import de.tum.in.www1.exerciseapp.domain.DragAndDropQuestion;
 import de.tum.in.www1.exerciseapp.domain.MultipleChoiceQuestion;
 import de.tum.in.www1.exerciseapp.domain.Question;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 public class ScoringStrategyFactory {
     /**
@@ -17,13 +16,16 @@ public class ScoringStrategyFactory {
         if (question instanceof MultipleChoiceQuestion) {
             if (question.getScoringType() == ScoringType.ALL_OR_NOTHING) {
                 return new ScoringStrategyMultipleChoiceAllOrNothing();
+            } else if (question.getScoringType() == ScoringType.PROPORTIONAL_WITH_PENALTY) {
+                return new ScoringStrategyMultipleChoiceProportionalWithPenalty();
             }
-        }
-        if (question instanceof DragAndDropQuestion) {
+        } else if (question instanceof DragAndDropQuestion) {
             if (question.getScoringType() == ScoringType.ALL_OR_NOTHING) {
                 return new ScoringStrategyDragAndDropAllOrNothing();
+            } else if (question.getScoringType() == ScoringType.PROPORTIONAL_WITH_PENALTY) {
+                return new ScoringStrategyDragAndDropProportionalWithPenalty();
             }
         }
-        throw new NotImplementedException();
+        throw new UnsupportedOperationException("Unknown ScoringType!");
     }
 }

@@ -32,7 +32,10 @@
         vm.participationStatus = participationStatus;
         vm.start = start;
         vm.resume = resume;
+        vm.startPractice = startPractice;
         vm.canOpenStatistic = canOpenStatistic;
+        vm.isPracticeModeAvailable = isPracticeModeAvailable;
+        vm.isActiveQuiz = isActiveQuiz;
         vm.now = Date.now();
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
@@ -119,7 +122,9 @@
 
         function participationStatus(exercise) {
             if (exercise.type && exercise.type === "quiz") {
-                if (angular.equals({}, exercise.participation) && moment(exercise.dueDate).isAfter(moment())) {
+                if ((!exercise.isPlannedToStart || moment(exercise.releaseDate).isAfter(moment())) && exercise.visibleToStudents) {
+                    return "quiz-not-started";
+                } else if (angular.equals({}, exercise.participation) && (!exercise.isPlannedToStart || moment(exercise.dueDate).isAfter(moment())) && exercise.visibleToStudents) {
                     return "quiz-uninitialized";
                 } else if (angular.equals({}, exercise.participation)) {
                     return "quiz-not-participated";
@@ -139,8 +144,33 @@
             return "inactive";
         }
 
+        /**
+         * Check if the practice mode is available for the given exercise
+         *
+         * @param exercise {object} the exercise to check for practice mode
+         */
+        function isPracticeModeAvailable(exercise) {
+            return exercise.type === "quiz" &&
+                exercise.isPlannedToStart &&
+                exercise.isOpenForPractice &&
+                moment(exercise.dueDate).isBefore(moment());
+        }
+
+        /**
+         * Check if the given exercise is an active quiz
+         *
+         * @param exercise {object} the exercise to test
+         * @return {boolean} true, if the exercise is an active quiz, otherwise false
+         */
+        function isActiveQuiz(exercise) {
+            var participationState = participationStatus(exercise);
+            return participationState === "quiz-uninitialized" ||
+                participationState === "quiz-active" ||
+                participationState === "quiz-submitted";
+        }
+
         function isNotOverdue(exercise) {
-            return vm.showOverdueExercises || _.isEmpty(exercise.dueDate) || vm.now <= Date.parse(exercise.dueDate);
+            return vm.showOverdueExercises || exercise.type === "quiz" || _.isEmpty(exercise.dueDate) || vm.now <= Date.parse(exercise.dueDate);
         }
 
         vm.isNotOverdue = isNotOverdue;
@@ -204,6 +234,10 @@
             }).finally(function () {
                 vm.loading[exercise.id] = false;
             });
+        }
+
+        function startPractice(exercise) {
+            $location.url("/quiz/" + exercise.id + "/practice");
         }
 
         function toggleShowOverdueExercises() {

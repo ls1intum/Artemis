@@ -154,8 +154,13 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
             if (originalQuestion.getAnswerOptions().contains(answer)) {
                 //find original answer
                 AnswerOption originalAnswer = originalQuestion.findAnswerOptionById(answer.getId());
+                //correct invalid = null to invalid = false
+                if (answer.isInvalid() == null) {
+                    answer.setInvalid(false);
+                }
                 //reset invalid answer if it already set to true (it's not possible to set an answer valid again)
-                answer.setInvalid(answer.isInvalid() || originalAnswer.isInvalid());
+                answer.setInvalid(answer.isInvalid()
+                    || (originalAnswer.isInvalid() != null && originalAnswer.isInvalid()));
             } else {
                 //mark the added Answers (adding questions is not allowed)
                 notAllowedAddedAnswers.add(answer);
@@ -185,7 +190,8 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
 
                 // check if an answer is set invalid or if the correctness has changed
                 // if true an update of the Statistics and Results is necessary
-                if ((answer.isInvalid() && !originalAnswer.isInvalid() && !this.isInvalid()) ||
+                if ((answer.isInvalid() && !this.isInvalid() && originalAnswer.isInvalid() == null) ||
+                    (answer.isInvalid() && !this.isInvalid() && !originalAnswer.isInvalid()) ||
                     (!(answer.isIsCorrect().equals(originalAnswer.isIsCorrect())))) {
                     updateNecessary = true;
                 }
@@ -200,6 +206,26 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    @Override
+    public Boolean isValid() {
+        // check general validity (using superclass)
+        if (!super.isValid()) {
+            return false;
+        }
+
+        // check answer options
+        if (getAnswerOptions() != null) {
+            for (AnswerOption answerOption : getAnswerOptions()) {
+                if (answerOption.isIsCorrect()) {
+                    // at least one correct answer option exists
+                    return true;
+                }
+            }
+        }
+        // no correct answer option exists
+        return false;
+    }
 
     @Override
     public boolean equals(Object o) {

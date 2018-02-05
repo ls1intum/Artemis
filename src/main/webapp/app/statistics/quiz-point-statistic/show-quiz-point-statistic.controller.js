@@ -226,8 +226,14 @@
                 $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
             }
             else{
-                if(vm.quizExercise.question[vm.quizExercise.questions.length - 1].type === "multiple-choice") {
+                if(vm.quizExercise.questions[vm.quizExercise.questions.length - 1].type === "multiple-choice") {
                     $state.go('multiple-choice-question-statistic-chart', {
+                        quizId: vm.quizExercise.id,
+                        questionId: vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id
+                    });
+                }
+                if (vm.quizExercise.questions[vm.quizExercise.questions.length - 1].type === "drag-and-drop") {
+                    $state.go('drag-and-drop-question-statistic-chart', {
                         quizId: vm.quizExercise.id,
                         questionId: vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id
                     });
@@ -246,15 +252,16 @@
             }
             // check if it's allowed to release the statistics, if not send alert and do nothing
             if (released && releaseButtonDisabled()) {
-                alert("Quiz noch nicht beendet!");
+                alert("Quiz hasn't ended yet!");
                 return;
             }
             if (vm.quizExercise.id) {
                 vm.quizExercise.quizPointStatistic.released = released;
-                for (var i = 0; i < vm.quizExercise.questions.length; i++) {
-                    vm.quizExercise.questions[i].questionStatistic.released = released;
+                if (released) {
+                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {}, function(){}, function () {alert("Error!");})
+                } else {
+                    QuizExercise.revokeStatistics({id: vm.quizExercise.id}, {});
                 }
-                QuizExercise.update(vm.quizExercise);
             }
         }
 

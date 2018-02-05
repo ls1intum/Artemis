@@ -106,6 +106,7 @@
                             return {
                                 dragItemIndex: null,
                                 dropLocationIndex: null,
+                                invalid: null,
                                 id: null
                             };
                         }

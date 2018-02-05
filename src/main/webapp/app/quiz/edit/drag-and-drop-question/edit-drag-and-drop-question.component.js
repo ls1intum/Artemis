@@ -30,6 +30,10 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
         {
             key: "ALL_OR_NOTHING",
             label: "All or Nothing"
+        },
+        {
+            key: "PROPORTIONAL_WITH_PENALTY",
+            label: "Proportional with Penalty"
         }
     ];
 
@@ -60,6 +64,13 @@ function EditDragAndDropQuestionController($translate, $translatePartialLoader, 
     function togglePreview() {
         vm.showPreview = !vm.showPreview;
     }
+
+    /**
+     * Prevent page from jumping back to last clicked/selected element on drop
+     */
+    $scope.$on('ANGULAR_DRAG_START', function () {
+        window.getSelection().removeAllRanges();
+    });
 
     // set up editor
     vm.random = pseudoRandomLong();

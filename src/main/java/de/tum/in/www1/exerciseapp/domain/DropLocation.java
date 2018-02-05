@@ -36,6 +36,9 @@ public class DropLocation implements Serializable {
     @Column(name = "height")
     private Integer height;
 
+    @Column(name = "invalid")
+    private Boolean invalid = false;
+
     @ManyToOne
     @JsonIgnore
     private DragAndDropQuestion question;
@@ -126,9 +129,16 @@ public class DropLocation implements Serializable {
     public DragAndDropQuestion getQuestion() {
         return question;
     }
+    public Boolean isInvalid() {
+        return invalid == null ? false : invalid;
+    }
 
     public DropLocation question(DragAndDropQuestion dragAndDropQuestion) {
         this.question = dragAndDropQuestion;
+        return this;
+    }
+    public DropLocation invalid(Boolean invalid) {
+        this.invalid = invalid;
         return this;
     }
 
@@ -138,6 +148,10 @@ public class DropLocation implements Serializable {
 
     public Set<DragAndDropMapping> getMappings() {
         return mappings;
+    }
+
+    public void setInvalid(Boolean invalid) {
+        this.invalid = invalid;
     }
 
     public DropLocation mappings(Set<DragAndDropMapping> mappings) {
@@ -155,6 +169,23 @@ public class DropLocation implements Serializable {
         this.mappings.remove(mapping);
         mapping.setDropLocation(null);
         return this;
+    }
+
+    /**
+     * check if the DropLocation is solved correctly
+     *
+     * @param dndAnswer Answer from the student with the List of submittedMappings from the Result
+     */
+    public boolean isDropLocationCorrect(DragAndDropSubmittedAnswer dndAnswer) {
+
+        Set<DragItem> correctDragItems = question.getCorrectDragItemsForDropLocation(this);
+        DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(this);
+
+        return ((correctDragItems.size() == 0 && selectedDragItem == null) ||
+            (selectedDragItem != null && correctDragItems.contains(selectedDragItem)));
+        // this drop location was meant to stay empty and user didn't drag anything onto it
+        // OR the user dragged one of the correct drag items onto this drop location
+        // => this is correct => Return true;
     }
 
     @Override
@@ -188,6 +219,7 @@ public class DropLocation implements Serializable {
             ", posY='" + getPosY() + "'" +
             ", width='" + getWidth() + "'" +
             ", height='" + getHeight() + "'" +
+            ", invalid='" + isInvalid() + "'" +
             "}";
     }
 }

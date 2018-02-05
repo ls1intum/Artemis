@@ -21,11 +21,12 @@
     <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch on="$ctrl.participationStatus(exercise)">
         <td>
             <span>{{exercise.title}}</span>
-            <a class="text-primary" has-any-authority="ROLE_ADMIN, ROLE_TA"><i class="fa fa-info-circle fa-fw"
+            <a class="text-primary" has-any-authority="ROLE_ADMIN, ROLE_TA, ROLE_INSTRUCTOR"><i class="fa fa-info-circle fa-fw"
                ui-sref="instructor-dashboard({courseId: exercise.course.id, exerciseId: exercise.id})"></i></a>
 
-            <span class="label label-warning" ng-show="!exercise.visibleToStudents" uib-tooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}"
+            <span class="label label-warning" ng-if="!exercise.visibleToStudents" uib-tooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}"
                   tooltip-placement="right">Not Released</span>
+            <span class="label label-success" ng-if="$ctrl.isActiveQuiz(exercise)">Live</span>
         </td>
         <td>
             <span am-time-ago="exercise.dueDate" uib-tooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}"
@@ -35,6 +36,7 @@
             <span class="text-muted" ng-switch-when="uninitialized">You have not started this exercise yet.</span>
             <span ng-switch-when="initialized"><result participation="exercise.participation"></result></span>
             <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
+            <span class="text-muted" ng-switch-when="quiz-not-started">The quiz hasn't started yet.</span>
             <span class="text-muted" ng-switch-when="quiz-uninitialized">You have not started this quiz yet.</span>
             <span class="text-muted" ng-switch-when="quiz-not-participated">You have not participated in this quiz.</span>
             <span class="text-muted" ng-switch-when="quiz-active">You are currently participating in this quiz.</span>
@@ -42,7 +44,6 @@
             <span ng-switch-when="quiz-finished"><result participation="exercise.participation" show-score="true"></result></span>
         </td>
         <td class="text-center">
-            <div class="btn-group flex-btn-group-container">
             <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
                     ng-switch-when="uninitialized"
                     ng-click="$ctrl.start(exercise)"
@@ -51,38 +52,10 @@
                 <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
             </button>
             <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="quiz-uninitialized"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start Quiz</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="quiz-active"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume Quiz</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="quiz-submitted"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]">View Submission</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
-                    ng-switch-when="quiz-finished"
-                    ng-click="$ctrl.start(exercise)"
-                    ng-disabled="$ctrl.loading[exercise.id.toString()]">
-                <span ng-hide="$ctrl.loading[exercise.id.toString()]">View Results</span>
-                <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
-            </button>
-            <button class="btn btn-primary btn-sm btn-block"
                     ng-switch-when="inactive"
                     ng-click="$ctrl.resume(exercise)"
                     ng-disabled="$ctrl.loading[exercise.id]"
-                    >
+            >
                 <span ng-hide="$ctrl.loading[exercise.id]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume exercise</span>
                 <i ng-show="$ctrl.loading[exercise.id]" class="fa fa-circle-o-notch fa-spin"></i>
             </button>
@@ -97,9 +70,52 @@
                 </button>
                 <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan" ng-if="exercise.publishBuildPlanUrl" ng-click="$ctrl.goToBuildPlan(exercise)"><i class="fa fa-external-link fa-fw"></i>&nbsp;Go to build plan</button>
             </div>
+            <div class="btn-group flex-btn-group-container" ng-if="exercise.type ==='quiz'">
+                <button class="btn btn-warning btn-sm"
+                        ng-if="$ctrl.isPracticeModeAvailable(exercise)"
+                        ng-click="$ctrl.startPractice(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-repeat fa-fw"></i>&nbsp;Practice</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-not-started"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Open Quiz</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-uninitialized"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start Quiz</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-active"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume Quiz</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-submitted"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-eye fa-fw"></i>&nbsp;View Submission</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-finished"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-eye fa-fw"></i>&nbsp;View Results</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
                 <button type="submit"
                         class="btn btn-success btn-sm"
-                        ng-if="exercise.type ==='quiz' && $ctrl.canOpenStatistic(exercise)"
+                        ng-if="$ctrl.canOpenStatistic(exercise)"
                         ui-sref="quiz-point-statistic-chart({quizId: exercise.id})">
                     <span class="fa fa-signal"></span>
                     <span class="hidden-sm-down" data-translate="global.menu.entities.statistic"></span>

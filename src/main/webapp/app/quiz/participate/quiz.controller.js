@@ -5,20 +5,30 @@
         .module('artemisApp')
         .controller('QuizController', QuizController);
 
-    QuizController.$inject = ['$scope', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult'];
+    QuizController.$inject = ['$scope', '$state', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizExercise', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult', '$timeout'];
 
-    function QuizController($scope, $stateParams, $interval, QuizExerciseForStudent, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult) {
+    function QuizController($scope, $state, $stateParams, $interval, QuizExerciseForStudent, QuizExercise, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult, $timeout) {
         var vm = this;
 
         var timeDifference = 0;
+        var outstandingWebsocketResponses = 0;
+
+        var runningTimeouts = [];
+
+        // set correct mode
+        vm.mode = $state.current.data.mode;
 
         vm.isSubmitting = false;
         vm.isSaving = false;
         vm.lastSavedTimeText = "never";
         vm.justSaved = false;
+        vm.waitingForQuizStart = false;
 
         vm.remainingTimeText = "?";
         vm.remainingTimeSeconds = 0;
+        vm.timeUntilStart = 0;
+        vm.disconnected = true;
+        vm.unsavedChanges = false;
 
         vm.sendWebsocket = null;
         vm.showingResult = false;
@@ -27,16 +37,154 @@
         vm.onSelectionChanged = onSelectionChanged;
         vm.onSubmit = onSubmit;
 
-        init();
+        // init according to mode
+        switch (vm.mode) {
+            case "practice":
+                initPracticeMode();
+                break;
+            case "preview":
+                initPreview();
+                break;
+            case "solution":
+                initShowSolution();
+                break;
+            case "default":
+                init();
+                break;
+        }
+
         $interval(updateDisplayedTimes, 100);  // update displayed times in UI regularly
+
+        /**
+         * Websocket channels
+         */
+        var submissionChannel;
+        var participationChannel;
+        var quizExerciseChannel;
+        var onConnected;
+        var onDisconnected;
+
+        /**
+         * unsubscribe from all subscribed websocket channels when page is closed
+         */
+        $scope.$on('$destroy', function () {
+            runningTimeouts.forEach(function (timeout) {
+                $timeout.cancel(timeout);
+            });
+
+            if (submissionChannel) {
+                JhiWebsocketService.unsubscribe(submissionChannel);
+            }
+            if (participationChannel) {
+                JhiWebsocketService.unsubscribe(participationChannel);
+            }
+            if (quizExerciseChannel) {
+                JhiWebsocketService.unsubscribe(quizExerciseChannel);
+            }
+            if (onConnected) {
+                JhiWebsocketService.unbind("connect", onConnected);
+            }
+            if (onDisconnected) {
+                JhiWebsocketService.unbind("disconnect", onDisconnected);
+            }
+        });
 
         /**
          * loads latest submission from server and sets up socket connection
          */
         function init() {
-            load(function () {
-                var submissionChannel = '/topic/quizSubmissions/' + vm.submission.id;
-                var participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
+            // initialize websocket channel for changes to quiz exercise
+            quizExerciseChannel = '/topic/quizExercise/' + $stateParams.id;
+            JhiWebsocketService.subscribe(quizExerciseChannel);
+            JhiWebsocketService.receive(quizExerciseChannel).then(null, null, function () {
+                if (vm.waitingForQuizStart) {
+                    // only reload if quiz is hasn't started to prevent jumping ui during participation
+                    load();
+                }
+            });
+
+            // listen to connect / disconnect events
+            onConnected = function () {
+                vm.disconnected = false;
+                if (vm.unsavedChanges && vm.sendWebsocket) {
+                    vm.sendWebsocket(vm.submission);
+                }
+            };
+            JhiWebsocketService.bind("connect", onConnected);
+            onDisconnected = function () {
+                vm.disconnected = true;
+                if (outstandingWebsocketResponses > 0) {
+                    outstandingWebsocketResponses = 0;
+                    vm.isSaving = false;
+                    vm.unsavedChanges = true;
+                }
+            };
+            JhiWebsocketService.bind("disconnect", onDisconnected);
+
+            // load the quiz (and existing submission if quiz has started)
+            load();
+        }
+
+        /**
+         * loads quizExercise and starts practice mode
+         */
+        function initPracticeMode() {
+            QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
+                if (quizExercise.isOpenForPractice) {
+                    startQuizPreviewOrPractice(quizExercise);
+                } else {
+                    alert("Error: This quiz is not open for practice!");
+                }
+            });
+        }
+
+        /**
+         * loads quiz exercise and starts preview mode
+         */
+        function initPreview() {
+            QuizExercise.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
+                startQuizPreviewOrPractice(quizExercise);
+            });
+        }
+
+        function initShowSolution() {
+            QuizExercise.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
+                // init quiz
+                vm.quizExercise = quizExercise;
+                initQuiz();
+                vm.showingResult = true;
+            });
+        }
+
+        /**
+         * Start the given quiz in practice or preview mode
+         *
+         * @param quizExercise {object} the quizExercise to start
+         */
+        function startQuizPreviewOrPractice(quizExercise) {
+            // init quiz
+            vm.quizExercise = quizExercise;
+            initQuiz();
+
+            // randomize order
+            randomizeOrder(quizExercise);
+
+            // init empty submission
+            vm.submission = {};
+
+            // adjust end date
+            vm.quizExercise.adjustedDueDate = moment().add(quizExercise.duration, "seconds");
+
+            // auto submit when time is up
+            runningTimeouts.push($timeout(onSubmit, quizExercise.duration * 1000));
+        }
+
+        /**
+         * subscribe to any outstanding websocket channels
+         */
+        function subscribeToWebsocketChannels() {
+            if (!submissionChannel) {
+                submissionChannel = '/topic/quizSubmissions/' + vm.submission.id;
 
                 // submission channel => react to new submissions
                 JhiWebsocketService.subscribe(submissionChannel);
@@ -46,23 +194,19 @@
 
                 // save answers (submissions) through websocket
                 vm.sendWebsocket = function (data) {
+                    outstandingWebsocketResponses++;
                     JhiWebsocketService.send(submissionChannel + '/save', data);
                 };
+            }
+            if (!participationChannel) {
+                participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
 
                 // participation channel => react to new results
                 JhiWebsocketService.subscribe(participationChannel);
                 JhiWebsocketService.receive(participationChannel).then(null, null, function () {
-                    if (vm.remainingTimeSeconds <= 0) {
-                        // only reload if quiz is over to prevent jumping ui during participation
-                        load();
-                    }
+                    loadResults();
                 });
-
-                $scope.$on('$destroy', function () {
-                    JhiWebsocketService.unsubscribe(submissionChannel);
-                    JhiWebsocketService.unsubscribe(participationChannel);
-                });
-            });
+            }
         }
 
         /**
@@ -75,13 +219,7 @@
                 if (endDate.isAfter(moment())) {
                     // quiz is still running => calculate remaining seconds and generate text based on that
                     vm.remainingTimeSeconds = endDate.diff(moment(), "seconds");
-                    if (vm.remainingTimeSeconds > 210) {
-                        vm.remainingTimeText = Math.ceil(vm.remainingTimeSeconds / 60) + " min"
-                    } else if (vm.remainingTimeSeconds > 59) {
-                        vm.remainingTimeText = Math.floor(vm.remainingTimeSeconds / 60) + " min " + (vm.remainingTimeSeconds % 60) + " s";
-                    } else {
-                        vm.remainingTimeText = vm.remainingTimeSeconds + " s";
-                    }
+                    vm.remainingTimeText = relativeTimeText(vm.remainingTimeSeconds);
                 } else {
                     // quiz is over => set remaining seconds to negative, to deactivate "Submit" button
                     vm.remainingTimeSeconds = -1;
@@ -97,6 +235,66 @@
             if (vm.submission && vm.submission.adjustedSubmissionDate) {
                 // exact value is not important => use default relative time from moment for better readability and less distraction
                 vm.lastSavedTimeText = moment(vm.submission.adjustedSubmissionDate).fromNow();
+            }
+
+            // update time until start
+            if (vm.quizExercise && vm.quizExercise.adjustedReleaseDate) {
+                if (vm.quizExercise.adjustedReleaseDate.isAfter(moment())) {
+                    vm.timeUntilStart = relativeTimeText(vm.quizExercise.adjustedReleaseDate.diff(moment(), "seconds"));
+                } else {
+                    vm.timeUntilStart = "Now"
+                }
+            } else {
+                vm.timeUntilStart = "";
+            }
+        }
+
+        /**
+         * Express the given timespan as humanized text
+         *
+         * @param remainingTimeSeconds {number} the amount of seconds to display
+         * @return {string} humanized text for the given amount of seconds
+         */
+        function relativeTimeText(remainingTimeSeconds) {
+            if (remainingTimeSeconds > 210) {
+                return Math.ceil(remainingTimeSeconds / 60) + " min"
+            } else if (remainingTimeSeconds > 59) {
+                return Math.floor(remainingTimeSeconds / 60) + " min " + (remainingTimeSeconds % 60) + " s";
+            } else {
+                return remainingTimeSeconds + " s";
+            }
+        }
+
+        /**
+         * Initialize the selections / mappings for each question with an empty array
+         */
+        function initQuiz() {
+            // calculate score
+            vm.totalScore = vm.quizExercise.questions.reduce(function (score, question) {
+                return score + question.score;
+            }, 0);
+
+            // prepare selection arrays for each question
+            if (!vm.submission) {
+                vm.selectedAnswerOptions = {};
+                vm.dragAndDropMappings = {};
+
+                if (vm.quizExercise.questions) {
+                    vm.quizExercise.questions.forEach(function (question) {
+                        switch (question.type) {
+                            case "multiple-choice":
+                                // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                                vm.selectedAnswerOptions[question.id] = [];
+                                break;
+                            case "drag-and-drop":
+                                // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                                vm.dragAndDropMappings[question.id] = [];
+                                break;
+                            default:
+                                console.error("Unknown question type: " + question.type);
+                        }
+                    });
+                }
             }
         }
 
@@ -185,52 +383,164 @@
 
         /**
          * Load the latest submission data for this user and this exercise
-         * @param callback [optional] callback function to be called when data has been loaded
          */
-        function load(callback) {
-            QuizSubmissionForExercise.get({
-                courseId: 1,
-                exerciseId: $stateParams.id
-            }).$promise.then(function (quizSubmission) {
-                vm.submission = quizSubmission;
-                QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
-                    vm.quizExercise = quizExercise;
-                    vm.totalScore = quizExercise.questions.reduce(function (score, question) {
-                        return score + question.score;
-                    }, 0);
-                    vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
-                    timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
+        function load() {
+            QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
+                vm.quizExercise = quizExercise;
+                initQuiz();
 
-                    // update submission time
-                    if (vm.submission.submissionDate) {
-                        vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                if (quizExercise.remainingTime != null) {
+                    if (quizExercise.remainingTime > 0) {
+                        // apply randomized order where necessary
+                        randomizeOrder(quizExercise);
+
+                        // automatically load results 5 seconds after quiz has ended (in case websocket didn't work)
+                        runningTimeouts.push(
+                            $timeout(function () {
+                                if (!vm.showingResult) {
+                                    loadResults();
+                                }
+                            }, (quizExercise.remainingTime + 5) * 1000)
+                        );
                     }
+                    QuizSubmissionForExercise.get({
+                        courseId: 1,
+                        exerciseId: $stateParams.id
+                    }).$promise.then(function (quizSubmission) {
+                        vm.submission = quizSubmission;
+                        vm.waitingForQuizStart = false;
 
-                    // show submission answers in UI
-                    applySubmission();
+                        // update timeDifference
+                        vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
+                        timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
 
-                    // load participation
-                    ExerciseParticipation.get({
-                        courseId: vm.quizExercise.course.id,
-                        exerciseId: vm.quizExercise.id
-                    }).$promise.then(function (participation) {
-                        vm.participation = participation;
-
-                        if (vm.quizExercise.remainingTime < 0) {
-                            // load result
-                            ParticipationResult.query({
-                                courseId: vm.participation.exercise.course.id,
-                                exerciseId: vm.participation.exercise.id,
-                                participationId: vm.participation.id,
-                                showAllResults: false
-                            }).$promise.then(showResult);
+                        // update submission time
+                        if (vm.submission.submissionDate) {
+                            vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
                         }
 
-                        if (callback) {
-                            callback();
-                        }
+                        // show submission answers in UI
+                        applySubmission();
+
+                        // load participation
+                        ExerciseParticipation.get({
+                            courseId: vm.quizExercise.course.id,
+                            exerciseId: vm.quizExercise.id
+                        }).$promise.then(function (participation) {
+                            vm.participation = participation;
+
+                            if (vm.quizExercise.remainingTime < 0) {
+                                // load result
+                                ParticipationResult.query({
+                                    courseId: vm.participation.exercise.course.id,
+                                    exerciseId: vm.participation.exercise.id,
+                                    participationId: vm.participation.id,
+                                    showAllResults: false,
+                                    ratedOnly: true
+                                }).$promise.then(showResult);
+                            }
+
+                            subscribeToWebsocketChannels();
+                        });
                     });
+                } else {
+                    // quiz hasn't started yet
+                    vm.waitingForQuizStart = true;
+                    if (quizExercise.isPlannedToStart) {
+                        // synchronize time with server
+                        vm.quizExercise.releaseDate = moment(vm.quizExercise.releaseDate);
+                        vm.quizExercise.adjustedReleaseDate = moment().add(quizExercise.timeUntilPlannedStart, "seconds");
+
+                        // load quiz when it is planned to start (at most once every second)
+                        runningTimeouts.push(
+                            $timeout(function () {
+                                if (vm.waitingForQuizStart) {
+                                    load();
+                                }
+                            }, Math.max(1, quizExercise.timeUntilPlannedStart) * 1000)
+                        );
+                    }
+                }
+            });
+        }
+
+        /**
+         * Load the quiz results and update quizExercise with missing fields
+         */
+        function loadResults() {
+            // TODO: create endpoint to reduce number of REST calls to one
+
+            QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
+                // only act on it if quiz has ended
+                if (quizExercise.remainingTime < 0) {
+                    // update questions with explanations and correct answer options / correct mappings
+                    applyFullQuizExercise(quizExercise);
+
+                    QuizSubmissionForExercise.get({
+                        courseId: 1,
+                        exerciseId: $stateParams.id
+                    }).$promise.then(function (quizSubmission) {
+                        vm.submission = quizSubmission;
+
+                        // show submission answers in UI
+                        applySubmission();
+
+                        // load and show result
+                        ParticipationResult.query({
+                            courseId: vm.participation.exercise.course.id,
+                            exerciseId: vm.participation.exercise.id,
+                            participationId: vm.participation.id,
+                            showAllResults: false,
+                            ratedOnly: true
+                        }).$promise.then(showResult, onLoadResultError);
+                    }, onLoadResultError);
+                }
+            }, onLoadResultError);
+        }
+
+        /**
+         * handle error when loading the results
+         *
+         * @param error
+         */
+        function onLoadResultError(error) {
+            console.error(error);
+            alert("Loading results failed. Please wait a few seconds and refresh the page manually.");
+        }
+
+        /**
+         * Transfer additional information (explanations, correct answers) from
+         * the given full quiz exercise to vm.quizExercise
+         *
+         * @param fullQuizExercise {object} the quizExercise containing additional information
+         */
+        function applyFullQuizExercise(fullQuizExercise) {
+            vm.quizExercise.questions.forEach(function (question) {
+                // find updated question
+                var fullQuestion = fullQuizExercise.questions.find(function (fullQuestion) {
+                    return question.id === fullQuestion.id;
                 });
+                if (fullQuestion) {
+                    question.explanation = fullQuestion.explanation;
+
+                    switch (question.type) {
+                        case "multiple-choice":
+                            question.answerOptions.forEach(function (answerOption) {
+                                // find updated answerOption
+                                var fullAnswerOption = fullQuestion.answerOptions.find(function (fullAnswerOption) {
+                                    return answerOption.id === fullAnswerOption.id;
+                                });
+                                if (fullAnswerOption) {
+                                    answerOption.explanation = fullAnswerOption.explanation;
+                                    answerOption.isCorrect = fullAnswerOption.isCorrect;
+                                }
+                            });
+                            break;
+                        case "drag-and-drop":
+                            question.correctMappings = fullQuestion.correctMappings;
+                            break;
+                    }
+                }
             });
         }
 
@@ -243,14 +553,58 @@
             if (vm.result) {
                 vm.showingResult = true;
 
-                // assign user score
-                vm.userScore = vm.result.submission.scoreInPoints || 0;
+                // assign user score (limit decimal places to 2)
+                vm.userScore = vm.result.submission.scoreInPoints ? Math.round(vm.result.submission.scoreInPoints * 100) / 100 : 0;
 
                 // create dictionary with scores for each question
                 vm.questionScores = {};
                 vm.result.submission.submittedAnswers.forEach(function (submittedAnswer) {
-                    vm.questionScores[submittedAnswer.question.id] = submittedAnswer.scoreInPoints;
+                    // limit decimal places to 2
+                    vm.questionScores[submittedAnswer.question.id] = Math.round(submittedAnswer.scoreInPoints * 100) / 100;
                 });
+            }
+        }
+
+        /**
+         * Randomize the order of the questions
+         * (and answerOptions or dragItems within each question)
+         * if randomizeOrder is true
+         *
+         * @param quizExercise {object} the quizExercise to randomize elements in
+         */
+        function randomizeOrder(quizExercise) {
+            if (quizExercise.questions) {
+                // shuffle questions
+                if (quizExercise.randomizeQuestionOrder) {
+                    shuffle(quizExercise.questions);
+                }
+
+                // shuffle answerOptions / dragItems within questions
+                quizExercise.questions.forEach(function (question) {
+                    if (question.randomizeOrder) {
+                        switch (question.type) {
+                            case "multiple-choice":
+                                shuffle(question.answerOptions);
+                                break;
+                            case "drag-and-drop":
+                                shuffle(question.dragItems);
+                                break;
+                        }
+                    }
+                });
+            }
+        }
+
+        /**
+         * Shuffles array in place.
+         * @param {Array} items An array containing the items.
+         */
+        function shuffle(items) {
+            for (var i = items.length - 1; i > 0; i--) {
+                var pickedIndex = Math.floor(Math.random() * (i + 1));
+                var picked = items[pickedIndex];
+                items[pickedIndex] = items[i];
+                items[i] = picked;
             }
         }
 
@@ -259,9 +613,13 @@
          */
         function onSelectionChanged() {
             applySelection();
-            vm.isSaving = true;
             if (vm.sendWebsocket) {
-                vm.sendWebsocket(vm.submission);
+                if (!vm.disconnected) {
+                    vm.isSaving = true;
+                    vm.sendWebsocket(vm.submission);
+                } else {
+                    vm.unsavedChanges = true;
+                }
             }
         }
 
@@ -270,14 +628,18 @@
          * @param quizSubmission The response data from the server
          */
         function onSaveSuccess(quizSubmission) {
-            vm.isSaving = false;
-            vm.submission = quizSubmission;
-            applySubmission();
-            if (vm.submission.submissionDate) {
-                vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
-                    vm.justSaved = true;
-                    timeoutJustSaved();
+            outstandingWebsocketResponses = Math.max(0, outstandingWebsocketResponses - 1);
+            if (outstandingWebsocketResponses === 0) {
+                vm.isSaving = false;
+                vm.unsavedChanges = false;
+                vm.submission = quizSubmission;
+                applySubmission();
+                if (vm.submission.submissionDate) {
+                    vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                    if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
+                        vm.justSaved = true;
+                        timeoutJustSaved();
+                    }
                 }
             }
         }
@@ -296,7 +658,27 @@
         function onSubmit() {
             applySelection();
             vm.isSubmitting = true;
-            QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+            switch (vm.mode) {
+                case "practice":
+                    if (!vm.submission.id) {
+                        QuizSubmission.submitForPractice({
+                            courseId: 1,
+                            exerciseId: $stateParams.id
+                        }, vm.submission, onSubmitPracticeSuccess, onSubmitError);
+                    }
+                    break;
+                case "preview":
+                    if (!vm.submission.id) {
+                        QuizSubmission.submitForPreview({
+                            courseId: 1,
+                            exerciseId: $stateParams.id
+                        }, vm.submission, onSubmitPreviewSuccess, onSubmitError);
+                    }
+                    break;
+                case "default":
+                    QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+                    break;
+            }
         }
 
         /**
@@ -317,12 +699,46 @@
         }
 
         /**
+         * Callback function for handling response after submitting for practice
+         * @param response
+         */
+        function onSubmitPracticeSuccess(response) {
+            vm.isSubmitting = false;
+            vm.submission = response;
+            applySubmission();
+
+            // load participation
+            ExerciseParticipation.get({
+                courseId: vm.quizExercise.course.id,
+                exerciseId: vm.quizExercise.id
+            }).$promise.then(function (participation) {
+                vm.participation = participation;
+                // load result
+                ParticipationResult.query({
+                    courseId: vm.participation.exercise.course.id,
+                    exerciseId: vm.participation.exercise.id,
+                    participationId: vm.participation.id,
+                    showAllResults: false,
+                    ratedOnly: false
+                }).$promise.then(showResult);
+            });
+        }
+
+        /**
+         * Callback function for handling response after submitting for preview
+         * @param response
+         */
+        function onSubmitPreviewSuccess(response) {
+            showResult([response]);
+        }
+
+        /**
          * Callback function for handling error when submitting
          * @param error
          */
         function onSubmitError(error) {
-            console.log(error);
-            alert("Submitting answers failed! Please try again later.");
+            console.error(error);
+            alert("Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.");
             vm.isSubmitting = false;
         }
     }

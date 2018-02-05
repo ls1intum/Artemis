@@ -4,25 +4,27 @@ import de.tum.in.www1.exerciseapp.domain.*;
 
 import java.util.Set;
 
+/**
+ * All or nothing means the full score is given if the answer is 100% correct,
+ * otherwise a score of 0 is given
+ */
 public class ScoringStrategyDragAndDropAllOrNothing implements ScoringStrategy {
-    // All or nothing means we get the full score if the answer is 100% correct, and 0 points otherwise
     @Override
     public double calculateScore(Question question, SubmittedAnswer submittedAnswer) {
+        // return maximal Score if the question is invalid
+        if (question.isInvalid()) {
+            return question.getScore();
+        }
         if (submittedAnswer instanceof DragAndDropSubmittedAnswer && question instanceof DragAndDropQuestion) {
             DragAndDropSubmittedAnswer dndAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
             DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
             // iterate through each drop location and compare its correct mappings with the answer's mapping
             for (DropLocation dropLocation : dndQuestion.getDropLocations()) {
-                Set<DragItem> correctDragItems = dndQuestion.getCorrectDragItemsForDropLocation(dropLocation);
                 DragItem selectedDragItem = dndAnswer.getSelectedDragItemForDropLocation(dropLocation);
-
-                if ((correctDragItems.size() == 0 && selectedDragItem == null) ||
-                    (selectedDragItem != null && correctDragItems.contains(selectedDragItem))) {
-                    // this drop location was meant to stay empty and user didn't drag anything onto it
-                    // OR the user dragged one of the correct drag items onto this drop location
-                    // => this is correct => Do nothing
-                } else {
-                    // incorrect => entire answer can no longer be 100 % correct
+                //return 0.0 if an dropLocation is solved incorrect and the dropLocation and dragItem is valid
+                if (!dropLocation.isInvalid()
+                    && !(selectedDragItem != null && selectedDragItem.isInvalid())
+                    && !dropLocation.isDropLocationCorrect(dndAnswer)) {
                     return 0.0;
                 }
             }

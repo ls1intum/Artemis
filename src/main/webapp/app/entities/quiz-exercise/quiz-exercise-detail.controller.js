@@ -68,6 +68,7 @@
         vm.onQuestionUpdated = onQuestionUpdated;
         vm.save = save;
         vm.onDurationChange = onDurationChange;
+        vm.hasSavedQuizStarted = hasSavedQuizStarted;
 
         var unsubscribe = $rootScope.$on('artemisApp:quizExerciseUpdate', function (event, result) {
             vm.quizExercise = result;
@@ -102,7 +103,7 @@
                 title: "",
                 text: "Enter your question text here",
                 scoringType: "ALL_OR_NOTHING",
-                randomizeOrder: false,
+                randomizeOrder: true,
                 score: 1,
                 type: "multiple-choice",
                 answerOptions: [
@@ -126,7 +127,7 @@
                 title: "",
                 text: "Enter your question text here",
                 scoringType: "ALL_OR_NOTHING",
-                randomizeOrder: false,
+                randomizeOrder: true,
                 score: 1,
                 type: "drag-and-drop",
                 dropLocations: [],
@@ -175,7 +176,7 @@
          * @returns {boolean} true if valid, false otherwise
          */
         function validQuiz() {
-            var isGenerallyValid = vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration;
+            var isGenerallyValid = vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration && vm.quizExercise.questions && vm.quizExercise.questions.length;
             var areAllQuestionsValid = vm.quizExercise.questions.every(function (question) {
                 switch (question.type) {
                     case "multiple-choice":
@@ -208,6 +209,12 @@
             if (!vm.quizExercise.duration) {
                 reasons.push({
                     translateKey: "artemisApp.quizExercise.invalidReasons.quizDuration",
+                    translateValues: {}
+                });
+            }
+            if (!vm.quizExercise.questions || vm.quizExercise.questions.length === 0) {
+                reasons.push({
+                    translateKey: "artemisApp.quizExercise.invalidReasons.noQuestion",
                     translateValues: {}
                 });
             }
@@ -266,7 +273,7 @@
          * Save the quiz to the server
          */
         function save() {
-            if (!validQuiz()) {
+            if (hasSavedQuizStarted() || !pendingChanges() || !validQuiz()) {
                 return;
             }
             vm.isSaving = true;
@@ -320,6 +327,19 @@
             var duration = moment.duration(vm.quizExercise.duration, "seconds");
             vm.duration.minutes = 60 * duration.hours() + duration.minutes();
             vm.duration.seconds = duration.seconds();
+        }
+
+        /**
+         * Check if the saved quiz has started
+         *
+         * @return {boolean} true if the saved quiz has started, otherwise false
+         */
+        function hasSavedQuizStarted() {
+            return !!(
+                savedEntity &&
+                savedEntity.isPlannedToStart &&
+                moment(savedEntity.releaseDate).isBefore(moment())
+            );
         }
     }
 })();

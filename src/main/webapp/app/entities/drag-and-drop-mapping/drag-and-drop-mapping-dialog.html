@@ -25,6 +25,11 @@
                     ng-model="vm.dragAndDropMapping.dropLocationIndex"
                     />
         </div>
+        <div class="form-group">
+            <label class="control-label" data-translate="artemisApp.dragAndDropMapping.invalid" for="field_invalid">Invalid</label>
+                <input type="checkbox" name="invalid" id="field_invalid"
+                          ng-model="vm.dragAndDropMapping.invalid"/>
+        </div>
 
         <div class="form-group">
             <label data-translate="artemisApp.dragAndDropMapping.dragItem" for="field_dragItem">Drag Item</label>

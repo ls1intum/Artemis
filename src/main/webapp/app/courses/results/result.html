@@ -8,8 +8,8 @@
         <span ng-switch on="$ctrl.results[0].successful">
             <span ng-switch-when="true">
                 <span class="text-success">
-                    <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                    <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                    <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                    <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                         <span ng-switch-when="true">
                             {{$ctrl.results[0].resultString}}
                         </span>
@@ -21,8 +21,8 @@
             </span>
             <span ng-switch-when="false">
                 <span class="text-danger">
-                    <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
-                     <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                    <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                     <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                         <span ng-switch-when="true">
                             {{$ctrl.results[0].resultString}}
                         </span>
@@ -37,8 +37,8 @@
     <span ng-switch-when="false">
         <span ng-if="$ctrl.results[0].score > 80">
             <span class="text-success">
-                <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                     <span ng-switch-when="true">
                         {{$ctrl.results[0].resultString}}
                     </span>
@@ -50,8 +50,8 @@
         </span>
         <span ng-if="$ctrl.results[0].score > 40 && $ctrl.results[0].score <= 80">
             <span  class="result-orange">
-                <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
+                <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                     <span ng-switch-when="true">
                         {{$ctrl.results[0].resultString}}
                     </span>
@@ -63,8 +63,8 @@
         </span>
         <span ng-if="$ctrl.results[0].score >= 0 && $ctrl.results[0].score <= 40">
             <span class="text-danger">
-                <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
-                <span ng-switch on="!$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
+                <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-times-circle-o"></i>&nbsp;
+                <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                     <span ng-switch-when="true">
                         {{$ctrl.results[0].resultString}}
                     </span>

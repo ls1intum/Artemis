@@ -19,9 +19,7 @@
             ng-model="vm.quizExercise.title"
             placeholder="Quiz Title"
         />
-        <div
-            class="quiz-options"
-        >
+        <div class="quiz-options">
             <div class="form-group">
                 <span
                     data-translate="artemisApp.quizExercise.duration"
@@ -32,7 +30,7 @@
                     title="Duration"
                     type="number"
                     min="0"
-                    max="99999"
+                    max="999"
                     ng-model="vm.duration.minutes"
                     ng-blur="vm.onDurationChange()"
                 />
@@ -43,8 +41,8 @@
                     class="form-control"
                     title="Duration"
                     type="number"
-                    max="99999"
-                    min="-9999"
+                    max="999"
+                    min="-99"
                     ng-model="vm.duration.seconds"
                     ng-blur="vm.onDurationChange()"
                 />
@@ -53,9 +51,20 @@
                 ></span>
             </div>
             <div class="form-group">
-                <div
-                    class="checkbox"
-                >
+                <div class="checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            ng-model="vm.quizExercise.randomizeQuestionOrder"
+                        />
+                        <span
+                            data-translate="artemisApp.quizExercise.randomizeQuestionOrder"
+                        ></span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
                     <label>
                         <input
                             type="checkbox"
@@ -67,9 +76,7 @@
                         ></span>
                     </label>
                 </div>
-                <div
-                    class="input-group"
-                >
+                <div class="input-group">
                     <input
                         ng-disabled="!vm.quizExercise.isPlannedToStart"
                         class="form-control"
@@ -199,7 +206,7 @@
                     <button
                         class="btn btn-success"
                         ng-click="vm.save()"
-                        ng-class="{disabled: !vm.pendingChanges() || !vm.validQuiz() || vm.isSaving}"
+                        ng-class="{disabled: !vm.pendingChanges() || !vm.validQuiz() || vm.hasSavedQuizStarted() || vm.isSaving}"
                         data-translate="entity.action.save"
                         uib-tooltip-html="!vm.validQuiz() && vm.invalidReasonsHTML()"
                         tooltip-placement="top-right"
@@ -208,5 +215,11 @@
                 </div>
             </div>
         </div>
+    </div>
+</div>
+<div ng-if="vm.hasSavedQuizStarted()">
+    <div class="quiz-is-active-background"></div>
+    <div class="quiz-is-active-overlay alert alert-warning" >
+        <span data-translate="artemisApp.quizExercise.edit.quizHasStarted"></span>
     </div>
 </div>

@@ -68,20 +68,84 @@ public class DragAndDropQuestion extends Question implements Serializable {
         return this;
     }
 
+    /**
+     * 1. add the dropLocation to the List of the other dropLocation
+     * 2. add backward relation in the dropLocation-object
+     * 3. add the new dropLocation to the DragAndDropQuestionStatistic
+     *
+     * @param dropLocation the dropLocation object which will be added
+     * @return this DragAndDropQuestion-object
+     */
     public DragAndDropQuestion addDropLocations(DropLocation dropLocation) {
         this.dropLocations.add(dropLocation);
         dropLocation.setQuestion(this);
+        //if an answerOption was added then add the associated AnswerCounter implicitly
+        ((DragAndDropQuestionStatistic)getQuestionStatistic()).addDropLocation(dropLocation);
         return this;
     }
 
+    /**
+     * 1. delete the new dropLocation in the DragAndDropQuestionStatistic
+     * 2. remove the dropLocation from the List of the other dropLocation
+     * 3. remove backward relation in the dropLocation-object
+     *
+     * @param dropLocation the dropLocation object which should be removed
+     * @return this DragAndDropQuestion-object
+     */
     public DragAndDropQuestion removeDropLocations(DropLocation dropLocation) {
+        //if an answerOption was removed then remove the associated AnswerCounter implicitly
+        if (getQuestionStatistic() instanceof DragAndDropQuestionStatistic) {
+            DragAndDropQuestionStatistic ddStatistic = (DragAndDropQuestionStatistic) getQuestionStatistic();
+            DropLocationCounter dropLocationCounterToDelete = null;
+            for (DropLocationCounter dropLocationCounter : ddStatistic.getDropLocationCounters()) {
+                if (dropLocation.equals(dropLocationCounter.getDropLocation())) {
+                    dropLocationCounter.setDropLocation(null);
+                    dropLocationCounterToDelete = dropLocationCounter;
+                }
+            }
+            ddStatistic.getDropLocationCounters().remove(dropLocationCounterToDelete);
+        }
         this.dropLocations.remove(dropLocation);
         dropLocation.setQuestion(null);
         return this;
     }
 
+    /**
+     * 1. check if the questionStatistic is an instance of DragAndDropQuestionStatistic.
+     *              otherwise generate a DragAndDropQuestionStatistic new replace the old one
+     * 2. set the dropLocation List to the new dropLocation List
+     * 3. if an dropLocation was added then add the associated dropLocationCounter
+     * 4. if an dropLocation was removed then remove the associated dropLocationCounter
+     *
+     * @param dropLocations the new List of dropLocation-objects which will be set
+     */
     public void setDropLocations(List<DropLocation> dropLocations) {
+        DragAndDropQuestionStatistic ddStatistic;
+        if (getQuestionStatistic() instanceof DragAndDropQuestionStatistic) {
+            ddStatistic = (DragAndDropQuestionStatistic)getQuestionStatistic();
+        }
+        else{
+            ddStatistic = new DragAndDropQuestionStatistic();
+            setQuestionStatistic(ddStatistic);
+        }
         this.dropLocations = dropLocations;
+
+        //if an dropLocation was added then add the associated dropLocationCounter implicitly
+        for (DropLocation dropLocation : getDropLocations()) {
+            ddStatistic.addDropLocation(dropLocation);
+        }
+
+        //if an answerOption was removed then remove the associated AnswerCounters implicitly
+        Set<DropLocationCounter> dropLocationCounterToDelete = new HashSet<>();
+        for (DropLocationCounter dropLocationCounter : ddStatistic.getDropLocationCounters()) {
+            if (dropLocationCounter.getId() != null) {
+                if(!(dropLocations.contains(dropLocationCounter.getDropLocation()))) {
+                    dropLocationCounter.setDropLocation(null);
+                    dropLocationCounterToDelete.add(dropLocationCounter);
+                }
+            }
+        }
+        ddStatistic.getDropLocationCounters().removeAll(dropLocationCounterToDelete);
     }
 
     public List<DragItem> getDragItems() {
@@ -134,6 +198,19 @@ public class DragAndDropQuestion extends Question implements Serializable {
         this.correctMappings = dragAndDropMappings;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+    @Override
+    public Boolean isValid() {
+        // check general validity (using superclass)
+        if (!super.isValid()) {
+            return false;
+        }
+
+        // check if at least one correct mapping exists
+        return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
+
+        // TODO (?): Add checks for "is solvable" and "no misleading correct mapping"
+    }
 
     /*
      * NOTE:
@@ -239,5 +316,17 @@ public class DragAndDropQuestion extends Question implements Serializable {
             "id=" + getId() +
             ", backgroundFilePath='" + getBackgroundFilePath() + "'" +
             "}";
+    }
+
+    /**
+     * Constructor.
+     *
+     * 1. generate associated DragAndDropQuestionStatistic implicitly
+     */
+    public DragAndDropQuestion() {
+        //create associated Statistic implicitly
+        DragAndDropQuestionStatistic ddStatistic = new DragAndDropQuestionStatistic();
+        setQuestionStatistic(ddStatistic);
+        ddStatistic.setQuestion(this);
     }
 }

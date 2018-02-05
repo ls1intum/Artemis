@@ -6,7 +6,9 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
+
 import java.io.Serializable;
+import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Objects;
@@ -40,6 +42,9 @@ public class Result implements Serializable {
 
     @Column(name = "score")
     private Long score;
+
+    @Column(name = "rated")
+    private Boolean rated;
 
     @OneToOne(cascade=CascadeType.REMOVE, orphanRemoval=true)
     @JoinColumn(unique = true)
@@ -148,7 +153,6 @@ public class Result implements Serializable {
      *
      * @param score new score
      */
-
     public void setScore(Long score) {
         this.score = score;
 
@@ -158,6 +162,19 @@ public class Result implements Serializable {
         } else {
             successful = false;
         }
+    }
+
+    public Boolean isRated() {
+        return rated;
+    }
+
+    public Result rated(Boolean rated) {
+        this.rated = rated;
+        return this;
+    }
+
+    public void setRated(Boolean rated) {
+        this.rated = rated;
     }
 
     public Submission getSubmission() {
@@ -222,6 +239,9 @@ public class Result implements Serializable {
             QuizExercise quizExercise = (QuizExercise) getParticipation().getExercise();
             // update score
             setScore(quizExercise.getScoreForSubmission(quizSubmission));
+            // update result string
+            DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
+            setResultString(formatter.format(quizExercise.getScoreInPointsForSubmission(quizSubmission)) + " of " + formatter.format(quizExercise.getMaxTotalScore()) + " points");
             // update successful
             setSuccessful(score == 100L);
         }
@@ -256,6 +276,7 @@ public class Result implements Serializable {
             ", successful='" + isSuccessful() + "'" +
             ", buildArtifact='" + isBuildArtifact() + "'" +
             ", score='" + getScore() + "'" +
+            ", rated='" + isRated() + "'" +
             "}";
     }
 }

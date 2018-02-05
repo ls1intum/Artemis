@@ -1,29 +1,34 @@
-<div class="dnd-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult, incorrect: (vm.score || 0) < vm.question.score}">
+<div class="dnd-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult && !vm.forceSampleSolution, incorrect: (vm.score || 0) < vm.question.score && !vm.forceSampleSolution}">
     <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
     <p ng-bind-html="vm.rendered.text"></p>
-    <h4 ng-if="vm.question.hint || vm.question.explanation">
+    <h4 ng-if="vm.question.hint || (vm.question.explanation && vm.showResult)">
         <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
             <i class="fa fa-question-circle-o"></i>
             <span data-translate="artemisApp.question.hint"></span>
         </span> &nbsp;
-        <span class="label label-primary" uib-popover-html="vm.rendered.explanation" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.explanation">
+        <span class="label label-primary" uib-popover-html="vm.rendered.explanation" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.explanation && vm.showResult">
             <i class="fa fa-exclamation-circle"></i>
             <span data-translate="artemisApp.question.explanation"></span>
         </span>
     </h4>
-    <div class="question-score" ng-if="!vm.showResult">
+    <div class="question-score" ng-if="!vm.showResult || vm.forceSampleSolution">
         <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
         <span>{{vm.question.score}}</span>
     </div>
-    <div class="question-score result" ng-if="vm.showResult" ng-class="{incorrect: (vm.score || 0) < vm.question.score}">
+    <div class="question-score result" ng-if="vm.showResult && !vm.forceSampleSolution" ng-class="{incorrect: (vm.score || 0) < vm.question.score}">
         <span data-translate="artemisApp.question.yourScore" class="colon-suffix"></span>
         <span>{{vm.score || 0}}/{{vm.question.score}}</span>
     </div>
-    <div class="drag-and-drop-area" ng-if="!vm.showResult">
+    <div class="drag-and-drop-area">
+        <div class="instructions" ng-if="vm.showResult">
+            <span data-translate="artemisApp.dragAndDropQuestion.showingSampleSolution" ng-if="vm.showingSampleSolution"></span>
+            <span data-translate="artemisApp.dragAndDropQuestion.showingYourAnswer" ng-if="!vm.showingSampleSolution"></span>
+        </div>
         <div class="background-area">
             <img ng-src="{{vm.question.backgroundFilePath}}">
             <div class="click-layer">
                 <div
+                    ng-if="!vm.showResult"
                     class="drop-location"
                     ng-repeat="dropLocation in vm.question.dropLocations"
                     ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
@@ -33,26 +38,8 @@
                 >
                     <drag-item ng-if="vm.dragItemForDropLocation(dropLocation)" drag-item="vm.dragItemForDropLocation(dropLocation)" click-disabled="vm.clickDisabled"></drag-item>
                 </div>
-            </div>
-        </div>
-        <hr>
-        <div class="instructions">
-            <span data-translate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
-        </div>
-        <div class="drag-items" ui-on-drop="vm.onDragDrop(null, $data)" drag-enter-class="drop-allowed" drag-hover-class="drop-hover">
-            <drag-item ng-repeat="dragItem in vm.getUnassignedDragItems()" drag-item="dragItem" click-disabled="vm.clickDisabled"></drag-item>
-        </div>
-    </div>
-    <div class="result" ng-if="vm.showResult">
-        <div class="instructions">
-            <span data-translate="artemisApp.dragAndDropQuestion.showingSampleSolution" ng-if="vm.showingSampleSolution"></span>
-            <span data-translate="artemisApp.dragAndDropQuestion.showingYourAnswer" ng-if="!vm.showingSampleSolution"></span>
-        </div>
-        <div class="background-area">
-            <img ng-src="{{vm.question.backgroundFilePath}}">
-            <div class="click-layer">
                 <div
-                    ng-if="!vm.showingSampleSolution"
+                    ng-if="vm.showResult && !vm.showingSampleSolution"
                     class="drop-location results"
                     ng-repeat="dropLocation in vm.question.dropLocations"
                     ng-class="{incorrect: !vm.isLocationCorrect(dropLocation)}"
@@ -67,13 +54,13 @@
                     </div>
                 </div>
                 <div
-                    ng-if="vm.showingSampleSolution"
+                    ng-if="vm.showResult && vm.showingSampleSolution"
                     class="drop-location sampleSolution"
                     ng-repeat="dropLocation in vm.question.dropLocations"
                     ng-class="{incorrect: !vm.isLocationCorrect(dropLocation)}"
                     ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                 >
-                    <div class="result-symbol" ng-if="!vm.isLocationCorrect(dropLocation)">
+                    <div class="result-symbol" ng-if="!vm.isLocationCorrect(dropLocation) && !vm.forceSampleSolution">
                         <i class="fa fa-2x fa-exclamation-triangle warning"></i>
                     </div>
                     <drag-item ng-if="vm.correctDragItemForDropLocation(dropLocation)" drag-item="vm.correctDragItemForDropLocation(dropLocation)" click-disabled="true"></drag-item>
@@ -83,7 +70,16 @@
                 </div>
             </div>
         </div>
-        <div>
+        <div ng-if="!vm.showResult">
+            <hr/>
+            <div class="instructions">
+                <span data-translate="artemisApp.dragAndDropQuestion.studentInstructions"></span>
+            </div>
+            <div class="drag-items" ui-on-drop="vm.onDragDrop(null, $data)" drag-enter-class="drop-allowed" drag-hover-class="drop-hover">
+                <drag-item ng-repeat="dragItem in vm.getUnassignedDragItems()" drag-item="dragItem" click-disabled="vm.clickDisabled"></drag-item>
+            </div>
+        </div>
+        <div ng-if="vm.showResult && !vm.forceSampleSolution">
             <div class="btn btn-default" ng-if="!vm.showingSampleSolution" ng-click="vm.showSampleSolution()">
                 Show Sample Solution
             </div>

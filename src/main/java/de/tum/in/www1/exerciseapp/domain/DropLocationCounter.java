@@ -1,5 +1,7 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
@@ -9,15 +11,15 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="DD")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class DropLocationCounter extends StatisticCounter implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     @ManyToOne
+    @JsonIgnore
     private DragAndDropQuestionStatistic dragAndDropQuestionStatistic;
 
-    @OneToOne
+    @OneToOne(cascade = {CascadeType.PERSIST})
     @JoinColumn(unique = true)
     private DropLocation dropLocation;
 

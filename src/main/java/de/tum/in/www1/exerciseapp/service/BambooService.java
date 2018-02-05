@@ -495,7 +495,7 @@ public class BambooService implements ContinuousIntegrationService {
                 entity,
                 Map.class);
         } catch (Exception e) {
-            log.error("HttpError while retrieving build result logs", e);
+            log.error("HttpError while retrieving build result logs from Bamboo: " + e.getMessage());
         }
 
         ArrayList logs = new ArrayList<BuildLogEntry>();

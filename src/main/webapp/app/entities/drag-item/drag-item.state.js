@@ -106,6 +106,7 @@
                             return {
                                 pictureFilePath: null,
                                 text: null,
+                                invalid: null,
                                 id: null
                             };
                         }
