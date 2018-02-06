@@ -11,6 +11,7 @@
         var vm = this;
 
         vm.result = entity;
+        console.log('result ' + JSON.stringify(vm.result));
         if(vm.result.completionDate) {
             vm.result.completionDate = new Date(vm.result.completionDate);
         }
