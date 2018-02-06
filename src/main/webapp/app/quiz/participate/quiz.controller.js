@@ -72,6 +72,9 @@
                 $timeout.cancel(timeout);
             });
 
+            // disable automatic websocket reconnect
+            JhiWebsocketService.disableReconnect();
+
             if (submissionChannel) {
                 JhiWebsocketService.unsubscribe(submissionChannel);
             }
@@ -102,6 +105,9 @@
                     load();
                 }
             });
+
+            // disable automatic websocket reconnect
+            JhiWebsocketService.enableReconnect();
 
             // listen to connect / disconnect events
             onConnected = function () {
@@ -552,6 +558,9 @@
             vm.result = results[0];
             if (vm.result) {
                 vm.showingResult = true;
+
+                // disable automatic websocket reconnect
+                JhiWebsocketService.disableReconnect();
 
                 // assign user score (limit decimal places to 2)
                 vm.userScore = vm.result.submission.scoreInPoints ? Math.round(vm.result.submission.scoreInPoints * 100) / 100 : 0;
