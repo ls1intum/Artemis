@@ -106,9 +106,6 @@
                 }
             });
 
-            // disable automatic websocket reconnect
-            JhiWebsocketService.enableReconnect();
-
             // listen to connect / disconnect events
             onConnected = function () {
                 vm.disconnected = false;
@@ -396,7 +393,10 @@
                 initQuiz();
 
                 if (quizExercise.remainingTime != null) {
-                    if (quizExercise.remainingTime > 0) {
+                    if (quizExercise.remainingTime >= 0) {
+                        // enable automatic websocket reconnect
+                        JhiWebsocketService.enableReconnect();
+
                         // apply randomized order where necessary
                         randomizeOrder(quizExercise);
 
@@ -452,6 +452,10 @@
                 } else {
                     // quiz hasn't started yet
                     vm.waitingForQuizStart = true;
+
+                    // enable automatic websocket reconnect
+                    JhiWebsocketService.enableReconnect();
+
                     if (quizExercise.isPlannedToStart) {
                         // synchronize time with server
                         vm.quizExercise.releaseDate = moment(vm.quizExercise.releaseDate);
