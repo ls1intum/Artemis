@@ -115,6 +115,7 @@
             if (stompClient !== null) {
                 stompClient.disconnect();
                 stompClient = null;
+                isConnected = false;
             }
         }
 
