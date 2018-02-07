@@ -52,11 +52,11 @@
                 />
             </div>
         </div>
-        <!--br/>
+        <br/>
         <div class="form-group">
             <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
         </div>
-        <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
+        <!--div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
             <div class="form-group">
                 <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
                     Feedback #{{index + 1}} Text
@@ -83,12 +83,12 @@
                 </div>
             </div>
             <br/>
-        </div>
+        </div-->
         <div class="form-group" ng-show="vm.addFeedbackClicked">
             <a ng-click="vm.pushFeedback()">More feedback</a>
             &nbsp;
             <a ng-click="vm.popFeedback()">Less feedback</a>
-        </div-->
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
