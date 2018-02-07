@@ -1,0 +1,78 @@
+<div>
+    <p class="text-center text-muted" ng-show="$ctrl.exercises.length === 0">There are no available exercises for this
+        course.</p>
+    <table class="table exercise-table" ng-hide="$ctrl.exercises.length === 0">
+        <thead>
+        <tr>
+            <th class="col-xs-3"
+tour-step-placement="right"
+            tour-step="10"
+                tour-step-backdrop="true"
+                tour-step-title="Name"
+                tour-step-content="Each exercise has its own name so you can easily find the exercise you need"
+                tour-step-order="10"
+            >Exercise</th>
+
+            <th class="col-xs-2"
+                tour-step="11"
+                tour-step-backdrop="true"
+                tour-step-title="Due Date"
+                tour-step-content="If you have a due date on your exercise, the days till submission will be displayed here"
+                tour-step-order="11"
+            >Due date</th>
+            <th class="col-xs-6"
+                tour-step="12"
+                tour-step-backdrop="true"
+                tour-step-title="Result"
+                tour-step-content="If you submit your exercises your Result will be displayed here"
+                tour-step-order="12"
+            >Results</th>
+            <th class="col-xs-1"
+                tour-step="13"
+                tour-step-placement="left"
+                tour-step-backdrop="true"
+                tour-step-title="Action"
+                tour-step-content="Here you see all the different actions you can do. Don't worry we will go over them"
+                tour-step-order="13"
+            >Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+
+        <tr ng-show="!$ctrl.showOverdueExercises &&  $ctrl.numOfOverdueExercises > 0">
+            <td colspan="4" ng-switch on="$ctrl.numOfOverdueExercises == 1">
+                <a ng-switch-when="true" ng-click="$ctrl.toggleShowOverdueExercises()">Show one overdue exercise</a>
+                <a ng-switch-when="false" ng-click="$ctrl.toggleShowOverdueExercises()">Show
+                    {{$ctrl.numOfOverdueExercises}} overdue exercises</a>
+            </td>
+        </tr>
+
+        <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch
+            on="$ctrl.participationStatus(exercise)">
+            <td>
+                <span>{{exercise.title}}</span>
+            </td>
+            <td>
+            <span am-time-ago="exercise.dueDate" uib-tooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}"
+                  tooltip-placement="right"></span>
+            </td>
+            <td>
+                <span ng-switch-when="initialized"
+                      tour-step="20"
+                      tour-step-title="Succesfull submission"
+                      tour-step-content="This is what a result looks like if your submission was correct. Perfect you completed your first exercise"
+                      tour-step-order="20"
+                ><result participation="exercise.participation"></result></span>
+            </td>
+            <td class="text-center">
+                <div ng-switch-when="initialized">
+                    <button type="button" class="btn btn-primary btn-sm btn-block" disabled><i
+                        class="fa fa-download fa-fw"></i>&nbsp;Clone
+                        repository
+                    </button>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>

@@ -12,7 +12,7 @@
                 filterByExerciseId: '<'
             },
             templateUrl: 'app/courses/exercises/exercise-list.html',
-            controller: ExerciseListController
+            controller: 'ExerciseListController'
         });
 
     ExerciseListController.$inject = ['$sce', '$scope', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', 'JhiWebsocketService', '$http', '$location', 'Principal', '$rootScope'];

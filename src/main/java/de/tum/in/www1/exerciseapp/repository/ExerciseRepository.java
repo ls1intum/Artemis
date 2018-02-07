@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 
 /**
@@ -18,6 +19,8 @@ import java.util.List;
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     List<Exercise> findByCourseId(@Param("courseId") Long courseId);
+
+    Optional<Exercise> findOneByTitleAndCourseId(String title, Long courseId);
 
 
     /**

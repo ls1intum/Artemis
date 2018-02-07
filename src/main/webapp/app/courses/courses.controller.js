@@ -15,9 +15,12 @@
 
         loadAll();
 
+
         function loadAll() {
             Course.query().$promise.then(function (courses) {
 
+                //remove the tutorial course
+                courses.shift();
                 vm.courses = courses;
 
                 if(vm.filterByCourseId) {
@@ -27,5 +30,6 @@
                 }
             });
         }
+
     }
 })();

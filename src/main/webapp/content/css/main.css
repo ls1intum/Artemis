@@ -9556,3 +9556,6 @@ ui bootstrap tweaks
   left: 0;
   top: 0;
   margin-left: -14px; }
+
+.ui-tour-backdrop {
+  background-color: rgba(0, 0, 0, 0.5); }

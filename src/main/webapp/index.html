@@ -13,6 +13,7 @@
     <!-- bower:css -->
     <link rel="stylesheet" href="bower_components/font-awesome-animation/dist/font-awesome-animation.css">
     <link rel="stylesheet" href="bower_components/font-awesome-animation/dist/font-awesome-animation.min.css">
+    <link rel="stylesheet" href="bower_components/cfp-angular-hotkeys/build/hotkeys.css">
     <link rel="stylesheet" href="bower_components/angular-loading-bar/build/loading-bar.css">
     <link rel="stylesheet" href="bower_components/bootstrap-treeview/dist/bootstrap-treeview.min.css">
     <!-- endinject -->
@@ -48,6 +49,7 @@
 
     <!-- build:js app/vendor.js -->
     <!-- bower:js -->
+    <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/jquery/dist/jquery.js"></script>
     <script src="bower_components/messageformat/messageformat.js"></script>
     <script src="bower_components/json3/lib/json3.js"></script>
@@ -76,6 +78,11 @@
     <script src="bower_components/jquery-ui/jquery-ui.js"></script>
     <script src="bower_components/jquery-textfill/source/jquery.textfill.js"></script>
     <script src="bower_components/angular/angular.js"></script>
+    <script src="bower_components/hone/hone.js"></script>
+    <script src="bower_components/tether/dist/js/tether.js"></script>
+    <script src="bower_components/angular-hotkeys/angular-hotkeys.js"></script>
+    <script src="bower_components/angular-hotkeys/angular-hotkeys.min.js"></script>
+    <script src="bower_components/cfp-angular-hotkeys/build/hotkeys.js"></script>
     <script src="bower_components/angular-aria/angular-aria.js"></script>
     <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.js"></script>
     <script src="bower_components/angular-cache-buster/angular-cache-buster.js"></script>
@@ -98,15 +105,28 @@
     <script src="bower_components/angular-ui-ace/ui-ace.js"></script>
     <script src="bower_components/angular-file-saver/dist/angular-file-saver.bundle.js"></script>
     <script src="bower_components/angular-resizable/src/angular-resizable.js"></script>
+    <script src="bower_components/ez-ng/dist/ez-ng.js"></script>
     <script src="bower_components/angular-chart.js/dist/angular-chart.js"></script>
     <script src="bower_components/angular-ui-sortable/sortable.js"></script>
     <script src="bower_components/angular-native-dragdrop/draganddrop.js"></script>
+    <script src="bower_components/ngSmoothScroll/lib/angular-smooth-scroll.js"></script>
+    <script src="bower_components/angular-scroll/angular-scroll.js"></script>
+    <script src="bower_components/angular-bind-html-compile/angular-bind-html-compile.js"></script>
+    <script src="bower_components/angular-ui-tour/dist/angular-ui-tour.js"></script>
     <!-- endinject -->
     <!-- endbuild -->
 
+
     <!-- build:js app/app.js  -->
     <!-- inject:js -->
+    <script src="app/tutorial/tutorialExercise.component.js"></script>
     <script src="app/app.module.js"></script>
+    <script src="app/tutorial/exercises/tutorialExerciseList.directive.js"></script>
+    <script src="app/tutorial/exerciseFinished/tutorialExercise_startedExercise.directive.js"></script>
+    <script src="app/tutorial/exerciseFinished/tutorialExercise_caseFinished.directive.js"></script>
+    <script src="app/tutorial/exerciseFinished/tutorialExercise_caseClone.js"></script>
+    <script src="app/tutorial/course/tutorialCourse.directive.js"></script>
+    <script src="app/tutorial/course/tutorialCourse.controller.js"></script>
     <script src="app/statistics/statistic.state.js"></script>
     <script src="app/statistics/quiz-statistic/show-quiz-statistic.controller.js"></script>
     <script src="app/statistics/quiz-point-statistic/show-quiz-point-statistic.controller.js"></script>
@@ -115,6 +135,8 @@
     <script src="app/services/user/user.service.js"></script>
     <script src="app/services/profiles/profile.service.js"></script>
     <script src="app/services/profiles/page-ribbon.directive.js"></script>
+    <script src="app/services/modal/modal.service.js"></script>
+    <script src="app/services/modal/modal.controller.js"></script>
     <script src="app/services/auth/sessions.service.js"></script>
     <script src="app/services/auth/register.service.js"></script>
     <script src="app/services/auth/principal.service.js"></script>
@@ -348,6 +370,7 @@
     <script src="app/editor/build-output/editor-build-output.component.js"></script>
     <script src="app/editor/ace/editor-ace.component.js"></script>
     <script src="app/courses/results/result.component.js"></script>
+    <script src="app/courses/exercises/exercise-list.controller.js"></script>
     <script src="app/courses/exercises/exercise-list.component.js"></script>
     <script src="app/courses/courses.state.js"></script>
     <script src="app/courses/courses.controller.js"></script>

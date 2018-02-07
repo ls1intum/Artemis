@@ -119,6 +119,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
 
             Optional<User> matchingUser = userService.getUserWithAuthoritiesByLogin(username);
             if (matchingUser.isPresent()) {
+                courseService.initTutorial(matchingUser.get());
                 return matchingUser.get();
             } else {
                 throw new UsernameNotFoundException("User " + username + " was not found in the " +

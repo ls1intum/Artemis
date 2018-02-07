@@ -76,6 +76,8 @@ code-error {
 
 
 
+
+
 /* ==========================================================================
 Hide ng-cloak on page load, https://docs.angularjs.org/api/ng/directive/ngCloak
 ========================================================================== */
@@ -429,7 +431,6 @@ ui bootstrap tweaks
     padding-right: 10px;
 }
 
-
 /* jhipster-needle-scss-add-main JHipster will add new css style */
 
 
@@ -505,4 +506,11 @@ $spacing: 14px;
     left: 0;
     top: 0;
     margin-left: -$spacing;
+}
+
+//**********************************************************************
+// styles for tutorial
+// **********************************************************************
+.ui-tour-backdrop {
+    background-color: rgba(black, 0.5);
 }

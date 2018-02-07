@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.service;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +15,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Service Implementation for managing Participation.
@@ -32,12 +35,15 @@ public class ParticipationService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
-    public ParticipationService(ParticipationRepository participationRepository, UserRepository userRepository, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    private final ResultRepository resultRepository;
+
+    public ParticipationService(ParticipationRepository participationRepository, UserRepository userRepository, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ResultRepository resultRepository) {
         this.participationRepository = participationRepository;
         this.userRepository = userRepository;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -266,5 +272,37 @@ public class ParticipationService {
 
         }
         participationRepository.delete(id);
+    }
+
+    /**
+     * Create the fake participation and Result for the first Exercise in the Tutorial
+     *
+     * @param user the user for whom the participation is created
+     * @param exercise the exercise to which the participation belongs
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createTutorialParticipation(User user, Exercise exercise){
+        //check if participation and result already exists
+        Participation tutorialE1 = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+        if(tutorialE1 != null){
+            return;
+        }
+        //creating the fake participation
+        tutorialE1 = new Participation();
+        tutorialE1.setRepositoryUrl("tutorial");
+        tutorialE1.setBuildPlanId("tutorial");
+        tutorialE1.setStudent(user);
+        tutorialE1.setInitializationDate(ZonedDateTime.now());
+        tutorialE1.setExercise(exercise);
+        tutorialE1.setInitializationState(ParticipationState.INITIALIZED);
+        tutorialE1 = save(tutorialE1);
+
+        //creating the fake result for the participation
+        Result result = new Result();
+        result.setParticipation(tutorialE1);
+        result.setSuccessful(true);
+        result.setCompletionDate(ZonedDateTime.now());
+        result.setResultString("5 passed");
+        resultRepository.saveAndFlush(result);
     }
 }

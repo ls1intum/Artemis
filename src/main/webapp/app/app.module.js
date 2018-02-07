@@ -17,6 +17,7 @@
             'ui.sortable',
             'ui.router',
             'infinite-scroll',
+            'bm.uiTour',
             // jhipster-needle-angularjs-add-module JHipster will add new module here
             'angular-loading-bar',
             'angularMoment',

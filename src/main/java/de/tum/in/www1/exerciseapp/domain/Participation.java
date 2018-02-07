@@ -164,7 +164,7 @@ public class Participation implements Serializable {
     }
 
     public URL getRepositoryUrlAsUrl() {
-        if (repositoryUrl == null) {
+        if (repositoryUrl == null || repositoryUrl.toLowerCase().equals("tutorial")) {
             return null;
         }
 

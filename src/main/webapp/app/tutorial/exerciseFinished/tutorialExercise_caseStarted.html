@@ -1,0 +1,123 @@
+<table class="table exercise-table" ng-hide="$ctrl.exercises.length === 0">
+    <tbody
+        tour-step="34"
+        tour-step-backdrop="false"
+        tour-step-title="Open Exercise"
+        tour-step-content="Congratulations you worked on your first exercise in the editor <br> Next up is working with it on your local computer"
+        tour-step-order="34"
+    >
+    <tr ng-repeat="exercise in $ctrl.exercises | orderBy:'dueDate' | filter:$ctrl.isNotOverdue" ng-switch on="$ctrl.participationStatus(exercise)">
+        <td class="col-xs-3">
+            <span>{{exercise.title}}</span>
+            <span class="label label-warning" ng-show="!exercise.isVisibleToStudents" uib-tooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}"
+                  tooltip-placement="right">Not Released</span>
+        </td>
+        <td class="col-xs-2">
+            <span am-time-ago="exercise.dueDate" uib-tooltip="{{exercise.dueDate | date:'MMM d, y H:mm'}}"
+                  tooltip-placement="right"></span>
+        </td>
+        <td class="col-xs-6">
+            <span class="text-muted" ng-switch-when="uninitialized">You have not started this exercise yet.</span>
+            <span ng-switch-when="initialized"
+                  tour-step="32"
+                  tour-step-backdrop="false"
+                  tour-step-title="Understanding Results"
+                  tour-step-content="If your submission isn't complete or you are missing something your result appears red.
+                   <br>Click it to see what you are missing or doing wrong."
+                  tour-step-order="32"
+            ><result participation="exercise.participation"></result></span>
+            <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
+            <span class="text-muted" ng-switch-when="quiz-uninitialized">You have not started this quiz yet.</span>
+            <span class="text-muted" ng-switch-when="quiz-not-participated">You have not participated in this quiz.</span>
+            <span class="text-muted" ng-switch-when="quiz-active">You are currently participating in this quiz.</span>
+            <span class="text-muted" ng-switch-when="quiz-submitted">You have already submitted. Wait for the quiz to end to see results.</span>
+            <span ng-switch-when="quiz-finished"><result participation="exercise.participation" show-score="true"></result></span>
+        </td>
+        <td class="text-center" class="col-xs-1"
+            tour-step="30"
+            tour-step-placement="left"
+            tour-step-backdrop="false"
+            tour-step-title="Open Exercise"
+            tour-step-content="Click on the start exercise button to start your exercise"
+            tour-step-order="30"
+        >
+            <div class="btn-group flex-btn-group-container">
+                <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"
+                        ng-switch-when="uninitialized"
+                        ng-click="$ctrl.start(exercise);"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"
+                    ><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start exercise</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-uninitialized"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Start Quiz</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-active"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume Quiz</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-submitted"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]">View Submission</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="quiz-finished"
+                        ng-click="$ctrl.start(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id.toString()]">
+                    <span ng-hide="$ctrl.loading[exercise.id.toString()]">View Results</span>
+                    <i class="fa fa-circle-o-notch fa-spin" ng-show="$ctrl.loading[exercise.id.toString()]"></i>
+                </button>
+                <button class="btn btn-primary btn-sm btn-block"
+                        ng-switch-when="inactive"
+                        ng-click="$ctrl.resume(exercise)"
+                        ng-disabled="$ctrl.loading[exercise.id]"
+                >
+                    <span ng-hide="$ctrl.loading[exercise.id]"><i class="fa fa-play-circle fa-fw"></i>&nbsp;Resume exercise</span>
+                    <i ng-show="$ctrl.loading[exercise.id]" class="fa fa-circle-o-notch fa-spin"></i>
+                </button>
+                <div ng-switch-when="initialized">
+                    <a ui-sref="editor({participationId:exercise.participation.id})" class="btn btn-primary btn-sm btn-block" id="btn-online-editor" ng-if="exercise.allowOnlineEditor"><i class="fa fa-folder-open fa-fw"
+                        tour-step="31" tour-step-placement="left"
+                        tour-step-backdrop="false"
+                        tour-step-title="Open Exercise"
+                        tour-step-content="If the online editor is availiable you can directly use your browser to finish your exercise.
+                        <br> <strong> DON'T </strong> click on the online editor yet"
+                        tour-step-order="31"
+                    ></i>&nbsp;Open exercise</a>
+                    <div tour-step="33" tour-step-placement="left"
+                         tour-step-backdrop="false"
+                         tour-step-title="Open Exercise"
+                         tour-step-content="Now you can try to complete your first task by opening the online Editor"
+                         tour-step-order="33"></div>
+                    <button uib-popover-html="::$ctrl.getClonePopoverTemplate(exercise)"
+                            popover-placement="{{$ctrl.clonePopover.placement}}"
+                            popover-trigger="outsideClick"
+                            type="button" class="btn btn-primary btn-sm btn-block"><i
+                        class="fa fa-download fa-fw"></i>&nbsp;Clone
+                        repository
+                    </button>
+                    <button class="btn btn-primary btn-sm btn-block" id="btn-build-plan" ng-if="exercise.publishBuildPlanUrl" ng-click="$ctrl.goToBuildPlan(exercise)"><i class="fa fa-external-link fa-fw"></i>&nbsp;Go to build plan</button>
+                </div>
+                <button type="submit"
+                        class="btn btn-success btn-sm"
+                        ng-if="exercise.type ==='quiz' && $ctrl.canOpenStatistic(exercise)"
+                        ui-sref="quiz-point-statistic-chart({quizId: exercise.id})">
+                    <span class="fa fa-signal"></span>
+                    <span class="hidden-sm-down" data-translate="global.menu.entities.statistic"></span>
+                </button>
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>

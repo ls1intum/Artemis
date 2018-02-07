@@ -90,22 +90,22 @@ server:
 
 artemis:
   repo-clone-path: ./repos/
-  encryption-password: <encryption-password>
+  encryption-password: floriansprang24051994
   result-retrieval-delay: 5000
   jira:
     url: https://jirabruegge.in.tum.de
-    user: <username>
-    password: <password>
-    instructor-group-name: <group>
+    user: ga78feh
+    password: DTshell9e
+    instructor-group-name: artemis-dev
   bitbucket:
     url: https://repobruegge.in.tum.de
-    user: <username>
-    password: <password>
+    user: ga78feh
+    password: DTshell9e
   bamboo:
     url: https://bamboobruegge.in.tum.de
-    bitbucket-application-link-id: <application-link-id>
-    user: <username>
-    password: <password>
+    bitbucket-application-link-id: de1bf2e0-eb40-3a2d-9494-93cbe2e22d08
+    user: ga78feh
+    password: DTshell9e
   lti:
     id: artemis_lti
     oauth-key: artemis_lti_key
@@ -114,7 +114,7 @@ artemis:
     user-group-name: edx
   git:
     name: ArTEMiS
-    email: <email>
+    email: florian.sprang@tum.de
 
 # ===================================================================
 # JHipster specific properties

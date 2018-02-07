@@ -65,6 +65,7 @@
     "proxy-middleware": "0.15.0",
     "puppeteer": "0.10.2",
     "run-sequence": "1.2.2",
+    "stream-series": "^0.1.1",
     "workbox-build": "2.1.2",
     "yargs": "5.0.0"
   },
@@ -75,5 +76,7 @@
     "test": "gulp test",
     "postinstall": "webdriver-manager update"
   },
-  "dependencies": {}
+  "dependencies": {
+    "hone": "^1.0.3"
+  }
 }

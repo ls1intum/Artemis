@@ -1,10 +1,8 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Course;
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
+import de.tum.in.www1.exerciseapp.repository.ExerciseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,9 +24,14 @@ public class CourseService {
     private final CourseRepository courseRepository;
     private final UserService userService;
 
-    public CourseService(CourseRepository courseRepository, UserService userService) {
+    private final ParticipationService participationService;
+    private final ExerciseRepository exerciseRepository;
+
+    public CourseService(CourseRepository courseRepository, UserService userService, ParticipationService participationService, ExerciseRepository exerciseRepository) {
         this.courseRepository = courseRepository;
         this.userService = userService;
+        this.participationService = participationService;
+        this.exerciseRepository = exerciseRepository;
     }
 
     /**
@@ -50,8 +53,50 @@ public class CourseService {
     @Transactional(readOnly = true)
     public List<Course> findAll() {
         log.debug("Request to get all Courses");
-        return courseRepository.findAll();
+        return moveTutorialToTop(courseRepository.findAll());
     }
+
+    /**
+     * Rearange Course List so Tutorial is always first course
+     *
+     * @return same list reordered so tutorial is first item.
+     */
+    private List<Course> moveTutorialToTop(List<Course> allCourses){
+        List<Course> temp = new ArrayList<>();
+        List<Course> reorderedList = new ArrayList<>();
+        for(Course course : allCourses){
+            if(course.getTitle().equals("Tutorial")){
+                reorderedList.add(course);
+            }else{
+                temp.add(course);
+            }
+        }
+        reorderedList.addAll(temp);
+        return reorderedList;
+    }
+
+    /**
+     * Initalize the tutorial with the partcipation and result for a User
+     *
+     * @param user the user for whom the participation and result is supposed to be added
+     */
+    @Transactional(readOnly = false)
+    public void initTutorial(User user){
+        Optional<Course> course = courseRepository.findOneByTitle("Tutorial");
+
+        if(course.isPresent()) {
+            Course tutorial = course.get();
+            log.debug("Starting to initalize tutorial for {}", user);
+
+            Optional<Exercise> exercise = exerciseRepository.findOneByTitleAndCourseId("Tutorial 1", tutorial.getId());
+
+            if (exercise.isPresent()) {
+                participationService.createTutorialParticipation(user, exercise.get());
+            }
+        }
+    }
+
+
 
     /**
      * Get one course by id.

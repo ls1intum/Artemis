@@ -25,8 +25,8 @@
                 vm.account = account;
                 vm.isAuthenticated = Principal.isAuthenticated;
 
-                //login Admins directly to the Dashboard In order to Skip the WelcomePage
-                if (account != null && account.authorities.indexOf('ROLE_ADMIN') >=0) {
+                //login directly to the Dashboard In order to access the new WelcomePage
+                if (account != null) {
                     $location.path('courses');
                 }
             });

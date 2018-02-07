@@ -1,0 +1,35 @@
+<div ui-tour="courseTour" ui-tour-placement="bottom">
+    <div class="panel panel-primary">
+        <div class="panel-heading"
+             tour-step="0"
+             tour-step-title="Course"
+             tour-step-content="This is a course, in each course you are enrolled by your Instructor"
+             tour-step-order="0"
+             tour-step-backdrop="true"
+        >
+            <h4 class="panel-title">{{tutorial.course.title}}</h4>
+        </div>
+        <div class="panel-body"
+             tour-step="1"
+             tour-step-title="Exercises"
+             tour-step-content="Each course has exercises which you need to complete"
+             tour-step-order="1"
+             tour-step-backdrop="true"
+             tour-step-backdrop-border-radius="10"
+        >
+
+            <button class="btn btn-primary btn-sm" ng-show="tutorial.started || tutorial.skipped" ng-click="tutorial.continueTutorial()">Continue Tutorial</button>
+            <button class="btn btn-primary btn-sm" ng-show="tutorial.finished" ng-click="tutorial.startTutorial()">Start Tutorial</button>
+
+            <div ng-if="tutorial.loaded && tutorial.do">
+               <!-- <exercise-list  course="tutorial.course" filter-by-exercise-id=""></exercise-list>-->
+                <exercise-finished ng-show="tutorial.amountOfExercises > 0" course="tutorial.course" filter-by-exercise-id="tutorial.getFilterId(0)"></exercise-finished>
+                <exercise-started ng-show="tutorial.amountOfExercises > 1" course="tutorial.course" filter-by-exercise-id="tutorial.getFilterId(1)"></exercise-started>
+                <exercise-clone ng-show="tutorial.amountOfExercises > 2" course="tutorial.course" filter-by-exercise-id="tutorial.getFilterId(2)"></exercise-clone>
+                <!--tutorial-exercise-list>course="tutorial.course" filter-by-exercise-id=""</tutorial-exercise-list-->
+
+            </div>
+
+        </div>
+    </div>
+</div>
