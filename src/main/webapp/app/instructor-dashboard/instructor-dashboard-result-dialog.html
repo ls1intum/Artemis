@@ -56,7 +56,7 @@
         <div class="form-group">
             <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
         </div>
-        <!--span ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices"-->
+        <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
             <div class="form-group">
                 <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
                     Feedback #{{index + 1}} Text
@@ -69,7 +69,8 @@
                     <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
                         Feedback #{{index + 1}} Detail Text
                     </label>
-                    <textarea class="form-control" rows="3" id="feedbackErrorText" name="feedbackErrorText"  ng-model="vm.result.feedbacks[index].detailText"/>
+                    <input class="form-control" id="feedbackErrorText" name="feedbackErrorText"  ng-model="vm.result.feedbacks[index].detailText"/>
+                    <!--textarea class="form-control" rows="3" id="feedbackErrorText" name="feedbackErrorText"  ng-model="vm.result.feedbacks[index].detailText"/-->
                 </div>
                 <div class="col-md-1">
                     <label class="control-label artemis-label">
@@ -83,7 +84,7 @@
                 </div>
             </div>
             <br/>
-        <!--/span-->
+        </div>
         <div class="form-group" ng-show="vm.addFeedbackClicked">
             <a ng-click="vm.pushFeedback()">More feedback</a>
             &nbsp;
