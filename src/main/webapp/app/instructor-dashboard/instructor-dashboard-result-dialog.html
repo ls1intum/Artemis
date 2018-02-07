@@ -9,7 +9,7 @@
         </h4>
     </div>
     <div class="modal-body">
-        <div ng-show="vm.result.participation.exercise.openForSubmission" class="alert alert-warning">
+        <!--div ng-show="vm.result.participation.exercise.openForSubmission" class="alert alert-warning">
             <strong>Exercise is still open for submissions!</strong> The due date of this exercise is not reached yet. The student could override this manual result by comitting a new solution.
         </div>
         <jhi-alert-error></jhi-alert-error>
@@ -17,8 +17,8 @@
             <label for="id" translate="global.field.id">ID</label>
             <input type="text" class="form-control" id="id" name="id"
                    ng-model="vm.result.id" readonly />
-        </div>
-        <div class="form-group col-md-12">
+        </div-->
+        <!--div class="form-group col-md-12">
             <label class="control-label">Result Text</label>
             <input type="text" required class="form-control" name="resultString" id="field_resultString"
                    ng-model="vm.result.resultString"
@@ -32,7 +32,7 @@
                 />
                 <span class="input-group-btn">
                         <button type="button" class="btn btn-default" ng-click="vm.openCalendar('completionDate')"><i class="glyphicon glyphicon-calendar"></i></button>
-                    </span>
+                </span>
             </div>
         </div>
         <div class="form-group col-md-6">
@@ -94,7 +94,7 @@
                 &nbsp;
                 <a ng-click="vm.popFeedback()">Less feedback</a>
             </div>
-        </span>
+        </span-->
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">
