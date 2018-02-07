@@ -15,7 +15,7 @@
         <drag-and-drop-question ng-if="question.type === 'drag-and-drop'" question="question" mappings="vm.dragAndDropMappings[question.id]" on-mapping-update="vm.onSelectionChanged()" click-disabled="vm.submission.submitted || vm.remainingTimeSeconds < 0" show-result="vm.showingResult" force-sample-solution="vm.mode === 'solution'" question-index="$index + 1" score="vm.questionScores[question.id]"></drag-and-drop-question>
     </div>
 </div>
-<div class="quiz-footer" ng-if="!vm.waitingForQuizStart">
+<div class="quiz-footer">
     <div class="container">
         <div class="quiz-footer-content">
             <div>
@@ -29,13 +29,16 @@
                 </div>
             </div>
             <div ng-if="!vm.showingResult" id="remaining-time" ng-switch="vm.mode">
-                <div>
+                <div ng-if="!vm.waitingForQuizStart">
                     <span data-translate="artemisApp.quizExercise.remainingTime" class="colon-suffix"></span>
                     <span id="remaining-time-value" ng-class="{'time-critical': vm.remainingTimeSeconds < 60 || vm.remainingTimeSeconds < vm.quizExercise.duration / 4, 'time-warning': vm.remainingTimeSeconds < 120 || vm.remainingTimeSeconds < vm.quizExercise.duration / 2}">
                         {{vm.remainingTimeText}}
                     </span>
                 </div>
-                <div ng-switch-when="default">
+                <div ng-if="vm.waitingForQuizStart">
+                    <span data-translate="artemisApp.quizExercise.waitingForStart"></span>
+                </div>
+                <div ng-switch-when="default" ng-if="!vm.waitingForQuizStart">
                     <span ng-if="vm.isSaving">Saving Answers...</span>
                     <span ng-if="!vm.isSaving" uib-tooltip="{{vm.submission.adjustedSubmissionDate | date:'MMM d, y HH:mm:ss'}}" tooltip-placement="right">
                         <span ng-if="!vm.submission.submitted" data-translate="artemisApp.quizExercise.lastSaved" class="colon-suffix"></span>
@@ -72,7 +75,7 @@
             <div ng-if="vm.mode === 'solution'">
                 <span data-translate="artemisApp.quizExercise.solution"></span>
             </div>
-            <button ng-if="!vm.submission.submitted && !vm.showingResult" ng-disabled="vm.isSubmitting || vm.remainingTimeSeconds < 0" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></button>
+            <button ng-if="!vm.submission.submitted && !vm.showingResult" ng-disabled="vm.isSubmitting || vm.waitingForQuizStart || vm.remainingTimeSeconds < 0" class="btn btn-success btn-lg" data-translate="entity.action.submit" ng-click="vm.onSubmit()"></button>
             <button ng-if="vm.submission.submitted && !vm.showingResult" disabled class="btn btn-success btn-lg" data-translate="artemisApp.quizExercise.submitted"></button>
             <button ng-if="vm.showingResult" class="btn btn-default btn-lg disabled" data-translate="artemisApp.quizExercise.statistics" uib-popover-html="'{{'artemisApp.quizExercise.statisticsNotPublished' | translate}}'" popover-placement="top-right" popover-trigger="mouseenter"></button>
         </div>

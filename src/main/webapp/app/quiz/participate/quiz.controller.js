@@ -72,6 +72,9 @@
                 $timeout.cancel(timeout);
             });
 
+            // disable automatic websocket reconnect
+            JhiWebsocketService.disableReconnect();
+
             if (submissionChannel) {
                 JhiWebsocketService.unsubscribe(submissionChannel);
             }
@@ -390,7 +393,10 @@
                 initQuiz();
 
                 if (quizExercise.remainingTime != null) {
-                    if (quizExercise.remainingTime > 0) {
+                    if (quizExercise.remainingTime >= 0) {
+                        // enable automatic websocket reconnect
+                        JhiWebsocketService.enableReconnect();
+
                         // apply randomized order where necessary
                         randomizeOrder(quizExercise);
 
@@ -446,6 +452,10 @@
                 } else {
                     // quiz hasn't started yet
                     vm.waitingForQuizStart = true;
+
+                    // enable automatic websocket reconnect
+                    JhiWebsocketService.enableReconnect();
+
                     if (quizExercise.isPlannedToStart) {
                         // synchronize time with server
                         vm.quizExercise.releaseDate = moment(vm.quizExercise.releaseDate);
@@ -552,6 +562,9 @@
             vm.result = results[0];
             if (vm.result) {
                 vm.showingResult = true;
+
+                // disable automatic websocket reconnect
+                JhiWebsocketService.disableReconnect();
 
                 // assign user score (limit decimal places to 2)
                 vm.userScore = vm.result.submission.scoreInPoints ? Math.round(vm.result.submission.scoreInPoints * 100) / 100 : 0;
