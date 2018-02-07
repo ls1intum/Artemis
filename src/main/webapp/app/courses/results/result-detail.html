@@ -8,7 +8,8 @@
         <p ng-if="feedback.type === 'AUTOMATIC'">Error in method &nbsp;<code-error>{{feedback.text}}</code-error>:</p>
         <p ng-if="feedback.type === 'MANUAL' && !feedback.positive"><code-error>Feedback &nbsp;{{feedback.text}}:</code-error></p>
         <p ng-if="feedback.type === 'MANUAL' && feedback.positive"><code-success>Feedback &nbsp;{{feedback.text}}:</code-success></p>
-        <pre ng-bind="feedback.detailText"></pre>
+        <pre ng-if="feedback.detailText" ng-bind="feedback.detailText"></pre>
+        <pre ng-if="!feedback.detailText">No feedback available</pre>
         <hr ng-if="!lastDetail">
     </div>
     <div ng-if="$ctrl.details.length == 0">
