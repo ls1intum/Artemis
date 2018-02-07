@@ -69,8 +69,7 @@
                     <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
                         Feedback #{{index + 1}} Detail Text
                     </label>
-                    <!--input class="form-control" id="feedbackErrorText" name="feedbackErrorText"  ng-model="vm.result.feedbacks[index].detailText"/-->
-                    <textarea class="form-control" rows="3" id="feedbackErrorText" name="feedbackErrorText"  ng-model="vm.result.feedbacks[index].detailText"/>
+                    <input class="form-control" id="feedbackErrorText" name="feedbackErrorText"  ng-model="vm.result.feedbacks[index].detailText"/>
                 </div>
                 <div class="col-md-1">
                     <label class="control-label artemis-label">
