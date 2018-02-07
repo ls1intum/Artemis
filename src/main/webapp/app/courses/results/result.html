@@ -11,7 +11,7 @@
                     <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
                     <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                         <span ng-switch-when="true">
-                            {{$ctrl.results[0].resultString}}
+                            {{ $ctrl.buildResultString($ctrl.results[0]) }}
                         </span>
                          <span ng-switch-when="false">
                              <a class="text-success" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
@@ -24,7 +24,7 @@
                     <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-times-circle-o"></i>&nbsp;
                      <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                         <span ng-switch-when="true">
-                            {{$ctrl.results[0].resultString}}
+                            {{ $ctrl.buildResultString($ctrl.results[0]) }}
                         </span>
                          <span ng-switch-when="false">
                              <a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
@@ -40,7 +40,7 @@
                 <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
                 <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                     <span ng-switch-when="true">
-                        {{$ctrl.results[0].resultString}}
+                        {{ $ctrl.buildResultString($ctrl.results[0]) }}
                     </span>
                     <span ng-switch-when="false">
                         <a class="text-success" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
@@ -53,7 +53,7 @@
                 <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
                 <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                     <span ng-switch-when="true">
-                        {{$ctrl.results[0].resultString}}
+                        {{ $ctrl.buildResultString($ctrl.results[0]) }}
                     </span>
                     <span ng-switch-when="false">
                         <a class="result-orange" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
@@ -66,7 +66,7 @@
                 <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-times-circle-o"></i>&nbsp;
                 <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].feedbacks || $ctrl.results[0].feedbacks.length === 0">
                     <span ng-switch-when="true">
-                        {{$ctrl.results[0].resultString}}
+                        {{ $ctrl.buildResultString($ctrl.results[0]) }}
                     </span>
                     <span ng-switch-when="false">
                         <a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
