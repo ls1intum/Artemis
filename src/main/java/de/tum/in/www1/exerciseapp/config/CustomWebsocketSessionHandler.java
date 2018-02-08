@@ -32,7 +32,7 @@ public class CustomWebsocketSessionHandler {
                             session.close();
                             sessionMap.remove(sessionId);
                         }
-                        else {
+                        else if (!session.isOpen()) {
                             sessionMap.remove(sessionId);
                         }
                     } catch (IOException e) {
