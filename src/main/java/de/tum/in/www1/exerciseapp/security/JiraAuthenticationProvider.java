@@ -108,8 +108,6 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
                     (String) content.get("displayName"), "", (String) content.get("emailAddress"), null,
                     "en");
             });
-            //set the password explicitly to null as we don't need to store a hashed version of an empty string
-            user.setPassword(null);
             user.setGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items")));
             user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));
             userRepository.save(user);
