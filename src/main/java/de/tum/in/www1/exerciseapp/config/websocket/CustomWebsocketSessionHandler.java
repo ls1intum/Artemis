@@ -70,17 +70,28 @@ public class CustomWebsocketSessionHandler {
     public void handleOutboundMessage(String sessionId, Message<?> message) {
         if (sessionId != null) {
             CustomWebsocketSessionHolder sessionHolder = sessionMap.get(sessionId);
-            log.debug("Websocket outbound message was handled for session " + sessionId + " for user " + sessionHolder.getSession().getPrincipal().getName());
             if (sessionHolder != null) {
-                sessionHolder.setLastMessageTime(System.currentTimeMillis());
+                WebSocketSession session = sessionHolder.getSession();
+                if (session != null) {
+                    String user = "unknown";
+                    if (session.getPrincipal() != null) {
+                        user = session.getPrincipal().getName();
+                    }
+                    log.debug("Websocket outbound message was handled for session " + sessionId + " for user " + user);
+                    sessionHolder.setLastMessageTime(System.currentTimeMillis());
+                }
             }
         }
     }
 
     public void handleInboundMessage(WebSocketSession session, WebSocketMessage<?> message) {
-        log.debug("Websocket inbound message was handled for session " + session.getId() + " for user " + session.getPrincipal().getName());
         CustomWebsocketSessionHolder sessionHolder = sessionMap.get(session.getId());
         if (sessionHolder != null) {
+            String user = "unknown";
+            if (session.getPrincipal() != null) {
+                user = session.getPrincipal().getName();
+            }
+            log.debug("Websocket inbound message was handled for session " + session.getId() + " for user " + user);
             sessionHolder.setLastMessageTime(System.currentTimeMillis());
         }
     }
