@@ -184,12 +184,14 @@ public class ResultResource {
 
         List<Result> results = new ArrayList<>();
         Participation participation = participationService.findOne(participationId);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
+        if (!authCheckService.isOwnerOfParticipation(participation)) {
+            Course course = participation.getExercise().getCourse();
+             if(!authCheckService.isTeachingAssistantInCourse(course) &&
+                !authCheckService.isInstructorInCourse(course) &&
+                !authCheckService.isAdmin()) {
+                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+             }
         }
         if (participation != null) {
             // if exercise is quiz => only give out results if quiz is over
