@@ -1,4 +1,4 @@
-package de.tum.in.www1.exerciseapp.config;
+package de.tum.in.www1.exerciseapp.config.websocket;
 
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import io.github.jhipster.config.JHipsterProperties;
@@ -21,7 +21,6 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 
 @Configuration
 //@EnableWebSocketMessageBroker

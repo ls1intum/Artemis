@@ -15,7 +15,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 import java.security.Principal;
 import java.time.Instant;
 
-import static de.tum.in.www1.exerciseapp.config.WebsocketConfiguration.IP_ADDRESS;
+import static de.tum.in.www1.exerciseapp.config.websocket.WebsocketConfiguration.IP_ADDRESS;
 
 @Controller
 public class ActivityService implements ApplicationListener<SessionDisconnectEvent> {

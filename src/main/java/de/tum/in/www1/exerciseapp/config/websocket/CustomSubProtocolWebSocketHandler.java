@@ -1,4 +1,4 @@
-package de.tum.in.www1.exerciseapp.config;
+package de.tum.in.www1.exerciseapp.config.websocket;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +10,7 @@ import org.springframework.messaging.SubscribableChannel;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.WebSocketMessage;
 import org.springframework.web.socket.WebSocketSession;
+import org.springframework.web.socket.messaging.SubProtocolHandler;
 import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
 public class CustomSubProtocolWebSocketHandler extends SubProtocolWebSocketHandler {
@@ -40,7 +41,8 @@ public class CustomSubProtocolWebSocketHandler extends SubProtocolWebSocketHandl
      */
     @Override
     public void handleMessage(Message<?> message) throws MessagingException {
-        log.info("Websocket outbound message was handled");
+        String sessionId = resolveSessionId(message);
+        customWebsocketSessionHandler.handleOutboundMessage(sessionId, message);
         super.handleMessage(message);
     }
 
@@ -49,7 +51,24 @@ public class CustomSubProtocolWebSocketHandler extends SubProtocolWebSocketHandl
      */
     @Override
     public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
-        log.info("Websocket inbound message was handled");
+        customWebsocketSessionHandler.handleInboundMessage(session, message);
         super.handleMessage(session, message);
+    }
+
+
+    private String resolveSessionId(Message<?> message) {
+        for (SubProtocolHandler handler : getProtocolHandlers()) {
+            String sessionId = handler.resolveSessionId(message);
+            if (sessionId != null) {
+                return sessionId;
+            }
+        }
+        if (this.getDefaultProtocolHandler() != null) {
+            String sessionId = this.getDefaultProtocolHandler().resolveSessionId(message);
+            if (sessionId != null) {
+                return sessionId;
+            }
+        }
+        return null;
     }
 }
