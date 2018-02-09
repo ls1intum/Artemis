@@ -194,28 +194,7 @@ public class ExerciseResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        List<Exercise> result;
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
-            !authCheckService.isAdmin()) {
-            // user is student for this course
-            result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(courseId, principal) : exerciseRepository.findByCourseId(courseId);
-            // filter out exercises that are not released (or explicitly made visible to students) yet
-            result = result.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
-        } else {
-            result = exerciseRepository.findByCourseId(courseId);
-        }
-
-        // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
-        for (Exercise exercise : result) {
-            if (exercise instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) exercise;
-                quizExercise.setQuestions(null);
-                quizExercise.getQuizPointStatistic().setPointCounters(null);
-                quizExercise.getQuizPointStatistic().setParticipantsRated(null);
-                quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
-            }
-        }
+        List<Exercise> result = exerciseService.findAllForCourse(course, withLtiOutcomeUrlExisting, principal);
 
         return ResponseEntity.ok(result);
     }

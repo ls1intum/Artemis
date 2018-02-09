@@ -10,7 +10,7 @@
             bindings: {
                 participation: '<',
                 showScore: '<',
-                onNewResult: '&',
+                onNewResult: '&'
             },
             templateUrl: 'app/courses/results/result.html',
             controller: ResultController
@@ -27,24 +27,27 @@
         vm.showDetails = showDetails;
 
         function init() {
-            refresh();
-
+            refresh(false);
 
             var websocketChannel = '/topic/participation/' + vm.participation.id + '/newResults';
 
             JhiWebsocketService.subscribe(websocketChannel);
 
             JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
-                refresh();
+                refresh(true);
             });
 
             $scope.$on('$destroy', function() {
                 JhiWebsocketService.unsubscribe(websocketChannel);
             })
-
         }
 
-        function refresh() {
+        /**
+         * refresh the participation and load the result if necessary
+         *
+         * @param forceLoad {boolean} force loading the result if the status is not QUEUED or BUILDING
+         */
+        function refresh(forceLoad) {
             $http.get('api/participations/' + vm.participation.id  + '/status', {
                 ignoreLoadingBar: true
             }).then(function (response) {
@@ -52,19 +55,25 @@
                 vm.building = response.data === 'BUILDING';
             }).finally(function () {
                 if (!vm.queued && !vm.building) {
-                    vm.results = ParticipationResult.query({
-                        courseId: vm.participation.exercise.course.id,
-                        exerciseId: vm.participation.exercise.id,
-                        participationId: vm.participation.id,
-                        showAllResults: false,
-                        ratedOnly: vm.participation.exercise.type === "quiz"
-                    }, function (results) {
-                        if(vm.onNewResult) {
-                            vm.onNewResult({ $event: {
-                                newResult: results[0]
-                            }});
-                        }
-                    });
+                    if (forceLoad || !vm.participation.results) {
+                        // load results from server
+                        vm.results = ParticipationResult.query({
+                            courseId: vm.participation.exercise.course.id,
+                            exerciseId: vm.participation.exercise.id,
+                            participationId: vm.participation.id,
+                            showAllResults: false,
+                            ratedOnly: vm.participation.exercise.type === "quiz"
+                        }, function (results) {
+                            if(vm.onNewResult) {
+                                vm.onNewResult({ $event: {
+                                        newResult: results[0]
+                                    }});
+                            }
+                        });
+                    } else {
+                        // take results from participation
+                        vm.results = vm.participation.results;
+                    }
                 }
             });
         }

@@ -40,6 +40,39 @@
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
 
+        function initExercises(exercises) {
+            if (vm.filterByExerciseId) {
+                exercises = _.filter(exercises, {id: vm.filterByExerciseId})
+            }
+
+            vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
+                return !isNotOverdue(exercise);
+            }).length;
+
+            angular.forEach(exercises, function (exercise) {
+                if (exercise.participation) {
+                    // no need to load it
+                } else {
+                    exercise['participation'] = ExerciseParticipation.get({
+                        courseId: exercise.course.id,
+                        exerciseId: exercise.id
+                    });
+                }
+
+                //if the User is a student: subscribe the release Websocket of every quizExercise
+                if(exercise.type === 'quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
+                    var websocketChannel = '/topic/statistic/'+ exercise.id +'/release';
+
+                    JhiWebsocketService.subscribe(websocketChannel);
+
+                    JhiWebsocketService.receive(websocketChannel).then(null, null, function(payload) {
+                        exercise.quizPointStatistic.released = payload;
+                    });
+                }
+            });
+            vm.exercises = exercises;
+        }
+
         function init() {
 
             if ($location.search().welcome) {
@@ -50,46 +83,25 @@
                 vm.repositoryPassword = password;
             });
 
-            CourseExercises.query({
-                courseId: vm.course.id,
-                withLtiOutcomeUrlExisting: true
-            }).$promise.then(function (exercises) {
-
-                if (vm.filterByExerciseId) {
-                    exercises = _.filter(exercises, {id: vm.filterByExerciseId})
-                }
-
-                vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
-                    return !isNotOverdue(exercise);
-                }).length;
-
-                angular.forEach(exercises, function (exercise) {
-                    exercise['participation'] = ExerciseParticipation.get({
-                        courseId: exercise.course.id,
-                        exerciseId: exercise.id
-                    });
-
-                    //if the User is a student: subscribe the release Websocket of every quizExercise
-                    if(exercise.type === 'quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
-                        var websocketChannel = '/topic/statistic/'+ exercise.id +'/release';
-
-                        JhiWebsocketService.subscribe(websocketChannel);
-
-                        JhiWebsocketService.receive(websocketChannel).then(null, null, function(payload) {
-                            exercise.quizPointStatistic.released = payload;
-                        });
-                    }
-                });
-                vm.exercises = exercises;
-            });
+            if (vm.course.exercises) {
+                // exercises already included in data, no need to load them
+                initExercises(vm.course.exercises);
+            } else {
+                CourseExercises.query({
+                    courseId: vm.course.id,
+                    withLtiOutcomeUrlExisting: true
+                }).$promise.then(initExercises);
+            }
 
             //if the User is a student: unsubscribe the release Websocket of every quizExercise
             $scope.$on('$destroy', function() {
-                vm.exercises.forEach(function (exercise) {
-                    if(exercise.typa ==='quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
-                    JhiWebsocketService.unsubscribe('/topic/statistic/'+ exercise.id +'/release');
-                    }
-                })
+                if (vm.exercises) {
+                    vm.exercises.forEach(function (exercise) {
+                        if(exercise.typa ==='quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
+                            JhiWebsocketService.unsubscribe('/topic/statistic/'+ exercise.id +'/release');
+                        }
+                    });
+                }
             });
 
         }

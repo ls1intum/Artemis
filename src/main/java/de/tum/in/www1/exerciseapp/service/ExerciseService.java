@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,14 +40,22 @@ public class ExerciseService {
     private final ExerciseRepository exerciseRepository;
     private final UserService userService;
     private final ParticipationService participationService;
+    private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<GitService> gitService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService) {
+    public ExerciseService(ExerciseRepository exerciseRepository,
+                           UserService userService,
+                           ParticipationService participationService,
+                           AuthorizationCheckService authCheckService,
+                           Optional<ContinuousIntegrationService> continuousIntegrationService,
+                           Optional<VersionControlService> versionControlService,
+                           Optional<GitService> gitService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
+        this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
@@ -84,6 +93,34 @@ public class ExerciseService {
         );
         List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
         return new PageImpl<>(filteredExercises, pageable, filteredExercises.size());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal) {
+        List<Exercise> result;
+        if (!authCheckService.isTeachingAssistantInCourse(course) &&
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
+            // user is student for this course
+            result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());
+            // filter out exercises that are not released (or explicitly made visible to students) yet
+            result = result.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
+        } else {
+            result = exerciseRepository.findByCourseId(course.getId());
+        }
+
+        // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+        for (Exercise exercise : result) {
+            if (exercise instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) exercise;
+                quizExercise.setQuestions(null);
+                quizExercise.getQuizPointStatistic().setPointCounters(null);
+                quizExercise.getQuizPointStatistic().setParticipantsRated(null);
+                quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
+            }
+        }
+
+        return result;
     }
 
     /**

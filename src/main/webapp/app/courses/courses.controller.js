@@ -16,7 +16,7 @@
         loadAll();
 
         function loadAll() {
-            Course.query().$promise.then(function (courses) {
+            Course.query({id: "for-dashboard"}).$promise.then(function (courses) {
 
                 vm.courses = courses;
 

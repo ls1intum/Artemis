@@ -1,10 +1,16 @@
 package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
-import de.tum.in.www1.exerciseapp.domain.Course;
-import de.tum.in.www1.exerciseapp.domain.Result;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.CourseService;
+import de.tum.in.www1.exerciseapp.service.ExerciseService;
+import de.tum.in.www1.exerciseapp.service.ParticipationService;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -12,14 +18,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.security.Principal;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,11 +42,24 @@ public class CourseResource {
     private static final String ENTITY_NAME = "course";
 
     private final CourseService courseService;
+    private final ExerciseService exerciseService;
+    private final ParticipationService participationService;
+    private final ResultRepository resultRepository;
     private final AuthorizationCheckService authCheckService;
+    private final ObjectMapper objectMapper;
 
-    public CourseResource(CourseService courseService, AuthorizationCheckService authCheckService) {
+    public CourseResource(CourseService courseService,
+                          ExerciseService exerciseService,
+                          ParticipationService participationService,
+                          ResultRepository resultRepository,
+                          AuthorizationCheckService authCheckService,
+                          MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.courseService = courseService;
+        this.exerciseService = exerciseService;
+        this.participationService = participationService;
+        this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
 
     /**
@@ -90,7 +109,7 @@ public class CourseResource {
     /**
      * GET  /courses : get all the courses.
      *
-     * @return  the list of courses (the user has access to)
+     * @return the list of courses (the user has access to)
      */
     @GetMapping("/courses")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
@@ -99,15 +118,52 @@ public class CourseResource {
         log.debug("REST request to get all Courses the user has access to");
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(
-           course -> authCheckService.isStudentInCourse(course) ||
-                 authCheckService.isTeachingAssistantInCourse(course) ||
-                 authCheckService.isInstructorInCourse(course) ||
-                 authCheckService.isAdmin()
+            course -> authCheckService.isStudentInCourse(course) ||
+                authCheckService.isTeachingAssistantInCourse(course) ||
+                authCheckService.isInstructorInCourse(course) ||
+                authCheckService.isAdmin()
         );
         return userCourses.collect(Collectors.toList());
     }
 
     //TODO: create a second method for the administration of courses, so that in this case, courses are only visible to Admins and TAs of this course
+
+    /**
+     * GET /courses/for-dashboard
+     *
+     * @param principal the current user principal
+     * @return the list of courses (the user has access to) including all exercises
+     * with participation and result for the user
+     */
+    @GetMapping("/courses/for-dashboard")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public JsonNode getAllCoursesForDashboard(Principal principal) {
+        log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
+
+        // create json array to hold all the data
+        ArrayNode coursesJson = objectMapper.createArrayNode();
+
+        List<Course> courses = getAllCourses();
+        for (Course course : courses) {
+            ObjectNode courseJson = objectMapper.valueToTree(course);
+
+            // get all exercises for this user in this course
+            List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal);
+            ArrayNode exercisesJson = objectMapper.createArrayNode();
+            for (Exercise exercise : exercises) {
+                // add exercise to json array
+                ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, principal);
+                exercisesJson.add(exerciseJson);
+            }
+            // add exercises to course
+            courseJson.set("exercises", exercisesJson);
+            coursesJson.add(courseJson);
+        }
+
+        // return json array of courses
+        return coursesJson;
+    }
 
     /**
      * GET  /courses/:id : get the "id" course.
@@ -122,9 +178,9 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", id);
         Course course = courseService.findOne(id);
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-           return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
     }
@@ -150,20 +206,66 @@ public class CourseResource {
      *
      * @param courseId the Id of the course
      * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:
-     *  ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
+     * ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
      */
     @GetMapping("/courses/{courseId}/getAllCourseScoresOfCourseUsers")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId){
+    public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId) {
         log.debug("REST request to get courseScores from course : {}", courseId);
         Course course = courseService.findOne(courseId);
         if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
+            !authCheckService.isInstructorInCourse(course) &&
+            !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
+    }
+
+    private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, Principal principal) {
+        // get user's participation for the exercise
+        Participation participation;
+        if (exercise instanceof QuizExercise) {
+            participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), principal.getName());
+        } else {
+            participation = participationService.findOneByExerciseIdAndStudentLogin(exercise.getId(), principal.getName());
+        }
+
+        // add results to participation
+        ObjectNode participationJson = objectMapper.createObjectNode();
+        if (participation != null) {
+            List<Result> results;
+            // if exercise is quiz => only give out results if quiz is over
+            if (participation.getExercise() instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) participation.getExercise();
+                if (quizExercise.shouldFilterForStudents()) {
+                    // return empty list
+                    results = new ArrayList<>();
+                } else {
+                    // for quiz exercises only return latest rated result
+                    results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true)
+                        .map(Arrays::asList)
+                        .orElse(new ArrayList<>());
+                }
+            } else {
+                // for other types of exercises => return latest result
+                results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId())
+                    .map(Arrays::asList)
+                    .orElse(new ArrayList<>());
+            }
+
+            // remove user from participation to prevent IllegalArgumentException in ObjectMapper
+            participation.setStudent(null);
+
+            // add results to json
+            participationJson = objectMapper.valueToTree(participation);
+            participationJson.set("results", objectMapper.valueToTree(results));
+        }
+
+        // add participation to exercise
+        ObjectNode exerciseJson = objectMapper.valueToTree(exercise);
+        exerciseJson.set("participation", participationJson);
+        return exerciseJson;
     }
 
 }
