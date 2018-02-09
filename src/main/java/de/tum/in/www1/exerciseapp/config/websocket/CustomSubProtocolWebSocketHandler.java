@@ -55,7 +55,6 @@ public class CustomSubProtocolWebSocketHandler extends SubProtocolWebSocketHandl
         super.handleMessage(session, message);
     }
 
-
     private String resolveSessionId(Message<?> message) {
         for (SubProtocolHandler handler : getProtocolHandlers()) {
             String sessionId = handler.resolveSessionId(message);
