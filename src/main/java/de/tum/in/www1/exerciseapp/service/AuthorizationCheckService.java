@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
+import de.tum.in.www1.exerciseapp.security.SecurityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ public class AuthorizationCheckService {
      */
     public boolean isInstructorInCourse(Course course) {
         log.debug("Request to check instructor access rights to course with id: {}", course.getId());
+        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
         User user = userService.getUserWithGroupsAndAuthorities();
         return user.getGroups().contains(course.getInstructorGroupName());
     }
@@ -42,6 +45,7 @@ public class AuthorizationCheckService {
      */
     public boolean isTeachingAssistantInCourse(Course course) {
         log.debug("Request to check teaching assistant access rights to course with id: {}", course.getId());
+        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
         User user = userService.getUserWithGroupsAndAuthorities();
         return user.getGroups().contains(course.getTeachingAssistantGroupName());
     }
@@ -54,6 +58,7 @@ public class AuthorizationCheckService {
      */
     public boolean isStudentInCourse(Course course) {
         log.debug("Request to check student access rights to course with id: {}", course.getId());
+        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
         User user = userService.getUserWithGroupsAndAuthorities();
         return user.getGroups().contains(course.getStudentGroupName());
     }
@@ -66,8 +71,7 @@ public class AuthorizationCheckService {
      */
     public boolean isOwnerOfParticipation(Participation participation) {
         log.debug("Request to check student access rights to participation with id: {}", participation.getId());
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return participation.getStudent().getLogin().equals(user.getLogin());
+        return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin());
     }
 
     /**
@@ -77,6 +81,7 @@ public class AuthorizationCheckService {
      * @return true, if user is allowed to see this exercise, otherwise false
      */
     public boolean isAllowedToSeeExercise(Exercise exercise) {
+        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
         log.debug("Request to check access rights to exercise with id: {}", exercise.getId());
         Course course = exercise.getCourse();
         return isAdmin() ||
@@ -92,7 +97,6 @@ public class AuthorizationCheckService {
      */
     public boolean isAdmin() {
         log.debug("Request to check if user is admin");
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return user.getAuthorities().contains(adminAuthority);
+        return SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
     }
 }
