@@ -5,13 +5,13 @@
         .module('artemisApp')
         .controller('CoursesController', CoursesController);
 
-    CoursesController.$inject = ['$scope', '$q', '$state', 'Course', '$http'];
+    CoursesController.$inject = ['$scope', '$q', '$state', 'Course', '$http', 'Principal'];
 
-    function CoursesController($scope, $q, $state, Course, $http) {
+    function CoursesController($scope, $q, $state, Course, $http, Principal) {
         var vm = this;
 
-        vm.filterByCourseId = _.toInteger(_.get($state,"params.courseId"));
-        vm.filterByExerciseId = _.toInteger(_.get($state,"params.exerciseId"));
+        vm.filterByCourseId = _.toInteger(_.get($state, "params.courseId"));
+        vm.filterByExerciseId = _.toInteger(_.get($state, "params.exerciseId"));
 
         loadAll();
 
@@ -20,7 +20,7 @@
 
                 vm.courses = courses;
 
-                if(vm.filterByCourseId) {
+                if (vm.filterByCourseId) {
                     vm.courses = _.filter(vm.courses, {
                         'id': vm.filterByCourseId
                     });
@@ -28,7 +28,14 @@
             });
         }
 
-        vm.password = getRepositoryPassword();
+        vm.password = Principal.identity().then(function (account) {
+            // only load password if current user login starts with "edx"
+            if (account && account.login && account.login.startsWith("edx")) {
+                return getRepositoryPassword();
+            } else {
+                return null;
+            }
+        });
 
         function getRepositoryPassword() {
             return $http.get('api/account/password', {
