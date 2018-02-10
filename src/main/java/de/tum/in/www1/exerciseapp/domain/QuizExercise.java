@@ -66,7 +66,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
-    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @OneToMany(cascade=CascadeType.ALL, orphanRemoval=true)
     @OrderColumn
     @JoinColumn(name="exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -531,7 +531,6 @@ public class QuizExercise extends Exercise implements Serializable {
             ", isOpenForPractice='" + isIsOpenForPractice() + "'" +
             ", isPlannedToStart='" + isIsPlannedToStart() + "'" +
             ", duration='" + getDuration() + "'" +
-            ", questions='" + getQuestions() + "'" +
             "}";
     }
 

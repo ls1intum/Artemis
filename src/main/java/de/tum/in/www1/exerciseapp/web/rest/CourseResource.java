@@ -254,8 +254,12 @@ public class CourseResource {
                     .orElse(new ArrayList<>());
             }
 
-            // remove user from participation to prevent IllegalArgumentException in ObjectMapper
-            participation.setStudent(null);
+            // remove exercise from participation to prevent sending the exercise twice
+            participation.setExercise(null);
+            // remove participation from result to prevent sending it twice
+            for (Result result : results) {
+                result.setParticipation(null);
+            }
 
             // add results to json
             participationJson = objectMapper.valueToTree(participation);

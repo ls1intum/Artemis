@@ -6,10 +6,7 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.*;
-import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
-import de.tum.in.www1.exerciseapp.service.StatisticService;
-import de.tum.in.www1.exerciseapp.service.UserService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import de.tum.in.www1.exerciseapp.web.websocket.QuizSubmissionService;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -39,7 +36,7 @@ public class QuizSubmissionResource {
     private static final String ENTITY_NAME = "quizSubmission";
 
     private final QuizSubmissionRepository quizSubmissionRepository;
-    private final QuizExerciseRepository quizExerciseRepository;
+    private final QuizExerciseService quizExerciseService;
     private final QuizPointStatisticRepository quizPointStatisticRepository;
     private final QuestionStatisticRepository questionStatisticRepository;
     private final ResultRepository resultRepository;
@@ -50,7 +47,7 @@ public class QuizSubmissionResource {
     private final AuthorizationCheckService authCheckService;
 
     public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository,
-                                  QuizExerciseRepository quizExerciseRepository,
+                                  QuizExerciseService quizExerciseService,
                                   QuizPointStatisticRepository quizPointStatisticRepository,
                                   QuestionStatisticRepository questionStatisticRepository,
                                   ResultRepository resultRepository,
@@ -60,7 +57,7 @@ public class QuizSubmissionResource {
                                   StatisticService statisticService,
                                   AuthorizationCheckService authCheckService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
-        this.quizExerciseRepository = quizExerciseRepository;
+        this.quizExerciseService = quizExerciseService;
         this.resultRepository = resultRepository;
         this.participationService = participationService;
         this.userService = userService;
@@ -89,7 +86,7 @@ public class QuizSubmissionResource {
                                                                              @PathVariable Long exerciseId,
                                                                              Principal principal) throws URISyntaxException {
         log.debug("REST request to get QuizSubmission for QuizExercise: {}", exerciseId);
-        QuizExercise quizExercise = quizExerciseRepository.findOne(exerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOne(exerciseId);
         if (Optional.ofNullable(quizExercise).isPresent()) {
             User user = userService.getUserWithGroupsAndAuthorities();
             // check if user is allowed to take part in this exercise
@@ -175,7 +172,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseRepository.findOne(exerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
         if (Optional.ofNullable(quizExercise).isPresent()) {
             User user = userService.getUserWithGroupsAndAuthorities();
             // check if user is allowed to take part in this exercise
@@ -185,7 +182,7 @@ public class QuizSubmissionResource {
                     // update and save submission
                     quizSubmission.setSubmitted(true);
                     quizSubmission.setType(SubmissionType.MANUAL);
-                    quizSubmission.calculateAndUpdateScores((QuizExercise) participation.getExercise());
+                    quizSubmission.calculateAndUpdateScores(quizExercise);
                     quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
                     // create and save result
@@ -236,7 +233,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseRepository.findOne(exerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
         if (Optional.ofNullable(quizExercise).isPresent()) {
             Course course = quizExercise.getCourse();
             if (!authCheckService.isTeachingAssistantInCourse(course) &&
@@ -357,6 +354,7 @@ public class QuizSubmissionResource {
             // update participation state => no further rated submissions allowed
             participation.setInitializationState(ParticipationState.FINISHED);
             participation = participationService.save(participation);
+            participation.setExercise(quizExerciseService.findOneWithQuestions(participation.getExercise().getId()));
             // update submission
             quizSubmission.setSubmitted(true);
             quizSubmission.setType(submissionType);

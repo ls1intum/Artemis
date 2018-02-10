@@ -188,7 +188,11 @@ public class QuizExerciseResource {
     @Transactional(readOnly = true)
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
-        return quizExerciseService.findByCourseId(courseId);
+        List<QuizExercise> result = quizExerciseService.findByCourseId(courseId);
+        for (QuizExercise quizExercise : result) {
+            quizExercise.setQuestions(null);
+        }
+        return result;
     }
 
     /**
@@ -202,7 +206,7 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseService.findOne(id);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -220,7 +224,7 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseService.findOne(id);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -283,7 +287,7 @@ public class QuizExerciseResource {
         log.debug("REST request to immediately start QuizExercise : {}", id);
 
         // find quiz exercise
-        QuizExercise quizExercise = quizExerciseService.findOne(id);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
@@ -420,7 +424,7 @@ public class QuizExerciseResource {
         if (quizExercise.getId() == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
         }
-        QuizExercise originalQuizExercise = quizExerciseService.findOne(quizExercise.getId());
+        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
         if (originalQuizExercise == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }

@@ -111,6 +111,21 @@ public class QuizExerciseService {
     }
 
     /**
+     * Get one quiz exercise by id.
+     *
+     * @param id the id of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public QuizExercise findOneWithQuestions(Long id) {
+        log.debug("Request to get Quiz Exercise : {}", id);
+        QuizExercise result = quizExerciseRepository.findOne(id);
+        // load questions
+        result.getQuestions().size();
+        return result;
+    }
+
+    /**
      * Get all quiz exercises for the given course.
      *
      * @param courseId the id of the course

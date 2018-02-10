@@ -26,7 +26,7 @@ public class StatisticService {
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
-    private final QuizExerciseRepository quizExerciseRepository;
+    private final QuizExerciseService quizExerciseService;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizPointStatisticRepository quizPointStatisticRepository;
     private final QuestionStatisticRepository questionStatisticRepository;
@@ -34,14 +34,14 @@ public class StatisticService {
     public StatisticService(SimpMessageSendingOperations messagingTemplate,
                             ParticipationRepository participationRepository,
                             ResultRepository resultRepository,
-                            QuizExerciseRepository quizExerciseRepository,
+                            QuizExerciseService quizExerciseService,
                             QuizSubmissionRepository quizSubmissionRepository,
                             QuizPointStatisticRepository quizPointStatisticRepository,
                             QuestionStatisticRepository questionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
-        this.quizExerciseRepository = quizExerciseRepository;
+        this.quizExerciseService = quizExerciseService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.questionStatisticRepository = questionStatisticRepository;
@@ -164,7 +164,7 @@ public class StatisticService {
         try {
             statisticSemaphore.acquire();
 
-            QuizExercise quiz = quizExerciseRepository.findOne(newResult.getParticipation().getExercise().getId());
+            QuizExercise quiz = quizExerciseService.findOneWithQuestions(newResult.getParticipation().getExercise().getId());
 
             if (oldResult != null) {
                 for (Question question : quiz.getQuestions()) {
