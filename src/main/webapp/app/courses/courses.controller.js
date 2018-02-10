@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('CoursesController', CoursesController);
 
-    CoursesController.$inject = ['$scope', '$q', '$state', 'Course', 'CourseExercises'];
+    CoursesController.$inject = ['$scope', '$q', '$state', 'Course', '$http'];
 
-    function CoursesController($scope, $q, $state, Course, CourseExercises) {
+    function CoursesController($scope, $q, $state, Course, $http) {
         var vm = this;
 
         vm.filterByCourseId = _.toInteger(_.get($state,"params.courseId"));
@@ -25,6 +25,22 @@
                         'id': vm.filterByCourseId
                     });
                 }
+            });
+        }
+
+        vm.password = getRepositoryPassword();
+
+        function getRepositoryPassword() {
+            return $http.get('api/account/password', {
+                ignoreLoadingBar: true
+            }).then(function (response) {
+                if (response.data && response.data.password && response.data.password !== "") {
+                    return response.data.password;
+                } else {
+                    return null;
+                }
+            }).catch(function () {
+                return null;
             });
         }
     }

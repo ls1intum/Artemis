@@ -9,15 +9,16 @@
         .component('exerciseList', {
             bindings: {
                 course: '<',
-                filterByExerciseId: '<'
+                filterByExerciseId: '<',
+                repositoryPassword: '<'
             },
             templateUrl: 'app/courses/exercises/exercise-list.html',
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', '$scope', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', 'JhiWebsocketService', '$http', '$location', 'Principal', '$rootScope'];
+    ExerciseListController.$inject = ['$sanitize', '$scope', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', 'JhiWebsocketService', '$http', '$location', 'Principal', '$rootScope'];
 
-    function ExerciseListController($sce, $scope,  $window, AlertService, CourseExercises, Participation, ExerciseParticipation, JhiWebsocketService, $http, $location, Principal, $rootScope) {
+    function ExerciseListController($sanitize, $scope,  $window, AlertService, CourseExercises, Participation, ExerciseParticipation, JhiWebsocketService, $http, $location, Principal, $rootScope) {
         var vm = this;
 
         vm.clonePopover = {
@@ -79,10 +80,6 @@
                 showWelcomeAlert();
             }
 
-            getRepositoryPassword().then(function (password) {
-                vm.repositoryPassword = password;
-            });
-
             if (vm.course.exercises) {
                 // exercises already included in data, no need to load them
                 initExercises(vm.course.exercises);
@@ -111,8 +108,6 @@
             return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
         }
 
-        var trusted = {};
-
         function getClonePopoverTemplate(exercise) {
             var html = [
                 '<div>',
@@ -123,7 +118,7 @@
                 ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. ',
                 '</div>'
             ].join('');
-            return trusted[html] || (trusted[html] = $sce.trustAsHtml(html));
+            return $sanitize(html);
         }
 
         function goToBuildPlan(exercise) {
@@ -186,16 +181,6 @@
         }
 
         vm.isNotOverdue = isNotOverdue;
-
-        function getRepositoryPassword() {
-            return $http.get('api/account/password', {
-                ignoreLoadingBar: true
-            }).then(function (response) {
-                return _.has(response, "data.password") && !_.isEmpty(response.data.password) ? response.data.password : null;
-            }).catch(function () {
-                return null;
-            });
-        }
 
         function showWelcomeAlert() {
             AlertService.add({
