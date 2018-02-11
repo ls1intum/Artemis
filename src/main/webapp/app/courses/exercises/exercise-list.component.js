@@ -198,10 +198,10 @@
                 return;
             }
 
-            exercise.$start({
+            CourseExercises.start({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
-            }).then(function (returnedExercise) {
+            }).$promise.then(function (returnedExercise) {
                 exercise['participation'] = returnedExercise.participation;
                 exercise['participation'].toJSON = exercise.toJSON;
                 AlertService.add({
@@ -223,10 +223,10 @@
 
         function resume(exercise) {
             vm.loading[exercise.id] = true;
-            exercise.$resume({
+            CourseExercises.resume({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
-            }).catch(function (errorResponse) {
+            }).$promise.catch(function (errorResponse) {
                 alert(errorResponse.data.status + " " + errorResponse.data.detail);
             }).finally(function () {
                 vm.loading[exercise.id] = false;

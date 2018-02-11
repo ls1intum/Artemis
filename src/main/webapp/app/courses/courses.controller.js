@@ -28,13 +28,16 @@
             });
         }
 
-        vm.password = Principal.identity().then(function (account) {
+        vm.repositoryPassword = null;
+        Principal.identity().then(function (account) {
             // only load password if current user login starts with "edx"
             if (account && account.login && account.login.startsWith("edx")) {
                 return getRepositoryPassword();
             } else {
                 return null;
             }
+        }).then(function(result) {
+            vm.repositoryPassword = result;
         });
 
         function getRepositoryPassword() {
