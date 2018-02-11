@@ -201,7 +201,7 @@
             CourseExercises.start({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
-            }).$promise.then(function (returnedExercise) {
+            }, {}).$promise.then(function (returnedExercise) {
                 exercise['participation'] = returnedExercise.participation;
                 exercise['participation'].toJSON = exercise.toJSON;
                 AlertService.add({
@@ -226,7 +226,7 @@
             CourseExercises.resume({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
-            }).$promise.catch(function (errorResponse) {
+            }, {}).$promise.catch(function (errorResponse) {
                 alert(errorResponse.data.status + " " + errorResponse.data.detail);
             }).finally(function () {
                 vm.loading[exercise.id] = false;
