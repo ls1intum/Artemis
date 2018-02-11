@@ -1,4 +1,4 @@
-package de.tum.in.www1.exerciseapp.config;
+package de.tum.in.www1.exerciseapp.config.websocket;
 
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import org.springframework.context.annotation.Configuration;

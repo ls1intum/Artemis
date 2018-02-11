@@ -123,7 +123,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
                     "database");
             }
         } else {
-            throw new InternalAuthenticationServiceException("JIRA Authentication failed");
+            throw new InternalAuthenticationServiceException("JIRA Authentication failed for user " + username);
         }
     }
 

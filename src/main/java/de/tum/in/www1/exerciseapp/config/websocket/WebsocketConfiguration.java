@@ -1,4 +1,4 @@
-package de.tum.in.www1.exerciseapp.config;
+package de.tum.in.www1.exerciseapp.config.websocket;
 
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import io.github.jhipster.config.JHipsterProperties;
@@ -13,9 +13,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.socket.WebSocketHandler;
-import org.springframework.web.socket.config.annotation.AbstractWebSocketMessageBrokerConfigurer;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
+import org.springframework.web.socket.config.annotation.*;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
@@ -23,11 +21,10 @@ import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 
 @Configuration
-@EnableWebSocketMessageBroker
-public class WebsocketConfiguration extends AbstractWebSocketMessageBrokerConfigurer {
+//@EnableWebSocketMessageBroker
+public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationSupport {
 
     private final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
 
@@ -46,12 +43,18 @@ public class WebsocketConfiguration extends AbstractWebSocketMessageBrokerConfig
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        String[] allowedOrigins = Optional.ofNullable(jHipsterProperties.getCors().getAllowedOrigins()).map(origins -> origins.toArray(new String[0])).orElse(new String[0]);
+//        String[] allowedOrigins = Optional.ofNullable(jHipsterProperties.getCors().getAllowedOrigins()).map(origins -> origins.toArray(new String[0])).orElse(new String[0]);
         registry.addEndpoint("/websocket/tracker")
             .setHandshakeHandler(defaultHandshakeHandler())
-            .setAllowedOrigins(allowedOrigins)
+            //Override this value due to warnings in the logs: o.s.w.s.s.t.h.DefaultSockJsService       : Origin check enabled but transport 'jsonp' does not support it.
+            .setAllowedOrigins("*")
             .withSockJS()
             .setInterceptors(httpSessionHandshakeInterceptor());
+    }
+
+    @Override
+    public WebSocketHandler subProtocolWebSocketHandler() {
+        return new CustomSubProtocolWebSocketHandler(clientInboundChannel(), clientOutboundChannel());
     }
 
     @Bean
