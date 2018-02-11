@@ -251,7 +251,8 @@
          */
         function canOpenStatistic(exercise){
             if(exercise.type === 'quiz'){
-                return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) ||  exercise.quizPointStatistic.released == true;
+                // TODO: fix quizPointStatistic (Maybe include flag into exercise itself and load statistics separately)
+                return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) /*||  exercise.quizPointStatistic.released == true*/;
             }
             return false;
         }

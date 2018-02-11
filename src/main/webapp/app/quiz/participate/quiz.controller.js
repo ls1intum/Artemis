@@ -567,11 +567,11 @@
                 JhiWebsocketService.disableReconnect();
 
                 // assign user score (limit decimal places to 2)
-                vm.userScore = vm.result.submission.scoreInPoints ? Math.round(vm.result.submission.scoreInPoints * 100) / 100 : 0;
+                vm.userScore = vm.submission.scoreInPoints ? Math.round(vm.submission.scoreInPoints * 100) / 100 : 0;
 
                 // create dictionary with scores for each question
                 vm.questionScores = {};
-                vm.result.submission.submittedAnswers.forEach(function (submittedAnswer) {
+                vm.submission.submittedAnswers.forEach(function (submittedAnswer) {
                     // limit decimal places to 2
                     vm.questionScores[submittedAnswer.question.id] = Math.round(submittedAnswer.scoreInPoints * 100) / 100;
                 });
@@ -742,6 +742,9 @@
          * @param response
          */
         function onSubmitPreviewSuccess(response) {
+            vm.isSubmitting = false;
+            vm.submission = response.submission;
+            applySubmission();
             showResult([response]);
         }
 

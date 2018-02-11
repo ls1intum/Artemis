@@ -34,14 +34,14 @@
         </td>
         <td>
             <span class="text-muted" ng-switch-when="uninitialized">You have not started this exercise yet.</span>
-            <span ng-switch-when="initialized"><result participation="exercise.participation"></result></span>
-            <span ng-switch-when="inactive"><result participation="exercise.participation"></result></span>
+            <span ng-switch-when="initialized"><result participation="exercise.participation" is-quiz="false"></result></span>
+            <span ng-switch-when="inactive"><result participation="exercise.participation" is-quiz="false"></result></span>
             <span class="text-muted" ng-switch-when="quiz-not-started">The quiz hasn't started yet.</span>
             <span class="text-muted" ng-switch-when="quiz-uninitialized">You have not started this quiz yet.</span>
             <span class="text-muted" ng-switch-when="quiz-not-participated">You have not participated in this quiz.</span>
             <span class="text-muted" ng-switch-when="quiz-active">You are currently participating in this quiz.</span>
             <span class="text-muted" ng-switch-when="quiz-submitted">You have already submitted. Wait for the quiz to end to see results.</span>
-            <span ng-switch-when="quiz-finished"><result participation="exercise.participation" show-score="true"></result></span>
+            <span ng-switch-when="quiz-finished"><result participation="exercise.participation" is-quiz="true" show-score="true"></result></span>
         </td>
         <td class="text-center">
             <button class="btn btn-primary btn-sm btn-block" id="btn-student-action"

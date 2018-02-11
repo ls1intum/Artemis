@@ -1,11 +1,11 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
-import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.*;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -97,6 +97,7 @@ public class StatisticService {
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
+    @Transactional
     public void updateStatisticsAndResults(QuizExercise quizExercise){
 
         //reset all statistics
@@ -116,7 +117,7 @@ public class StatisticService {
             // update all Results of a participation
             for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
 
-                QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
                 //recalculate existing score
                 quizSubmission.calculateAndUpdateScores(quizExercise);
                 //update Successful-Flag in Result
@@ -159,18 +160,17 @@ public class StatisticService {
      * @param newResult the new Result, which will be added to the statistics
      * @param oldResult the old Result, which will be removedfrom the statistics. oldResult = null, if there is no old Result
      */
-    public boolean updateStatistics(Result newResult, Result oldResult) {
+    @Transactional
+    public boolean updateStatistics(Result newResult, Result oldResult, QuizExercise quiz) {
         // critical part locked with Semaphore statisticSemaphore
         try {
             statisticSemaphore.acquire();
-
-            QuizExercise quiz = quizExerciseService.findOneWithQuestions(newResult.getParticipation().getExercise().getId());
-
             if (oldResult != null) {
                 for (Question question : quiz.getQuestions()) {
                     if (question.getQuestionStatistic() != null) {
                         // remove the previous Result from the QuestionStatistics
-                        question.getQuestionStatistic().removeOldResult(((QuizSubmission) oldResult.getSubmission()).getSubmittedAnswerForQuestion(question), oldResult.isRated());
+                        QuizSubmission quizSubmission = quizSubmissionRepository.findOne(oldResult.getSubmission().getId());
+                        question.getQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(question), oldResult.isRated());
                     }
                 }
                 // add the new Result to the quizPointStatistic and remove the previous one
@@ -191,7 +191,7 @@ public class StatisticService {
             statisticSemaphore.release();
         }
         // notify statistics about new Result
-        this.notifyStatisticWebsocket((QuizExercise) newResult.getParticipation().getExercise());
+        this.notifyStatisticWebsocket(quiz);
         return true;
     }
 
@@ -209,7 +209,8 @@ public class StatisticService {
         for (Question question : quizExercise.getQuestions()) {
             // update QuestionStatistics with the result
             if (result != null && question.getQuestionStatistic() != null) {
-                question.getQuestionStatistic().addResult(((QuizSubmission) result.getSubmission()).getSubmittedAnswerForQuestion(question), result.isRated());
+                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+                question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), result.isRated());
             }
         }
     }

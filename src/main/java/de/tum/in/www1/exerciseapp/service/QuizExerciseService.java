@@ -117,12 +117,9 @@ public class QuizExerciseService {
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public QuizExercise findOneWithQuestions(Long id) {
+    public QuizExercise findOneWithQuestionsAndStatistics(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
-        QuizExercise result = quizExerciseRepository.findOne(id);
-        // load questions
-        result.getQuestions().size();
-        return result;
+        return quizExerciseRepository.findOneByIdWithEagerQuestionsAndStatistics(id);
     }
 
     /**
@@ -162,6 +159,7 @@ public class QuizExerciseService {
      *
      * @param quizExercise the changed quizExercise.
      */
+    @Transactional
     public void adjustResultsOnQuizDeletions(QuizExercise quizExercise) {
         //change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {

@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
@@ -22,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,7 +44,7 @@ public class CourseResource {
     private final UserService userService;
     private final CourseService courseService;
     private final ExerciseService exerciseService;
-    private final ParticipationService participationService;
+    private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
     private final AuthorizationCheckService authCheckService;
     private final ObjectMapper objectMapper;
@@ -49,14 +52,14 @@ public class CourseResource {
     public CourseResource(UserService userService,
                           CourseService courseService,
                           ExerciseService exerciseService,
-                          ParticipationService participationService,
+                          ParticipationRepository participationRepository,
                           ResultRepository resultRepository,
                           AuthorizationCheckService authCheckService,
                           MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.userService = userService;
         this.courseService = courseService;
         this.exerciseService = exerciseService;
-        this.participationService = participationService;
+        this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
@@ -114,9 +117,9 @@ public class CourseResource {
     @GetMapping("/courses")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Course> getAllCourses(User user) {
+    public List<Course> getAllCourses() {
         log.debug("REST request to get all Courses the user has access to");
-
+        User user = userService.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(
             course -> user.getGroups().contains(course.getStudentGroupName()) ||
@@ -142,26 +145,44 @@ public class CourseResource {
     public JsonNode getAllCoursesForDashboard(Principal principal) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
+        User user = userService.getUserWithGroupsAndAuthorities();
 
         // create json array to hold all the data
         ArrayNode coursesJson = objectMapper.createArrayNode();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        List<Course> courses = getAllCourses(user);
+        List<Course> courses = courseService.findAllWithExercises();
         log.warn(courses.size() + " courses received after " + (System.currentTimeMillis() - start) + "ms");
+
+        for (Course course : courses) {
+            if (!user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
+                !user.getGroups().contains(course.getInstructorGroupName()) &&
+                !authCheckService.isAdmin()) {
+                // get exercises for student
+                List<Exercise> studentExercises = exerciseService.findAllForCourse(course, true, principal, user);
+                course.setExercises(new HashSet<>(studentExercises));
+            } else {
+                // filter unnecessary information anyway
+                for (Exercise exercise : course.getExercises()) {
+                    if (exercise instanceof QuizExercise) {
+                        QuizExercise quizExercise = (QuizExercise) exercise;
+                        quizExercise.filterSensitiveInformation();
+                    }
+                }
+            }
+            log.warn("    " + course.getExercises().size() + " exercises received after " + (System.currentTimeMillis() - start) + "ms");
+        }
+
+        List<Participation> participations = participationRepository.findByStudentUsernameWithEagerResults(principal.getName());
+
         for (Course course : courses) {
             ObjectNode courseJson = objectMapper.valueToTree(course);
-
-            // get all exercises for this user in this course
-            //TODO: this call checks again the user rights, we already have the user and could pass the reference
-            List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal, user);
-            log.warn("    " + exercises.size() + " exercises received after " + (System.currentTimeMillis() - start) + "ms");
             ArrayNode exercisesJson = objectMapper.createArrayNode();
-            for (Exercise exercise : exercises) {
-                // add exercise to json array
-                ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, principal);
-                log.warn("        participation and result received after " + (System.currentTimeMillis() - start) + "ms");
+            for (Exercise exercise : course.getExercises()) {
+                // add participation with result to each exercise
+                ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, participations);
                 exercisesJson.add(exerciseJson);
             }
+            log.warn("    participation and results connected to exercises after " + (System.currentTimeMillis() - start) + "ms");
+
             // add exercises to course
             courseJson.set("exercises", exercisesJson);
             coursesJson.add(courseJson);
@@ -230,48 +251,67 @@ public class CourseResource {
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
 
-    private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, Principal principal) {
+    private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, List<Participation> participations) {
         // get user's participation for the exercise
-        Participation participation;
+        Participation participation = null;
         if (exercise instanceof QuizExercise) {
-            participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), principal.getName());
+            for (Participation participation1 : participations) {
+                if (participation1.getExercise().equals(exercise)) {
+                    participation = participation1;
+                    break;
+                }
+            }
         } else {
-            participation = participationService.findOneByExerciseIdAndStudentLogin(exercise.getId(), principal.getName());
+            for (Participation participation1 : participations) {
+                if (participation1.getExercise().equals(exercise)) {
+                    if (participation1.getInitializationState() == ParticipationState.INITIALIZED) {
+                        participation = participation1;
+                        break;
+                    } else if (participation1.getInitializationState() == ParticipationState.INACTIVE) {
+                        participation = participation1;
+                    }
+                }
+            }
         }
 
         // add results to participation
         ObjectNode participationJson = objectMapper.createObjectNode();
         if (participation != null) {
-            List<Result> results;
-            // if exercise is quiz => only give out results if quiz is over
-            if (participation.getExercise() instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) participation.getExercise();
-                if (quizExercise.shouldFilterForStudents()) {
-                    // return empty list
-                    results = new ArrayList<>();
-                } else {
-                    // for quiz exercises only return latest rated result
-                    results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true)
-                        .map(Arrays::asList)
-                        .orElse(new ArrayList<>());
-                }
-            } else {
-                // for other types of exercises => return latest result
-                results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId())
-                    .map(Arrays::asList)
-                    .orElse(new ArrayList<>());
-            }
-
-            // remove exercise from participation to prevent sending the exercise twice
-            participation.setExercise(null);
-            // remove participation from result to prevent sending it twice
-            for (Result result : results) {
-                result.setParticipation(null);
-            }
-
-            // add results to json
             participationJson = objectMapper.valueToTree(participation);
-            participationJson.set("results", objectMapper.valueToTree(results));
+
+            // add results if exercise is a quiz, or not overdue
+            if (exercise instanceof QuizExercise || exercise.getDueDate() == null || exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+                List<Result> results;
+                // if exercise is quiz => only give out results if quiz is over
+                if (participation.getExercise() instanceof QuizExercise) {
+                    QuizExercise quizExercise = (QuizExercise) participation.getExercise();
+                    if (quizExercise.shouldFilterForStudents()) {
+                        // return empty list
+                        results = new ArrayList<>();
+                    } else {
+                        // for quiz exercises only return latest rated result
+                        Result result = null;
+                        for (Result result1 : participation.getResults()) {
+                            if (result1.isRated() && (result == null || result.getCompletionDate().isBefore(result1.getCompletionDate()))) {
+                                result = result1;
+                            }
+                        }
+                        results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
+                    }
+                } else {
+                    // for other types of exercises => return latest result
+                    Result result = null;
+                    for (Result result1 : participation.getResults()) {
+                        if (result == null || result.getCompletionDate().isBefore(result1.getCompletionDate())) {
+                            result = result1;
+                        }
+                    }
+                    results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
+                }
+
+                // add results to json
+                participationJson.set("results", objectMapper.valueToTree(results));
+            }
         }
 
         // add participation to exercise

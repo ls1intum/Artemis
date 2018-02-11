@@ -185,8 +185,10 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, Principal principal) {
         log.debug("REST request to get Exercises for Course : {}", courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
+
         Course course = courseService.findOne(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+
         if (!user.getGroups().contains(course.getStudentGroupName()) &&
             !user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
             !user.getGroups().contains(course.getInstructorGroupName()) &&
