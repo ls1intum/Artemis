@@ -150,6 +150,16 @@ public class CourseResource {
         // create json array to hold all the data
         ArrayNode coursesJson = objectMapper.createArrayNode();
         List<Course> courses = courseService.findAllWithExercises();
+        if (!authCheckService.isAdmin()) {
+            // filter courses for user
+            Stream<Course> userCourses = courses.stream().filter(
+                course -> user.getGroups().contains(course.getStudentGroupName()) ||
+                    user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
+                    user.getGroups().contains(course.getInstructorGroupName())
+            );
+            courses = userCourses.collect(Collectors.toList());
+        }
+
         log.warn(courses.size() + " courses received after " + (System.currentTimeMillis() - start) + "ms");
 
         for (Course course : courses) {
