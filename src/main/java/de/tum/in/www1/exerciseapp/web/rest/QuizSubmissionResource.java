@@ -241,8 +241,9 @@ public class QuizSubmissionResource {
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(exerciseId);
         if (Optional.ofNullable(quizExercise).isPresent()) {
             Course course = quizExercise.getCourse();
-            if (!authCheckService.isTeachingAssistantInCourse(course) &&
-                !authCheckService.isInstructorInCourse(course) &&
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
                 !authCheckService.isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }

@@ -3,10 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.*;
-import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
-import de.tum.in.www1.exerciseapp.service.CourseService;
-import de.tum.in.www1.exerciseapp.service.QuizExerciseService;
-import de.tum.in.www1.exerciseapp.service.StatisticService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -38,17 +35,20 @@ public class QuizExerciseResource {
 
     private final QuizExerciseService quizExerciseService;
     private final ParticipationRepository participationRepository;
+    private final UserService userService;
     private final CourseService courseService;
     private final StatisticService statisticService;
     private final AuthorizationCheckService authCheckService;
     private final SimpMessageSendingOperations messagingTemplate;
 
-    public QuizExerciseResource(QuizExerciseService quizExerciseService,
+    public QuizExerciseResource(UserService userService,
+                                QuizExerciseService quizExerciseService,
                                 ParticipationRepository participationRepository,
                                 CourseService courseService,
                                 StatisticService statisticService,
                                 AuthorizationCheckService authCheckService,
                                 SimpMessageSendingOperations messagingTemplate) {
+        this.userService = userService;
         this.quizExerciseService = quizExerciseService;
         this.participationRepository = participationRepository;
         this.courseService = courseService;
@@ -78,8 +78,9 @@ public class QuizExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -119,8 +120,9 @@ public class QuizExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -205,7 +207,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
@@ -223,7 +225,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (quizExercise == null) {
@@ -292,8 +294,9 @@ public class QuizExerciseResource {
 
         // check permissions
         Course course = quizExercise.getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -384,8 +387,9 @@ public class QuizExerciseResource {
         }
 
         Course course = quizExercise.getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -432,7 +436,8 @@ public class QuizExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
-        if (!authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

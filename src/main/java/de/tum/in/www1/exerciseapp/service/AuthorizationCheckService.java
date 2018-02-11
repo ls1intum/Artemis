@@ -30,10 +30,10 @@ public class AuthorizationCheckService {
      * @param course course to check the rights for
      * @return true, if user is instructor of this course, otherwise false
      */
-    public boolean isInstructorInCourse(Course course) {
-        log.debug("Request to check instructor access rights to course with id: {}", course.getId());
-        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
-        User user = userService.getUserWithGroupsAndAuthorities();
+    public boolean isInstructorInCourse(Course course, User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
         return user.getGroups().contains(course.getInstructorGroupName());
     }
 
@@ -43,25 +43,23 @@ public class AuthorizationCheckService {
      * @param course course to check the rights for
      * @return true, if user is teaching assistant of this course, otherwise false
      */
-    public boolean isTeachingAssistantInCourse(Course course) {
-        log.debug("Request to check teaching assistant access rights to course with id: {}", course.getId());
-        boolean result = userService.isTeachingAssistantInCourse(SecurityUtils.getCurrentUserLogin(), course.getTeachingAssistantGroupName());
-        return result;
-//        User user = userService.getUserWithGroupsAndAuthorities();
-//        return user.getGroups().contains(course.getTeachingAssistantGroupName());
-
+    public boolean isTeachingAssistantInCourse(Course course, User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
+        return user.getGroups().contains(course.getTeachingAssistantGroupName());
     }
 
     /**
-     * Method used to check whether the current logged in user is student of this course
+     * method used to check whether the current logged in user is student of this course
      *
      * @param course course to check the rights for
      * @return true, if user is student of this course, otherwise false
      */
-    public boolean isStudentInCourse(Course course) {
-        log.debug("Request to check student access rights to course with id: {}", course.getId());
-        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
-        User user = userService.getUserWithGroupsAndAuthorities();
+    public boolean isStudentInCourse(Course course, User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
         return user.getGroups().contains(course.getStudentGroupName());
     }
 
@@ -72,7 +70,6 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(Participation participation) {
-        log.debug("Request to check student access rights to participation with id: {}", participation.getId());
         return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin());
     }
 
@@ -82,14 +79,16 @@ public class AuthorizationCheckService {
      * @param exercise exercise to check the rights for
      * @return true, if user is allowed to see this exercise, otherwise false
      */
-    public boolean isAllowedToSeeExercise(Exercise exercise) {
-        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
+    public boolean isAllowedToSeeExercise(Exercise exercise, User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
         log.debug("Request to check access rights to exercise with id: {}", exercise.getId());
         Course course = exercise.getCourse();
-        return isAdmin() ||
-            isInstructorInCourse(course) ||
-            isTeachingAssistantInCourse(course) ||
-            (isStudentInCourse(course) && exercise.isVisibleToStudents());
+        return  isAdmin() ||
+                isInstructorInCourse(course, user) ||
+                isTeachingAssistantInCourse(course, user) ||
+                (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
 
     /**

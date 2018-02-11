@@ -28,12 +28,15 @@ public class QuizExerciseService {
     private final AuthorizationCheckService authCheckService;
     private final ResultRepository resultRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
+    private final UserService userService;
 
-    public QuizExerciseService(QuizExerciseRepository quizExerciseRepository,
+    public QuizExerciseService(UserService userService,
+                               QuizExerciseRepository quizExerciseRepository,
                                DragAndDropMappingRepository dragAndDropMappingRepository,
                                AuthorizationCheckService authCheckService,
                                ResultRepository resultRepository,
                                QuizSubmissionRepository quizSubmissionRepository) {
+        this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.authCheckService = authCheckService;
@@ -87,11 +90,12 @@ public class QuizExerciseService {
     public List<QuizExercise> findAll() {
         log.debug("REST request to get all QuizExercises");
         List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
+        User user = userService.getUserWithGroupsAndAuthorities();
         Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
             exercise -> {
                 Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course) ||
-                    authCheckService.isInstructorInCourse(course) ||
+                return authCheckService.isTeachingAssistantInCourse(course, user) ||
+                    authCheckService.isInstructorInCourse(course, user) ||
                     authCheckService.isAdmin();
             }
         );
@@ -132,11 +136,12 @@ public class QuizExerciseService {
     public List<QuizExercise> findByCourseId(Long courseId) {
         log.debug("Request to get all Quiz Exercises in Course : {}", courseId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
             exercise -> {
                 Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course) ||
-                    authCheckService.isInstructorInCourse(course) ||
+                return authCheckService.isTeachingAssistantInCourse(course, user) ||
+                    authCheckService.isInstructorInCourse(course, user) ||
                     authCheckService.isAdmin();
             }
         );
