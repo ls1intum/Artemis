@@ -113,12 +113,14 @@ class QuizParticipationSimulation extends Simulation {
             .formParam("submit", "Login")
             .check(status.is(200))
             .check(headerRegex("Set-Cookie", "XSRF-TOKEN=([^;]*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
-        .pause(2 seconds)
-        .exec(http("Authenticated request")
-            .get("/api/account")
+        .pause(5 seconds)
+
+    val loadDashboard: ChainBuilder = exec(
+        http("Get dashboard")
+            .get("/api/courses/for-dashboard")
             .headers(headers_http_authenticated)
-            .check(status.is(200)))
-        .pause(30 seconds, 40 seconds)
+            .check(status.is(200))).exitHereIfFailed
+        .pause(10 seconds, 30 seconds)
 
     val startQuiz: ChainBuilder = exec(
         http("Get quiz")
@@ -145,7 +147,7 @@ class QuizParticipationSimulation extends Simulation {
         //        .exec(ws("Subscribe Participation")
         //            .sendText("[\"SUBSCRIBE\nid:sub-1\ndestination:/topic/participation/13020/newResults\n\n\u0000\"]"))
         .exec(ws("Subscribe Submission")
-            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000"))
+        .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000"))
         .pause(5 seconds)
         .repeat(20) {
             exec(ws("Send Answers")
@@ -163,12 +165,12 @@ class QuizParticipationSimulation extends Simulation {
                 .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
                 .check(status.is(200)))
 
-    val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, startQuiz, workOnQuiz)
-    val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, startQuiz, workOnQuiz, submitQuiz)
+    val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, loadDashboard, startQuiz, workOnQuiz)
+    val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, loadDashboard, startQuiz, workOnQuiz, submitQuiz)
 
     setUp(
-        usersNoSubmit.inject(rampUsers(100) over (30 seconds)),
-        usersSubmit.inject(rampUsers(100) over (30 seconds))
+        usersNoSubmit.inject(rampUsers(100) over (20 seconds)),
+        usersSubmit.inject(rampUsers(300) over (20 seconds))
     ).protocols(httpConf)
 
 }
