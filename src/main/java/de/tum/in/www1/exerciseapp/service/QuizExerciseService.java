@@ -127,6 +127,24 @@ public class QuizExerciseService {
     }
 
     /**
+     * Get one quiz exercise by id.
+     * NOTE: This method is to be used by Threads outside Spring (e.g. the Timer when a Quiz ends)
+     *
+     * @param id the id of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public QuizExercise findOneWithQuestionsAndStatisticsForTimer(Long id) {
+        log.debug("Request to get Quiz Exercise : {}", id);
+        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        if (quizExercise != null) {
+            quizExercise.getQuestions().size();
+            quizExercise.getQuizPointStatistic().getId();
+        }
+        return quizExercise;
+    }
+
+    /**
      * Get all quiz exercises for the given course.
      *
      * @param courseId the id of the course

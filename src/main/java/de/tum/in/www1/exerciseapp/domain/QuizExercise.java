@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.exerciseapp.config.Constants;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.LazyToOne;
+import org.hibernate.annotations.LazyToOneOption;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -62,7 +64,8 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
-    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.LAZY, orphanRemoval=true)
+    @LazyToOne(LazyToOneOption.NO_PROXY)
+    @OneToOne(cascade=CascadeType.ALL, orphanRemoval=true)
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 

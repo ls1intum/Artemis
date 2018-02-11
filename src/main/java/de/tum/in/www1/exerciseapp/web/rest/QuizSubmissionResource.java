@@ -16,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -106,11 +105,12 @@ public class QuizSubmissionResource {
                     result = resultRepository.save(result);
 
                     // create timer to score this submission when exercise times out.
+                    final String username = principal.getName();
                     Timer timer = new Timer();
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {
-                            Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+                            Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, username);
                             submitSubmission(participation, null);
                             // notify user about new result
                             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
@@ -352,19 +352,21 @@ public class QuizSubmissionResource {
                 // remove this submission from the cached submissions
                 QuizSubmissionService.removeCachedSubmission(username, submissionId);
             } else {
-                // if user never sent answers through websocket, use initially created submission
-                quizSubmission = (QuizSubmission) result.getSubmission();
+                // if user never sent answers through websocket, use empty submission
+                QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
+                quizSubmission = quizSubmissionRepository.save(newSubmission);
             }
         }
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsForTimer(participation.getExercise().getId());
         if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
             // update participation state => no further rated submissions allowed
             participation.setInitializationState(ParticipationState.FINISHED);
             participation = participationService.save(participation);
-            participation.setExercise(quizExerciseService.findOneWithQuestionsAndStatistics(participation.getExercise().getId()));
+            participation.setExercise(quizExercise);
             // update submission
             quizSubmission.setSubmitted(true);
             quizSubmission.setType(submissionType);
-            quizSubmission.calculateAndUpdateScores((QuizExercise) participation.getExercise());
+            quizSubmission.calculateAndUpdateScores(quizExercise);
             quizSubmission = quizSubmissionRepository.save(quizSubmission);
             // update result
             result.setParticipation(participation);
@@ -378,7 +380,7 @@ public class QuizSubmissionResource {
             // get previous Result
             Result previousResult = getPreviousResult(result);
 
-           if (!statisticService.updateStatistics(result, previousResult, (QuizExercise) participation.getExercise())) {
+           if (!statisticService.updateStatistics(result, previousResult, quizExercise)) {
                log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
            }
         }
@@ -387,7 +389,7 @@ public class QuizSubmissionResource {
         // and this was called from the timer, quizSubmission might be null at this point
         QuizSubmission resultSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
         // remove scores from submission if quiz hasn't ended yet
-        if (resultSubmission.isSubmitted() && ((QuizExercise) participation.getExercise()).shouldFilterForStudents()) {
+        if (resultSubmission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
             resultSubmission.removeScores();
         }
         // set submission date for response
