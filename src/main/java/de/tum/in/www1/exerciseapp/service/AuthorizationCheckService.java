@@ -17,15 +17,11 @@ public class AuthorizationCheckService {
 
     private final UserService userService;
     private Authority adminAuthority;
-    private final User user;
 
     public AuthorizationCheckService(UserService userService) {
         this.userService = userService;
         adminAuthority = new Authority();
         adminAuthority.setName("ROLE_ADMIN");
-
-        // Load user once when Service is instantiated
-        user = userService.getUserWithGroupsAndAuthorities();
     }
 
     /**
@@ -36,6 +32,8 @@ public class AuthorizationCheckService {
      */
     public boolean isInstructorInCourse(Course course) {
         log.debug("Request to check instructor access rights to course with id: {}", course.getId());
+        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
+        User user = userService.getUserWithGroupsAndAuthorities();
         return user.getGroups().contains(course.getInstructorGroupName());
     }
 
@@ -47,7 +45,11 @@ public class AuthorizationCheckService {
      */
     public boolean isTeachingAssistantInCourse(Course course) {
         log.debug("Request to check teaching assistant access rights to course with id: {}", course.getId());
-        return user.getGroups().contains(course.getTeachingAssistantGroupName());
+        boolean result = userService.isTeachingAssistantInCourse(SecurityUtils.getCurrentUserLogin(), course.getTeachingAssistantGroupName());
+        return result;
+//        User user = userService.getUserWithGroupsAndAuthorities();
+//        return user.getGroups().contains(course.getTeachingAssistantGroupName());
+
     }
 
     /**
@@ -58,6 +60,8 @@ public class AuthorizationCheckService {
      */
     public boolean isStudentInCourse(Course course) {
         log.debug("Request to check student access rights to course with id: {}", course.getId());
+        //TODO execute a SQL query directly in the database to improve performance (using userRepository)
+        User user = userService.getUserWithGroupsAndAuthorities();
         return user.getGroups().contains(course.getStudentGroupName());
     }
 
@@ -69,7 +73,7 @@ public class AuthorizationCheckService {
      */
     public boolean isOwnerOfParticipation(Participation participation) {
         log.debug("Request to check student access rights to participation with id: {}", participation.getId());
-        return participation.getStudent().equals(user);
+        return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin());
     }
 
     /**
@@ -95,6 +99,6 @@ public class AuthorizationCheckService {
      */
     public boolean isAdmin() {
         log.debug("Request to check if user is admin");
-        return user.getAuthorities().contains(adminAuthority);
+        return SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
     }
 }

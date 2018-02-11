@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -40,6 +41,7 @@ public class QuizSubmissionResource {
     private final QuizPointStatisticRepository quizPointStatisticRepository;
     private final QuestionStatisticRepository questionStatisticRepository;
     private final ResultRepository resultRepository;
+    private final ResultService resultService;
     private final ParticipationService participationService;
     private final UserService userService;
     private final StatisticService statisticService;
@@ -51,6 +53,7 @@ public class QuizSubmissionResource {
                                   QuizPointStatisticRepository quizPointStatisticRepository,
                                   QuestionStatisticRepository questionStatisticRepository,
                                   ResultRepository resultRepository,
+                                  ResultService resultService,
                                   ParticipationService participationService,
                                   UserService userService,
                                   SimpMessageSendingOperations messagingTemplate,
@@ -59,6 +62,7 @@ public class QuizSubmissionResource {
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizExerciseService = quizExerciseService;
         this.resultRepository = resultRepository;
+        this.resultService = resultService;
         this.participationService = participationService;
         this.userService = userService;
         this.messagingTemplate = messagingTemplate;
@@ -92,7 +96,7 @@ public class QuizSubmissionResource {
             // check if user is allowed to take part in this exercise
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
                 Participation participation = participationService.init(quizExercise, principal.getName());
-                Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+                Result result = resultService.findFirstByParticipationIdAndRatedOrderByCompletionDateDescEager(participation.getId(), true);
                 if (quizExercise.isSubmissionAllowed() && result == null) {
                     // no result exists yet => create a new one
                     QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
@@ -114,7 +118,7 @@ public class QuizSubmissionResource {
                     }, (quizExercise.getRemainingTime() + Constants.QUIZ_AUTOMATIC_SUBMISSION_DELAY_IN_SECONDS) * 1000);
                 }
                 if (result != null) {
-                    QuizSubmission submission = (QuizSubmission) result.getSubmission();
+                    QuizSubmission submission = quizSubmissionRepository.findOne(result.getSubmission().getId());
                     // get submission from cache, if it exists and submission is not submitted already
                     QuizSubmission cachedSubmission = null;
                     if (!submission.isSubmitted()) {
@@ -172,12 +176,13 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(exerciseId);
         if (Optional.ofNullable(quizExercise).isPresent()) {
             User user = userService.getUserWithGroupsAndAuthorities();
             // check if user is allowed to take part in this exercise
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
                 Participation participation = participationService.init(quizExercise, principal.getName());
+                participation.setExercise(quizExercise);
                 if (quizExercise.hasStarted() && quizExercise.getRemainingTime() < 0 && quizExercise.isIsOpenForPractice()) {
                     // update and save submission
                     quizSubmission.setSubmitted(true);
@@ -197,7 +202,7 @@ public class QuizSubmissionResource {
                     // get previous Result
                     Result previousResult = getPreviousResult(result);
 
-                    if (!statisticService.updateStatistics(result, previousResult)) {
+                    if (!statisticService.updateStatistics(result, previousResult, quizExercise)) {
                         log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
                     }
                     // return quizSubmission
@@ -233,7 +238,7 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(exerciseId);
         if (Optional.ofNullable(quizExercise).isPresent()) {
             Course course = quizExercise.getCourse();
             if (!authCheckService.isTeachingAssistantInCourse(course) &&
@@ -288,7 +293,7 @@ public class QuizSubmissionResource {
         }
 
         // update corresponding result
-        Optional<Result> resultOptional = resultRepository.findDistinctBySubmissionId(quizSubmission.getId());
+        Optional<Result> resultOptional = resultRepository.findDistinctBySubmissionIdWithParticipation(quizSubmission.getId());
         if (resultOptional.isPresent()) {
             Result result = resultOptional.get();
             Participation participation = result.getParticipation();
@@ -329,7 +334,7 @@ public class QuizSubmissionResource {
             // Do nothing
             return quizSubmission;
         }
-        Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId()).orElse(null);
+        Result result = resultService.findFirstByParticipationIdAndRatedOrderByCompletionDateDescEager(participation.getId(), true);
         if (result == null) {
             // Do nothing
             return quizSubmission;
@@ -354,7 +359,7 @@ public class QuizSubmissionResource {
             // update participation state => no further rated submissions allowed
             participation.setInitializationState(ParticipationState.FINISHED);
             participation = participationService.save(participation);
-            participation.setExercise(quizExerciseService.findOneWithQuestions(participation.getExercise().getId()));
+            participation.setExercise(quizExerciseService.findOneWithQuestionsAndStatistics(participation.getExercise().getId()));
             // update submission
             quizSubmission.setSubmitted(true);
             quizSubmission.setType(submissionType);
@@ -372,14 +377,14 @@ public class QuizSubmissionResource {
             // get previous Result
             Result previousResult = getPreviousResult(result);
 
-           if (!statisticService.updateStatistics(result, previousResult)) {
+           if (!statisticService.updateStatistics(result, previousResult, (QuizExercise) participation.getExercise())) {
                log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
            }
         }
         // prepare submission for sending
         // Note: We get submission from result because if submission was already submitted
         // and this was called from the timer, quizSubmission might be null at this point
-        QuizSubmission resultSubmission = (QuizSubmission) result.getSubmission();
+        QuizSubmission resultSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
         // remove scores from submission if quiz hasn't ended yet
         if (resultSubmission.isSubmitted() && ((QuizExercise) participation.getExercise()).shouldFilterForStudents()) {
             resultSubmission.removeScores();

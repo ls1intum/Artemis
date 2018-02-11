@@ -8,6 +8,7 @@
         .module('artemisApp')
         .component('result', {
             bindings: {
+                isQuiz: '<',
                 participation: '<',
                 showScore: '<',
                 onNewResult: '&'
@@ -16,9 +17,9 @@
             controller: ResultController
         });
 
-    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', 'Repository', '$interval','$scope', '$sce', 'JhiWebsocketService', 'Result'];
+    ResultController.$inject = ['$http', '$uibModal', 'ParticipationResult', 'Repository', '$interval', '$scope', '$sce', 'JhiWebsocketService', 'Result'];
 
-    function ResultController($http, $uibModal, ParticipationResult, Repository, $interval,$scope, $sce, JhiWebsocketService, Result) {
+    function ResultController($http, $uibModal, ParticipationResult, Repository, $interval, $scope, $sce, JhiWebsocketService, Result) {
         var vm = this;
 
         vm.$onInit = init;
@@ -33,11 +34,11 @@
 
             JhiWebsocketService.subscribe(websocketChannel);
 
-            JhiWebsocketService.receive(websocketChannel).then(null, null, function(notify) {
+            JhiWebsocketService.receive(websocketChannel).then(null, null, function (notify) {
                 refresh(true);
             });
 
-            $scope.$on('$destroy', function() {
+            $scope.$on('$destroy', function () {
                 JhiWebsocketService.unsubscribe(websocketChannel);
             })
         }
@@ -48,34 +49,46 @@
          * @param forceLoad {boolean} force loading the result if the status is not QUEUED or BUILDING
          */
         function refresh(forceLoad) {
-            $http.get('api/participations/' + vm.participation.id  + '/status', {
+            // don't load status for quizExercises
+            if (vm.isQuiz) {
+                refreshResult(forceLoad);
+                return;
+            }
+
+            $http.get('api/participations/' + vm.participation.id + '/status', {
                 ignoreLoadingBar: true
             }).then(function (response) {
                 vm.queued = response.data === 'QUEUED';
                 vm.building = response.data === 'BUILDING';
             }).finally(function () {
                 if (!vm.queued && !vm.building) {
-                    if (forceLoad || !vm.participation.results) {
-                        // load results from server
-                        vm.results = ParticipationResult.query({
-                            courseId: vm.participation.exercise.course.id,
-                            exerciseId: vm.participation.exercise.id,
-                            participationId: vm.participation.id,
-                            showAllResults: false,
-                            ratedOnly: vm.participation.exercise.type === "quiz"
-                        }, function (results) {
-                            if(vm.onNewResult) {
-                                vm.onNewResult({ $event: {
-                                        newResult: results[0]
-                                    }});
-                            }
-                        });
-                    } else {
-                        // take results from participation
-                        vm.results = vm.participation.results;
-                    }
+                    refreshResult(forceLoad);
                 }
             });
+        }
+
+        function refreshResult(forceLoad) {
+            if (forceLoad || !vm.participation.results) {
+                // load results from server
+                vm.results = ParticipationResult.query({
+                    courseId: vm.participation.exercise.course.id,
+                    exerciseId: vm.participation.exercise.id,
+                    participationId: vm.participation.id,
+                    showAllResults: false,
+                    ratedOnly: vm.participation.exercise.type === "quiz"
+                }, function (results) {
+                    if (vm.onNewResult) {
+                        vm.onNewResult({
+                            $event: {
+                                newResult: results[0]
+                            }
+                        });
+                    }
+                });
+            } else {
+                // take results from participation
+                vm.results = vm.participation.results;
+            }
         }
 
         function buildResultString(result) {
@@ -105,7 +118,7 @@
                             id: result.id
                         }, function (details) {
                             vm.details = details;
-                            if(details.length == 0) {
+                            if (details.length == 0) {
                                 Repository.buildlogs({
                                     participationId: result.participation.id
                                 }, function (buildLogs) {

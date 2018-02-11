@@ -48,16 +48,18 @@ public class ExerciseResource {
 
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
+    private final UserService userService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
     public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService,
-                            CourseService courseService, AuthorizationCheckService authCheckService,
+                            UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
                             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
+        this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -185,14 +187,16 @@ public class ExerciseResource {
         log.debug("REST request to get Exercises for Course : {}", courseId);
 
         Course course = courseService.findOne(courseId);
-        if (!authCheckService.isStudentInCourse(course) &&
-            !authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+
+        if (!user.getGroups().contains(course.getStudentGroupName()) &&
+            !user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
+            !user.getGroups().contains(course.getInstructorGroupName()) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        List<Exercise> result = exerciseService.findAllForCourse(course, withLtiOutcomeUrlExisting, principal);
+        List<Exercise> result = exerciseService.findAllForCourse(course, withLtiOutcomeUrlExisting, principal, user);
 
         return ResponseEntity.ok(result);
     }

@@ -21,11 +21,9 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * REST controller for managing QuizExercise.
@@ -206,7 +204,7 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -224,7 +222,7 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -287,7 +285,7 @@ public class QuizExerciseResource {
         log.debug("REST request to immediately start QuizExercise : {}", id);
 
         // find quiz exercise
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
         if (quizExercise == null) {
             return ResponseEntity.notFound().build();
         }
@@ -424,7 +422,7 @@ public class QuizExerciseResource {
         if (quizExercise.getId() == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseWithoutId", "The quiz exercise doesn't have an ID.")).build();
         }
-        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
+        QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         if (originalQuizExercise == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
         }

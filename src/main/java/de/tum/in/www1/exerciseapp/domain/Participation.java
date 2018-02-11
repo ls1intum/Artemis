@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 
@@ -51,7 +53,8 @@ public class Participation implements Serializable {
     @ManyToOne
     private User student;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
+    @Fetch(FetchMode.JOIN)
     @JsonIgnoreProperties({"quizPointStatistic", "questions", "maxTotalScore"})
     private Exercise exercise;
 

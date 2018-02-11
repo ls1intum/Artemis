@@ -329,6 +329,11 @@ public class UserService {
         return user;
     }
 
+    @Transactional(readOnly = true)
+    public boolean isTeachingAssistantInCourse(String username, String teachingAssistantGroup) {
+        return userRepository.isTeachingAssistantInCourse(username, teachingAssistantGroup);
+    }
+
     /**
      * Persistent Token are used for providing automatic authentication, they should be automatically deleted after
      * 30 days.

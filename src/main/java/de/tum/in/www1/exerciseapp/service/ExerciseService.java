@@ -96,10 +96,10 @@ public class ExerciseService {
     }
 
     @Transactional(readOnly = true)
-    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal) {
+    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal, User user) {
         List<Exercise> exercises;
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        if (!user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
+            !user.getGroups().contains(course.getInstructorGroupName()) &&
             !authCheckService.isAdmin()) {
             // user is student for this course
             exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());

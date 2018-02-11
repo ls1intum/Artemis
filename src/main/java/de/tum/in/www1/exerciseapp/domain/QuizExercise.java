@@ -62,7 +62,7 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
-    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.LAZY, orphanRemoval=true)
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
@@ -328,7 +328,9 @@ public class QuizExercise extends Exercise implements Serializable {
     public void setQuestions(List<Question> questions) {
 
         this.questions = questions;
-        recalculatePointCounters();
+        if (questions != null) {
+            recalculatePointCounters();
+        }
     }
 
     @Override
@@ -341,9 +343,7 @@ public class QuizExercise extends Exercise implements Serializable {
      */
     public void filterSensitiveInformation() {
         setQuestions(null);
-        getQuizPointStatistic().setPointCounters(null);
-        getQuizPointStatistic().setParticipantsRated(null);
-        getQuizPointStatistic().setParticipantsUnrated(null);
+        setQuizPointStatistic(null);
     }
 
     /**

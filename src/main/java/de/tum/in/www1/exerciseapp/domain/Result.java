@@ -157,15 +157,11 @@ public class Result implements Serializable {
         this.score = score;
 
         //if score is 100 set successful true, if not set it false
-        if (score == 100) {
-            successful = true;
-        } else {
-            successful = false;
-        }
+        successful = score == 100;
     }
 
     public Boolean isRated() {
-        return rated;
+        return rated != null ? rated : false;
     }
 
     public Result rated(Boolean rated) {
