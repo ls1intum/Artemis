@@ -129,7 +129,13 @@ public class ExerciseService {
     @Transactional(readOnly = true)
     public Exercise findOne(Long id) {
         log.debug("Request to get Exercise : {}", id);
-        return exerciseRepository.findOne(id);
+        Exercise exercise = exerciseRepository.findOne(id);
+        if (exercise instanceof QuizExercise) {
+            QuizExercise quizExercise = (QuizExercise) exercise;
+            quizExercise.getQuestions().size();
+            quizExercise.getQuizPointStatistic().getId();
+        }
+        return exercise;
     }
 
     /**
