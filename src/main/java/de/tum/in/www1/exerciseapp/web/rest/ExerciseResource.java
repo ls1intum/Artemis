@@ -80,8 +80,9 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to save Exercise : {}", exercise);
         Course course = exercise.getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -130,8 +131,9 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> updateExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to update Exercise : {}", exercise);
         Course course = exercise.getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -162,11 +164,12 @@ public class ExerciseResource {
     public ResponseEntity<List<Exercise>> getAllExercises(Pageable pageable) {
         log.debug("REST request to get a page of Exercises");
         Page<Exercise> page = exerciseRepository.findAll(pageable);
+        User user = userService.getUserWithGroupsAndAuthorities();
         Stream<Exercise> authorizedExercises = page.getContent().stream().filter(
             exercise -> {
                 Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course) ||
-                    authCheckService.isInstructorInCourse(course) ||
+                return authCheckService.isTeachingAssistantInCourse(course, user) ||
+                    authCheckService.isInstructorInCourse(course, user) ||
                     authCheckService.isAdmin();
             }
         );
@@ -188,10 +191,9 @@ public class ExerciseResource {
 
         Course course = courseService.findOne(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-
-        if (!user.getGroups().contains(course.getStudentGroupName()) &&
-            !user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
-            !user.getGroups().contains(course.getInstructorGroupName()) &&
+        if (!authCheckService.isStudentInCourse(course, user) &&
+            !authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -214,8 +216,9 @@ public class ExerciseResource {
         log.debug("REST request to get Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
         Course course = exercise.getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -236,7 +239,8 @@ public class ExerciseResource {
         Exercise exercise = exerciseService.findOne(id);
         if (Optional.ofNullable(exercise).isPresent()) {
             Course course = exercise.getCourse();
-            if (!authCheckService.isInstructorInCourse(course) && !authCheckService.isAdmin()) {
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
             exerciseService.reset(exercise);
@@ -258,7 +262,8 @@ public class ExerciseResource {
         log.debug("REST request to reset Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
         Course course = exercise.getCourse();
-        if (!authCheckService.isInstructorInCourse(course) && !authCheckService.isAdmin()) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         exerciseService.reset(exercise);
@@ -279,7 +284,8 @@ public class ExerciseResource {
         log.info("Start to cleanup build plans for Exercise: {}, delete repositories: {}", id, deleteRepositories);
         Exercise exercise = exerciseService.findOne(id);
         Course course = exercise.getCourse();
-        if (!authCheckService.isInstructorInCourse(course) && !authCheckService.isAdmin()) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
              return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (deleteRepositories) {
@@ -317,7 +323,8 @@ public class ExerciseResource {
         log.info("Start to archive repositories for Exercise : {}", id);
         Exercise exercise = exerciseService.findOne(id);
         Course course = exercise.getCourse();
-        if (!authCheckService.isInstructorInCourse(course) && !authCheckService.isAdmin()) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         File zipFile = exerciseService.archive(id);

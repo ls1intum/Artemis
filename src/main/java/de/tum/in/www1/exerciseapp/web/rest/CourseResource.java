@@ -188,6 +188,7 @@ public class CourseResource {
             coursesJson.add(courseJson);
         }
 
+        log.warn("Complete dashboard call finished after " + (System.currentTimeMillis() - start) + "ms");
         // return json array of courses
         return coursesJson;
     }
