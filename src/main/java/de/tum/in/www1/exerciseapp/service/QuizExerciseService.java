@@ -119,10 +119,7 @@ public class QuizExerciseService {
     @Transactional(readOnly = true)
     public QuizExercise findOneWithQuestions(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
-        QuizExercise result = quizExerciseRepository.findOne(id);
-        // load questions
-        result.getQuestions().size();
-        return result;
+        return quizExerciseRepository.findOneByIdWithEagerQuestions(id);
     }
 
     /**

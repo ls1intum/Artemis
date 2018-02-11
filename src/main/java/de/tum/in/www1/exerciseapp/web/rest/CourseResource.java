@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
 import de.tum.in.www1.exerciseapp.service.CourseService;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -43,20 +45,20 @@ public class CourseResource {
 
     private final CourseService courseService;
     private final ExerciseService exerciseService;
-    private final ParticipationService participationService;
+    private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
     private final AuthorizationCheckService authCheckService;
     private final ObjectMapper objectMapper;
 
     public CourseResource(CourseService courseService,
                           ExerciseService exerciseService,
-                          ParticipationService participationService,
+                          ParticipationRepository participationRepository,
                           ResultRepository resultRepository,
                           AuthorizationCheckService authCheckService,
                           MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.courseService = courseService;
         this.exerciseService = exerciseService;
-        this.participationService = participationService;
+        this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
@@ -144,12 +146,29 @@ public class CourseResource {
         // create json array to hold all the data
         ArrayNode coursesJson = objectMapper.createArrayNode();
 
-        List<Course> courses = getAllCourses();
+        List<Course> courses = courseService.findAllWithExercises();
+        for (Course course : courses) {
+            if (!authCheckService.isTeachingAssistantInCourse(course) &&
+                !authCheckService.isInstructorInCourse(course) &&
+                !authCheckService.isAdmin()) {
+                // filter exercises for student
+                course.setExercises(new HashSet<>(exerciseService.findAllForCourse(course, true, principal)));
+            } else {
+                // filter unnecessary information anyway
+                for (Exercise exercise : course.getExercises()) {
+                    if (exercise instanceof QuizExercise) {
+                        QuizExercise quizExercise = (QuizExercise) exercise;
+                        quizExercise.filterSensitiveInformation();
+                    }
+                }
+            }
+        }
+
+        List<Participation> participations = participationRepository.findByStudentIsCurrentUser();
         for (Course course : courses) {
             ObjectNode courseJson = objectMapper.valueToTree(course);
-
             // get all exercises for this user in this course
-            List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal);
+            Set<Exercise> exercises = course.getExercises();
             ArrayNode exercisesJson = objectMapper.createArrayNode();
             for (Exercise exercise : exercises) {
                 // add exercise to json array
@@ -223,48 +242,48 @@ public class CourseResource {
     }
 
     private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, Principal principal) {
+
+        // TODO
+
         // get user's participation for the exercise
         Participation participation;
-        if (exercise instanceof QuizExercise) {
-            participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), principal.getName());
-        } else {
-            participation = participationService.findOneByExerciseIdAndStudentLogin(exercise.getId(), principal.getName());
-        }
+//        if (exercise instanceof QuizExercise) {
+//            participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exercise.getId(), principal.getName());
+//        } else {
+//            participation = participationService.findOneByExerciseIdAndStudentLogin(exercise.getId(), principal.getName());
+//        }
 
         // add results to participation
         ObjectNode participationJson = objectMapper.createObjectNode();
-        if (participation != null) {
-            List<Result> results;
-            // if exercise is quiz => only give out results if quiz is over
-            if (participation.getExercise() instanceof QuizExercise) {
-                QuizExercise quizExercise = (QuizExercise) participation.getExercise();
-                if (quizExercise.shouldFilterForStudents()) {
-                    // return empty list
-                    results = new ArrayList<>();
-                } else {
-                    // for quiz exercises only return latest rated result
-                    results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true)
-                        .map(Arrays::asList)
-                        .orElse(new ArrayList<>());
-                }
-            } else {
-                // for other types of exercises => return latest result
-                results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId())
-                    .map(Arrays::asList)
-                    .orElse(new ArrayList<>());
-            }
-
-            // remove exercise from participation to prevent sending the exercise twice
-            participation.setExercise(null);
-            // remove participation from result to prevent sending it twice
-            for (Result result : results) {
-                result.setParticipation(null);
-            }
-
-            // add results to json
-            participationJson = objectMapper.valueToTree(participation);
-            participationJson.set("results", objectMapper.valueToTree(results));
-        }
+//        if (participation != null) {
+//            participationJson = objectMapper.valueToTree(participation);
+//
+//            // add results if exercise is a quiz, or not overdue
+//            if (exercise instanceof QuizExercise || exercise.getDueDate() == null || exercise.getDueDate().isAfter(ZonedDateTime.now())) {
+//                List<Result> results;
+//                // if exercise is quiz => only give out results if quiz is over
+//                if (participation.getExercise() instanceof QuizExercise) {
+//                    QuizExercise quizExercise = (QuizExercise) participation.getExercise();
+//                    if (quizExercise.shouldFilterForStudents()) {
+//                        // return empty list
+//                        results = new ArrayList<>();
+//                    } else {
+//                        // for quiz exercises only return latest rated result
+//                        results = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true)
+//                            .map(Arrays::asList)
+//                            .orElse(new ArrayList<>());
+//                    }
+//                } else {
+//                    // for other types of exercises => return latest result
+//                    results = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId())
+//                        .map(Arrays::asList)
+//                        .orElse(new ArrayList<>());
+//                }
+//
+//                // add results to json
+//                participationJson.set("results", objectMapper.valueToTree(results));
+//            }
+//        }
 
         // add participation to exercise
         ObjectNode exerciseJson = objectMapper.valueToTree(exercise);

@@ -337,6 +337,16 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
+     * set all sensitive information to null, so no info gets leaked to students through json
+     */
+    public void filterSensitiveInformation() {
+        setQuestions(null);
+        getQuizPointStatistic().setPointCounters(null);
+        getQuizPointStatistic().setParticipantsRated(null);
+        getQuizPointStatistic().setParticipantsUnrated(null);
+    }
+
+    /**
      * Get the score for this submission as a number from 0 to 100 (100 being the best possible result)
      *
      * @param quizSubmission the submission that should be evaluated

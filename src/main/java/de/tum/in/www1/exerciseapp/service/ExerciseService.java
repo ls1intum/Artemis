@@ -113,10 +113,7 @@ public class ExerciseService {
         for (Exercise exercise : result) {
             if (exercise instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) exercise;
-                quizExercise.setQuestions(null);
-                quizExercise.getQuizPointStatistic().setPointCounters(null);
-                quizExercise.getQuizPointStatistic().setParticipantsRated(null);
-                quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
+                quizExercise.filterSensitiveInformation();
             }
         }
 

@@ -46,7 +46,7 @@ public class Result implements Serializable {
     @Column(name = "rated")
     private Boolean rated;
 
-    @OneToOne(cascade=CascadeType.REMOVE, orphanRemoval=true)
+    @OneToOne(cascade=CascadeType.REMOVE, fetch = FetchType.LAZY, orphanRemoval=true)
     @JoinColumn(unique = true)
     private Submission submission;
 
@@ -56,7 +56,7 @@ public class Result implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Feedback> feedbacks = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Participation participation;
 
     /**

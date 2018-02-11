@@ -54,6 +54,17 @@ public class CourseService {
     }
 
     /**
+     * Get all the courses with exercises.
+     *
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public List<Course> findAllWithExercises() {
+        log.debug("Request to get all Courses with Exercises");
+        return courseRepository.findAllWithEagerExercises();
+    }
+
+    /**
      * Get one course by id.
      *
      * @param id the id of the entity
