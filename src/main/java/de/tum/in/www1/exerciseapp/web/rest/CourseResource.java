@@ -183,12 +183,18 @@ public class CourseResource {
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
         Course course = courseService.findOne(id);
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!userHasPermission(course)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+    }
+
+    private boolean userHasPermission(Course course) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -220,11 +226,7 @@ public class CourseResource {
     public ResponseEntity<Collection<Result>> getAllSummedScoresOfCourseUsers(@PathVariable("courseId") Long courseId) {
         log.debug("REST request to get courseScores from course : {}", courseId);
         Course course = courseService.findOne(courseId);
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+        if (!userHasPermission(course)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
 
