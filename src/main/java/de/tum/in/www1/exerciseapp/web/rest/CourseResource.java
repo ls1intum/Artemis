@@ -149,38 +149,12 @@ public class CourseResource {
 
         // create json array to hold all the data
         ArrayNode coursesJson = objectMapper.createArrayNode();
-        List<Course> courses = courseService.findAllWithExercises();
-        if (!authCheckService.isAdmin()) {
-            // filter courses for user
-            Stream<Course> userCourses = courses.stream().filter(
-                course -> user.getGroups().contains(course.getStudentGroupName()) ||
-                    user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
-                    user.getGroups().contains(course.getInstructorGroupName())
-            );
-            courses = userCourses.collect(Collectors.toList());
-        }
 
-        log.warn(courses.size() + " courses received after " + (System.currentTimeMillis() - start) + "ms");
+        // get all courses with exercises for this user
+        List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
+        log.warn(courses.size() + " courses including exercises received after " + (System.currentTimeMillis() - start) + "ms");
 
-        for (Course course : courses) {
-            if (!user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
-                !user.getGroups().contains(course.getInstructorGroupName()) &&
-                !authCheckService.isAdmin()) {
-                // get exercises for student
-                List<Exercise> studentExercises = exerciseService.findAllForCourse(course, true, principal, user);
-                course.setExercises(new HashSet<>(studentExercises));
-            } else {
-                // filter unnecessary information anyway
-                for (Exercise exercise : course.getExercises()) {
-                    if (exercise instanceof QuizExercise) {
-                        QuizExercise quizExercise = (QuizExercise) exercise;
-                        quizExercise.filterSensitiveInformation();
-                    }
-                }
-            }
-            log.warn("    " + course.getExercises().size() + " exercises received after " + (System.currentTimeMillis() - start) + "ms");
-        }
-
+        // get all participations of this user
         List<Participation> participations = participationRepository.findByStudentUsernameWithEagerResults(principal.getName());
 
         for (Course course : courses) {
