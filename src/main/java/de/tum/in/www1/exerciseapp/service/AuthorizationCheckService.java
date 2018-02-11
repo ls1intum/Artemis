@@ -46,12 +46,14 @@ public class AuthorizationCheckService {
     public boolean isTeachingAssistantInCourse(Course course) {
         log.debug("Request to check teaching assistant access rights to course with id: {}", course.getId());
         //TODO execute a SQL query directly in the database to improve performance (using userRepository)
-        User user = userService.getUserWithGroupsAndAuthorities();
-        return user.getGroups().contains(course.getTeachingAssistantGroupName());
+        boolean result = userService.isTeachingAssistantInCourse(SecurityUtils.getCurrentUserLogin(), course.getTeachingAssistantGroupName());
+        return result;
+//        User user = userService.getUserWithGroupsAndAuthorities();
+//        return user.getGroups().contains(course.getTeachingAssistantGroupName());
     }
 
     /**
-     * Method used to check whether the current logged in user is student of this course
+     * method used to check whether the current logged in user is student of this course
      *
      * @param course course to check the rights for
      * @return true, if user is student of this course, otherwise false

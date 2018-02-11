@@ -7,10 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
-import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
-import de.tum.in.www1.exerciseapp.service.CourseService;
-import de.tum.in.www1.exerciseapp.service.ExerciseService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -41,6 +38,7 @@ public class CourseResource {
 
     private static final String ENTITY_NAME = "course";
 
+    private final UserService userService;
     private final CourseService courseService;
     private final ExerciseService exerciseService;
     private final ParticipationService participationService;
@@ -48,12 +46,14 @@ public class CourseResource {
     private final AuthorizationCheckService authCheckService;
     private final ObjectMapper objectMapper;
 
-    public CourseResource(CourseService courseService,
+    public CourseResource(UserService userService,
+                          CourseService courseService,
                           ExerciseService exerciseService,
                           ParticipationService participationService,
                           ResultRepository resultRepository,
                           AuthorizationCheckService authCheckService,
                           MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
+        this.userService = userService;
         this.courseService = courseService;
         this.exerciseService = exerciseService;
         this.participationService = participationService;
@@ -114,13 +114,14 @@ public class CourseResource {
     @GetMapping("/courses")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public List<Course> getAllCourses() {
+    public List<Course> getAllCourses(User user) {
         log.debug("REST request to get all Courses the user has access to");
+
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(
-            course -> authCheckService.isStudentInCourse(course) ||
-                authCheckService.isTeachingAssistantInCourse(course) ||
-                authCheckService.isInstructorInCourse(course) ||
+            course -> user.getGroups().contains(course.getStudentGroupName()) ||
+                user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
+                user.getGroups().contains(course.getInstructorGroupName()) ||
                 authCheckService.isAdmin()
         );
         return userCourses.collect(Collectors.toList());
@@ -139,21 +140,26 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public JsonNode getAllCoursesForDashboard(Principal principal) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
 
         // create json array to hold all the data
         ArrayNode coursesJson = objectMapper.createArrayNode();
-
-        List<Course> courses = getAllCourses();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        List<Course> courses = getAllCourses(user);
+        log.warn(courses.size() + " courses received after " + (System.currentTimeMillis() - start) + "ms");
         for (Course course : courses) {
             ObjectNode courseJson = objectMapper.valueToTree(course);
 
             // get all exercises for this user in this course
-            List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal);
+            //TODO: this call checks again the user rights, we already have the user and could pass the reference
+            List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal, user);
+            log.warn("    " + exercises.size() + " exercises received after " + (System.currentTimeMillis() - start) + "ms");
             ArrayNode exercisesJson = objectMapper.createArrayNode();
             for (Exercise exercise : exercises) {
                 // add exercise to json array
                 ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, principal);
+                log.warn("        participation and result received after " + (System.currentTimeMillis() - start) + "ms");
                 exercisesJson.add(exerciseJson);
             }
             // add exercises to course

@@ -96,21 +96,21 @@ public class ExerciseService {
     }
 
     @Transactional(readOnly = true)
-    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal) {
-        List<Exercise> result;
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal, User user) {
+        List<Exercise> exercises;
+        if (!user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
+            !user.getGroups().contains(course.getInstructorGroupName()) &&
             !authCheckService.isAdmin()) {
             // user is student for this course
-            result = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());
+            exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());
             // filter out exercises that are not released (or explicitly made visible to students) yet
-            result = result.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
+            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
         } else {
-            result = exerciseRepository.findByCourseId(course.getId());
+            exercises = exerciseRepository.findByCourseId(course.getId());
         }
 
         // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
-        for (Exercise exercise : result) {
+        for (Exercise exercise : exercises) {
             if (exercise instanceof QuizExercise) {
                 QuizExercise quizExercise = (QuizExercise) exercise;
                 quizExercise.setQuestions(null);
@@ -120,7 +120,7 @@ public class ExerciseService {
             }
         }
 
-        return result;
+        return exercises;
     }
 
     /**

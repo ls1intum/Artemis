@@ -185,16 +185,16 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Collection<Exercise>> getExercisesForCourse(@PathVariable Long courseId, @RequestParam(defaultValue = "false") boolean withLtiOutcomeUrlExisting, Principal principal) {
         log.debug("REST request to get Exercises for Course : {}", courseId);
-
+        User user = userService.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOne(courseId);
-        if (!authCheckService.isStudentInCourse(course) &&
-            !authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        if (!user.getGroups().contains(course.getStudentGroupName()) &&
+            !user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
+            !user.getGroups().contains(course.getInstructorGroupName()) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        List<Exercise> result = exerciseService.findAllForCourse(course, withLtiOutcomeUrlExisting, principal);
+        List<Exercise> result = exerciseService.findAllForCourse(course, withLtiOutcomeUrlExisting, principal, user);
 
         return ResponseEntity.ok(result);
     }
