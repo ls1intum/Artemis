@@ -68,6 +68,9 @@ public class CourseResourceIntTest {
     private CourseRepository courseRepository;
 
     @Autowired
+    private CourseResource courseResource;
+
+    @Autowired
     private CourseService courseService;
 
     @Autowired
@@ -92,7 +95,6 @@ public class CourseResourceIntTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        final CourseResource courseResource = new CourseResource(courseService, authCheckService);
         this.restCourseMockMvc = MockMvcBuilders.standaloneSetup(courseResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
