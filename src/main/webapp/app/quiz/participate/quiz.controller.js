@@ -400,6 +400,10 @@
                         // apply randomized order where necessary
                         randomizeOrder(quizExercise);
 
+                        // update timeDifference
+                        vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
+                        timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
+
                         // automatically load results 5 seconds after quiz has ended (in case websocket didn't work)
                         runningTimeouts.push(
                             $timeout(function () {
@@ -415,10 +419,6 @@
                     }).$promise.then(function (quizSubmission) {
                         vm.submission = quizSubmission;
                         vm.waitingForQuizStart = false;
-
-                        // update timeDifference
-                        vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
-                        timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
 
                         // update submission time
                         if (vm.submission.submissionDate) {
@@ -638,20 +638,40 @@
 
         /**
          * Callback function for handling response after saving submission to server
-         * @param quizSubmission The response data from the server
+         * @param response The response data from the server
          */
-        function onSaveSuccess(quizSubmission) {
-            outstandingWebsocketResponses = Math.max(0, outstandingWebsocketResponses - 1);
+        function onSaveSuccess(response) {
             if (outstandingWebsocketResponses === 0) {
                 vm.isSaving = false;
                 vm.unsavedChanges = false;
-                vm.submission = quizSubmission;
-                applySubmission();
-                if (vm.submission.submissionDate) {
-                    vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                    if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
-                        vm.justSaved = true;
-                        timeoutJustSaved();
+
+                // load current submission with REST call
+                QuizSubmissionForExercise.get({
+                    courseId: 1,
+                    exerciseId: $stateParams.id
+                }).$promise.then(function (quizSubmission) {
+                    vm.submission = quizSubmission;
+
+                    // update submission time
+                    if (vm.submission.submissionDate) {
+                        vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                    }
+
+                    // show submission answers in UI
+                    applySubmission();
+                });
+            } else {
+                outstandingWebsocketResponses--;
+                if (outstandingWebsocketResponses === 0) {
+                    vm.isSaving = false;
+                    vm.unsavedChanges = false;
+                    if (response.saved) {
+                        console.log(response.saved);
+                        vm.submission.adjustedSubmissionDate = moment(response.saved).subtract(timeDifference, "seconds").toDate();
+                        if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
+                            vm.justSaved = true;
+                            timeoutJustSaved();
+                        }
                     }
                 }
             }
