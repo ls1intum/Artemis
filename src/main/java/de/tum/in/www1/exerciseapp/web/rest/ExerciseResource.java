@@ -48,18 +48,16 @@ public class ExerciseResource {
 
     private final ExerciseRepository exerciseRepository;
     private final ExerciseService exerciseService;
-    private final UserService userService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
     public ExerciseResource(ExerciseRepository exerciseRepository, ExerciseService exerciseService,
-                            UserService userService, CourseService courseService, AuthorizationCheckService authCheckService,
+                            CourseService courseService, AuthorizationCheckService authCheckService,
                             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
         this.exerciseRepository = exerciseRepository;
         this.exerciseService = exerciseService;
-        this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;

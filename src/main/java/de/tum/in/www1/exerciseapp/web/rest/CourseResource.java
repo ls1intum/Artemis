@@ -8,10 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
-import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
-import de.tum.in.www1.exerciseapp.service.CourseService;
-import de.tum.in.www1.exerciseapp.service.ExerciseService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -26,7 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -141,12 +137,14 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public JsonNode getAllCoursesForDashboard(Principal principal) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
 
         // create json array to hold all the data
         ArrayNode coursesJson = objectMapper.createArrayNode();
-
         List<Course> courses = courseService.findAllWithExercises();
+        log.warn(courses.size() + " courses received after " + (System.currentTimeMillis() - start) + "ms");
+
         for (Course course : courses) {
             if (!authCheckService.isTeachingAssistantInCourse(course) &&
                 !authCheckService.isInstructorInCourse(course) &&
@@ -169,10 +167,13 @@ public class CourseResource {
             ObjectNode courseJson = objectMapper.valueToTree(course);
             // get all exercises for this user in this course
             Set<Exercise> exercises = course.getExercises();
+            log.warn("    " + exercises.size() + " exercises received after " + (System.currentTimeMillis() - start) + "ms");
+
             ArrayNode exercisesJson = objectMapper.createArrayNode();
             for (Exercise exercise : exercises) {
                 // add exercise to json array
                 ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, principal);
+                log.warn("        participation and result received after " + (System.currentTimeMillis() - start) + "ms");
                 exercisesJson.add(exerciseJson);
             }
             // add exercises to course
