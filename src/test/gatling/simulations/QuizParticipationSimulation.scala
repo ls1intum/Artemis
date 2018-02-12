@@ -61,29 +61,60 @@ class QuizParticipationSimulation extends Simulation {
         // iterate through all questions to select answers
         questions.foreach((questionP) => {
             val question = questionP.get.asInstanceOf[Map[String, Any]]
+            val questionType = question("type").get.asInstanceOf[String]
 
             // create a submitted answer for this question
             var submittedAnswer = Map(
                 "question" -> question,
-                "type" -> question("type")
+                "type" -> questionType
             )
 
-            // save selected options in a List
-            var selectedOptions = List[Map[String, Any]]()
+            if (questionType.equals("multiple-choice")) {
+                // save selected options in a List
+                var selectedOptions = List[Map[String, Any]]()
 
-            // iterate through all answer options of this question
-            val answerOptions = question("answerOptions").get.asInstanceOf[List[Any]]
-            answerOptions.foreach((answerOptionP) => {
-                val answerOption = answerOptionP.get.asInstanceOf[Map[String, Any]]
+                // iterate through all answer options of this question
+                val answerOptions = question("answerOptions").get.asInstanceOf[List[Any]]
+                answerOptions.foreach((answerOptionP) => {
+                    val answerOption = answerOptionP.get.asInstanceOf[Map[String, Any]]
 
-                // select each answer option with a 50/50 chance
-                if (math.random < 0.5) {
-                    selectedOptions = answerOption +: selectedOptions
+                    // select each answer option with a 50/50 chance
+                    if (math.random < 0.5) {
+                        selectedOptions = answerOption +: selectedOptions
+                    }
+                })
+
+                // add selected options to submitted answer
+                submittedAnswer = submittedAnswer + ("selectedOptions" -> selectedOptions)
+            } else if (questionType.equals("drag-and-drop")) {
+                // save mappings in a List
+                var mappings = List[Map[String, Any]]()
+
+                // extract drag items and drop locations
+                var dragItems = question("dragItems").get.asInstanceOf[List[Any]]
+                var dropLocations = question("dropLocations").get.asInstanceOf[List[Any]]
+
+                while (dragItems.nonEmpty && dropLocations.nonEmpty) {
+                    // create a random mapping
+                    val dragItemIndex = (math.random * dragItems.size).floor.toInt
+                    val dropLocationIndex = (math.random * dropLocations.size).floor.toInt
+
+                    val mapping = Map(
+                        "dragItem" -> dragItems.get(dragItemIndex).get.asInstanceOf[Map[String, Any]],
+                        "dropLocation" -> dropLocations.get(dropLocationIndex).get.asInstanceOf[Map[String, Any]]
+                    )
+
+                    // remove selected elements from lists
+                    dragItems = dragItems.take(dragItemIndex) ++ dragItems.drop(dragItemIndex + 1)
+                    dropLocations = dropLocations.take(dropLocationIndex) ++ dropLocations.drop(dropLocationIndex + 1)
+
+                    // add mapping to mappings
+                    mappings = mapping +: mappings
                 }
-            })
 
-            // add selected options to submitted answer
-            submittedAnswer = submittedAnswer + ("selectedOptions" -> selectedOptions)
+                // add mappings to submitted answer
+                submittedAnswer = submittedAnswer + ("mappings" -> mappings)
+            }
 
             // add submitted answer to the List
             submittedAnswers = submittedAnswer +: submittedAnswers
@@ -123,11 +154,16 @@ class QuizParticipationSimulation extends Simulation {
         .pause(10 seconds, 30 seconds)
 
     val startQuiz: ChainBuilder = exec(
-        http("Get quiz")
+        http("Get Quiz")
             .get("/api/quiz-exercises/" + exerciseId + "/for-student")
             .headers(headers_http_authenticated)
             .check(status.is(200))
             .check(jsonPath("$.questions").saveAs("questions"))).exitHereIfFailed
+        // TODO: replace Picture url, or comment out the entire "Load Picture" part
+        .exec(http("Load Picture")
+            .get("/api/files/drag-and-drop/backgrounds/98/DragAndDropBackground_2018-02-12T14-37-06-089_4d55faf0.png")
+            .headers(headers_http_authenticated)
+            .check(status.is(200)))
         .exec(http("Start Quiz")
             .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
             .headers(headers_http_authenticated)
@@ -143,9 +179,6 @@ class QuizParticipationSimulation extends Simulation {
         .exec(ws("Connect STOMP")
             .sendText("CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000")
             .check(wsAwait.within(10 seconds).until(1)))
-        // TODO: get participation id and subscribe to participation
-        //        .exec(ws("Subscribe Participation")
-        //            .sendText("[\"SUBSCRIBE\nid:sub-1\ndestination:/topic/participation/13020/newResults\n\n\u0000\"]"))
         .exec(ws("Subscribe Submission")
         .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000"))
         .pause(5 seconds)
