@@ -95,7 +95,7 @@ public class QuizSubmissionResource {
             // check if user is allowed to take part in this exercise
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
                 Participation participation = participationService.init(quizExercise, principal.getName());
-                Result result = resultService.findFirstByParticipationIdAndRatedOrderByCompletionDateDescEager(participation.getId(), true);
+                Result result = resultService.findLatestRatedResultWithSubmissionByParticipationId(participation.getId());
                 if (quizExercise.isSubmissionAllowed() && result == null) {
                     // no result exists yet => create a new one
                     QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
@@ -335,7 +335,7 @@ public class QuizSubmissionResource {
             // Do nothing
             return quizSubmission;
         }
-        Result result = resultService.findFirstByParticipationIdAndRatedOrderByCompletionDateDescEager(participation.getId(), true);
+        Result result = resultService.findLatestRatedResultWithSubmissionByParticipationId(participation.getId());
         if (result == null) {
             // Do nothing
             return quizSubmission;
@@ -357,7 +357,7 @@ public class QuizSubmissionResource {
                 quizSubmission = quizSubmissionRepository.save(newSubmission);
             }
         }
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatisticsForTimer(participation.getExercise().getId());
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(participation.getExercise().getId());
         if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
             // update participation state => no further rated submissions allowed
             participation.setInitializationState(ParticipationState.FINISHED);

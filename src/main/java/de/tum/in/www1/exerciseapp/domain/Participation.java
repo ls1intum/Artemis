@@ -53,8 +53,11 @@ public class Participation implements Serializable {
     @ManyToOne
     private User student;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @Fetch(FetchMode.JOIN)
+    // NOTE: Keep default of FetchType.EAGER because most of the times we want
+    // to get a participation, we also need the exercise. Dealing with Proxy
+    // objects would cause more issues (Subclasses don't work properly for Proxy objects)
+    // and the gain from fetching lazy here is minimal
+    @ManyToOne
     @JsonIgnoreProperties({"quizPointStatistic", "questions", "maxTotalScore"})
     private Exercise exercise;
 

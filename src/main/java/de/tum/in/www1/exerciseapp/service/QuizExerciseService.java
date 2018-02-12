@@ -123,23 +123,10 @@ public class QuizExerciseService {
     @Transactional(readOnly = true)
     public QuizExercise findOneWithQuestionsAndStatistics(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
-        return quizExerciseRepository.findOneByIdWithEagerQuestionsAndStatistics(id);
-    }
-
-    /**
-     * Get one quiz exercise by id and eagerly load questions and statistics
-     * NOTE: This method is to be used by Threads outside Spring (e.g. the Timer when a Quiz ends)
-     *
-     * @param id the id of the entity
-     * @return the entity
-     */
-    @Transactional(readOnly = true)
-    public QuizExercise findOneWithQuestionsAndStatisticsForTimer(Long id) {
-        log.debug("Request to get Quiz Exercise : {}", id);
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
         if (quizExercise != null) {
             quizExercise.getQuestions().size();
-            quizExercise.getQuizPointStatistic().getId();
+            quizExercise.getQuizPointStatistic().getPointCounters().size();
         }
         return quizExercise;
     }

@@ -25,10 +25,11 @@ import java.util.Set;
     discriminatorType = DiscriminatorType.STRING
 )
 @DiscriminatorValue(value = "E")
+// NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 
-// Annonation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
+// Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming-exercise"),
     @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling-exercise"),

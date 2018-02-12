@@ -45,18 +45,16 @@ public class ResultService {
         ltiService.onNewBuildResult(participation);
     }
 
+    /**
+     * Get the latest rated result for the given participationId
+     * Also eagerly load the submission
+     *
+     * @param participationId Participation for which to get the latest rated result
+     * @return the requested result or null if none exist
+     */
     @Transactional(readOnly = true)
-    public Result findFirstByParticipationIdOrderByCompletionDateDescEager(Long participationId) {
-        Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).orElse(null);
-        if (result != null) {
-            result.getSubmission().getId();
-        }
-        return result;
-    }
-
-    @Transactional(readOnly = true)
-    public Result findFirstByParticipationIdAndRatedOrderByCompletionDateDescEager(Long participationId, boolean rated) {
-        Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated).orElse(null);
+    public Result findLatestRatedResultWithSubmissionByParticipationId(Long participationId) {
+        Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true).orElse(null);
         if (result != null) {
             result.getSubmission().getId();
         }

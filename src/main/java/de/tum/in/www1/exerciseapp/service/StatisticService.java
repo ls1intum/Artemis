@@ -164,11 +164,14 @@ public class StatisticService {
         try {
             statisticSemaphore.acquire();
 
-            // get quiz and submission within semaphore to prevent lost updates
-            quiz = quizExerciseService.findOneWithQuestionsAndStatisticsForTimer(quiz.getId());
-            QuizSubmission quizSubmission = quizSubmissionRepository.findOne(oldResult.getSubmission().getId());
+            // get quiz within semaphore to prevent lost updates
+            // (if the same statistic is updated by several threads at the same time,
+            // new values might be calculated based on outdated data)
+            quiz = quizExerciseService.findOneWithQuestionsAndStatistics(quiz.getId());
 
             if (oldResult != null) {
+                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(oldResult.getSubmission().getId());
+
                 for (Question question : quiz.getQuestions()) {
                     if (question.getQuestionStatistic() != null) {
                         // remove the previous Result from the QuestionStatistics
@@ -207,12 +210,12 @@ public class StatisticService {
         // update QuizPointStatistic with the result
         if (result != null) {
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
-        }
-        for (Question question : quizExercise.getQuestions()) {
-            // update QuestionStatistics with the result
-            if (result != null && question.getQuestionStatistic() != null) {
-                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
-                question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), result.isRated());
+            QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+            for (Question question : quizExercise.getQuestions()) {
+                // update QuestionStatistics with the result
+                if (question.getQuestionStatistic() != null) {
+                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), result.isRated());
+                }
             }
         }
     }
