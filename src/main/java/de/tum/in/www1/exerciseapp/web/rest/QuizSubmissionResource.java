@@ -395,7 +395,7 @@ public class QuizSubmissionResource {
         // set submission date for response
         resultSubmission.setSubmissionDate(result.getCompletionDate());
         // notify user about changed submission
-        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + resultSubmission.getId(), resultSubmission);
+        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + resultSubmission.getId(), "{\"saved\": \"" + resultSubmission.getSubmissionDate().toString().substring(0, 23) + "\"}");
         return resultSubmission;
     }
 
