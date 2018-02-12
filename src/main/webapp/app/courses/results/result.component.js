@@ -49,10 +49,17 @@
          * @param forceLoad {boolean} force loading the result if the status is not QUEUED or BUILDING
          */
         function refresh(forceLoad) {
-            // don't load status for quizExercises
             if (vm.isQuiz) {
+                // don't load status for quiz exercises
                 refreshResult(forceLoad);
                 return;
+            } else if (!forceLoad && vm.participation.results && vm.participation.results.length > 0) {
+                var result = vm.participation.results[0];
+                if (result.successful) {
+                    // don't load status on init for exercises with successful results
+                    vm.results = vm.participation.results;
+                    return;
+                }
             }
 
             $http.get('api/participations/' + vm.participation.id + '/status', {
