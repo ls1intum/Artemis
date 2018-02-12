@@ -163,12 +163,15 @@ public class StatisticService {
         // critical part locked with Semaphore statisticSemaphore
         try {
             statisticSemaphore.acquire();
+
+            // get quiz and submission within semaphore to prevent lost updates
             quiz = quizExerciseService.findOneWithQuestionsAndStatisticsForTimer(quiz.getId());
+            QuizSubmission quizSubmission = quizSubmissionRepository.findOne(oldResult.getSubmission().getId());
+
             if (oldResult != null) {
                 for (Question question : quiz.getQuestions()) {
                     if (question.getQuestionStatistic() != null) {
                         // remove the previous Result from the QuestionStatistics
-                        QuizSubmission quizSubmission = quizSubmissionRepository.findOne(oldResult.getSubmission().getId());
                         question.getQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(question), oldResult.isRated());
                     }
                 }
