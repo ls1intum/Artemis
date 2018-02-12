@@ -151,10 +151,12 @@ public class CourseResource {
         ArrayNode coursesJson = objectMapper.createArrayNode();
 
         // get all courses with exercises for this user
+        // TODO: in the future, we should limit this to active courses to improve performance
         List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
         log.warn(courses.size() + " courses including exercises received after " + (System.currentTimeMillis() - start) + "ms");
 
         // get all participations of this user
+        // TODO: in the future, we should limit this to active courses to improve performance
         List<Participation> participations = participationRepository.findByStudentUsernameWithEagerResults(principal.getName());
 
         for (Course course : courses) {

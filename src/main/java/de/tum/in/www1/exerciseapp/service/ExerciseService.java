@@ -97,16 +97,18 @@ public class ExerciseService {
 
     @Transactional(readOnly = true)
     public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal, User user) {
-        List<Exercise> exercises;
-        if (!user.getGroups().contains(course.getTeachingAssistantGroupName()) &&
-            !user.getGroups().contains(course.getInstructorGroupName()) &&
-            !authCheckService.isAdmin()) {
-            // user is student for this course
+        List<Exercise> exercises = null;
+        if (authCheckService.isAdmin() ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isTeachingAssistantInCourse(course, user)) {
+            // user can see this exercise
+            exercises = exerciseRepository.findByCourseId(course.getId());
+        }
+        else if (authCheckService.isStudentInCourse(course, user)) {
+            // user is student for this course and might not have the right to see it so we have to filter
             exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());
             // filter out exercises that are not released (or explicitly made visible to students) yet
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
-        } else {
-            exercises = exerciseRepository.findByCourseId(course.getId());
         }
 
         // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
@@ -128,10 +130,10 @@ public class ExerciseService {
      */
     @Transactional(readOnly = true)
     public Exercise findOne(Long id) {
-        log.debug("Request to get Exercise : {}", id);
         Exercise exercise = exerciseRepository.findOne(id);
         if (exercise instanceof QuizExercise) {
             QuizExercise quizExercise = (QuizExercise) exercise;
+            //eagerly load questions and statistic
             quizExercise.getQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
         }

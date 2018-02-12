@@ -41,9 +41,4 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findOneWithAuthoritiesByLogin(String login);
 
     Page<User> findAllByLoginNot(Pageable pageable, String login);
-
-    //TODO: is this really faster than populating the user and its group in Hibernate/Java?
-    @Query("select COUNT(u) = 1 from User u where u.login = :username and :teachingAssistantGroup member of u.groups")
-    boolean isTeachingAssistantInCourse(@Param("username") String username, @Param("teachingAssistantGroup") String teachingAssistantGroup);
-    //TODO: implement SQL query for authorization checks
 }

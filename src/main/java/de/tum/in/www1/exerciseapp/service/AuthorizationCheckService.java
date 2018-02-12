@@ -80,13 +80,12 @@ public class AuthorizationCheckService {
      * @return true, if user is allowed to see this exercise, otherwise false
      */
     public boolean isAllowedToSeeExercise(Exercise exercise, User user) {
+        if (isAdmin()) { return true; }
         if (user == null || user.getGroups() == null) {
             user = userService.getUserWithGroupsAndAuthorities();
         }
-        log.debug("Request to check access rights to exercise with id: {}", exercise.getId());
         Course course = exercise.getCourse();
-        return  isAdmin() ||
-                isInstructorInCourse(course, user) ||
+        return  isInstructorInCourse(course, user) ||
                 isTeachingAssistantInCourse(course, user) ||
                 (isStudentInCourse(course, user) && exercise.isVisibleToStudents());
     }
@@ -97,7 +96,6 @@ public class AuthorizationCheckService {
      * @return true, if user is admin, otherwise false
      */
     public boolean isAdmin() {
-        log.debug("Request to check if user is admin");
         return SecurityUtils.isCurrentUserInRole(AuthoritiesConstants.ADMIN);
     }
 }

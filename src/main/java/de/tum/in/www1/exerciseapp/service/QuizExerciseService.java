@@ -115,7 +115,7 @@ public class QuizExerciseService {
     }
 
     /**
-     * Get one quiz exercise by id.
+     * Get one quiz exercise by id and eagerly load questions and statistics
      *
      * @param id the id of the entity
      * @return the entity
@@ -127,7 +127,7 @@ public class QuizExerciseService {
     }
 
     /**
-     * Get one quiz exercise by id.
+     * Get one quiz exercise by id and eagerly load questions and statistics
      * NOTE: This method is to be used by Threads outside Spring (e.g. the Timer when a Quiz ends)
      *
      * @param id the id of the entity
