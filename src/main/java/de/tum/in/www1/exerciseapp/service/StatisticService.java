@@ -97,7 +97,6 @@ public class StatisticService {
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
-    @Transactional
     public void updateStatisticsAndResults(QuizExercise quizExercise){
 
         //reset all statistics
@@ -160,11 +159,11 @@ public class StatisticService {
      * @param newResult the new Result, which will be added to the statistics
      * @param oldResult the old Result, which will be removedfrom the statistics. oldResult = null, if there is no old Result
      */
-    @Transactional
     public boolean updateStatistics(Result newResult, Result oldResult, QuizExercise quiz) {
         // critical part locked with Semaphore statisticSemaphore
         try {
             statisticSemaphore.acquire();
+            quiz = quizExerciseService.findOneWithQuestionsAndStatisticsForTimer(quiz.getId());
             if (oldResult != null) {
                 for (Question question : quiz.getQuestions()) {
                     if (question.getQuestionStatistic() != null) {
