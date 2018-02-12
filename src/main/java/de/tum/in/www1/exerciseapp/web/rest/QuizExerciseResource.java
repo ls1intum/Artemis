@@ -454,9 +454,6 @@ public class QuizExerciseResource {
 
         // update Statistics and Results
         if (updateOfResultsAndStatisticsNecessary) {
-            // TODO: @Moritz: check if this works
-            quizExercise.recalculatePointCounters();
-
             statisticService.updateStatisticsAndResults(quizExercise);
         }
         return ResponseEntity.ok()
