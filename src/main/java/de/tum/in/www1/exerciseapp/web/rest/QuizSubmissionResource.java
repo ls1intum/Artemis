@@ -113,11 +113,10 @@ public class QuizSubmissionResource {
                     final Result savedResult = resultRepository.save(result);
 
                     // create timer to score this submission when exercise times out.
-                    final String username = principal.getName();
                     threadPoolTaskScheduler.schedule(() -> {
                         long start = System.currentTimeMillis();
-//                        Participation participation1 = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, username);
-                        submitSubmission(participation, null, savedResult);
+                        Participation currentParticipation = participationService.findOne(participation.getId());
+                        submitSubmission(currentParticipation, null, savedResult);
                         // notify user about new result
                         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                         log.warn("Timer call took a total of " + (System.currentTimeMillis() - start) + "ms");
