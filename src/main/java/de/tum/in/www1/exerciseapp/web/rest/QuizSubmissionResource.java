@@ -94,7 +94,7 @@ public class QuizSubmissionResource {
             User user = userService.getUserWithGroupsAndAuthorities();
             // check if user is allowed to take part in this exercise
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
-                Participation participation = participationService.init(quizExercise, principal.getName());
+                final Participation participation = participationService.init(quizExercise, principal.getName());
                 Result result = resultService.findLatestRatedResultWithSubmissionByParticipationId(participation.getId());
                 if (quizExercise.isSubmissionAllowed() && result == null) {
                     // no result exists yet => create a new one
@@ -102,7 +102,7 @@ public class QuizSubmissionResource {
                     newSubmission = quizSubmissionRepository.save(newSubmission);
                     result = new Result().participation(participation).submission(newSubmission);
                     result.setRated(true);
-                    result = resultRepository.save(result);
+                    final Result savedResult = resultRepository.save(result);
 
                     // create timer to score this submission when exercise times out.
                     final String username = principal.getName();
@@ -111,8 +111,10 @@ public class QuizSubmissionResource {
                         @Override
                         public void run() {
                             long start = System.currentTimeMillis();
-                            Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, username);
-                            submitSubmission(participation, null);
+                            log.warn("Timer starts for user " + username);
+//                            Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, username);
+//                            log.warn("Find participation took a total of " + (System.currentTimeMillis() - start) + "ms");
+                            submitSubmission(participation, null, savedResult);
                             // notify user about new result
                             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                             log.warn("Timer call took a total of " + (System.currentTimeMillis() - start) + "ms");
@@ -307,7 +309,7 @@ public class QuizSubmissionResource {
                 // only update if quizExercise hasn't ended and user hasn't made final submission yet
                 if (quizExercise.isSubmissionAllowed() && participation.getInitializationState() == ParticipationState.INITIALIZED) {
                     // save changes to submission
-                    quizSubmission = submitSubmission(participation, quizSubmission);
+                    quizSubmission = submitSubmission(participation, quizSubmission, result);
                     // send response
                     return ResponseEntity.ok()
                         .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizSubmission.getId().toString()))
@@ -332,13 +334,15 @@ public class QuizSubmissionResource {
      * @param quizSubmission (optional) the new submission to overwrite the existing one with
      * @return The updated QuizSubmission (submitted is true; submissionDate and type are updated)
      */
-    private QuizSubmission submitSubmission(Participation participation, QuizSubmission quizSubmission) {
+    private QuizSubmission submitSubmission(Participation participation, QuizSubmission quizSubmission, Result result) {
         long start = System.currentTimeMillis();
         if (participation == null) {
             // Do nothing
             return quizSubmission;
         }
-        Result result = resultService.findLatestRatedResultWithSubmissionByParticipationId(participation.getId());
+        if (result == null) {
+            result = resultService.findLatestRatedResultWithSubmissionByParticipationId(participation.getId());
+        }
         log.warn("    fetched result after " + (System.currentTimeMillis() - start) + "ms");
         if (result == null) {
             // Do nothing
@@ -359,6 +363,7 @@ public class QuizSubmissionResource {
                 // if user never sent answers through websocket, use empty submission
                 QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
                 quizSubmission = quizSubmissionRepository.save(newSubmission);
+                log.warn("    saved quizSubmission after " + (System.currentTimeMillis() - start) + "ms");
             }
         }
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(participation.getExercise().getId());
