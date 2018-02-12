@@ -49,7 +49,6 @@ public class ResultService {
     public Result findFirstByParticipationIdOrderByCompletionDateDescEager(Long participationId) {
         Result result = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participationId).orElse(null);
         if (result != null) {
-            result.getParticipation().getId();
             result.getSubmission().getId();
         }
         return result;
@@ -59,7 +58,6 @@ public class ResultService {
     public Result findFirstByParticipationIdAndRatedOrderByCompletionDateDescEager(Long participationId, boolean rated) {
         Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, rated).orElse(null);
         if (result != null) {
-            result.getParticipation().getId();
             result.getSubmission().getId();
         }
         return result;

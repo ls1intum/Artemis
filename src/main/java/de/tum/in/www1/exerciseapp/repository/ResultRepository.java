@@ -50,8 +50,4 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
-
-    @Query("select distinct result from Result result left join fetch result.participation where result.submission.id = :#{#submissionId}")
-    Optional<Result> findDistinctBySubmissionIdWithParticipation(@Param("submissionId") Long submissionId);
-
 }

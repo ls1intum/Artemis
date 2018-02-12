@@ -56,7 +56,7 @@ public class Result implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Feedback> feedbacks = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private Participation participation;
 
     /**

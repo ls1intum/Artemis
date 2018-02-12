@@ -294,7 +294,7 @@ public class QuizSubmissionResource {
         }
 
         // update corresponding result
-        Optional<Result> resultOptional = resultRepository.findDistinctBySubmissionIdWithParticipation(quizSubmission.getId());
+        Optional<Result> resultOptional = resultRepository.findDistinctBySubmissionId(quizSubmission.getId());
         if (resultOptional.isPresent()) {
             Result result = resultOptional.get();
             Participation participation = result.getParticipation();
