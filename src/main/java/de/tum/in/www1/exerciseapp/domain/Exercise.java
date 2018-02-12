@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -11,6 +12,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -172,6 +174,31 @@ public abstract class Exercise implements Serializable {
             return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * find a relevant participation for this exercise
+     * (relevancy depends on ParticipationState)
+     *
+     * @param participations the list of available participations
+     * @return the found participation, or null, if none exist
+     */
+    public Participation findRelevantParticipation(List<Participation> participations) {
+        Participation result = null;
+        for (Participation participation : participations) {
+            if (participation.getExercise().equals(this)) {
+                if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                    // ParticipationState INITIALIZED is preferred
+                    // => if we find one, we can return immediately
+                    return participation;
+                } else if (participation.getInitializationState() == ParticipationState.INACTIVE) {
+                    // ParticipationState INACTIVE is also ok
+                    // => if we can't find INITIALIZED, we return that one
+                    result = participation;
+                }
+            }
+        }
+        return result;
     }
 
     @Override

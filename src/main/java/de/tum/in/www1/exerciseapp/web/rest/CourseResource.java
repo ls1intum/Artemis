@@ -238,29 +238,20 @@ public class CourseResource {
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
 
+    /**
+     * Find the participation in participations that belongs to the given exercise
+     * and return a JSON ObjectNode that includes the exercise data, plus the found
+     * participation with its most recent relevant result
+     *
+     * @param exercise the exercise to create a JSON ObjectNode for
+     * @param participations the set of participations, wherein to search for the relevant participation
+     * @return the JSON for the given exercise
+     */
     private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, List<Participation> participations) {
         // get user's participation for the exercise
-        Participation participation = null;
-        if (exercise instanceof QuizExercise) {
-            for (Participation participation1 : participations) {
-                if (participation1.getExercise().equals(exercise)) {
-                    participation = participation1;
-                    break;
-                }
-            }
-        } else {
-            for (Participation participation1 : participations) {
-                if (participation1.getExercise().equals(exercise)) {
-                    if (participation1.getInitializationState() == ParticipationState.INITIALIZED) {
-                        participation = participation1;
-                        break;
-                    } else if (participation1.getInitializationState() == ParticipationState.INACTIVE) {
-                        participation = participation1;
-                    }
-                }
-            }
-        }
+        Participation participation = exercise.findRelevantParticipation(participations);
 
+        // TODO: Improve code quality by refactoring the huge if-statement below
         // add results to participation
         ObjectNode participationJson = objectMapper.createObjectNode();
         if (participation != null) {

@@ -362,6 +362,18 @@ public class QuizExercise extends Exercise implements Serializable {
         return null;
     }
 
+    @Override
+    public Participation findRelevantParticipation(List<Participation> participations) {
+        for (Participation participation : participations) {
+            if (participation.getExercise().equals(this)) {
+                // in quiz exercises we don't care about the ParticipationState
+                // => return the first participation we find
+                return participation;
+            }
+        }
+        return null;
+    }
+
     /**
      * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, question.points, adding Questions and Answers)
      *
