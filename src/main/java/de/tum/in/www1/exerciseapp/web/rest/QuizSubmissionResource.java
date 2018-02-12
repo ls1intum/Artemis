@@ -116,7 +116,9 @@ public class QuizSubmissionResource {
                     threadPoolTaskScheduler.schedule(() -> {
                         long start = System.currentTimeMillis();
                         Participation currentParticipation = participationService.findOne(participation.getId());
-                        submitSubmission(currentParticipation, null, savedResult);
+                        if (currentParticipation.getInitializationState() == ParticipationState.INITIALIZED) {
+                            submitSubmission(currentParticipation, null, savedResult);
+                        }
                         // notify user about new result
                         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
                         log.warn("Timer call took a total of " + (System.currentTimeMillis() - start) + "ms");
