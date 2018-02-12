@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,13 @@ public class QuizSubmissionResource {
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);
 
     private static final String ENTITY_NAME = "quizSubmission";
+
+    private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+    static {
+        threadPoolTaskScheduler.setPoolSize(5);
+        threadPoolTaskScheduler.setThreadNamePrefix("QuizEndScheduler");
+        threadPoolTaskScheduler.initialize();
+    }
 
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizExerciseService quizExerciseService;
@@ -106,20 +114,14 @@ public class QuizSubmissionResource {
 
                     // create timer to score this submission when exercise times out.
                     final String username = principal.getName();
-                    Timer timer = new Timer();
-                    timer.schedule(new TimerTask() {
-                        @Override
-                        public void run() {
-                            long start = System.currentTimeMillis();
-                            log.warn("Timer starts for user " + username);
-//                            Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, username);
-//                            log.warn("Find participation took a total of " + (System.currentTimeMillis() - start) + "ms");
-                            submitSubmission(participation, null, savedResult);
-                            // notify user about new result
-                            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
-                            log.warn("Timer call took a total of " + (System.currentTimeMillis() - start) + "ms");
-                        }
-                    }, (quizExercise.getRemainingTime() + Constants.QUIZ_AUTOMATIC_SUBMISSION_DELAY_IN_SECONDS) * 1000);
+                    threadPoolTaskScheduler.schedule(() -> {
+                        long start = System.currentTimeMillis();
+//                        Participation participation1 = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, username);
+                        submitSubmission(participation, null, savedResult);
+                        // notify user about new result
+                        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
+                        log.warn("Timer call took a total of " + (System.currentTimeMillis() - start) + "ms");
+                    }, new Date(System.currentTimeMillis() + (quizExercise.getRemainingTime() + Constants.QUIZ_AUTOMATIC_SUBMISSION_DELAY_IN_SECONDS) * 1000));
                 }
                 if (result != null) {
                     QuizSubmission submission = quizSubmissionRepository.findOne(result.getSubmission().getId());
