@@ -110,10 +110,12 @@ public class QuizSubmissionResource {
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {
+                            long start = System.currentTimeMillis();
                             Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, username);
                             submitSubmission(participation, null);
                             // notify user about new result
                             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
+                            log.warn("Timer call took a total of " + (System.currentTimeMillis() - start) + "ms");
                         }
                     }, (quizExercise.getRemainingTime() + Constants.QUIZ_AUTOMATIC_SUBMISSION_DELAY_IN_SECONDS) * 1000);
                 }
@@ -331,11 +333,13 @@ public class QuizSubmissionResource {
      * @return The updated QuizSubmission (submitted is true; submissionDate and type are updated)
      */
     private QuizSubmission submitSubmission(Participation participation, QuizSubmission quizSubmission) {
+        long start = System.currentTimeMillis();
         if (participation == null) {
             // Do nothing
             return quizSubmission;
         }
         Result result = resultService.findLatestRatedResultWithSubmissionByParticipationId(participation.getId());
+        log.warn("    fetched result after " + (System.currentTimeMillis() - start) + "ms");
         if (result == null) {
             // Do nothing
             return quizSubmission;
@@ -358,6 +362,7 @@ public class QuizSubmissionResource {
             }
         }
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(participation.getExercise().getId());
+        log.warn("    fetched quizExercise after " + (System.currentTimeMillis() - start) + "ms");
         if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
             // update participation state => no further rated submissions allowed
             participation.setInitializationState(ParticipationState.FINISHED);
@@ -377,12 +382,17 @@ public class QuizSubmissionResource {
             // save result
             result = resultRepository.save(result);
 
+            log.warn("    updated result after " + (System.currentTimeMillis() - start) + "ms");
+
             // get previous Result
             Result previousResult = getPreviousResult(result);
 
-           if (!statisticService.updateStatistics(result, previousResult, quizExercise)) {
+            log.warn("    fetched previous result after " + (System.currentTimeMillis() - start) + "ms");
+
+            if (!statisticService.updateStatistics(result, previousResult, quizExercise)) {
                log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
            }
+            log.warn("    updated statistics after " + (System.currentTimeMillis() - start) + "ms");
         }
         // prepare submission for sending
         // Note: We get submission from result because if submission was already submitted
@@ -396,6 +406,7 @@ public class QuizSubmissionResource {
         resultSubmission.setSubmissionDate(result.getCompletionDate());
         // notify user about changed submission
         messagingTemplate.convertAndSend("/topic/quizSubmissions/" + resultSubmission.getId(), "{\"saved\": \"" + resultSubmission.getSubmissionDate().toString().substring(0, 23) + "\"}");
+        log.warn("    submitSubmission took a total of " + (System.currentTimeMillis() - start) + "ms");
         return resultSubmission;
     }
 
