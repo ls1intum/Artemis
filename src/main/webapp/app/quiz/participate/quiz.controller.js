@@ -483,13 +483,13 @@
             QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
                 // only act on it if quiz has ended
                 if (quizExercise.remainingTime < 0) {
-                    // update questions with explanations and correct answer options / correct mappings
-                    applyFullQuizExercise(quizExercise);
-
                     QuizSubmissionForExercise.get({
                         courseId: 1,
                         exerciseId: $stateParams.id
                     }).$promise.then(function (quizSubmission) {
+                        // update questions with explanations and correct answer options / correct mappings
+                        applyFullQuizExercise(quizExercise);
+
                         vm.submission = quizSubmission;
 
                         // show submission answers in UI

@@ -81,6 +81,9 @@
         </div>
     </div>
 </div>
+<div class="quiz-is-over-overlay alert alert-info" ng-if="!vm.waitingForQuizStart && !vm.showingResult && !vm.submission.submitted && vm.remainingTimeSeconds < 0">
+    <span data-translate="artemisApp.quizExercise.quizIsOverText"></span>
+</div>
 <div class="quiz-submitted-overlay alert alert-success" ng-if="!vm.waitingForQuizStart && vm.submission.submitted && !vm.showingResult">
     <span data-translate="artemisApp.quizExercise.successfullySubmittedText"></span>
 </div>

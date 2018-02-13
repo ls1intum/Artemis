@@ -8928,7 +8928,8 @@ body.editor .navbar-brand span {
 
 .quiz-submitted-overlay,
 .quiz-waiting-for-start-overlay,
-.quiz-is-active-overlay {
+.quiz-is-active-overlay,
+.quiz-is-over-overlay {
   position: fixed;
   top: 50%;
   left: 50%;
