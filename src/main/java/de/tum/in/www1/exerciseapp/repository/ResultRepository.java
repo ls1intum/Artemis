@@ -50,5 +50,4 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
-
 }

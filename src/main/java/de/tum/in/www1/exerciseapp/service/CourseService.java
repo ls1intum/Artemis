@@ -1,17 +1,16 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import de.tum.in.www1.exerciseapp.domain.Course;
-import de.tum.in.www1.exerciseapp.domain.Exercise;
-import de.tum.in.www1.exerciseapp.domain.Participation;
-import de.tum.in.www1.exerciseapp.domain.Result;
+import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.CourseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 /**
@@ -25,10 +24,17 @@ public class CourseService {
 
     private final CourseRepository courseRepository;
     private final UserService userService;
+    private final ExerciseService exerciseService;
+    private final AuthorizationCheckService authCheckService;
 
-    public CourseService(CourseRepository courseRepository, UserService userService) {
+    public CourseService(CourseRepository courseRepository,
+                         UserService userService,
+                         ExerciseService exerciseService,
+                         AuthorizationCheckService authCheckService) {
         this.courseRepository = courseRepository;
         this.userService = userService;
+        this.exerciseService = exerciseService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -51,6 +57,56 @@ public class CourseService {
     public List<Course> findAll() {
         log.debug("Request to get all Courses");
         return courseRepository.findAll();
+    }
+
+    /**
+     * Get all the courses with exercises.
+     *
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public List<Course> findAllWithExercises() {
+        log.debug("Request to get all Courses with Exercises");
+        return courseRepository.findAllWithEagerExercises();
+    }
+
+    /**
+     * Get all courses with exercises (filtered for given user)
+     * @param principal the user principal
+     * @param user the user entity
+     * @return the list of all courses including exercises for the user
+     */
+    @Transactional(readOnly = true)
+    public List<Course> findAllWithExercisesForUser(Principal principal, User user) {
+        if (authCheckService.isAdmin()) {
+            // admin => fetch all courses with all exercises immediately
+            List<Course> courses = findAllWithExercises();
+            // filter unnecessary information anyway
+            for (Course course : courses) {
+                for (Exercise exercise : course.getExercises()) {
+                    if (exercise instanceof QuizExercise) {
+                        QuizExercise quizExercise = (QuizExercise) exercise;
+                        quizExercise.filterSensitiveInformation();
+                    }
+                }
+            }
+            return courses;
+        } else {
+            // not admin => fetch visible courses first
+            List<Course> courses = findAll();
+            Stream<Course> userCourses = courses.stream().filter(
+                course -> user.getGroups().contains(course.getStudentGroupName()) ||
+                    user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
+                    user.getGroups().contains(course.getInstructorGroupName())
+            );
+            courses = userCourses.collect(Collectors.toList());
+            for (Course course : courses) {
+                // fetch visible exercises for each course after filtering
+                List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal, user);
+                course.setExercises(new HashSet<>(exercises));
+            }
+            return courses;
+        }
     }
 
     /**
@@ -134,7 +190,7 @@ public class CourseService {
      * Find the best Result in a Participation
      *
      * @param participation the participation you want the best result from
-     * @param hasDueDate if the participation has a duedate take last result before the due date if not take the overall last result
+     * @param hasDueDate    if the participation has a duedate take last result before the due date if not take the overall last result
      * @return the best result a student had within the time of the exercise
      */
     @Transactional(readOnly = true)
@@ -143,7 +199,7 @@ public class CourseService {
 
         Result chosenResult;
         //edge case of no result submitted to a participation
-        if(results.size() <= 0) {
+        if (results.size() <= 0) {
             chosenResult = new Result();
             chosenResult.setScore((long) 0);
             chosenResult.setParticipation(participation);
@@ -153,14 +209,13 @@ public class CourseService {
         //sorting in descending order to have the last result at the beginning
         results.sort(Comparator.comparing(Result::getCompletionDate).reversed());
 
-        if(hasDueDate) {
+        if (hasDueDate) {
             //find the first result that is before the due date otherwise handles the case where all results were submitted after the due date,
             chosenResult = results.stream()
                 .filter(x -> x.getCompletionDate().isBefore(participation.getExercise().getDueDate()))
                 .findFirst()
                 .orElse(new Result());
-        }
-        else {
+        } else {
             chosenResult = results.remove(0); //no due date use last result
         }
 

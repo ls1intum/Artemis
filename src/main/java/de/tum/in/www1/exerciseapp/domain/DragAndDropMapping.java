@@ -37,11 +37,11 @@ public class DragAndDropMapping implements Serializable {
     @ManyToOne
     private DropLocation dropLocation;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private DragAndDropSubmittedAnswer submittedAnswer;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private DragAndDropQuestion question;
 

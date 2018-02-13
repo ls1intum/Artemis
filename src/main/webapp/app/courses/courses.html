@@ -6,7 +6,7 @@
                 <h4 class="panel-title">{{course.title}} <a class="text-primary" has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_TA" ui-sref="instructor-course-dashboard({courseId: course.id})"><i class="fa fa-info-circle fa-fw"></i></a></h4>
             </div>
             <div class="panel-body">
-                <exercise-list course="course" filter-by-exercise-id="vm.filterByExerciseId"></exercise-list>
+                <exercise-list course="course" filter-by-exercise-id="vm.filterByExerciseId" repository-password="vm.repositoryPassword"></exercise-list>
             </div>
         </div>
     </div>

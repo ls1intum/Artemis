@@ -24,13 +24,13 @@
                     innerTag: attr.innerTag || "span",
                     debug: attr.debug || false,
                     minFontPixels: parseInt(attr.minFontPixels) || 6,
-                    maxFontPixels: parseInt(attr.maxFontPixels) || 30,
+                    maxFontPixels: parseInt(attr.maxFontPixels) || 26,
                     widthOnly: attr.widthOnly || false
                 };
 
                 function runTextFill() {
-                    options.explicitHeight = attr.explicitHeight || element[0].offsetHeight;
-                    options.explicitWidth = attr.explicitWidth || element[0].offsetWidth;
+                    options.explicitHeight = attr.explicitHeight || element[0].offsetHeight - 10;
+                    options.explicitWidth = attr.explicitWidth || element[0].offsetWidth - 10;
                     element.textfill(options);
                 }
 
