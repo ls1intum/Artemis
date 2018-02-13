@@ -407,7 +407,7 @@
                         // automatically load results 5 seconds after quiz has ended (in case websocket didn't work)
                         runningTimeouts.push(
                             $timeout(function () {
-                                if (!vm.showingResult) {
+                                if (vm.disconnected && !vm.showingResult) {
                                     loadResults();
                                 }
                             }, (quizExercise.remainingTime + 5) * 1000)
