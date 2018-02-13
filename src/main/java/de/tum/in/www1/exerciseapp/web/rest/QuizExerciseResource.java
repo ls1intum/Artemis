@@ -225,11 +225,11 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
         if (quizExercise == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
         // filter out all questions, if quiz hasn't started yet
