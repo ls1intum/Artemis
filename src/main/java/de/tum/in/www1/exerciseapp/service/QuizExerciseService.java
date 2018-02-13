@@ -175,7 +175,7 @@ public class QuizExerciseService {
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+            QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
