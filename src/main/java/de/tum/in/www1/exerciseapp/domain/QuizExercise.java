@@ -413,6 +413,23 @@ public class QuizExercise extends Exercise implements Serializable {
         return null;
     }
 
+    @Override
+    public Result findLatestRelevantResult(Participation participation) {
+        if (shouldFilterForStudents()) {
+            // results are never relevant before quiz has ended => return null
+            return null;
+        } else {
+            // only rated results are considered relevant
+            Result latestRatedResult = null;
+            for (Result result : participation.getResults()) {
+                if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                    latestRatedResult = result;
+                }
+            }
+            return latestRatedResult;
+        }
+    }
+
     /**
      * undo all changes which are not allowed after the dueDate ( dueDate, releaseDate, question.points, adding Questions and Answers)
      *

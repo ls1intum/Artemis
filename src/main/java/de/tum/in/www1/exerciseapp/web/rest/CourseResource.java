@@ -251,41 +251,15 @@ public class CourseResource {
         // get user's participation for the exercise
         Participation participation = exercise.findRelevantParticipation(participations);
 
-        // TODO: Improve code quality by refactoring the huge if-statement below
         // add results to participation
         ObjectNode participationJson = objectMapper.createObjectNode();
         if (participation != null) {
             participationJson = objectMapper.valueToTree(participation);
 
-            // add results if exercise is a quiz, or not overdue
+            // add relevant result if exercise is a quiz, or not overdue
             if (exercise instanceof QuizExercise || exercise.getDueDate() == null || exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                List<Result> results;
-                // if exercise is quiz => only give out results if quiz is over
-                if (participation.getExercise() instanceof QuizExercise) {
-                    QuizExercise quizExercise = (QuizExercise) participation.getExercise();
-                    if (quizExercise.shouldFilterForStudents()) {
-                        // return empty list
-                        results = new ArrayList<>();
-                    } else {
-                        // for quiz exercises only return latest rated result
-                        Result result = null;
-                        for (Result result1 : participation.getResults()) {
-                            if (result1.isRated() && (result == null || result.getCompletionDate().isBefore(result1.getCompletionDate()))) {
-                                result = result1;
-                            }
-                        }
-                        results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
-                    }
-                } else {
-                    // for other types of exercises => return latest result
-                    Result result = null;
-                    for (Result result1 : participation.getResults()) {
-                        if (result == null || result.getCompletionDate().isBefore(result1.getCompletionDate())) {
-                            result = result1;
-                        }
-                    }
-                    results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
-                }
+                Result result = exercise.findLatestRelevantResult(participation);
+                List<Result> results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
 
                 // add results to json
                 participationJson.set("results", objectMapper.valueToTree(results));
