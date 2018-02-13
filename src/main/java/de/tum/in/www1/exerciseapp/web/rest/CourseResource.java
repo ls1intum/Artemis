@@ -143,7 +143,6 @@ public class CourseResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public JsonNode getAllCoursesForDashboard(Principal principal) {
-        long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
         User user = userService.getUserWithGroupsAndAuthorities();
 
@@ -153,7 +152,6 @@ public class CourseResource {
         // get all courses with exercises for this user
         // TODO: in the future, we should limit this to active courses to improve performance
         List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
-        log.warn(courses.size() + " courses including exercises received after " + (System.currentTimeMillis() - start) + "ms");
 
         // get all participations of this user
         // TODO: in the future, we should limit this to active courses to improve performance
@@ -167,14 +165,12 @@ public class CourseResource {
                 ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, participations);
                 exercisesJson.add(exerciseJson);
             }
-            log.warn("    participation and results connected to exercises after " + (System.currentTimeMillis() - start) + "ms");
 
             // add exercises to course
             courseJson.set("exercises", exercisesJson);
             coursesJson.add(courseJson);
         }
 
-        log.warn("Complete dashboard call finished after " + (System.currentTimeMillis() - start) + "ms");
         // return json array of courses
         return coursesJson;
     }

@@ -37,6 +37,7 @@ public class QuizSubmissionResource {
     private static final String ENTITY_NAME = "quizSubmission";
 
     private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+
     static {
         threadPoolTaskScheduler.setPoolSize(5);
         threadPoolTaskScheduler.setThreadNamePrefix("QuizEndScheduler");
@@ -114,14 +115,12 @@ public class QuizSubmissionResource {
 
                     // create timer to score this submission when exercise times out.
                     threadPoolTaskScheduler.schedule(() -> {
-                        long start = System.currentTimeMillis();
                         Participation currentParticipation = participationService.findOne(participation.getId());
                         if (currentParticipation.getInitializationState() == ParticipationState.INITIALIZED) {
                             submitSubmission(currentParticipation, null, savedResult);
                         }
                         // notify user about new result
                         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
-                        log.warn("Timer call took a total of " + (System.currentTimeMillis() - start) + "ms");
                     }, new Date(System.currentTimeMillis() + (quizExercise.getRemainingTime() + Constants.QUIZ_AUTOMATIC_SUBMISSION_DELAY_IN_SECONDS) * 1000));
                 }
                 if (result != null) {
@@ -161,9 +160,9 @@ public class QuizSubmissionResource {
     /**
      * POST  /courses/:courseId/exercises/:exerciseId/submissions/practice : Submit a new quizSubmission for practice mode.
      *
-     * @param courseId   only included for API consistency, not actually used
-     * @param exerciseId the id of the exercise for which to init a participation
-     * @param principal  the current user principal
+     * @param courseId       only included for API consistency, not actually used
+     * @param exerciseId     the id of the exercise for which to init a participation
+     * @param principal      the current user principal
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 201 (Created) and with body the new quizSubmission, or with status 400 (Bad Request) if the quizSubmission has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
@@ -230,8 +229,8 @@ public class QuizSubmissionResource {
      * POST  /courses/:courseId/exercises/:exerciseId/submissions/preview : Submit a new quizSubmission for preview mode.
      * Nothing will be saved in database.
      *
-     * @param courseId   only included for API consistency, not actually used
-     * @param exerciseId the id of the exercise for which to init a participation
+     * @param courseId       only included for API consistency, not actually used
+     * @param exerciseId     the id of the exercise for which to init a participation
      * @param quizSubmission the quizSubmission to submit
      * @return the ResponseEntity with status 200 and body the result or the appropriate error code.
      */
@@ -335,87 +334,80 @@ public class QuizSubmissionResource {
      *
      * @param participation  the participation object that the submission belongs to
      * @param quizSubmission (optional) the new submission to overwrite the existing one with
+     * @param result the result object that the submission belongs to
      * @return The updated QuizSubmission (submitted is true; submissionDate and type are updated)
      */
     private QuizSubmission submitSubmission(Participation participation, QuizSubmission quizSubmission, Result result) {
-        long start = System.currentTimeMillis();
-        if (participation == null) {
-            // Do nothing
-            return quizSubmission;
-        }
-        if (result == null) {
-            result = resultService.findLatestRatedResultWithSubmissionByParticipationId(participation.getId());
-        }
-        log.warn("    fetched result after " + (System.currentTimeMillis() - start) + "ms");
-        if (result == null) {
-            // Do nothing
-            return quizSubmission;
-        }
+        // determine submission type
         SubmissionType submissionType = SubmissionType.MANUAL;
         if (quizSubmission == null) {
             submissionType = SubmissionType.TIMEOUT;
-            // first check cachedSubmissions (if user sent answers via websocket)
+
+            // get the most up to date submission
             String username = participation.getStudent().getLogin();
             Long submissionId = result.getSubmission().getId();
-            QuizSubmission cachedSubmission = QuizSubmissionService.getCachedSubmission(username, submissionId);
-            if (cachedSubmission != null) {
-                quizSubmission = cachedSubmission;
-                // remove this submission from the cached submissions
-                QuizSubmissionService.removeCachedSubmission(username, submissionId);
-            } else {
-                // if user never sent answers through websocket, use empty submission
-                QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
-                quizSubmission = quizSubmissionRepository.save(newSubmission);
-                log.warn("    saved quizSubmission after " + (System.currentTimeMillis() - start) + "ms");
-            }
+            quizSubmission = getQuizSubmission(username, submissionId);
         }
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(participation.getExercise().getId());
-        log.warn("    fetched quizExercise after " + (System.currentTimeMillis() - start) + "ms");
-        if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
-            // update participation state => no further rated submissions allowed
-            participation.setInitializationState(ParticipationState.FINISHED);
-            participation = participationService.save(participation);
-            participation.setExercise(quizExercise);
-            // update submission
-            quizSubmission.setSubmitted(true);
-            quizSubmission.setType(submissionType);
-            quizSubmission.calculateAndUpdateScores(quizExercise);
-            quizSubmission = quizSubmissionRepository.save(quizSubmission);
-            // update result
-            result.setParticipation(participation);
-            result.setSubmission(quizSubmission);
-            result.setCompletionDate(ZonedDateTime.now());
-            // calculate score and update result accordingly
-            result.evaluateSubmission();
-            // save result
-            result = resultRepository.save(result);
 
-            log.warn("    updated result after " + (System.currentTimeMillis() - start) + "ms");
+        // update participation state => no further rated submissions allowed
+        participation.setInitializationState(ParticipationState.FINISHED);
+        participation = participationService.save(participation);
+        participation.setExercise(quizExercise);
+        // update submission
+        quizSubmission.setSubmitted(true);
+        quizSubmission.setType(submissionType);
+        quizSubmission.calculateAndUpdateScores(quizExercise);
+        quizSubmission = quizSubmissionRepository.save(quizSubmission);
+        // update result
+        result.setParticipation(participation);
+        result.setSubmission(quizSubmission);
+        result.setCompletionDate(ZonedDateTime.now());
+        // calculate score and update result accordingly
+        result.evaluateSubmission();
+        // save result
+        result = resultRepository.save(result);
 
-            // get previous Result
-            Result previousResult = getPreviousResult(result);
+        // get previous Result
+        Result previousResult = getPreviousResult(result);
 
-            log.warn("    fetched previous result after " + (System.currentTimeMillis() - start) + "ms");
-
-            if (!statisticService.updateStatistics(result, previousResult, quizExercise)) {
-               log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
-           }
-            log.warn("    updated statistics after " + (System.currentTimeMillis() - start) + "ms");
+        // update statistics
+        if (!statisticService.updateStatistics(result, previousResult, quizExercise)) {
+            log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
         }
-        // prepare submission for sending
-        // Note: We get submission from result because if submission was already submitted
-        // and this was called from the timer, quizSubmission might be null at this point
-        QuizSubmission resultSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+
         // remove scores from submission if quiz hasn't ended yet
-        if (resultSubmission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
-            resultSubmission.removeScores();
+        if (quizSubmission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
+            quizSubmission.removeScores();
         }
         // set submission date for response
-        resultSubmission.setSubmissionDate(result.getCompletionDate());
+        quizSubmission.setSubmissionDate(result.getCompletionDate());
         // notify user about changed submission
-        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + resultSubmission.getId(), "{\"saved\": \"" + resultSubmission.getSubmissionDate().toString().substring(0, 23) + "\"}");
-        log.warn("    submitSubmission took a total of " + (System.currentTimeMillis() - start) + "ms");
-        return resultSubmission;
+        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(),
+            "{\"saved\": \"" + quizSubmission.getSubmissionDate().toString().substring(0, 23) + "\"}");
+        return quizSubmission;
+    }
+
+    /**
+     * Get the most up-to-date submission for the given user and submissionId
+     *
+     * @param username the username of the submission's owner
+     * @param submissionId the submissionId
+     * @return the submission entity
+     */
+    private QuizSubmission getQuizSubmission(String username, Long submissionId) {
+        QuizSubmission quizSubmission;
+        QuizSubmission cachedSubmission = QuizSubmissionService.getCachedSubmission(username, submissionId);
+        if (cachedSubmission != null) {
+            quizSubmission = cachedSubmission;
+            // remove this submission from the cached submissions
+            QuizSubmissionService.removeCachedSubmission(username, submissionId);
+        } else {
+            // if user never sent answers through websocket, use empty submission
+            QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
+            quizSubmission = quizSubmissionRepository.save(newSubmission);
+        }
+        return quizSubmission;
     }
 
     /**
@@ -427,7 +419,7 @@ public class QuizSubmissionResource {
     private Result getPreviousResult(Result newResult) {
         Result oldResult = null;
 
-        for(Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
+        for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
             //find the latest Result, which is presented in the Statistics
             if (result.isRated() == newResult.isRated()
                 && result.getCompletionDate().isBefore(newResult.getCompletionDate())

@@ -163,18 +163,12 @@ public class StatisticService {
         // critical part locked with Semaphore statisticSemaphore
         try {
             statisticSemaphore.acquire();
-            long start = System.currentTimeMillis();
-
             // get quiz within semaphore to prevent lost updates
             // (if the same statistic is updated by several threads at the same time,
             // new values might be calculated based on outdated data)
             quiz = quizExerciseService.findOneWithQuestionsAndStatistics(quiz.getId());
-            System.out.println("    fetched quiz after " + (System.currentTimeMillis() - start) + "ms");
-
             if (oldResult != null) {
                 QuizSubmission quizSubmission = quizSubmissionRepository.findOne(oldResult.getSubmission().getId());
-
-                System.out.println("    fetched old submission after " + (System.currentTimeMillis() - start) + "ms");
 
                 for (Question question : quiz.getQuestions()) {
                     if (question.getQuestionStatistic() != null) {
@@ -187,16 +181,12 @@ public class StatisticService {
             }
             addResultToAllStatistics(quiz, newResult);
 
-            System.out.println("    added new results after " + (System.currentTimeMillis() - start) + "ms");
-
             quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
             for (Question question : quiz.getQuestions()) {
                 if (question.getQuestionStatistic() != null) {
                     questionStatisticRepository.save(question.getQuestionStatistic());
                 }
             }
-            System.out.println("    updateStatistics took a total of " + (System.currentTimeMillis() - start) + "ms");
-
         } catch (InterruptedException e) {
             return false;
         } finally {
