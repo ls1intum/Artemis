@@ -24,7 +24,7 @@ public class QuizPointStatistic extends Statistic implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<PointCounter> pointCounters = new HashSet<>();
 
-    @OneToOne(mappedBy = "quizPointStatistic")
+    @OneToOne(mappedBy = "quizPointStatistic", fetch = FetchType.LAZY)
     @JsonIgnore
     private QuizExercise quiz;
 

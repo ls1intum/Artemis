@@ -28,12 +28,15 @@ public class QuizExerciseService {
     private final AuthorizationCheckService authCheckService;
     private final ResultRepository resultRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
+    private final UserService userService;
 
-    public QuizExerciseService(QuizExerciseRepository quizExerciseRepository,
+    public QuizExerciseService(UserService userService,
+                               QuizExerciseRepository quizExerciseRepository,
                                DragAndDropMappingRepository dragAndDropMappingRepository,
                                AuthorizationCheckService authCheckService,
                                ResultRepository resultRepository,
                                QuizSubmissionRepository quizSubmissionRepository) {
+        this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.authCheckService = authCheckService;
@@ -87,11 +90,12 @@ public class QuizExerciseService {
     public List<QuizExercise> findAll() {
         log.debug("REST request to get all QuizExercises");
         List<QuizExercise> quizExercises = quizExerciseRepository.findAll();
+        User user = userService.getUserWithGroupsAndAuthorities();
         Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
             exercise -> {
                 Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course) ||
-                    authCheckService.isInstructorInCourse(course) ||
+                return authCheckService.isTeachingAssistantInCourse(course, user) ||
+                    authCheckService.isInstructorInCourse(course, user) ||
                     authCheckService.isAdmin();
             }
         );
@@ -111,6 +115,23 @@ public class QuizExerciseService {
     }
 
     /**
+     * Get one quiz exercise by id and eagerly load questions and statistics
+     *
+     * @param id the id of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public QuizExercise findOneWithQuestionsAndStatistics(Long id) {
+        log.debug("Request to get Quiz Exercise : {}", id);
+        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        if (quizExercise != null) {
+            quizExercise.getQuestions().size();
+            quizExercise.getQuizPointStatistic().getPointCounters().size();
+        }
+        return quizExercise;
+    }
+
+    /**
      * Get all quiz exercises for the given course.
      *
      * @param courseId the id of the course
@@ -120,11 +141,12 @@ public class QuizExerciseService {
     public List<QuizExercise> findByCourseId(Long courseId) {
         log.debug("Request to get all Quiz Exercises in Course : {}", courseId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
         Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
             exercise -> {
                 Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course) ||
-                    authCheckService.isInstructorInCourse(course) ||
+                return authCheckService.isTeachingAssistantInCourse(course, user) ||
+                    authCheckService.isInstructorInCourse(course, user) ||
                     authCheckService.isAdmin();
             }
         );
@@ -147,6 +169,7 @@ public class QuizExerciseService {
      *
      * @param quizExercise the changed quizExercise.
      */
+    @Transactional
     public void adjustResultsOnQuizDeletions(QuizExercise quizExercise) {
         //change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {

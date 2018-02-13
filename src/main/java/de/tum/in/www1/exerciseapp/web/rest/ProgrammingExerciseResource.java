@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.Course;
 import de.tum.in.www1.exerciseapp.domain.ProgrammingExercise;
+import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -86,8 +87,9 @@ public class ProgrammingExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
         }
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -123,8 +125,9 @@ public class ProgrammingExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this programming exercise does not exist")).body(null);
         }
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-            !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -152,8 +155,9 @@ public class ProgrammingExerciseResource {
         Stream<ProgrammingExercise> authorizedExercises = exercises.stream().filter(
             exercise -> {
                 Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course) ||
-                    authCheckService.isInstructorInCourse(course) ||
+                User user = userService.getUserWithGroupsAndAuthorities();
+                return authCheckService.isTeachingAssistantInCourse(course, user) ||
+                    authCheckService.isInstructorInCourse(course, user) ||
                     authCheckService.isAdmin();
             }
         );
@@ -172,8 +176,9 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<List<ProgrammingExercise>> getProgrammingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -195,8 +200,9 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get ProgrammingExercise : {}", id);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
         Course course = programmingExercise.getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -216,8 +222,9 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
         Course course = programmingExercise.getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

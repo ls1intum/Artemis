@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 
@@ -51,8 +53,12 @@ public class Participation implements Serializable {
     @ManyToOne
     private User student;
 
+    // NOTE: Keep default of FetchType.EAGER because most of the times we want
+    // to get a participation, we also need the exercise. Dealing with Proxy
+    // objects would cause more issues (Subclasses don't work properly for Proxy objects)
+    // and the gain from fetching lazy here is minimal
     @ManyToOne
-    @JsonIgnoreProperties({"quizPointStatistic", "questions"})
+    @JsonIgnoreProperties({"quizPointStatistic", "questions", "maxTotalScore"})
     private Exercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

@@ -51,7 +51,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.exerciseapp'
-version = '1.4.1'
+version = '1.4.2'
 description = 'AuTomated assEssment Management System for Interactive Learning'
 
 bootRepackage {

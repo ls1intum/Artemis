@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -11,6 +12,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -25,10 +27,11 @@ import java.util.Set;
     discriminatorType = DiscriminatorType.STRING
 )
 @DiscriminatorValue(value = "E")
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+// NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 
-// Annonation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
+// Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming-exercise"),
     @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling-exercise"),
@@ -171,6 +174,49 @@ public abstract class Exercise implements Serializable {
             return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
+     * find a relevant participation for this exercise
+     * (relevancy depends on ParticipationState)
+     *
+     * @param participations the list of available participations
+     * @return the found participation, or null, if none exist
+     */
+    public Participation findRelevantParticipation(List<Participation> participations) {
+        Participation result = null;
+        for (Participation participation : participations) {
+            if (participation.getExercise().equals(this)) {
+                if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
+                    // ParticipationState INITIALIZED is preferred
+                    // => if we find one, we can return immediately
+                    return participation;
+                } else if (participation.getInitializationState() == ParticipationState.INACTIVE) {
+                    // ParticipationState INACTIVE is also ok
+                    // => if we can't find INITIALIZED, we return that one
+                    result = participation;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Get the latest relevant result from the given participation
+     * (relevancy depends on Exercise type => this should be overridden by subclasses if necessary)
+     *
+     * @param participation the participation whose results we are considering
+     * @return the latest relevant result in the given participation, or null, if none exist
+     */
+    public Result findLatestRelevantResult(Participation participation) {
+        // for most types of exercises => return latest result (all results are relevant)
+        Result latestResult = null;
+        for (Result result : participation.getResults()) {
+            if (latestResult == null || latestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+                latestResult = result;
+            }
+        }
+        return latestResult;
     }
 
     @Override
