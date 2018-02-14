@@ -18,6 +18,7 @@ import org.zalando.problem.spring.web.advice.validation.ConstraintViolationProbl
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import java.nio.channels.ClosedChannelException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -79,6 +80,12 @@ public class ExceptionTranslator implements ProblemHandling {
             .with("fieldErrors", fieldErrors)
             .build();
         return create(ex, problem, request);
+    }
+
+    @ExceptionHandler(ClosedChannelException.class)
+    public ResponseEntity<Problem> handleBadRequestAlertException(ClosedChannelException ex, NativeWebRequest request) {
+        //we return null, because the channel was already closed, see e.g. https://mtyurt.net/post/spring-how-to-handle-ioexception-broken-pipe.html
+        return null;
     }
 
     @ExceptionHandler(BadRequestAlertException.class)
