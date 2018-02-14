@@ -15,6 +15,8 @@ class QuizParticipationSimulation extends Simulation {
 
     // TODO replace exerciseID with id of dynamically created exercise
     val exerciseId = 118
+    val numUsersSubmit = 400
+    val numUsersNoSubmit = 0
 
     val feeder: Iterator[Map[String, String]] = Iterator.tabulate(500)(i => Map(
         "username" -> ("<USERNAME>"),   // TODO: generate real username for each value of i (removed for security)
@@ -33,6 +35,7 @@ class QuizParticipationSimulation extends Simulation {
         .acceptLanguageHeader("fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3")
         .connectionHeader("keep-alive")
         .userAgentHeader("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:33.0) Gecko/20100101 Firefox/33.0")
+        .disableClientSharing
 
     val headers_http = Map(
         "Accept" -> """application/json"""
@@ -144,17 +147,17 @@ class QuizParticipationSimulation extends Simulation {
             .formParam("submit", "Login")
             .check(status.is(200))
             .check(headerRegex("Set-Cookie", "XSRF-TOKEN=([^;]*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
-        .pause(5 seconds)
+        .pause(10 seconds)
 
-    val loadDashboard: ChainBuilder = exec(
-        http("Get dashboard")
+    val loadDashboard: ChainBuilder = rendezVous(numUsersSubmit)
+        .exec(http("Get dashboard")
             .get("/api/courses/for-dashboard")
             .headers(headers_http_authenticated)
             .check(status.is(200))).exitHereIfFailed
-        .pause(10 seconds, 30 seconds)
+        .pause(5 seconds)
 
-    val startQuiz: ChainBuilder = exec(
-        http("Get Quiz")
+    val startQuiz: ChainBuilder = rendezVous(numUsersSubmit)
+        .exec(http("Get Quiz")
             .get("/api/quiz-exercises/" + exerciseId + "/for-student")
             .headers(headers_http_authenticated)
             .check(status.is(200))
@@ -210,21 +213,20 @@ class QuizParticipationSimulation extends Simulation {
             .headers(headers_http_authenticated)
             .check(status.is(200)))
 
-    val submitQuiz: ChainBuilder =
-        pause(5 seconds, 10 seconds)
-            .exec(http("Submit Quiz")
-                .put("/api/quiz-submissions")
-                .headers(headers_http_authenticated)
-                .header("Content-Type", "application/json")
-                .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
-                .check(status.is(200)))
+    val submitQuiz: ChainBuilder = rendezVous(numUsersSubmit)
+        .exec(http("Submit Quiz")
+            .put("/api/quiz-submissions")
+            .headers(headers_http_authenticated)
+            .header("Content-Type", "application/json")
+            .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
+            .check(status.is(200)))
 
     val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, loadDashboard, startQuiz, workOnQuiz, waitForResult)
     val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, loadDashboard, startQuiz, workOnQuiz, submitQuiz, waitForResult)
 
     setUp(
-        usersNoSubmit.inject(rampUsers(100) over (20 seconds)),
-        usersSubmit.inject(rampUsers(200) over (20 seconds))
+        usersNoSubmit.inject(rampUsers(numUsersNoSubmit) over (20 seconds)),
+        usersSubmit.inject(rampUsers(numUsersSubmit) over (20 seconds))
     ).protocols(httpConf)
 
 }
