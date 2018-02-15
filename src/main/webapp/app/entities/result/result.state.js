@@ -111,6 +111,7 @@
                                 buildArtifact: null,
                                 score: null,
                                 rated: null,
+                                hasFeedback: null,
                                 id: null
                             };
                         }

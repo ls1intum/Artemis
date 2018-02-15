@@ -154,7 +154,7 @@ public class Result implements Serializable {
         this.hasFeedback = hasFeedback;
     }
 
-    public Boolean getFeedback() {
+    public Boolean getHasFeedback() {
         return hasFeedback;
     }
 
@@ -287,8 +287,9 @@ public class Result implements Serializable {
             ", completionDate='" + getCompletionDate() + "'" +
             ", successful='" + isSuccessful() + "'" +
             ", buildArtifact='" + isBuildArtifact() + "'" +
-            ", score='" + getScore() + "'" +
+            ", score=" + getScore() +
             ", rated='" + isRated() + "'" +
+            ", hasFeedback='" + getHasFeedback() + "'" +
             "}";
     }
 }
