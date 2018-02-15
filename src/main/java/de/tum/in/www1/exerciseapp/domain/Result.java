@@ -46,7 +46,7 @@ public class Result implements Serializable {
     @Column(name = "rated")
     private Boolean rated;
 
-    @OneToOne(cascade=CascadeType.REMOVE, orphanRemoval=true)
+    @OneToOne(cascade=CascadeType.REMOVE, fetch = FetchType.LAZY, orphanRemoval=true)
     @JoinColumn(unique = true)
     private Submission submission;
 
@@ -157,15 +157,11 @@ public class Result implements Serializable {
         this.score = score;
 
         //if score is 100 set successful true, if not set it false
-        if (score == 100) {
-            successful = true;
-        } else {
-            successful = false;
-        }
+        successful = score == 100;
     }
 
     public Boolean isRated() {
-        return rated;
+        return rated != null ? rated : false;
     }
 
     public Result rated(Boolean rated) {

@@ -4,6 +4,7 @@ import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.domain.DragAndDropQuestion;
 import de.tum.in.www1.exerciseapp.domain.DragItem;
+import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.DragAndDropQuestionRepository;
 import de.tum.in.www1.exerciseapp.repository.DragItemRepository;
 import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
@@ -136,7 +137,7 @@ public class FileUploadResource {
         if (question == null) {
             return ResponseEntity.notFound().build();
         }
-        if (authCheckService.isAllowedToSeeExercise(question.getExercise())) {
+        if (authCheckService.isAllowedToSeeExercise(question.getExercise(), null)) {
             File file = new File(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename);
             return responseEntityForFile(file);
         } else {
@@ -161,7 +162,7 @@ public class FileUploadResource {
         if (dragItem == null) {
             return ResponseEntity.notFound().build();
         }
-        if (authCheckService.isAllowedToSeeExercise(dragItem.getQuestion().getExercise())) {
+        if (authCheckService.isAllowedToSeeExercise(dragItem.getQuestion().getExercise(), null)) {
             File file = new File(Constants.DRAG_ITEM_FILEPATH + filename);
             return responseEntityForFile(file);
         } else {

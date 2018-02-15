@@ -9,15 +9,16 @@
         .component('exerciseList', {
             bindings: {
                 course: '<',
-                filterByExerciseId: '<'
+                filterByExerciseId: '<',
+                repositoryPassword: '<'
             },
             templateUrl: 'app/courses/exercises/exercise-list.html',
             controller: ExerciseListController
         });
 
-    ExerciseListController.$inject = ['$sce', '$scope', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', 'JhiWebsocketService', '$http', '$location', 'Principal', '$rootScope'];
+    ExerciseListController.$inject = ['$sanitize', '$scope', '$window', 'AlertService', 'CourseExercises', 'Participation', 'ExerciseParticipation', 'JhiWebsocketService', '$http', '$location', 'Principal', '$rootScope'];
 
-    function ExerciseListController($sce, $scope,  $window, AlertService, CourseExercises, Participation, ExerciseParticipation, JhiWebsocketService, $http, $location, Principal, $rootScope) {
+    function ExerciseListController($sanitize, $scope,  $window, AlertService, CourseExercises, Participation, ExerciseParticipation, JhiWebsocketService, $http, $location, Principal, $rootScope) {
         var vm = this;
 
         vm.clonePopover = {
@@ -40,56 +41,64 @@
         vm.numOfOverdueExercises = 0;
         vm.showOverdueExercises = false;
 
+        function initExercises(exercises) {
+            if (vm.filterByExerciseId) {
+                exercises = _.filter(exercises, {id: vm.filterByExerciseId})
+            }
+
+            vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
+                return !isNotOverdue(exercise);
+            }).length;
+
+            angular.forEach(exercises, function (exercise) {
+                if (exercise.participation) {
+                    // no need to load it
+                } else {
+                    exercise['participation'] = ExerciseParticipation.get({
+                        courseId: exercise.course.id,
+                        exerciseId: exercise.id
+                    });
+                }
+
+                //if the User is a student: subscribe the release Websocket of every quizExercise
+                if(exercise.type === 'quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
+                    var websocketChannel = '/topic/statistic/'+ exercise.id +'/release';
+
+                    JhiWebsocketService.subscribe(websocketChannel);
+
+                    JhiWebsocketService.receive(websocketChannel).then(null, null, function(payload) {
+                        exercise.quizPointStatistic.released = payload;
+                    });
+                }
+            });
+            vm.exercises = exercises;
+        }
+
         function init() {
 
             if ($location.search().welcome) {
                 showWelcomeAlert();
             }
 
-            getRepositoryPassword().then(function (password) {
-                vm.repositoryPassword = password;
-            });
-
-            CourseExercises.query({
-                courseId: vm.course.id,
-                withLtiOutcomeUrlExisting: true
-            }).$promise.then(function (exercises) {
-
-                if (vm.filterByExerciseId) {
-                    exercises = _.filter(exercises, {id: vm.filterByExerciseId})
-                }
-
-                vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
-                    return !isNotOverdue(exercise);
-                }).length;
-
-                angular.forEach(exercises, function (exercise) {
-                    exercise['participation'] = ExerciseParticipation.get({
-                        courseId: exercise.course.id,
-                        exerciseId: exercise.id
-                    });
-
-                    //if the User is a student: subscribe the release Websocket of every quizExercise
-                    if(exercise.type === 'quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
-                        var websocketChannel = '/topic/statistic/'+ exercise.id +'/release';
-
-                        JhiWebsocketService.subscribe(websocketChannel);
-
-                        JhiWebsocketService.receive(websocketChannel).then(null, null, function(payload) {
-                            exercise.quizPointStatistic.released = payload;
-                        });
-                    }
-                });
-                vm.exercises = exercises;
-            });
+            if (vm.course.exercises) {
+                // exercises already included in data, no need to load them
+                initExercises(vm.course.exercises);
+            } else {
+                CourseExercises.query({
+                    courseId: vm.course.id,
+                    withLtiOutcomeUrlExisting: true
+                }).$promise.then(initExercises);
+            }
 
             //if the User is a student: unsubscribe the release Websocket of every quizExercise
             $scope.$on('$destroy', function() {
-                vm.exercises.forEach(function (exercise) {
-                    if(exercise.typa ==='quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
-                    JhiWebsocketService.unsubscribe('/topic/statistic/'+ exercise.id +'/release');
-                    }
-                })
+                if (vm.exercises) {
+                    vm.exercises.forEach(function (exercise) {
+                        if(exercise.typa ==='quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
+                            JhiWebsocketService.unsubscribe('/topic/statistic/'+ exercise.id +'/release');
+                        }
+                    });
+                }
             });
 
         }
@@ -98,8 +107,6 @@
             // sourcetree://cloneRepo?type=stash&cloneUrl=https%3A%2F%2Fga56hur%40repobruegge.in.tum.de%2Fscm%2Fmadm%2Fexercise-application.git
             return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
         }
-
-        var trusted = {};
 
         function getClonePopoverTemplate(exercise) {
             var html = [
@@ -111,7 +118,7 @@
                 ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. ',
                 '</div>'
             ].join('');
-            return trusted[html] || (trusted[html] = $sce.trustAsHtml(html));
+            return $sanitize(html);
         }
 
         function goToBuildPlan(exercise) {
@@ -175,16 +182,6 @@
 
         vm.isNotOverdue = isNotOverdue;
 
-        function getRepositoryPassword() {
-            return $http.get('api/account/password', {
-                ignoreLoadingBar: true
-            }).then(function (response) {
-                return _.has(response, "data.password") && !_.isEmpty(response.data.password) ? response.data.password : null;
-            }).catch(function () {
-                return null;
-            });
-        }
-
         function showWelcomeAlert() {
             AlertService.add({
                 type: 'info',
@@ -201,10 +198,10 @@
                 return;
             }
 
-            exercise.$start({
+            CourseExercises.start({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
-            }).then(function (returnedExercise) {
+            }, {}).$promise.then(function (returnedExercise) {
                 exercise['participation'] = returnedExercise.participation;
                 exercise['participation'].toJSON = exercise.toJSON;
                 AlertService.add({
@@ -226,10 +223,10 @@
 
         function resume(exercise) {
             vm.loading[exercise.id] = true;
-            exercise.$resume({
+            CourseExercises.resume({
                 courseId: exercise.course.id,
                 exerciseId: exercise.id
-            }).catch(function (errorResponse) {
+            }, {}).$promise.catch(function (errorResponse) {
                 alert(errorResponse.data.status + " " + errorResponse.data.detail);
             }).finally(function () {
                 vm.loading[exercise.id] = false;
@@ -254,7 +251,8 @@
          */
         function canOpenStatistic(exercise){
             if(exercise.type === 'quiz'){
-                return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) ||  exercise.quizPointStatistic.released == true;
+                // TODO: fix quizPointStatistic (Maybe include flag into exercise itself and load statistics separately)
+                return Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) /*||  exercise.quizPointStatistic.released == true*/;
             }
             return false;
         }

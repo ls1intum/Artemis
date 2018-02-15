@@ -61,29 +61,60 @@ class QuizParticipationSimulation extends Simulation {
         // iterate through all questions to select answers
         questions.foreach((questionP) => {
             val question = questionP.get.asInstanceOf[Map[String, Any]]
+            val questionType = question("type").get.asInstanceOf[String]
 
             // create a submitted answer for this question
             var submittedAnswer = Map(
                 "question" -> question,
-                "type" -> question("type")
+                "type" -> questionType
             )
 
-            // save selected options in a List
-            var selectedOptions = List[Map[String, Any]]()
+            if (questionType.equals("multiple-choice")) {
+                // save selected options in a List
+                var selectedOptions = List[Map[String, Any]]()
 
-            // iterate through all answer options of this question
-            val answerOptions = question("answerOptions").get.asInstanceOf[List[Any]]
-            answerOptions.foreach((answerOptionP) => {
-                val answerOption = answerOptionP.get.asInstanceOf[Map[String, Any]]
+                // iterate through all answer options of this question
+                val answerOptions = question("answerOptions").get.asInstanceOf[List[Any]]
+                answerOptions.foreach((answerOptionP) => {
+                    val answerOption = answerOptionP.get.asInstanceOf[Map[String, Any]]
 
-                // select each answer option with a 50/50 chance
-                if (math.random < 0.5) {
-                    selectedOptions = answerOption +: selectedOptions
+                    // select each answer option with a 50/50 chance
+                    if (math.random < 0.5) {
+                        selectedOptions = answerOption +: selectedOptions
+                    }
+                })
+
+                // add selected options to submitted answer
+                submittedAnswer = submittedAnswer + ("selectedOptions" -> selectedOptions)
+            } else if (questionType.equals("drag-and-drop")) {
+                // save mappings in a List
+                var mappings = List[Map[String, Any]]()
+
+                // extract drag items and drop locations
+                var dragItems = question("dragItems").get.asInstanceOf[List[Any]]
+                var dropLocations = question("dropLocations").get.asInstanceOf[List[Any]]
+
+                while (dragItems.nonEmpty && dropLocations.nonEmpty) {
+                    // create a random mapping
+                    val dragItemIndex = (math.random * dragItems.size).floor.toInt
+                    val dropLocationIndex = (math.random * dropLocations.size).floor.toInt
+
+                    val mapping = Map(
+                        "dragItem" -> dragItems.get(dragItemIndex).get.asInstanceOf[Map[String, Any]],
+                        "dropLocation" -> dropLocations.get(dropLocationIndex).get.asInstanceOf[Map[String, Any]]
+                    )
+
+                    // remove selected elements from lists
+                    dragItems = dragItems.take(dragItemIndex) ++ dragItems.drop(dragItemIndex + 1)
+                    dropLocations = dropLocations.take(dropLocationIndex) ++ dropLocations.drop(dropLocationIndex + 1)
+
+                    // add mapping to mappings
+                    mappings = mapping +: mappings
                 }
-            })
 
-            // add selected options to submitted answer
-            submittedAnswer = submittedAnswer + ("selectedOptions" -> selectedOptions)
+                // add mappings to submitted answer
+                submittedAnswer = submittedAnswer + ("mappings" -> mappings)
+            }
 
             // add submitted answer to the List
             submittedAnswers = submittedAnswer +: submittedAnswers
@@ -113,25 +144,36 @@ class QuizParticipationSimulation extends Simulation {
             .formParam("submit", "Login")
             .check(status.is(200))
             .check(headerRegex("Set-Cookie", "XSRF-TOKEN=([^;]*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
-        .pause(2 seconds)
-        .exec(http("Authenticated request")
-            .get("/api/account")
+        .pause(5 seconds)
+
+    val loadDashboard: ChainBuilder = exec(
+        http("Get dashboard")
+            .get("/api/courses/for-dashboard")
             .headers(headers_http_authenticated)
-            .check(status.is(200)))
-        .pause(30 seconds, 40 seconds)
+            .check(status.is(200))).exitHereIfFailed
+        .pause(10 seconds, 30 seconds)
 
     val startQuiz: ChainBuilder = exec(
-        http("Get quiz")
+        http("Get Quiz")
             .get("/api/quiz-exercises/" + exerciseId + "/for-student")
             .headers(headers_http_authenticated)
             .check(status.is(200))
             .check(jsonPath("$.questions").saveAs("questions"))).exitHereIfFailed
+        .exec(http("Load Picture") // TODO: replace Picture url, or comment out the entire "Load Picture" part
+            .get("/api/files/drag-and-drop/backgrounds/67/DragAndDropBackground_2018-02-13T01-02-38-250_013a3522.png")
+            .headers(headers_http_authenticated)
+            .check(status.is(200)))
         .exec(http("Start Quiz")
             .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
             .headers(headers_http_authenticated)
             .check(status.is(200))
             .check(bodyString.saveAs("submission"))
             .check(jsonPath("$.id").saveAs("submissionID"))).exitHereIfFailed
+        .exec(http("Load Participation")
+            .get("/api/courses/1/exercises/" + exerciseId + "/participation")
+            .headers(headers_http_authenticated)
+            .check(status.is(200))
+            .check(jsonPath("$.id").saveAs("participationID"))).exitHereIfFailed
         .pause(5 seconds)
 
     val workOnQuiz: ChainBuilder = exec(
@@ -141,9 +183,6 @@ class QuizParticipationSimulation extends Simulation {
         .exec(ws("Connect STOMP")
             .sendText("CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000")
             .check(wsAwait.within(10 seconds).until(1)))
-        // TODO: get participation id and subscribe to participation
-        //        .exec(ws("Subscribe Participation")
-        //            .sendText("[\"SUBSCRIBE\nid:sub-1\ndestination:/topic/participation/13020/newResults\n\n\u0000\"]"))
         .exec(ws("Subscribe Submission")
             .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000"))
         .pause(5 seconds)
@@ -154,6 +193,23 @@ class QuizParticipationSimulation extends Simulation {
                 .pause(5 seconds)
         }
 
+    val waitForResult: ChainBuilder = pause(10 seconds)
+        .exec(ws("Subscribe Participation")
+            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/participation/${participationID}/newResults\n\n\u0000")
+            .check(wsAwait.within(600 seconds).until(1)))
+        .exec(http("Load Quiz At End")
+            .get("/api/quiz-exercises/" + exerciseId + "/for-student")
+            .headers(headers_http_authenticated)
+            .check(status.is(200)))
+        .exec(http("Load Submission At End")
+            .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
+            .headers(headers_http_authenticated)
+            .check(status.is(200)))
+        .exec(http("Load Results")
+            .get("/api/courses/1/exercises/1/participations/${participationID}/results?showAllResults=false&ratedOnly=true")
+            .headers(headers_http_authenticated)
+            .check(status.is(200)))
+
     val submitQuiz: ChainBuilder =
         pause(5 seconds, 10 seconds)
             .exec(http("Submit Quiz")
@@ -163,12 +219,12 @@ class QuizParticipationSimulation extends Simulation {
                 .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
                 .check(status.is(200)))
 
-    val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, startQuiz, workOnQuiz)
-    val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, startQuiz, workOnQuiz, submitQuiz)
+    val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, loadDashboard, startQuiz, workOnQuiz, waitForResult)
+    val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, loadDashboard, startQuiz, workOnQuiz, submitQuiz, waitForResult)
 
     setUp(
-        usersNoSubmit.inject(rampUsers(100) over (30 seconds)),
-        usersSubmit.inject(rampUsers(100) over (30 seconds))
+        usersNoSubmit.inject(rampUsers(100) over (20 seconds)),
+        usersSubmit.inject(rampUsers(200) over (20 seconds))
     ).protocols(httpConf)
 
 }

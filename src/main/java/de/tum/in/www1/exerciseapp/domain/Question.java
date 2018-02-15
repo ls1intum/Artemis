@@ -62,7 +62,7 @@ public abstract class Question implements Serializable {
     @Column(name = "invalid")
     private Boolean invalid = false;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(unique = true)
     private QuestionStatistic questionStatistic;
 

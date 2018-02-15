@@ -711,7 +711,7 @@
                 color: black;
                 background: white;
                 border: 1px solid black;
-                padding: 10px;
+                padding: 4px;
             }
         }
     }
@@ -799,7 +799,8 @@
 
 .quiz-submitted-overlay,
 .quiz-waiting-for-start-overlay,
-.quiz-is-active-overlay {
+.quiz-is-active-overlay,
+.quiz-is-over-overlay {
     position: fixed;
     top: 50%;
     left: 50%;

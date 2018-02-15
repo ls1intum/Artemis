@@ -75,6 +75,7 @@ public class QuizSubmissionService {
         cachedSubmissions.put(keyForUsernameAndSubmissionId(principal.getName(), quizSubmission.getId()), quizSubmission);
 
         // send response (to all subscribers)
-        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(), quizSubmission);
+        messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(),
+            "{\"saved\": \"" + ZonedDateTime.now().toString().substring(0, 23) + "\"}");
     }
 }

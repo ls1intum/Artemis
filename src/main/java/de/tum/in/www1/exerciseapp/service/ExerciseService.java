@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -39,14 +40,22 @@ public class ExerciseService {
     private final ExerciseRepository exerciseRepository;
     private final UserService userService;
     private final ParticipationService participationService;
+    private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
     private final Optional<GitService> gitService;
 
-    public ExerciseService(ExerciseRepository exerciseRepository, UserService userService, ParticipationService participationService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, Optional<GitService> gitService) {
+    public ExerciseService(ExerciseRepository exerciseRepository,
+                           UserService userService,
+                           ParticipationService participationService,
+                           AuthorizationCheckService authCheckService,
+                           Optional<ContinuousIntegrationService> continuousIntegrationService,
+                           Optional<VersionControlService> versionControlService,
+                           Optional<GitService> gitService) {
         this.exerciseRepository = exerciseRepository;
         this.userService = userService;
         this.participationService = participationService;
+        this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
         this.gitService = gitService;
@@ -86,6 +95,33 @@ public class ExerciseService {
         return new PageImpl<>(filteredExercises, pageable, filteredExercises.size());
     }
 
+    @Transactional(readOnly = true)
+    public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal, User user) {
+        List<Exercise> exercises = null;
+        if (authCheckService.isAdmin() ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isTeachingAssistantInCourse(course, user)) {
+            // user can see this exercise
+            exercises = exerciseRepository.findByCourseId(course.getId());
+        }
+        else if (authCheckService.isStudentInCourse(course, user)) {
+            // user is student for this course and might not have the right to see it so we have to filter
+            exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());
+            // filter out exercises that are not released (or explicitly made visible to students) yet
+            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toList());
+        }
+
+        // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+        for (Exercise exercise : exercises) {
+            if (exercise instanceof QuizExercise) {
+                QuizExercise quizExercise = (QuizExercise) exercise;
+                quizExercise.filterSensitiveInformation();
+            }
+        }
+
+        return exercises;
+    }
+
     /**
      * Get one exercise by id.
      *
@@ -94,8 +130,14 @@ public class ExerciseService {
      */
     @Transactional(readOnly = true)
     public Exercise findOne(Long id) {
-        log.debug("Request to get Exercise : {}", id);
-        return exerciseRepository.findOne(id);
+        Exercise exercise = exerciseRepository.findOne(id);
+        if (exercise instanceof QuizExercise) {
+            QuizExercise quizExercise = (QuizExercise) exercise;
+            //eagerly load questions and statistic
+            quizExercise.getQuestions().size();
+            quizExercise.getQuizPointStatistic().getId();
+        }
+        return exercise;
     }
 
     /**

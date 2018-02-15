@@ -45,7 +45,7 @@ public abstract class SubmittedAnswer implements Serializable {
     private Double scoreInPoints;
 
     @ManyToOne(cascade = CascadeType.REMOVE)
-    @JsonIgnoreProperties({"questionStatistic"})
+    @JsonIgnoreProperties({"questionStatistic", "exercise"})
     private Question question;
 
     @ManyToOne

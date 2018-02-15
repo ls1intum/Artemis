@@ -2,10 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
-import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
-import de.tum.in.www1.exerciseapp.service.ContinuousIntegrationService;
-import de.tum.in.www1.exerciseapp.service.GitService;
-import de.tum.in.www1.exerciseapp.service.ParticipationService;
+import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -42,9 +39,11 @@ public class RepositoryResource {
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<GitService> gitService;
+    private final UserService userService;
 
-    public RepositoryResource(ParticipationService participationService, AuthorizationCheckService authCheckService,
+    public RepositoryResource(UserService userService, ParticipationService participationService, AuthorizationCheckService authCheckService,
                               Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService) {
+        this.userService = userService;
         this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.gitService = gitService;
@@ -64,13 +63,8 @@ public class RepositoryResource {
     public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to files for Participation : {}", id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -103,13 +97,8 @@ public class RepositoryResource {
     public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -147,13 +136,8 @@ public class RepositoryResource {
     public ResponseEntity<Void> createFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to create file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -197,13 +181,8 @@ public class RepositoryResource {
     public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to update file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -240,13 +219,9 @@ public class RepositoryResource {
     public ResponseEntity<Void> deleteFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to delete file {} for Participation : {}", filename, id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
@@ -282,13 +257,8 @@ public class RepositoryResource {
     public ResponseEntity<Void> updateFile(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to commit Repository for Participation : {}", id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -316,13 +286,8 @@ public class RepositoryResource {
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to get clean status for Repository for Participation : {}", id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -351,13 +316,8 @@ public class RepositoryResource {
     public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, AbstractAuthenticationToken authentication) {
         log.debug("REST request to get build log : {}", id);
         Participation participation = participationService.findOne(id);
-        Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
+
+        if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
         if (!Optional.ofNullable(participation).isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -366,5 +326,18 @@ public class RepositoryResource {
         List<BuildLogEntry> logs = continuousIntegrationService.get().getLatestBuildLogs(participation);
 
         return new ResponseEntity<>(logs, HttpStatus.OK);
+    }
+
+    private boolean userHasPermissions(Participation participation) {
+        if (!authCheckService.isOwnerOfParticipation(participation)) {
+            User user = userService.getUserWithGroupsAndAuthorities();
+            Course course = participation.getExercise().getCourse();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return false;
+            }
+        }
+        return true;
     }
 }

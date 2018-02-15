@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.exerciseapp.config.Constants;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.LazyToOne;
+import org.hibernate.annotations.LazyToOneOption;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -62,11 +64,12 @@ public class QuizExercise extends Exercise implements Serializable {
     @Column(name = "duration")
     private Integer duration;
 
-    @OneToOne(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @LazyToOne(LazyToOneOption.NO_PROXY)
+    @OneToOne(cascade=CascadeType.ALL, orphanRemoval=true)
     @JoinColumn(unique = true)
     private QuizPointStatistic quizPointStatistic;
 
-    @OneToMany(cascade=CascadeType.ALL, fetch=FetchType.EAGER, orphanRemoval=true)
+    @OneToMany(cascade=CascadeType.ALL, orphanRemoval=true)
     @OrderColumn
     @JoinColumn(name="exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -328,12 +331,22 @@ public class QuizExercise extends Exercise implements Serializable {
     public void setQuestions(List<Question> questions) {
 
         this.questions = questions;
-        recalculatePointCounters();
+        if (questions != null) {
+            recalculatePointCounters();
+        }
     }
 
     @Override
     public Boolean isVisibleToStudents() {
         return isVisibleBeforeStart || (isPlannedToStart && releaseDate != null && releaseDate.isBefore(ZonedDateTime.now()));
+    }
+
+    /**
+     * set all sensitive information to null, so no info gets leaked to students through json
+     */
+    public void filterSensitiveInformation() {
+        setQuestions(null);
+        setQuizPointStatistic(null);
     }
 
     /**
@@ -386,6 +399,35 @@ public class QuizExercise extends Exercise implements Serializable {
             }
         }
         return null;
+    }
+
+    @Override
+    public Participation findRelevantParticipation(List<Participation> participations) {
+        for (Participation participation : participations) {
+            if (participation.getExercise().equals(this)) {
+                // in quiz exercises we don't care about the ParticipationState
+                // => return the first participation we find
+                return participation;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Result findLatestRelevantResult(Participation participation) {
+        if (shouldFilterForStudents()) {
+            // results are never relevant before quiz has ended => return null
+            return null;
+        } else {
+            // only rated results are considered relevant
+            Result latestRatedResult = null;
+            for (Result result : participation.getResults()) {
+                if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
+                    latestRatedResult = result;
+                }
+            }
+            return latestRatedResult;
+        }
     }
 
     /**
@@ -531,7 +573,6 @@ public class QuizExercise extends Exercise implements Serializable {
             ", isOpenForPractice='" + isIsOpenForPractice() + "'" +
             ", isPlannedToStart='" + isIsPlannedToStart() + "'" +
             ", duration='" + getDuration() + "'" +
-            ", questions='" + getQuestions() + "'" +
             "}";
     }
 

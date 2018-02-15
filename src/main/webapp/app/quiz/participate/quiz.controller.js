@@ -400,10 +400,14 @@
                         // apply randomized order where necessary
                         randomizeOrder(quizExercise);
 
+                        // update timeDifference
+                        vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
+                        timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
+
                         // automatically load results 5 seconds after quiz has ended (in case websocket didn't work)
                         runningTimeouts.push(
                             $timeout(function () {
-                                if (!vm.showingResult) {
+                                if (vm.disconnected && !vm.showingResult) {
                                     loadResults();
                                 }
                             }, (quizExercise.remainingTime + 5) * 1000)
@@ -415,10 +419,6 @@
                     }).$promise.then(function (quizSubmission) {
                         vm.submission = quizSubmission;
                         vm.waitingForQuizStart = false;
-
-                        // update timeDifference
-                        vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
-                        timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
 
                         // update submission time
                         if (vm.submission.submissionDate) {
@@ -483,13 +483,13 @@
             QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
                 // only act on it if quiz has ended
                 if (quizExercise.remainingTime < 0) {
-                    // update questions with explanations and correct answer options / correct mappings
-                    applyFullQuizExercise(quizExercise);
-
                     QuizSubmissionForExercise.get({
                         courseId: 1,
                         exerciseId: $stateParams.id
                     }).$promise.then(function (quizSubmission) {
+                        // update questions with explanations and correct answer options / correct mappings
+                        applyFullQuizExercise(quizExercise);
+
                         vm.submission = quizSubmission;
 
                         // show submission answers in UI
@@ -567,11 +567,11 @@
                 JhiWebsocketService.disableReconnect();
 
                 // assign user score (limit decimal places to 2)
-                vm.userScore = vm.result.submission.scoreInPoints ? Math.round(vm.result.submission.scoreInPoints * 100) / 100 : 0;
+                vm.userScore = vm.submission.scoreInPoints ? Math.round(vm.submission.scoreInPoints * 100) / 100 : 0;
 
                 // create dictionary with scores for each question
                 vm.questionScores = {};
-                vm.result.submission.submittedAnswers.forEach(function (submittedAnswer) {
+                vm.submission.submittedAnswers.forEach(function (submittedAnswer) {
                     // limit decimal places to 2
                     vm.questionScores[submittedAnswer.question.id] = Math.round(submittedAnswer.scoreInPoints * 100) / 100;
                 });
@@ -638,20 +638,40 @@
 
         /**
          * Callback function for handling response after saving submission to server
-         * @param quizSubmission The response data from the server
+         * @param response The response data from the server
          */
-        function onSaveSuccess(quizSubmission) {
-            outstandingWebsocketResponses = Math.max(0, outstandingWebsocketResponses - 1);
+        function onSaveSuccess(response) {
             if (outstandingWebsocketResponses === 0) {
                 vm.isSaving = false;
                 vm.unsavedChanges = false;
-                vm.submission = quizSubmission;
-                applySubmission();
-                if (vm.submission.submissionDate) {
-                    vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                    if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
-                        vm.justSaved = true;
-                        timeoutJustSaved();
+
+                // load current submission with REST call
+                QuizSubmissionForExercise.get({
+                    courseId: 1,
+                    exerciseId: $stateParams.id
+                }).$promise.then(function (quizSubmission) {
+                    vm.submission = quizSubmission;
+
+                    // update submission time
+                    if (vm.submission.submissionDate) {
+                        vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                    }
+
+                    // show submission answers in UI
+                    applySubmission();
+                });
+            } else {
+                outstandingWebsocketResponses--;
+                if (outstandingWebsocketResponses === 0) {
+                    vm.isSaving = false;
+                    vm.unsavedChanges = false;
+                    if (response.saved) {
+                        console.log(response.saved);
+                        vm.submission.adjustedSubmissionDate = moment(response.saved).subtract(timeDifference, "seconds").toDate();
+                        if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
+                            vm.justSaved = true;
+                            timeoutJustSaved();
+                        }
                     }
                 }
             }
@@ -742,6 +762,9 @@
          * @param response
          */
         function onSubmitPreviewSuccess(response) {
+            vm.isSubmitting = false;
+            vm.submission = response.submission;
+            applySubmission();
             showResult([response]);
         }
 

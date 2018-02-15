@@ -8,6 +8,12 @@
 
     JhiWebsocketService.$inject = ['$rootScope', '$window', '$cookies', '$http', '$q'];
 
+    var ConnectionStatus = {
+        CONNECTED: 1,
+        DISCONNECTED: 2,
+        CONNECTING: 3
+    };
+
     function JhiWebsocketService ($rootScope, $window, $cookies, $http, $q) {
         var stompClient = null;
         var subscriber = {};
@@ -16,7 +22,7 @@
         var disconnectListener = [];
         var connected = $q.defer();
         var alreadyConnectedOnce = false;
-        var isConnected = false;
+        var connectionStatus = ConnectionStatus.DISCONNECTED;
         var consecutiveFailedAttempts = 0;
         var shouldReconnect = false;
 
@@ -39,7 +45,7 @@
         //adapted from https://stackoverflow.com/questions/22361917/automatic-reconnect-with-stomp-js-in-node-js-application
         function stompFailureCallback(error) {
             // console.error("Websocket disconnect due to: " + error); // this console.error is not needed, because error is already logged by stomp-websocket
-            isConnected = false;
+            connectionStatus = ConnectionStatus.DISCONNECTED;
             consecutiveFailedAttempts++;
             disconnectListener.forEach(function (listener) {
                 listener();
@@ -67,9 +73,10 @@
         }
 
         function connect () {
-            if (isConnected) {
+            if (connectionStatus === ConnectionStatus.CONNECTED) {
                 return; // don't connect, if already connected
             }
+            connectionStatus = ConnectionStatus.CONNECTING;
             //building absolute path so that websocket doesn't fail when deploying with a context path
             var loc = $window.location;
             var url = '//' + loc.host + loc.pathname + 'websocket/tracker';
@@ -83,16 +90,18 @@
                 connectListener.forEach(function (listener) {
                     listener();
                 });
-                isConnected = true;
+                connectionStatus = ConnectionStatus.CONNECTED;
                 consecutiveFailedAttempts = 0;
                 // (re)connect to all existing channels
                 // Note: use function instead of for-loop to prevent
                 // variable "channel" from being mutated
-                Object.keys(listener).forEach(function (channel) {
-                    subscriber[channel] = stompClient.subscribe(channel, function(data) {
-                        listener[channel].notify(angular.fromJson(data.body));
+                if (alreadyConnectedOnce) {
+                    Object.keys(listener).forEach(function (channel) {
+                        subscriber[channel] = stompClient.subscribe(channel, function(data) {
+                            listener[channel].notify(angular.fromJson(data.body));
+                        });
                     });
-                });
+                }
                 sendActivity();
                 if (!alreadyConnectedOnce) {
                     stateChangeStart = $rootScope.$on('$stateChangeStart', function () {
@@ -115,7 +124,7 @@
             if (stompClient !== null) {
                 stompClient.disconnect();
                 stompClient = null;
-                isConnected = false;
+                connectionStatus = ConnectionStatus.DISCONNECTED;
             }
         }
 
@@ -178,13 +187,13 @@
             switch (event) {
                 case "connect":
                     connectListener.push(callback);
-                    if (isConnected) {
+                    if (connectionStatus === ConnectionStatus.CONNECTED) {
                         callback();
                     }
                     break;
                 case "disconnect":
                     disconnectListener.push(callback);
-                    if (!isConnected) {
+                    if (connectionStatus === ConnectionStatus.DISCONNECTED) {
                         callback();
                     }
                     break;
@@ -216,10 +225,10 @@
          * enable automatic reconnect
          */
         function enableReconnect() {
-            shouldReconnect = true;
-            if(!isConnected) {
+            if(connectionStatus === ConnectionStatus.DISCONNECTED) {
                 connect();
             }
+            shouldReconnect = true;
         }
 
         /**

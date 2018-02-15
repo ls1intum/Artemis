@@ -1,11 +1,11 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
-import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.repository.*;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -26,7 +26,7 @@ public class StatisticService {
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
-    private final QuizExerciseRepository quizExerciseRepository;
+    private final QuizExerciseService quizExerciseService;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizPointStatisticRepository quizPointStatisticRepository;
     private final QuestionStatisticRepository questionStatisticRepository;
@@ -34,14 +34,14 @@ public class StatisticService {
     public StatisticService(SimpMessageSendingOperations messagingTemplate,
                             ParticipationRepository participationRepository,
                             ResultRepository resultRepository,
-                            QuizExerciseRepository quizExerciseRepository,
+                            QuizExerciseService quizExerciseService,
                             QuizSubmissionRepository quizSubmissionRepository,
                             QuizPointStatisticRepository quizPointStatisticRepository,
                             QuestionStatisticRepository questionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
-        this.quizExerciseRepository = quizExerciseRepository;
+        this.quizExerciseService = quizExerciseService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.questionStatisticRepository = questionStatisticRepository;
@@ -116,7 +116,7 @@ public class StatisticService {
             // update all Results of a participation
             for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
 
-                QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
                 //recalculate existing score
                 quizSubmission.calculateAndUpdateScores(quizExercise);
                 //update Successful-Flag in Result
@@ -159,18 +159,21 @@ public class StatisticService {
      * @param newResult the new Result, which will be added to the statistics
      * @param oldResult the old Result, which will be removedfrom the statistics. oldResult = null, if there is no old Result
      */
-    public boolean updateStatistics(Result newResult, Result oldResult) {
+    public boolean updateStatistics(Result newResult, Result oldResult, QuizExercise quiz) {
         // critical part locked with Semaphore statisticSemaphore
         try {
             statisticSemaphore.acquire();
-
-            QuizExercise quiz = quizExerciseRepository.findOne(newResult.getParticipation().getExercise().getId());
-
+            // get quiz within semaphore to prevent lost updates
+            // (if the same statistic is updated by several threads at the same time,
+            // new values might be calculated based on outdated data)
+            quiz = quizExerciseService.findOneWithQuestionsAndStatistics(quiz.getId());
             if (oldResult != null) {
+                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(oldResult.getSubmission().getId());
+
                 for (Question question : quiz.getQuestions()) {
                     if (question.getQuestionStatistic() != null) {
                         // remove the previous Result from the QuestionStatistics
-                        question.getQuestionStatistic().removeOldResult(((QuizSubmission) oldResult.getSubmission()).getSubmittedAnswerForQuestion(question), oldResult.isRated());
+                        question.getQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(question), oldResult.isRated());
                     }
                 }
                 // add the new Result to the quizPointStatistic and remove the previous one
@@ -184,14 +187,13 @@ public class StatisticService {
                     questionStatisticRepository.save(question.getQuestionStatistic());
                 }
             }
-
         } catch (InterruptedException e) {
             return false;
         } finally {
             statisticSemaphore.release();
         }
         // notify statistics about new Result
-        this.notifyStatisticWebsocket((QuizExercise) newResult.getParticipation().getExercise());
+        this.notifyStatisticWebsocket(quiz);
         return true;
     }
 
@@ -205,11 +207,12 @@ public class StatisticService {
         // update QuizPointStatistic with the result
         if (result != null) {
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
-        }
-        for (Question question : quizExercise.getQuestions()) {
-            // update QuestionStatistics with the result
-            if (result != null && question.getQuestionStatistic() != null) {
-                question.getQuestionStatistic().addResult(((QuizSubmission) result.getSubmission()).getSubmittedAnswerForQuestion(question), result.isRated());
+            QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+            for (Question question : quizExercise.getQuestions()) {
+                // update QuestionStatistics with the result
+                if (question.getQuestionStatistic() != null) {
+                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), result.isRated());
+                }
             }
         }
     }

@@ -40,12 +40,14 @@ public class ResultResource {
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final FeedbackService feedbackService;
+    private final UserService userService;
 
-    public ResultResource(ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService,
+    public ResultResource(UserService userService, ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService,
                           ResultService resultService, AuthorizationCheckService authCheckService,
                           Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService,
                           ExerciseService exerciseService, CourseService courseService) {
 
+        this.userService = userService;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
         this.participationService = participationService;
@@ -71,8 +73,9 @@ public class ResultResource {
         log.debug("REST request to save Result : {}", result);
         Participation participation = result.getParticipation();
         Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -146,8 +149,9 @@ public class ResultResource {
         log.debug("REST request to update Result : {}", result);
         Participation participation = result.getParticipation();
         Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -198,8 +202,9 @@ public class ResultResource {
 
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             Course course = participation.getExercise().getCourse();
-             if(!authCheckService.isTeachingAssistantInCourse(course) &&
-                !authCheckService.isInstructorInCourse(course) &&
+            User user = userService.getUserWithGroupsAndAuthorities();
+             if(!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
                 !authCheckService.isAdmin()) {
                  return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
              }
@@ -252,8 +257,9 @@ public class ResultResource {
 
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -292,8 +298,9 @@ public class ResultResource {
     public ResponseEntity<List<Result>> getResultsForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get Results for Course : {}", courseId);
         Course course = courseService.findOne(courseId);
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -316,8 +323,9 @@ public class ResultResource {
         Result result = resultRepository.findOne(id);
         Participation participation = result.getParticipation();
         Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
@@ -347,11 +355,14 @@ public class ResultResource {
         }
         Participation participation = result.getParticipation();
         Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isOwnerOfParticipation(participation) &&
-             !authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        if (!authCheckService.isOwnerOfParticipation(participation)) {
+
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if(!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
         }
         try {
             Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
@@ -378,8 +389,9 @@ public class ResultResource {
         Result result = resultRepository.findOne(id);
         Participation participation = result.getParticipation();
         Course course = participation.getExercise().getCourse();
-        if (!authCheckService.isTeachingAssistantInCourse(course) &&
-             !authCheckService.isInstructorInCourse(course) &&
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+             !authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
