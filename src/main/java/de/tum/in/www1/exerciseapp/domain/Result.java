@@ -46,12 +46,15 @@ public class Result implements Serializable {
     @Column(name = "rated")
     private Boolean rated;
 
+    @Column(name = "hasFeedback")
+    private Boolean hasFeedback;
+
     @OneToOne(cascade=CascadeType.REMOVE, fetch = FetchType.LAZY, orphanRemoval=true)
     @JoinColumn(unique = true)
     private Submission submission;
 
     //TODO: we might want to store it as a list (see quizzes)
-    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Feedback> feedbacks = new HashSet<>();
@@ -144,6 +147,19 @@ public class Result implements Serializable {
 
     public Result score(Long score) {
         this.score = score;
+        return this;
+    }
+
+    public void setHasFeedback(Boolean hasFeedback) {
+        this.hasFeedback = hasFeedback;
+    }
+
+    public Boolean getFeedback() {
+        return hasFeedback;
+    }
+
+    public Result hasFeedback(Boolean hasFeedback) {
+        this.hasFeedback = hasFeedback;
         return this;
     }
 

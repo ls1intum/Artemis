@@ -93,6 +93,9 @@ public class ResultResource {
             throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
         }
 
+        if(!result.getFeedbacks().isEmpty()) {
+            result.setHasFeedback(true);
+        }
         Result savedResult = resultRepository.save(result);
         result.getFeedbacks().forEach(feedback -> {
             feedback.setResult(savedResult);
