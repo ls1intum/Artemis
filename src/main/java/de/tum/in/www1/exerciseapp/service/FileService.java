@@ -26,7 +26,7 @@ public class FileService {
      * Get the file for the given path as a byte[]
      *
      * @param path the path for the file to load
-     * @return file contents as a byte[]
+     * @return file contents as a byte[], or null, if the file doesn't exist
      * @throws IOException
      */
     @Cacheable(value="files", unless="#result == null")
