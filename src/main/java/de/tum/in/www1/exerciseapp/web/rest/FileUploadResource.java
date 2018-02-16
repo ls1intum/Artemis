@@ -111,7 +111,7 @@ public class FileUploadResource {
     @Timed
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return fileService.getFileForPath(Constants.TEMP_FILEPATH + filename);
+        return responseEntityForFilePath(Constants.TEMP_FILEPATH + filename);
     }
 
     /**
@@ -126,7 +126,7 @@ public class FileUploadResource {
     @Timed
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return fileService.getFileForPath(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename);
+        return responseEntityForFilePath(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename);
     }
 
     /**
@@ -141,6 +141,25 @@ public class FileUploadResource {
     @Timed
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-        return fileService.getFileForPath(Constants.DRAG_ITEM_FILEPATH + filename);
+        return responseEntityForFilePath(Constants.DRAG_ITEM_FILEPATH + filename);
+    }
+
+    /**
+     * Reads the file and turns it into a ResponseEntity
+     *
+     * @param path the path for the file to read
+     * @return ResponseEntity with status 200 and the file as byte[], status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
+     */
+    private ResponseEntity<byte[]> responseEntityForFilePath(String path) {
+        try {
+            byte[] file = fileService.getFileForPath(path);
+            if (file == null) {
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
+        }
     }
 }

@@ -5,7 +5,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -23,10 +22,21 @@ public class FileService {
 
     private final Logger log = LoggerFactory.getLogger(FileService.class);
 
-    @Cacheable(value="files", unless="#result.getStatusCodeValue() != 200")
-    public ResponseEntity<byte[]> getFileForPath(String path) {
+    /**
+     * Get the file for the given path as a byte[]
+     *
+     * @param path the path for the file to load
+     * @return file contents as a byte[]
+     * @throws IOException
+     */
+    @Cacheable(value="files", unless="#result == null")
+    public byte[] getFileForPath(String path) throws IOException {
         File file = new File(path);
-        return responseEntityForFile(file);
+        if (file.exists()) {
+            return Files.readAllBytes(file.toPath());
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -171,24 +181,5 @@ public class FileService {
         } while (!fileCreated);
 
         return newFile;
-    }
-
-    /**
-     * Reads the file and turns it into a ResponseEntity
-     *
-     * @param file the file to read
-     * @return ResponseEntity with status 200 and the file as byte[], status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
-     */
-    private ResponseEntity<byte[]> responseEntityForFile(File file) {
-        if (file.exists()) {
-            try {
-                return ResponseEntity.ok(Files.readAllBytes(file.toPath()));
-            } catch (IOException e) {
-                e.printStackTrace();
-                return ResponseEntity.status(500).build();
-            }
-        } else {
-            return ResponseEntity.notFound().build();
-        }
     }
 }
