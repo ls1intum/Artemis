@@ -5,7 +5,6 @@ import de.tum.in.www1.exerciseapp.config.Constants;
 import de.tum.in.www1.exerciseapp.service.FileService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -24,8 +23,7 @@ public class DragItem implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Transient
-    @Autowired
-    private FileService fileService;
+    private FileService fileService = new FileService();
 
     @Transient
     private String prevPictureFilePath;
