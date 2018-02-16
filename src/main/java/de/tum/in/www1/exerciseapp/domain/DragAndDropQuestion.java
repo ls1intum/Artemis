@@ -2,9 +2,10 @@ package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import de.tum.in.www1.exerciseapp.config.Constants;
-import de.tum.in.www1.exerciseapp.domain.util.FileManagement;
+import de.tum.in.www1.exerciseapp.service.FileService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -20,6 +21,10 @@ import java.util.*;
 public class DragAndDropQuestion extends Question implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    @Transient
+    @Autowired
+    private FileService fileService;
 
     @Transient
     private String prevBackgroundFilePath;
@@ -251,7 +256,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        backgroundFilePath = FileManagement.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
     }
 
     @PostPersist
@@ -265,13 +270,13 @@ public class DragAndDropQuestion extends Question implements Serializable {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        backgroundFilePath = FileManagement.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        FileManagement.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
     }
 
     /**

@@ -2,9 +2,10 @@ package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.exerciseapp.config.Constants;
-import de.tum.in.www1.exerciseapp.domain.util.FileManagement;
+import de.tum.in.www1.exerciseapp.service.FileService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -21,6 +22,10 @@ import java.util.Set;
 public class DragItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    @Transient
+    @Autowired
+    private FileService fileService;
 
     @Transient
     private String prevPictureFilePath;
@@ -189,7 +194,7 @@ public class DragItem implements Serializable {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        pictureFilePath = FileManagement.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, Constants.DRAG_ITEM_FILEPATH, getId());
+        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, Constants.DRAG_ITEM_FILEPATH, getId());
     }
 
     @PostPersist
@@ -203,13 +208,13 @@ public class DragItem implements Serializable {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        pictureFilePath = FileManagement.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, Constants.DRAG_ITEM_FILEPATH, getId());
+        pictureFilePath = fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, pictureFilePath, Constants.DRAG_ITEM_FILEPATH, getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        FileManagement.manageFilesForUpdatedFilePath(prevPictureFilePath, null, Constants.DRAG_ITEM_FILEPATH, getId());
+        fileService.manageFilesForUpdatedFilePath(prevPictureFilePath, null, Constants.DRAG_ITEM_FILEPATH, getId());
     }
 
     @Override

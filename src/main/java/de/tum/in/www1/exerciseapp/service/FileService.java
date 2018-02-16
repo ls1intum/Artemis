@@ -1,9 +1,12 @@
-package de.tum.in.www1.exerciseapp.domain.util;
+package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.config.Constants;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,9 +18,16 @@ import java.util.UUID;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-public class FileManagement {
+@Service
+public class FileService {
 
-    private static final Logger log = LoggerFactory.getLogger(FileManagement.class);
+    private final Logger log = LoggerFactory.getLogger(FileService.class);
+
+    @Cacheable(value="files", unless="#result.getStatusCodeValue() != 200")
+    public ResponseEntity<byte[]> getFileForPath(String path) {
+        File file = new File(path);
+        return responseEntityForFile(file);
+    }
 
     /**
      * Takes care of any changes that have to be made to the filesystem
@@ -30,7 +40,7 @@ public class FileManagement {
      * @param entityId     id of the entity this file belongs to (needed to generate public path). If this is null, a placeholder will be inserted where the id would be
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
-    public static String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
+    public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
         log.debug("Manage files for {} to {}", oldFilePath, newFilePath);
 
         if (oldFilePath != null) {
@@ -70,7 +80,7 @@ public class FileManagement {
      * @param publicPath the public file url to convert
      * @return the actual path to that file in the local filesystem
      */
-    private static String actualPathForPublicPath(String publicPath) {
+    private String actualPathForPublicPath(String publicPath) {
         // first extract the filename from the url
         String filename = publicPath.substring(publicPath.lastIndexOf("/") + 1);
 
@@ -96,7 +106,7 @@ public class FileManagement {
      * @param entityId   the id of the entity associated with the file (may be null)
      * @return the public file url that can be used by users to access the file from outside
      */
-    private static String publicPathForActualPath(String actualPath, Long entityId) {
+    private String publicPathForActualPath(String actualPath, Long entityId) {
         // first extract filename
         String filename = Paths.get(actualPath).getFileName().toString();
 
@@ -126,7 +136,7 @@ public class FileManagement {
      * @return the newly created file
      * @throws IOException
      */
-    private static File generateTargetFile(String originalFilename, String targetFolder) throws IOException {
+    private File generateTargetFile(String originalFilename, String targetFolder) throws IOException {
         // determine the base for the filename
         String filenameBase = "Unspecified_";
         if (targetFolder.equals(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH)) {
@@ -161,5 +171,24 @@ public class FileManagement {
         } while (!fileCreated);
 
         return newFile;
+    }
+
+    /**
+     * Reads the file and turns it into a ResponseEntity
+     *
+     * @param file the file to read
+     * @return ResponseEntity with status 200 and the file as byte[], status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
+     */
+    private ResponseEntity<byte[]> responseEntityForFile(File file) {
+        if (file.exists()) {
+            try {
+                return ResponseEntity.ok(Files.readAllBytes(file.toPath()));
+            } catch (IOException e) {
+                e.printStackTrace();
+                return ResponseEntity.status(500).build();
+            }
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
