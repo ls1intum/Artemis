@@ -503,6 +503,13 @@
                     font-size: 14px;
                 }
 
+                .invalid {
+                    position: absolute;
+                    left: 2px;
+                    top: 0;
+                    font-size: 14px;
+                }
+
                 .resize {
                     position: absolute;
                     width: 6px;
@@ -578,6 +585,17 @@
             position: absolute;
             top: 4px;
             right: 2px;
+
+            .re-evaluate-button {
+                display: inline-block;
+                padding: 2px;
+            }
+        }
+        .dimensions {
+            position: absolute;
+            left: 2px;
+            bottom: 0;
+            font-size: 14px;
         }
 
         .drag-handle-wrapper {

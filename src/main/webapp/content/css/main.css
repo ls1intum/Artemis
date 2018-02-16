@@ -8729,6 +8729,11 @@ body.editor .navbar-brand span {
       left: 2px;
       bottom: 0;
       font-size: 14px; }
+    .edit-dnd-question .background-area .click-layer .drop-location .invalid {
+      position: absolute;
+      left: 2px;
+      top: 0;
+      font-size: 14px; }
     .edit-dnd-question .background-area .click-layer .drop-location .resize {
       position: absolute;
       width: 6px;
@@ -8776,6 +8781,15 @@ body.editor .navbar-brand span {
   position: absolute;
   top: 4px;
   right: 2px; }
+  .edit-dnd-question .drag-item .delete-button .re-evaluate-button {
+    display: inline-block;
+    padding: 2px; }
+
+.edit-dnd-question .drag-item .dimensions {
+  position: absolute;
+  left: 2px;
+  bottom: 0;
+  font-size: 14px; }
 
 .edit-dnd-question .drag-item .drag-handle-wrapper {
   position: absolute;

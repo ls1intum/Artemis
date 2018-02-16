@@ -32,7 +32,9 @@
             "addDragItemText": "Drag Item mit Text Hinzufügen",
             "studentInstructions": "Drag & Drop: Platzieren Sie die passenden Elemente unten auf die zugehörigen Flächen oben.",
             "showingYourAnswer": "Ihre Abgabe:",
-            "showingSampleSolution": "Musterlösung:"
+            "showingSampleSolution": "Musterlösung:",
+            "changeBackgroundPicture": "Hintergrund Ändern",
+            "changeDragItemPicture": "Lade Bild für Drag Item Veränderung hoch"
         }
     }
 }

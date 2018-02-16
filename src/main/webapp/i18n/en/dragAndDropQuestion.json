@@ -32,7 +32,9 @@
             "addDragItemText": "Add Text Drag Item",
             "studentInstructions": "Drag & Drop: Place the suitable items below on the correct areas above.",
             "showingYourAnswer": "Your Submission:",
-            "showingSampleSolution": "Sample Solution:"
+            "showingSampleSolution": "Sample Solution:",
+            "changeBackgroundPicture": "Change Background",
+            "changeDragItemPicture": "Upload Picture for Drag Item Change"
         }
     }
 }
