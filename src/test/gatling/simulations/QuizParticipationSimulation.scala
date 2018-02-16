@@ -13,9 +13,15 @@ import scala.util.parsing.json._
 
 class QuizParticipationSimulation extends Simulation {
 
-    // TODO replace exerciseID with id of dynamically created exercise
-    val exerciseId = 118
-    val numUsersSubmit = 400
+    // TODO: update these values to fit the tested exercise
+    val exerciseId = 187
+    val backgroundPicturePath = "/api/files/drag-and-drop/backgrounds/98/DragAndDropBackground_2018-02-16T11-45-42-684_7f0aa8e4.png"
+
+    // TODO: Enter any valid participationId to get the build status for
+    val participationIdForStatus = 19353
+
+    // TODO: Adjust these numbers for desired load
+    val numUsersSubmit = 300
     val numUsersNoSubmit = 0
 
     val feeder: Iterator[Map[String, String]] = Iterator.tabulate(500)(i => Map(
@@ -153,7 +159,18 @@ class QuizParticipationSimulation extends Simulation {
         .exec(http("Get dashboard")
             .get("/api/courses/for-dashboard")
             .headers(headers_http_authenticated)
-            .check(status.is(200))).exitHereIfFailed
+            .check(status.is(200))
+            .resources(
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=1").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=2").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=3").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=4").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=5").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=6").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=7").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=8").headers(headers_http_authenticated)
+            )
+        ).exitHereIfFailed
         .pause(5 seconds)
 
     val startQuiz: ChainBuilder = rendezVous(numUsersSubmit)
@@ -161,11 +178,11 @@ class QuizParticipationSimulation extends Simulation {
             .get("/api/quiz-exercises/" + exerciseId + "/for-student")
             .headers(headers_http_authenticated)
             .check(status.is(200))
-            .check(jsonPath("$.questions").saveAs("questions"))).exitHereIfFailed
-        .exec(http("Load Picture") // TODO: replace Picture url, or comment out the entire "Load Picture" part
-            .get("/api/files/drag-and-drop/backgrounds/67/DragAndDropBackground_2018-02-13T01-02-38-250_013a3522.png")
-            .headers(headers_http_authenticated)
-            .check(status.is(200)))
+            .check(jsonPath("$.questions").saveAs("questions"))
+            .resources(
+                http("Load Picture").get(backgroundPicturePath).headers(headers_http_authenticated)
+            )
+        ).exitHereIfFailed
         .exec(http("Start Quiz")
             .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
             .headers(headers_http_authenticated)
