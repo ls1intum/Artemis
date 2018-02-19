@@ -1,6 +1,6 @@
 <div class="dnd-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult && !vm.forceSampleSolution, incorrect: (vm.score || 0) < vm.question.score && !vm.forceSampleSolution}">
     <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
-    <p ng-bind-html="vm.rendered.text"></p>
+    <p ng-bind-html="vm.rendered.text"></p><span style="color:red;" ng-if="vm.question.invalid" data-translate="artemisApp.question.invalidText"></span>
     <h4 ng-if="vm.question.hint || (vm.question.explanation && vm.showResult)">
         <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
             <i class="fa fa-question-circle-o"></i>
@@ -42,13 +42,29 @@
                     ng-if="vm.showResult && !vm.showingSampleSolution"
                     class="drop-location results"
                     ng-repeat="dropLocation in vm.question.dropLocations"
-                    ng-class="{incorrect: !vm.isLocationCorrect(dropLocation)}"
+                    ng-class="{incorrect: !vm.isLocationCorrect(dropLocation) && !dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation).invalid && !vm.question.invalid}"
                     ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                 >
-                    <div class="result-symbol" ng-if="!vm.isLocationCorrect(dropLocation)">
+                    <div class="result-symbol"
+                         ng-if="!vm.isLocationCorrect(dropLocation) && !dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation).invalid && !vm.question.invalid">
                         <i class="fa fa-2x fa-exclamation-triangle warning"></i>
                     </div>
-                    <drag-item ng-if="vm.dragItemForDropLocation(dropLocation)" drag-item="vm.dragItemForDropLocation(dropLocation)" click-disabled="true"></drag-item>
+                    <div class="invalid">
+                        <span ng-if="dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation) && !vm.question.invalid"
+                              data-translate="artemisApp.dragAndDropQuestion.invalid.dropLocation"></span>
+                        <span ng-if="!dropLocation.invalid && vm.dragItemForDropLocation(dropLocation) && !vm.question.invalid"
+                              data-translate="artemisApp.dragAndDropQuestion.invalid.dragItem"></span>
+                        <span ng-if="(dropLocation.invalid && vm.dragItemForDropLocation(dropLocation)) || vm.question.invalid"
+                              data-translate="artemisApp.question.invalid"></span>
+                        &nbsp<span uib-tooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
+                                   tooltip-placement="top-right"
+                                   style="color:black;"
+                                   class="fa fa-question-circle"
+                                   ng-if="dropLocation.invalid || vm.question.invalid || vm.dragItemForDropLocation(dropLocation).invalid"></span>
+                    </div>
+                    <drag-item ng-if="vm.dragItemForDropLocation(dropLocation)"
+                               drag-item="vm.dragItemForDropLocation(dropLocation)" click-disabled="true">
+                    </drag-item>
                     <div class="drag-item no-click" ng-if="!vm.dragItemForDropLocation(dropLocation)">
                         <div></div>
                     </div>
@@ -57,13 +73,24 @@
                     ng-if="vm.showResult && vm.showingSampleSolution"
                     class="drop-location sampleSolution"
                     ng-repeat="dropLocation in vm.question.dropLocations"
-                    ng-class="{incorrect: !vm.isLocationCorrect(dropLocation)}"
+                    ng-class="{incorrect: !vm.isLocationCorrect(dropLocation) && !dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation).invalid && !vm.question.invalid}"
                     ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
                 >
-                    <div class="result-symbol" ng-if="!vm.isLocationCorrect(dropLocation) && !vm.forceSampleSolution">
+                    <div class="result-symbol" ng-if="!vm.isLocationCorrect(dropLocation) && !dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation).invalid && !vm.question.invalid && !vm.forceSampleSolution">
                         <i class="fa fa-2x fa-exclamation-triangle warning"></i>
                     </div>
-                    <drag-item ng-if="vm.correctDragItemForDropLocation(dropLocation)" drag-item="vm.correctDragItemForDropLocation(dropLocation)" click-disabled="true"></drag-item>
+                    <div class="invalid">
+                        <span ng-if="dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation) && !vm.question.invalid"
+                              data-translate="artemisApp.dragAndDropQuestion.invalid.dropLocation"></span>
+                        <span ng-if="(dropLocation.invalid && vm.dragItemForDropLocation(dropLocation)) || vm.question.invalid"
+                              data-translate="artemisApp.question.invalid"></span>
+                        &nbsp<span uib-tooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
+                                   tooltip-placement="top-right"
+                                   style="color:black;"
+                                   class="fa fa-question-circle"
+                                   ng-if="dropLocation.invalid || vm.question.invalid"></span>
+                    </div>
+                    <drag-item ng-if="vm.correctDragItemForDropLocation(dropLocation) && !dropLocation.invalid && !vm.question.invalid" drag-item="vm.correctDragItemForDropLocation(dropLocation)" click-disabled="true"></drag-item>
                     <div class="drag-item no-click" ng-if="!vm.correctDragItemForDropLocation(dropLocation)">
                         <div></div>
                     </div>

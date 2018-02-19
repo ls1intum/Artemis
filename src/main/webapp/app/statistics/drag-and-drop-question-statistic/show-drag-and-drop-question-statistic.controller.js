@@ -141,7 +141,7 @@
             orderDropLocationByPos();
 
             // reset old data
-            label = new Array(vm.question.dropLocations.length + 1);
+            label = new Array(vm.question.dropLocations.length);
             backgroundColor = [];
             backgroundSolutionColor = [];
 
@@ -197,7 +197,7 @@
                                 pointBorderColor: "#838383"
                             });
 
-                        label[j] = ([String.fromCharCode(65 + i) + ".", " " + invalidLabel]);
+                        label[j] = ([String.fromCharCode(65 + j) + ".", " " + invalidLabel]);
                     }
                 }
             });

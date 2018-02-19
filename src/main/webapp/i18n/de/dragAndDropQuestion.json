@@ -34,7 +34,11 @@
             "showingYourAnswer": "Ihre Abgabe:",
             "showingSampleSolution": "Musterlösung:",
             "changeBackgroundPicture": "Hintergrund Ändern",
-            "changeDragItemPicture": "Lade Bild für Drag Item Veränderung hoch"
+            "changeDragItemPicture": "Lade Bild für Drag Item Veränderung hoch",
+            "invalid": {
+                "dragItem": "Ungültiges Drag Item",
+                "dropLocation": "Ungültige Drop Location"
+            }
         }
     }
 }

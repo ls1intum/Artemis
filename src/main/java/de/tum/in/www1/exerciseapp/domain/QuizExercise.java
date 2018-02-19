@@ -465,9 +465,10 @@ public class QuizExercise extends Exercise implements Serializable {
                 if (question instanceof MultipleChoiceQuestion) {
                     ((MultipleChoiceQuestion) question).undoUnallowedAnswerChanges((MultipleChoiceQuestion) originalQuestion);
                 }
-
+                //undo all not allowed changes in the elements of the DragAndDropQuestion
                 if (question instanceof DragAndDropQuestion) {
-                    // TODO: @Moritz: check changes in DragAndDropQuestions
+                    ((DragAndDropQuestion) question).undoUnallowedDragItemChanges((DragAndDropQuestion) originalQuestion);
+                    ((DragAndDropQuestion) question).undoUnallowedDropLocationChanges((DragAndDropQuestion) originalQuestion);
                 }
 
             } else {
@@ -509,9 +510,14 @@ public class QuizExercise extends Exercise implements Serializable {
                     updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
                         ((MultipleChoiceQuestion) question).checkAnswersIfRecalculationIsNecessary((MultipleChoiceQuestion) originalQuestion);
                 }
-
+                // check if the dropLocations, mappings or dragItem-changes make an update of the statistics and results necessary
                 if (question instanceof DragAndDropQuestion) {
-                    // TODO: @Moritz: check changes in DragAndDropQuestions
+                    DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
+                    DragAndDropQuestion orginalDndQuestion = (DragAndDropQuestion) originalQuestion;
+                    updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
+                        dndQuestion.checkDragItemsIfRecalculationIsNecessary(orginalDndQuestion) ||
+                        dndQuestion.checkDropLocationsIfRecalculationIsNecessary(orginalDndQuestion) ||
+                        !dndQuestion.getCorrectMappings().equals(orginalDndQuestion.getCorrectMappings());
                 }
 
             }

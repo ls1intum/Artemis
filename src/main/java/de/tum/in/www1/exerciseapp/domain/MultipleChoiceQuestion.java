@@ -127,9 +127,9 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     public AnswerOption findAnswerOptionById (Long answerOptionId) {
 
         if (answerOptionId != null) {
-            // iterate through all questions of this quiz
+            // iterate through all answers of this quiz
             for (AnswerOption answer : answerOptions) {
-                // return question if the IDs are equal
+                // return answer if the IDs are equal
                 if (answer.getId().equals(answerOptionId)) {
                     return answer;
                 }
@@ -162,7 +162,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
                 answer.setInvalid(answer.isInvalid()
                     || (originalAnswer.isInvalid() != null && originalAnswer.isInvalid()));
             } else {
-                //mark the added Answers (adding questions is not allowed)
+                //mark the added Answers (adding answers is not allowed)
                 notAllowedAddedAnswers.add(answer);
             }
         }

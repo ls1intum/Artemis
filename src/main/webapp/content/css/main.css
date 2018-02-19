@@ -8842,6 +8842,13 @@ body.editor .navbar-brand span {
     -ms-transform: translate3d(-63%, -63%, 0);
     -o-transform: translate3d(-63%, -63%, 0);
     transform: translate3d(-63%, -63%, 0); }
+  .dnd-question .background-area .click-layer .drop-location .invalid {
+    color: red;
+    position: absolute;
+    bottom: 0px;
+    left: 2px;
+    z-index: 1;
+    opacity: 1; }
 
 .dnd-question .drop-allowed {
   background: lightblue !important; }
@@ -9022,6 +9029,17 @@ table.answer-options-result {
 .drag-and-drop-statistic-picture .click-layer .drop-location {
   background: white;
   border: 1px dashed black; }
+  .drag-and-drop-statistic-picture .click-layer .drop-location .drag-item,
+  .drag-and-drop-statistic-picture .click-layer .drop-location drag-item {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background: white; }
+  .drag-and-drop-statistic-picture .click-layer .drop-location .drag-item div {
+    padding: 6px; }
+    .drag-and-drop-statistic-picture .click-layer .drop-location .drag-item div span {
+      border: none;
+      padding: 0; }
   .drag-and-drop-statistic-picture .click-layer .drop-location .letter {
     color: white;
     position: absolute;
@@ -9046,18 +9064,13 @@ table.answer-options-result {
     -ms-transform: translate3d(-63%, -63%, 0);
     -o-transform: translate3d(-63%, -63%, 0);
     transform: translate3d(-63%, -63%, 0); }
-  .drag-and-drop-statistic-picture .click-layer .drop-location .drag-item,
-  .drag-and-drop-statistic-picture .click-layer .drop-location drag-item {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    background: white; }
-  .drag-and-drop-statistic-picture .click-layer .drop-location .drag-item div {
-    padding: 6px; }
-    .drag-and-drop-statistic-picture .click-layer .drop-location .drag-item div span {
-      border: none;
-      padding: 0;
-      width: 100%; }
+  .drag-and-drop-statistic-picture .click-layer .drop-location .invalid {
+    color: red;
+    position: absolute;
+    bottom: 0;
+    left: 2px;
+    z-index: 1;
+    opacity: 1; }
 
 .drag-and-drop-statistic-picture .click-layer .drag-item {
   background: transparent;
@@ -9102,11 +9115,18 @@ table.answer-options-result {
   .drag-and-drop-statistic-picture .drag-items {
     margin: 6px 0;
     width: 100%;
-    min-height: 180px;
+    height: 100%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: space-evenly; }
+    .drag-and-drop-statistic-picture .drag-items .invalid {
+      color: red;
+      position: absolute;
+      bottom: 0;
+      left: 2px;
+      z-index: 1;
+      opacity: 1; }
   .drag-and-drop-statistic-picture .drag-item {
     position: relative;
     height: 160px;

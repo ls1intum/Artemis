@@ -191,7 +191,20 @@ public class QuizExerciseService {
                         // Check if an answerOption was deleted and delete reference to in selectedOptions
                         ((MultipleChoiceSubmittedAnswer) submittedAnswer).checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
                     }
-                    // TODO: @Moritz: DragAndDrop Question
+                }
+                if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                    // Delete all references to question, dropLocations and dragItem if the question was deleted
+                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
+                        submittedAnswer.setQuestion(null);
+                        ((DragAndDropSubmittedAnswer) submittedAnswer).setMappings(null);
+                        submittedAnswersToDelete.add(submittedAnswer);
+                    } else {
+                        // find same question in quizExercise
+                        Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
+
+                        // Check if a dragItem or dropLocation was deleted and delete the reference to it in selected mappings
+                        ((DragAndDropSubmittedAnswer) submittedAnswer).checkForDeletedMappings((DragAndDropQuestion) question);
+                    }
                 }
             }
             quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);

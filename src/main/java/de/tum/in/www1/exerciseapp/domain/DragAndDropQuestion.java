@@ -290,6 +290,179 @@ public class DragAndDropQuestion extends Question implements Serializable {
         return result;
     }
 
+    /**
+     * Get dragItem by ID
+     *
+     * @param dragItemId the ID of the dragItem, which should be found
+     * @return the dragItem with the given ID, or null if the dragItem is not contained in this question
+     */
+    public DragItem findDragItemById (Long dragItemId) {
+
+        if (dragItemId != null) {
+            // iterate through all dragItems of this quiz
+            for (DragItem dragItem : dragItems) {
+                // return dragItem if the IDs are equal
+                if (dragItem.getId().equals(dragItemId)) {
+                    return dragItem;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get dropLocation by ID
+     *
+     * @param dropLocationId the ID of the dropLocation, which should be found
+     * @return the dropLocation with the given ID, or null if the dropLocation is not contained in this question
+     */
+    public DropLocation findDropLocationById (Long dropLocationId) {
+
+        if (dropLocationId != null) {
+            // iterate through all dropLocations of this quiz
+            for (DropLocation dropLocation : dropLocations) {
+                // return dropLocation if the IDs are equal
+                if (dropLocation.getId().equals(dropLocationId)) {
+                    return dropLocation;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    /**
+     * undo all dragItem-changes which are not allowed ( adding them)
+     *
+     * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
+     *
+     */
+    public void undoUnallowedDragItemChanges ( DragAndDropQuestion originalQuestion){
+
+        //find added DragItems, which are not allowed to be added
+        Set<DragItem> notAllowedAddedDragItems = new HashSet<>();
+        //check every dragItem of the question
+        for (DragItem dragItem : this.getDragItems()) {
+            //check if the dragItem were already in the originalQuestion -> if not it's an added dragItem
+            if (originalQuestion.getDragItems().contains(dragItem)) {
+                //find original dragItem
+                DragItem originalDragItem = originalQuestion.findDragItemById(dragItem.getId());
+                //correct invalid = null to invalid = false
+                if (dragItem.isInvalid() == null) {
+                    dragItem.setInvalid(false);
+                }
+                //reset invalid dragItem if it already set to true (it's not possible to set a dragItem valid again)
+                dragItem.setInvalid(dragItem.isInvalid()
+                    || (originalDragItem.isInvalid() != null && originalDragItem.isInvalid()));
+            } else {
+                //mark the added dragItem (adding dragItems is not allowed)
+                notAllowedAddedDragItems.add(dragItem);
+            }
+        }
+        //remove the added dragItems
+        this.getDragItems().removeAll(notAllowedAddedDragItems);
+    }
+
+    /**
+     * undo all dropLocation-changes which are not allowed ( adding them)
+     *
+     * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
+     *
+     */
+    public void undoUnallowedDropLocationChanges ( DragAndDropQuestion originalQuestion){
+
+        //find added DropLocations, which are not allowed to be added
+        Set<DropLocation> notAllowedAddedDropLocations = new HashSet<>();
+        //check every dropLocation of the question
+        for (DropLocation dropLocation : this.getDropLocations()) {
+            //check if the dropLocation were already in the originalQuestion -> if not it's an added dropLocation
+            if (originalQuestion.getDropLocations().contains(dropLocation)) {
+                //find original dropLocation
+                DropLocation originalDropLocation = originalQuestion.findDropLocationById(dropLocation.getId());
+                //correct invalid = null to invalid = false
+                if (dropLocation.isInvalid() == null) {
+                    dropLocation.setInvalid(false);
+                }
+                //reset invalid dropLocation if it already set to true (it's not possible to set a dropLocation valid again)
+                dropLocation.setInvalid(dropLocation.isInvalid()
+                    || (originalDropLocation.isInvalid() != null && originalDropLocation.isInvalid()));
+            } else {
+                //mark the added dropLocation (adding dropLocations is not allowed)
+                notAllowedAddedDropLocations.add(dropLocation);
+            }
+        }
+        //remove the added dropLocations
+        this.getDropLocations().removeAll(notAllowedAddedDropLocations);
+    }
+
+    /**
+     * check dragItems if an update of the Results and Statistics is necessary
+     *
+     * @param originalQuestion the original DragAndDropQuestion-object, which will be compared with this question
+     *
+     * @return a boolean which is true if the dragItem-changes make an update necessary and false if not
+     */
+    public boolean checkDragItemsIfRecalculationIsNecessary (DragAndDropQuestion originalQuestion){
+
+        boolean updateNecessary = false;
+
+        //check every dragItem of the question
+        for (DragItem dragItem : this.getDragItems()) {
+            //check if the dragItem were already in the originalQuizExercise
+            if (originalQuestion.getDragItems().contains(dragItem)) {
+                //find original dragItem
+                DragItem originalDragItem = originalQuestion.findDragItemById(dragItem.getId());
+
+                // check if a dragItem is set invalid
+                // if true an update of the Statistics and Results is necessary
+                if ((dragItem.isInvalid() && !this.isInvalid() && originalDragItem.isInvalid() == null) ||
+                    (dragItem.isInvalid() && !this.isInvalid() && !originalDragItem.isInvalid())) {
+                    updateNecessary = true;
+                }
+            }
+        }
+        // check if a dragItem was deleted (not allowed added dragItems are not relevant)
+        // if true an update of the Statistics and Results is necessary
+        if ( this.getDragItems().size() < originalQuestion.getDragItems().size()) {
+            updateNecessary = true;
+        }
+        return updateNecessary;
+    }
+
+    /**
+     * check DropLocations if an update of the Results and Statistics is necessary
+     *
+     * @param originalQuestion the original DragAndDropQuestion-object, which will be compared with this question
+     *
+     * @return a boolean which is true if the dropLocation-changes make an update necessary and false if not
+     */
+    public boolean checkDropLocationsIfRecalculationIsNecessary (DragAndDropQuestion originalQuestion){
+
+        boolean updateNecessary = false;
+
+        //check every dropLocation of the question
+        for (DropLocation dropLocation : this.getDropLocations()) {
+            //check if the dropLocation were already in the originalQuizExercise
+            if (originalQuestion.getDropLocations().contains(dropLocation)) {
+                //find original dropLocation
+                DropLocation originalDropLocation = originalQuestion.findDropLocationById(dropLocation.getId());
+
+                // check if a dropLocation is set invalid
+                // if true an update of the Statistics and Results is necessary
+                if ((dropLocation.isInvalid() && !this.isInvalid() && originalDropLocation.isInvalid() == null) ||
+                    (dropLocation.isInvalid() && !this.isInvalid() && !originalDropLocation.isInvalid())) {
+                    updateNecessary = true;
+                }
+            }
+        }
+        // check if a dropLocation was deleted (not allowed added dropLocations are not relevant)
+        // if true an update of the Statistics and Results is necessary
+        if ( this.getDropLocations().size() < originalQuestion.getDropLocations().size()) {
+            updateNecessary = true;
+        }
+        return updateNecessary;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {

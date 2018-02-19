@@ -450,12 +450,14 @@ public class QuizExerciseResource {
 
         //update QuizExercise
         reconnectJSONIgnoreAttributes(quizExercise);
-        QuizExercise result = quizExerciseService.save(quizExercise);
 
         // update Statistics and Results
         if (updateOfResultsAndStatisticsNecessary) {
             statisticService.updateStatisticsAndResults(quizExercise);
         }
+
+        QuizExercise result = quizExerciseService.save(quizExercise);
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
@@ -497,12 +499,6 @@ public class QuizExerciseResource {
                 if (question instanceof DragAndDropQuestion) {
                     DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                     DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
-                    //reconnect dropLocationCounters
-                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
-                        if (dropLocationCounter.getId() != null) {
-                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
-                        }
-                    }
                     // reconnect dropLocations
                     for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
                         if (dropLocation.getId() != null) {
@@ -519,6 +515,13 @@ public class QuizExerciseResource {
                     for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
                         if (mapping.getId() != null) {
                             mapping.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    //reconnect dropLocationCounters
+                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
+                        if (dropLocationCounter.getId() != null) {
+                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
+                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
                         }
                     }
                 }

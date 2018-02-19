@@ -204,6 +204,7 @@ public class StatisticService {
      * @param result the result which will be added
      */
     private void addResultToAllStatistics(QuizExercise quizExercise, Result result) {
+
         // update QuizPointStatistic with the result
         if (result != null) {
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());

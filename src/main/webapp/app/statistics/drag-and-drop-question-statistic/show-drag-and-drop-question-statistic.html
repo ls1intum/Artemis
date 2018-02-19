@@ -14,19 +14,27 @@
                     <div class="col-md-8 text-left"><p id="text" style="font-size: large">
                     <span ng-show="vm.rated"
                           data-translate="showStatistic.multipleChoiceQuestionStatistic.titleRated"></span>
-                        <span ng-show="!vm.rated" data-translate="showStatistic.multipleChoiceQuestionStatistic.titleUnrated"></span></p></div>
-                    <div class="col-md-3 text-right"><p style="font-size: large"><span>{{vm.participants}} </span><span data-translate="showStatistic.participants"></span></p></div>
+                        <span ng-show="!vm.rated"
+                              data-translate="showStatistic.multipleChoiceQuestionStatistic.titleUnrated"></span></p>
+                    </div>
+                    <div class="col-md-3 text-right"><p style="font-size: large"><span>{{vm.participants}} </span><span
+                        data-translate="showStatistic.participants"></span></p></div>
                     <canvas id="bar" class="chart chart-bar"
-                            chart-data="vm.data" chart-labels="vm.labels" chart-options="vm.options" chart-colors="vm.colors">
+                            chart-data="vm.data" chart-labels="vm.labels" chart-options="vm.options"
+                            chart-colors="vm.colors">
                     </canvas>
 
 
-                    <div class="col-md-12 text-center" >
+                    <div class="col-md-12 text-center">
                         <button ng-click="vm.switchSolution()" type="button" class="btn btn-primary">
                             <span ng-show="vm.showSolution" class="glyphicon glyphicon-ok-circle"></span>&nbsp;
                             <span ng-show="!vm.showSolution" class="glyphicon glyphicon-remove-circle"></span>&nbsp;
-                            <span ng-show="vm.showSolution" data-translate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
-                            <span ng-show="!vm.showSolution" data-translate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span></button></button>
+                            <span ng-show="vm.showSolution"
+                                  data-translate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
+                            <span ng-show="!vm.showSolution"
+                                  data-translate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
+                        </button>
+                        </button>
 
                         <button ng-click="vm.switchRated()" type="button" class="btn btn-primary">
                             <span class="glyphicon glyphicon-refresh"></span>&nbsp;
@@ -38,98 +46,120 @@
                 <div class="drag-and-drop-statistic-picture">
                     <img ng-src="{{vm.question.backgroundFilePath}}">
 
-                <div class="click-layer">
-                    <div
-                        ng-if="!vm.showSolution"
-                        class="drop-location"
-                        ng-repeat="dropLocation in vm.question.dropLocations"
-                        ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
-                    >
-                        <div class="letter">
-                            <span>{{vm.getLetter($index) + "."}}</span>
+                    <div class="click-layer">
+                        <div
+                            ng-if="!vm.showSolution"
+                            class="drop-location"
+                            ng-repeat="dropLocation in vm.question.dropLocations"
+                            ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                        >
+                            <div class="letter">
+                                <span>{{vm.getLetter($index) + "."}}</span>
+                            </div>
+                            <div class="invalid" ng-if="dropLocation.invalid">
+                                <span data-translate="showStatistic.invalid"></span>
+                            </div>
                         </div>
-                    </div>
-                    <div
-                        ng-if="vm.showSolution"
-                        class="drop-location"
-                        ng-repeat="dropLocation in vm.question.dropLocations"
-                        ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
-                    >
-                        <div class="letter-solution">
-                            <span>{{vm.getLetter($index) + "."}}</span>
-                        </div>
-                        <drag-item ng-if="vm.correctDragItemForDropLocation(dropLocation)"
-                                   drag-item="vm.correctDragItemForDropLocation(dropLocation)"
-                                   click-disabled="true"></drag-item>
-                    </div>
-                </div>
-                </div>
-                <div class="drag-and-drop-statistic-picture" ng-if="!vm.showSolution">
-                    <h4>Drag-Items:</h4>
-                    <div class="drop-location">
-                        <div class="drag-items">
-                            <drag-item ng-repeat="dragItem in vm.question.dragItems" drag-item="dragItem"
+                        <div
+                            ng-if="vm.showSolution"
+                            class="drop-location"
+                            ng-repeat="dropLocation in vm.question.dropLocations"
+                            ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                        >
+                            <div class="letter-solution">
+                                <span>{{vm.getLetter($index) + "."}}</span>
+                            </div>
+                            <div class="invalid" ng-if="dropLocation.invalid">
+                                <span data-translate="showStatistic.invalid"></span>
+                            </div>
+                            <drag-item ng-if="vm.correctDragItemForDropLocation(dropLocation)"
+                                       drag-item="vm.correctDragItemForDropLocation(dropLocation)"
                                        click-disabled="true"></drag-item>
                         </div>
                     </div>
+                </div>
+                <div class="edit-dnd-question" ng-if="!vm.showSolution">
+                    <h4>Drag-Items:</h4>
+                    <div class="drag-items" ng-if="vm.question.dragItems && vm.question.dragItems.length">
+                        <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems">
+                            <div ng-if="dragItem.pictureFilePath">
+                                <img ng-src="{{dragItem.pictureFilePath}}">
+                            </div>
+                            <div ng-if="!dragItem.pictureFilePath">
+                                <span>{{dragItem.text}}</span>
+                            </div>
+                            <div class="dimensions">
+                                <span style="color:red" ng-if="dragItem.invalid"
+                                      data-translate="showStatistic.invalid"></span>
+                            </div>
+                        </div>
+                    </div>
 
                 </div>
                 <p>&nbsp</p>
                 <p>&nbsp</p>
 
-        </div>
-    </div>
-</div>
-<div class="statistic-footer">
-    <div class="container">
-        <div class="edit-quiz-footer-content">
-            <div class="form-group">
-                <div class="btn-group dropup" uib-dropdown>
-                    <button
-                        type="button"
-                        class="btn btn-default"
-                        aria-haspopup="true"
-                        aria-expanded="false"
-                        uib-dropdown-toggle
-                    >
-                        <span class="hidden-xs hidden-sm" data-translate="showStatistic.chooseStatistic"></span>
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a ui-sref="quiz-point-statistic-chart({quizId: vm.quizExercise.id})"
-                               data-translate="showStatistic.quizPointStatisticTitle"></a></li>
-                        <li><a ui-sref="quiz-statistic-chart({quizId: vm.quizExercise.id})"
-                               data-translate="showStatistic.quizStatisticTitle"></a></li>
-                        <li ng-repeat="question in vm.quizExercise.questions">
-                            <a ng-if="question.type === 'multiple-choice'" ui-sref="multiple-choice-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
-                            ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a>
-                            <a ng-if="question.type === 'drag-and-drop'" ui-sref="drag-and-drop-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
-                            ><div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div></a></li>
-                    </ul>
-                </div>
-            </div>
-            <div class="form-group">
-                <div class="btn-group flex-btn-group-container">
-                    <button ng-click=vm.previousStatistic()
-                            data-translate="showStatistic.previousStatistic"
-                            class="btn btn-default"></button>
-                    <button ng-click=vm.nextStatistic()
-                            data-translate="showStatistic.nextStatistic"
-                            class="btn btn-default"></button>
-                </div>
-            </div>
-            <div class="form-group">
-                <button ng-show="!vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(true);
-                        data-translate="showStatistic.releaseStatistic" has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_TA"
-                        ng-disabled="vm.releaseButtonDisabled()"
-                        class="btn btn-success"
-                ></button>
-                <button ng-show="vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(false);
-                        data-translate="showStatistic.rereleaseStatistic" has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_TA"
-                        class="btn btn-danger"
-                ></button>
             </div>
         </div>
     </div>
-</div>
+    <div class="statistic-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div class="form-group">
+                    <div class="btn-group dropup" uib-dropdown>
+                        <button
+                            type="button"
+                            class="btn btn-default"
+                            aria-haspopup="true"
+                            aria-expanded="false"
+                            uib-dropdown-toggle
+                        >
+                            <span class="hidden-xs hidden-sm" data-translate="showStatistic.chooseStatistic"></span>
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a ui-sref="quiz-point-statistic-chart({quizId: vm.quizExercise.id})"
+                                   data-translate="showStatistic.quizPointStatisticTitle"></a></li>
+                            <li><a ui-sref="quiz-statistic-chart({quizId: vm.quizExercise.id})"
+                                   data-translate="showStatistic.quizStatisticTitle"></a></li>
+                            <li ng-repeat="question in vm.quizExercise.questions">
+                                <a ng-if="question.type === 'multiple-choice'"
+                                   ui-sref="multiple-choice-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
+                                >
+                                    <div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div>
+                                </a>
+                                <a ng-if="question.type === 'drag-and-drop'"
+                                   ui-sref="drag-and-drop-question-statistic-chart({quizId: vm.quizExercise.id, questionId: question.id})"
+                                >
+                                    <div style="text-indent:10px;">{{$index + 1}}. {{question.title}}</div>
+                                </a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="btn-group flex-btn-group-container">
+                        <button ng-click=vm.previousStatistic()
+                                data-translate="showStatistic.previousStatistic"
+                                class="btn btn-default"></button>
+                        <button ng-click=vm.nextStatistic()
+                                data-translate="showStatistic.nextStatistic"
+                                class="btn btn-default"></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <button ng-show="!vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(true);
+                            data-translate="showStatistic.releaseStatistic"
+                            has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_TA"
+                            ng-disabled="vm.releaseButtonDisabled()"
+                            class="btn btn-success"
+                    ></button>
+                    <button ng-show="vm.quizExercise.quizPointStatistic.released" ng-click=vm.releaseStatistics(false);
+                            data-translate="showStatistic.rereleaseStatistic"
+                            has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_TA"
+                            class="btn btn-danger"
+                    ></button>
+                </div>
+            </div>
+        </div>
+    </div>
 
