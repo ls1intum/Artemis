@@ -224,13 +224,17 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
+        long start = System.currentTimeMillis();
+
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
         if (quizExercise == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
+        log.info("    checked permissions after {} ms", System.currentTimeMillis() - start);
 
         // filter out all questions, if quiz hasn't started yet
         if (!quizExercise.hasStarted()) {
@@ -242,9 +246,8 @@ public class QuizExerciseResource {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
             for (Question question : quizExercise.getQuestions()) {
                 question.setExplanation(null);
-                if (question.getQuestionStatistic() != null && !question.getQuestionStatistic().isReleased()) {
-                    question.setQuestionStatistic(null);
-                }
+                // TODO: check if statistic is released
+                question.setQuestionStatistic(null);
 
                 // filter out "isCorrect" and "explanation" fields from answerOptions in all MC questions (so students can't see correct options in JSON)
                 if (question instanceof MultipleChoiceQuestion) {
@@ -263,12 +266,10 @@ public class QuizExerciseResource {
             }
         }
         // filter out the statistic information if the statistic is not released
-        if (quizExercise.getQuizPointStatistic() != null && !quizExercise.getQuizPointStatistic().isReleased()) {
-            // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
-            quizExercise.getQuizPointStatistic().setPointCounters(null);
-            quizExercise.getQuizPointStatistic().setParticipantsRated(null);
-            quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
-        }
+        // TODO: check if statistic is released
+        quizExercise.setQuizPointStatistic(null);
+
+        log.info("    filtered info after {} ms", System.currentTimeMillis() - start);
 
         return ResponseEntity.ok(quizExercise);
     }

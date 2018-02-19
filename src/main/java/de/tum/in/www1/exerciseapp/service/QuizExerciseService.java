@@ -115,6 +115,25 @@ public class QuizExerciseService {
     }
 
     /**
+     * Get one quiz exercise by id and eagerly load questions
+     *
+     * @param id the id of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public QuizExercise findOneWithQuestions(Long id) {
+        log.debug("Request to get Quiz Exercise : {}", id);
+        long start = System.currentTimeMillis();
+        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        log.info("    loaded quiz after {} ms", System.currentTimeMillis() - start);
+        if (quizExercise != null) {
+            quizExercise.getQuestions().size();
+            log.info("    loaded questions after {} ms", System.currentTimeMillis() - start);
+        }
+        return quizExercise;
+    }
+
+    /**
      * Get one quiz exercise by id and eagerly load questions and statistics
      *
      * @param id the id of the entity
@@ -123,10 +142,18 @@ public class QuizExerciseService {
     @Transactional(readOnly = true)
     public QuizExercise findOneWithQuestionsAndStatistics(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
+        long start = System.currentTimeMillis();
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        log.info("    loaded quiz after {} ms", System.currentTimeMillis() - start);
         if (quizExercise != null) {
             quizExercise.getQuestions().size();
+            log.info("    loaded questions after {} ms", System.currentTimeMillis() - start);
             quizExercise.getQuizPointStatistic().getPointCounters().size();
+            log.info("    loaded quiz point statistic after {} ms", System.currentTimeMillis() - start);
+            for (Question question : quizExercise.getQuestions()) {
+                question.getQuestionStatistic().getRatedCorrectCounter();
+            }
+            log.info("    loaded question statistics after {} ms", System.currentTimeMillis() - start);
         }
         return quizExercise;
     }
