@@ -8,7 +8,6 @@ import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.*;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
-import de.tum.in.www1.exerciseapp.web.websocket.QuizSubmissionService;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +44,7 @@ public class QuizSubmissionResource {
     }
 
     private final QuizSubmissionRepository quizSubmissionRepository;
+    private final QuizSubmissionService quizSubmissionService;
     private final QuizExerciseService quizExerciseService;
     private final QuizPointStatisticRepository quizPointStatisticRepository;
     private final QuestionStatisticRepository questionStatisticRepository;
@@ -57,6 +57,7 @@ public class QuizSubmissionResource {
     private final AuthorizationCheckService authCheckService;
 
     public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository,
+                                  QuizSubmissionService quizSubmissionService,
                                   QuizExerciseService quizExerciseService,
                                   QuizPointStatisticRepository quizPointStatisticRepository,
                                   QuestionStatisticRepository questionStatisticRepository,
@@ -68,6 +69,7 @@ public class QuizSubmissionResource {
                                   StatisticService statisticService,
                                   AuthorizationCheckService authCheckService) {
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.quizSubmissionService = quizSubmissionService;
         this.quizExerciseService = quizExerciseService;
         this.resultRepository = resultRepository;
         this.resultService = resultService;
@@ -98,20 +100,25 @@ public class QuizSubmissionResource {
                                                                              @PathVariable Long exerciseId,
                                                                              Principal principal) throws URISyntaxException {
         log.debug("REST request to get QuizSubmission for QuizExercise: {}", exerciseId);
+        long start = System.currentTimeMillis();
         QuizExercise quizExercise = quizExerciseService.findOne(exerciseId);
+        log.info("    loaded quiz exercise after {} ms", System.currentTimeMillis() - start);
         if (Optional.ofNullable(quizExercise).isPresent()) {
             User user = userService.getUserWithGroupsAndAuthorities();
             // check if user is allowed to take part in this exercise
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
+                log.info("    checked permissions after {} ms", System.currentTimeMillis() - start);
                 final Participation participation = participationService.init(quizExercise, principal.getName());
-                Result result = resultService.findLatestRatedResultWithSubmissionByParticipationId(participation.getId());
+                log.info("    loaded participation after {} ms", System.currentTimeMillis() - start);
+                Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+                log.info("    loaded result after {} ms", System.currentTimeMillis() - start);
                 if (quizExercise.isSubmissionAllowed() && result == null) {
                     // no result exists yet => create a new one
                     QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
-                    newSubmission = quizSubmissionRepository.save(newSubmission);
                     result = new Result().participation(participation).submission(newSubmission);
                     result.setRated(true);
                     final Result savedResult = resultRepository.save(result);
+                    log.info("    saved result after {} ms", System.currentTimeMillis() - start);
 
                     // create timer to score this submission when exercise times out.
                     threadPoolTaskScheduler.schedule(() -> {
@@ -125,10 +132,11 @@ public class QuizSubmissionResource {
                 }
                 if (result != null) {
                     QuizSubmission submission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+                    log.info("    loaded submission after {} ms", System.currentTimeMillis() - start);
                     // get submission from cache, if it exists and submission is not submitted already
                     QuizSubmission cachedSubmission = null;
                     if (!submission.isSubmitted()) {
-                        cachedSubmission = QuizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
+                        cachedSubmission = quizSubmissionService.getCachedSubmission(principal.getName(), submission.getId());
                         if (cachedSubmission != null) {
                             submission = cachedSubmission;
                         }
@@ -144,6 +152,7 @@ public class QuizSubmissionResource {
                         submission.setSubmissionDate(result.getCompletionDate());
                     }
 
+                    log.info("    filtered submission after {} ms", System.currentTimeMillis() - start);
                     // return submission
                     return ResponseEntity.ok(submission);
                 } else {
@@ -338,15 +347,17 @@ public class QuizSubmissionResource {
      * @return The updated QuizSubmission (submitted is true; submissionDate and type are updated)
      */
     private QuizSubmission submitSubmission(Participation participation, QuizSubmission quizSubmission, Result result) {
+        String username = participation.getStudent().getLogin();
+        Long submissionId = result.getSubmission().getId();
+
         // determine submission type
         SubmissionType submissionType = SubmissionType.MANUAL;
         if (quizSubmission == null) {
             submissionType = SubmissionType.TIMEOUT;
-
             // get the most up to date submission
-            String username = participation.getStudent().getLogin();
-            Long submissionId = result.getSubmission().getId();
-            quizSubmission = getQuizSubmission(username, submissionId);
+            quizSubmission = quizSubmissionService.getActiveQuizSubmissionAndRemoveFromCache(username, submissionId);
+        } else {
+            quizSubmissionService.removeCachedSubmission(username, submissionId);
         }
         QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(participation.getExercise().getId());
 
@@ -385,28 +396,6 @@ public class QuizSubmissionResource {
         // notify user about changed submission
         messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(),
             "{\"saved\": \"" + quizSubmission.getSubmissionDate().toString().substring(0, 23) + "\"}");
-        return quizSubmission;
-    }
-
-    /**
-     * Get the most up-to-date submission for the given user and submissionId
-     *
-     * @param username the username of the submission's owner
-     * @param submissionId the submissionId
-     * @return the submission entity
-     */
-    private QuizSubmission getQuizSubmission(String username, Long submissionId) {
-        QuizSubmission quizSubmission;
-        QuizSubmission cachedSubmission = QuizSubmissionService.getCachedSubmission(username, submissionId);
-        if (cachedSubmission != null) {
-            quizSubmission = cachedSubmission;
-            // remove this submission from the cached submissions
-            QuizSubmissionService.removeCachedSubmission(username, submissionId);
-        } else {
-            // if user never sent answers through websocket, use empty submission
-            QuizSubmission newSubmission = new QuizSubmission().submittedAnswers(new HashSet<>());
-            quizSubmission = quizSubmissionRepository.save(newSubmission);
-        }
         return quizSubmission;
     }
 

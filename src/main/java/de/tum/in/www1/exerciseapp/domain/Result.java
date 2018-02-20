@@ -46,7 +46,7 @@ public class Result implements Serializable {
     @Column(name = "rated")
     private Boolean rated;
 
-    @OneToOne(cascade=CascadeType.REMOVE, fetch = FetchType.LAZY, orphanRemoval=true)
+    @OneToOne(cascade={CascadeType.REMOVE, CascadeType.PERSIST}, fetch = FetchType.LAZY, orphanRemoval=true)
     @JoinColumn(unique = true)
     private Submission submission;
 

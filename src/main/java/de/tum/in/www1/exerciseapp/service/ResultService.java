@@ -15,7 +15,6 @@ import java.util.Optional;
  * Created by Josias Montag on 06.10.16.
  */
 @Service
-@Transactional
 public class ResultService {
 
     private final ResultRepository resultRepository;
@@ -43,21 +42,5 @@ public class ResultService {
         messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
         // handles new results and sends them to LTI consumers
         ltiService.onNewBuildResult(participation);
-    }
-
-    /**
-     * Get the latest rated result for the given participationId
-     * Also eagerly load the submission
-     *
-     * @param participationId Participation for which to get the latest rated result
-     * @return the requested result or null if none exist
-     */
-    @Transactional(readOnly = true)
-    public Result findLatestRatedResultWithSubmissionByParticipationId(Long participationId) {
-        Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participationId, true).orElse(null);
-        if (result != null) {
-            result.getSubmission().getId();
-        }
-        return result;
     }
 }

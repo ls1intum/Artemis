@@ -10,10 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -169,15 +166,15 @@ public class QuizExerciseService {
         log.debug("Request to get all Quiz Exercises in Course : {}", courseId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
+        if (quizExercises.size() > 0) {
+            Course course = quizExercises.get(0).getCourse();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return new LinkedList<>();
             }
-        );
-        return authorizedExercises.collect(Collectors.toList());
+        }
+        return quizExercises;
     }
 
     /**
