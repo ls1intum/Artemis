@@ -95,7 +95,7 @@
     <div class="background-area">
         <img ng-src="{{vm.question.backgroundFilePath}}"
              alt="{{'artemisApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">
-        <div id="{{'click-layer-' + vm.random}}" class="click-layer" ng-mousedown="vm.backgroundMouseDown()"
+        <div id="{{'click-layer-' + vm.random}}" class="click-layer" style="cursor: default !important;"
              ng-class="{disabled: !vm.question.backgroundFilePath}">
             <div
                 class="drop-location"
@@ -164,7 +164,7 @@
                     <i class="fa fa-font fa-lg"></i>
                 </div>
                 <div class="re-evaluate-button" title="Change to Picture Drag Item and use uploaded picture"
-                     ng-hide="vm.dragItemPicture === null"
+                     ng-hide="vm.dragItemFile === null"
                      ng-click="vm.changeToPictureDragItem(dragItem)">
                     <i class="fa fa-picture-o fa-lg"></i>
                 </div>
@@ -197,11 +197,10 @@
     </div>
     <div class="question-options">
         <div class="form-group">
-            <button ng-disabled="vm.isUploadingDragItemFile || !vm.dragItemFile" class="btn btn-default" ng-click="vm.uploadDragItem()">
-                <i class="fa fa-upload"></i>
-                <span ng-if="vm.isUploadingDragItemFile" data-translate="artemisApp.dragAndDropQuestion.uploading"></span>
-                <span ng-if="!vm.isUploadingDragItemFile" data-translate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
-            </button>
+            <i class="fa fa-upload"></i>
+            <span ng-if="vm.isUploadingDragItemFile" data-translate="artemisApp.dragAndDropQuestion.uploading"></span>
+            <span ng-if="!vm.isUploadingDragItemFile"
+                  data-translate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
             <input type="file" accept="image/*" file-model="vm.dragItemFile"/>
         </div>
     </div>
