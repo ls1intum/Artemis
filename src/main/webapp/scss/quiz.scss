@@ -357,27 +357,6 @@
         flex-wrap: wrap;
         justify-content: space-evenly;
     }
-
-    .drag-item {
-        position: relative;
-        height: 160px;
-        width: 160px;
-        margin: 10px 4px;
-        border: 1px solid dimgrey;
-        background: #fafafa;
-
-        img {
-            max-height: 100%;
-            max-width: 100%;
-            height: auto;
-            width: auto;
-            margin: auto;
-            position: absolute;
-            transform: translate(-50%, -50%);
-            top: 50%;
-            left: 50%;
-        }
-    }
 }
 
 .edit-dnd-question {
@@ -565,6 +544,9 @@
     }
 
     .drag-item {
+        border: 1px solid dimgrey;
+        background: #fafafa;
+
         textarea {
             position: absolute;
             left: 0;
@@ -702,43 +684,66 @@
     }
 
     .drag-item {
-        background: transparent;
-        border: none;
-
-        &.no-click {
-            * {
-                cursor: default !important;
-                -webkit-user-select: none;
-                -moz-user-select: none;
-                -ms-user-select: none;
-                user-select: none;
-            }
-        }
-
-        .drag-item-picture {
-            cursor: move;
-            width: 0;
-            height: 0;
-            padding: 0;
-            margin: 0;
-        }
-
         div {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            width: 100%;
-            height: 100%;
-            white-space: pre-wrap;
-
             span {
                 cursor: move;
-                color: black;
-                background: white;
                 border: 1px solid black;
-                padding: 4px;
             }
+        }
+    }
+}
+
+.drag-item {
+    background: transparent;
+    border: none;
+    position: relative;
+    height: 160px;
+    width: 160px;
+    margin: 10px 4px;
+
+    img {
+        max-height: 100%;
+        max-width: 100%;
+        height: auto;
+        width: auto !important;
+        margin: auto;
+        position: absolute;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        left: 50%;
+    }
+
+    &.no-click {
+        * {
+            cursor: default !important;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+    }
+
+    .drag-item-picture {
+        cursor: move;
+        width: 0;
+        height: 0;
+        padding: 0;
+        margin: 0;
+    }
+
+    .drag-item-text {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        width: 100%;
+        height: 100%;
+        white-space: pre-wrap;
+
+        span {
+            color: black;
+            background: white;
+            padding: 4px;
         }
     }
 }
@@ -990,33 +995,13 @@ table.answer-options-result {
                 opacity: 1;
             }
         }
-        .drag-item {
-            background: transparent;
-            border: none;
-
-            div {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                text-align: center;
-                width: 100%;
-                height: 100%;
-                white-space: pre-wrap;
-
-                span {
-                    cursor: move;
-                    color: black;
-                    background: white;
-                    border: 1px solid black;
-                    padding: 10px;
-                }
-            }
-        }
     }
-}
-
-.drag-and-drop-statistic-picture {
     position: relative;
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 18px;
+    padding: 20px;
+    background: #fefefe;
 
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -1050,39 +1035,36 @@ table.answer-options-result {
         margin: 6px 0;
 
         width: 100%;
-        height: 100%;
+        min-height: 180px;
 
         display: flex;
         flex-direction: row;
         flex-wrap: wrap;
         justify-content: space-evenly;
+    }
 
-        .invalid {
-            color: red;
+    .drag-item {
+        border: 1px solid dimgrey;
+        background: #fafafa;
+
+        div {
+            span {
+                border: 1px solid transparent;
+            }
+        }
+        div.invalid {
+            span {
+                color: red;
+                padding: 0;
+            }
+            width: auto;
+            height: auto;
+
             position: absolute;
             bottom: 0;
             left: 2px;
             z-index: 1;
             opacity: 1;
-        }
-    }
-
-    .drag-item {
-        position: relative;
-        height: 160px;
-        width: 160px;
-        margin: 10px 4px;
-        border: 1px solid dimgrey;
-        background: #fafafa;
-
-        img {
-            max-height: 100%;
-            max-width: 100%;
-            margin: auto;
-            position: absolute;
-            transform: translate(-50%, -50%);
-            top: 50%;
-            left: 50%;
         }
     }
 

@@ -78,21 +78,14 @@
                         </div>
                     </div>
                 </div>
-                <div class="edit-dnd-question" ng-if="!vm.showSolution">
+                <div class="drag-and-drop-statistic-picture" ng-if="!vm.showSolution">
                     <h4>Drag-Items:</h4>
                     <div class="drag-items" ng-if="vm.question.dragItems && vm.question.dragItems.length">
-                        <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems">
-                            <div ng-if="dragItem.pictureFilePath">
-                                <img ng-src="{{dragItem.pictureFilePath}}">
-                            </div>
-                            <div ng-if="!dragItem.pictureFilePath">
-                                <span>{{dragItem.text}}</span>
-                            </div>
-                            <div class="dimensions">
-                                <span style="color:red" ng-if="dragItem.invalid"
-                                      data-translate="showStatistic.invalid"></span>
-                            </div>
-                        </div>
+                        <drag-item ng-repeat="dragItem in vm.question.dragItems"
+                                   drag-item="dragItem"
+                                   invalid="dragItem.invalid"
+                                   click-disabled="true"></drag-item>
+
                     </div>
 
                 </div>
