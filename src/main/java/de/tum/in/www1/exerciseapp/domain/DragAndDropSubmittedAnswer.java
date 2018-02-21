@@ -71,7 +71,7 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
     }
 
     /**
-     * Check if dragItem were deleted and delete reference to in mappings
+     * Check if a dragItem or dropLocation were deleted and delete reference to in mappings
      * @param question the changed question with the changed DragItems and DropLocations
      */
     public void checkForDeletedMappings(DragAndDropQuestion question) {
@@ -80,12 +80,14 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
             // Check if a dragItem or dropLocation was deleted and delete reference to it in mappings
             Set<DragAndDropMapping> selectedMappingsToDelete = new HashSet<>();
             for (DragAndDropMapping mapping : this.getMappings()) {
-                if (!(question.getDragItems().contains(mapping.getDragItem())) ||
-                    !(question.getDropLocations().contains(mapping.getDropLocation()))) {
+                if ((!question.getDragItems().contains(mapping.getDragItem())) ||
+                    (!question.getDropLocations().contains(mapping.getDropLocation()))) {
                     selectedMappingsToDelete.add(mapping);
                 }
             }
-            this.getMappings().removeAll(selectedMappingsToDelete);
+            for (DragAndDropMapping mappingToDelete: selectedMappingsToDelete) {
+                this.removeMappings(mappingToDelete);
+            }
         }
     }
 

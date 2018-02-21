@@ -50,11 +50,11 @@
                         <i class="fa fa-2x fa-exclamation-triangle warning"></i>
                     </div>
                     <div class="invalid">
-                        <span ng-if="dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation) && !vm.question.invalid"
+                        <span ng-if="dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation).invalid && !vm.question.invalid"
                               data-translate="artemisApp.dragAndDropQuestion.invalid.dropLocation"></span>
-                        <span ng-if="!dropLocation.invalid && vm.dragItemForDropLocation(dropLocation) && !vm.question.invalid"
+                        <span ng-if="!dropLocation.invalid && vm.dragItemForDropLocation(dropLocation).invalid && !vm.question.invalid"
                               data-translate="artemisApp.dragAndDropQuestion.invalid.dragItem"></span>
-                        <span ng-if="(dropLocation.invalid && vm.dragItemForDropLocation(dropLocation)) || vm.question.invalid"
+                        <span ng-if="(dropLocation.invalid && vm.dragItemForDropLocation(dropLocation).invalid) || vm.question.invalid"
                               data-translate="artemisApp.question.invalid"></span>
                         &nbsp<span uib-tooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                    tooltip-placement="top-right"
@@ -80,9 +80,9 @@
                         <i class="fa fa-2x fa-exclamation-triangle warning"></i>
                     </div>
                     <div class="invalid">
-                        <span ng-if="dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation) && !vm.question.invalid"
+                        <span ng-if="dropLocation.invalid && !vm.dragItemForDropLocation(dropLocation).invalid && !vm.question.invalid"
                               data-translate="artemisApp.dragAndDropQuestion.invalid.dropLocation"></span>
-                        <span ng-if="(dropLocation.invalid && vm.dragItemForDropLocation(dropLocation)) || vm.question.invalid"
+                        <span ng-if="(dropLocation.invalid && vm.dragItemForDropLocation(dropLocation).invalid) || vm.question.invalid"
                               data-translate="artemisApp.question.invalid"></span>
                         &nbsp<span uib-tooltip="Invalid Drop Locations and invalid Drag Items will be assessed as correct."
                                    tooltip-placement="top-right"

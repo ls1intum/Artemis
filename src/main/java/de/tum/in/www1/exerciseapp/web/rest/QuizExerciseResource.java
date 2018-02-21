@@ -34,6 +34,7 @@ public class QuizExerciseResource {
     private static final String ENTITY_NAME = "quizExercise";
 
     private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
     private final ParticipationRepository participationRepository;
     private final UserService userService;
     private final CourseService courseService;
@@ -43,6 +44,7 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(UserService userService,
                                 QuizExerciseService quizExerciseService,
+                                QuizExerciseRepository quizExerciseRepository,
                                 ParticipationRepository participationRepository,
                                 CourseService courseService,
                                 StatisticService statisticService,
@@ -50,6 +52,7 @@ public class QuizExerciseResource {
                                 SimpMessageSendingOperations messagingTemplate) {
         this.userService = userService;
         this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.courseService = courseService;
         this.statisticService = statisticService;
@@ -445,18 +448,19 @@ public class QuizExerciseResource {
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
-        //adjust existing results if an answer or and question was deleted
-        quizExerciseService.adjustResultsOnQuizDeletions(quizExercise);
-
         //update QuizExercise
         reconnectJSONIgnoreAttributes(quizExercise);
 
-        // update Statistics and Results
+        //adjust existing results if an answer or and question was deleted and recalculate them
+        quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
+
+        QuizExercise result = quizExerciseRepository.save(quizExercise);
+
         if (updateOfResultsAndStatisticsNecessary) {
-            statisticService.updateStatisticsAndResults(quizExercise);
+            // update Statistics
+            statisticService.updateStatisticsAfterReEvaluation(quizExercise);
         }
 
-        QuizExercise result = quizExerciseService.save(quizExercise);
 
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))

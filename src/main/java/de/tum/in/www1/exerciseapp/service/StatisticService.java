@@ -97,7 +97,7 @@ public class StatisticService {
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
-    public void updateStatisticsAndResults(QuizExercise quizExercise){
+    public void updateStatisticsAfterReEvaluation(QuizExercise quizExercise){
 
         //reset all statistics
         quizExercise.getQuizPointStatistic().resetStatistic();
@@ -115,16 +115,6 @@ public class StatisticService {
 
             // update all Results of a participation
             for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
-
-                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
-                //recalculate existing score
-                quizSubmission.calculateAndUpdateScores(quizExercise);
-                //update Successful-Flag in Result
-                result.setScore(Math.round(quizSubmission.getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
-
-                // save the updated Result and its Submission
-                resultRepository.save(result);
-                quizSubmissionRepository.save(quizSubmission);
 
                 // find latest rated Result
                 if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {

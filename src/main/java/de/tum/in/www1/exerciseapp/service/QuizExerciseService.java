@@ -166,11 +166,12 @@ public class QuizExerciseService {
 
     /**
      * adjust existing results if an answer or and question was deleted
+     * and recalculate the scores
      *
      * @param quizExercise the changed quizExercise.
      */
     @Transactional
-    public void adjustResultsOnQuizDeletions(QuizExercise quizExercise) {
+    public void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
         //change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
 
@@ -202,12 +203,20 @@ public class QuizExerciseService {
                         // find same question in quizExercise
                         Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
 
-                        // Check if a dragItem or dropLocation was deleted and delete the reference to it in selected mappings
+                        // Check if a dragItem or dropLocation was deleted and delete the mappings with it
                         ((DragAndDropSubmittedAnswer) submittedAnswer).checkForDeletedMappings((DragAndDropQuestion) question);
                     }
                 }
             }
             quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
+
+            //recalculate existing score
+            quizSubmission.calculateAndUpdateScores(quizExercise);
+            //update Successful-Flag in Result
+            result.setScore(Math.round(quizSubmission.getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
+
+            // save the updated Result and its Submission
+            resultRepository.save(result);
             quizSubmissionRepository.save(quizSubmission);
         }
     }
