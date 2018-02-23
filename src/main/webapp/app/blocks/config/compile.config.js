@@ -11,6 +11,9 @@
         // disable debug data on prod profile to improve performance
         $compileProvider.debugInfoEnabled(DEBUG_INFO_ENABLED);
 
+        // allow sourcetree links to pass sanitation
+        $compileProvider.aHrefSanitizationWhitelist(/^((ftp|https?|sourcetree):\/\/|mailto:|tel:|#)/i);
+
         /*
         If you wish to debug an application with this information
         then you should open up a debug console in the browser
