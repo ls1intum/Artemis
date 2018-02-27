@@ -38,15 +38,20 @@
         vm.$onInit = init;
 
         /**
-         * loads quizExercise with the selected multipleChoiceQuestionStatistic from server and sets up socket connections
+         * loads quizExercise with the selected multipleChoiceQuestionStatistic
+         * from server and sets up socket connections
          */
         function init() {
             // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
+                QuizExercise.get({
+                    id: _.get($state,"params.quizId")})
+                    .$promise.then(loadQuiz);
             }
             else{
-                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
+                QuizExerciseForStudent.get({
+                    id: _.get($state,"params.quizId")})
+                    .$promise.then(loadQuiz);
             }
             //subscribe websocket for new statistical data
             var websocketChannelForData = '/topic/statistic/'+ _.get($state,"params.quizId");
@@ -57,17 +62,23 @@
             JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
             // ask for new Data if the websocket for new statistical data was notified
-            JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
+            JhiWebsocketService.receive(websocketChannelForData)
+                .then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    MultipleChoiceQuestionStatistic.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
+                    MultipleChoiceQuestionStatistic.get({
+                        id: vm.questionStatistic.id})
+                        .$promise.then(loadNewData);
                 }
                 else{
-                    MultipleChoiceQuestionStatisticForStudent.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
+                    MultipleChoiceQuestionStatisticForStudent.get({
+                        id: vm.questionStatistic.id})
+                        .$promise.then(loadNewData);
                 }
 
             });
             // refresh release information
-            JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
+            JhiWebsocketService.receive(websocketChannelForReleaseState)
+                .then(null, null, function(payload) {
                 vm.quizExercise.quizPointStatistic.released = payload;
                 vm.questionStatistic.released = payload;
                 // send students back to courses if the statistic was revoked
@@ -82,10 +93,14 @@
             });
 
             // add Axes-labels based on selected language
-            $translate('showStatistic.multipleChoiceQuestionStatistic.xAxes').then(function (xLabel) {
+            $translate(
+                'showStatistic.multipleChoiceQuestionStatistic.xAxes')
+                .then(function (xLabel) {
                 vm.options.scales.xAxes[0].scaleLabel.labelString = xLabel;
             });
-            $translate('showStatistic.multipleChoiceQuestionStatistic.yAxes').then(function (yLabel) {
+            $translate(
+                'showStatistic.multipleChoiceQuestionStatistic.yAxes')
+                .then(function (yLabel) {
                 vm.options.scales.yAxes[0].scaleLabel.labelString = yLabel;
             });
         }
@@ -96,19 +111,23 @@
          * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
          */
         function loadQuiz(quiz) {
-            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
+            // if the Student finds a way to the Website, while the Statistic is not released
+            //      -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
+                && quiz.quizPointStatistic.released == false) {
                 $state.go('courses');
             }
             //search selected question in quizExercise based on questionId
             vm.quizExercise = quiz;
             vm.question = null;
             for(var i = 0; vm.question === null && i < vm.quizExercise.questions.length; i++) {
+                // "==" because it compares a number with an string
                 if (_.get($state,"params.questionId") == vm.quizExercise.questions[i].id) {
                     vm.question = vm.quizExercise.questions[i];
                 }
             }
-            // if the Anyone finds a way to the Website, with an wrong combination of QuizId and QuestionId -> go back to Courses
+            // if the Anyone finds a way to the Website, with an wrong combination of QuizId and QuestionId
+            //      -> go back to Courses
             if(vm.question === null) {
                 $state.go('courses');
             }
@@ -124,13 +143,17 @@
         }
 
         /**
-         * load the new multipleChoiceQuestionStatistic from the server if the Websocket has been notified
+         * load the new multipleChoiceQuestionStatistic from the server
+         *      if the Websocket has been notified
          *
-         * @param {MultipleChoiceQuestionStatistic} statistic: the new multipleChoiceQuestionStatistic from the server with the new Data.
+         * @param {MultipleChoiceQuestionStatistic} statistic: the new multipleChoiceQuestionStatistic
+         *                                              from the server with the new Data.
          */
         function loadNewData(statistic) {
-            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
+            // if the Student finds a way to the Website, while the Statistic is not released
+            //      -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
+                && !quiz.quizPointStatistic.released) {
                 $state.go('courses');
             }
             vm.questionStatistic = statistic;
@@ -195,16 +218,19 @@
                                 pointBorderColor: "#838383"
                             });
 
-                        solutionLabel[j] = ([String.fromCharCode(65 + i) + ".", " " + invalidLabel]);
+                        solutionLabel[j] = ([String.fromCharCode(65 + i)
+                                            + ".", " " + invalidLabel]);
                     }
                 }
             });
 
             //add correct-text to the label based on the language
-            $translate('showStatistic.multipleChoiceQuestionStatistic.correct').then(function (correctLabel) {
+            $translate('showStatistic.multipleChoiceQuestionStatistic.correct')
+                .then(function (correctLabel) {
                 for(var i = 0; i < vm.question.answerOptions.length; i++) {
                     if (vm.question.answerOptions[i].isCorrect) {
-                        // check if the answer is valid and if true change solution-label and -color
+                        // check if the answer is valid and if true:
+                        //      change solution-label and -color
                         if (!vm.question.answerOptions[i].invalid) {
                             backgroundSolutionColor[i] = (
                                 {backgroundColor: "#5cb85c",
@@ -212,17 +238,20 @@
                                     pointBackgroundColor: "#5cb85c",
                                     pointBorderColor: "#5cb85c"
                                 });
-                            solutionLabel[i] = ([String.fromCharCode(65 + i) + ".", " (" + correctLabel + ")"]);
+                            solutionLabel[i] = ([String.fromCharCode(65 + i)
+                                                + ".", " (" + correctLabel + ")"]);
                         }
                     }
                 }
             });
 
             //add incorrect-text to the label based on the language
-            $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect').then(function (incorrectLabel) {
+            $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect')
+                .then(function (incorrectLabel) {
                 for(var i = 0; i < vm.question.answerOptions.length; i++) {
                     if (!vm.question.answerOptions[i].isCorrect) {
-                        // check if the answer is valid and if true change solution-label and -color
+                        // check if the answer is valid and if false:
+                        //      change solution-label and -color
                         if (!vm.question.answerOptions[i].invalid) {
                             backgroundSolutionColor[i] = (
                                 {backgroundColor: "#d9534f",
@@ -230,7 +259,8 @@
                                     pointBackgroundColor: "#d9534f",
                                     pointBorderColor: "#d9534f"
                                 });
-                            solutionLabel[i] = ([String.fromCharCode(65 + i) + ".", " (" + incorrectLabel + ")"]);
+                            solutionLabel[i] = ([String.fromCharCode(65 + i)
+                                                + ".", " (" + incorrectLabel + ")"]);
                         }
                     }
                 }
@@ -249,7 +279,8 @@
             //set data based on the answerCounters for each AnswerOption
             for(var i = 0; i < vm.question.answerOptions.length; i++) {
                 for(var j = 0; j < vm.questionStatistic.answerCounters.length; j++) {
-                    if (vm.question.answerOptions[i].id === (vm.questionStatistic.answerCounters[j].answer.id)) {
+                    if (vm.question.answerOptions[i].id
+                        === (vm.questionStatistic.answerCounters[j].answer.id)) {
                         ratedData.push(vm.questionStatistic.answerCounters[j].ratedCounter);
                         unratedData.push(vm.questionStatistic.answerCounters[j].unRatedCounter);
                     }
@@ -259,7 +290,8 @@
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;
             unratedCorrectData = vm.questionStatistic.unRatedCorrectCounter;
 
-            // if show Solution is true use the label, backgroundColor and Data, which show the solution
+            // if show Solution is true use the
+            // label, backgroundColor and Data, which show the solution
             if(vm.showSolution) {
                 // show Solution
                 vm.labels = solutionLabel;
@@ -402,7 +434,8 @@
          * if last QuestionStatistic -> go to the Quiz-Point-Statistic
          */
         function nextStatistic() {
-            if (vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id === vm.question.id) {
+            if (vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id
+                === vm.question.id) {
                 $state.go('quiz-point-statistic-chart', {quizId: vm.quizExercise.id});
             }
             else {
@@ -442,7 +475,10 @@
             if (vm.quizExercise.id) {
                 vm.quizExercise.quizPointStatistic.released = released;
                 if (released) {
-                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {}, function(){}, function () {alert("Error!");})
+                    QuizExercise.releaseStatistics({
+                        id: vm.quizExercise.id}, {},
+                        function(){},
+                        function () {alert("Error!");});
                 } else {
                     QuizExercise.revokeStatistics({id: vm.quizExercise.id}, {});
                 }
@@ -455,7 +491,8 @@
          */
         function releaseButtonDisabled() {
             if (vm.quizExercise != null) {
-                return (!vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate));
+                return (!vm.quizExercise.isPlannedToStart
+                    || moment().isBefore(vm.quizExercise.dueDate));
             }else{
                 return true;
             }
@@ -559,6 +596,6 @@
                     });
                 }
             }
-        }
+        };
     }
 })();

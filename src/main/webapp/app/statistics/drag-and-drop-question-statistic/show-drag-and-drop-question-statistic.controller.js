@@ -39,15 +39,18 @@
         vm.$onInit = init;
 
         /**
-         * loads quizExercise with the selected multipleChoiceQuestionStatistic from server and sets up socket connections
+         * loads quizExercise with the selected multipleChoiceQuestionStatistic
+         * from server and sets up socket connections
          */
         function init() {
             // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
+                QuizExercise.get({id: _.get($state,"params.quizId")})
+                    .$promise.then(loadQuiz);
             }
             else{
-                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuiz);
+                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")})
+                    .$promise.then(loadQuiz);
             }
             //subscribe websocket for new statistical data
             var websocketChannelForData = '/topic/statistic/'+ _.get($state,"params.quizId");
@@ -60,19 +63,23 @@
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    DragAndDropQuestionStatistic.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
+                    DragAndDropQuestionStatistic.get({id: vm.questionStatistic.id})
+                        .$promise.then(loadNewData);
                 }
                 else{
-                    DragAndDropQuestionStatisticForStudent.get({id: vm.questionStatistic.id}).$promise.then(loadNewData);
+                    DragAndDropQuestionStatisticForStudent.get({id: vm.questionStatistic.id})
+                        .$promise.then(loadNewData);
                 }
 
             });
             // refresh release information
-            JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
+            JhiWebsocketService.receive(websocketChannelForReleaseState)
+                .then(null, null, function(payload) {
                 vm.quizExercise.quizPointStatistic.released = payload;
                 vm.questionStatistic.released = payload;
                 // send students back to courses if the statistic was revoked
-                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !payload) {
+                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])
+                    && !payload) {
                     $state.go('courses');
                 }
             });
@@ -97,19 +104,24 @@
          * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
          */
         function loadQuiz(quiz) {
-            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
+            // if the Student finds a way to the Website, while the Statistic is not released
+            //      -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
+                && !quiz.quizPointStatistic.released) {
                 $state.go('courses');
             }
             //search selected question in quizExercise based on questionId
             vm.quizExercise = quiz;
             vm.question = null;
             for(var i = 0; vm.question === null && i < vm.quizExercise.questions.length; i++) {
+                //"==" because it compare a number with a string
                 if (_.get($state,"params.questionId") == vm.quizExercise.questions[i].id) {
                     vm.question = vm.quizExercise.questions[i];
                 }
             }
-            // if the Anyone finds a way to the Website, with an wrong combination of QuizId and QuestionId -> go back to Courses
+            // if the Anyone finds a way to the Website,
+            // with an wrong combination of QuizId and QuestionId
+            //      -> go back to Courses
             if(vm.question === null) {
                 $state.go('courses');
             }
@@ -120,9 +132,12 @@
         }
 
         /**
-         * load the new dragAndDropQuestionStatistic from the server if the Websocket has been notified
+         * load the new dragAndDropQuestionStatistic from the server
+         * if the Websocket has been notified
          *
-         * @param {DragAndDropQuestionStatistic} statistic: the new multipleChoiceQuestionStatistic from the server with the new Data.
+         * @param {DragAndDropQuestionStatistic} statistic:
+         *                          the new multipleChoiceQuestionStatistic
+         *                          from the server with the new Data.
          */
         function loadNewData(statistic) {
             // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
@@ -215,7 +230,8 @@
             //set data based on the answerCounters for each AnswerOption
             for(var i = 0; i < vm.question.dropLocations.length; i++) {
                 for(var j = 0; j < vm.questionStatistic.dropLocationCounters.length; j++) {
-                    if (vm.question.dropLocations[i].id === (vm.questionStatistic.dropLocationCounters[j].dropLocation.id)) {
+                    if (vm.question.dropLocations[i].id
+                        === (vm.questionStatistic.dropLocationCounters[j].dropLocation.id)) {
                         ratedData.push(vm.questionStatistic.dropLocationCounters[j].ratedCounter);
                         unratedData.push(vm.questionStatistic.dropLocationCounters[j].unRatedCounter);
                     }
@@ -227,7 +243,8 @@
 
             vm.labels = label;
 
-            // if show Solution is true use the label, backgroundColor and Data, which show the solution
+            // if show Solution is true use the label,
+            // backgroundColor and Data, which show the solution
             if(vm.showSolution) {
                 // show Solution
                 // if show Solution is true use the backgroundColor which shows the solution
@@ -363,7 +380,8 @@
          * Get the drag item that was mapped to the given drop location in the sample solution
          *
          * @param dropLocation {object} the drop location that the drag item should be mapped to
-         * @return {object | null} the mapped drag item, or null, if no drag item has been mapped to this location
+         * @return {object | null} the mapped drag item,
+         *                          or null if no drag item has been mapped to this location
          */
         function correctDragItemForDropLocation(dropLocation) {
             var mapping = DragAndDropQuestionUtil.solve(vm.question, null).find(function (mapping) {
@@ -410,7 +428,8 @@
          * if last QuestionStatistic -> go to the Quiz-Point-Statistic
          */
         function nextStatistic() {
-            if (vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id === vm.question.id) {
+            if (vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id
+                    === vm.question.id) {
                 $state.go('quiz-point-statistic-chart', {quizId: vm.quizExercise.id});
             }
             else {
@@ -450,7 +469,9 @@
             if (vm.quizExercise.id) {
                 vm.quizExercise.quizPointStatistic.released = released;
                 if (released) {
-                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {}, function(){}, function () {alert("Error!");})
+                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {},
+                        function(){},
+                        function () {alert("Error!");});
                 } else {
                     QuizExercise.revokeStatistics({id: vm.quizExercise.id}, {});
                 }
@@ -463,7 +484,8 @@
          */
         function releaseButtonDisabled() {
             if (vm.quizExercise != null) {
-                return (!vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate));
+                return (!vm.quizExercise.isPlannedToStart
+                    || moment().isBefore(vm.quizExercise.dueDate));
             }else{
                 return true;
             }
@@ -567,6 +589,6 @@
                     });
                 }
             }
-        }
+        };
     }
 })();

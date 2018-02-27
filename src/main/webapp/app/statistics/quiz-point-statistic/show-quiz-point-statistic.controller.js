@@ -34,10 +34,12 @@
         function init() {
             // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+                QuizExercise.get({id: _.get($state,"params.quizId")})
+                    .$promise.then(loadQuizSuccess);
             }
             else{
-                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")})
+                    .$promise.then(loadQuizSuccess);
             }
 
             //subscribe websocket for new statistical data
@@ -51,18 +53,22 @@
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    QuizPointStatistic.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
+                    QuizPointStatistic.get({id: vm.quizPointStatistic.id})
+                        .$promise.then(loadNewData);
                 }
                 else{
-                    QuizPointStatisticForStudent.get({id: vm.quizPointStatistic.id}).$promise.then(loadNewData);
+                    QuizPointStatisticForStudent.get({id: vm.quizPointStatistic.id})
+                        .$promise.then(loadNewData);
                 }
 
             });
             // refresh release information
-            JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
+            JhiWebsocketService.receive(websocketChannelForReleaseState)
+                .then(null, null, function(payload) {
                 vm.quizExercise.quizPointStatistic.released = payload;
                 // send students back to courses if the statistic was revoked
-                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !payload) {
+                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])
+                    && !payload) {
                     $state.go('courses');
                 }
             });
@@ -84,11 +90,14 @@
         /**
          * load the new quizPointStatistic from the server if the Websocket has been notified
          *
-         * @param {QuizPointStatistic} statistic: the new quizPointStatistic from the server with the new Data.
+         * @param {QuizPointStatistic} statistic: the new quizPointStatistic
+         *                                          from the server with the new Data.
          */
         function loadNewData(statistic) {
-            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && statistic.released == false) {
+            // if the Student finds a way to the Website, while the Statistic is not released
+            //      -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
+                && !statistic.released) {
                 $state.go('courses');
             }
             vm.quizPointStatistic = statistic;
@@ -98,11 +107,14 @@
         /**
          * This functions loads the Quiz, which is necessary to build the Web-Template
          *
-         * @param {QuizExercise} quiz: the quizExercise, which the this quiz-point-statistic presents.
+         * @param {QuizExercise} quiz: the quizExercise,
+         *                              which the this quiz-point-statistic presents.
          */
         function loadQuizSuccess(quiz) {
-            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
+            // if the Student finds a way to the Website, while the Statistic is not released
+            //      -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
+                && quiz.quizPointStatistic.released == false) {
                 $state.go('courses');
             }
             vm.quizExercise = quiz;
@@ -222,17 +234,20 @@
          * if there is no QuestionStatistic -> go to QuizStatistic
          */
         function previousStatistic() {
-            if(vm.quizExercise.questions === null || vm.quizExercise.questions.length === 0) {
+            if(vm.quizExercise.questions === null
+                || vm.quizExercise.questions.length === 0) {
                 $state.go('quiz-statistic-chart',{quizId: vm.quizExercise.id});
             }
             else{
-                if(vm.quizExercise.questions[vm.quizExercise.questions.length - 1].type === "multiple-choice") {
+                if(vm.quizExercise.questions[vm.quizExercise.questions.length - 1].type
+                    === "multiple-choice") {
                     $state.go('multiple-choice-question-statistic-chart', {
                         quizId: vm.quizExercise.id,
                         questionId: vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id
                     });
                 }
-                if (vm.quizExercise.questions[vm.quizExercise.questions.length - 1].type === "drag-and-drop") {
+                if (vm.quizExercise.questions[vm.quizExercise.questions.length - 1].type
+                    === "drag-and-drop") {
                     $state.go('drag-and-drop-question-statistic-chart', {
                         quizId: vm.quizExercise.id,
                         questionId: vm.quizExercise.questions[vm.quizExercise.questions.length - 1].id
@@ -258,7 +273,9 @@
             if (vm.quizExercise.id) {
                 vm.quizExercise.quizPointStatistic.released = released;
                 if (released) {
-                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {}, function(){}, function () {alert("Error!");})
+                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {},
+                        function(){},
+                        function () {alert("Error!");})
                 } else {
                     QuizExercise.revokeStatistics({id: vm.quizExercise.id}, {});
                 }
@@ -271,7 +288,8 @@
          */
         function releaseButtonDisabled() {
             if (vm.quizExercise != null) {
-                return (!vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate));
+                return (!vm.quizExercise.isPlannedToStart
+                    || moment().isBefore(vm.quizExercise.dueDate));
             }else{
                 return true;
             }
@@ -375,6 +393,6 @@
                     });
                 }
             }
-        }
+        };
     }
 })();

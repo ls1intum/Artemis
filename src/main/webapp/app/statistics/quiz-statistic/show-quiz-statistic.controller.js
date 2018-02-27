@@ -34,15 +34,18 @@
         vm.$onInit = init;
 
         /**
-         * loads quizExercise with all multipleChoiceQuestionStatistics from server and sets up socket connections
+         * loads quizExercise with all multipleChoiceQuestionStatistics
+         * from server and sets up socket connections
          */
         function init() {
             // use different REST-call if the User is a Student
             if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+                QuizExercise.get({id: _.get($state,"params.quizId")})
+                    .$promise.then(loadQuizSuccess);
             }
             else{
-                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
+                QuizExerciseForStudent.get({id: _.get($state,"params.quizId")})
+                    .$promise.then(loadQuizSuccess);
             }
 
             //subscribe websocket for new statistical data
@@ -54,20 +57,25 @@
             JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
             // ask for new Data if the websocket for new statistical data was notified
-            JhiWebsocketService.receive(websocketChannelForData).then(null, null, function(notify) {
+            JhiWebsocketService.receive(websocketChannelForData)
+                .then(null, null, function(notify) {
                 if(Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    QuizExercise.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess);
+                    QuizExercise.get({id: _.get($state,"params.quizId")})
+                        .$promise.then(loadQuizSuccess);
                 }
                 else{
-                    QuizExerciseForStudent.get({id: _.get($state,"params.quizId")}).$promise.then(loadQuizSuccess)
+                    QuizExerciseForStudent.get({id: _.get($state,"params.quizId")})
+                        .$promise.then(loadQuizSuccess)
                 }
 
             });
             // refresh release information
-            JhiWebsocketService.receive(websocketChannelForReleaseState).then(null, null, function(payload) {
+            JhiWebsocketService.receive(websocketChannelForReleaseState)
+                .then(null, null, function(payload) {
                 vm.quizExercise.quizPointStatistic.released = payload;
                 // send students back to courses if the statistic was revoked
-                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !payload) {
+                if(!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])
+                    && !payload) {
                     $state.go('courses');
                 }
             });
@@ -93,8 +101,10 @@
          * @param {QuizExercise} quiz: the quizExercise, which the this quiz-statistic presents.
          */
         function loadQuizSuccess(quiz) {
-            // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released == false) {
+            // if the Student finds a way to the Website, while the Statistic is not released
+            //      -> the Student will be send back to Courses
+            if( (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
+                && !quiz.quizPointStatistic.released) {
                 $state.go('courses');
             }
             vm.quizExercise = quiz;
@@ -112,7 +122,7 @@
             var result = 0;
 
             vm.quizExercise.questions.forEach(function(question) {
-                result = result + question.score
+                result = result + question.score;
             });
             return result;
         }
@@ -139,10 +149,16 @@
                         pointBackgroundColor: "#5bc0de",
                         pointBorderColor: "#5bc0de"
                     });
-                ratedData.push(vm.quizExercise.questions[i].questionStatistic.ratedCorrectCounter);
-                unratedData.push(vm.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter);
-                ratedAverage = ratedAverage + (vm.quizExercise.questions[i].questionStatistic.ratedCorrectCounter * vm.quizExercise.questions[i].score);
-                unratedAverage = unratedAverage + (vm.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * vm.quizExercise.questions[i].score);
+                ratedData.push(
+                    vm.quizExercise.questions[i].questionStatistic.ratedCorrectCounter);
+                unratedData.push(
+                    vm.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter);
+                ratedAverage = ratedAverage
+                    + (vm.quizExercise.questions[i].questionStatistic.ratedCorrectCounter
+                        * vm.quizExercise.questions[i].score);
+                unratedAverage = unratedAverage
+                    + (vm.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter
+                        * vm.quizExercise.questions[i].score);
             }
 
             //set Background for invalid questions = grey
@@ -249,7 +265,9 @@
             if (vm.quizExercise.id) {
                 vm.quizExercise.quizPointStatistic.released = released;
                 if (released) {
-                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {}, function(){}, function () {alert("Error!");})
+                    QuizExercise.releaseStatistics({id: vm.quizExercise.id}, {},
+                        function(){},
+                        function () {alert("Error!");});
                 } else {
                     QuizExercise.revokeStatistics({id: vm.quizExercise.id}, {});
                 }
@@ -261,8 +279,9 @@
          * @returns {boolean} true if it's allowed, false if not
          */
         function releaseButtonDisabled() {
-            if (vm.quizExercise != null) {
-                return (!vm.quizExercise.isPlannedToStart || moment().isBefore(vm.quizExercise.dueDate));
+            if (vm.quizExercise !== null) {
+                return (!vm.quizExercise.isPlannedToStart
+                    || moment().isBefore(vm.quizExercise.dueDate));
             }else{
                 return true;
             }
@@ -366,6 +385,6 @@
                     });
                 }
             }
-        }
+        };
     }
 })();
