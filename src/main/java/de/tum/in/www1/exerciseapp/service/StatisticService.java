@@ -40,14 +40,15 @@ public class StatisticService {
         threadPoolTaskScheduler.initialize();
 
         threadPoolTaskScheduler.scheduleWithFixedDelay(() -> {
-            if (!resultToAdd.isEmpty() && !resultToRemove.isEmpty()) {
+            if (!resultToAdd.isEmpty() || !resultToRemove.isEmpty()) {
 
                 for(long quizId: resultToAdd.keySet()) {
+
                     QuizExercise quiz = statisticService.quizExerciseService.findOneWithQuestionsAndStatistics(quizId);
-                     for(Result result: resultToAdd.get(quizId)) {
+                     for(Result result: resultToAdd.remove(quizId)) {
                          statisticService.addResultToAllStatistics(quiz, result);
                      }
-                     for(Result result: resultToRemove.get(quizId)) {
+                     for(Result result: resultToRemove.remove(quizId)) {
                          statisticService.removeResultFromAllStatistics(quiz, result);
                      }
                     statisticService.quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
@@ -59,8 +60,6 @@ public class StatisticService {
                     //notify users via websocket about new results for the statistics.
                     statisticService.messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), true);
                 }
-                resultToAdd.clear();
-                resultToRemove.clear();
             }
         }, 3000);
     }
