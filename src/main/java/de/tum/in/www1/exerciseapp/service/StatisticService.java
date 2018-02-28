@@ -2,17 +2,17 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.Semaphore;
+import javax.annotation.PostConstruct;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by Moritz Issig on 22.11.17.
@@ -20,8 +20,50 @@ import java.util.concurrent.Semaphore;
 @Service
 public class StatisticService {
 
-    private static Set<Long> semaphorSetUpdateStatistic = new HashSet<Long>();
-    private static Semaphore statisticSemaphore = new Semaphore(1);
+    private final Logger log = LoggerFactory.getLogger(StatisticService.class);
+
+
+    private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+
+    private static Map<Long, List<Result>> resultToAdd = new ConcurrentHashMap<>();
+    private static Map<Long, List<Result>> resultToRemove = new ConcurrentHashMap<>();
+
+    private static StatisticService statisticService;
+
+    @PostConstruct
+    private void initStaticStatisticService() {
+        statisticService = this;
+    }
+
+    static {
+        threadPoolTaskScheduler.setThreadNamePrefix("StatisticUpdateScheduler");
+        threadPoolTaskScheduler.initialize();
+
+        threadPoolTaskScheduler.scheduleWithFixedDelay(() -> {
+            if (!resultToAdd.isEmpty() && !resultToRemove.isEmpty()) {
+
+                for(long quizId: resultToAdd.keySet()) {
+                    QuizExercise quiz = statisticService.quizExerciseService.findOneWithQuestionsAndStatistics(quizId);
+                     for(Result result: resultToAdd.get(quizId)) {
+                         statisticService.addResultToAllStatistics(quiz, result);
+                     }
+                     for(Result result: resultToRemove.get(quizId)) {
+                         statisticService.removeResultFromAllStatistics(quiz, result);
+                     }
+                    statisticService.quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
+                    for (Question question : quiz.getQuestions()) {
+                        if (question.getQuestionStatistic() != null) {
+                            statisticService.questionStatisticRepository.save(question.getQuestionStatistic());
+                        }
+                    }
+                    //notify users via websocket about new results for the statistics.
+                    statisticService.messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), true);
+                }
+                resultToAdd.clear();
+                resultToRemove.clear();
+            }
+        }, 3000);
+    }
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
@@ -47,36 +89,7 @@ public class StatisticService {
         this.questionStatisticRepository = questionStatisticRepository;
     }
 
-    /**
-     * Perform async operations after we were notified about new results for the statistics.
-     *
-     * @param quizExercise contains the object of the quiz, for which statistics new result are available;
-     */
-    @Async
 
-    public void notifyStatisticWebsocket(QuizExercise quizExercise) {
-        // notify user via websocket
-        // if the quiz-timer is ending this service waits for 300ms for additional Results before its sending the Websocket
-        if(quizExercise.getDueDate().isAfter(ZonedDateTime.now()) && quizExercise.getDueDate().isBefore(ZonedDateTime.now().plusSeconds(10))) {
-            // semaphore, which checks if the service is still waiting for new Results for the given qiuzExercise
-            if(!semaphorSetUpdateStatistic.contains(quizExercise.getId())) {
-                semaphorSetUpdateStatistic.add(quizExercise.getId());
-                Timer timer = new Timer();
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        messagingTemplate.convertAndSend("/topic/statistic/" + quizExercise.getId(), true);
-                        semaphorSetUpdateStatistic.remove(quizExercise.getId());
-                    }
-                }, 300);
-            }
-        }
-        // if the quiz is running or later if its over the websocket will be notified instantly
-        else{
-            messagingTemplate.convertAndSend("/topic/statistic/" + quizExercise.getId(), true);
-        }
-
-    }
     /**
      * Perform async operations if the release state of an statistic is changed
      *
@@ -126,6 +139,9 @@ public class StatisticService {
                 resultRepository.save(result);
                 quizSubmissionRepository.save(quizSubmission);
 
+                // replace proxy with submission, because of Lazy-fetching
+                result.setSubmission(quizSubmission);
+
                 // find latest rated Result
                 if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
                     latestRatedResult = result;
@@ -159,59 +175,67 @@ public class StatisticService {
      * @param newResult the new Result, which will be added to the statistics
      * @param oldResult the old Result, which will be removedfrom the statistics. oldResult = null, if there is no old Result
      */
-    public boolean updateStatistics(Result newResult, Result oldResult, QuizExercise quiz) {
-        // critical part locked with Semaphore statisticSemaphore
-        try {
-            statisticSemaphore.acquire();
-            // get quiz within semaphore to prevent lost updates
-            // (if the same statistic is updated by several threads at the same time,
-            // new values might be calculated based on outdated data)
-            quiz = quizExerciseService.findOneWithQuestionsAndStatistics(quiz.getId());
-            if (oldResult != null) {
-                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(oldResult.getSubmission().getId());
+    public void updateStatistics(Result newResult, Result oldResult, QuizExercise quiz) {
 
-                for (Question question : quiz.getQuestions()) {
-                    if (question.getQuestionStatistic() != null) {
-                        // remove the previous Result from the QuestionStatistics
-                        question.getQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(question), oldResult.isRated());
-                    }
-                }
-                // add the new Result to the quizPointStatistic and remove the previous one
-                quiz.getQuizPointStatistic().removeOldResult(oldResult.getScore(), oldResult.isRated());
+        if(oldResult != null){
+            if(!resultToRemove.keySet().contains(quiz.getId())){
+                resultToRemove.put(quiz.getId(), new ArrayList<>());
             }
-            addResultToAllStatistics(quiz, newResult);
-
-            quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
-            for (Question question : quiz.getQuestions()) {
-                if (question.getQuestionStatistic() != null) {
-                    questionStatisticRepository.save(question.getQuestionStatistic());
-                }
-            }
-        } catch (InterruptedException e) {
-            return false;
-        } finally {
-            statisticSemaphore.release();
+            resultToRemove.get(quiz.getId()).add(oldResult);
         }
-        // notify statistics about new Result
-        this.notifyStatisticWebsocket(quiz);
-        return true;
+        if(!resultToAdd.keySet().contains(quiz.getId())){
+            resultToAdd.put(quiz.getId(), new ArrayList<>());
+        }
+        resultToAdd.get(quiz.getId()).add(oldResult);
     }
 
     /**
      * add Result to all Statistics of the given QuizExercise
      *
      * @param quizExercise contains the object of the quiz, where the Results will be added
-     * @param result the result which will be added
+     * @param result the result which will be added (NOTE: add the submission to the result previously (this would improve the performance)
      */
     private void addResultToAllStatistics(QuizExercise quizExercise, Result result) {
         // update QuizPointStatistic with the result
         if (result != null) {
+            // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
+            QuizSubmission quizSubmission;
+            if(result.getSubmission() instanceof QuizSubmission){
+                quizSubmission = (QuizSubmission) result.getSubmission();
+            } else {
+                quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+            }
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
-            QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+            for (Question question : quizExercise.getQuestions()) {
+                // update QuestionStatistics with the result
+                if (question.getQuestionStatistic() != null && result.getSubmission() instanceof QuizSubmission) {
+                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), result.isRated());
+                }
+            }
+        }
+    }
+
+    /**
+     * remove Result from all Statistics of the given QuizExercise
+     *
+     * @param quizExercise contains the object of the quiz, where the Results will be removed
+     * @param result the result which will be removed (NOTE: add the submission to the result previously (this would improve the performance)
+     */
+    private void removeResultFromAllStatistics(QuizExercise quizExercise, Result result) {
+        // update QuizPointStatistic with the result
+        if (result != null) {
+            // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database
+            QuizSubmission quizSubmission;
+            if(result.getSubmission() instanceof QuizSubmission){
+                quizSubmission = (QuizSubmission) result.getSubmission();
+            } else {
+                quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+            }
+            quizExercise.getQuizPointStatistic().removeOldResult(result.getScore(), result.isRated());
             for (Question question : quizExercise.getQuestions()) {
                 // update QuestionStatistics with the result
                 if (question.getQuestionStatistic() != null) {
-                    question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), result.isRated());
+                    question.getQuestionStatistic().removeOldResult(quizSubmission.getSubmittedAnswerForQuestion(question), result.isRated());
                 }
             }
         }
