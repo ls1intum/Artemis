@@ -197,7 +197,6 @@ public class QuizSubmissionResource {
                     quizSubmission.setSubmitted(true);
                     quizSubmission.setType(SubmissionType.MANUAL);
                     quizSubmission.calculateAndUpdateScores(quizExercise);
-                    quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
                     // create and save result
                     Result result = new Result().participation(participation).submission(quizSubmission);
