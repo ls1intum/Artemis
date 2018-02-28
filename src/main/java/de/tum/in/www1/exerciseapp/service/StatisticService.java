@@ -40,17 +40,23 @@ public class StatisticService {
         threadPoolTaskScheduler.initialize();
 
         threadPoolTaskScheduler.scheduleWithFixedDelay(() -> {
+            // check if where is a Result to add or to move -> otherwise  do nothing
             if (!resultToAdd.isEmpty() || !resultToRemove.isEmpty()) {
 
+                //separate results by quizExercise
                 for(long quizId: resultToAdd.keySet()) {
 
+                    // get the statistic for the quizExrcise
                     QuizExercise quiz = statisticService.quizExerciseService.findOneWithQuestionsAndStatistics(quizId);
+                    // add all results of the quizExercise
                      for(Result result: resultToAdd.remove(quizId)) {
                          statisticService.addResultToAllStatistics(quiz, result);
                      }
+                    // remove all results of the quizExercise
                      for(Result result: resultToRemove.remove(quizId)) {
                          statisticService.removeResultFromAllStatistics(quiz, result);
                      }
+                     //save statistics
                     statisticService.quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
                     for (Question question : quiz.getQuestions()) {
                         if (question.getQuestionStatistic() != null) {
