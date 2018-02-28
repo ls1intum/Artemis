@@ -46,8 +46,6 @@ public class QuizSubmissionResource {
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizSubmissionService quizSubmissionService;
     private final QuizExerciseService quizExerciseService;
-    private final QuizPointStatisticRepository quizPointStatisticRepository;
-    private final QuestionStatisticRepository questionStatisticRepository;
     private final ResultRepository resultRepository;
     private final ResultService resultService;
     private final ParticipationService participationService;
@@ -59,8 +57,6 @@ public class QuizSubmissionResource {
     public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository,
                                   QuizSubmissionService quizSubmissionService,
                                   QuizExerciseService quizExerciseService,
-                                  QuizPointStatisticRepository quizPointStatisticRepository,
-                                  QuestionStatisticRepository questionStatisticRepository,
                                   ResultRepository resultRepository,
                                   ResultService resultService,
                                   ParticipationService participationService,
@@ -77,8 +73,6 @@ public class QuizSubmissionResource {
         this.userService = userService;
         this.messagingTemplate = messagingTemplate;
         this.statisticService = statisticService;
-        this.quizPointStatisticRepository = quizPointStatisticRepository;
-        this.questionStatisticRepository = questionStatisticRepository;
         this.authCheckService = authCheckService;
     }
 
@@ -213,13 +207,13 @@ public class QuizSubmissionResource {
                     result.evaluateSubmission();
                     // save result
                     resultRepository.save(result);
+                    // replace proxy with submission, because of Lazy-fetching
+                    result.setSubmission(quizSubmission);
 
                     // get previous Result
                     Result previousResult = getPreviousResult(result);
-
-                    if (!statisticService.updateStatistics(result, previousResult, quizExercise)) {
-                        log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
-                    }
+                    // update statistics
+                    statisticService.updateStatistics(result, previousResult, quizExercise);
                     // return quizSubmission
                     quizSubmission.setSubmissionDate(result.getCompletionDate());
                     return ResponseEntity.created(new URI("/api/quiz-submissions/" + quizSubmission.getId())).body(quizSubmission);
@@ -378,14 +372,14 @@ public class QuizSubmissionResource {
         result.evaluateSubmission();
         // save result
         result = resultRepository.save(result);
-
-        // get previous Result
-        Result previousResult = getPreviousResult(result);
+        // replace proxy with submission, because of Lazy-fetching
+        result.setSubmission(quizSubmission);
 
         // update statistics
-        if (!statisticService.updateStatistics(result, previousResult, quizExercise)) {
-            log.error("Possible offset between Results and Statistics in the Quiz-Statistics of Exercise: " + participation.getExercise());
-        }
+        // NOTE: where is never an old Result -> oldResult = null
+        long start = System.currentTimeMillis();
+        statisticService.updateStatistics(result, null, quizExercise);
+        log.info(     "Update Statistics took: {} ms", System.currentTimeMillis() - start);
 
         // remove scores from submission if quiz hasn't ended yet
         if (quizSubmission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
