@@ -171,14 +171,11 @@ public class StatisticService {
     }
 
     /**
-     * 1. lock critical part with semaphore for database transaction safety
-     * 2. remove old Result from the quiz-point-statistic and all question-statistics
-     * 3. add new Result to the quiz-point-statistic and all question-statistics
-     * 4. save statistics
-     * 5. notify statistic-websocket
+     * 1. remove old Result from the quiz-point-statistic and all question-statistics
+     * 2. add new Result to the quiz-point-statistic and all question-statistics
      *
      * @param newResult the new Result, which will be added to the statistics
-     * @param oldResult the old Result, which will be removedfrom the statistics. oldResult = null, if there is no old Result
+     * @param oldResult the old Result, which will be removed from the statistics. oldResult = null, if there is no old Result
      */
     public void updateStatistics(Result newResult, Result oldResult, QuizExercise quiz) {
 
