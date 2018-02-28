@@ -186,7 +186,7 @@ public class StatisticService {
         if(!resultToAdd.keySet().contains(quiz.getId())){
             resultToAdd.put(quiz.getId(), new ArrayList<>());
         }
-        resultToAdd.get(quiz.getId()).add(oldResult);
+        resultToAdd.get(quiz.getId()).add(newResult);
     }
 
     /**
