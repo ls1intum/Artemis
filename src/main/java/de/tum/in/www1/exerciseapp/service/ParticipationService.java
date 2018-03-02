@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
@@ -98,6 +99,54 @@ public class ParticipationService {
 
         save(participation);
         return participation;
+    }
+
+    /**
+     * Get a participation for the given quiz and username
+     *
+     * If the quiz hasn't ended, participation is constructed from cached submission
+     *
+     * If the quis has ended, we first look in the database for the participation
+     * and construct one if none was found
+     *
+     * @param quizExercise the quiz exercise to attach to the participation
+     * @param username the username of the user that the participation belongs to
+     * @return the found or created participation
+     */
+    public Participation getParticipationForQuiz(QuizExercise quizExercise, String username) {
+        if (quizExercise.hasEnded()) {
+            // try getting participation from database first
+            Participation participation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
+            if (participation != null) {
+                return participation;
+            }
+        }
+
+        // get submission from HashMap
+        QuizSubmission quizSubmission = QuizScheduleService.getQuizSubmission(quizExercise.getId(), username);
+        if (quizExercise.hasEnded()) {
+            if (quizSubmission.isSubmitted()) {
+                quizSubmission.setType(SubmissionType.MANUAL);
+            } else {
+                quizSubmission.setSubmitted(true);
+                quizSubmission.setType(SubmissionType.TIMEOUT);
+            }
+        }
+
+        Result result = new Result().submission(quizSubmission);
+        if (quizExercise.hasEnded()) {
+            result.setRated(true);
+            result.setCompletionDate(ZonedDateTime.now());
+            // calculate scores and update result and submission accordingly
+            quizSubmission.calculateAndUpdateScores(quizExercise);
+            result.evaluateSubmission();
+        }
+
+        // construct participation
+        return new Participation()
+            .initializationState(quizSubmission.isSubmitted() ? ParticipationState.FINISHED : ParticipationState.INITIALIZED)
+            .exercise(quizExercise)
+            .addResults(result);
     }
 
     /**

@@ -182,7 +182,7 @@ public class QuizScheduleService {
             QuizExercise quizExercise = quizExerciseService.findOne(quizId);
 
             // check if the quiz has ended
-            if (quizExercise.getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS < 0) {
+            if (quizExercise.hasEnded()) {
                 // send the participation with containing result and quiz back to the users via websocket
                 //      and remove the participation from the ParticipationHashMap
                 for (Participation participation : participationHashMap.remove(quizId)) {
@@ -218,15 +218,16 @@ public class QuizScheduleService {
             // first case: the user submitted the quizSubmission
             if (userSubmissionMap.get(username).isSubmitted()) {
                 QuizSubmission quizSubmission = userSubmissionMap.remove(username);
-                quizSubmission.setType(SubmissionType.MANUAL);
+                if (quizSubmission.getType() == null) {
+                    quizSubmission.setType(SubmissionType.MANUAL);
+                }
 
                 // Create Participation and Result and save to Database (DB Write)
                 // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
                 createParticipationWithResultAndWriteItInHashMaps(quizExercise, username, quizSubmission);
 
-
                 // second case: the quiz has ended
-            } else if (quizExercise.getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS < 0) {
+            } else if (quizExercise.hasEnded()) {
                 QuizSubmission quizSubmission = userSubmissionMap.remove(username);
                 quizSubmission.setSubmitted(true);
                 quizSubmission.setType(SubmissionType.TIMEOUT);
@@ -261,16 +262,17 @@ public class QuizScheduleService {
             //add the quizExercise to the participation
             participation.setExercise(quizExercise);
 
-            // create and save new result
+            // create new result
             Result result = new Result().participation(participation).submission(quizSubmission);
             result.setRated(true);
             result.setCompletionDate(ZonedDateTime.now());
             result.setSubmission(quizSubmission);
-            // calculate score and update result accordingly
+
+            // calculate scores and update result and submission accordingly
+            quizSubmission.calculateAndUpdateScores(quizExercise);
             result.evaluateSubmission();
 
-            // update quizSubmission with CompletionDate;
-            quizSubmission.setSubmissionDate(result.getCompletionDate());
+            // add result to participation
             participation.addResults(result);
 
             //save participation with result and quizSubmission

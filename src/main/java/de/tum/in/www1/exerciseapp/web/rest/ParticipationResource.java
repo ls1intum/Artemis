@@ -2,6 +2,8 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.*;
@@ -20,6 +22,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
+import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,7 +38,7 @@ public class ParticipationResource {
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
     private final ParticipationService participationService;
     private final ParticipationRepository participationRepository;
-    private final ResultRepository resultRepository;
+    private final QuizExerciseService quizExerciseService;
     private final ExerciseService exerciseService;
     private final CourseService courseService;
     private final AuthorizationCheckService authCheckService;
@@ -44,13 +48,19 @@ public class ParticipationResource {
 
     private static final String ENTITY_NAME = "participation";
 
-    public ParticipationResource(UserService userService, ParticipationService participationService, ParticipationRepository participationRepository, CourseService courseService,
-                                 ResultRepository resultRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-                                 Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ParticipationResource(UserService userService,
+                                 ParticipationService participationService,
+                                 ParticipationRepository participationRepository,
+                                 CourseService courseService,
+                                 QuizExerciseService quizExerciseService,
+                                 ExerciseService exerciseService,
+                                 AuthorizationCheckService authCheckService,
+                                 Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                 Optional<VersionControlService> versionControlService) {
         this.userService = userService;
         this.participationService = participationService;
         this.participationRepository = participationRepository;
-        this.resultRepository = resultRepository;
+        this.quizExerciseService = quizExerciseService;
         this.exerciseService = exerciseService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
@@ -355,13 +365,31 @@ public class ParticipationResource {
         }
         Participation participation;
         if (exercise instanceof QuizExercise) {
-            participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+            participation = participationForQuizExercise((QuizExercise) exercise, principal.getName());
         } else {
             participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
         }
         return Optional.ofNullable(participation)
             .map(result -> new ResponseEntity<>(result, HttpStatus.OK))
             .orElse(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+    }
+
+    private Participation participationForQuizExercise(QuizExercise quizExercise, String username) {
+        if (!quizExercise.hasStarted()) {
+            // Quiz hasn't started yet => no Result, only quizExercise without questions
+            quizExercise.filterSensitiveInformation();
+            return new Participation().exercise(quizExercise);
+        } else if (quizExercise.isSubmissionAllowed()) {
+            // Quiz is active => construct Participation from
+            // filtered quizExercise and submission from HashMap
+            quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
+            quizExercise.filterForStudentsDuringQuiz();
+            return participationService.getParticipationForQuiz(quizExercise, username);
+        } else {
+            // quiz has ended => get participation from database and add full quizExercise
+            quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
+            return participationService.getParticipationForQuiz(quizExercise, username);
+        }
     }
 
     /**

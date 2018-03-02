@@ -244,26 +244,7 @@ public class QuizExerciseResource {
         // only filter out information if quiz hasn't ended yet
         if (quizExercise.shouldFilterForStudents()) {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
-            for (Question question : quizExercise.getQuestions()) {
-                question.setExplanation(null);
-                // TODO: check if statistic is released
-                question.setQuestionStatistic(null);
-
-                // filter out "isCorrect" and "explanation" fields from answerOptions in all MC questions (so students can't see correct options in JSON)
-                if (question instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        answerOption.setIsCorrect(null);
-                        answerOption.setExplanation(null);
-                    }
-                }
-
-                // filter out "correctMappings" from DragAndDropQuestions
-                if (question instanceof DragAndDropQuestion) {
-                    DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
-                    dndQuestion.setCorrectMappings(null);
-                }
-            }
+            quizExercise.filterForStudentsDuringQuiz();
         }
         // filter out the statistic information if the statistic is not released
         // TODO: check if statistic is released
@@ -337,7 +318,7 @@ public class QuizExerciseResource {
                 break;
             case "release-statistics":
                 // release statistics
-                if (quizExercise.hasStarted() && quizExercise.getRemainingTime() < 0) {
+                if (quizExercise.hasEnded()) {
                     quizExercise.getQuizPointStatistic().setReleased(true);
                     for ( Question question : quizExercise.getQuestions()){
                         question.getQuestionStatistic().setReleased(true);

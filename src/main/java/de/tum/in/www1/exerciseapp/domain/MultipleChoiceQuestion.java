@@ -207,6 +207,16 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
 
+
+    @Override
+    public void filterForStudentsDuringQuiz() {
+        super.filterForStudentsDuringQuiz();
+        for (AnswerOption answerOption : getAnswerOptions()) {
+            answerOption.setIsCorrect(null);
+            answerOption.setExplanation(null);
+        }
+    }
+
     @Override
     public Boolean isValid() {
         // check general validity (using superclass)

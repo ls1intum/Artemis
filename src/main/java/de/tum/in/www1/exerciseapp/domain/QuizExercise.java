@@ -232,6 +232,10 @@ public class QuizExercise extends Exercise implements Serializable {
         return hasStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
     }
 
+    public Boolean hasEnded() {
+        return hasStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
+    }
+
     /**
      * Check if the quiz should be filtered for students (because it hasn't ended yet)
      * @return true if quiz should be filtered, false otherwise
@@ -347,6 +351,20 @@ public class QuizExercise extends Exercise implements Serializable {
     public void filterSensitiveInformation() {
         setQuestions(null);
         setQuizPointStatistic(null);
+    }
+
+    /**
+     * filter out information about correct answers
+     */
+    public void filterForStudentsDuringQuiz() {
+        // filter out statistics
+        setQuizPointStatistic(null);
+
+        // filter out statistics, explanations, and any information about correct answers
+        // from all questions (so students can't find them in the JSON while answering the quiz)
+        for (Question question : this.getQuestions()) {
+            question.filterForStudentsDuringQuiz();
+        }
     }
 
     /**

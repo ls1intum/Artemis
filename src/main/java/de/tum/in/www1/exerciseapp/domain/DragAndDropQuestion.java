@@ -294,6 +294,12 @@ public class DragAndDropQuestion extends Question implements Serializable {
     }
 
     @Override
+    public void filterForStudentsDuringQuiz() {
+        super.filterForStudentsDuringQuiz();
+        setCorrectMappings(null);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
