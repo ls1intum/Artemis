@@ -100,6 +100,8 @@
             quizExerciseChannel = '/topic/quizExercise/' + $stateParams.id;
             JhiWebsocketService.subscribe(quizExerciseChannel);
             JhiWebsocketService.receive(quizExerciseChannel).then(null, null, function () {
+                // TODO: update to include quiz with questions as payload
+
                 if (vm.waitingForQuizStart) {
                     // only reload if quiz is hasn't started to prevent jumping ui during participation
                     load();
@@ -186,6 +188,9 @@
          * subscribe to any outstanding websocket channels
          */
         function subscribeToWebsocketChannels() {
+            return;
+
+            // TODO: update to work without submissionId
             if (!submissionChannel) {
                 submissionChannel = '/topic/quizSubmissions/' + vm.submission.id;
 
@@ -201,6 +206,7 @@
                     JhiWebsocketService.send(submissionChannel + '/save', data);
                 };
             }
+            // TODO: update to work without participationId
             if (!participationChannel) {
                 participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
 
@@ -388,20 +394,24 @@
          * Load the latest submission data for this user and this exercise
          */
         function load() {
-            QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
-                vm.quizExercise = quizExercise;
+            ExerciseParticipation.get({
+                courseId: 1,
+                exerciseId: $stateParams.id
+            }).$promise.then(function (participation) {
+                console.log(participation);
+                vm.quizExercise = participation.exercise;
                 initQuiz();
 
-                if (quizExercise.remainingTime != null) {
-                    if (quizExercise.remainingTime >= 0) {
+                if (vm.quizExercise.remainingTime != null) {
+                    if (vm.quizExercise.remainingTime >= 0) {
                         // enable automatic websocket reconnect
                         JhiWebsocketService.enableReconnect();
 
                         // apply randomized order where necessary
-                        randomizeOrder(quizExercise);
+                        randomizeOrder(vm.quizExercise);
 
                         // update timeDifference
-                        vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
+                        vm.quizExercise.adjustedDueDate = moment().add(vm.quizExercise.remainingTime, "seconds");
                         timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
 
                         // automatically load results 5 seconds after quiz has ended (in case websocket didn't work)
@@ -410,14 +420,14 @@
                                 if (vm.disconnected && !vm.showingResult) {
                                     loadResults();
                                 }
-                            }, (quizExercise.remainingTime + 5) * 1000)
+                            }, (vm.quizExercise.remainingTime + 5) * 1000)
                         );
+                    } else {
+                        // TODO: check if participationState is FINISHED
+                        // TODO: and display results or "Wait for Result" message
                     }
-                    QuizSubmissionForExercise.get({
-                        courseId: 1,
-                        exerciseId: $stateParams.id
-                    }).$promise.then(function (quizSubmission) {
-                        vm.submission = quizSubmission;
+                    if (participation.results.length) {
+                        vm.submission = participation.results[0].submission;
                         vm.waitingForQuizStart = false;
 
                         // update submission time
@@ -428,27 +438,8 @@
                         // show submission answers in UI
                         applySubmission();
 
-                        // load participation
-                        ExerciseParticipation.get({
-                            courseId: vm.quizExercise.course.id,
-                            exerciseId: vm.quizExercise.id
-                        }).$promise.then(function (participation) {
-                            vm.participation = participation;
-
-                            if (vm.quizExercise.remainingTime < 0) {
-                                // load result
-                                ParticipationResult.query({
-                                    courseId: vm.participation.exercise.course.id,
-                                    exerciseId: vm.participation.exercise.id,
-                                    participationId: vm.participation.id,
-                                    showAllResults: false,
-                                    ratedOnly: true
-                                }).$promise.then(showResult);
-                            }
-
-                            subscribeToWebsocketChannels();
-                        });
-                    });
+                        subscribeToWebsocketChannels();
+                    }
                 } else {
                     // quiz hasn't started yet
                     vm.waitingForQuizStart = true;
@@ -456,10 +447,10 @@
                     // enable automatic websocket reconnect
                     JhiWebsocketService.enableReconnect();
 
-                    if (quizExercise.isPlannedToStart) {
+                    if (vm.quizExercise.isPlannedToStart) {
                         // synchronize time with server
                         vm.quizExercise.releaseDate = moment(vm.quizExercise.releaseDate);
-                        vm.quizExercise.adjustedReleaseDate = moment().add(quizExercise.timeUntilPlannedStart, "seconds");
+                        vm.quizExercise.adjustedReleaseDate = moment().add(vm.quizExercise.timeUntilPlannedStart, "seconds");
 
                         // load quiz when it is planned to start (at most once every second)
                         runningTimeouts.push(
@@ -467,7 +458,7 @@
                                 if (vm.waitingForQuizStart) {
                                     load();
                                 }
-                            }, Math.max(1, quizExercise.timeUntilPlannedStart) * 1000)
+                            }, Math.max(1, vm.quizExercise.timeUntilPlannedStart) * 1000)
                         );
                     }
                 }
@@ -626,6 +617,8 @@
          */
         function onSelectionChanged() {
             applySelection();
+            return;
+            // TODO: update to work without submissionId
             if (vm.sendWebsocket) {
                 if (!vm.disconnected) {
                     vm.isSaving = true;

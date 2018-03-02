@@ -2,6 +2,7 @@ package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.tum.in.www1.exerciseapp.config.Constants;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.LazyToOne;
@@ -550,7 +551,7 @@ public class QuizExercise extends Exercise implements Serializable {
     public Integer getMaxTotalScore() {
         int maxScore = 0;
         // iterate through all questions of this quiz and add up the score
-        if (getQuestions() != null) {
+        if (questions != null && Hibernate.isInitialized(questions)) {
             for (Question question : getQuestions()) {
                 maxScore += question.getScore();
             }

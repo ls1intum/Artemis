@@ -133,20 +133,27 @@ public class ParticipationService {
             }
         }
 
+        // construct result
         Result result = new Result().submission(quizSubmission);
+
+        // construct participation
+        Participation participation = new Participation()
+            .initializationState(ParticipationState.INITIALIZED)
+            .exercise(quizExercise)
+            .addResults(result);
+
         if (quizExercise.hasEnded()) {
+            // update result and participation state
             result.setRated(true);
             result.setCompletionDate(ZonedDateTime.now());
+            participation.setInitializationState(ParticipationState.FINISHED);
+
             // calculate scores and update result and submission accordingly
             quizSubmission.calculateAndUpdateScores(quizExercise);
             result.evaluateSubmission();
         }
 
-        // construct participation
-        return new Participation()
-            .initializationState(quizSubmission.isSubmitted() ? ParticipationState.FINISHED : ParticipationState.INITIALIZED)
-            .exercise(quizExercise)
-            .addResults(result);
+        return participation;
     }
 
     /**

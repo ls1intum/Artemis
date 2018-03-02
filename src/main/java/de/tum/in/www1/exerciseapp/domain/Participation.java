@@ -46,7 +46,7 @@ public class Participation implements Serializable {
     private ZonedDateTime initializationDate;
 
     @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
-    @JsonIgnore
+    @JsonIgnoreProperties("participation")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Result> results = new HashSet<>();
 
@@ -58,7 +58,6 @@ public class Participation implements Serializable {
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
     // and the gain from fetching lazy here is minimal
     @ManyToOne
-    @JsonIgnoreProperties({"quizPointStatistic", "questions", "maxTotalScore"})
     private Exercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
