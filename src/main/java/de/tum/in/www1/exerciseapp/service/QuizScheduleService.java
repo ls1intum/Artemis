@@ -222,7 +222,7 @@ public class QuizScheduleService {
 
                 // Create Participation and Result and save to Database (DB Write)
                 // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
-                createParticipationWithResult(quizExercise, username, quizSubmission);
+                createParticipationWithResultAndWriteItInHashMaps(quizExercise, username, quizSubmission);
 
 
                 // second case: the quiz has ended
@@ -233,7 +233,7 @@ public class QuizScheduleService {
 
                 // Create Participation and Result and save to Database (DB Write)
                 // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
-                createParticipationWithResult(quizExercise, username, quizSubmission);
+                createParticipationWithResultAndWriteItInHashMaps(quizExercise, username, quizSubmission);
             }
         }
     }
@@ -244,11 +244,10 @@ public class QuizScheduleService {
      * @param quizExercise   the quizExercise the quizSubmission belongs to
      * @param username       the user, who submitted the quizSubmission
      * @param quizSubmission the quizSubmission, which is used to calculate the Result
-     * @return the created Participation with Result
      */
-    private Participation createParticipationWithResult(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
+    private Participation createParticipationWithResultAndWriteItInHashMaps(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
 
-        if (quizExercise != null && username != null) {
+        if (quizExercise != null && username != null && quizSubmission != null) {
 
             // update submission with score
             quizSubmission.calculateAndUpdateScores(quizExercise);
