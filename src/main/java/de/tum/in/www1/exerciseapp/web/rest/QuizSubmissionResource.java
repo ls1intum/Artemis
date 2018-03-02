@@ -208,11 +208,6 @@ public class QuizSubmissionResource {
                     resultRepository.save(result);
                     // replace proxy with submission, because of Lazy-fetching
                     result.setSubmission(quizSubmission);
-
-                    // get previous Result
-                    Result previousResult = getPreviousResult(result);
-                    // update statistics
-                    statisticService.updateStatistics(result, previousResult, quizExercise);
                     // return quizSubmission
                     quizSubmission.setSubmissionDate(result.getCompletionDate());
                     return ResponseEntity.created(new URI("/api/quiz-submissions/" + quizSubmission.getId())).body(quizSubmission);
@@ -374,11 +369,6 @@ public class QuizSubmissionResource {
         // replace proxy with submission, because of Lazy-fetching
         result.setSubmission(quizSubmission);
 
-        // update statistics
-        // NOTE: where is never an old Result -> oldResult = null
-        long start = System.currentTimeMillis();
-        statisticService.updateStatistics(result, null, quizExercise);
-        log.info(     "Update Statistics took: {} ms", System.currentTimeMillis() - start);
 
         // remove scores from submission if quiz hasn't ended yet
         if (quizSubmission.isSubmitted() && quizExercise.shouldFilterForStudents()) {
@@ -390,27 +380,6 @@ public class QuizSubmissionResource {
         messagingTemplate.convertAndSend("/topic/quizSubmissions/" + quizSubmission.getId(),
             "{\"saved\": \"" + quizSubmission.getSubmissionDate().toString().substring(0, 23) + "\"}");
         return quizSubmission;
-    }
-
-    /**
-     * Go through all Results in the Participation and return the latest one before the new Result,
-     *
-     * @param newResult the new result object which will replace the old Result in the Statistics
-     * @return the previous Result, which is presented in the Statistics (null if where is no previous Result)
-     */
-    private Result getPreviousResult(Result newResult) {
-        Result oldResult = null;
-
-        for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
-            //find the latest Result, which is presented in the Statistics
-            if (result.isRated() == newResult.isRated()
-                && result.getCompletionDate().isBefore(newResult.getCompletionDate())
-                && !result.equals(newResult)
-                && (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
-                oldResult = result;
-            }
-        }
-        return oldResult;
     }
 
     /**

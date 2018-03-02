@@ -20,60 +20,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class StatisticService {
 
-    private final Logger log = LoggerFactory.getLogger(StatisticService.class);
-
-
-    private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-
-    private static Map<Long, List<Result>> resultToAdd = new ConcurrentHashMap<>();
-    private static Map<Long, List<Result>> resultToRemove = new ConcurrentHashMap<>();
-
-    private static StatisticService statisticService;
-
-    @PostConstruct
-    private void initStaticStatisticService() {
-        statisticService = this;
-    }
-
-    static {
-        threadPoolTaskScheduler.setThreadNamePrefix("StatisticUpdateScheduler");
-        threadPoolTaskScheduler.initialize();
-
-        threadPoolTaskScheduler.scheduleWithFixedDelay(() -> {
-            // check if where is a Result to add or to move -> otherwise  do nothing
-            if (!resultToAdd.isEmpty() || !resultToRemove.isEmpty()) {
-
-                //separate results by quizExercise
-                for(long quizId: resultToAdd.keySet()) {
-
-                    // get the statistic for the quizExrcise
-                    QuizExercise quiz = statisticService.quizExerciseService.findOneWithQuestionsAndStatistics(quizId);
-                    // add all results of the quizExercise
-                     for(Result result: resultToAdd.remove(quizId)) {
-                         statisticService.addResultToAllStatistics(quiz, result);
-                     }
-                    // remove all results of the quizExercise
-                     for(Result result: resultToRemove.remove(quizId)) {
-                         statisticService.removeResultFromAllStatistics(quiz, result);
-                     }
-                     //save statistics
-                    statisticService.quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
-                    for (Question question : quiz.getQuestions()) {
-                        if (question.getQuestionStatistic() != null) {
-                            statisticService.questionStatisticRepository.save(question.getQuestionStatistic());
-                        }
-                    }
-                    //notify users via websocket about new results for the statistics.
-                    statisticService.messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), true);
-                }
-            }
-        }, 3000);
-    }
-
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
-    private final QuizExerciseService quizExerciseService;
     private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizPointStatisticRepository quizPointStatisticRepository;
     private final QuestionStatisticRepository questionStatisticRepository;
@@ -81,14 +30,12 @@ public class StatisticService {
     public StatisticService(SimpMessageSendingOperations messagingTemplate,
                             ParticipationRepository participationRepository,
                             ResultRepository resultRepository,
-                            QuizExerciseService quizExerciseService,
                             QuizSubmissionRepository quizSubmissionRepository,
                             QuizPointStatisticRepository quizPointStatisticRepository,
                             QuestionStatisticRepository questionStatisticRepository) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
-        this.quizExerciseService = quizExerciseService;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.questionStatisticRepository = questionStatisticRepository;
@@ -171,24 +118,58 @@ public class StatisticService {
     }
 
     /**
-     * 1. remove old Result from the quiz-point-statistic and all question-statistics
+     * 1. check for each result if it's rated
+     *      -> true: check if there is an old Result
+     *          -> true: remove the old Result from the statistics
      * 2. add new Result to the quiz-point-statistic and all question-statistics
      *
-     * @param newResult the new Result, which will be added to the statistics
-     * @param oldResult the old Result, which will be removed from the statistics. oldResult = null, if there is no old Result
+     * @param results the results, which will be added to the statistics
+     * @param quiz the quizExercise with Questions where the results should contain to
      */
-    public void updateStatistics(Result newResult, Result oldResult, QuizExercise quiz) {
+    public void updateStatistics(Set<Result> results, QuizExercise quiz) {
 
-        if(oldResult != null){
-            if(!resultToRemove.keySet().contains(quiz.getId())){
-                resultToRemove.put(quiz.getId(), new ArrayList<>());
+        if (results != null && quiz != null && quiz.getQuestions() != null) {
+
+            for (Result result : results) {
+                // check if the result is rated
+                // NOTE: where is never an old Result if the new result is rated
+                if (!result.isRated()) {
+                    removeResultFromAllStatistics(quiz, getPreviousResult(result));
+                }
+                addResultToAllStatistics(quiz, result);
             }
-            resultToRemove.get(quiz.getId()).add(oldResult);
+            //save statistics
+            quizPointStatisticRepository.save(quiz.getQuizPointStatistic());
+            for (Question question : quiz.getQuestions()) {
+                if (question.getQuestionStatistic() != null) {
+                    questionStatisticRepository.save(question.getQuestionStatistic());
+                }
+            }
+            //notify users via websocket about new results for the statistics.
+            messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), true);
         }
-        if(!resultToAdd.keySet().contains(quiz.getId())){
-            resultToAdd.put(quiz.getId(), new ArrayList<>());
+
+    }
+
+    /**
+     * Go through all Results in the Participation and return the latest one before the new Result,
+     *
+     * @param newResult the new result object which will replace the old Result in the Statistics
+     * @return the previous Result, which is presented in the Statistics (null if where is no previous Result)
+     */
+    private Result getPreviousResult(Result newResult) {
+        Result oldResult = null;
+
+        for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(newResult.getParticipation().getId())) {
+            //find the latest Result, which is presented in the Statistics
+            if (result.isRated() == newResult.isRated()
+                && result.getCompletionDate().isBefore(newResult.getCompletionDate())
+                && !result.equals(newResult)
+                && (oldResult == null || result.getCompletionDate().isAfter(oldResult.getCompletionDate()))) {
+                oldResult = result;
+            }
         }
-        resultToAdd.get(quiz.getId()).add(newResult);
+        return oldResult;
     }
 
     /**
