@@ -204,20 +204,36 @@ public class QuizScheduleService {
 
     }
 
+    /**
+     * check if the user submitted the submission or if the quiz has ended:
+     *  if true: -> Create Participation and Result and save to Database (DB Write)
+     *              Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
+     *
+     * @param quizExercise the quiz which should be checked
+     * @param userSubmissionMap a Map with all submissions for the given quizExercise mapped by the username
+     */
     private void createParticipations(QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
 
         for (String username : userSubmissionMap.keySet()) {
+            // first case: the user submitted the quizSubmission
             if (userSubmissionMap.get(username).isSubmitted()) {
                 QuizSubmission quizSubmission = userSubmissionMap.remove(username);
                 quizSubmission.setType(SubmissionType.MANUAL);
 
-                createParticipation(quizExercise, username, quizSubmission);
+                // Create Participation and Result and save to Database (DB Write)
+                // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
+                createParticipationWithResult(quizExercise, username, quizSubmission);
+
+
+                // second case: the quiz has ended
             } else if (quizExercise.getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS < 0) {
                 QuizSubmission quizSubmission = userSubmissionMap.remove(username);
                 quizSubmission.setSubmitted(true);
                 quizSubmission.setType(SubmissionType.TIMEOUT);
 
-                createParticipation(quizExercise, username, quizSubmission);
+                // Create Participation and Result and save to Database (DB Write)
+                // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
+                createParticipationWithResult(quizExercise, username, quizSubmission);
             }
         }
     }
@@ -230,22 +246,21 @@ public class QuizScheduleService {
      * @param quizSubmission the quizSubmission, which is used to calculate the Result
      * @return the created Participation with Result
      */
-    private Participation createParticipation(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
+    private Participation createParticipationWithResult(QuizExercise quizExercise, String username, QuizSubmission quizSubmission) {
 
         if (quizExercise != null && username != null) {
 
-            // update submission
+            // update submission with score
             quizSubmission.calculateAndUpdateScores(quizExercise);
 
             //create and save new participation
             Participation participation = new Participation();
-            participation.setExercise(quizExercise);
             Optional<User> user = userRepository.findOneByLogin(username);
             if (user.isPresent()) {
                 participation.setStudent(user.get());
             }
+            //add the quizExercise to the participation
             participation.setExercise(quizExercise);
-            participation = participationRepository.save(participation);
 
             // create and save new result
             Result result = new Result().participation(participation).submission(quizSubmission);
@@ -254,15 +269,15 @@ public class QuizScheduleService {
             result.setSubmission(quizSubmission);
             // calculate score and update result accordingly
             result.evaluateSubmission();
-            // save result
-            resultRepository.save(result);
 
-            // update quizSubmission with CompletionDate
+            // update quizSubmission with CompletionDate;
             quizSubmission.setSubmissionDate(result.getCompletionDate());
-
-            //add the quizExercise to the participation
-            participation.setExercise(quizExercise);
             participation.addResults(result);
+
+            //save participation with result and quizSubmission
+            participationRepository.save(participation);
+
+            participation.setExercise(quizExercise);
             //add the participation to the participationHashMap for the send out at the end of the quiz
             QuizScheduleService.addParticipation(quizExercise.getId(), participation);
             //add the result of the participation resultHashMap for the statistic-Update

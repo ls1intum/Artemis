@@ -88,8 +88,8 @@ public class StatisticService {
                 result.setScore(Math.round(quizSubmission.getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
 
                 // save the updated Result and its Submission
+                result.setSubmission(quizSubmission);
                 resultRepository.save(result);
-                quizSubmissionRepository.save(quizSubmission);
 
                 // replace proxy with submission, because of Lazy-fetching
                 result.setSubmission(quizSubmission);

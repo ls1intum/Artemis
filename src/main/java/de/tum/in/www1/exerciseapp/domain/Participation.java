@@ -45,7 +45,7 @@ public class Participation implements Serializable {
     @Column(name = "initialization_date")
     private ZonedDateTime initializationDate;
 
-    @OneToMany(mappedBy = "participation", cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Result> results = new HashSet<>();
