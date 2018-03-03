@@ -76,7 +76,7 @@
             JhiWebsocketService.disableReconnect();
 
             if (submissionChannel) {
-                JhiWebsocketService.unsubscribe(submissionChannel);
+                JhiWebsocketService.unsubscribe("/user" + submissionChannel);
             }
             if (participationChannel) {
                 JhiWebsocketService.unsubscribe(participationChannel);
@@ -188,24 +188,22 @@
          * subscribe to any outstanding websocket channels
          */
         function subscribeToWebsocketChannels() {
-            return;
-
-            // TODO: update to work without submissionId
             if (!submissionChannel) {
-                submissionChannel = '/topic/quizSubmissions/' + vm.submission.id;
+                submissionChannel = '/topic/quizExercise/' + vm.quizExercise.id + '/submission';
 
                 // submission channel => react to new submissions
-                JhiWebsocketService.subscribe(submissionChannel);
-                JhiWebsocketService.receive(submissionChannel).then(null, null, function (payload) {
+                JhiWebsocketService.subscribe("/user" + submissionChannel);
+                JhiWebsocketService.receive("/user" + submissionChannel).then(null, null, function (payload) {
                     onSaveSuccess(payload);
                 });
 
                 // save answers (submissions) through websocket
                 vm.sendWebsocket = function (data) {
                     outstandingWebsocketResponses++;
-                    JhiWebsocketService.send(submissionChannel + '/save', data);
+                    JhiWebsocketService.send(submissionChannel, data);
                 };
             }
+            return;
             // TODO: update to work without participationId
             if (!participationChannel) {
                 participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
@@ -617,8 +615,6 @@
          */
         function onSelectionChanged() {
             applySelection();
-            return;
-            // TODO: update to work without submissionId
             if (vm.sendWebsocket) {
                 if (!vm.disconnected) {
                     vm.isSaving = true;
@@ -634,33 +630,37 @@
          * @param response The response data from the server
          */
         function onSaveSuccess(response) {
+            if (!response) {
+                // TODO: Include reason why saving failed
+                alert("Saving Answers failed.");
+                vm.unsavedChanges = true;
+                if (outstandingWebsocketResponses > 0) {
+                    outstandingWebsocketResponses--;
+                }
+                if (outstandingWebsocketResponses === 0) {
+                    vm.isSaving = false;
+                }
+                return;
+            }
             if (outstandingWebsocketResponses === 0) {
                 vm.isSaving = false;
                 vm.unsavedChanges = false;
+                vm.submission = response;
 
-                // load current submission with REST call
-                QuizSubmissionForExercise.get({
-                    courseId: 1,
-                    exerciseId: $stateParams.id
-                }).$promise.then(function (quizSubmission) {
-                    vm.submission = quizSubmission;
+                // update submission time
+                if (vm.submission.submissionDate) {
+                    vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                }
 
-                    // update submission time
-                    if (vm.submission.submissionDate) {
-                        vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                    }
-
-                    // show submission answers in UI
-                    applySubmission();
-                });
+                // show submission answers in UI
+                applySubmission();
             } else {
                 outstandingWebsocketResponses--;
                 if (outstandingWebsocketResponses === 0) {
                     vm.isSaving = false;
                     vm.unsavedChanges = false;
-                    if (response.saved) {
-                        console.log(response.saved);
-                        vm.submission.adjustedSubmissionDate = moment(response.saved).subtract(timeDifference, "seconds").toDate();
+                    if (response) {
+                        vm.submission.adjustedSubmissionDate = moment(response.submissionDate).subtract(timeDifference, "seconds").toDate();
                         if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
                             vm.justSaved = true;
                             timeoutJustSaved();
