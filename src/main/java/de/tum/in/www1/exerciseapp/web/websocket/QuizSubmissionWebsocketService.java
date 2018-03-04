@@ -5,9 +5,9 @@ import de.tum.in.www1.exerciseapp.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
@@ -36,7 +36,7 @@ public class QuizSubmissionWebsocketService {
         this.authCheckService = authCheckService;
     }
 
-    @SubscribeMapping("/topic/quizExercise/{exerciseId}/submission")
+    @MessageMapping("/topic/quizExercise/{exerciseId}/submission")
     public void saveSubmission(@DestinationVariable Long exerciseId, @Payload QuizSubmission quizSubmission, Principal principal) {
         String username = principal.getName();
 

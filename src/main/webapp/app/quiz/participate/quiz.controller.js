@@ -429,9 +429,7 @@
                         vm.waitingForQuizStart = false;
 
                         // update submission time
-                        if (vm.submission.submissionDate) {
-                            vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                        }
+                        updateSubmissionTime()
 
                         // show submission answers in UI
                         applySubmission();
@@ -626,6 +624,19 @@
         }
 
         /**
+         * update the value for adjustedSubmissionDate in vm.submission
+         */
+        function updateSubmissionTime() {
+            if (vm.submission.submissionDate) {
+                vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
+                    vm.justSaved = true;
+                    timeoutJustSaved();
+                }
+            }
+        }
+
+        /**
          * Callback function for handling response after saving submission to server
          * @param response The response data from the server
          */
@@ -634,6 +645,7 @@
                 // TODO: Include reason why saving failed
                 alert("Saving Answers failed.");
                 vm.unsavedChanges = true;
+                vm.isSubmitting = false;
                 if (outstandingWebsocketResponses > 0) {
                     outstandingWebsocketResponses--;
                 }
@@ -642,17 +654,19 @@
                 }
                 return;
             }
-            if (outstandingWebsocketResponses === 0) {
+            if (response.submitted) {
+                outstandingWebsocketResponses = 0;
+                vm.isSaving = false;
+                vm.unsavedChanges = false;
+                vm.isSubmitting = false;
+                vm.submission = response;
+                updateSubmissionTime();
+                applySubmission();
+            } else if (outstandingWebsocketResponses === 0) {
                 vm.isSaving = false;
                 vm.unsavedChanges = false;
                 vm.submission = response;
-
-                // update submission time
-                if (vm.submission.submissionDate) {
-                    vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                }
-
-                // show submission answers in UI
+                updateSubmissionTime();
                 applySubmission();
             } else {
                 outstandingWebsocketResponses--;
@@ -660,11 +674,8 @@
                     vm.isSaving = false;
                     vm.unsavedChanges = false;
                     if (response) {
-                        vm.submission.adjustedSubmissionDate = moment(response.submissionDate).subtract(timeDifference, "seconds").toDate();
-                        if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
-                            vm.justSaved = true;
-                            timeoutJustSaved();
-                        }
+                        vm.submission.submissionDate = response.submissionDate;
+                        updateSubmissionTime();
                     }
                 }
             }
@@ -702,25 +713,18 @@
                     }
                     break;
                 case "default":
-                    QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+                    if (vm.disconnected || !submissionChannel) {
+                        // TODO: Create REST Endpoint as a fallback option
+                        alert("Cannot Submit while disconnected. Don't worry, answers that were saved while you were still connected will be submitted automatically when the quiz ends.");
+                        vm.isSubmitting = false;
+                        return;
+                    }
+                    // send submission through websocket with "submitted = true"
+                    JhiWebsocketService.send(submissionChannel, {
+                        submittedAnswers: vm.submission.submittedAnswers,
+                        submitted: true
+                    });
                     break;
-            }
-        }
-
-        /**
-         * Callback function for handling response after submitting
-         * @param response
-         */
-        function onSubmitSuccess(response) {
-            vm.isSubmitting = false;
-            vm.submission = response;
-            applySubmission();
-            if (vm.submission.submissionDate) {
-                vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
-                    vm.justSaved = true;
-                    timeoutJustSaved();
-                }
             }
         }
 
