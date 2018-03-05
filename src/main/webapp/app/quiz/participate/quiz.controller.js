@@ -293,26 +293,24 @@
             }, 0);
 
             // prepare selection arrays for each question
-            if (!vm.submission) {
-                vm.selectedAnswerOptions = {};
-                vm.dragAndDropMappings = {};
+            vm.selectedAnswerOptions = {};
+            vm.dragAndDropMappings = {};
 
-                if (vm.quizExercise.questions) {
-                    vm.quizExercise.questions.forEach(function (question) {
-                        switch (question.type) {
-                            case "multiple-choice":
-                                // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                                vm.selectedAnswerOptions[question.id] = [];
-                                break;
-                            case "drag-and-drop":
-                                // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                                vm.dragAndDropMappings[question.id] = [];
-                                break;
-                            default:
-                                console.error("Unknown question type: " + question.type);
-                        }
-                    });
-                }
+            if (vm.quizExercise.questions) {
+                vm.quizExercise.questions.forEach(function (question) {
+                    switch (question.type) {
+                        case "multiple-choice":
+                            // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                            vm.selectedAnswerOptions[question.id] = [];
+                            break;
+                        case "drag-and-drop":
+                            // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                            vm.dragAndDropMappings[question.id] = [];
+                            break;
+                        default:
+                            console.error("Unknown question type: " + question.type);
+                    }
+                });
             }
         }
 
@@ -421,9 +419,9 @@
                     // quiz has ended and results are available
                     showResult(participation.results);
                 }
+            } else {
+                vm.submission = {};
             }
-
-
         }
 
         /**
@@ -437,6 +435,9 @@
             // check if quiz has started
             console.log(vm.quizExercise);
             if (vm.quizExercise.started) {
+                // quiz has started
+                vm.waitingForQuizStart = false;
+
                 // check if quiz hasn't ended
                 if (!vm.quizExercise.ended) {
                     // enable automatic websocket reconnect

@@ -334,7 +334,6 @@ public class QuizExercise extends Exercise implements Serializable {
      * @param questions the List of Question objects which will be set
      */
     public void setQuestions(List<Question> questions) {
-
         this.questions = questions;
         if (questions != null) {
             recalculatePointCounters();
@@ -347,11 +346,22 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
+     * filter this quiz exercise for students depending on the quiz's current state
+     */
+    public void applyAppropriateFilterForStudents() {
+        if (!isStarted()) {
+            filterSensitiveInformation();
+        } else if (shouldFilterForStudents()) {
+            filterForStudentsDuringQuiz();
+        }
+    }
+
+    /**
      * set all sensitive information to null, so no info gets leaked to students through json
      */
     public void filterSensitiveInformation() {
-        setQuestions(null);
         setQuizPointStatistic(null);
+        setQuestions(new ArrayList<>());
     }
 
     /**
@@ -613,6 +623,9 @@ public class QuizExercise extends Exercise implements Serializable {
      * 2. delete old PointCounters if the score is no longer contained
      */
     private void recalculatePointCounters() {
+        if (quizPointStatistic == null || !Hibernate.isInitialized(quizPointStatistic)) {
+            return;
+        }
 
         double quizScore = getMaxTotalScore();
 

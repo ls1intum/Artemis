@@ -157,7 +157,12 @@ public class QuizExerciseResource {
         QuizExercise result = quizExerciseService.save(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
+        // NOTE: We need to get a deep copy because we still want to return the full quizExercise
+        // to the REST client. Deep copy via serialize-deserialize threw ClassCastException,
+        // so we are going with fetching from database for now, although this is bad for performance.
+        QuizExercise quizForWebsocket = quizExerciseService.findOneWithQuestions(result.getId());
+        quizForWebsocket.applyAppropriateFilterForStudents();
+        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), quizForWebsocket);
 
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
@@ -346,7 +351,8 @@ public class QuizExerciseResource {
         quizExerciseService.save(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
+        quizExercise.applyAppropriateFilterForStudents();
+        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), quizExercise);
 
         return ResponseEntity.noContent().build();
     }
