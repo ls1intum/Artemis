@@ -2,10 +2,7 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
-import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
-import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
-import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -22,8 +19,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.Principal;
-import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -375,7 +370,7 @@ public class ParticipationResource {
     }
 
     private Participation participationForQuizExercise(QuizExercise quizExercise, String username) {
-        if (!quizExercise.hasStarted()) {
+        if (!quizExercise.isStarted()) {
             // Quiz hasn't started yet => no Result, only quizExercise without questions
             quizExercise.filterSensitiveInformation();
             return new Participation().exercise(quizExercise);

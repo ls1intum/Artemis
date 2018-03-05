@@ -205,7 +205,7 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
      */
     public Long getRemainingTime() {
-        return hasStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+        return isStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
     }
 
     /**
@@ -221,7 +221,7 @@ public class QuizExercise extends Exercise implements Serializable {
      * Check if the quiz has started
      * @return true if quiz has started, false otherwise
      */
-    public Boolean hasStarted() {
+    public Boolean isStarted() {
         return isIsPlannedToStart() && ZonedDateTime.now().isAfter(getReleaseDate());
     }
 
@@ -230,11 +230,11 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return true if submissions are allowed, false otherwise
      */
     public Boolean isSubmissionAllowed() {
-        return hasStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
+        return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
     }
 
-    public Boolean hasEnded() {
-        return hasStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
+    public Boolean isEnded() {
+        return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }
 
     /**
@@ -242,7 +242,7 @@ public class QuizExercise extends Exercise implements Serializable {
      * @return true if quiz should be filtered, false otherwise
      */
     public Boolean shouldFilterForStudents() {
-        return !hasStarted() || isSubmissionAllowed();
+        return !isStarted() || isSubmissionAllowed();
     }
 
     /**

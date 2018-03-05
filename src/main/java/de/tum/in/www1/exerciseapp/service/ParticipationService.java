@@ -4,6 +4,8 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
+import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,13 +30,23 @@ public class ParticipationService {
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
     private final ParticipationRepository participationRepository;
+    private final ResultRepository resultRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
     private final UserRepository userRepository;
     private final Optional<GitService> gitService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
-    public ParticipationService(ParticipationRepository participationRepository, UserRepository userRepository, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ParticipationService(ParticipationRepository participationRepository,
+                                ResultRepository resultRepository,
+                                QuizSubmissionRepository quizSubmissionRepository,
+                                UserRepository userRepository,
+                                Optional<GitService> gitService,
+                                Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                Optional<VersionControlService> versionControlService) {
         this.participationRepository = participationRepository;
+        this.resultRepository = resultRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
         this.userRepository = userRepository;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -114,22 +126,32 @@ public class ParticipationService {
      * @return the found or created participation
      */
     public Participation getParticipationForQuiz(QuizExercise quizExercise, String username) {
-        if (quizExercise.hasEnded()) {
+        if (quizExercise.isEnded()) {
             // try getting participation from database first
             Participation participation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
             if (participation != null) {
+                // add exercise
+                participation.setExercise(quizExercise);
+
+                // add result
+                Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+                Submission submission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+                result.setSubmission(submission);
+                participation.addResults(result);
+
                 return participation;
             }
         }
 
         // get submission from HashMap
         QuizSubmission quizSubmission = QuizScheduleService.getQuizSubmission(quizExercise.getId(), username);
-        if (quizExercise.hasEnded()) {
+        if (quizExercise.isEnded()) {
             if (quizSubmission.isSubmitted()) {
                 quizSubmission.setType(SubmissionType.MANUAL);
             } else {
                 quizSubmission.setSubmitted(true);
                 quizSubmission.setType(SubmissionType.TIMEOUT);
+                quizSubmission.setSubmissionDate(ZonedDateTime.now());
             }
         }
 
@@ -142,7 +164,7 @@ public class ParticipationService {
             .exercise(quizExercise)
             .addResults(result);
 
-        if (quizExercise.hasEnded()) {
+        if (quizExercise.isEnded()) {
             // update result and participation state
             result.setRated(true);
             result.setCompletionDate(ZonedDateTime.now());

@@ -192,7 +192,7 @@ public class QuizSubmissionResource {
             if (user.getGroups().contains(quizExercise.getCourse().getStudentGroupName())) {
                 Participation participation = participationService.init(quizExercise, principal.getName());
                 participation.setExercise(quizExercise);
-                if (quizExercise.hasEnded() && quizExercise.isIsOpenForPractice()) {
+                if (quizExercise.isEnded() && quizExercise.isIsOpenForPractice()) {
                     // update and save submission
                     quizSubmission.setSubmitted(true);
                     quizSubmission.setType(SubmissionType.MANUAL);
