@@ -13,8 +13,16 @@ import scala.util.parsing.json._
 
 class QuizParticipationSimulation extends Simulation {
 
-    // TODO replace exerciseID with id of dynamically created exercise
-    val exerciseId = 118
+    // TODO: update these values to fit the tested exercise
+    val exerciseId = 187
+    val backgroundPicturePath = "/api/files/drag-and-drop/backgrounds/98/DragAndDropBackground_2018-02-16T11-45-42-684_7f0aa8e4.png"
+
+    // TODO: Enter any valid participationId to get the build status for
+    val participationIdForStatus = 19353
+
+    // TODO: Adjust these numbers for desired load
+    val numUsersSubmit = 300
+    val numUsersNoSubmit = 0
 
     val feeder: Iterator[Map[String, String]] = Iterator.tabulate(500)(i => Map(
         "username" -> ("<USERNAME>"),   // TODO: generate real username for each value of i (removed for security)
@@ -33,6 +41,7 @@ class QuizParticipationSimulation extends Simulation {
         .acceptLanguageHeader("fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3")
         .connectionHeader("keep-alive")
         .userAgentHeader("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:33.0) Gecko/20100101 Firefox/33.0")
+        .disableClientSharing
 
     val headers_http = Map(
         "Accept" -> """application/json"""
@@ -144,25 +153,36 @@ class QuizParticipationSimulation extends Simulation {
             .formParam("submit", "Login")
             .check(status.is(200))
             .check(headerRegex("Set-Cookie", "XSRF-TOKEN=([^;]*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
-        .pause(5 seconds)
+        .pause(10 seconds)
 
-    val loadDashboard: ChainBuilder = exec(
-        http("Get dashboard")
+    val loadDashboard: ChainBuilder = rendezVous(numUsersSubmit)
+        .exec(http("Get dashboard")
             .get("/api/courses/for-dashboard")
             .headers(headers_http_authenticated)
-            .check(status.is(200))).exitHereIfFailed
-        .pause(10 seconds, 30 seconds)
+            .check(status.is(200))
+            .resources(
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=1").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=2").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=3").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=4").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=5").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=6").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=7").headers(headers_http_authenticated),
+                http("Load Status").get("/api/participations/" + participationIdForStatus + "/status?cacheBuster=8").headers(headers_http_authenticated)
+            )
+        ).exitHereIfFailed
+        .pause(5 seconds)
 
-    val startQuiz: ChainBuilder = exec(
-        http("Get Quiz")
+    val startQuiz: ChainBuilder = rendezVous(numUsersSubmit)
+        .exec(http("Get Quiz")
             .get("/api/quiz-exercises/" + exerciseId + "/for-student")
             .headers(headers_http_authenticated)
             .check(status.is(200))
-            .check(jsonPath("$.questions").saveAs("questions"))).exitHereIfFailed
-        .exec(http("Load Picture") // TODO: replace Picture url, or comment out the entire "Load Picture" part
-            .get("/api/files/drag-and-drop/backgrounds/67/DragAndDropBackground_2018-02-13T01-02-38-250_013a3522.png")
-            .headers(headers_http_authenticated)
-            .check(status.is(200)))
+            .check(jsonPath("$.questions").saveAs("questions"))
+            .resources(
+                http("Load Picture").get(backgroundPicturePath).headers(headers_http_authenticated)
+            )
+        ).exitHereIfFailed
         .exec(http("Start Quiz")
             .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
             .headers(headers_http_authenticated)
@@ -210,21 +230,20 @@ class QuizParticipationSimulation extends Simulation {
             .headers(headers_http_authenticated)
             .check(status.is(200)))
 
-    val submitQuiz: ChainBuilder =
-        pause(5 seconds, 10 seconds)
-            .exec(http("Submit Quiz")
-                .put("/api/quiz-submissions")
-                .headers(headers_http_authenticated)
-                .header("Content-Type", "application/json")
-                .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
-                .check(status.is(200)))
+    val submitQuiz: ChainBuilder = rendezVous(numUsersSubmit)
+        .exec(http("Submit Quiz")
+            .put("/api/quiz-submissions")
+            .headers(headers_http_authenticated)
+            .header("Content-Type", "application/json")
+            .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
+            .check(status.is(200)))
 
     val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, loadDashboard, startQuiz, workOnQuiz, waitForResult)
     val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, loadDashboard, startQuiz, workOnQuiz, submitQuiz, waitForResult)
 
     setUp(
-        usersNoSubmit.inject(rampUsers(100) over (20 seconds)),
-        usersSubmit.inject(rampUsers(200) over (20 seconds))
+        usersNoSubmit.inject(rampUsers(numUsersNoSubmit) over (20 seconds)),
+        usersSubmit.inject(rampUsers(numUsersSubmit) over (20 seconds))
     ).protocols(httpConf)
 
 }
