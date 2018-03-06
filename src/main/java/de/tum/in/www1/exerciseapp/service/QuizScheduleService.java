@@ -174,7 +174,7 @@ public class QuizScheduleService {
 
             QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizId);
 
-            int num = createParticipations(quizExercise, submissionHashMap.get(quizId));
+            int num = createParticipations(quizExercise, submissionHashMap.remove(quizId));
 
             log.info("    processed {} submissions after {} ms", num, System.currentTimeMillis() - start);
         }
