@@ -140,6 +140,9 @@
                 } else if (exercise.participation.initializationState === "FINISHED" && moment(exercise.dueDate).isAfter(moment())) {
                     return "quiz-submitted";
                 } else {
+                    if (exercise.participation.results.length === 0) {
+                        return "quiz-not-participated";
+                    }
                     return "quiz-finished"
                 }
             }

@@ -17,8 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Service Implementation for managing Participation.
@@ -135,9 +134,14 @@ public class ParticipationService {
 
                 // add result
                 Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
-                Submission submission = quizSubmissionRepository.findOne(result.getSubmission().getId());
-                result.setSubmission(submission);
-                participation.addResults(result);
+
+                participation.setResults(new HashSet<>());
+
+                if (result != null) {
+                    Submission submission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+                    result.setSubmission(submission);
+                    participation.addResults(result);
+                }
 
                 return participation;
             }

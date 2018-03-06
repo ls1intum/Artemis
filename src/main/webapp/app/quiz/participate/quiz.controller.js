@@ -438,6 +438,10 @@
                 // quiz has started
                 vm.waitingForQuizStart = false;
 
+                // update timeDifference
+                vm.quizExercise.adjustedDueDate = moment().add(vm.quizExercise.remainingTime, "seconds");
+                timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
+
                 // check if quiz hasn't ended
                 if (!vm.quizExercise.ended) {
                     // enable automatic websocket reconnect
@@ -445,10 +449,6 @@
 
                     // apply randomized order where necessary
                     randomizeOrder(vm.quizExercise);
-
-                    // update timeDifference
-                    vm.quizExercise.adjustedDueDate = moment().add(vm.quizExercise.remainingTime, "seconds");
-                    timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
 
                     // alert user 5 seconds after quiz has ended (in case websocket didn't work)
                     runningTimeouts.push(
@@ -696,7 +696,7 @@
                         QuizSubmission.submitForPractice({
                             courseId: 1,
                             exerciseId: $stateParams.id
-                        }, vm.submission, onSubmitPracticeSuccess, onSubmitError);
+                        }, vm.submission, onSubmitPracticeOrPreviewSuccess, onSubmitError);
                     }
                     break;
                 case "preview":
@@ -704,7 +704,7 @@
                         QuizSubmission.submitForPreview({
                             courseId: 1,
                             exerciseId: $stateParams.id
-                        }, vm.submission, onSubmitPreviewSuccess, onSubmitError);
+                        }, vm.submission, onSubmitPracticeOrPreviewSuccess, onSubmitError);
                     }
                     break;
                 case "default":
@@ -724,37 +724,10 @@
         }
 
         /**
-         * Callback function for handling response after submitting for practice
+         * Callback function for handling response after submitting for practice or preview
          * @param response
          */
-        function onSubmitPracticeSuccess(response) {
-            // TODO: Update endpoint to return result instead of submission
-            vm.isSubmitting = false;
-            vm.submission = response;
-            applySubmission();
-
-            // load participation
-            ExerciseParticipation.get({
-                courseId: vm.quizExercise.course.id,
-                exerciseId: vm.quizExercise.id
-            }).$promise.then(function (participation) {
-                vm.participation = participation;
-                // load result
-                ParticipationResult.query({
-                    courseId: vm.participation.exercise.course.id,
-                    exerciseId: vm.participation.exercise.id,
-                    participationId: vm.participation.id,
-                    showAllResults: false,
-                    ratedOnly: false
-                }).$promise.then(showResult);
-            });
-        }
-
-        /**
-         * Callback function for handling response after submitting for preview
-         * @param response
-         */
-        function onSubmitPreviewSuccess(response) {
+        function onSubmitPracticeOrPreviewSuccess(response) {
             vm.isSubmitting = false;
             vm.submission = response.submission;
             applySubmission();
