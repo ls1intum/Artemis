@@ -174,7 +174,16 @@ public class QuizScheduleService {
 
             QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizId);
 
-            int num = createParticipations(quizExercise, submissionHashMap.remove(quizId));
+            // if quiz has ended, all submissions will be processed => we can remove the inner HashMap for this quiz
+            // if quiz hasn't ended, some submissions (those that are not submitted) will stay in HashMap => keep inner HashMap
+            Map<String, QuizSubmission> submissions;
+            if (quizExercise.isEnded()) {
+                submissions = submissionHashMap.remove(quizId);
+            } else {
+                submissions = submissionHashMap.get(quizId);
+            }
+
+            int num = createParticipations(quizExercise, submissions);
 
             log.info("    processed {} submissions after {} ms", num, System.currentTimeMillis() - start);
         }
