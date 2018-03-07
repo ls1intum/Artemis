@@ -44,7 +44,6 @@
          *
          * @param quiz {quizExercise} the reference Quiz from Server
          */
-
         function loadQuizSuccess(quiz) {
 
             backUpQuiz = quiz;
@@ -55,104 +54,120 @@
             //check each question
             vm.quizExercise.questions.forEach(function (question) {
                 //find same question in backUp (necessary if the order has been changed)
-                var backUpQuestion = null;
-                for (var i = 0; backUpQuestion === null && i < backUpQuiz.questions.length; i++) {
-                    if (backUpQuiz.questions[i].id === question.id) {
-                        backUpQuestion = backUpQuiz.questions[i];
-                    }
+                var backUpQuestion = backUpQuiz.questions.find(function (questionBackUp) {
+                    return question.id === questionBackUp.id
+                });
+
+                checkQuestion(question, backUpQuestion);
+
+            });
+        }
+
+        /**
+         * 1. compare backUpQuestion and question
+         * 2. set flags based on detected changes
+         *
+         * @param question changed question
+         * @param backUpQuestion original not changed question
+         */
+        function checkQuestion(question, backUpQuestion) {
+
+            if (backUpQuestion !== null) {
+                // question set invalid?
+                if (question.invalid !== backUpQuestion.invalid) {
+                    vm.questionInvalid = true;
                 }
-                if (backUpQuestion !== null) {
-                    // question set invalid?
-                    if (question.invalid !== backUpQuestion.invalid) {
-                        vm.questionInvalid = true;
-                    }
-                    // question scoring changed?
-                    if (question.scoringType !== backUpQuestion.scoringType) {
-                        vm.scoringChanged = true;
-                    }
-                    //check MultipleChoiceQuestions
-                    if (question.type === "multiple-choice") {
-                        // question-Element deleted?
-                        if (question.answerOptions.length !== backUpQuestion.answerOptions.length) {
-                            vm.questionElementDeleted = true;
+                // question scoring changed?
+                if (question.scoringType !== backUpQuestion.scoringType) {
+                    vm.scoringChanged = true;
+                }
+                //check MultipleChoiceQuestions
+                if (question.type === "multiple-choice") {
+                    checkMultipleChoiceQuestion(question, backUpQuestion);
+                }
+                //check DragAndDropQuestions
+                if (question.type === "drag-and-drop") {
+                    checkDragAndDropQuestion(question, backUpQuestion);
+
+                }
+            }
+        }
+
+        /**
+         * 1. check MultipleChoiceQuestion-Elements
+         * 2. set flags based on detected changes
+         *
+         * @param question changed Multiple-Choice-Question
+         * @param backUpQuestion original not changed Multiple-Choice-Question
+         */
+        function checkMultipleChoiceQuestion(question, backUpQuestion) {
+            // question-Element deleted?
+            if (question.answerOptions.length !== backUpQuestion.answerOptions.length) {
+                vm.questionElementDeleted = true;
+            }
+            //check each answer
+            question.answerOptions.forEach(function (answer) {
+                // only check if there are no changes on the question-elements yet
+                if (!vm.questionCorrectness || !vm.questionElementInvalid) {
+                    var backUpAnswer = backUpQuestion.answerOptions.find(function (answerBackUp) {
+                        return answerBackUp.id === answer.id;
+                    });
+                    if (backUpAnswer !== null) {
+                        //answer set invalid?
+                        if (answer.invalid !== backUpAnswer.invalid) {
+                            vm.questionElementInvalid = true;
                         }
-
-                        //check each answer
-                        question.answerOptions.forEach(function (answer) {
-                            // only check if there are no changes on the question-elements yet
-                            if (!vm.questionCorrectness || !vm.questionElementInvalid) {
-                                var backUpAnswer = null;
-                                for (var j = 0; backUpAnswer === null && j < backUpQuestion.answerOptions.length; j++) {
-                                    if (backUpQuestion.answerOptions[j].id === answer.id) {
-                                        backUpAnswer = backUpQuestion.answerOptions[j];
-                                    }
-                                }
-                                if (backUpAnswer !== null) {
-                                    //answer set invalid?
-                                    if (answer.invalid !== backUpAnswer.invalid) {
-                                        vm.questionElementInvalid = true;
-                                    }
-                                    //answer correctness changed?
-                                    if (answer.isCorrect !== backUpAnswer.isCorrect) {
-                                        vm.questionCorrectness = true;
-                                    }
-                                }
-                            }
-                        });
-                    }
-                    //check DragAndDropQuestions
-                    if (question.type === "drag-and-drop") {
-                        if (question.dragItems.length !== backUpQuestion.dragItems.length
-                            || question.dropLocations.length !== backUpQuestion.dropLocations.length) {
-                            vm.questionElementDeleted = true;
+                        //answer correctness changed?
+                        if (answer.isCorrect !== backUpAnswer.isCorrect) {
+                            vm.questionCorrectness = true;
                         }
-                        if (!angular.equals(question.correctMappings, backUpQuestion.correctMappings)) {
-                            vm.questionCorrectess = true;
-                        }
-
-                        //check each dragItem
-                        question.dragItems.forEach(function (dragItem) {
-                        // only check if there are no changes on the question-elements yet
-                            if (!vm.questionElementInvalid) {
-                                var backUpDragItem = null;
-                                for (var j = 0; backUpDragItem === null && j < backUpQuestion.dragItems.length; j++) {
-                                    if (backUpQuestion.dragItems[j].id === dragItem.id) {
-                                        backUpDragItem = backUpQuestion.dragItems[j];
-                                    }
-                                }
-                                if (backUpDragItem !== null) {
-                                    //dragItem set invalid?
-                                    if (dragItem.invalid !== backUpDragItem.invalid) {
-                                        vm.questionElementInvalid = true;
-                                    }
-                                }
-                            }
-                        });
-
-                        //check each dropLocation
-                        question.dropLocations.forEach(function (dropLocation) {
-                            // only check if there are no changes on the question-elements yet
-                            if (!vm.questionElementInvalid) {
-                                var backUpDropLocation = null;
-                                for (var j = 0; backUpDropLocation === null && j < backUpQuestion.dropLocations.length; j++) {
-                                    if (backUpQuestion.dropLocations[j].id === dropLocation.id) {
-                                        backUpDropLocation = backUpQuestion.dropLocations[j];
-                                    }
-                                }
-                                if (backUpDropLocation !== null) {
-                                    //dropLocation set invalid?
-                                    if (dropLocation.invalid !== backUpDropLocation.invalid) {
-                                        vm.questionElementInvalid = true;
-                                    }
-                                }
-                            }
-                        });
                     }
-
-
-
                 }
             });
+        }
+
+        /**
+         * 1. check DragAndDrop-Question-Elements
+         * 2. set flags based on detected changes
+         *
+         * @param question changed DragAndDrop-Question
+         * @param backUpQuestion original not changed DragAndDrop-Question
+         */
+        function checkDragAndDropQuestion(question, backUpQuestion) {
+            //check if a dropLocation or dragItem was deleted
+            if (question.dragItems.length !== backUpQuestion.dragItems.length
+                || question.dropLocations.length !== backUpQuestion.dropLocations.length) {
+                vm.questionElementDeleted = true;
+            }
+            //check if the correct Mappings has changed
+            if (!angular.equals(question.correctMappings, backUpQuestion.correctMappings)) {
+                vm.questionCorrectness = true;
+            }
+            // only check if there are no changes on the question-elements yet
+            if (!vm.questionElementInvalid) {
+                //check each dragItem
+                question.dragItems.forEach(function (dragItem) {
+                    var backUpDragItem = backUpQuestion.dragItems.find(function (dragItemBackUp) {
+                        return dragItemBackUp.id === dragItem.id;
+                    });
+                    //dragItem set invalid?
+                    if (backUpDragItem !== null
+                        && dragItem.invalid !== backUpDragItem.invalid) {
+                        vm.questionElementInvalid = true;
+                    }
+                });
+                //check each dropLocation
+                question.dropLocations.forEach(function (dropLocation) {
+                    var backUpDropLocation = backUpQuestion.dropLocations.find(function (dropLocationBackUp) {
+                        return dropLocationBackUp.id === dropLocation.id;
+                    });
+                    //dropLocation set invalid?
+                    if (backUpDropLocation !== null
+                        && dropLocation.invalid !== backUpDropLocation.invalid) {
+                        vm.questionElementInvalid = true;
+                    }
+                });
+            }
         }
 
         /**

@@ -15,7 +15,7 @@
                     <p style="margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.element_invalid"></p></li>
                 <li><span data-translate="artemisApp.quizExercise.re-evaluate.warning.statistic"></span></li>
             </ul> </li>
-            <li ng-show="vm.questionCorrectess" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.element_correctness"></span>
+            <li ng-show="vm.questionCorrectness" style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.element_correctness"></span>
             <ul style="padding-left: 15px">
                 <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
                     <p style="margin-left: 10px; color: red" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p></li>
@@ -37,7 +37,7 @@
                     <li style="margin-bottom: -10px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.results"></span>
                         <p style="color:red; margin-left: 10px" data-translate="artemisApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p></li>
                 </ul></li>
-            <li ng-show="!(vm.questionElementInvalid || vm.questionElementDeleted || vm.questionCorrectess || vm.questionInvalid || vm.questionDeleted || vm.scoringChanged )"
+            <li ng-show="!(vm.questionElementInvalid || vm.questionElementDeleted || vm.questionCorrectness || vm.questionInvalid || vm.questionDeleted || vm.scoringChanged )"
                 style="padding-top: 5px"><span data-translate="artemisApp.quizExercise.re-evaluate.warning.no_changes"></span></li>
         </ul>
     </div>

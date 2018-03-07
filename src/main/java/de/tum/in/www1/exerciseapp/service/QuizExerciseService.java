@@ -180,31 +180,33 @@ public class QuizExerciseService {
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
+                    MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
                     // Delete all references to question and answers if the question was deleted
                     if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
                         submittedAnswer.setQuestion(null);
-                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(null);
+                        multipleChoiceSubmittedAnswer.setSelectedOptions(null);
                         submittedAnswersToDelete.add(submittedAnswer);
                     } else {
                         // find same question in quizExercise
                         Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
 
                         // Check if an answerOption was deleted and delete reference to in selectedOptions
-                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
+                        multipleChoiceSubmittedAnswer.checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
                     }
                 }
                 if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
+                    DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
                     // Delete all references to question, dropLocations and dragItem if the question was deleted
                     if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
                         submittedAnswer.setQuestion(null);
-                        ((DragAndDropSubmittedAnswer) submittedAnswer).setMappings(null);
+                        dragAndDropSubmittedAnswer.setMappings(null);
                         submittedAnswersToDelete.add(submittedAnswer);
                     } else {
                         // find same question in quizExercise
                         Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
 
                         // Check if a dragItem or dropLocation was deleted and delete the mappings with it
-                        ((DragAndDropSubmittedAnswer) submittedAnswer).checkForDeletedMappings((DragAndDropQuestion) question);
+                        dragAndDropSubmittedAnswer.checkForDeletedMappings((DragAndDropQuestion) question);
                     }
                 }
             }
