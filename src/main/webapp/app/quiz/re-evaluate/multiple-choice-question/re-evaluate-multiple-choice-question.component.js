@@ -29,11 +29,11 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
     vm.isAnswerInvalid = isAnswerInvalid;
 
     vm.sortableOptions = {
-        handle: '.answer-handle',
-        ignore: '.question-options',
+        handle: ".answer-handle",
+        ignore: ".question-options",
         axis: "y",
-        tolerance: 'pointer',
-        cursor: 'move',
+        tolerance: "pointer",
+        cursor: "move",
         start: function (e, ui) {
             ui.item.startPos = ui.item.index();
         },
@@ -116,7 +116,8 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      * The markdown is generated according to these rules:
      *
      * 1. First the answer text is inserted
-     * 2. If hint and/or explanation exist, they are added after the text with a linebreak and tab in front of them
+     * 2. If hint and/or explanation exist,
+     *      they are added after the text with a linebreak and tab in front of them
      *
      * @param answer {answerOption}  is the AnswerOption, which the Markdown-field presents
      */
@@ -254,7 +255,8 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
             if (backUpQuestion.answerOptions[i].id === answer.id) {
 
                 //find correct answer if they have another order
-                vm.question.answerOptions[vm.question.answerOptions.indexOf(answer)] = angular.copy(backUpQuestion.answerOptions[i]);
+                vm.question.answerOptions[vm.question.answerOptions.indexOf(answer)]
+                    = angular.copy(backUpQuestion.answerOptions[i]);
                 answer = angular.copy(backUpQuestion.answerOptions[i]);
 
                 // reset answer editor
