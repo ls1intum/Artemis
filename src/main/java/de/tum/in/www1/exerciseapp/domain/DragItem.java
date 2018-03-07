@@ -1,7 +1,9 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.exerciseapp.config.Constants;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import de.tum.in.www1.exerciseapp.service.FileService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -30,15 +32,19 @@ public class DragItem implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "picture_file_path")
+    @JsonView(QuizView.Before.class)
     private String pictureFilePath;
 
     @Column(name = "text")
+    @JsonView(QuizView.Before.class)
     private String text;
 
     @Column(name = "invalid")
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne
