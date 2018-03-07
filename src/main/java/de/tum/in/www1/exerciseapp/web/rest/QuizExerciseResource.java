@@ -40,6 +40,7 @@ public class QuizExerciseResource {
     private final StatisticService statisticService;
     private final AuthorizationCheckService authCheckService;
     private final SimpMessageSendingOperations messagingTemplate;
+    private final QuizScheduleService quizScheduleService;
 
     public QuizExerciseResource(UserService userService,
                                 QuizExerciseService quizExerciseService,
@@ -47,7 +48,8 @@ public class QuizExerciseResource {
                                 CourseService courseService,
                                 StatisticService statisticService,
                                 AuthorizationCheckService authCheckService,
-                                SimpMessageSendingOperations messagingTemplate) {
+                                SimpMessageSendingOperations messagingTemplate,
+                                QuizScheduleService quizScheduleService) {
         this.userService = userService;
         this.quizExerciseService = quizExerciseService;
         this.participationRepository = participationRepository;
@@ -55,6 +57,7 @@ public class QuizExerciseResource {
         this.statisticService = statisticService;
         this.authCheckService = authCheckService;
         this.messagingTemplate = messagingTemplate;
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -91,6 +94,7 @@ public class QuizExerciseResource {
         }
 
         QuizExercise result = quizExerciseService.save(quizExercise);
+        quizScheduleService.scheduleQuizStart(result);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -155,6 +159,7 @@ public class QuizExerciseResource {
         }
 
         QuizExercise result = quizExerciseService.save(quizExercise);
+        quizScheduleService.scheduleQuizStart(result);
 
         // notify websocket channel of changes to the quiz exercise
         // NOTE: We need to get a deep copy because we still want to return the full quizExercise
@@ -348,7 +353,8 @@ public class QuizExerciseResource {
         }
 
         // save quiz exercise
-        quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.save(quizExercise);
+        quizScheduleService.scheduleQuizStart(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
         quizExercise.applyAppropriateFilterForStudents();
@@ -389,6 +395,8 @@ public class QuizExerciseResource {
         }
 
         quizExerciseService.delete(id);
+        quizScheduleService.cancelScheduledQuizStart(id);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
@@ -417,6 +425,9 @@ public class QuizExerciseResource {
         QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         if (originalQuizExercise == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
+        }
+        if (!originalQuizExercise.isEnded()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotEnded", "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
         }
 
         // fetch course from database to make sure client didn't change groups

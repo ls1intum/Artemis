@@ -409,7 +409,6 @@
             // apply submission if it exists
             if (participation.results.length) {
                 vm.submission = participation.results[0].submission;
-                vm.waitingForQuizStart = false;
 
                 // update submission time
                 updateSubmissionTime();
@@ -472,16 +471,6 @@
                     // synchronize time with server
                     vm.quizExercise.releaseDate = moment(vm.quizExercise.releaseDate);
                     vm.quizExercise.adjustedReleaseDate = moment().add(vm.quizExercise.timeUntilPlannedStart, "seconds");
-
-                    // load quiz when it is planned to start (at most once every second)
-                    runningTimeouts.push(
-                        $timeout(function () {
-                            if (vm.waitingForQuizStart) {
-                                // Load only quizExercise
-                                QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(applyQuizFull);
-                            }
-                        }, Math.max(1, vm.quizExercise.timeUntilPlannedStart + 1) * 1000)
-                    );
                 }
             }
         }
@@ -711,7 +700,6 @@
                     break;
                 case "default":
                     if (vm.disconnected || !submissionChannel) {
-                        // TODO: Create REST Endpoint as a fallback option
                         alert("Cannot Submit while disconnected. Don't worry, answers that were saved while you were still connected will be submitted automatically when the quiz ends.");
                         vm.isSubmitting = false;
                         return;

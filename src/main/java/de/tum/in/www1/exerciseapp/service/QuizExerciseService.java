@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -174,6 +175,20 @@ public class QuizExerciseService {
                 !authCheckService.isAdmin()) {
                 return new LinkedList<>();
             }
+        }
+        return quizExercises;
+    }
+
+    /**
+     * Get all quiz exercises that are planned to start in the future
+     *
+     * @return the list of quiz exercises
+     */
+    @Transactional(readOnly = true)
+    public List<QuizExercise> findAllPlannedToStartInTheFutureWithQuestions() {
+        List<QuizExercise> quizExercises = quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
+        for (QuizExercise quizExercise : quizExercises) {
+            quizExercise.getQuestions().size();
         }
         return quizExercises;
     }

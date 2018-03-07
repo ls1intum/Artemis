@@ -1,22 +1,25 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -28,15 +31,23 @@ public class QuizScheduleService {
     private static Map<Long, Map<String, QuizSubmission>> submissionHashMap = new ConcurrentHashMap<>();
     private static Map<Long, Map<String, Participation>> participationHashMap = new ConcurrentHashMap<>();
     private static Map<Long, Set<Result>> resultHashMap = new ConcurrentHashMap<>();
+    private static Map<Long, ScheduledFuture> quizStartSchedules = new ConcurrentHashMap<>();
 
-    private ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-    private ScheduledFuture<?> scheduledFuture;
+    private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+    static {
+        threadPoolTaskScheduler.setThreadNamePrefix("QuizScheduler");
+        threadPoolTaskScheduler.setPoolSize(3);
+        threadPoolTaskScheduler.initialize();
+    }
+
+    private ScheduledFuture scheduledFuture;
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
     private final UserRepository userRepository;
     private final QuizExerciseService quizExerciseService;
     private final StatisticService statisticService;
+    private final ObjectMapper objectMapper;
 
     /**
      * add a quizSubmission to the submissionHashMap
@@ -143,18 +154,16 @@ public class QuizScheduleService {
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate,
                                ParticipationRepository participationRepository,
-                               ResultRepository resultRepository,
                                UserRepository userRepository,
                                QuizExerciseService quizExerciseService,
-                               StatisticService statisticService) {
+                               StatisticService statisticService,
+                               MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.userRepository = userRepository;
         this.quizExerciseService = quizExerciseService;
         this.statisticService = statisticService;
-
-        threadPoolTaskScheduler.setThreadNamePrefix("QuizScheduler");
-        threadPoolTaskScheduler.initialize();
+        this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
     }
 
     /**
@@ -163,13 +172,53 @@ public class QuizScheduleService {
     public void startSchedule(long delayInMillis) {
         log.info("QuizScheduleService was started to run repeatedly with {} second gaps.", delayInMillis / 1000.0);
         scheduledFuture = threadPoolTaskScheduler.scheduleWithFixedDelay(this::run, delayInMillis);
+
+        // schedule quiz start for all existing quizzes that are planned to start in the future
+        List<QuizExercise> quizExercises = quizExerciseService.findAllPlannedToStartInTheFutureWithQuestions();
+        for (QuizExercise quizExercise : quizExercises) {
+            scheduleQuizStart(quizExercise);
+        }
     }
 
     /**
-     * stop scheduler
-     * doen't interrupt if running
+     * stop scheduler (doesn't interrupt if running)
      */
     public void stopSchedule() {
+        if (scheduledFuture != null) {
+            scheduledFuture.cancel(false);
+        }
+        for (Long quizId : quizStartSchedules.keySet()) {
+            cancelScheduledQuizStart(quizId);
+        }
+    }
+
+    public void scheduleQuizStart(final QuizExercise quizExercise) {
+        // first remove and cancel old scheduledFuture if it exists
+        cancelScheduledQuizStart(quizExercise.getId());
+
+        if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+            // schedule sending out filtered quiz over websocket
+            ScheduledFuture scheduledFuture = threadPoolTaskScheduler.schedule(
+                () -> {
+                    try {
+                        long start = System.currentTimeMillis();
+                        byte[] payload = objectMapper.copy().writerWithView(QuizView.During.class).writeValueAsBytes(quizExercise);
+                        messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
+                        log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
+                    } catch (JsonProcessingException e) {
+                        log.error("Exception occurred while serializing quiz exercise: {}", e);
+                    }
+                },
+                Date.from(quizExercise.getReleaseDate().toInstant())
+            );
+
+            // save scheduled future in HashMap
+            quizStartSchedules.put(quizExercise.getId(), scheduledFuture);
+        }
+    }
+
+    public void cancelScheduledQuizStart(Long quizId) {
+        ScheduledFuture scheduledFuture = quizStartSchedules.remove(quizId);
         if (scheduledFuture != null) {
             scheduledFuture.cancel(false);
         }
@@ -227,8 +276,8 @@ public class QuizScheduleService {
                 }
                 log.info("    sent out {} participations after {} ms", counter, System.currentTimeMillis() - start);
             }
-
         }
+
         //Update Statistics with Results from ResultHashMap (DB Read and DB Write) and remove from ResultHashMap
         for (long quizId : resultHashMap.keySet()) {
 
