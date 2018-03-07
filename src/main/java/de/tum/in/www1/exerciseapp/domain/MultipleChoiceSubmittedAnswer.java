@@ -76,7 +76,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
      * Check if answerOptions were deleted and delete reference to in selectedOptions
      * @param question the changed question with the answerOptions
      */
-    public void checkForDeletedAnswerOptions(MultipleChoiceQuestion question) {
+    private void checkForDeletedAnswerOptions(MultipleChoiceQuestion question) {
 
         if( question != null) {
             // Check if an answerOption was deleted and delete reference to in selectedOptions
@@ -87,6 +87,25 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
                 }
             }
             this.getSelectedOptions().removeAll(selectedOptionsToDelete);
+        }
+    }
+
+    /**
+     * Delete all references to question and answers if the question was changed
+     *
+     * @param quizExercise the changed quizExercise-object
+     */
+    public void updateForDeletedReferences (QuizExercise quizExercise) {
+
+        if (!quizExercise.getQuestions().contains(getQuestion())) {
+            setQuestion(null);
+            selectedOptions = null;
+        } else {
+            // find same question in quizExercise
+            Question question = quizExercise.findQuestionById(getQuestion().getId());
+
+            // Check if an answerOption was deleted and delete reference to in selectedOptions
+            checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
         }
     }
 

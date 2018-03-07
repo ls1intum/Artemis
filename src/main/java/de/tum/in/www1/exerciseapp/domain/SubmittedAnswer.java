@@ -126,4 +126,11 @@ public abstract class SubmittedAnswer implements Serializable {
             ", scoreInPoints='" + getScoreInPoints() + "'" +
             "}";
     }
+
+    /**
+     * Delete all references to question and question-elements if the question was changed
+     *
+     * @param quizExercise the changed quizExercise-object
+     */
+    public abstract void updateForDeletedReferences (QuizExercise quizExercise);
 }

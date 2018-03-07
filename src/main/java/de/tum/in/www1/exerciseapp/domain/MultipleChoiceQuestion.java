@@ -141,10 +141,25 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     /**
      * undo all answer-changes which are not allowed ( adding Answers)
      *
+     * @param originalQuestion the original Question-object, which will be compared with this question
+     *
+     */
+    public void undoUnallowedChanges (Question originalQuestion) {
+
+        if (originalQuestion != null
+            && originalQuestion instanceof MultipleChoiceQuestion) {
+            MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuestion;
+            undoUnallowedAnswerChanges(mcOriginalQuestion);
+        }
+    }
+
+    /**
+     * undo all answer-changes which are not allowed ( adding Answers)
+     *
      * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
      *
      */
-    public void undoUnallowedAnswerChanges ( MultipleChoiceQuestion originalQuestion){
+    private void undoUnallowedAnswerChanges (MultipleChoiceQuestion originalQuestion) {
 
         //find added Answers, which are not allowed to be added
         Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
@@ -173,11 +188,26 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     /**
      * check if an update of the Results and Statistics is necessary
      *
+     * @param originalQuestion the original Question-object, which will be compared with this question
+     *
+     * @return a boolean which is true if the answer-changes make an update necessary and false if not
+     */
+    public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
+        if (originalQuestion != null && originalQuestion instanceof MultipleChoiceQuestion){
+            MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuestion;
+            return checkAnswersIfRecalculationIsNecessary(mcOriginalQuestion);
+        }
+        return false;
+    }
+
+    /**
+     * check if an update of the Results and Statistics is necessary
+     *
      * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
      *
      * @return a boolean which is true if the answer-changes make an update necessary and false if not
      */
-    public boolean checkAnswersIfRecalculationIsNecessary (MultipleChoiceQuestion originalQuestion){
+    private boolean checkAnswersIfRecalculationIsNecessary (MultipleChoiceQuestion originalQuestion){
 
         boolean updateNecessary = false;
 

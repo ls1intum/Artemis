@@ -330,6 +330,23 @@ public class DragAndDropQuestion extends Question implements Serializable {
         return null;
     }
 
+    /**
+     * undo all dragItem- and dropLocation-changes which are not allowed ( adding them)
+     *
+     * @param originalQuestion the original Question-object, which will be compared with this question
+     *
+     */
+    public void undoUnallowedChanges (Question originalQuestion) {
+
+        if (originalQuestion != null
+            && originalQuestion instanceof DragAndDropQuestion) {
+            DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuestion;
+            //undo unallowed dragItemChanges
+            undoUnallowedDragItemChanges(dndOriginalQuestion);
+            //undo unallowed dragItemChanges
+            undoUnallowedDropLocationChanges(dndOriginalQuestion);
+        }
+    }
 
     /**
      * undo all dragItem-changes which are not allowed ( adding them)
@@ -337,7 +354,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
      * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
      *
      */
-    public void undoUnallowedDragItemChanges ( DragAndDropQuestion originalQuestion){
+    private void undoUnallowedDragItemChanges (DragAndDropQuestion originalQuestion) {
 
         //find added DragItems, which are not allowed to be added
         Set<DragItem> notAllowedAddedDragItems = new HashSet<>();
@@ -369,7 +386,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
      * @param originalQuestion the original DragAndDrop-object, which will be compared with this question
      *
      */
-    public void undoUnallowedDropLocationChanges ( DragAndDropQuestion originalQuestion){
+    private void undoUnallowedDropLocationChanges (DragAndDropQuestion originalQuestion) {
 
         //find added DropLocations, which are not allowed to be added
         Set<DropLocation> notAllowedAddedDropLocations = new HashSet<>();
@@ -396,13 +413,30 @@ public class DragAndDropQuestion extends Question implements Serializable {
     }
 
     /**
+     * check if an update of the Results and Statistics is necessary
+     *
+     * @param originalQuestion the original Question-object, which will be compared with this question
+     *
+     * @return a boolean which is true if the dragItem and dropLocation-changes make an update necessary and false if not
+     */
+    public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
+        if (originalQuestion != null && originalQuestion instanceof DragAndDropQuestion){
+            DragAndDropQuestion dndOriginalQuestion = (DragAndDropQuestion) originalQuestion;
+            return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) ||
+                checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion) ||
+                !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());
+        }
+        return false;
+    }
+
+    /**
      * check dragItems if an update of the Results and Statistics is necessary
      *
      * @param originalQuestion the original DragAndDropQuestion-object, which will be compared with this question
      *
      * @return a boolean which is true if the dragItem-changes make an update necessary and false if not
      */
-    public boolean checkDragItemsIfRecalculationIsNecessary (DragAndDropQuestion originalQuestion){
+    private boolean checkDragItemsIfRecalculationIsNecessary (DragAndDropQuestion originalQuestion){
 
         boolean updateNecessary = false;
 
@@ -436,7 +470,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
      *
      * @return a boolean which is true if the dropLocation-changes make an update necessary and false if not
      */
-    public boolean checkDropLocationsIfRecalculationIsNecessary (DragAndDropQuestion originalQuestion){
+    private boolean checkDropLocationsIfRecalculationIsNecessary (DragAndDropQuestion originalQuestion){
 
         boolean updateNecessary = false;
 

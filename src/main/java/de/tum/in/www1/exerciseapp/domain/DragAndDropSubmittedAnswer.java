@@ -74,7 +74,7 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
      * Check if a dragItem or dropLocation were deleted and delete reference to in mappings
      * @param question the changed question with the changed DragItems and DropLocations
      */
-    public void checkForDeletedMappings(DragAndDropQuestion question) {
+    private void checkForDeletedMappings(DragAndDropQuestion question) {
 
         if( question != null) {
             // Check if a dragItem or dropLocation was deleted and delete reference to it in mappings
@@ -88,6 +88,26 @@ public class DragAndDropSubmittedAnswer extends SubmittedAnswer implements Seria
             for (DragAndDropMapping mappingToDelete: selectedMappingsToDelete) {
                 this.removeMappings(mappingToDelete);
             }
+        }
+    }
+
+    /**
+     * Delete all references to question, dragItems and dropLocations if the question was changed
+     *
+     * @param quizExercise the changed quizExercise-object
+     */
+    public void updateForDeletedReferences (QuizExercise quizExercise) {
+
+        // Delete all references to question, dropLocations and dragItem if the question was deleted
+        if (!quizExercise.getQuestions().contains(getQuestion())) {
+            setQuestion(null);
+            mappings = null;
+        } else {
+            // find same question in quizExercise
+            Question question = quizExercise.findQuestionById(getQuestion().getId());
+
+            // Check if a dragItem or dropLocation was deleted and delete the mappings with it
+            checkForDeletedMappings((DragAndDropQuestion) question);
         }
     }
 

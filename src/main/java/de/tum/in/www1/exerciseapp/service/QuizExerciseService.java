@@ -179,35 +179,10 @@ public class QuizExerciseService {
             QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                    MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = (MultipleChoiceSubmittedAnswer) submittedAnswer;
-                    // Delete all references to question and answers if the question was deleted
-                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
-                        submittedAnswer.setQuestion(null);
-                        multipleChoiceSubmittedAnswer.setSelectedOptions(null);
-                        submittedAnswersToDelete.add(submittedAnswer);
-                    } else {
-                        // find same question in quizExercise
-                        Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
-
-                        // Check if an answerOption was deleted and delete reference to in selectedOptions
-                        multipleChoiceSubmittedAnswer.checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
-                    }
-                }
-                if (submittedAnswer instanceof DragAndDropSubmittedAnswer) {
-                    DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer = (DragAndDropSubmittedAnswer) submittedAnswer;
-                    // Delete all references to question, dropLocations and dragItem if the question was deleted
-                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
-                        submittedAnswer.setQuestion(null);
-                        dragAndDropSubmittedAnswer.setMappings(null);
-                        submittedAnswersToDelete.add(submittedAnswer);
-                    } else {
-                        // find same question in quizExercise
-                        Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
-
-                        // Check if a dragItem or dropLocation was deleted and delete the mappings with it
-                        dragAndDropSubmittedAnswer.checkForDeletedMappings((DragAndDropQuestion) question);
-                    }
+                // Delete all references to question and question-elements if the question was changed
+                submittedAnswer.updateForDeletedReferences(quizExercise);
+                if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
+                    submittedAnswersToDelete.add(submittedAnswer);
                 }
             }
             quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
@@ -215,7 +190,9 @@ public class QuizExerciseService {
             //recalculate existing score
             quizSubmission.calculateAndUpdateScores(quizExercise);
             //update Successful-Flag in Result
-            result.setScore(Math.round(quizSubmission.getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
+            result.getParticipation().setExercise(quizExercise);
+            result.setSubmission(quizSubmission);
+            result.evaluateSubmission();
 
             // save the updated Result and its Submission
             resultRepository.save(result);

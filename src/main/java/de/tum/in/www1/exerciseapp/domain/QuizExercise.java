@@ -461,15 +461,8 @@ public class QuizExercise extends Exercise implements Serializable {
                 question.setInvalid(question.isInvalid()
                     || (originalQuestion.isInvalid() != null && originalQuestion.isInvalid()));
 
-                //undo all not allowed changes in the answers of the MultipleChoiceQuestion
-                if (question instanceof MultipleChoiceQuestion) {
-                    ((MultipleChoiceQuestion) question).undoUnallowedAnswerChanges((MultipleChoiceQuestion) originalQuestion);
-                }
-                //undo all not allowed changes in the elements of the DragAndDropQuestion
-                if (question instanceof DragAndDropQuestion) {
-                    ((DragAndDropQuestion) question).undoUnallowedDragItemChanges((DragAndDropQuestion) originalQuestion);
-                    ((DragAndDropQuestion) question).undoUnallowedDropLocationChanges((DragAndDropQuestion) originalQuestion);
-                }
+                //undo all not allowed changes in the answers of the Question
+                question.undoUnallowedChanges(originalQuestion);
 
             } else {
                 // question is added (not allowed), mark question for remove
@@ -498,28 +491,16 @@ public class QuizExercise extends Exercise implements Serializable {
                 // find original unchanged question
                 Question originalQuestion = originalQuizExercise.findQuestionById(question.getId());
 
-                // check if a question is  set invalid or if the scoringType has changed
+                // check if a question is set invalid or if the scoringType has changed
                 // if true an update of the Statistics and Results is necessary
                 updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
                     (question.isInvalid() && originalQuestion.isInvalid() == null) ||
                     (question.isInvalid() && !originalQuestion.isInvalid()) ||
                     !question.getScoringType().equals(originalQuestion.getScoringType());
 
-                // check if the answers-changes make an update of the statistics and results necessary
-                if (question instanceof MultipleChoiceQuestion) {
-                    updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
-                        ((MultipleChoiceQuestion) question).checkAnswersIfRecalculationIsNecessary((MultipleChoiceQuestion) originalQuestion);
-                }
-                // check if the dropLocations, mappings or dragItem-changes make an update of the statistics and results necessary
-                if (question instanceof DragAndDropQuestion) {
-                    DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
-                    DragAndDropQuestion orginalDndQuestion = (DragAndDropQuestion) originalQuestion;
-                    updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
-                        dndQuestion.checkDragItemsIfRecalculationIsNecessary(orginalDndQuestion) ||
-                        dndQuestion.checkDropLocationsIfRecalculationIsNecessary(orginalDndQuestion) ||
-                        !dndQuestion.getCorrectMappings().equals(orginalDndQuestion.getCorrectMappings());
-                }
-
+                // check if the question-changes make an update of the statistics and results necessary
+                updateOfResultsAndStatisticsNecessary = updateOfResultsAndStatisticsNecessary ||
+                    question.isUpdateOfResultsAndStatisticsNecessary(originalQuestion);
             }
         }
         // check if an question was deleted (not allowed added quistions are not relevant)

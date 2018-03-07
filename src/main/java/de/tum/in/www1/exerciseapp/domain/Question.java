@@ -274,4 +274,20 @@ public abstract class Question implements Serializable {
             ", invalid='" + isInvalid() + "'" +
             "}";
     }
+
+    /**
+     * undo all changes which are not allowed
+     *
+     * @param originalQuestion the original not changed Question, to detect the changes
+     */
+    public abstract void undoUnallowedChanges(Question originalQuestion);
+
+    /**
+     * check if an update of the Results and Statistics is necessary
+     *
+     * @param originalQuestion the original Question-object, which will be compared with this question
+     *
+     * @return a boolean which is true if the question-changes make an update necessary and false if not
+     */
+    public abstract boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion);
 }
