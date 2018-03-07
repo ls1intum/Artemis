@@ -47,6 +47,7 @@ public abstract class Submission implements Serializable {
     // but Hibernate still respects it
     private ZonedDateTime submissionDateTransient;
 
+    @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDateTransient;
     }
