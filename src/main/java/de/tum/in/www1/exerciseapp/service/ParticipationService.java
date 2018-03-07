@@ -155,7 +155,7 @@ public class ParticipationService {
 
         // get submission from HashMap
         QuizSubmission quizSubmission = QuizScheduleService.getQuizSubmission(quizExercise.getId(), username);
-        if (quizExercise.isEnded()) {
+        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             if (quizSubmission.isSubmitted()) {
                 quizSubmission.setType(SubmissionType.MANUAL);
             } else {
@@ -174,7 +174,7 @@ public class ParticipationService {
             .exercise(quizExercise)
             .addResults(result);
 
-        if (quizExercise.isEnded()) {
+        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             // update result and participation state
             result.setRated(true);
             result.setCompletionDate(ZonedDateTime.now());
