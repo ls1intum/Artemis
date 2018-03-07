@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
@@ -220,6 +221,21 @@ public class QuizExerciseService {
             }
             quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
             quizSubmissionRepository.save(quizSubmission);
+        }
+    }
+
+    /**
+     * get the view for students in the given quiz
+     * @param quizExercise the quiz to get the view for
+     * @return the view depending on the current state of the quiz
+     */
+    public Class viewForStudentsInQuizExercise(QuizExercise quizExercise) {
+        if (!quizExercise.isStarted()) {
+            return QuizView.Before.class;
+        } else if (quizExercise.isSubmissionAllowed()) {
+            return QuizView.During.class;
+        } else {
+            return QuizView.After.class;
         }
     }
 

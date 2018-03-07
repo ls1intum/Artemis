@@ -147,6 +147,12 @@ public class ParticipationService {
             }
         }
 
+        // Look for Participation in ParticipationHashMap first
+        Participation participation = QuizScheduleService.getParticipation(quizExercise.getId(), username);
+        if (participation != null) {
+            return participation;
+        }
+
         // get submission from HashMap
         QuizSubmission quizSubmission = QuizScheduleService.getQuizSubmission(quizExercise.getId(), username);
         if (quizExercise.isEnded()) {
@@ -163,7 +169,7 @@ public class ParticipationService {
         Result result = new Result().submission(quizSubmission);
 
         // construct participation
-        Participation participation = new Participation()
+        participation = new Participation()
             .initializationState(ParticipationState.INITIALIZED)
             .exercise(quizExercise)
             .addResults(result);

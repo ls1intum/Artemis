@@ -3,7 +3,9 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -43,23 +45,29 @@ public abstract class Exercise implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "title")
+    @JsonView(QuizView.Before.class)
     private String title;
 
     @Column(name = "release_date")
+    @JsonView(QuizView.Before.class)
     protected ZonedDateTime releaseDate;
 
     @Column(name = "due_date")
+    @JsonView(QuizView.Before.class)
     private ZonedDateTime dueDate;
 
     @OneToMany(mappedBy = "exercise")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
     private Set<Participation> participations = new HashSet<>();
 
     @ManyToOne
+    @JsonView(QuizView.Before.class)
     private Course course;
 
     @Transient
@@ -169,6 +177,7 @@ public abstract class Exercise implements Serializable {
      *
      * @return true, if students are allowed to see this exercise, otherwise false
      */
+    @JsonView(QuizView.Before.class)
     public Boolean isVisibleToStudents() {
         if (releaseDate == null) {  //no release date means the exercise is visible to students
             return true;

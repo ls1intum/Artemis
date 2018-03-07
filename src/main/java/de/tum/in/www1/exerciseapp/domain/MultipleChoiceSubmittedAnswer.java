@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Cascade;
@@ -27,6 +29,7 @@ public class MultipleChoiceSubmittedAnswer extends SubmittedAnswer implements Se
     @JoinTable(name = "multiple_choice_submitted_answer_selected_options",
         joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"),
         inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
+    @JsonView(QuizView.Before.class)
     private Set<AnswerOption> selectedOptions = new HashSet<>();
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove

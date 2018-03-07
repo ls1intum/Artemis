@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -347,7 +348,7 @@ public class ParticipationResource {
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Participation> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
@@ -358,32 +359,42 @@ public class ParticipationResource {
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        Participation participation;
+        MappingJacksonValue result;
         if (exercise instanceof QuizExercise) {
-            participation = participationForQuizExercise((QuizExercise) exercise, principal.getName());
+            result = participationForQuizExercise((QuizExercise) exercise, principal.getName());
         } else {
-            participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+            Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
+            result = participation == null ? null : new MappingJacksonValue(participation);
         }
-        return Optional.ofNullable(participation)
-            .map(result -> new ResponseEntity<>(result, HttpStatus.OK))
-            .orElse(new ResponseEntity<>(HttpStatus.NO_CONTENT));
+        if (result == null) {
+            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+        } else {
+            return new ResponseEntity<>(result, HttpStatus.OK);
+        }
     }
 
-    private Participation participationForQuizExercise(QuizExercise quizExercise, String username) {
+    private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, String username) {
         if (!quizExercise.isStarted()) {
             // Quiz hasn't started yet => no Result, only quizExercise without questions
             quizExercise.filterSensitiveInformation();
-            return new Participation().exercise(quizExercise);
+            Participation participation = new Participation().exercise(quizExercise);
+            return new MappingJacksonValue(participation);
         } else if (quizExercise.isSubmissionAllowed()) {
             // Quiz is active => construct Participation from
             // filtered quizExercise and submission from HashMap
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
             quizExercise.filterForStudentsDuringQuiz();
-            return participationService.getParticipationForQuiz(quizExercise, username);
+            Participation participation = participationService.getParticipationForQuiz(quizExercise, username);
+            // set view
+            Class view = quizExerciseService.viewForStudentsInQuizExercise(quizExercise);
+            MappingJacksonValue value = new MappingJacksonValue(participation);
+            value.setSerializationView(view);
+            return value;
         } else {
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
-            return participationService.getParticipationForQuiz(quizExercise, username);
+            Participation participation = participationService.getParticipationForQuiz(quizExercise, username);
+            return new MappingJacksonValue(participation);
         }
     }
 

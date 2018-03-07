@@ -1,7 +1,9 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.exerciseapp.config.Constants;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -39,41 +41,51 @@ public class QuizExercise extends Exercise implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "description")
+    @JsonView(QuizView.Before.class)
     private String description;
 
     @Column(name = "explanation")
+    @JsonView(QuizView.After.class)
     private String explanation;
 
     @Column(name = "randomize_question_order")
+    @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder;
 
     @Column(name = "allowed_number_of_attempts")
+    @JsonView(QuizView.Before.class)
     private Integer allowedNumberOfAttempts;
 
     @Column(name = "is_visible_before_start")
+    @JsonView(QuizView.Before.class)
     private Boolean isVisibleBeforeStart;
 
     @Column(name = "is_open_for_practice")
+    @JsonView(QuizView.Before.class)
     private Boolean isOpenForPractice;
 
     @Column(name = "is_planned_to_start")
+    @JsonView(QuizView.Before.class)
     private Boolean isPlannedToStart;
 
     /**
      * The duration of the quiz exercise in seconds
      */
     @Column(name = "duration")
+    @JsonView(QuizView.Before.class)
     private Integer duration;
 
     @LazyToOne(LazyToOneOption.NO_PROXY)
     @OneToOne(cascade=CascadeType.ALL, orphanRemoval=true)
     @JoinColumn(unique = true)
+    @JsonView(QuizView.After.class)
     private QuizPointStatistic quizPointStatistic;
 
     @OneToMany(cascade=CascadeType.ALL, orphanRemoval=true)
     @OrderColumn
     @JoinColumn(name="exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.During.class)
     private List<Question> questions = new ArrayList<>();
 
     public String getDescription() {
@@ -192,9 +204,14 @@ public class QuizExercise extends Exercise implements Serializable {
     public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
         this.quizPointStatistic = quizPointStatistic;
     }
-    public String getType() { return "quiz"; }
+
+    @JsonView(QuizView.Before.class)
+    public String getType() {
+        return "quiz";
+    }
 
     @Override
+    @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
         return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : null;
     }
@@ -204,6 +221,7 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
      */
+    @JsonView(QuizView.Before.class)
     public Long getRemainingTime() {
         return isStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
     }
@@ -213,6 +231,7 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return null, if the quiz isn't planned to start, otherwise the time until the quiz starts in seconds (negative if the quiz has already started)
      */
+    @JsonView(QuizView.Before.class)
     public Long getTimeUntilPlannedStart() {
         return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getReleaseDate()) : null;
     }
@@ -221,6 +240,7 @@ public class QuizExercise extends Exercise implements Serializable {
      * Check if the quiz has started
      * @return true if quiz has started, false otherwise
      */
+    @JsonView(QuizView.Before.class)
     public Boolean isStarted() {
         return isIsPlannedToStart() && ZonedDateTime.now().isAfter(getReleaseDate());
     }
@@ -229,10 +249,16 @@ public class QuizExercise extends Exercise implements Serializable {
      * Check if submissions for this quiz are allowed at the moment
      * @return true if submissions are allowed, false otherwise
      */
+    @JsonIgnore
     public Boolean isSubmissionAllowed() {
         return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
     }
 
+    /**
+     * Check if the quiz has ended
+     * @return true if quiz has ended, false otherwise
+     */
+    @JsonView(QuizView.Before.class)
     public Boolean isEnded() {
         return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }
@@ -241,6 +267,7 @@ public class QuizExercise extends Exercise implements Serializable {
      * Check if the quiz should be filtered for students (because it hasn't ended yet)
      * @return true if quiz should be filtered, false otherwise
      */
+    @JsonIgnore
     public Boolean shouldFilterForStudents() {
         return !isStarted() || isSubmissionAllowed();
     }
@@ -558,6 +585,7 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return the sum of all the questions' maximum scores
      */
+    @JsonView(QuizView.During.class)
     public Integer getMaxTotalScore() {
         int maxScore = 0;
         // iterate through all questions of this quiz and add up the score

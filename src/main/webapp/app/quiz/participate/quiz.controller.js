@@ -288,9 +288,9 @@
          */
         function initQuiz() {
             // calculate score
-            vm.totalScore = vm.quizExercise.questions.reduce(function (score, question) {
+            vm.totalScore = vm.quizExercise.questions ? vm.quizExercise.questions.reduce(function (score, question) {
                 return score + question.score;
-            }, 0);
+            }, 0) : 0;
 
             // prepare selection arrays for each question
             vm.selectedAnswerOptions = {};
@@ -326,25 +326,27 @@
             vm.selectedAnswerOptions = {};
             vm.dragAndDropMappings = {};
 
-            // iterate through all questions of this quiz
-            vm.quizExercise.questions.forEach(function (question) {
-                // find the submitted answer that belongs to this question
-                var submittedAnswer = vm.submission.submittedAnswers.find(function (submittedAnswer) {
-                    return submittedAnswer.question.id === question.id;
+            if (vm.quizExercise.questions) {
+                // iterate through all questions of this quiz
+                vm.quizExercise.questions.forEach(function (question) {
+                    // find the submitted answer that belongs to this question
+                    var submittedAnswer = vm.submission.submittedAnswers.find(function (submittedAnswer) {
+                        return submittedAnswer.question.id === question.id;
+                    });
+                    switch (question.type) {
+                        case "multiple-choice":
+                            // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                            vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
+                            break;
+                        case "drag-and-drop":
+                            // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                            vm.dragAndDropMappings[question.id] = submittedAnswer ? submittedAnswer.mappings : [];
+                            break;
+                        default:
+                            console.error("Unknown question type: " + question.type);
+                    }
                 });
-                switch (question.type) {
-                    case "multiple-choice":
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
-                        break;
-                    case "drag-and-drop":
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        vm.dragAndDropMappings[question.id] = submittedAnswer ? submittedAnswer.mappings : [];
-                        break;
-                    default:
-                        console.error("Unknown question type: " + question.type);
-                }
-            });
+            }
         }
 
         /**
@@ -415,7 +417,7 @@
                 // show submission answers in UI
                 applySubmission();
 
-                if (participation.initializationState === "FINISHED" && vm.quizExercise.remainingTime < 0) {
+                if (participation.results[0].resultString && vm.quizExercise.ended) {
                     // quiz has ended and results are available
                     showResult(participation.results);
                 }
@@ -486,8 +488,8 @@
 
         function applyParticipationAfterStart(participation) {
             console.log(participation);
-            if (participation.initializationState === "FINISHED" &&
-                participation.results.length &&
+            if (participation.results.length &&
+                participation.results[0].resultString &&
                 participation.exercise.ended) {
                 // quiz has ended and results are available
                 vm.submission = participation.results[0].submission;

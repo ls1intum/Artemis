@@ -26,7 +26,7 @@ public class QuizScheduleService {
     private static final Logger log = LoggerFactory.getLogger(QuizScheduleService.class);
 
     private static Map<Long, Map<String, QuizSubmission>> submissionHashMap = new ConcurrentHashMap<>();
-    private static Map<Long, Set<Participation>> participationHashMap = new ConcurrentHashMap<>();
+    private static Map<Long, Map<String, Participation>> participationHashMap = new ConcurrentHashMap<>();
     private static Map<Long, Set<Result>> resultHashMap = new ConcurrentHashMap<>();
 
     private ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
@@ -85,9 +85,9 @@ public class QuizScheduleService {
         if (quizId != null && participation != null) {
             //check if there is already a result with the same quiz
             if (!participationHashMap.containsKey(quizId)) {
-                participationHashMap.put(quizId, new HashSet<>());
+                participationHashMap.put(quizId, new ConcurrentHashMap<>());
             }
-            participationHashMap.get(quizId).add(participation);
+            participationHashMap.get(quizId).put(participation.getStudent().getLogin(), participation);
         }
 
     }
@@ -117,6 +117,28 @@ public class QuizScheduleService {
         }
         //return an empty quizSubmission if the maps contain no mapping for the keys
         return new QuizSubmission().submittedAnswers(new HashSet<>());
+    }
+
+    /**
+     * get a participation from the participationHashMap by quizId and username
+     *
+     * @param quizId   the quizId of the quiz, the participation belongs to (first Key)
+     * @param username the username of the user, the participation belongs to (second Key)
+     * @return the participation with the given quizId and username
+     * -> return null if there is no participation
+     * -> return null if the quizId or if the username is null
+     */
+    public static Participation getParticipation(Long quizId, String username) {
+        if (quizId == null || username == null) {
+            return null;
+        }
+        //check if the the map contains participations with the quizId
+        if (participationHashMap.containsKey(quizId)) {
+            //return the participation with the username-Key
+            return participationHashMap.get(quizId).get(username);
+        }
+        //return null if the maps contain no mapping for the keys
+        return null;
     }
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate,
@@ -199,7 +221,7 @@ public class QuizScheduleService {
                 // send the participation with containing result and quiz back to the users via websocket
                 //      and remove the participation from the ParticipationHashMap
                 int counter = 0;
-                for (Participation participation : participationHashMap.remove(quizId)) {
+                for (Participation participation : participationHashMap.remove(quizId).values()) {
                     messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/quizExercise/" + quizId + "/participation", participation);
                     counter++;
                 }

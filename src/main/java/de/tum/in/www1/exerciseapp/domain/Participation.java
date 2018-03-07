@@ -2,7 +2,9 @@ package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.Fetch;
@@ -30,27 +32,34 @@ public class Participation implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "repository_url")
+    @JsonView(QuizView.Before.class)
     private String repositoryUrl;
 
     @Column(name = "build_plan_id")
+    @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
+    @JsonView(QuizView.Before.class)
     private ParticipationState initializationState;
 
     @Column(name = "initialization_date")
+    @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
     @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     @JsonIgnoreProperties("participation")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
     private Set<Result> results = new HashSet<>();
 
     @ManyToOne
+    @JsonView(QuizView.Before.class)
     private User student;
 
     // NOTE: Keep default of FetchType.EAGER because most of the times we want
@@ -58,6 +67,7 @@ public class Participation implements Serializable {
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
     // and the gain from fetching lazy here is minimal
     @ManyToOne
+    @JsonView(QuizView.Before.class)
     private Exercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
