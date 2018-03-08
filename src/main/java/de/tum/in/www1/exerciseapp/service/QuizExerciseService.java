@@ -180,7 +180,7 @@ public class QuizExerciseService {
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 // Delete all references to question and question-elements if the question was changed
-                submittedAnswer.updateForDeletedReferences(quizExercise);
+                submittedAnswer.checkAndDeleteReferences(quizExercise);
                 if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
                     submittedAnswersToDelete.add(submittedAnswer);
                 }
