@@ -82,9 +82,9 @@
                     "warning": "Warning!",
                     "confirm": "Confirm changes",
                     "problems": "The following problems may occur:",
-                    "answer_deleted": "Answer option deleted:",
-                    "answer_invalid": "Answer option set invalid:",
-                    "answer_correctness": "Solution of an answer option changed:",
+                    "element_deleted": "Question-element deleted:",
+                    "element_invalid": "Question-element set invalid:",
+                    "element_correctness": "Solution mappings or solution of an answer option changed:",
                     "question_deleted": "Question deleted:",
                     "question_invalid": "Question set invalid:",
                     "scoring_change": "Scoring changed:",
@@ -92,8 +92,8 @@
                     "statistic": "The existing statistics must be recalculated!",
                     "results": "The existing results must be recalculated!",
                     "resulttext":{
-                        "answer_deleted": "The answer option will be removed from all results",
-                        "answer_invalid": "All participants receive the points for the invalid answer",
+                        "element_deleted": "The question-element will be removed from all results",
+                        "element_invalid": "All participants receive the points for the invalid question-element",
                         "question_deleted": "The question will be removed from all results",
                         "question_invalid": "All participants receive the points for the invalid question",
                         "scoring_change": "The scores will be recalculated. A participant could also lose points"

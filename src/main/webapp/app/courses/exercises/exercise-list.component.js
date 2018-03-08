@@ -43,7 +43,7 @@
 
         function initExercises(exercises) {
             if (vm.filterByExerciseId) {
-                exercises = _.filter(exercises, {id: vm.filterByExerciseId})
+                exercises = _.filter(exercises, {id: vm.filterByExerciseId});
             }
 
             vm.numOfOverdueExercises = _.filter(exercises, function (exercise) {
@@ -61,12 +61,14 @@
                 }
 
                 //if the User is a student: subscribe the release Websocket of every quizExercise
-                if(exercise.type === 'quiz' && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
+                if(exercise.type === 'quiz'
+                    && (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))){
                     var websocketChannel = '/topic/statistic/'+ exercise.id +'/release';
 
                     JhiWebsocketService.subscribe(websocketChannel);
 
-                    JhiWebsocketService.receive(websocketChannel).then(null, null, function(payload) {
+                    JhiWebsocketService.receive(websocketChannel)
+                        .then(null, null, function(payload) {
                         exercise.quizPointStatistic.released = payload;
                     });
                 }

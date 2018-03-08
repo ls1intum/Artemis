@@ -51,7 +51,7 @@ public class DragItem implements Serializable {
     @JsonIgnore
     private DragAndDropQuestion question;
 
-    @OneToMany(cascade = CascadeType.REMOVE, fetch = FetchType.EAGER, orphanRemoval = true, mappedBy = "dragItem")
+    @OneToMany(cascade = CascadeType.REMOVE, orphanRemoval = true, mappedBy = "dragItem")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropMapping> mappings = new HashSet<>();

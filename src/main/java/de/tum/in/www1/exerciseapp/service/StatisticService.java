@@ -62,7 +62,7 @@ public class StatisticService {
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
-    public void updateStatisticsAndResults(QuizExercise quizExercise){
+    public void updateStatisticsAfterReEvaluation(QuizExercise quizExercise){
 
         //reset all statistics
         quizExercise.getQuizPointStatistic().resetStatistic();
@@ -80,19 +80,6 @@ public class StatisticService {
 
             // update all Results of a participation
             for (Result result : resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
-
-                QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
-                //recalculate existing score
-                quizSubmission.calculateAndUpdateScores(quizExercise);
-                //update Successful-Flag in Result
-                result.setScore(Math.round(quizSubmission.getScoreInPoints() / quizExercise.getMaxTotalScore() * 100));
-
-                // save the updated Result and its Submission
-                result.setSubmission(quizSubmission);
-                resultRepository.save(result);
-
-                // replace proxy with submission, because of Lazy-fetching
-                result.setSubmission(quizSubmission);
 
                 // find latest rated Result
                 if (result.isRated() && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
@@ -179,6 +166,7 @@ public class StatisticService {
      * @param result the result which will be added (NOTE: add the submission to the result previously (this would improve the performance)
      */
     private void addResultToAllStatistics(QuizExercise quizExercise, Result result) {
+
         // update QuizPointStatistic with the result
         if (result != null) {
             // check if result contains a quizSubmission if true -> a it's not necessary to fetch it from the database

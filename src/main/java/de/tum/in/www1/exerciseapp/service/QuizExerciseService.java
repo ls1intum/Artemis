@@ -206,11 +206,12 @@ public class QuizExerciseService {
 
     /**
      * adjust existing results if an answer or and question was deleted
+     * and recalculate the scores
      *
      * @param quizExercise the changed quizExercise.
      */
     @Transactional
-    public void adjustResultsOnQuizDeletions(QuizExercise quizExercise) {
+    public void adjustResultsOnQuizChanges(QuizExercise quizExercise) {
         //change existing results if an answer or and question was deleted
         for (Result result : resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId())) {
 
@@ -218,24 +219,23 @@ public class QuizExerciseService {
             QuizSubmission quizSubmission = quizSubmissionRepository.findOne(result.getSubmission().getId());
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
-                if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
-                    // Delete all references to question and answers if the question was deleted
-                    if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
-                        submittedAnswer.setQuestion(null);
-                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).setSelectedOptions(null);
-                        submittedAnswersToDelete.add(submittedAnswer);
-                    } else {
-                        // find same question in quizExercise
-                        Question question = quizExercise.findQuestionById(submittedAnswer.getQuestion().getId());
-
-                        // Check if an answerOption was deleted and delete reference to in selectedOptions
-                        ((MultipleChoiceSubmittedAnswer) submittedAnswer).checkForDeletedAnswerOptions((MultipleChoiceQuestion) question);
-                    }
-                    // TODO: @Moritz: DragAndDrop Question
+                // Delete all references to question and question-elements if the question was changed
+                submittedAnswer.checkAndDeleteReferences(quizExercise);
+                if (!quizExercise.getQuestions().contains(submittedAnswer.getQuestion())) {
+                    submittedAnswersToDelete.add(submittedAnswer);
                 }
             }
             quizSubmission.getSubmittedAnswers().removeAll(submittedAnswersToDelete);
-            quizSubmissionRepository.save(quizSubmission);
+
+            //recalculate existing score
+            quizSubmission.calculateAndUpdateScores(quizExercise);
+            //update Successful-Flag in Result
+            result.getParticipation().setExercise(quizExercise);
+            result.setSubmission(quizSubmission);
+            result.evaluateSubmission();
+
+            // save the updated Result and its Submission
+            resultRepository.save(result);
         }
     }
 

@@ -82,9 +82,9 @@
                     "warning": "Warnung!",
                     "confirm": "Änderungen bestätigen",
                     "problems": "Folgende Probleme können auftreten:",
-                    "answer_deleted": "Antwortmöglichkeit gelöscht:",
-                    "answer_invalid": "Antwortmöglichkeit ungültig gesetzt:",
-                    "answer_correctness": "Lösung einer Antwort verändert:",
+                    "element_deleted": "Frage-Element gelöscht:",
+                    "element_invalid": "Frage-Element ungültig gesetzt:",
+                    "element_correctness": "Lösungsverbindungen oder Lösung einer Antwort verändert:",
                     "question_deleted": "Frage gelöscht:",
                     "question_invalid": "Frage ungültig gesetzt:",
                     "scoring_change": "Bewertungsart verändert:",
@@ -92,8 +92,8 @@
                     "statistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
                     "resulttext":{
-                        "answer_deleted": "Die Antwortmöglichkeit wird aus allen Ergebnissen entfernt",
-                        "answer_invalid": "Alle Teilnehmer erhalten die Punkte für die ungültige Antwort",
+                        "element_deleted": "Das Frage-Element wird aus allen Ergebnissen entfernt",
+                        "element_invalid": "Alle Teilnehmer erhalten die Punkte für das ungültige Frage-Element",
                         "question_deleted": "Die Frage wird aus allen Ergebnissen entfernt",
                         "question_invalid": "Alle Teilnehmer erhalten die Punkte für die ungültige Frage",
                         "scoring_change": "Die erreichte Punktzahl wird neu berechnet, dabei kann ein Teilnehmer auch Punkte verlieren"

@@ -34,6 +34,7 @@ public class QuizExerciseResource {
     private static final String ENTITY_NAME = "quizExercise";
 
     private final QuizExerciseService quizExerciseService;
+    private final QuizExerciseRepository quizExerciseRepository;
     private final ParticipationRepository participationRepository;
     private final UserService userService;
     private final CourseService courseService;
@@ -44,6 +45,7 @@ public class QuizExerciseResource {
 
     public QuizExerciseResource(UserService userService,
                                 QuizExerciseService quizExerciseService,
+                                QuizExerciseRepository quizExerciseRepository,
                                 ParticipationRepository participationRepository,
                                 CourseService courseService,
                                 StatisticService statisticService,
@@ -52,6 +54,7 @@ public class QuizExerciseResource {
                                 QuizScheduleService quizScheduleService) {
         this.userService = userService;
         this.quizExerciseService = quizExerciseService;
+        this.quizExerciseRepository = quizExerciseRepository;
         this.participationRepository = participationRepository;
         this.courseService = courseService;
         this.statisticService = statisticService;
@@ -444,17 +447,20 @@ public class QuizExerciseResource {
         quizExercise.undoUnallowedChanges(originalQuizExercise);
         boolean updateOfResultsAndStatisticsNecessary = quizExercise.checkIfRecalculationIsNecessary(originalQuizExercise);
 
-        //adjust existing results if an answer or and question was deleted
-        quizExerciseService.adjustResultsOnQuizDeletions(quizExercise);
-
         //update QuizExercise
         reconnectJSONIgnoreAttributes(quizExercise);
-        QuizExercise result = quizExerciseService.save(quizExercise);
 
-        // update Statistics and Results
+        //adjust existing results if an answer or and question was deleted and recalculate them
+        quizExerciseService.adjustResultsOnQuizChanges(quizExercise);
+
+        QuizExercise result = quizExerciseRepository.save(quizExercise);
+
         if (updateOfResultsAndStatisticsNecessary) {
-            statisticService.updateStatisticsAndResults(quizExercise);
+            // update Statistics
+            statisticService.updateStatisticsAfterReEvaluation(quizExercise);
         }
+
+
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
             .body(result);
@@ -496,12 +502,6 @@ public class QuizExerciseResource {
                 if (question instanceof DragAndDropQuestion) {
                     DragAndDropQuestion dragAndDropQuestion = (DragAndDropQuestion) question;
                     DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuestionStatistic();
-                    //reconnect dropLocationCounters
-                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
-                        if (dropLocationCounter.getId() != null) {
-                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
-                        }
-                    }
                     // reconnect dropLocations
                     for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
                         if (dropLocation.getId() != null) {
@@ -518,6 +518,13 @@ public class QuizExerciseResource {
                     for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
                         if (mapping.getId() != null) {
                             mapping.setQuestion(dragAndDropQuestion);
+                        }
+                    }
+                    //reconnect dropLocationCounters
+                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
+                        if (dropLocationCounter.getId() != null) {
+                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
+                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
                         }
                     }
                 }
