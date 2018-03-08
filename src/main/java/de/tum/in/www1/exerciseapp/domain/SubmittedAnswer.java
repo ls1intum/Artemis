@@ -128,9 +128,9 @@ public abstract class SubmittedAnswer implements Serializable {
     }
 
     /**
-     * Delete all references to question and question-elements if the question was changed
+     * Delete all references to question and question-elements if the quiz was changed
      *
      * @param quizExercise the changed quizExercise-object
      */
-    public abstract void updateForDeletedReferences (QuizExercise quizExercise);
+    public abstract void checkAndDeleteReferences (QuizExercise quizExercise);
 }
