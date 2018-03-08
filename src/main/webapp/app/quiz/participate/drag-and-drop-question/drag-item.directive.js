@@ -10,7 +10,8 @@
             restrict: 'E',
             scope: {
                 dragItem: '=dragItem',
-                clickDisabled: "=clickDisabled"
+                clickDisabled: "=clickDisabled",
+                invalid: "=invalid"
             },
             templateUrl: 'app/quiz/participate/drag-and-drop-question/drag-item.template.html'
         };

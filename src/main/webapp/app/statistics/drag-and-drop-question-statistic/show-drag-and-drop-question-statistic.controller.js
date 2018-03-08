@@ -156,7 +156,7 @@
             orderDropLocationByPos();
 
             // reset old data
-            label = new Array(vm.question.dropLocations.length + 1);
+            label = new Array(vm.question.dropLocations.length);
             backgroundColor = [];
             backgroundSolutionColor = [];
 
