@@ -1,0 +1,208 @@
+<div class="edit-dnd-question" ng-hide="vm.showPreview">
+    <div>
+        <div class="col-md-10 text-left">
+            <div class="input-group">
+                <input class="form-control" ng-model="vm.question.title" placeholder="Question Title"
+                       style="height: 33px"/>
+                <span class="input-group-btn">
+                <button class="btn btn-default" type="button" ng-click="vm.resetQuestionTitle()">
+                <i class="fa fa-rotate-left"></i>
+            </button>
+            </span>
+            </div>
+        </div>
+        <div class="col-md-2 text-right">
+            <div class="form-group">
+                <div class="re-evaluate-button" ng-click="vm.moveUp()">
+                    <i class="fa fa-chevron-up fa-2x"></i>
+                </div>
+                <div class="re-evaluate-button" ng-click="vm.moveDown()">
+                    <i class="fa fa-chevron-down fa-2x"></i>
+                </div>
+                <div class="re-evaluate-button" ng-click="vm.resetQuestion()">
+                    <i class="fa fa-rotate-left fa-2x"></i>
+                </div>
+                <div class="re-evaluate-button" ng-click="vm.delete()">
+                    <i class="fa fa-trash fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <span data-translate="artemisApp.question.scoringType"
+                  class="colon-suffix no-flex-shrink"></span>
+            <select class="form-control" ng-options="option.key as option.label for option in vm.scoringTypeOptions"
+                    ng-model="vm.question.scoringType" title="scoring type"></select>
+            <span data-translate="artemisApp.question.score" class="colon-suffix"></span>
+            <span>{{vm.question.score}}</span>
+        </div>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" ng-model="vm.question.randomizeOrder"/>
+                    <span data-translate="artemisApp.question.randomizeOrder"></span>
+                </label>
+            </div>
+        </div>
+        <button
+            class="btn btn-default"
+            ng-hide="vm.question.invalid"
+            ng-click="vm.question.invalid = true"
+            data-translate="artemisApp.quizExercise.re-evaluate.setQuestionInvalid"
+        ></button>
+        <button
+            class="btn btn-default"
+            ng-show="vm.question.invalid"
+            ng-disabled="vm.question.invalid"
+            data-translate="artemisApp.quizExercise.re-evaluate.questionIsInvalid"
+        ></button>
+    </div>
+    <div class="markupEditorArea">
+        <div class="question-content" style="padding-bottom: 12px">
+            <div class="input-group" style="height: 60px">
+                <div id="{{'question-content-editor-' + vm.random}}" class="form-control"></div>
+                <span class="input-group-btn" style="vertical-align: top">
+                    <button class="btn btn-default btn-lg" type="button" ng-click="vm.resetQuestionText()">
+                    <i class="fa fa-rotate-left"></i>
+                    </button>
+                </span>
+            </div>
+        </div>
+    </div>
+    <hr/>
+    <div class="question-options">
+        <div class="form-group">
+            <span data-translate="artemisApp.dragAndDropQuestion.changeBackgroundPicture"
+                  class="colon-suffix no-flex-shrink"></span>
+            <input type="file" accept="image/*" file-model="vm.backgroundFile"/>
+            <button ng-disabled="vm.isUploadingBackgroundFile || !vm.backgroundFile" class="btn btn-default"
+                    ng-click="vm.uploadBackground()">
+                <span ng-if="vm.isUploadingBackgroundFile"
+                      data-translate="artemisApp.dragAndDropQuestion.uploading"></span>
+                <span ng-if="!vm.isUploadingBackgroundFile"
+                      data-translate="artemisApp.dragAndDropQuestion.upload"></span>
+            </button>
+
+        </div>
+        <button class="btn btn-default btn-lg" type="button" ng-click="vm.resetBackground()">
+            <i class="fa fa-rotate-left"></i>
+        </button>
+    </div>
+    <div class="instructions" ng-if="!vm.question.backgroundFilePath">
+        <span data-translate="artemisApp.dragAndDropQuestion.uploadBackgroundInstructions"></span>
+    </div>
+    <div class="background-area">
+        <img ng-src="{{vm.question.backgroundFilePath}}"
+             alt="{{'artemisApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">
+        <div id="{{'click-layer-' + vm.random}}" class="click-layer" style="cursor: default !important;"
+             ng-class="{disabled: !vm.question.backgroundFilePath}">
+            <div
+                class="drop-location"
+                ng-repeat="dropLocation in vm.question.dropLocations"
+                ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                ng-mousedown="vm.dropLocationMouseDown(dropLocation)"
+                ui-on-drop="vm.onDragDrop(dropLocation, $data)"
+                drag-enter-class="drop-allowed"
+                drag-hover-class="drop-hover"
+            >
+                <div class="invalid">
+                    <span style="color:red;" ng-if="dropLocation.invalid" data-translate="artemisApp.question.invalid"></span>
+                </div>
+                <div class="dimensions">
+                    {{dropLocation.width}}x{{dropLocation.height}}
+                </div>
+                <div class="re-evaluate-button" title="Set invalid" ng-if="!dropLocation.invalid"
+                     ng-click="dropLocation.invalid = true">
+                    <i class="fa fa-ban fa-lg"></i>
+                </div>
+                <div class="re-evaluate-button" title="Reset" ng-click="vm.resetDropLocation(dropLocation)">
+                    <i class="fa fa-rotate-left fa-lg"></i>
+                </div>
+                <div class="re-evaluate-button" title="Delete" ng-click="vm.deleteDropLocation(dropLocation)">
+                    <i class="fa fa-trash fa-lg"></i>
+                </div>
+                <div class="resize top left" ng-mousedown="vm.resizeMouseDown(dropLocation, 'top', 'left')"></div>
+                <div class="resize top center" ng-mousedown="vm.resizeMouseDown(dropLocation, 'top', 'center')"></div>
+                <div class="resize top right" ng-mousedown="vm.resizeMouseDown(dropLocation, 'top', 'right')"></div>
+                <div class="resize middle left" ng-mousedown="vm.resizeMouseDown(dropLocation, 'middle', 'left')"></div>
+                <div class="resize middle right"
+                     ng-mousedown="vm.resizeMouseDown(dropLocation, 'middle', 'right')"></div>
+                <div class="resize bottom left" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
+                <div class="resize bottom center"
+                     ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
+                <div class="resize bottom right" ng-mousedown="vm.resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
+                <div ng-class="'mapping-number mapping-color-' + (vm.getMappingIndex(vm.getMappingsForDropLocation(dropLocation)[0]) % 8)" ng-if="vm.getMappingsForDropLocation(dropLocation).length">
+                    {{vm.getMappingIndex(vm.getMappingsForDropLocation(dropLocation)[0])}}
+                    <div class="unlink-mapping" ng-click="vm.deleteMappingsForDropLocation(dropLocation)">
+                        <i class="fa fa-chain-broken fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr/>
+    <div ng-if="!vm.question.dragItems || !vm.question.dragItems.length" class="instructions">
+        <span data-translate="artemisApp.dragAndDropQuestion.addDragItemsInstructions"></span>
+    </div>
+    <div ng-if="vm.question.dragItems && vm.question.dragItems.length" class="instructions">
+        <span data-translate="artemisApp.dragAndDropQuestion.addMappingsInstructions"></span>
+    </div>
+    <div class="drag-items" ng-if="vm.question.dragItems && vm.question.dragItems.length">
+        <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems" ui-draggable="true" drag="dragItem"
+             drag-handle-class="drag-handle">
+            <div ng-if="dragItem.pictureFilePath">
+                <img ng-src="{{dragItem.pictureFilePath}}">
+            </div>
+            <div ng-if="!dragItem.pictureFilePath">
+                <textarea ng-model="dragItem.text" ng-change="vm.onUpdated()"></textarea>
+            </div>
+            <div class="delete-button">
+                <div class="re-evaluate-button" title="Change to Text Drag Item"
+                     ng-if="dragItem.pictureFilePath"
+                     ng-click="vm.changeToTextDragItem(dragItem)">
+                    <i class="fa fa-font fa-lg"></i>
+                </div>
+                <div class="re-evaluate-button" title="Change to Picture Drag Item and use uploaded picture"
+                     ng-hide="vm.dragItemFile === null"
+                     ng-click="vm.changeToPictureDragItem(dragItem)">
+                    <i class="fa fa-picture-o fa-lg"></i>
+                </div>
+                <div class="re-evaluate-button" title="Set invalid" ng-if="!dragItem.invalid"
+                     ng-click="dragItem.invalid = true">
+                    <i class="fa fa-ban fa-lg"></i>
+                </div>
+                <div class="re-evaluate-button" title="Reset" ng-click="vm.resetDragItem(dragItem)">
+                    <i class="fa fa-rotate-left fa-lg"></i>
+                </div>
+                <div class="re-evaluate-button" title="Delete" ng-click="vm.deleteDragItem(dragItem)">
+                    <i class="fa fa-trash fa-lg"></i>
+                </div>
+            </div>
+            <div class="drag-handle drag-handle-wrapper" title="Move">
+                <i class="fa fa-bars fa-lg drag-handle"></i>
+            </div>
+            <div class="dimensions">
+                <span style="color:red" ng-if="dragItem.invalid" data-translate="artemisApp.question.invalid"></span>
+            </div>
+            <div class="mapping-numbers-wrapper">
+                <div ng-repeat="mapping in vm.getMappingsForDragItem(dragItem) | orderBy: vm.getMappingIndex" ng-class="'mapping-number mapping-color-' + (vm.getMappingIndex(mapping) % 8)">
+                    {{vm.getMappingIndex(mapping)}}
+                    <div class="unlink-mapping" ng-click="vm.deleteMapping(mapping)">
+                        <i class="fa fa-chain-broken fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <i class="fa fa-upload"></i>
+            <span ng-if="vm.isUploadingDragItemFile" data-translate="artemisApp.dragAndDropQuestion.uploading"></span>
+            <span ng-if="!vm.isUploadingDragItemFile"
+                  data-translate="artemisApp.dragAndDropQuestion.changeDragItemPicture"></span>
+            <input type="file" accept="image/*" file-model="vm.dragItemFile"/>
+        </div>
+    </div>
+    <hr/>
+</div>
