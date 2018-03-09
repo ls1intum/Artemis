@@ -164,14 +164,14 @@
         function loadLayout() {
 
             // reset old data
-            label = new Array(vm.question.answerOptions.length + 1);
+            label = [];
             backgroundColor = [];
             backgroundSolutionColor = new Array(vm.question.answerOptions.length + 1);
             solutionLabel = new Array(vm.question.answerOptions.length + 1);
 
             //set label and background-Color based on the AnswerOptions
             vm.question.answerOptions.forEach(function (answerOption, i) {
-                label[i] = (String.fromCharCode(65 + i) + ".");
+                label.push(String.fromCharCode(65 + i) + ".");
                 backgroundColor.push(
                     {
                         backgroundColor: "#428bca",
@@ -221,7 +221,7 @@
             //set Background for invalid answers = grey
             $translate('showStatistic.invalid').then(function (invalidLabel) {
                 vm.question.answerOptions.forEach(function (answerOption, i) {
-                    if (vm.question.answerOptions[i].invalid) {
+                    if (answerOption.invalid) {
                         backgroundColor[i] = (
                             {
                                 backgroundColor: "#838383",
@@ -299,17 +299,17 @@
         function loadData() {
 
             // reset old data
-            ratedData = new Array(vm.question.answerOptions.length);
-            unratedData = new Array(vm.question.answerOptions.length);
+            ratedData = [];
+            unratedData = [];
 
             //set data based on the answerCounters for each AnswerOption
-            vm.question.answerOptions.forEach(function (answerOption, i) {
+            vm.question.answerOptions.forEach(function (answerOption) {
                 var answerOptionCounter = vm.questionStatistic.answerCounters
                     .find(function (answerCounter) {
                     return answerOption.id === answerCounter.answer.id;
                 });
-                ratedData[i] = answerOptionCounter.ratedCounter;
-                unratedData[i] = answerOptionCounter.unRatedCounter;
+                ratedData.push(answerOptionCounter.ratedCounter);
+                unratedData.push(answerOptionCounter.unRatedCounter);
             });
             //add data for the last bar (correct Solutions)
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;

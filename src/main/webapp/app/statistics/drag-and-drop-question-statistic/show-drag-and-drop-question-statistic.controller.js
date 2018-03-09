@@ -153,13 +153,13 @@
             orderDropLocationByPos();
 
             // reset old data
-            label = new Array(vm.question.dropLocations.length);
+            label = [];
             backgroundColor = [];
             backgroundSolutionColor = [];
 
             //set label and backgroundcolor based on the dropLocations
             vm.question.dropLocations.forEach(function (dropLocation, i) {
-                label[i] = (String.fromCharCode(65 + i) + ".");
+                label.push(String.fromCharCode(65 + i) + ".");
                 backgroundColor.push(
                     {
                         backgroundColor: "#428bca",
@@ -243,17 +243,17 @@
         function loadData() {
 
             // reset old data
-            ratedData = new Array(vm.question.dropLocations.length);
-            unratedData = new Array(vm.question.dropLocations.length);
+            ratedData = [];
+            unratedData = [];
 
             //set data based on the dropLocations for each dropLocation
-            vm.question.dropLocations.forEach(function (dropLocation, i) {
+            vm.question.dropLocations.forEach(function (dropLocation) {
                 var dropLocationCounter = vm.questionStatistic.dropLocationCounters
                     .find(function (dlCounter) {
                     return dropLocation.id === dlCounter.dropLocation.id;
                 });
-                ratedData[i] = dropLocationCounter.ratedCounter;
-                unratedData[i] = dropLocationCounter.unRatedCounter;
+                ratedData.push(dropLocationCounter.ratedCounter);
+                unratedData.push(dropLocationCounter.unRatedCounter);
             });
             //add data for the last bar (correct Solutions)
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;
