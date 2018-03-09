@@ -252,10 +252,10 @@
             $translate('showStatistic.multipleChoiceQuestionStatistic.correct')
                 .then(function (correctLabel) {
                     vm.question.answerOptions.forEach(function (answerOption, i) {
-                        if (vm.question.answerOptions[i].isCorrect) {
+                        if (answerOption.isCorrect) {
                             // check if the answer is valid and if true:
                             //      change solution-label and -color
-                            if (!vm.question.answerOptions[i].invalid) {
+                            if (!answerOption.invalid) {
                                 backgroundSolutionColor[i] = (
                                     {
                                         backgroundColor: "#5cb85c",
@@ -274,10 +274,10 @@
             $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect')
                 .then(function (incorrectLabel) {
                     vm.question.answerOptions.forEach(function (answerOption, i) {
-                        if (!vm.question.answerOptions[i].isCorrect) {
+                        if (!answerOption.isCorrect) {
                             // check if the answer is valid and if false:
                             //      change solution-label and -color
-                            if (!vm.question.answerOptions[i].invalid) {
+                            if (!answerOption.invalid) {
                                 backgroundSolutionColor[i] = (
                                     {
                                         backgroundColor: "#d9534f",

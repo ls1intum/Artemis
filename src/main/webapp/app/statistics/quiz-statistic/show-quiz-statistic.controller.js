@@ -133,17 +133,17 @@
         function loadData() {
 
             // reset old data
-            label = new Array(vm.quizExercise.questions.length);
+            label = [];
             backgroundColor = [];
-            ratedData = new Array(vm.quizExercise.questions.length);
-            unratedData = new Array(vm.quizExercise.questions.length);
+            ratedData = [];
+            unratedData = [];
             ratedAverage = 0;
             unratedAverage = 0;
 
             //set data based on the CorrectCounters in the QuestionStatistics
             vm.quizExercise.questions.forEach(function (question, i) {
 
-                label [i] = (i + 1 + ".");
+                label.push(i + 1 + ".");
                 backgroundColor.push(
                     {
                         backgroundColor: "#5bc0de",
@@ -151,8 +151,8 @@
                         pointBackgroundColor: "#5bc0de",
                         pointBorderColor: "#5bc0de"
                     });
-                ratedData[i] = question.questionStatistic.ratedCorrectCounter;
-                unratedData[i] = question.questionStatistic.unRatedCorrectCounter;
+                ratedData.push(question.questionStatistic.ratedCorrectCounter);
+                unratedData.push(question.questionStatistic.unRatedCorrectCounter);
                 ratedAverage = ratedAverage
                     + (question.questionStatistic.ratedCorrectCounter * question.score);
                 unratedAverage = unratedAverage
