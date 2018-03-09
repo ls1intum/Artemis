@@ -61,7 +61,9 @@
             JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
             // ask for new Data if the websocket for new statistical data was notified
-            JhiWebsocketService.receive(websocketChannelForData).then(null, null, function (notify) {
+            JhiWebsocketService.receive(websocketChannelForData)
+                .then(null, null, function (notify) {
+
                 if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                     DragAndDropQuestionStatistic.get({id: vm.questionStatistic.id})
                         .$promise.then(loadNewData);
@@ -138,12 +140,7 @@
          *                          from the server with the new Data.
          */
         function loadNewData(statistic) {
-            // if the Student finds a way to the Website, while the Statistic is not released
-            //          -> the Student will be send back to Courses
-            if ((!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-                && !quiz.quizPointStatistic.released) {
-                $state.go('courses');
-            }
+
             vm.questionStatistic = statistic;
             loadData();
         }
@@ -251,7 +248,8 @@
 
             //set data based on the dropLocations for each dropLocation
             vm.question.dropLocations.forEach(function (dropLocation, i) {
-                var dropLocationCounter = vm.questionStatistic.dropLocationCounters.find(function (dlCounter) {
+                var dropLocationCounter = vm.questionStatistic.dropLocationCounters
+                    .find(function (dlCounter) {
                     return dropLocation.id === dlCounter.dropLocation.id;
                 });
                 ratedData[i] = dropLocationCounter.ratedCounter;
@@ -342,7 +340,8 @@
             while (change) {
                 change = false;
                 for (var i = 0; i < vm.question.dropLocations.length - 1; i++) {
-                    if ((vm.question.dropLocations[i].posX ) > vm.question.dropLocations[i + 1].posX) {
+                    if ((vm.question.dropLocations[i].posX )
+                        > vm.question.dropLocations[i + 1].posX) {
                         // switch DropLocations
                         var temp = vm.question.dropLocations[i];
                         vm.question.dropLocations[i] = vm.question.dropLocations[i + 1];
@@ -462,7 +461,8 @@
                         var meta = chartInstance.controller.getDatasetMeta(i);
                         meta.data.forEach(function (bar, index) {
                             var data = (Math.round(dataset.data[index] * 100) / 100);
-                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+                            var dataPercentage = (Math.round(
+                                (dataset.data[index] / vm.participants) * 1000) / 10);
 
                             var position = bar.tooltipPosition();
 
@@ -476,14 +476,16 @@
 
                                     if (vm.participants !== 0) {
                                         ctx.fillStyle = 'white';
-                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     }
                                 }
                                 //if the bar is too high -> write the amountValue inside the bar
                                 else {
                                     ctx.fillStyle = 'white';
                                     if (vm.participants !== 0) {
-                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(data + " / " + dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     } else {
                                         ctx.fillText(data, position.x, position.y + 10);
                                     }
@@ -493,7 +495,8 @@
                             else {
                                 ctx.fillStyle = 'black';
                                 if (vm.participants !== 0) {
-                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                    ctx.fillText(data + " / " + dataPercentage.toString()
+                                        + "%", position.x, position.y - 10);
                                 } else {
                                     ctx.fillText(data, position.x, position.y - 10);
                                 }

@@ -65,7 +65,7 @@
                     }
                     else {
                         QuizExerciseForStudent.get({id: _.get($state, "params.quizId")})
-                            .$promise.then(loadQuizSuccess)
+                            .$promise.then(loadQuizSuccess);
                     }
 
                 });
@@ -153,8 +153,10 @@
                     });
                 ratedData[i] = question.questionStatistic.ratedCorrectCounter;
                 unratedData[i] = question.questionStatistic.unRatedCorrectCounter;
-                ratedAverage = ratedAverage + (question.questionStatistic.ratedCorrectCounter * question.score);
-                unratedAverage = unratedAverage + (question.questionStatistic.unRatedCorrectCounter * question.score);
+                ratedAverage = ratedAverage
+                    + (question.questionStatistic.ratedCorrectCounter * question.score);
+                unratedAverage = unratedAverage
+                    + (question.questionStatistic.unRatedCorrectCounter * question.score);
 
                 if (question.invalid) {
                     backgroundColor[i] = (
@@ -315,7 +317,8 @@
                         var meta = chartInstance.controller.getDatasetMeta(i);
                         meta.data.forEach(function (bar, index) {
                             var data = (Math.round(dataset.data[index] * 100) / 100);
-                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+                            var dataPercentage = (Math.round(
+                                (dataset.data[index] / vm.participants) * 1000) / 10);
 
                             var position = bar.tooltipPosition();
 
@@ -329,14 +332,16 @@
 
                                     if (vm.participants !== 0) {
                                         ctx.fillStyle = 'white';
-                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     }
                                 }
                                 //if the bar is too high -> write the amountValue inside the bar
                                 else {
                                     ctx.fillStyle = 'white';
                                     if (vm.participants !== 0) {
-                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(data + " / " + dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     } else {
                                         ctx.fillText(data, position.x, position.y + 10);
                                     }
@@ -346,7 +351,8 @@
                             else {
                                 ctx.fillStyle = 'black';
                                 if (vm.participants !== 0) {
-                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                    ctx.fillText(data + " / " + dataPercentage.toString()
+                                       + "%", position.x, position.y - 10);
                                 } else {
                                     ctx.fillText(data, position.x, position.y - 10);
                                 }

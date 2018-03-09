@@ -86,7 +86,8 @@
                     vm.quizExercise.quizPointStatistic.released = payload;
                     vm.questionStatistic.released = payload;
                     // send students back to courses if the statistic was revoked
-                    if (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !payload) {
+                    if (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])
+                        && !payload) {
                         $state.go('courses');
                     }
                 });
@@ -127,7 +128,8 @@
                 // "==" because it compares a number with a string
                 return _.get($state, "params.questionId") == question.id;
             });
-            // if the Anyone finds a way to the Website, with an wrong combination of QuizId and QuestionId
+            // if the Anyone finds a way to the Website,
+            // with an wrong combination of QuizId and QuestionId
             //      -> go back to Courses
             if (vm.question === null) {
                 $state.go('courses');
@@ -147,16 +149,11 @@
          * load the new multipleChoiceQuestionStatistic from the server
          *      if the Websocket has been notified
          *
-         * @param {MultipleChoiceQuestionStatistic} statistic: the new multipleChoiceQuestionStatistic
+         * @param {MultipleChoiceQuestionStatistic} statistic: the new multipleChoiceStatistic
          *                                              from the server with the new Data.
          */
         function loadNewData(statistic) {
-            // if the Student finds a way to the Website, while the Statistic is not released
-            //      -> the Student will be send back to Courses
-            if ((!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-                && !quiz.quizPointStatistic.released) {
-                $state.go('courses');
-            }
+
             vm.questionStatistic = statistic;
             loadData();
         }
@@ -307,7 +304,8 @@
 
             //set data based on the answerCounters for each AnswerOption
             vm.question.answerOptions.forEach(function (answerOption, i) {
-                var answerOptionCounter = vm.questionStatistic.answerCounters.find(function (answerCounter) {
+                var answerOptionCounter = vm.questionStatistic.answerCounters
+                    .find(function (answerCounter) {
                     return answerOption.id === answerCounter.answer.id;
                 });
                 ratedData[i] = answerOptionCounter.ratedCounter;
@@ -476,7 +474,8 @@
                         var meta = chartInstance.controller.getDatasetMeta(i);
                         meta.data.forEach(function (bar, index) {
                             var data = (Math.round(dataset.data[index] * 100) / 100);
-                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+                            var dataPercentage = (Math.round(
+                                (dataset.data[index] / vm.participants) * 1000) / 10);
 
                             var position = bar.tooltipPosition();
 
@@ -490,14 +489,16 @@
 
                                     if (vm.participants !== 0) {
                                         ctx.fillStyle = 'white';
-                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     }
                                 }
                                 //if the bar is too high -> write the amountValue inside the bar
                                 else {
                                     ctx.fillStyle = 'white';
                                     if (vm.participants !== 0) {
-                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(data + " / " + dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     } else {
                                         ctx.fillText(data, position.x, position.y + 10);
                                     }
@@ -507,7 +508,8 @@
                             else {
                                 ctx.fillStyle = 'black';
                                 if (vm.participants !== 0) {
-                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                    ctx.fillText(data + " / " + dataPercentage.toString()
+                                        + "%", position.x, position.y - 10);
                                 } else {
                                     ctx.fillText(data, position.x, position.y - 10);
                                 }

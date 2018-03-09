@@ -84,7 +84,8 @@
         }
 
         /**
-         * Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
+         * Handles the change of a question by replacing the array with a copy
+         *                                      (allows for shallow comparison)
          */
         function onQuestionUpdated() {
             vm.quizExercise.questions = Array.from(vm.quizExercise.questions);
@@ -103,12 +104,15 @@
          * @returns {boolean} true if valid, false otherwise
          */
         function validQuiz() {
-            return vm.quizExercise.title && vm.quizExercise.title !== "" && vm.quizExercise.duration;
+            return vm.quizExercise.title
+                && vm.quizExercise.title !== ""
+                && vm.quizExercise.duration;
         }
 
         /**
          * Open Warning-Modal
-         *  -> if confirmed: send changed quiz to server (in Modal-controller) and go back to parent-template
+         *  -> if confirmed: send changed quiz to server (in Modal-controller)
+         *                              and go back to parent-template
          *  -> if canceled: close Modal
          */
         function save() {
