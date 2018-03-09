@@ -249,6 +249,13 @@ public abstract class Question implements Serializable {
     }
 
     /**
+     * filter out information about correct answers
+     */
+    public void filterForStatisticWebsocket() {
+        setExplanation(null);
+    }
+
+    /**
      * Check if the question is valid. This means the question has a title
      * and fulfills any additional requirements by the specific subclass
      *

@@ -406,6 +406,18 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
+     * filter out information about correct answers
+     */
+    public void filterForStatisticWebsocket() {
+
+        // filter out  explanations, and any information about correct answers
+        // from all questions (so students can't find them in the JSON while answering the quiz)
+        for (Question question : this.getQuestions()) {
+            question.filterForStatisticWebsocket();
+        }
+    }
+
+    /**
      * Get the score for this submission as a number from 0 to 100 (100 being the best possible result)
      *
      * @param quizSubmission the submission that should be evaluated

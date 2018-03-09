@@ -251,6 +251,15 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     }
 
     @Override
+    public void filterForStatisticWebsocket() {
+        super.filterForStatisticWebsocket();
+        for (AnswerOption answerOption : getAnswerOptions()) {
+            answerOption.setIsCorrect(null);
+            answerOption.setExplanation(null);
+        }
+    }
+
+    @Override
     public Boolean isValid() {
         // check general validity (using superclass)
         if (!super.isValid()) {

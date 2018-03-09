@@ -133,7 +133,9 @@ public class StatisticService {
                 }
             }
             //notify users via websocket about new results for the statistics.
-            messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), true);
+            //filters out solution-Informations
+            quiz.filterForStatisticWebsocket();
+            messagingTemplate.convertAndSend("/topic/statistic/" + quiz.getId(), quiz);
         }
 
     }

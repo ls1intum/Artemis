@@ -58,16 +58,9 @@
 
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData)
-                .then(null, null, function (notify) {
-                    if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                        QuizExercise.get({id: _.get($state, "params.quizId")})
-                            .$promise.then(loadQuizSuccess);
-                    }
-                    else {
-                        QuizExerciseForStudent.get({id: _.get($state, "params.quizId")})
-                            .$promise.then(loadQuizSuccess)
-                    }
+                .then(null, null, function (quiz) {
 
+                    loadQuizSuccess(quiz);
                 });
             // refresh release information
             JhiWebsocketService.receive(websocketChannelForReleaseState)

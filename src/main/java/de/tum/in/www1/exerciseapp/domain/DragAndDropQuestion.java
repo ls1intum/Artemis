@@ -513,6 +513,12 @@ public class DragAndDropQuestion extends Question implements Serializable {
     }
 
     @Override
+    public void filterForStatisticWebsocket() {
+        super.filterForStatisticWebsocket();
+        setCorrectMappings(null);
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) {
             return true;
