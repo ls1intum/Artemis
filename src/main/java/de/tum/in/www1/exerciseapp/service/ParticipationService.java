@@ -4,9 +4,7 @@ import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
-import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
-import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -30,23 +28,23 @@ public class ParticipationService {
 
     private final ParticipationRepository participationRepository;
     private final ResultRepository resultRepository;
-    private final QuizSubmissionRepository quizSubmissionRepository;
-    private final UserRepository userRepository;
+    private final QuizSubmissionService quizSubmissionService;
+    private final UserService userService;
     private final Optional<GitService> gitService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
     public ParticipationService(ParticipationRepository participationRepository,
                                 ResultRepository resultRepository,
-                                QuizSubmissionRepository quizSubmissionRepository,
-                                UserRepository userRepository,
+                                QuizSubmissionService quizSubmissionService,
+                                UserService userService,
                                 Optional<GitService> gitService,
                                 Optional<ContinuousIntegrationService> continuousIntegrationService,
                                 Optional<VersionControlService> versionControlService) {
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
-        this.quizSubmissionRepository = quizSubmissionRepository;
-        this.userRepository = userRepository;
+        this.quizSubmissionService = quizSubmissionService;
+        this.userService = userService;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -81,7 +79,7 @@ public class ParticipationService {
             participation = new Participation();
             participation.setExercise(exercise);
 
-            Optional<User> user = userRepository.findOneByLogin(username);
+            Optional<User> user = userService.getUserByLogin(username);
             if (user.isPresent()) {
                 participation.setStudent(user.get());
             }
@@ -138,7 +136,7 @@ public class ParticipationService {
                 participation.setResults(new HashSet<>());
 
                 if (result != null) {
-                    Submission submission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+                    Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
                     result.setSubmission(submission);
                     participation.addResults(result);
                 }
@@ -322,10 +320,31 @@ public class ParticipationService {
         return participation;
     }
 
+    /**
+     * Get all participations for the given student including all results
+     *
+     * @param username the username of the student
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public List<Participation> findWithResultsByStudentUsername(String username) {
+        return participationRepository.findByStudentUsernameWithEagerResults(username);
+    }
+
     @Transactional(readOnly = true)
     public Participation findOneByBuildPlanId(String buildPlanId) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
         return participationRepository.findOneByBuildPlanId(buildPlanId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Participation> findByExerciseId(Long exerciseId) {
+        return participationRepository.findByExerciseId(exerciseId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Participation> findByCourseId(Long courseId) {
+        return participationRepository.findByCourseId(courseId);
     }
 
     /**
@@ -354,5 +373,19 @@ public class ParticipationService {
 
         }
         participationRepository.delete(id);
+    }
+
+    /**
+     * Delete all participations belonging to the given exercise
+     *
+     * @param exerciseId the id of the exercise
+     */
+    @Transactional
+    public void deleteAllByExerciseId(Long exerciseId) {
+        List<Participation> participationsToDelete = participationRepository.findByExerciseId(exerciseId);
+
+        for (Participation participation : participationsToDelete) {
+            delete(participation.getId(), true, true);
+        }
     }
 }

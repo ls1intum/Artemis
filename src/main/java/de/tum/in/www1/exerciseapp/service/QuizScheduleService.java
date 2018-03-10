@@ -1,20 +1,12 @@
 package de.tum.in.www1.exerciseapp.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
-import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
-import de.tum.in.www1.exerciseapp.repository.ResultRepository;
-import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -44,10 +36,9 @@ public class QuizScheduleService {
 
     private final SimpMessageSendingOperations messagingTemplate;
     private final ParticipationRepository participationRepository;
-    private final UserRepository userRepository;
+    private final UserService userService;
     private final QuizExerciseService quizExerciseService;
     private final StatisticService statisticService;
-    private final ObjectMapper objectMapper;
 
     /**
      * add a quizSubmission to the submissionHashMap
@@ -154,16 +145,14 @@ public class QuizScheduleService {
 
     public QuizScheduleService(SimpMessageSendingOperations messagingTemplate,
                                ParticipationRepository participationRepository,
-                               UserRepository userRepository,
+                               UserService userService,
                                QuizExerciseService quizExerciseService,
-                               StatisticService statisticService,
-                               MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
+                               StatisticService statisticService) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
-        this.userRepository = userRepository;
+        this.userService = userService;
         this.quizExerciseService = quizExerciseService;
         this.statisticService = statisticService;
-        this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
     }
 
     /**
@@ -199,16 +188,7 @@ public class QuizScheduleService {
         if (quizExercise.isIsPlannedToStart() && quizExercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             // schedule sending out filtered quiz over websocket
             ScheduledFuture scheduledFuture = threadPoolTaskScheduler.schedule(
-                () -> {
-                    try {
-                        long start = System.currentTimeMillis();
-                        byte[] payload = objectMapper.copy().writerWithView(QuizView.During.class).writeValueAsBytes(quizExercise);
-                        messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
-                        log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
-                    } catch (JsonProcessingException e) {
-                        log.error("Exception occurred while serializing quiz exercise: {}", e);
-                    }
-                },
+                () -> quizExerciseService.sendQuizExerciseToSubscribedClients(quizExercise),
                 Date.from(quizExercise.getReleaseDate().toInstant())
             );
 
@@ -346,7 +326,7 @@ public class QuizScheduleService {
 
             //create and save new participation
             Participation participation = new Participation();
-            Optional<User> user = userRepository.findOneByLogin(username);
+            Optional<User> user = userService.getUserByLogin(username);
             if (user.isPresent()) {
                 participation.setStudent(user.get());
             }

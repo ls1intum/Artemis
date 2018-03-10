@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizController', QuizController);
 
-    QuizController.$inject = ['$scope', '$state', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizExercise', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult', '$timeout'];
+    QuizController.$inject = ['$scope', '$state', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizExercise', 'QuizSubmission', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult', '$timeout'];
 
-    function QuizController($scope, $state, $stateParams, $interval, QuizExerciseForStudent, QuizExercise, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult, $timeout) {
+    function QuizController($scope, $state, $stateParams, $interval, QuizExerciseForStudent, QuizExercise, QuizSubmission, JhiWebsocketService, ExerciseParticipation, ParticipationResult, $timeout) {
         var vm = this;
 
         var timeDifference = 0;

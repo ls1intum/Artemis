@@ -3,7 +3,6 @@ package de.tum.in.www1.exerciseapp.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
-import de.tum.in.www1.exerciseapp.repository.*;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -11,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -30,33 +28,16 @@ public class QuizSubmissionResource {
 
     private static final String ENTITY_NAME = "quizSubmission";
 
-    private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-
-    static {
-        threadPoolTaskScheduler.setPoolSize(5);
-        threadPoolTaskScheduler.setThreadNamePrefix("QuizEndScheduler");
-        threadPoolTaskScheduler.initialize();
-    }
-
-    private final QuizSubmissionRepository quizSubmissionRepository;
     private final QuizExerciseService quizExerciseService;
-    private final ResultRepository resultRepository;
+    private final QuizSubmissionService quizSubmissionService;
     private final ParticipationService participationService;
-    private final UserService userService;
-    private final AuthorizationCheckService authCheckService;
 
-    public QuizSubmissionResource(QuizSubmissionRepository quizSubmissionRepository,
-                                  QuizExerciseService quizExerciseService,
-                                  ResultRepository resultRepository,
-                                  ParticipationService participationService,
-                                  UserService userService,
-                                  AuthorizationCheckService authCheckService) {
-        this.quizSubmissionRepository = quizSubmissionRepository;
+    public QuizSubmissionResource(QuizExerciseService quizExerciseService,
+                                  QuizSubmissionService quizSubmissionService,
+                                  ParticipationService participationService) {
         this.quizExerciseService = quizExerciseService;
-        this.resultRepository = resultRepository;
+        this.quizSubmissionService = quizSubmissionService;
         this.participationService = participationService;
-        this.userService = userService;
-        this.authCheckService = authCheckService;
     }
 
     /**
@@ -83,12 +64,12 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(exerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
         if (quizExercise == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
 
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
+        if (!quizExerciseService.userIsAllowedToSeeExercise(quizExercise)) {
             return ResponseEntity.status(403).headers(HeaderUtil.createFailureAlert("submission", "Forbidden", "You are not allowed to participate in this exercise.")).body(null);
         }
 
@@ -99,23 +80,7 @@ public class QuizSubmissionResource {
         }
 
         // update and save submission
-        quizSubmission.setSubmitted(true);
-        quizSubmission.setType(SubmissionType.MANUAL);
-        quizSubmission.calculateAndUpdateScores(quizExercise);
-
-        // create and save result
-        Result result = new Result().participation(participation).submission(quizSubmission);
-        result.setRated(false);
-        result.setCompletionDate(ZonedDateTime.now());
-        // calculate score and update result accordingly
-        result.evaluateSubmission();
-        // save result
-        resultRepository.save(result);
-        // replace proxy with submission, because of Lazy-fetching
-        result.setSubmission(quizSubmission);
-
-        // add result to statistics
-        QuizScheduleService.addResultToStatistic(quizExercise.getId(), result);
+        Result result = quizSubmissionService.submitForPractice(quizSubmission, quizExercise, participation);
 
         // return quizSubmission
         quizSubmission.setSubmissionDate(result.getCompletionDate());
@@ -141,16 +106,12 @@ public class QuizSubmissionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "idexists", "A new quizSubmission cannot already have an ID.")).body(null);
         }
 
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(exerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(exerciseId);
         if (quizExercise == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
 
-        Course course = quizExercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!quizExerciseService.userHasTAPermissions(quizExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -182,7 +143,7 @@ public class QuizSubmissionResource {
     @Timed
     public List<QuizSubmission> getAllQuizSubmissions() {
         log.debug("REST request to get all QuizSubmissions");
-        return quizSubmissionRepository.findAll();
+        return quizSubmissionService.findAll();
     }
 
     /**
@@ -196,7 +157,7 @@ public class QuizSubmissionResource {
     @Timed
     public ResponseEntity<QuizSubmission> getQuizSubmission(@PathVariable Long id) {
         log.debug("REST request to get QuizSubmission : {}", id);
-        QuizSubmission quizSubmission = quizSubmissionRepository.findOne(id);
+        QuizSubmission quizSubmission = quizSubmissionService.findOne(id);
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizSubmission));
     }
 
@@ -211,7 +172,7 @@ public class QuizSubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteQuizSubmission(@PathVariable Long id) {
         log.debug("REST request to delete QuizSubmission : {}", id);
-        quizSubmissionRepository.delete(id);
+        quizSubmissionService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
-import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
-import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -43,24 +41,18 @@ public class CourseResource {
 
     private final UserService userService;
     private final CourseService courseService;
-    private final ExerciseService exerciseService;
-    private final ParticipationRepository participationRepository;
-    private final ResultRepository resultRepository;
+    private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
     private final ObjectMapper objectMapper;
 
     public CourseResource(UserService userService,
                           CourseService courseService,
-                          ExerciseService exerciseService,
-                          ParticipationRepository participationRepository,
-                          ResultRepository resultRepository,
+                          ParticipationService participationService,
                           AuthorizationCheckService authCheckService,
                           MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.userService = userService;
         this.courseService = courseService;
-        this.exerciseService = exerciseService;
-        this.participationRepository = participationRepository;
-        this.resultRepository = resultRepository;
+        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
@@ -155,7 +147,7 @@ public class CourseResource {
 
         // get all participations of this user
         // TODO: in the future, we should limit this to active courses to improve performance
-        List<Participation> participations = participationRepository.findByStudentUsernameWithEagerResults(principal.getName());
+        List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
 
         for (Course course : courses) {
             ObjectNode courseJson = objectMapper.valueToTree(course);

@@ -1,5 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
@@ -8,6 +10,9 @@ import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
 import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,23 +29,32 @@ public class QuizExerciseService {
 
     private final QuizExerciseRepository quizExerciseRepository;
     private final DragAndDropMappingRepository dragAndDropMappingRepository;
+    private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
     private final ResultRepository resultRepository;
     private final QuizSubmissionRepository quizSubmissionRepository;
+    private final SimpMessageSendingOperations messagingTemplate;
     private final UserService userService;
+    private final ObjectMapper objectMapper;
 
     public QuizExerciseService(UserService userService,
                                QuizExerciseRepository quizExerciseRepository,
                                DragAndDropMappingRepository dragAndDropMappingRepository,
+                               ParticipationService participationService,
                                AuthorizationCheckService authCheckService,
                                ResultRepository resultRepository,
-                               QuizSubmissionRepository quizSubmissionRepository) {
+                               QuizSubmissionRepository quizSubmissionRepository,
+                               SimpMessageSendingOperations messagingTemplate,
+                               MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter) {
         this.userService = userService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
+        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.messagingTemplate = messagingTemplate;
+        this.objectMapper = mappingJackson2HttpMessageConverter.getObjectMapper();
     }
 
     /**
@@ -49,8 +63,9 @@ public class QuizExerciseService {
      * are saved in the correct order to avoid PersistencyExceptions
      *
      * @param quizExercise the quiz exercise to save
-     * @return the saved quiz exercise including
+     * @return the saved quiz exercise
      */
+    @Transactional
     public QuizExercise save(QuizExercise quizExercise) {
         log.debug("Request to save QuizExercise : {}", quizExercise);
 
@@ -78,6 +93,18 @@ public class QuizExerciseService {
         }
 
         return result;
+    }
+
+    /**
+     * Save the given quizExercise to the database
+     * Note: Use this method if you are sure that there are no new entities
+     *
+     * @param quizExercise the quiz exercise to save
+     * @return the saved quiz exercise
+     */
+    @Transactional
+    public QuizExercise saveWithNoNewEntities(QuizExercise quizExercise) {
+        return quizExerciseRepository.save(quizExercise);
     }
 
     /**
@@ -201,6 +228,10 @@ public class QuizExerciseService {
     @Transactional
     public void delete(Long id) {
         log.debug("Request to delete Exercise : {}", id);
+
+        // delete all participations belonging to this quiz
+        participationService.deleteAllByExerciseId(id);
+
         quizExerciseRepository.delete(id);
     }
 
@@ -237,6 +268,42 @@ public class QuizExerciseService {
             // save the updated Result and its Submission
             resultRepository.save(result);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public void sendQuizExerciseToSubscribedClients(QuizExercise quizExercise) {
+        try{
+            long start = System.currentTimeMillis();
+            Class view = viewForStudentsInQuizExercise(quizExercise);
+            byte[] payload = objectMapper.copy().writerWithView(view).writeValueAsBytes(quizExercise);
+            messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
+            log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
+        } catch (JsonProcessingException e) {
+            log.error("Exception occurred while serializing quiz exercise: {}", e);
+        }
+    }
+
+    /**
+     * Check if the current user has at least TA-level permissions for the given exercise
+     *
+     * @param quizExercise the exercise to check permissions for
+     * @return true, if the user has the required permissions, false otherwise
+     */
+    public boolean userHasTAPermissions(QuizExercise quizExercise) {
+        Course course = quizExercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return authCheckService.isTeachingAssistantInCourse(course, user) ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isAdmin();
+    }
+
+    /**
+     * Check if the current user is allowed to see the given exercise
+     * @param quizExercise the exercise to check permissions for
+     * @return true, if the user has the required permissions, false otherwise
+     */
+    public boolean userIsAllowedToSeeExercise(QuizExercise quizExercise) {
+        return authCheckService.isAllowedToSeeExercise(quizExercise, null);
     }
 
     /**
