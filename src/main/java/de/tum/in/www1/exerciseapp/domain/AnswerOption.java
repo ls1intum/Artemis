@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -20,21 +22,27 @@ public class AnswerOption implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "text")
+    @JsonView(QuizView.Before.class)
     private String text;
 
     @Column(name = "hint")
+    @JsonView(QuizView.Before.class)
     private String hint;
 
     @Column(name = "explanation")
+    @JsonView(QuizView.After.class)
     private String explanation;
 
     @Column(name = "is_correct")
+    @JsonView(QuizView.After.class)
     private Boolean isCorrect;
 
     @Column(name = "invalid")
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne

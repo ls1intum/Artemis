@@ -58,16 +58,8 @@
 
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData)
-                .then(null, null, function (notify) {
-                    if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                        QuizExercise.get({id: _.get($state, "params.quizId")})
-                            .$promise.then(loadQuizSuccess);
-                    }
-                    else {
-                        QuizExerciseForStudent.get({id: _.get($state, "params.quizId")})
-                            .$promise.then(loadQuizSuccess);
-                    }
-
+                .then(null, null, function (quiz) {
+                    loadQuizSuccess(quiz);
                 });
             // refresh release information
             JhiWebsocketService.receive(websocketChannelForReleaseState)
@@ -352,7 +344,7 @@
                                 ctx.fillStyle = 'black';
                                 if (vm.participants !== 0) {
                                     ctx.fillText(data + " / " + dataPercentage.toString()
-                                       + "%", position.x, position.y - 10);
+                                        + "%", position.x, position.y - 10);
                                 } else {
                                     ctx.fillText(data, position.x, position.y - 10);
                                 }

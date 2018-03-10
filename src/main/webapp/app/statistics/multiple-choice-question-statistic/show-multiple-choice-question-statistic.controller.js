@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowMultipleChoiceQuestionStatisticController', ShowMultipleChoiceQuestionStatisticController);
 
-    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent', 'MultipleChoiceQuestionStatistic', 'MultipleChoiceQuestionStatisticForStudent', 'ArtemisMarkdown', 'QuizStatisticService'];
+    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent', 'ArtemisMarkdown', 'QuizStatisticService'];
 
-    function ShowMultipleChoiceQuestionStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, MultipleChoiceQuestionStatistic, MultipleChoiceQuestionStatisticForStudent, ArtemisMarkdown, QuizStatisticService) {
+    function ShowMultipleChoiceQuestionStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, ArtemisMarkdown, QuizStatisticService) {
 
         var vm = this;
 
@@ -47,13 +47,13 @@
                 QuizExercise.get({
                     id: _.get($state, "params.quizId")
                 })
-                    .$promise.then(loadQuiz);
+                    .$promise.then(loadQuiz, false);
             }
             else {
                 QuizExerciseForStudent.get({
                     id: _.get($state, "params.quizId")
                 })
-                    .$promise.then(loadQuiz);
+                    .$promise.then(loadQuiz, false);
             }
             //subscribe websocket for new statistical data
             var websocketChannelForData = '/topic/statistic/' + _.get($state, "params.quizId");
@@ -65,19 +65,8 @@
 
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData)
-                .then(null, null, function (notify) {
-                    if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                        MultipleChoiceQuestionStatistic.get({
-                            id: vm.questionStatistic.id
-                        })
-                            .$promise.then(loadNewData);
-                    }
-                    else {
-                        MultipleChoiceQuestionStatisticForStudent.get({
-                            id: vm.questionStatistic.id
-                        })
-                            .$promise.then(loadNewData);
-                    }
+                .then(null, null, function (quiz) {
+                     loadQuiz(quiz, true);
 
                 });
             // refresh release information
@@ -114,8 +103,9 @@
          * This functions loads the Quiz, which is necessary to build the Web-Template
          *
          * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
+         * @param {boolean} refresh: true if method is called from Websocket
          */
-        function loadQuiz(quiz) {
+        function loadQuiz(quiz, refresh) {
             // if the Student finds a way to the Website, while the Statistic is not released
             //      -> the Student will be send back to Courses
             if ((!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
@@ -134,27 +124,17 @@
             if (vm.question === null) {
                 $state.go('courses');
             }
-            //render Markdown-text
-            vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
-            vm.answerTextRendered = vm.question.answerOptions.map(function (answer) {
-                return ArtemisMarkdown.htmlForMarkdown(answer.text);
-            });
-
             vm.questionStatistic = vm.question.questionStatistic;
-            loadLayout();
-            loadData();
-        }
 
-        /**
-         * load the new multipleChoiceQuestionStatistic from the server
-         *      if the Websocket has been notified
-         *
-         * @param {MultipleChoiceQuestionStatistic} statistic: the new multipleChoiceStatistic
-         *                                              from the server with the new Data.
-         */
-        function loadNewData(statistic) {
-
-            vm.questionStatistic = statistic;
+            //load Layout only at the opening (not if the websocket refreshed the data)
+            if (!refresh) {
+                //render Markdown-text
+                vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
+                vm.answerTextRendered = vm.question.answerOptions.map(function (answer) {
+                    return ArtemisMarkdown.htmlForMarkdown(answer.text);
+                });
+                loadLayout();
+            }
             loadData();
         }
 

@@ -41,6 +41,7 @@ public class QuizExerciseResource {
     private final StatisticService statisticService;
     private final AuthorizationCheckService authCheckService;
     private final SimpMessageSendingOperations messagingTemplate;
+    private final QuizScheduleService quizScheduleService;
 
     public QuizExerciseResource(UserService userService,
                                 QuizExerciseService quizExerciseService,
@@ -49,7 +50,8 @@ public class QuizExerciseResource {
                                 CourseService courseService,
                                 StatisticService statisticService,
                                 AuthorizationCheckService authCheckService,
-                                SimpMessageSendingOperations messagingTemplate) {
+                                SimpMessageSendingOperations messagingTemplate,
+                                QuizScheduleService quizScheduleService) {
         this.userService = userService;
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -58,6 +60,7 @@ public class QuizExerciseResource {
         this.statisticService = statisticService;
         this.authCheckService = authCheckService;
         this.messagingTemplate = messagingTemplate;
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -94,6 +97,7 @@ public class QuizExerciseResource {
         }
 
         QuizExercise result = quizExerciseService.save(quizExercise);
+        quizScheduleService.scheduleQuizStart(result);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -141,14 +145,14 @@ public class QuizExerciseResource {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
 
         }
-        if (originalQuiz.hasStarted()) {
+        if (originalQuiz.isStarted()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizHasStarted", "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
         }
 
         reconnectJSONIgnoreAttributes(quizExercise);
 
         // reset Released-Flag in all statistics if they are released but the quiz hasn't ended yet
-        if (!quizExercise.hasStarted() || quizExercise.getRemainingTime() > 0) {
+        if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
             quizExercise.getQuizPointStatistic().setReleased(false);
             for (Question question : quizExercise.getQuestions()) {
                 if (question.getQuestionStatistic() != null) {
@@ -158,9 +162,15 @@ public class QuizExerciseResource {
         }
 
         QuizExercise result = quizExerciseService.save(quizExercise);
+        quizScheduleService.scheduleQuizStart(result);
 
         // notify websocket channel of changes to the quiz exercise
-        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
+        // NOTE: We need to get a deep copy because we still want to return the full quizExercise
+        // to the REST client. Deep copy via serialize-deserialize threw ClassCastException,
+        // so we are going with fetching from database for now, although this is bad for performance.
+        QuizExercise quizForWebsocket = quizExerciseService.findOneWithQuestions(result.getId());
+        quizForWebsocket.applyAppropriateFilterForStudents();
+        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), quizForWebsocket);
 
         return ResponseEntity.ok()
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, quizExercise.getId().toString()))
@@ -227,7 +237,9 @@ public class QuizExerciseResource {
     @Timed
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long id) {
         log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
+        long start = System.currentTimeMillis();
+
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(id);
         if (quizExercise == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
@@ -235,43 +247,23 @@ public class QuizExerciseResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
+        log.info("    checked permissions after {} ms", System.currentTimeMillis() - start);
+
         // filter out all questions, if quiz hasn't started yet
-        if (!quizExercise.hasStarted()) {
+        if (!quizExercise.isStarted()) {
             quizExercise.setQuestions(new ArrayList<>());
         }
 
         // only filter out information if quiz hasn't ended yet
         if (quizExercise.shouldFilterForStudents()) {
             // filter out "explanation" and "questionStatistic" field from all questions (so students can't see explanation and questionStatistic while answering quiz)
-            for (Question question : quizExercise.getQuestions()) {
-                question.setExplanation(null);
-                if (question.getQuestionStatistic() != null && !question.getQuestionStatistic().isReleased()) {
-                    question.setQuestionStatistic(null);
-                }
-
-                // filter out "isCorrect" and "explanation" fields from answerOptions in all MC questions (so students can't see correct options in JSON)
-                if (question instanceof MultipleChoiceQuestion) {
-                    MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) question;
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        answerOption.setIsCorrect(null);
-                        answerOption.setExplanation(null);
-                    }
-                }
-
-                // filter out "correctMappings" from DragAndDropQuestions
-                if (question instanceof DragAndDropQuestion) {
-                    DragAndDropQuestion dndQuestion = (DragAndDropQuestion) question;
-                    dndQuestion.setCorrectMappings(null);
-                }
-            }
+            quizExercise.filterForStudentsDuringQuiz();
         }
         // filter out the statistic information if the statistic is not released
-        if (quizExercise.getQuizPointStatistic() != null && !quizExercise.getQuizPointStatistic().isReleased()) {
-            // filter out all statistical-Data of "quizPointStatistic" if the statistic is not released(so students can't see quizPointStatistic while answering quiz)
-            quizExercise.getQuizPointStatistic().setPointCounters(null);
-            quizExercise.getQuizPointStatistic().setParticipantsRated(null);
-            quizExercise.getQuizPointStatistic().setParticipantsUnrated(null);
-        }
+        // TODO: check if statistic is released
+        quizExercise.setQuizPointStatistic(null);
+
+        log.info("    filtered info after {} ms", System.currentTimeMillis() - start);
 
         return ResponseEntity.ok(quizExercise);
     }
@@ -307,7 +299,7 @@ public class QuizExerciseResource {
         switch (action) {
             case "start-now":
                 // check if quiz hasn't already started
-                if (quizExercise.hasStarted()) {
+                if (quizExercise.isStarted()) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz has already started.\"}");
                 }
 
@@ -326,7 +318,7 @@ public class QuizExerciseResource {
                 break;
             case "open-for-practice":
                 // check if quiz has ended
-                if (!quizExercise.hasStarted() || quizExercise.getRemainingTime() > 0) {
+                if (!quizExercise.isStarted() || quizExercise.getRemainingTime() > 0) {
                     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("{\"message\": \"Quiz hasn't ended yet.\"}");
                 }
                 // check if quiz is already open for practice
@@ -339,7 +331,7 @@ public class QuizExerciseResource {
                 break;
             case "release-statistics":
                 // release statistics
-                if (quizExercise.hasStarted() && quizExercise.getRemainingTime() < 0) {
+                if (quizExercise.isEnded()) {
                     quizExercise.getQuizPointStatistic().setReleased(true);
                     for ( Question question : quizExercise.getQuestions()){
                         question.getQuestionStatistic().setReleased(true);
@@ -364,10 +356,12 @@ public class QuizExerciseResource {
         }
 
         // save quiz exercise
-        quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.save(quizExercise);
+        quizScheduleService.scheduleQuizStart(quizExercise);
 
         // notify websocket channel of changes to the quiz exercise
-        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), true);
+        quizExercise.applyAppropriateFilterForStudents();
+        messagingTemplate.convertAndSend("/topic/quizExercise/" + quizExercise.getId(), quizExercise);
 
         return ResponseEntity.noContent().build();
     }
@@ -404,6 +398,8 @@ public class QuizExerciseResource {
         }
 
         quizExerciseService.delete(id);
+        quizScheduleService.cancelScheduledQuizStart(id);
+
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
@@ -432,6 +428,9 @@ public class QuizExerciseResource {
         QuizExercise originalQuizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExercise.getId());
         if (originalQuizExercise == null) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotFound", "The quiz exercise does not exist yet. Use POST to create a new quizExercise.")).build();
+        }
+        if (!originalQuizExercise.isEnded()) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "quizExerciseNotEnded", "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
         }
 
         // fetch course from database to make sure client didn't change groups

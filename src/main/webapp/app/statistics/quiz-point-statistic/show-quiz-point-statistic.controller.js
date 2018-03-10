@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowQuizPointStatisticController', ShowQuizPointStatisticController);
 
-    ShowQuizPointStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizPointStatistic', 'QuizPointStatisticForStudent', 'QuizExercise', 'QuizExerciseForStudent', 'QuizStatisticService'];
+    ShowQuizPointStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent', 'QuizStatisticService'];
 
-    function ShowQuizPointStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizPointStatistic, QuizPointStatisticForStudent, QuizExercise, QuizExerciseForStudent, QuizStatisticService) {
+    function ShowQuizPointStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, QuizStatisticService) {
         var vm = this;
 
         // Variables for the chart:
@@ -51,17 +51,10 @@
             JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
             // ask for new Data if the websocket for new statistical data was notified
-            JhiWebsocketService.receive(websocketChannelForData)
-                .then(null, null, function (notify) {
 
-                if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    QuizPointStatistic.get({id: vm.quizPointStatistic.id})
-                        .$promise.then(loadNewData);
-                }
-                else {
-                    QuizPointStatisticForStudent.get({id: vm.quizPointStatistic.id})
-                        .$promise.then(loadNewData);
-                }
+            JhiWebsocketService.receive(websocketChannelForData)
+                .then(null, null, function (quiz) {
+                    loadNewData(quiz.quizPointStatistic);
 
             });
             // refresh release information

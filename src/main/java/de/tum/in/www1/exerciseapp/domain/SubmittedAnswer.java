@@ -1,9 +1,7 @@
 package de.tum.in.www1.exerciseapp.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -39,13 +37,16 @@ public abstract class SubmittedAnswer implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "score_in_points")
+    @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
     @ManyToOne(cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties({"questionStatistic", "exercise"})
+    @JsonView(QuizView.Before.class)
     private Question question;
 
     @ManyToOne

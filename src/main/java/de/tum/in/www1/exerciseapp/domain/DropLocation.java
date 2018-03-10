@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -22,21 +24,27 @@ public class DropLocation implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "pos_x")
+    @JsonView(QuizView.Before.class)
     private Integer posX;
 
     @Column(name = "pos_y")
+    @JsonView(QuizView.Before.class)
     private Integer posY;
 
     @Column(name = "width")
+    @JsonView(QuizView.Before.class)
     private Integer width;
 
     @Column(name = "height")
+    @JsonView(QuizView.Before.class)
     private Integer height;
 
     @Column(name = "invalid")
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne

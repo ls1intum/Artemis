@@ -2,6 +2,8 @@ package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -26,37 +28,48 @@ public class Result implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "result_string")
+    @JsonView(QuizView.After.class)
     private String resultString;
 
     @Column(name = "completion_date")
+    @JsonView(QuizView.Before.class)
     private ZonedDateTime completionDate;
 
     @Column(name = "jhi_successful")
+    @JsonView(QuizView.After.class)
     private Boolean successful;
 
     @Column(name = "build_artifact")
+    @JsonView(QuizView.Before.class)
     private Boolean buildArtifact;
 
     @Column(name = "score")
+    @JsonView(QuizView.After.class)
     private Long score;
 
     @Column(name = "rated")
+    @JsonView(QuizView.Before.class)
     private Boolean rated;
 
-    @OneToOne(cascade=CascadeType.REMOVE, fetch = FetchType.LAZY, orphanRemoval=true)
+    @OneToOne(cascade=CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval=true)
     @JoinColumn(unique = true)
+    @JsonView(QuizView.Before.class)
     private Submission submission;
 
     //TODO: we might want to store it as a list (see quizzes)
     @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
     @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
     private Set<Feedback> feedbacks = new HashSet<>();
 
     @ManyToOne
+    @JsonView(QuizView.Before.class)
     private Participation participation;
 
     /**

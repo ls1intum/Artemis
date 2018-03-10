@@ -2,7 +2,10 @@ package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
+import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
 import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
+import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
+import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,8 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * Service Implementation for managing Participation.
@@ -27,13 +29,23 @@ public class ParticipationService {
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
     private final ParticipationRepository participationRepository;
+    private final ResultRepository resultRepository;
+    private final QuizSubmissionRepository quizSubmissionRepository;
     private final UserRepository userRepository;
     private final Optional<GitService> gitService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
 
-    public ParticipationService(ParticipationRepository participationRepository, UserRepository userRepository, Optional<GitService> gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+    public ParticipationService(ParticipationRepository participationRepository,
+                                ResultRepository resultRepository,
+                                QuizSubmissionRepository quizSubmissionRepository,
+                                UserRepository userRepository,
+                                Optional<GitService> gitService,
+                                Optional<ContinuousIntegrationService> continuousIntegrationService,
+                                Optional<VersionControlService> versionControlService) {
         this.participationRepository = participationRepository;
+        this.resultRepository = resultRepository;
+        this.quizSubmissionRepository = quizSubmissionRepository;
         this.userRepository = userRepository;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -97,6 +109,82 @@ public class ParticipationService {
         }
 
         save(participation);
+        return participation;
+    }
+
+    /**
+     * Get a participation for the given quiz and username
+     *
+     * If the quiz hasn't ended, participation is constructed from cached submission
+     *
+     * If the quis has ended, we first look in the database for the participation
+     * and construct one if none was found
+     *
+     * @param quizExercise the quiz exercise to attach to the participation
+     * @param username the username of the user that the participation belongs to
+     * @return the found or created participation
+     */
+    public Participation getParticipationForQuiz(QuizExercise quizExercise, String username) {
+        if (quizExercise.isEnded()) {
+            // try getting participation from database first
+            Participation participation = findOneByExerciseIdAndStudentLoginAnyState(quizExercise.getId(), username);
+            if (participation != null) {
+                // add exercise
+                participation.setExercise(quizExercise);
+
+                // add result
+                Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+
+                participation.setResults(new HashSet<>());
+
+                if (result != null) {
+                    Submission submission = quizSubmissionRepository.findOne(result.getSubmission().getId());
+                    result.setSubmission(submission);
+                    participation.addResults(result);
+                }
+
+                return participation;
+            }
+        }
+
+        // Look for Participation in ParticipationHashMap first
+        Participation participation = QuizScheduleService.getParticipation(quizExercise.getId(), username);
+        if (participation != null) {
+            return participation;
+        }
+
+        // get submission from HashMap
+        QuizSubmission quizSubmission = QuizScheduleService.getQuizSubmission(quizExercise.getId(), username);
+        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
+            if (quizSubmission.isSubmitted()) {
+                quizSubmission.setType(SubmissionType.MANUAL);
+            } else {
+                quizSubmission.setSubmitted(true);
+                quizSubmission.setType(SubmissionType.TIMEOUT);
+                quizSubmission.setSubmissionDate(ZonedDateTime.now());
+            }
+        }
+
+        // construct result
+        Result result = new Result().submission(quizSubmission);
+
+        // construct participation
+        participation = new Participation()
+            .initializationState(ParticipationState.INITIALIZED)
+            .exercise(quizExercise)
+            .addResults(result);
+
+        if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
+            // update result and participation state
+            result.setRated(true);
+            result.setCompletionDate(ZonedDateTime.now());
+            participation.setInitializationState(ParticipationState.FINISHED);
+
+            // calculate scores and update result and submission accordingly
+            quizSubmission.calculateAndUpdateScores(quizExercise);
+            result.evaluateSubmission();
+        }
+
         return participation;
     }
 

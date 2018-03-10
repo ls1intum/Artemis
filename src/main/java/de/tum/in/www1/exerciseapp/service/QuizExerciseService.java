@@ -1,6 +1,7 @@
 package de.tum.in.www1.exerciseapp.service;
 
 import de.tum.in.www1.exerciseapp.domain.*;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import de.tum.in.www1.exerciseapp.repository.DragAndDropMappingRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizExerciseRepository;
 import de.tum.in.www1.exerciseapp.repository.QuizSubmissionRepository;
@@ -10,10 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -115,6 +114,25 @@ public class QuizExerciseService {
     }
 
     /**
+     * Get one quiz exercise by id and eagerly load questions
+     *
+     * @param id the id of the entity
+     * @return the entity
+     */
+    @Transactional(readOnly = true)
+    public QuizExercise findOneWithQuestions(Long id) {
+        log.debug("Request to get Quiz Exercise : {}", id);
+        long start = System.currentTimeMillis();
+        QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        log.info("    loaded quiz after {} ms", System.currentTimeMillis() - start);
+        if (quizExercise != null) {
+            quizExercise.getQuestions().size();
+            log.info("    loaded questions after {} ms", System.currentTimeMillis() - start);
+        }
+        return quizExercise;
+    }
+
+    /**
      * Get one quiz exercise by id and eagerly load questions and statistics
      *
      * @param id the id of the entity
@@ -123,10 +141,18 @@ public class QuizExerciseService {
     @Transactional(readOnly = true)
     public QuizExercise findOneWithQuestionsAndStatistics(Long id) {
         log.debug("Request to get Quiz Exercise : {}", id);
+        long start = System.currentTimeMillis();
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
+        log.info("    loaded quiz after {} ms", System.currentTimeMillis() - start);
         if (quizExercise != null) {
             quizExercise.getQuestions().size();
+            log.info("    loaded questions after {} ms", System.currentTimeMillis() - start);
             quizExercise.getQuizPointStatistic().getPointCounters().size();
+            log.info("    loaded quiz point statistic after {} ms", System.currentTimeMillis() - start);
+            for (Question question : quizExercise.getQuestions()) {
+                question.getQuestionStatistic().getRatedCorrectCounter();
+            }
+            log.info("    loaded question statistics after {} ms", System.currentTimeMillis() - start);
         }
         return quizExercise;
     }
@@ -142,15 +168,29 @@ public class QuizExerciseService {
         log.debug("Request to get all Quiz Exercises in Course : {}", courseId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByCourseId(courseId);
         User user = userService.getUserWithGroupsAndAuthorities();
-        Stream<QuizExercise> authorizedExercises = quizExercises.stream().filter(
-            exercise -> {
-                Course course = exercise.getCourse();
-                return authCheckService.isTeachingAssistantInCourse(course, user) ||
-                    authCheckService.isInstructorInCourse(course, user) ||
-                    authCheckService.isAdmin();
+        if (quizExercises.size() > 0) {
+            Course course = quizExercises.get(0).getCourse();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return new LinkedList<>();
             }
-        );
-        return authorizedExercises.collect(Collectors.toList());
+        }
+        return quizExercises;
+    }
+
+    /**
+     * Get all quiz exercises that are planned to start in the future
+     *
+     * @return the list of quiz exercises
+     */
+    @Transactional(readOnly = true)
+    public List<QuizExercise> findAllPlannedToStartInTheFutureWithQuestions() {
+        List<QuizExercise> quizExercises = quizExerciseRepository.findByIsPlannedToStartAndReleaseDateIsAfter(true, ZonedDateTime.now());
+        for (QuizExercise quizExercise : quizExercises) {
+            quizExercise.getQuestions().size();
+        }
+        return quizExercises;
     }
 
     /**
@@ -196,7 +236,21 @@ public class QuizExerciseService {
 
             // save the updated Result and its Submission
             resultRepository.save(result);
-            quizSubmissionRepository.save(quizSubmission);
+        }
+    }
+
+    /**
+     * get the view for students in the given quiz
+     * @param quizExercise the quiz to get the view for
+     * @return the view depending on the current state of the quiz
+     */
+    public Class viewForStudentsInQuizExercise(QuizExercise quizExercise) {
+        if (!quizExercise.isStarted()) {
+            return QuizView.Before.class;
+        } else if (quizExercise.isSubmissionAllowed()) {
+            return QuizView.During.class;
+        } else {
+            return QuizView.After.class;
         }
     }
 

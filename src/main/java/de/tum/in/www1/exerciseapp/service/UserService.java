@@ -314,6 +314,16 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    public User getUserWithGroupsAndAuthoritiesByLogin(String login) {
+        User user = userRepository.findOneByLogin(login).orElse(null);
+        if (user != null) {
+            user.getGroups().size(); // eagerly load the association
+            user.getAuthorities().size(); // eagerly load the association
+        }
+        return user;
+    }
+
+    @Transactional(readOnly = true)
     public User getUserWithAuthorities() {
         User user = userRepository.findOneByLogin(SecurityUtils.getCurrentUserLogin()).get();
         user.getGroups().size(); // eagerly load the association

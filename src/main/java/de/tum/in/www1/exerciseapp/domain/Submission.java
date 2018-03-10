@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.exerciseapp.domain.enumeration.SubmissionType;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -27,13 +29,16 @@ public abstract class Submission implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "submitted")
+    @JsonView(QuizView.Before.class)
     private Boolean submitted;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "jhi_type")
+    @JsonView(QuizView.Before.class)
     private SubmissionType type;
 
     @Transient
@@ -42,6 +47,7 @@ public abstract class Submission implements Serializable {
     // but Hibernate still respects it
     private ZonedDateTime submissionDateTransient;
 
+    @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
         return submissionDateTransient;
     }

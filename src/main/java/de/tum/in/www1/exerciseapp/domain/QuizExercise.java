@@ -1,7 +1,10 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.exerciseapp.config.Constants;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.LazyToOne;
@@ -38,41 +41,51 @@ public class QuizExercise extends Exercise implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "description")
+    @JsonView(QuizView.Before.class)
     private String description;
 
     @Column(name = "explanation")
+    @JsonView(QuizView.After.class)
     private String explanation;
 
     @Column(name = "randomize_question_order")
+    @JsonView(QuizView.Before.class)
     private Boolean randomizeQuestionOrder;
 
     @Column(name = "allowed_number_of_attempts")
+    @JsonView(QuizView.Before.class)
     private Integer allowedNumberOfAttempts;
 
     @Column(name = "is_visible_before_start")
+    @JsonView(QuizView.Before.class)
     private Boolean isVisibleBeforeStart;
 
     @Column(name = "is_open_for_practice")
+    @JsonView(QuizView.Before.class)
     private Boolean isOpenForPractice;
 
     @Column(name = "is_planned_to_start")
+    @JsonView(QuizView.Before.class)
     private Boolean isPlannedToStart;
 
     /**
      * The duration of the quiz exercise in seconds
      */
     @Column(name = "duration")
+    @JsonView(QuizView.Before.class)
     private Integer duration;
 
     @LazyToOne(LazyToOneOption.NO_PROXY)
     @OneToOne(cascade=CascadeType.ALL, orphanRemoval=true)
     @JoinColumn(unique = true)
+    @JsonView(QuizView.After.class)
     private QuizPointStatistic quizPointStatistic;
 
     @OneToMany(cascade=CascadeType.ALL, orphanRemoval=true)
     @OrderColumn
     @JoinColumn(name="exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.During.class)
     private List<Question> questions = new ArrayList<>();
 
     public String getDescription() {
@@ -191,9 +204,14 @@ public class QuizExercise extends Exercise implements Serializable {
     public void setQuizPointStatistic(QuizPointStatistic quizPointStatistic) {
         this.quizPointStatistic = quizPointStatistic;
     }
-    public String getType() { return "quiz"; }
+
+    @JsonView(QuizView.Before.class)
+    public String getType() {
+        return "quiz";
+    }
 
     @Override
+    @JsonView(QuizView.Before.class)
     public ZonedDateTime getDueDate() {
         return isPlannedToStart ? getReleaseDate().plusSeconds(getDuration()) : null;
     }
@@ -203,8 +221,9 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return null, if the quiz is not planned to start, the remaining time in seconds otherwise
      */
+    @JsonView(QuizView.Before.class)
     public Long getRemainingTime() {
-        return hasStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
+        return isStarted() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getDueDate()) : null;
     }
 
     /**
@@ -212,6 +231,7 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return null, if the quiz isn't planned to start, otherwise the time until the quiz starts in seconds (negative if the quiz has already started)
      */
+    @JsonView(QuizView.Before.class)
     public Long getTimeUntilPlannedStart() {
         return isIsPlannedToStart() ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getReleaseDate()) : null;
     }
@@ -220,7 +240,8 @@ public class QuizExercise extends Exercise implements Serializable {
      * Check if the quiz has started
      * @return true if quiz has started, false otherwise
      */
-    public Boolean hasStarted() {
+    @JsonView(QuizView.Before.class)
+    public Boolean isStarted() {
         return isIsPlannedToStart() && ZonedDateTime.now().isAfter(getReleaseDate());
     }
 
@@ -228,16 +249,27 @@ public class QuizExercise extends Exercise implements Serializable {
      * Check if submissions for this quiz are allowed at the moment
      * @return true if submissions are allowed, false otherwise
      */
+    @JsonIgnore
     public Boolean isSubmissionAllowed() {
-        return hasStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
+        return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS > 0;
+    }
+
+    /**
+     * Check if the quiz has ended
+     * @return true if quiz has ended, false otherwise
+     */
+    @JsonView(QuizView.Before.class)
+    public Boolean isEnded() {
+        return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }
 
     /**
      * Check if the quiz should be filtered for students (because it hasn't ended yet)
      * @return true if quiz should be filtered, false otherwise
      */
+    @JsonIgnore
     public Boolean shouldFilterForStudents() {
-        return !hasStarted() || isSubmissionAllowed();
+        return !isStarted() || isSubmissionAllowed();
     }
 
     /**
@@ -329,7 +361,6 @@ public class QuizExercise extends Exercise implements Serializable {
      * @param questions the List of Question objects which will be set
      */
     public void setQuestions(List<Question> questions) {
-
         this.questions = questions;
         if (questions != null) {
             recalculatePointCounters();
@@ -342,11 +373,48 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     /**
+     * filter this quiz exercise for students depending on the quiz's current state
+     */
+    public void applyAppropriateFilterForStudents() {
+        if (!isStarted()) {
+            filterSensitiveInformation();
+        } else if (shouldFilterForStudents()) {
+            filterForStudentsDuringQuiz();
+        }
+    }
+
+    /**
      * set all sensitive information to null, so no info gets leaked to students through json
      */
     public void filterSensitiveInformation() {
-        setQuestions(null);
         setQuizPointStatistic(null);
+        setQuestions(new ArrayList<>());
+    }
+
+    /**
+     * filter out information about correct answers
+     */
+    public void filterForStudentsDuringQuiz() {
+        // filter out statistics
+        setQuizPointStatistic(null);
+
+        // filter out statistics, explanations, and any information about correct answers
+        // from all questions (so students can't find them in the JSON while answering the quiz)
+        for (Question question : this.getQuestions()) {
+            question.filterForStudentsDuringQuiz();
+        }
+    }
+
+    /**
+     * filter out information about correct answers
+     */
+    public void filterForStatisticWebsocket() {
+
+        // filter out  explanations, and any information about correct answers
+        // from all questions (so students can't find them in the JSON while answering the quiz)
+        for (Question question : this.getQuestions()) {
+            question.filterForStatisticWebsocket();
+        }
     }
 
     /**
@@ -516,10 +584,11 @@ public class QuizExercise extends Exercise implements Serializable {
      *
      * @return the sum of all the questions' maximum scores
      */
+    @JsonView(QuizView.During.class)
     public Integer getMaxTotalScore() {
         int maxScore = 0;
         // iterate through all questions of this quiz and add up the score
-        if (getQuestions() != null) {
+        if (questions != null && Hibernate.isInitialized(questions)) {
             for (Question question : getQuestions()) {
                 maxScore += question.getScore();
             }
@@ -581,6 +650,9 @@ public class QuizExercise extends Exercise implements Serializable {
      * 2. delete old PointCounters if the score is no longer contained
      */
     private void recalculatePointCounters() {
+        if (quizPointStatistic == null || !Hibernate.isInitialized(quizPointStatistic)) {
+            return;
+        }
 
         double quizScore = getMaxTotalScore();
 
