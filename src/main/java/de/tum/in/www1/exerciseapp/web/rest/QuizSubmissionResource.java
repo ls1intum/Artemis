@@ -139,7 +139,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and the list of quizSubmissions in body
      */
     @GetMapping("/quiz-submissions")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @Timed
     public List<QuizSubmission> getAllQuizSubmissions() {
         log.debug("REST request to get all QuizSubmissions");
@@ -153,7 +153,7 @@ public class QuizSubmissionResource {
      * @return the ResponseEntity with status 200 (OK) and with body the quizSubmission, or with status 404 (Not Found)
      */
     @GetMapping("/quiz-submissions/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     @Timed
     public ResponseEntity<QuizSubmission> getQuizSubmission(@PathVariable Long id) {
         log.debug("REST request to get QuizSubmission : {}", id);

@@ -210,7 +210,7 @@ public class CourseResource {
 
 
     /**
-     * GET /user/:courseId/courseResult
+     * GET /courses/:courseId/getAllCourseScoresOfCourseUsers
      *
      * @param courseId the Id of the course
      * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:

@@ -165,7 +165,7 @@ public class QuizExerciseResource {
     }
 
     /**
-     * GET  /courses/:courseId/exercises : get all the exercises.
+     * GET  /courses/:courseId/quiz-exercises : get all the exercises.
      *
      * @return the ResponseEntity with status 200 (OK) and the list of programmingExercises in body
      */
@@ -201,7 +201,8 @@ public class QuizExerciseResource {
     }
 
     /**
-     * GET  /quiz-exercises/:id : get the "id" quizExercise.
+     * GET  /quiz-exercises/:id/for-student : get the "id" quizExercise.
+     * (information filtered for students)
      *
      * @param id the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
