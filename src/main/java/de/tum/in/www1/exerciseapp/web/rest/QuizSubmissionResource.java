@@ -132,47 +132,4 @@ public class QuizSubmissionResource {
 
         return ResponseEntity.ok(result);
     }
-
-    /**
-     * GET  /quiz-submissions : get all the quizSubmissions.
-     *
-     * @return the ResponseEntity with status 200 (OK) and the list of quizSubmissions in body
-     */
-    @GetMapping("/quiz-submissions")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    @Timed
-    public List<QuizSubmission> getAllQuizSubmissions() {
-        log.debug("REST request to get all QuizSubmissions");
-        return quizSubmissionService.findAll();
-    }
-
-    /**
-     * GET  /quiz-submissions/:id : get the "id" quizSubmission.
-     *
-     * @param id the id of the quizSubmission to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the quizSubmission, or with status 404 (Not Found)
-     */
-    @GetMapping("/quiz-submissions/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    @Timed
-    public ResponseEntity<QuizSubmission> getQuizSubmission(@PathVariable Long id) {
-        log.debug("REST request to get QuizSubmission : {}", id);
-        QuizSubmission quizSubmission = quizSubmissionService.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizSubmission));
-    }
-
-    /**
-     * DELETE  /quiz-submissions/:id : delete the "id" quizSubmission.
-     *
-     * @param id the id of the quizSubmission to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("/quiz-submissions/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    @Timed
-    public ResponseEntity<Void> deleteQuizSubmission(@PathVariable Long id) {
-        log.debug("REST request to delete QuizSubmission : {}", id);
-        quizSubmissionService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
-    }
 }
