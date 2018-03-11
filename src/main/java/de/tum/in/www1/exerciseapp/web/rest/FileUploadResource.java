@@ -29,17 +29,13 @@ import java.util.UUID;
 @RequestMapping("/api")
 public class FileUploadResource {
 
-    private final FileService fileService;
-    private final DragAndDropQuestionRepository dragAndDropQuestionRepository;
-    private final DragItemRepository dragItemRepository;
-
-    public FileUploadResource(FileService fileService, DragAndDropQuestionRepository dragAndDropQuestionRepository, DragItemRepository dragItemRepository) {
-        this.fileService = fileService;
-        this.dragAndDropQuestionRepository = dragAndDropQuestionRepository;
-        this.dragItemRepository = dragItemRepository;
-    }
-
     private final Logger log = LoggerFactory.getLogger(FileUploadResource.class);
+
+    private final FileService fileService;
+
+    public FileUploadResource(FileService fileService) {
+        this.fileService = fileService;
+    }
 
     /**
      * POST  /fileUpload : Upload a new file.
