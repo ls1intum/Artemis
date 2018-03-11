@@ -181,7 +181,7 @@ public class ParticipationResource {
 //    }
 
     /**
-     * GET  /exercise/{exerciseId}/participations : get all the participations for an exercise
+     * GET  /exercise/:exerciseId/participations : get all the participations for an exercise
      *
      * @param exerciseId
      * @return
@@ -201,7 +201,7 @@ public class ParticipationResource {
     }
 
     /**
-     * GET  /course/{courseId}/participations : get all the participations for a course
+     * GET  /courses/:courseId/participations : get all the participations for a course
      *
      * @param courseId
      * @return
