@@ -17,7 +17,8 @@
                              <a class="text-success" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
                         </span>
                     </span>
-                </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+                    (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+                </span>
             </span>
             <span ng-switch-when="false">
                 <span class="text-danger">
@@ -30,7 +31,8 @@
                              <a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
                         </span>
                     </span>
-                </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+                    (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+                </span>
             </span>
         </span>
     </span>
@@ -46,10 +48,11 @@
                         <a class="text-success" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
                     </span>
                 </span>
-            </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+                (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+            </span>
         </span>
         <span ng-if="$ctrl.results[0].score > 40 && $ctrl.results[0].score <= 80">
-            <span  class="result-orange">
+            <span class="result-orange">
                 <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg fa-check-circle-o"></i>&nbsp;
                 <span ng-switch on="$ctrl.results[0].participation.exercise.type === 'quiz' || !$ctrl.results[0].hasFeedback">
                     <span ng-switch-when="true">
@@ -59,7 +62,8 @@
                         <a class="result-orange" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
                     </span>
                 </span>
-            </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+                (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+            </span>
         </span>
         <span ng-if="$ctrl.results[0].score >= 0 && $ctrl.results[0].score <= 40">
             <span class="text-danger">
@@ -72,7 +76,8 @@
                         <a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
                     </span>
                 </span>
-            </span> (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+                (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+            </span>
         </span>
     </span>
 </span>
