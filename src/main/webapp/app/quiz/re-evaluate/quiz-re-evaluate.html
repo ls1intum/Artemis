@@ -53,16 +53,27 @@
                 <span>{{vm.quizExercise.releaseDate | date:'yyyy-MM-dd HH:mm:ss'}}</span>
             </div>
         </div>
-        <re-evaluate-multiple-choice-question
-            class="question"
-            ng-repeat="question in vm.quizExercise.questions"
-            question="question"
-            question-index="$index + 1"
-            on-delete="vm.deleteQuestion(question)"
-            on-move-up="vm.moveUp(question)"
-            on-move-down="vm.moveDown(question)"
-            on-updated="vm.onQuestionUpdated()"
-        ></re-evaluate-multiple-choice-question>
+        <div ng-repeat="question in vm.quizExercise.questions">
+            <re-evaluate-multiple-choice-question
+                ng-if="question.type === 'multiple-choice'"
+                question="question"
+                question-index="$index + 1"
+                on-delete="vm.deleteQuestion(question)"
+                on-move-up="vm.moveUp(question)"
+                on-move-down="vm.moveDown(question)"
+                on-updated="vm.onQuestionUpdated()"
+            ></re-evaluate-multiple-choice-question>
+            <re-evaluate-drag-and-drop-question
+                ng-if="question.type === 'drag-and-drop'"
+                question="question"
+                question-index="$index + 1"
+                on-delete="vm.deleteQuestion(question)"
+                on-move-up="vm.moveUp(question)"
+                on-move-down="vm.moveDown(question)"
+                on-updated="vm.onQuestionUpdated()"
+            ></re-evaluate-drag-and-drop-question>
+            &nbsp
+        </div>
     </div>
     <div class="edit-quiz-footer">
         <div class="container">

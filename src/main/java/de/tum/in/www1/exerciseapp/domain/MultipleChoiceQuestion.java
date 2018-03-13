@@ -127,9 +127,9 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     public AnswerOption findAnswerOptionById (Long answerOptionId) {
 
         if (answerOptionId != null) {
-            // iterate through all questions of this quiz
+            // iterate through all answers of this quiz
             for (AnswerOption answer : answerOptions) {
-                // return question if the IDs are equal
+                // return answer if the IDs are equal
                 if (answer.getId().equals(answerOptionId)) {
                     return answer;
                 }
@@ -141,10 +141,25 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     /**
      * undo all answer-changes which are not allowed ( adding Answers)
      *
+     * @param originalQuestion the original Question-object, which will be compared with this question
+     *
+     */
+    public void undoUnallowedChanges (Question originalQuestion) {
+
+        if (originalQuestion != null
+            && originalQuestion instanceof MultipleChoiceQuestion) {
+            MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuestion;
+            undoUnallowedAnswerChanges(mcOriginalQuestion);
+        }
+    }
+
+    /**
+     * undo all answer-changes which are not allowed ( adding Answers)
+     *
      * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
      *
      */
-    public void undoUnallowedAnswerChanges ( MultipleChoiceQuestion originalQuestion){
+    private void undoUnallowedAnswerChanges (MultipleChoiceQuestion originalQuestion) {
 
         //find added Answers, which are not allowed to be added
         Set<AnswerOption> notAllowedAddedAnswers = new HashSet<>();
@@ -162,7 +177,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
                 answer.setInvalid(answer.isInvalid()
                     || (originalAnswer.isInvalid() != null && originalAnswer.isInvalid()));
             } else {
-                //mark the added Answers (adding questions is not allowed)
+                //mark the added Answers (adding answers is not allowed)
                 notAllowedAddedAnswers.add(answer);
             }
         }
@@ -173,11 +188,26 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     /**
      * check if an update of the Results and Statistics is necessary
      *
+     * @param originalQuestion the original Question-object, which will be compared with this question
+     *
+     * @return a boolean which is true if the answer-changes make an update necessary and false if not
+     */
+    public boolean isUpdateOfResultsAndStatisticsNecessary(Question originalQuestion) {
+        if (originalQuestion != null && originalQuestion instanceof MultipleChoiceQuestion){
+            MultipleChoiceQuestion mcOriginalQuestion = (MultipleChoiceQuestion) originalQuestion;
+            return checkAnswersIfRecalculationIsNecessary(mcOriginalQuestion);
+        }
+        return false;
+    }
+
+    /**
+     * check if an update of the Results and Statistics is necessary
+     *
      * @param originalQuestion the original MultipleChoiceQuestion-object, which will be compared with this question
      *
      * @return a boolean which is true if the answer-changes make an update necessary and false if not
      */
-    public boolean checkAnswersIfRecalculationIsNecessary (MultipleChoiceQuestion originalQuestion){
+    private boolean checkAnswersIfRecalculationIsNecessary (MultipleChoiceQuestion originalQuestion){
 
         boolean updateNecessary = false;
 
