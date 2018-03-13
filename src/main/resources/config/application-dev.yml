@@ -96,7 +96,7 @@ artemis:
     url: https://jirabruegge.in.tum.de
     user: <username>
     password: <password>
-    instructor-group-name: <group>
+    admin-group-name: <group>
   bitbucket:
     url: https://repobruegge.in.tum.de
     user: <username>
