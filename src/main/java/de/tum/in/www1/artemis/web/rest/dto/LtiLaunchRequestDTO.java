@@ -1,0 +1,231 @@
+package de.tum.in.www1.artemis.web.rest.dto;
+
+/**
+ * Created by Josias Montag on 22.09.16.
+ */
+public class LtiLaunchRequestDTO {
+
+
+    public LtiLaunchRequestDTO() {
+    }
+
+
+
+    private String lis_person_sourcedid;
+    private String lis_person_contact_email_primary;
+    private String lis_outcome_service_url;
+    private String lti_message_type;
+    private String lti_version;
+    private String context_id;
+    private String oauth_version;
+    private String oauth_signature_method;
+    private Long oauth_timestamp;
+    private String roles;
+    private String launch_presentation_locale;
+    private String custom_component_display_name;
+    private String launch_presentation_return_url;
+    private String lis_result_sourcedid;
+    private String resource_link_id;
+    private String user_id;
+    private String oauth_nonce;
+    private String oauth_consumer_key;
+    private String oauth_signature;
+
+    private Boolean custom_require_existing_user = false;
+    private Boolean custom_lookup_user_by_email = false;
+
+    public Boolean getCustom_require_existing_user() {
+        return custom_require_existing_user;
+    }
+
+    public void setCustom_require_existing_user(Boolean custom_require_existing_user) {
+        this.custom_require_existing_user = custom_require_existing_user;
+    }
+
+    public Boolean getCustom_lookup_user_by_email() {
+        return custom_lookup_user_by_email;
+    }
+
+    public void setCustom_lookup_user_by_email(Boolean custom_lookup_user_by_email) {
+        this.custom_lookup_user_by_email = custom_lookup_user_by_email;
+    }
+
+    public String getLis_person_sourcedid() {
+        return lis_person_sourcedid;
+    }
+
+    public void setLis_person_sourcedid(String lis_person_sourcedid) {
+        this.lis_person_sourcedid = lis_person_sourcedid;
+    }
+
+
+    public String getLis_person_contact_email_primary() {
+        return lis_person_contact_email_primary;
+    }
+
+    public void setLis_person_contact_email_primary(String lis_person_contact_email_primary) {
+        this.lis_person_contact_email_primary = lis_person_contact_email_primary;
+    }
+
+    public String getLis_outcome_service_url() {
+        return lis_outcome_service_url;
+    }
+
+    public void setLis_outcome_service_url(String lis_outcome_service_url) {
+        this.lis_outcome_service_url = lis_outcome_service_url;
+    }
+
+    public String getLti_message_type() {
+        return lti_message_type;
+    }
+
+    public void setLti_message_type(String lti_message_type) {
+        this.lti_message_type = lti_message_type;
+    }
+
+    public String getLti_version() {
+        return lti_version;
+    }
+
+    public void setLti_version(String lti_version) {
+        this.lti_version = lti_version;
+    }
+
+    public String getContext_id() {
+        return context_id;
+    }
+
+    public void setContext_id(String context_id) {
+        this.context_id = context_id;
+    }
+
+    public String getOauth_version() {
+        return oauth_version;
+    }
+
+    public void setOauth_version(String oauth_version) {
+        this.oauth_version = oauth_version;
+    }
+
+    public String getOauth_signature_method() {
+        return oauth_signature_method;
+    }
+
+    public void setOauth_signature_method(String oauth_signature_method) {
+        this.oauth_signature_method = oauth_signature_method;
+    }
+
+    public Long getOauth_timestamp() {
+        return oauth_timestamp;
+    }
+
+    public void setOauth_timestamp(Long oauth_timestamp) {
+        this.oauth_timestamp = oauth_timestamp;
+    }
+
+    public String getRoles() {
+        return roles;
+    }
+
+    public void setRoles(String roles) {
+        this.roles = roles;
+    }
+
+    public String getLaunch_presentation_locale() {
+        return launch_presentation_locale;
+    }
+
+    public void setLaunch_presentation_locale(String launch_presentation_locale) {
+        this.launch_presentation_locale = launch_presentation_locale;
+    }
+
+    public String getCustom_component_display_name() {
+        return custom_component_display_name;
+    }
+
+    public void setCustom_component_display_name(String custom_component_display_name) {
+        this.custom_component_display_name = custom_component_display_name;
+    }
+
+    public String getLaunch_presentation_return_url() {
+        return launch_presentation_return_url;
+    }
+
+    public void setLaunch_presentation_return_url(String launch_presentation_return_url) {
+        this.launch_presentation_return_url = launch_presentation_return_url;
+    }
+
+    public String getLis_result_sourcedid() {
+        return lis_result_sourcedid;
+    }
+
+    public void setLis_result_sourcedid(String lis_result_sourcedid) {
+        this.lis_result_sourcedid = lis_result_sourcedid;
+    }
+
+    public String getResource_link_id() {
+        return resource_link_id;
+    }
+
+    public void setResource_link_id(String resource_link_id) {
+        this.resource_link_id = resource_link_id;
+    }
+
+    public String getUser_id() {
+        return user_id;
+    }
+
+    public void setUser_id(String user_id) {
+        this.user_id = user_id;
+    }
+
+    public String getOauth_nonce() {
+        return oauth_nonce;
+    }
+
+    public void setOauth_nonce(String oauth_nonce) {
+        this.oauth_nonce = oauth_nonce;
+    }
+
+    public String getOauth_consumer_key() {
+        return oauth_consumer_key;
+    }
+
+    public void setOauth_consumer_key(String oauth_consumer_key) {
+        this.oauth_consumer_key = oauth_consumer_key;
+    }
+
+    public String getOauth_signature() {
+        return oauth_signature;
+    }
+
+    public void setOauth_signature(String oauth_signature) {
+        this.oauth_signature = oauth_signature;
+    }
+
+
+    @Override
+    public String toString() {
+        return "LtiLaunchRequestDTO{" +
+            "lis_person_sourcedid='" + lis_person_sourcedid + '\'' +
+            ", lis_person_contact_email_primary='" + lis_person_contact_email_primary + '\'' +
+            ", lis_outcome_service_url='" + lis_outcome_service_url + '\'' +
+            ", lti_message_type='" + lti_message_type + '\'' +
+            ", lti_version='" + lti_version + '\'' +
+            ", context_id='" + context_id + '\'' +
+            ", oauth_version='" + oauth_version + '\'' +
+            ", oauth_signature_method='" + oauth_signature_method + '\'' +
+            ", oauth_timestamp=" + oauth_timestamp +
+            ", roles='" + roles + '\'' +
+            ", launch_presentation_locale='" + launch_presentation_locale + '\'' +
+            ", custom_component_display_name='" + custom_component_display_name + '\'' +
+            ", launch_presentation_return_url='" + launch_presentation_return_url + '\'' +
+            ", lis_result_sourcedid='" + lis_result_sourcedid + '\'' +
+            ", resource_link_id='" + resource_link_id + '\'' +
+            ", user_id='" + user_id + '\'' +
+            ", oauth_nonce=" + oauth_nonce +
+            ", oauth_consumer_key='" + oauth_consumer_key + '\'' +
+            ", oauth_signature='" + oauth_signature + '\'' +
+            '}';
+    }
+}

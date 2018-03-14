@@ -77,7 +77,7 @@ ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Bo
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 
-To start ArTEMiS from the development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.exerciseapp.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
+To start ArTEMiS from the development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
 
 ```
 artemis:
@@ -112,7 +112,7 @@ Change the entries with ```<...>``` with proper values, e.g. your TUM Online acc
 
 In addition, you have to install MySQL, setup a root user without password and create an ExerciseApplication scheme.
 
-Then ArTEMiS should startup by running the main class ```de.tum.in.www1.exerciseapp.ArTEMiSApp``` using Spring Boot.
+Then ArTEMiS should startup by running the main class ```de.tum.in.www1.artemis.ArTEMiSApp``` using Spring Boot.
 
 To access ArTEMiS in your browser, you have to install npm and execute the following commands in the terminal / command line in the ArTEMiS root folder:
 

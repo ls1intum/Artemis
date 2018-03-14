@@ -16,7 +16,7 @@
 logging:
     level:
         ROOT: INFO
-        de.tum.in.www1.exerciseapp: INFO
+        de.tum.in.www1.artemis: INFO
         io.github.jhipster: INFO
 
 spring:

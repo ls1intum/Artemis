@@ -50,12 +50,12 @@ dependencyManagement {
 
 defaultTasks 'bootRun'
 
-group = 'de.tum.in.www1.exerciseapp'
+group = 'de.tum.in.www1.artemis'
 version = '1.4.2'
 description = 'AuTomated assEssment Management System for Interactive Learning'
 
 bootRepackage {
-   mainClass = 'de.tum.in.www1.exerciseapp.ArTEMiSApp'
+   mainClass = 'de.tum.in.www1.artemis.ArTEMiSApp'
 }
 
 war {
@@ -63,7 +63,7 @@ war {
 }
 
 springBoot {
-    mainClass = 'de.tum.in.www1.exerciseapp.ArTEMiSApp'
+    mainClass = 'de.tum.in.www1.artemis.ArTEMiSApp'
     executable = true
     buildInfo()
 }
