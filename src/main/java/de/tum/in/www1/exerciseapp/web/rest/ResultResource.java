@@ -82,8 +82,22 @@ public class ResultResource {
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
         if (result.getId() != null) {
-            throw new BadRequestAlertException("A new result cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new result cannot already have an ID.", ENTITY_NAME, "idexists");
+        } else if (result.getResultString() == null) {
+            throw new BadRequestAlertException("Result string is required.", ENTITY_NAME, "resultStringNull");
+        } else if (result.getScore() == null) {
+            throw new BadRequestAlertException("Score is required.", ENTITY_NAME, "scoreNull");
+        } else if(result.getScore() != 100 && result.isSuccessful()) {
+            throw new BadRequestAlertException("Only result with score 100% can be successful.", ENTITY_NAME, "scoreAndSuccessfulNotMatching");
+        } else if(!result.getFeedbacks().isEmpty() && result.getFeedbacks().stream()
+                .filter(feedback -> feedback.getText() == null).count() != 0) {
+            throw new BadRequestAlertException("In case feedback is present, feedback text and detail text are mandatory.", ENTITY_NAME, "feedbackTextOrDetailTextNull");
+        }
+
+        if(!result.getFeedbacks().isEmpty()) {
+            result.setHasFeedback(true);
         }
         Result savedResult = resultRepository.save(result);
         result.getFeedbacks().forEach(feedback -> {
@@ -263,10 +277,8 @@ public class ResultResource {
             results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
         }
 
-
         //Each object array in the list contains two Long values, participation id (index 0) and
         //number of results for this participation (index 1)
-
         List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
 
         //Matches each result with the number of results in corresponding participation

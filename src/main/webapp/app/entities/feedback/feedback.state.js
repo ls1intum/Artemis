@@ -108,6 +108,7 @@
                             return {
                                 text: null,
                                 detailText: null,
+                                positive: null,
                                 type: null,
                                 id: null
                             };

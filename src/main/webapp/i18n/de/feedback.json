@@ -17,6 +17,7 @@
             },
             "text": "Text",
             "detailText": "Detail Text",
+            "positive": "Positive",
             "type": "Type",
             "result": "Result"
         }

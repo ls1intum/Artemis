@@ -8,6 +8,10 @@
             "500": "Internal server error."
         },
         "concurrencyFailure": "Another user modified this data at the same time as you. Your changes were rejected.",
-        "validation": "Validation error on the server."
+        "validation": "Validation error on the server.",
+        "resultStringNull": "Fehler! Der Ergebnistext ist erforderlich.",
+        "scoreNull": "Fehler! Die Punktzahl ist erforderlich.",
+        "scoreAndSuccessfulNotMatching": "Fehler! Nur Ergebnis mit 100% Punkte kann erfolgreich sein.",
+        "feedbackTextOrDetailTextNull": "Fehler! Falls Feedback vorhanden ist, sind Feedback Text und Detail Text obligatorisch."
     }
 }

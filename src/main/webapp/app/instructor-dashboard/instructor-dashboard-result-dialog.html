@@ -4,7 +4,9 @@
     <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
                 ng-click="vm.clear()">&times;</button>
-        <h4 class="modal-title" id="myResultLabel">Create manual result for {{vm.result.participation.student.login}}</h4>
+        <h4 class="modal-title" id="myResultLabel">Create manual result for {{vm.result.participation.student.firstName}}
+            {{vm.result.participation.lastName}} ({{vm.result.participation.exercise.title}})
+        </h4>
     </div>
     <div class="modal-body">
         <div ng-show="vm.result.participation.exercise.openForSubmission" class="alert alert-warning">
@@ -18,9 +20,10 @@
         </div>
         <div class="form-group">
             <label class="control-label">Result Text</label>
-            <input type="text" class="form-control" name="resultString" id="field_resultString"
+            <input type="text" required class="form-control" name="resultString" id="field_resultString"
                    ng-model="vm.result.resultString"
             />
+            <span class="text-danger" ng-show="editForm.resultString.$error.required">Result text is required.</span>
         </div>
         <div class="form-group">
             <label class="control-label">Completion Date</label>
@@ -29,39 +32,55 @@
                 />
                 <span class="input-group-btn">
                         <button type="button" class="btn btn-default" ng-click="vm.openCalendar('completionDate')"><i class="glyphicon glyphicon-calendar"></i></button>
-                    </span>
+                </span>
             </div>
         </div>
-        <div class="form-group">
-            <label class="control-label">Successful</label>
-            <input type="checkbox" class="form-control" name="successful" id="field_successful"
-                   ng-model="vm.result.successful"
-            />
-        </div>
-        <div class="form-group">
-            <label class="control-label">Score</label>
-            <input type="text" class="form-control" name="score" id="field_score"
-                   ng-model="vm.result.score"
-            />
+        <div class="form-group row">
+            <div class="col-md-6">
+                <label class="control-label">Score (in %)</label>
+                <input type="number" max="100" required class="form-control" name="score" id="field_score" ng-model="vm.result.score"
+                       ng-change="vm.result.score === 100 ? vm.result.successful = true : vm.result.successful = false"
+                />
+                <span class="text-danger" ng-show="editForm.score.$dirty && editForm.score.$invalid">Score is required and should be a number.</span>
+            </div>
+            <div class="checkbox col-md-6">
+                <label class="artemis-label">
+                    <input type="checkbox" name="successful" ng-model="vm.result.successful" ng-disabled="true"> Successful
+                </label>
+            </div>
         </div>
         <br/>
-        <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
+        <div class="form-group">
+            <a ng-hide="vm.addFeedbackClicked" ng-click="vm.addFeedbackClicked = true">Add feedback</a>
+        </div>
         <div ng-show="vm.addFeedbackClicked" ng-repeat="index in vm.feedbackIndices">
             <div class="form-group">
-                <label class="control-label">Feedback #{{index + 1}} Text</label>
-                <input class="form-control" ng-model="vm.result.feedbacks[index].text"/>
+                <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
+                    Feedback #{{index + 1}} Text
+                </label>
+                <input class="form-control" name="feedbackText" ng-required="vm.addFeedbackClicked" ng-model="vm.result.feedbacks[index].text"/>
+                <span class="text-danger" ng-show="editForm.feedbackText.$error.required">Feedback text is required.</span>
             </div>
-            <div class="form-group">
-                <label class="control-label">Feedback #{{index + 1}} Detail Text</label>
-                <input class="form-control" ng-model="vm.result.feedbacks[index].detailText"/>
+            <div class="form-group row">
+                <div class="col-md-6">
+                    <label class="control-label" ng-class="{'negative': !vm.result.feedbacks[index] || !vm.result.feedbacks[index].positive, 'positive': vm.result.feedbacks[index].positive}">
+                        Feedback #{{index + 1}} Detail Text
+                    </label>
+                    <textarea class="form-control" id="feedbackErrorText" name="feedbackErrorText"  ng-model="vm.result.feedbacks[index].detailText"></textarea>
+                </div>
+                <div class="checkbox col-md-6">
+                    <label class="artemis-label">
+                        <input type="checkbox" name="positive" ng-model="vm.result.feedbacks[index].positive"> Positive
+                    </label>
+                </div>
             </div>
             <br/>
         </div>
-        <span ng-show="vm.addFeedbackClicked">
+        <div class="form-group" ng-show="vm.addFeedbackClicked">
             <a ng-click="vm.pushFeedback()">More feedback</a>
             &nbsp;
             <a ng-click="vm.popFeedback()">Less feedback</a>
-        </span>
+        </div>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="vm.clear()">

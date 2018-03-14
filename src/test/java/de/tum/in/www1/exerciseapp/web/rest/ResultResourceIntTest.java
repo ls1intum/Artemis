@@ -59,6 +59,9 @@ public class ResultResourceIntTest {
     private static final Boolean DEFAULT_RATED = false;
     private static final Boolean UPDATED_RATED = true;
 
+    private static final Boolean DEFAULT_HAS_FEEDBACK = false;
+    private static final Boolean UPDATED_HAS_FEEDBACK = true;
+
     @Autowired
     private ResultRepository resultRepository;
 
@@ -107,7 +110,8 @@ public class ResultResourceIntTest {
             .successful(DEFAULT_SUCCESSFUL)
             .buildArtifact(DEFAULT_BUILD_ARTIFACT)
             .score(DEFAULT_SCORE)
-            .rated(DEFAULT_RATED);
+            .rated(DEFAULT_RATED)
+            .hasFeedback(DEFAULT_HAS_FEEDBACK);
         return result;
     }
 
@@ -137,6 +141,7 @@ public class ResultResourceIntTest {
         assertThat(testResult.isBuildArtifact()).isEqualTo(DEFAULT_BUILD_ARTIFACT);
         assertThat(testResult.getScore()).isEqualTo(DEFAULT_SCORE);
         assertThat(testResult.isRated()).isEqualTo(DEFAULT_RATED);
+        assertThat(testResult.getHasFeedback()).isEqualTo(DEFAULT_HAS_FEEDBACK);
     }
 
     @Test
@@ -174,7 +179,8 @@ public class ResultResourceIntTest {
             .andExpect(jsonPath("$.[*].successful").value(hasItem(DEFAULT_SUCCESSFUL.booleanValue())))
             .andExpect(jsonPath("$.[*].buildArtifact").value(hasItem(DEFAULT_BUILD_ARTIFACT.booleanValue())))
             .andExpect(jsonPath("$.[*].score").value(hasItem(DEFAULT_SCORE.intValue())))
-            .andExpect(jsonPath("$.[*].rated").value(hasItem(DEFAULT_RATED.booleanValue())));
+            .andExpect(jsonPath("$.[*].rated").value(hasItem(DEFAULT_RATED.booleanValue())))
+            .andExpect(jsonPath("$.[*].hasFeedback").value(hasItem(DEFAULT_HAS_FEEDBACK.booleanValue())));
     }
 
     @Test
@@ -193,7 +199,8 @@ public class ResultResourceIntTest {
             .andExpect(jsonPath("$.successful").value(DEFAULT_SUCCESSFUL.booleanValue()))
             .andExpect(jsonPath("$.buildArtifact").value(DEFAULT_BUILD_ARTIFACT.booleanValue()))
             .andExpect(jsonPath("$.score").value(DEFAULT_SCORE.intValue()))
-            .andExpect(jsonPath("$.rated").value(DEFAULT_RATED.booleanValue()));
+            .andExpect(jsonPath("$.rated").value(DEFAULT_RATED.booleanValue()))
+            .andExpect(jsonPath("$.hasFeedback").value(DEFAULT_HAS_FEEDBACK.booleanValue()));
     }
 
     @Test
@@ -213,13 +220,16 @@ public class ResultResourceIntTest {
 
         // Update the result
         Result updatedResult = resultRepository.findOne(result.getId());
+        // Disconnect from session so that the updates on updatedResult are not directly saved in db
+        em.detach(updatedResult);
         updatedResult
             .resultString(UPDATED_RESULT_STRING)
             .completionDate(UPDATED_COMPLETION_DATE)
             .successful(UPDATED_SUCCESSFUL)
             .buildArtifact(UPDATED_BUILD_ARTIFACT)
             .score(UPDATED_SCORE)
-            .rated(UPDATED_RATED);
+            .rated(UPDATED_RATED)
+            .hasFeedback(UPDATED_HAS_FEEDBACK);
 
         restResultMockMvc.perform(put("/api/results")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
@@ -236,6 +246,7 @@ public class ResultResourceIntTest {
         assertThat(testResult.isBuildArtifact()).isEqualTo(UPDATED_BUILD_ARTIFACT);
         assertThat(testResult.getScore()).isEqualTo(UPDATED_SCORE);
         assertThat(testResult.isRated()).isEqualTo(UPDATED_RATED);
+        assertThat(testResult.getHasFeedback()).isEqualTo(UPDATED_HAS_FEEDBACK);
     }
 
     @Test
