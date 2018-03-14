@@ -16,7 +16,7 @@
 logging:
     level:
         ROOT: DEBUG
-        de.tum.in.www1.exerciseapp: DEBUG
+        de.tum.in.www1.artemis: DEBUG
         io.github.jhipster: DEBUG
 
 spring:
