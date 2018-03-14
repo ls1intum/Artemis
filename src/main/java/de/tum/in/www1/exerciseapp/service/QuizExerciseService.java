@@ -275,7 +275,7 @@ public class QuizExerciseService {
         try{
             long start = System.currentTimeMillis();
             Class view = viewForStudentsInQuizExercise(quizExercise);
-            byte[] payload = objectMapper.copy().writerWithView(view).writeValueAsBytes(quizExercise);
+            byte[] payload = objectMapper.writerWithView(view).writeValueAsBytes(quizExercise);
             messagingTemplate.send("/topic/quizExercise/" + quizExercise.getId(), MessageBuilder.withPayload(payload).build());
             log.info("    sent out quizExercise to all listening clients in {} ms", System.currentTimeMillis() - start);
         } catch (JsonProcessingException e) {
