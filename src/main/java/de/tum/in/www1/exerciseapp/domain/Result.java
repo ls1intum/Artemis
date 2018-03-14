@@ -46,6 +46,9 @@ public class Result implements Serializable {
     @Column(name = "rated")
     private Boolean rated;
 
+    @Column(name = "hasFeedback")
+    private Boolean hasFeedback;
+
     @OneToOne(cascade=CascadeType.REMOVE, fetch = FetchType.LAZY, orphanRemoval=true)
     @JoinColumn(unique = true)
     private Submission submission;
@@ -144,6 +147,19 @@ public class Result implements Serializable {
 
     public Result score(Long score) {
         this.score = score;
+        return this;
+    }
+
+    public void setHasFeedback(Boolean hasFeedback) {
+        this.hasFeedback = hasFeedback;
+    }
+
+    public Boolean getHasFeedback() {
+        return hasFeedback;
+    }
+
+    public Result hasFeedback(Boolean hasFeedback) {
+        this.hasFeedback = hasFeedback;
         return this;
     }
 
@@ -271,8 +287,9 @@ public class Result implements Serializable {
             ", completionDate='" + getCompletionDate() + "'" +
             ", successful='" + isSuccessful() + "'" +
             ", buildArtifact='" + isBuildArtifact() + "'" +
-            ", score='" + getScore() + "'" +
+            ", score=" + getScore() +
             ", rated='" + isRated() + "'" +
+            ", hasFeedback='" + getHasFeedback() + "'" +
             "}";
     }
 }

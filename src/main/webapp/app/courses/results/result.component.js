@@ -10,7 +10,6 @@
             bindings: {
                 isQuiz: '<',
                 participation: '<',
-                showScore: '<',
                 onNewResult: '&'
             },
             templateUrl: 'app/courses/results/result.html',
@@ -23,9 +22,11 @@
         var vm = this;
 
         vm.$onInit = init;
-        vm.buildResultString = buildResultString;
+        vm.resultString = resultString;
         vm.hasResults = hasResults;
         vm.showDetails = showDetails;
+        vm.getTextColorClass = getTextColorClass;
+        vm.getResultIconClass = getResultIconClass;
 
         function init() {
             refresh(false);
@@ -98,7 +99,7 @@
             }
         }
 
-        function buildResultString(result) {
+        function resultString(result) {
             if (result.resultString === 'No tests found') {
                 return 'Build failed';
             } else {
@@ -146,6 +147,54 @@
                 },
                 controllerAs: '$ctrl'
             });
+        }
+
+        /**
+         * Get the css class for the entire text as a string
+         *
+         * @return {string} the css class
+         */
+        function getTextColorClass() {
+            var result = vm.results[0];
+            if (result.score == null) {
+                if (result.successful) {
+                    return "text-success";
+                } else {
+                    return "text-danger";
+                }
+            } else {
+                if (result.score > 80) {
+                    return "text-success";
+                } else if (result.score > 40) {
+                    return "result-orange";
+                } else {
+                    return "text-danger";
+                }
+            }
+        }
+
+        //TODO think about a better color scheme
+
+        /**
+         * Get the css class for the result icon as a string
+         *
+         * @return {string} the css class
+         */
+        function getResultIconClass() {
+            var result = vm.results[0];
+            if (result.score == null) {
+                if (result.successful) {
+                    return "fa-check-circle-o";
+                } else {
+                    return "fa-times-circle-o";
+                }
+            } else {
+                if (result.score > 80) {
+                    return "fa-check-circle-o";
+                } else {
+                    return "fa-times-circle-o";
+                }
+            }
         }
     }
 })();

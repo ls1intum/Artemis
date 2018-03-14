@@ -29,6 +29,9 @@ public class Feedback implements Serializable {
     @Column(name = "detail_text")
     private String detailText;
 
+    @Column(name = "positive")
+    private Boolean positive;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "type")
     private FeedbackType type;
@@ -37,7 +40,7 @@ public class Feedback implements Serializable {
     @JsonIgnoreProperties("feedbacks")
     private Result result;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
+    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
     }
@@ -72,6 +75,19 @@ public class Feedback implements Serializable {
         this.detailText = detailText;
     }
 
+    public Boolean isPositive() {
+        return positive;
+    }
+
+    public Feedback positive(Boolean positive) {
+        this.positive = positive;
+        return this;
+    }
+
+    public void setPositive(Boolean positive) {
+        this.positive = positive;
+    }
+
     public FeedbackType getType() {
         return type;
     }
@@ -97,7 +113,7 @@ public class Feedback implements Serializable {
     public void setResult(Result result) {
         this.result = result;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -125,6 +141,7 @@ public class Feedback implements Serializable {
             "id=" + getId() +
             ", text='" + getText() + "'" +
             ", detailText='" + getDetailText() + "'" +
+            ", positive='" + isPositive() + "'" +
             ", type='" + getType() + "'" +
             "}";
     }

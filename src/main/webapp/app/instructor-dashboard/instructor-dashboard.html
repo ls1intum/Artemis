@@ -75,33 +75,9 @@
         <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
         <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
-        <td ng-switch on="result.successful">
-            <span ng-switch-when="true">
-                <span class="text-success">
-                    <span ng-if="$ctrl.exercise.type !== 'quiz'">
-                        <i class="fa fa-lg fa-check-circle-o"></i>&nbsp;
-                    </span>
-                    {{result.resultString}}
-                </span>
-                (<span am-time-ago="result.completionDate"></span>)
-            </span>
-            <span ng-switch-when="false">
-                <span class="text-danger">
-                    <span ng-if="$ctrl.exercise.type !== 'quiz'">
-                        <i class="fa fa-lg fa-times-circle-o"></i>&nbsp;
-                        <a class="text-danger" ng-click="$ctrl.showDetails(result)">
-                            {{result.resultString}}
-                        </a>
-                    </span>
-                    <span ng-if="$ctrl.exercise.type === 'quiz'">{{result.resultString}}</span>
-                </span>
-                (<span am-time-ago="result.completionDate"></span>)
-            </span>
-        </td>
+        <td><result participation="result.participation" is-quiz="$ctrl.exercise.type === 'quiz'"></result></td>
         <td>{{ result.submissionCount }}</td>
-        <td>
-            <span ng-show="result.score != null">{{result.score}}%</span>
-        </td>
+        <td><span ng-show="result.score != null">{{result.score}}%</span></td>
         <td>{{$ctrl.buildDurationString(result.completionDate, result.participation.initializationDate)}} minutes</td>
         <td ng-if="$ctrl.exercise.type !== 'quiz'">
             <button class="btn btn-default btn-xs" ng-click="$ctrl.goToRepository(result)"><i

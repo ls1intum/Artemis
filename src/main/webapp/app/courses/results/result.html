@@ -3,27 +3,16 @@
     <span class="text-primary" ng-if="$ctrl.queued"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Build is queued</span>
     <span class="text-primary" ng-if="$ctrl.building"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Building...</span>
 </span>
-<span ng-if="$ctrl.hasResults()" ng-switch on="$ctrl.results[0].successful">
-    <span ng-switch-when="true">
-        <span class="text-success">
-            <span ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'">
-                <i class="fa fa-lg fa-check-circle-o"></i>
-                &nbsp;
+<span ng-if="$ctrl.hasResults()">
+    <span ng-class="$ctrl.getTextColorClass()">
+        <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg" ng-class="$ctrl.getResultIconClass()"></i>&nbsp;
+        <span ng-switch on="!$ctrl.results[0].hasFeedback">
+            <span ng-switch-when="true">{{$ctrl.resultString($ctrl.results[0])}}</span>
+            <span ng-switch-when="false">
+                <a ng-class="$ctrl.getTextColorClass()" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>
             </span>
-            {{$ctrl.results[0].resultString}}
         </span>
-        (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
-    </span>
-    <span ng-switch-when="false">
-        <span class="text-danger">
-            <span ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'">
-                <i class="fa fa-lg fa-times-circle-o"></i>
-                &nbsp;
-                <a class="text-danger" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.buildResultString($ctrl.results[0])}}</a>
-            </span>
-            <span ng-if="$ctrl.results[0].participation.exercise.type === 'quiz'">{{$ctrl.results[0].resultString}}</span>
-        </span>
-        (<span am-time-ago="$ctrl.results[0].completionDate" ng-if="!$ctrl.showScore"></span><strong ng-if="$ctrl.showScore">{{$ctrl.results[0].score}}%</strong>)
+        (<strong>{{$ctrl.results[0].score}}%</strong>, <span am-time-ago="$ctrl.results[0].completionDate"></span>)
     </span>
 </span>
 <span ng-if="$ctrl.results[0].buildArtifact">

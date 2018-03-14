@@ -82,7 +82,6 @@
                 templateUrl: 'app/courses/results/result-detail.html',
                 controller: ['$http', 'result', function ($http, result) {
                     var vm = this;
-
                     vm.$onInit = init;
 
                     function init() {
