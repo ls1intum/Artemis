@@ -1,8 +1,10 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.exerciseapp.config.Constants;
-import de.tum.in.www1.exerciseapp.domain.util.FileManagement;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
+import de.tum.in.www1.exerciseapp.service.FileService;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -22,27 +24,34 @@ public class DragAndDropQuestion extends Question implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Transient
+    private FileService fileService = new FileService();
+
+    @Transient
     private String prevBackgroundFilePath;
 
     @Column(name = "background_file_path")
+    @JsonView(QuizView.Before.class)
     private String backgroundFilePath;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
     private List<DropLocation> dropLocations = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
     private List<DragItem> dragItems = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.After.class)
     private List<DragAndDropMapping> correctMappings = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
@@ -251,7 +260,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
     @PrePersist
     public void beforeCreate() {
         // move file if necessary (id at this point will be null, so placeholder will be inserted)
-        backgroundFilePath = FileManagement.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
     }
 
     @PostPersist
@@ -265,13 +274,13 @@ public class DragAndDropQuestion extends Question implements Serializable {
     @PreUpdate
     public void onUpdate() {
         // move file and delete old file if necessary
-        backgroundFilePath = FileManagement.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        backgroundFilePath = fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, backgroundFilePath, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
     }
 
     @PostRemove
     public void onDelete() {
         // delete old file if necessary
-        FileManagement.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
+        fileService.manageFilesForUpdatedFilePath(prevBackgroundFilePath, null, Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH, getId());
     }
 
     /**
@@ -495,6 +504,18 @@ public class DragAndDropQuestion extends Question implements Serializable {
             updateNecessary = true;
         }
         return updateNecessary;
+    }
+
+    @Override
+    public void filterForStudentsDuringQuiz() {
+        super.filterForStudentsDuringQuiz();
+        setCorrectMappings(null);
+    }
+
+    @Override
+    public void filterForStatisticWebsocket() {
+        super.filterForStatisticWebsocket();
+        setCorrectMappings(null);
     }
 
     @Override

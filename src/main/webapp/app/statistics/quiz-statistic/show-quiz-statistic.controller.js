@@ -58,16 +58,8 @@
 
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData)
-                .then(null, null, function (notify) {
-                    if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                        QuizExercise.get({id: _.get($state, "params.quizId")})
-                            .$promise.then(loadQuizSuccess);
-                    }
-                    else {
-                        QuizExerciseForStudent.get({id: _.get($state, "params.quizId")})
-                            .$promise.then(loadQuizSuccess)
-                    }
-
+                .then(null, null, function (quiz) {
+                    loadQuizSuccess(quiz);
                 });
             // refresh release information
             JhiWebsocketService.receive(websocketChannelForReleaseState)
@@ -133,17 +125,17 @@
         function loadData() {
 
             // reset old data
-            label = new Array(vm.quizExercise.questions.length);
+            label = [];
             backgroundColor = [];
-            ratedData = new Array(vm.quizExercise.questions.length);
-            unratedData = new Array(vm.quizExercise.questions.length);
+            ratedData = [];
+            unratedData = [];
             ratedAverage = 0;
             unratedAverage = 0;
 
             //set data based on the CorrectCounters in the QuestionStatistics
             vm.quizExercise.questions.forEach(function (question, i) {
 
-                label [i] = (i + 1 + ".");
+                label.push(i + 1 + ".");
                 backgroundColor.push(
                     {
                         backgroundColor: "#5bc0de",
@@ -151,10 +143,12 @@
                         pointBackgroundColor: "#5bc0de",
                         pointBorderColor: "#5bc0de"
                     });
-                ratedData[i] = question.questionStatistic.ratedCorrectCounter;
-                unratedData[i] = question.questionStatistic.unRatedCorrectCounter;
-                ratedAverage = ratedAverage + (question.questionStatistic.ratedCorrectCounter * question.score);
-                unratedAverage = unratedAverage + (question.questionStatistic.unRatedCorrectCounter * question.score);
+                ratedData.push(question.questionStatistic.ratedCorrectCounter);
+                unratedData.push(question.questionStatistic.unRatedCorrectCounter);
+                ratedAverage = ratedAverage
+                    + (question.questionStatistic.ratedCorrectCounter * question.score);
+                unratedAverage = unratedAverage
+                    + (question.questionStatistic.unRatedCorrectCounter * question.score);
 
                 if (question.invalid) {
                     backgroundColor[i] = (
@@ -315,7 +309,8 @@
                         var meta = chartInstance.controller.getDatasetMeta(i);
                         meta.data.forEach(function (bar, index) {
                             var data = (Math.round(dataset.data[index] * 100) / 100);
-                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+                            var dataPercentage = (Math.round(
+                                (dataset.data[index] / vm.participants) * 1000) / 10);
 
                             var position = bar.tooltipPosition();
 
@@ -329,14 +324,16 @@
 
                                     if (vm.participants !== 0) {
                                         ctx.fillStyle = 'white';
-                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     }
                                 }
                                 //if the bar is too high -> write the amountValue inside the bar
                                 else {
                                     ctx.fillStyle = 'white';
                                     if (vm.participants !== 0) {
-                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(data + " / " + dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     } else {
                                         ctx.fillText(data, position.x, position.y + 10);
                                     }
@@ -346,7 +343,8 @@
                             else {
                                 ctx.fillStyle = 'black';
                                 if (vm.participants !== 0) {
-                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                    ctx.fillText(data + " / " + dataPercentage.toString()
+                                        + "%", position.x, position.y - 10);
                                 } else {
                                     ctx.fillText(data, position.x, position.y - 10);
                                 }

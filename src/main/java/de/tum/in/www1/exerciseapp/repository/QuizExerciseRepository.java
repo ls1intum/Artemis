@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 /**
@@ -16,5 +17,7 @@ import java.util.List;
 public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long> {
 
     List<QuizExercise> findByCourseId(Long courseId);
+
+    List<QuizExercise> findByIsPlannedToStartAndReleaseDateIsAfter(Boolean plannedToStart, ZonedDateTime earliestReleaseDate);
 
 }

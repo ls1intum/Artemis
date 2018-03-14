@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowQuizPointStatisticController', ShowQuizPointStatisticController);
 
-    ShowQuizPointStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizPointStatistic', 'QuizPointStatisticForStudent', 'QuizExercise', 'QuizExerciseForStudent', 'QuizStatisticService'];
+    ShowQuizPointStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent', 'QuizStatisticService'];
 
-    function ShowQuizPointStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizPointStatistic, QuizPointStatisticForStudent, QuizExercise, QuizExerciseForStudent, QuizStatisticService) {
+    function ShowQuizPointStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, QuizStatisticService) {
         var vm = this;
 
         // Variables for the chart:
@@ -51,15 +51,10 @@
             JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
             // ask for new Data if the websocket for new statistical data was notified
-            JhiWebsocketService.receive(websocketChannelForData).then(null, null, function (notify) {
-                if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    QuizPointStatistic.get({id: vm.quizPointStatistic.id})
-                        .$promise.then(loadNewData);
-                }
-                else {
-                    QuizPointStatisticForStudent.get({id: vm.quizPointStatistic.id})
-                        .$promise.then(loadNewData);
-                }
+
+            JhiWebsocketService.receive(websocketChannelForData)
+                .then(null, null, function (quiz) {
+                    loadNewData(quiz.quizPointStatistic);
 
             });
             // refresh release information
@@ -328,7 +323,8 @@
                         var meta = chartInstance.controller.getDatasetMeta(i);
                         meta.data.forEach(function (bar, index) {
                             var data = (Math.round(dataset.data[index] * 100) / 100);
-                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+                            var dataPercentage = (Math.round(
+                                (dataset.data[index] / vm.participants) * 1000) / 10);
 
                             var position = bar.tooltipPosition();
 
@@ -342,14 +338,16 @@
 
                                     if (vm.participants !== 0) {
                                         ctx.fillStyle = 'white';
-                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     }
                                 }
                                 //if the bar is too high -> write the amountValue inside the bar
                                 else {
                                     ctx.fillStyle = 'white';
                                     if (vm.participants !== 0) {
-                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(data + " / " + dataPercentage.toString()
+                                        + "%", position.x, position.y + 10);
                                     } else {
                                         ctx.fillText(data, position.x, position.y + 10);
                                     }
@@ -359,7 +357,8 @@
                             else {
                                 ctx.fillStyle = 'black';
                                 if (vm.participants !== 0) {
-                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                    ctx.fillText(data + " / " + dataPercentage.toString()
+                                        + "%", position.x, position.y - 10);
                                 } else {
                                     ctx.fillText(data, position.x, position.y - 10);
                                 }

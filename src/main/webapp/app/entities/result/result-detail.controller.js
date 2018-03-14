@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ResultDetailController', ResultDetailController);
 
-    ResultDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity', 'Result', 'Submission', 'Feedback', 'Participation'];
+    ResultDetailController.$inject = ['$scope', '$rootScope', '$stateParams', 'previousState', 'entity'];
 
-    function ResultDetailController($scope, $rootScope, $stateParams, previousState, entity, Result, Submission, Feedback, Participation) {
+    function ResultDetailController($scope, $rootScope, $stateParams, previousState, entity) {
         var vm = this;
 
         vm.result = entity;

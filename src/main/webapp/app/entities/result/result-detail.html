@@ -30,7 +30,7 @@
         </dd>
         <dt><span data-translate="artemisApp.result.submission">Submission</span></dt>
         <dd>
-            <a ui-sref="submission-detail({id:vm.result.submission.id})">{{vm.result.submission.id}}</a>
+            {{vm.result.submission ? vm.result.submission.id : '-'}}
         </dd>
         <dt><span data-translate="artemisApp.result.participation">Participation</span></dt>
         <dd>

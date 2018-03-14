@@ -25,7 +25,7 @@
 
         vm.clear = clear;
         vm.confirmChange = confirmChange;
-        vm.close =  close;
+        vm.close = close;
 
         var backUpQuiz;
 
@@ -55,7 +55,7 @@
             vm.quizExercise.questions.forEach(function (question) {
                 //find same question in backUp (necessary if the order has been changed)
                 var backUpQuestion = backUpQuiz.questions.find(function (questionBackUp) {
-                    return question.id === questionBackUp.id
+                    return question.id === questionBackUp.id;
                 });
 
                 checkQuestion(question, backUpQuestion);
@@ -147,9 +147,11 @@
             if (!vm.questionElementInvalid) {
                 //check each dragItem
                 question.dragItems.forEach(function (dragItem) {
-                    var backUpDragItem = backUpQuestion.dragItems.find(function (dragItemBackUp) {
-                        return dragItemBackUp.id === dragItem.id;
-                    });
+                    var backUpDragItem =
+                        backUpQuestion.dragItems.find(function (dragItemBackUp) {
+
+                            return dragItemBackUp.id === dragItem.id;
+                        });
                     //dragItem set invalid?
                     if (backUpDragItem !== null
                         && dragItem.invalid !== backUpDragItem.invalid) {
@@ -158,9 +160,11 @@
                 });
                 //check each dropLocation
                 question.dropLocations.forEach(function (dropLocation) {
-                    var backUpDropLocation = backUpQuestion.dropLocations.find(function (dropLocationBackUp) {
-                        return dropLocationBackUp.id === dropLocation.id;
-                    });
+                    var backUpDropLocation =
+                        backUpQuestion.dropLocations.find(function (dropLocationBackUp) {
+
+                            return dropLocationBackUp.id === dropLocation.id;
+                        });
                     //dropLocation set invalid?
                     if (backUpDropLocation !== null
                         && dropLocation.invalid !== backUpDropLocation.invalid) {

@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizController', QuizController);
 
-    QuizController.$inject = ['$scope', '$state', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizExercise', 'QuizSubmission', 'QuizSubmissionForExercise', 'JhiWebsocketService', 'ExerciseParticipation', 'ParticipationResult', '$timeout'];
+    QuizController.$inject = ['$scope', '$state', '$stateParams', '$interval', 'QuizExerciseForStudent', 'QuizExercise', 'QuizSubmission', 'JhiWebsocketService', 'ExerciseParticipation', '$timeout'];
 
-    function QuizController($scope, $state, $stateParams, $interval, QuizExerciseForStudent, QuizExercise, QuizSubmission, QuizSubmissionForExercise, JhiWebsocketService, ExerciseParticipation, ParticipationResult, $timeout) {
+    function QuizController($scope, $state, $stateParams, $interval, QuizExerciseForStudent, QuizExercise, QuizSubmission, JhiWebsocketService, ExerciseParticipation, $timeout) {
         var vm = this;
 
         var timeDifference = 0;
@@ -76,7 +76,7 @@
             JhiWebsocketService.disableReconnect();
 
             if (submissionChannel) {
-                JhiWebsocketService.unsubscribe(submissionChannel);
+                JhiWebsocketService.unsubscribe("/user" + submissionChannel);
             }
             if (participationChannel) {
                 JhiWebsocketService.unsubscribe(participationChannel);
@@ -96,16 +96,6 @@
          * loads latest submission from server and sets up socket connection
          */
         function init() {
-            // initialize websocket channel for changes to quiz exercise
-            quizExerciseChannel = '/topic/quizExercise/' + $stateParams.id;
-            JhiWebsocketService.subscribe(quizExerciseChannel);
-            JhiWebsocketService.receive(quizExerciseChannel).then(null, null, function () {
-                if (vm.waitingForQuizStart) {
-                    // only reload if quiz is hasn't started to prevent jumping ui during participation
-                    load();
-                }
-            });
-
             // listen to connect / disconnect events
             onConnected = function () {
                 vm.disconnected = false;
@@ -124,8 +114,13 @@
             };
             JhiWebsocketService.bind("disconnect", onDisconnected);
 
+            subscribeToWebsocketChannels();
+
             // load the quiz (and existing submission if quiz has started)
-            load();
+            ExerciseParticipation.get({
+                courseId: 1,
+                exerciseId: $stateParams.id
+            }).$promise.then(applyParticipationFull);
         }
 
         /**
@@ -187,27 +182,47 @@
          */
         function subscribeToWebsocketChannels() {
             if (!submissionChannel) {
-                submissionChannel = '/topic/quizSubmissions/' + vm.submission.id;
+                submissionChannel = '/topic/quizExercise/' + $stateParams.id + '/submission';
 
                 // submission channel => react to new submissions
-                JhiWebsocketService.subscribe(submissionChannel);
-                JhiWebsocketService.receive(submissionChannel).then(null, null, function (payload) {
+                JhiWebsocketService.subscribe("/user" + submissionChannel);
+                JhiWebsocketService.receive("/user" + submissionChannel).then(null, null, function (payload) {
                     onSaveSuccess(payload);
                 });
 
                 // save answers (submissions) through websocket
                 vm.sendWebsocket = function (data) {
                     outstandingWebsocketResponses++;
-                    JhiWebsocketService.send(submissionChannel + '/save', data);
+                    JhiWebsocketService.send(submissionChannel, data);
                 };
             }
+
             if (!participationChannel) {
-                participationChannel = '/topic/participation/' + vm.participation.id + '/newResults';
+                participationChannel = '/user/topic/quizExercise/' + $stateParams.id + '/participation';
 
                 // participation channel => react to new results
                 JhiWebsocketService.subscribe(participationChannel);
-                JhiWebsocketService.receive(participationChannel).then(null, null, function () {
-                    loadResults();
+                JhiWebsocketService.receive(participationChannel).then(null, null, function (participation) {
+                    if (vm.waitingForQuizStart) {
+                        // only apply completely if quiz is hasn't started to prevent jumping ui during participation
+                        applyParticipationFull(participation);
+                    } else {
+                        // update quizExercise and results / submission
+                        applyParticipationAfterStart(participation);
+                    }
+                });
+            }
+
+            if (!quizExerciseChannel) {
+                quizExerciseChannel = "/topic/quizExercise/" + $stateParams.id;
+
+                // quizExercise channel => react to changes made to quizExercise (e.g. start date)
+                JhiWebsocketService.subscribe(quizExerciseChannel);
+                JhiWebsocketService.receive(quizExerciseChannel).then(null, null, function (quizExercise) {
+                    // only reload if quiz is hasn't started to prevent jumping ui during participation
+                    if (vm.waitingForQuizStart) {
+                        applyQuizFull(quizExercise);
+                    }
                 });
             }
         }
@@ -273,31 +288,29 @@
          */
         function initQuiz() {
             // calculate score
-            vm.totalScore = vm.quizExercise.questions.reduce(function (score, question) {
+            vm.totalScore = vm.quizExercise.questions ? vm.quizExercise.questions.reduce(function (score, question) {
                 return score + question.score;
-            }, 0);
+            }, 0) : 0;
 
             // prepare selection arrays for each question
-            if (!vm.submission) {
-                vm.selectedAnswerOptions = {};
-                vm.dragAndDropMappings = {};
+            vm.selectedAnswerOptions = {};
+            vm.dragAndDropMappings = {};
 
-                if (vm.quizExercise.questions) {
-                    vm.quizExercise.questions.forEach(function (question) {
-                        switch (question.type) {
-                            case "multiple-choice":
-                                // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                                vm.selectedAnswerOptions[question.id] = [];
-                                break;
-                            case "drag-and-drop":
-                                // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                                vm.dragAndDropMappings[question.id] = [];
-                                break;
-                            default:
-                                console.error("Unknown question type: " + question.type);
-                        }
-                    });
-                }
+            if (vm.quizExercise.questions) {
+                vm.quizExercise.questions.forEach(function (question) {
+                    switch (question.type) {
+                        case "multiple-choice":
+                            // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                            vm.selectedAnswerOptions[question.id] = [];
+                            break;
+                        case "drag-and-drop":
+                            // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                            vm.dragAndDropMappings[question.id] = [];
+                            break;
+                        default:
+                            console.error("Unknown question type: " + question.type);
+                    }
+                });
             }
         }
 
@@ -313,25 +326,27 @@
             vm.selectedAnswerOptions = {};
             vm.dragAndDropMappings = {};
 
-            // iterate through all questions of this quiz
-            vm.quizExercise.questions.forEach(function (question) {
-                // find the submitted answer that belongs to this question
-                var submittedAnswer = vm.submission.submittedAnswers.find(function (submittedAnswer) {
-                    return submittedAnswer.question.id === question.id;
+            if (vm.quizExercise.questions) {
+                // iterate through all questions of this quiz
+                vm.quizExercise.questions.forEach(function (question) {
+                    // find the submitted answer that belongs to this question
+                    var submittedAnswer = vm.submission.submittedAnswers.find(function (submittedAnswer) {
+                        return submittedAnswer.question.id === question.id;
+                    });
+                    switch (question.type) {
+                        case "multiple-choice":
+                            // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                            vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
+                            break;
+                        case "drag-and-drop":
+                            // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                            vm.dragAndDropMappings[question.id] = submittedAnswer ? submittedAnswer.mappings : [];
+                            break;
+                        default:
+                            console.error("Unknown question type: " + question.type);
+                    }
                 });
-                switch (question.type) {
-                    case "multiple-choice":
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        vm.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
-                        break;
-                    case "drag-and-drop":
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        vm.dragAndDropMappings[question.id] = submittedAnswer ? submittedAnswer.mappings : [];
-                        break;
-                    default:
-                        console.error("Unknown question type: " + question.type);
-                }
-            });
+            }
         }
 
         /**
@@ -385,137 +400,95 @@
         }
 
         /**
-         * Load the latest submission data for this user and this exercise
+         * Apply the data of the participation, replacing all old data
          */
-        function load() {
-            QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
-                vm.quizExercise = quizExercise;
-                initQuiz();
+        function applyParticipationFull(participation) {
+            console.log(participation);
+            applyQuizFull(participation.exercise);
 
-                if (quizExercise.remainingTime != null) {
-                    if (quizExercise.remainingTime >= 0) {
-                        // enable automatic websocket reconnect
-                        JhiWebsocketService.enableReconnect();
+            // apply submission if it exists
+            if (participation.results.length) {
+                vm.submission = participation.results[0].submission;
 
-                        // apply randomized order where necessary
-                        randomizeOrder(quizExercise);
+                // update submission time
+                updateSubmissionTime();
 
-                        // update timeDifference
-                        vm.quizExercise.adjustedDueDate = moment().add(quizExercise.remainingTime, "seconds");
-                        timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
+                // show submission answers in UI
+                applySubmission();
 
-                        // automatically load results 5 seconds after quiz has ended (in case websocket didn't work)
-                        runningTimeouts.push(
-                            $timeout(function () {
-                                if (vm.disconnected && !vm.showingResult) {
-                                    loadResults();
-                                }
-                            }, (quizExercise.remainingTime + 5) * 1000)
-                        );
-                    }
-                    QuizSubmissionForExercise.get({
-                        courseId: 1,
-                        exerciseId: $stateParams.id
-                    }).$promise.then(function (quizSubmission) {
-                        vm.submission = quizSubmission;
-                        vm.waitingForQuizStart = false;
+                if (participation.results[0].resultString && vm.quizExercise.ended) {
+                    // quiz has ended and results are available
+                    showResult(participation.results);
+                }
+            } else {
+                vm.submission = {};
+            }
+        }
 
-                        // update submission time
-                        if (vm.submission.submissionDate) {
-                            vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                        }
+        /**
+         * apply the data of the quiz, replacing all old data and enabling reconnect if necessary
+         * @param quizExercise
+         */
+        function applyQuizFull(quizExercise) {
+            vm.quizExercise = quizExercise;
+            initQuiz();
 
-                        // show submission answers in UI
-                        applySubmission();
+            // check if quiz has started
+            console.log(vm.quizExercise);
+            if (vm.quizExercise.started) {
+                // quiz has started
+                vm.waitingForQuizStart = false;
 
-                        // load participation
-                        ExerciseParticipation.get({
-                            courseId: vm.quizExercise.course.id,
-                            exerciseId: vm.quizExercise.id
-                        }).$promise.then(function (participation) {
-                            vm.participation = participation;
+                // update timeDifference
+                vm.quizExercise.adjustedDueDate = moment().add(vm.quizExercise.remainingTime, "seconds");
+                timeDifference = moment(vm.quizExercise.dueDate).diff(vm.quizExercise.adjustedDueDate, "seconds");
 
-                            if (vm.quizExercise.remainingTime < 0) {
-                                // load result
-                                ParticipationResult.query({
-                                    courseId: vm.participation.exercise.course.id,
-                                    exerciseId: vm.participation.exercise.id,
-                                    participationId: vm.participation.id,
-                                    showAllResults: false,
-                                    ratedOnly: true
-                                }).$promise.then(showResult);
-                            }
-
-                            subscribeToWebsocketChannels();
-                        });
-                    });
-                } else {
-                    // quiz hasn't started yet
-                    vm.waitingForQuizStart = true;
-
+                // check if quiz hasn't ended
+                if (!vm.quizExercise.ended) {
                     // enable automatic websocket reconnect
                     JhiWebsocketService.enableReconnect();
 
-                    if (quizExercise.isPlannedToStart) {
-                        // synchronize time with server
-                        vm.quizExercise.releaseDate = moment(vm.quizExercise.releaseDate);
-                        vm.quizExercise.adjustedReleaseDate = moment().add(quizExercise.timeUntilPlannedStart, "seconds");
+                    // apply randomized order where necessary
+                    randomizeOrder(vm.quizExercise);
 
-                        // load quiz when it is planned to start (at most once every second)
-                        runningTimeouts.push(
-                            $timeout(function () {
-                                if (vm.waitingForQuizStart) {
-                                    load();
-                                }
-                            }, Math.max(1, quizExercise.timeUntilPlannedStart) * 1000)
-                        );
-                    }
+                    // alert user 5 seconds after quiz has ended (in case websocket didn't work)
+                    runningTimeouts.push(
+                        $timeout(function () {
+                            if (vm.disconnected && !vm.showingResult) {
+                                alert("Loading results failed. Please wait a few seconds and refresh the page manually.");
+                            }
+                        }, (vm.quizExercise.remainingTime + 5) * 1000)
+                    );
                 }
-            });
+            } else {
+                // quiz hasn't started yet
+                vm.waitingForQuizStart = true;
+
+                // enable automatic websocket reconnect
+                JhiWebsocketService.enableReconnect();
+
+                if (vm.quizExercise.isPlannedToStart) {
+                    // synchronize time with server
+                    vm.quizExercise.releaseDate = moment(vm.quizExercise.releaseDate);
+                    vm.quizExercise.adjustedReleaseDate = moment().add(vm.quizExercise.timeUntilPlannedStart, "seconds");
+                }
+            }
         }
 
-        /**
-         * Load the quiz results and update quizExercise with missing fields
-         */
-        function loadResults() {
-            // TODO: create endpoint to reduce number of REST calls to one
+        function applyParticipationAfterStart(participation) {
+            console.log(participation);
+            if (participation.results.length &&
+                participation.results[0].resultString &&
+                participation.exercise.ended) {
+                // quiz has ended and results are available
+                vm.submission = participation.results[0].submission;
 
-            QuizExerciseForStudent.get({id: $stateParams.id}).$promise.then(function (quizExercise) {
-                // only act on it if quiz has ended
-                if (quizExercise.remainingTime < 0) {
-                    QuizSubmissionForExercise.get({
-                        courseId: 1,
-                        exerciseId: $stateParams.id
-                    }).$promise.then(function (quizSubmission) {
-                        // update questions with explanations and correct answer options / correct mappings
-                        applyFullQuizExercise(quizExercise);
-
-                        vm.submission = quizSubmission;
-
-                        // show submission answers in UI
-                        applySubmission();
-
-                        // load and show result
-                        ParticipationResult.query({
-                            courseId: vm.participation.exercise.course.id,
-                            exerciseId: vm.participation.exercise.id,
-                            participationId: vm.participation.id,
-                            showAllResults: false,
-                            ratedOnly: true
-                        }).$promise.then(showResult, onLoadResultError);
-                    }, onLoadResultError);
-                }
-            }, onLoadResultError);
-        }
-
-        /**
-         * handle error when loading the results
-         *
-         * @param error
-         */
-        function onLoadResultError(error) {
-            console.error(error);
-            alert("Loading results failed. Please wait a few seconds and refresh the page manually.");
+                // update submission time
+                updateSubmissionTime();
+                transferInformationToQuizExercise(participation.exercise);
+                applySubmission();
+                showResult(participation.results);
+            }
         }
 
         /**
@@ -524,7 +497,7 @@
          *
          * @param fullQuizExercise {object} the quizExercise containing additional information
          */
-        function applyFullQuizExercise(fullQuizExercise) {
+        function transferInformationToQuizExercise(fullQuizExercise) {
             vm.quizExercise.questions.forEach(function (question) {
                 // find updated question
                 var fullQuestion = fullQuizExercise.questions.find(function (fullQuestion) {
@@ -637,41 +610,58 @@
         }
 
         /**
+         * update the value for adjustedSubmissionDate in vm.submission
+         */
+        function updateSubmissionTime() {
+            if (vm.submission.submissionDate) {
+                vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
+                if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
+                    vm.justSaved = true;
+                    timeoutJustSaved();
+                }
+            }
+        }
+
+        /**
          * Callback function for handling response after saving submission to server
          * @param response The response data from the server
          */
         function onSaveSuccess(response) {
-            if (outstandingWebsocketResponses === 0) {
+            if (!response) {
+                // TODO: Include reason why saving failed
+                alert("Saving Answers failed.");
+                vm.unsavedChanges = true;
+                vm.isSubmitting = false;
+                if (outstandingWebsocketResponses > 0) {
+                    outstandingWebsocketResponses--;
+                }
+                if (outstandingWebsocketResponses === 0) {
+                    vm.isSaving = false;
+                }
+                return;
+            }
+            if (response.submitted) {
+                outstandingWebsocketResponses = 0;
                 vm.isSaving = false;
                 vm.unsavedChanges = false;
-
-                // load current submission with REST call
-                QuizSubmissionForExercise.get({
-                    courseId: 1,
-                    exerciseId: $stateParams.id
-                }).$promise.then(function (quizSubmission) {
-                    vm.submission = quizSubmission;
-
-                    // update submission time
-                    if (vm.submission.submissionDate) {
-                        vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                    }
-
-                    // show submission answers in UI
-                    applySubmission();
-                });
+                vm.isSubmitting = false;
+                vm.submission = response;
+                updateSubmissionTime();
+                applySubmission();
+            } else if (outstandingWebsocketResponses === 0) {
+                vm.isSaving = false;
+                vm.unsavedChanges = false;
+                vm.submission = response;
+                updateSubmissionTime();
+                applySubmission();
             } else {
                 outstandingWebsocketResponses--;
                 if (outstandingWebsocketResponses === 0) {
                     vm.isSaving = false;
                     vm.unsavedChanges = false;
-                    if (response.saved) {
-                        console.log(response.saved);
-                        vm.submission.adjustedSubmissionDate = moment(response.saved).subtract(timeDifference, "seconds").toDate();
-                        if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
-                            vm.justSaved = true;
-                            timeoutJustSaved();
-                        }
+                    if (response) {
+                        vm.submission.submissionDate = response.submissionDate;
+                        updateSubmissionTime();
                     }
                 }
             }
@@ -697,7 +687,7 @@
                         QuizSubmission.submitForPractice({
                             courseId: 1,
                             exerciseId: $stateParams.id
-                        }, vm.submission, onSubmitPracticeSuccess, onSubmitError);
+                        }, vm.submission, onSubmitPracticeOrPreviewSuccess, onSubmitError);
                     }
                     break;
                 case "preview":
@@ -705,63 +695,29 @@
                         QuizSubmission.submitForPreview({
                             courseId: 1,
                             exerciseId: $stateParams.id
-                        }, vm.submission, onSubmitPreviewSuccess, onSubmitError);
+                        }, vm.submission, onSubmitPracticeOrPreviewSuccess, onSubmitError);
                     }
                     break;
                 case "default":
-                    QuizSubmission.update(vm.submission, onSubmitSuccess, onSubmitError);
+                    if (vm.disconnected || !submissionChannel) {
+                        alert("Cannot Submit while disconnected. Don't worry, answers that were saved while you were still connected will be submitted automatically when the quiz ends.");
+                        vm.isSubmitting = false;
+                        return;
+                    }
+                    // send submission through websocket with "submitted = true"
+                    JhiWebsocketService.send(submissionChannel, {
+                        submittedAnswers: vm.submission.submittedAnswers,
+                        submitted: true
+                    });
                     break;
             }
         }
 
         /**
-         * Callback function for handling response after submitting
+         * Callback function for handling response after submitting for practice or preview
          * @param response
          */
-        function onSubmitSuccess(response) {
-            vm.isSubmitting = false;
-            vm.submission = response;
-            applySubmission();
-            if (vm.submission.submissionDate) {
-                vm.submission.adjustedSubmissionDate = moment(vm.submission.submissionDate).subtract(timeDifference, "seconds").toDate();
-                if (Math.abs(moment(vm.submission.adjustedSubmissionDate).diff(moment(), "seconds")) < 2) {
-                    vm.justSaved = true;
-                    timeoutJustSaved();
-                }
-            }
-        }
-
-        /**
-         * Callback function for handling response after submitting for practice
-         * @param response
-         */
-        function onSubmitPracticeSuccess(response) {
-            vm.isSubmitting = false;
-            vm.submission = response;
-            applySubmission();
-
-            // load participation
-            ExerciseParticipation.get({
-                courseId: vm.quizExercise.course.id,
-                exerciseId: vm.quizExercise.id
-            }).$promise.then(function (participation) {
-                vm.participation = participation;
-                // load result
-                ParticipationResult.query({
-                    courseId: vm.participation.exercise.course.id,
-                    exerciseId: vm.participation.exercise.id,
-                    participationId: vm.participation.id,
-                    showAllResults: false,
-                    ratedOnly: false
-                }).$promise.then(showResult);
-            });
-        }
-
-        /**
-         * Callback function for handling response after submitting for preview
-         * @param response
-         */
-        function onSubmitPreviewSuccess(response) {
+        function onSubmitPracticeOrPreviewSuccess(response) {
             vm.isSubmitting = false;
             vm.submission = response.submission;
             applySubmission();

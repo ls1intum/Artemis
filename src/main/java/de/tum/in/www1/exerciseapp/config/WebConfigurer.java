@@ -3,6 +3,7 @@ package de.tum.in.www1.exerciseapp.config;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.servlet.InstrumentedFilter;
 import com.codahale.metrics.servlets.MetricsServlet;
+import de.tum.in.www1.exerciseapp.config.debug.HttpLoggingFilter;
 import io.github.jhipster.config.JHipsterConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import io.github.jhipster.web.filter.CachingHttpHeadersFilter;
@@ -54,6 +55,7 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
             log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
         }
         EnumSet<DispatcherType> disps = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC);
+        addLoggingFilter(servletContext, disps);
         initMetrics(servletContext, disps);
         if (env.acceptsProfiles(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             initCachingHttpHeadersFilter(servletContext, disps);
@@ -156,6 +158,15 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
         metricsAdminServlet.addMapping("/management/metrics/*");
         metricsAdminServlet.setAsyncSupported(true);
         metricsAdminServlet.setLoadOnStartup(2);
+    }
+
+    private void addLoggingFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
+        log.debug("Registering Logging Filter");
+        FilterRegistration.Dynamic loggingFilter = servletContext.addFilter("httpLoggingFilter",
+            new HttpLoggingFilter());
+
+        loggingFilter.addMappingForUrlPatterns(disps, true, "/*");
+        loggingFilter.setAsyncSupported(true);
     }
 
     @Bean

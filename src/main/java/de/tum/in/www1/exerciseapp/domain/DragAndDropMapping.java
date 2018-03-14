@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -20,21 +22,27 @@ public class DragAndDropMapping implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "drag_item_index")
+    @JsonView(QuizView.Before.class)
     private Integer dragItemIndex;
 
     @Column(name = "drop_location_index")
+    @JsonView(QuizView.Before.class)
     private Integer dropLocationIndex;
 
     @Column(name = "invalid")
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
     @ManyToOne
+    @JsonView(QuizView.Before.class)
     private DragItem dragItem;
 
     @ManyToOne
+    @JsonView(QuizView.Before.class)
     private DropLocation dropLocation;
 
     @ManyToOne(fetch = FetchType.LAZY)

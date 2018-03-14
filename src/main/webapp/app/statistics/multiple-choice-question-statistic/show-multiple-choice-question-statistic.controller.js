@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowMultipleChoiceQuestionStatisticController', ShowMultipleChoiceQuestionStatisticController);
 
-    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent', 'MultipleChoiceQuestionStatistic', 'MultipleChoiceQuestionStatisticForStudent', 'ArtemisMarkdown', 'QuizStatisticService'];
+    ShowMultipleChoiceQuestionStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent', 'ArtemisMarkdown', 'QuizStatisticService'];
 
-    function ShowMultipleChoiceQuestionStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, MultipleChoiceQuestionStatistic, MultipleChoiceQuestionStatisticForStudent, ArtemisMarkdown, QuizStatisticService) {
+    function ShowMultipleChoiceQuestionStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, ArtemisMarkdown, QuizStatisticService) {
 
         var vm = this;
 
@@ -47,13 +47,13 @@
                 QuizExercise.get({
                     id: _.get($state, "params.quizId")
                 })
-                    .$promise.then(loadQuiz);
+                    .$promise.then(loadQuiz, false);
             }
             else {
                 QuizExerciseForStudent.get({
                     id: _.get($state, "params.quizId")
                 })
-                    .$promise.then(loadQuiz);
+                    .$promise.then(loadQuiz, false);
             }
             //subscribe websocket for new statistical data
             var websocketChannelForData = '/topic/statistic/' + _.get($state, "params.quizId");
@@ -65,19 +65,8 @@
 
             // ask for new Data if the websocket for new statistical data was notified
             JhiWebsocketService.receive(websocketChannelForData)
-                .then(null, null, function (notify) {
-                    if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                        MultipleChoiceQuestionStatistic.get({
-                            id: vm.questionStatistic.id
-                        })
-                            .$promise.then(loadNewData);
-                    }
-                    else {
-                        MultipleChoiceQuestionStatisticForStudent.get({
-                            id: vm.questionStatistic.id
-                        })
-                            .$promise.then(loadNewData);
-                    }
+                .then(null, null, function (quiz) {
+                     loadQuiz(quiz, true);
 
                 });
             // refresh release information
@@ -86,7 +75,8 @@
                     vm.quizExercise.quizPointStatistic.released = payload;
                     vm.questionStatistic.released = payload;
                     // send students back to courses if the statistic was revoked
-                    if (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !payload) {
+                    if (!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])
+                        && !payload) {
                         $state.go('courses');
                     }
                 });
@@ -113,8 +103,9 @@
          * This functions loads the Quiz, which is necessary to build the Web-Template
          *
          * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
+         * @param {boolean} refresh: true if method is called from Websocket
          */
-        function loadQuiz(quiz) {
+        function loadQuiz(quiz, refresh) {
             // if the Student finds a way to the Website, while the Statistic is not released
             //      -> the Student will be send back to Courses
             if ((!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
@@ -127,37 +118,23 @@
                 // "==" because it compares a number with a string
                 return _.get($state, "params.questionId") == question.id;
             });
-            // if the Anyone finds a way to the Website, with an wrong combination of QuizId and QuestionId
+            // if the Anyone finds a way to the Website,
+            // with an wrong combination of QuizId and QuestionId
             //      -> go back to Courses
             if (vm.question === null) {
                 $state.go('courses');
             }
-            //render Markdown-text
-            vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
-            vm.answerTextRendered = vm.question.answerOptions.map(function (answer) {
-                return ArtemisMarkdown.htmlForMarkdown(answer.text);
-            });
-
             vm.questionStatistic = vm.question.questionStatistic;
-            loadLayout();
-            loadData();
-        }
 
-        /**
-         * load the new multipleChoiceQuestionStatistic from the server
-         *      if the Websocket has been notified
-         *
-         * @param {MultipleChoiceQuestionStatistic} statistic: the new multipleChoiceQuestionStatistic
-         *                                              from the server with the new Data.
-         */
-        function loadNewData(statistic) {
-            // if the Student finds a way to the Website, while the Statistic is not released
-            //      -> the Student will be send back to Courses
-            if ((!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-                && !quiz.quizPointStatistic.released) {
-                $state.go('courses');
+            //load Layout only at the opening (not if the websocket refreshed the data)
+            if (!refresh) {
+                //render Markdown-text
+                vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
+                vm.answerTextRendered = vm.question.answerOptions.map(function (answer) {
+                    return ArtemisMarkdown.htmlForMarkdown(answer.text);
+                });
+                loadLayout();
             }
-            vm.questionStatistic = statistic;
             loadData();
         }
 
@@ -167,14 +144,14 @@
         function loadLayout() {
 
             // reset old data
-            label = new Array(vm.question.answerOptions.length + 1);
+            label = [];
             backgroundColor = [];
             backgroundSolutionColor = new Array(vm.question.answerOptions.length + 1);
             solutionLabel = new Array(vm.question.answerOptions.length + 1);
 
             //set label and background-Color based on the AnswerOptions
             vm.question.answerOptions.forEach(function (answerOption, i) {
-                label[i] = (String.fromCharCode(65 + i) + ".");
+                label.push(String.fromCharCode(65 + i) + ".");
                 backgroundColor.push(
                     {
                         backgroundColor: "#428bca",
@@ -224,7 +201,7 @@
             //set Background for invalid answers = grey
             $translate('showStatistic.invalid').then(function (invalidLabel) {
                 vm.question.answerOptions.forEach(function (answerOption, i) {
-                    if (vm.question.answerOptions[i].invalid) {
+                    if (answerOption.invalid) {
                         backgroundColor[i] = (
                             {
                                 backgroundColor: "#838383",
@@ -255,10 +232,10 @@
             $translate('showStatistic.multipleChoiceQuestionStatistic.correct')
                 .then(function (correctLabel) {
                     vm.question.answerOptions.forEach(function (answerOption, i) {
-                        if (vm.question.answerOptions[i].isCorrect) {
+                        if (answerOption.isCorrect) {
                             // check if the answer is valid and if true:
                             //      change solution-label and -color
-                            if (!vm.question.answerOptions[i].invalid) {
+                            if (!answerOption.invalid) {
                                 backgroundSolutionColor[i] = (
                                     {
                                         backgroundColor: "#5cb85c",
@@ -277,10 +254,10 @@
             $translate('showStatistic.multipleChoiceQuestionStatistic.incorrect')
                 .then(function (incorrectLabel) {
                     vm.question.answerOptions.forEach(function (answerOption, i) {
-                        if (!vm.question.answerOptions[i].isCorrect) {
+                        if (!answerOption.isCorrect) {
                             // check if the answer is valid and if false:
                             //      change solution-label and -color
-                            if (!vm.question.answerOptions[i].invalid) {
+                            if (!answerOption.invalid) {
                                 backgroundSolutionColor[i] = (
                                     {
                                         backgroundColor: "#d9534f",
@@ -302,16 +279,17 @@
         function loadData() {
 
             // reset old data
-            ratedData = new Array(vm.question.answerOptions.length);
-            unratedData = new Array(vm.question.answerOptions.length);
+            ratedData = [];
+            unratedData = [];
 
             //set data based on the answerCounters for each AnswerOption
-            vm.question.answerOptions.forEach(function (answerOption, i) {
-                var answerOptionCounter = vm.questionStatistic.answerCounters.find(function (answerCounter) {
+            vm.question.answerOptions.forEach(function (answerOption) {
+                var answerOptionCounter = vm.questionStatistic.answerCounters
+                    .find(function (answerCounter) {
                     return answerOption.id === answerCounter.answer.id;
                 });
-                ratedData[i] = answerOptionCounter.ratedCounter;
-                unratedData[i] = answerOptionCounter.unRatedCounter;
+                ratedData.push(answerOptionCounter.ratedCounter);
+                unratedData.push(answerOptionCounter.unRatedCounter);
             });
             //add data for the last bar (correct Solutions)
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;
@@ -476,7 +454,8 @@
                         var meta = chartInstance.controller.getDatasetMeta(i);
                         meta.data.forEach(function (bar, index) {
                             var data = (Math.round(dataset.data[index] * 100) / 100);
-                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+                            var dataPercentage = (Math.round(
+                                (dataset.data[index] / vm.participants) * 1000) / 10);
 
                             var position = bar.tooltipPosition();
 
@@ -490,14 +469,16 @@
 
                                     if (vm.participants !== 0) {
                                         ctx.fillStyle = 'white';
-                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     }
                                 }
                                 //if the bar is too high -> write the amountValue inside the bar
                                 else {
                                     ctx.fillStyle = 'white';
                                     if (vm.participants !== 0) {
-                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(data + " / " + dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     } else {
                                         ctx.fillText(data, position.x, position.y + 10);
                                     }
@@ -507,7 +488,8 @@
                             else {
                                 ctx.fillStyle = 'black';
                                 if (vm.participants !== 0) {
-                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                    ctx.fillText(data + " / " + dataPercentage.toString()
+                                        + "%", position.x, position.y - 10);
                                 } else {
                                     ctx.fillText(data, position.x, position.y - 10);
                                 }

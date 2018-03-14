@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -24,27 +26,35 @@ public class Course implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "title")
+    @JsonView(QuizView.Before.class)
     private String title;
 
     @Column(name = "student_group_name")
+    @JsonView(QuizView.Before.class)
     private String studentGroupName;
 
     @Column(name = "teaching_assistant_group_name")
+    @JsonView(QuizView.Before.class)
     private String teachingAssistantGroupName;
 
     @Column(name = "instructor_group_name")
+    @JsonView(QuizView.Before.class)
     private String instructorGroupName;
 
     @Column(name = "start_date")
+    @JsonView(QuizView.Before.class)
     private ZonedDateTime startDate;
 
     @Column(name = "end_date")
+    @JsonView(QuizView.Before.class)
     private ZonedDateTime endDate;
 
     @Column(name = "online_course")
+    @JsonView(QuizView.Before.class)
     private Boolean onlineCourse;
 
     @OneToMany(mappedBy = "course")

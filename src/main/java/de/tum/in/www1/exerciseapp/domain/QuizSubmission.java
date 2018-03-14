@@ -1,5 +1,7 @@
 package de.tum.in.www1.exerciseapp.domain;
 
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -20,10 +22,12 @@ public class QuizSubmission extends Submission implements Serializable {
     private static final long serialVersionUID = 1L;
 
     @Column(name = "score_in_points")
+    @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
     @OneToMany(mappedBy = "submission", cascade= CascadeType.ALL, fetch= FetchType.EAGER, orphanRemoval=true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
 
     public Double getScoreInPoints() {

@@ -4,7 +4,7 @@
     <div class="container-fluid">
         <div class="row">
             <div class="col-xs-4 no-padding-left">
-                <button class="btn btn-primary" ui-sref=".new({courseid:vm.course.id})" >
+                <button ng-if="vm.course" class="btn btn-primary" ui-sref=".new({courseid:vm.course.id})" >
                     <span class="glyphicon glyphicon-plus"></span>
                     <span  data-translate="artemisApp.quizExercise.home.createLabel">
                         Create new Quiz Exercise

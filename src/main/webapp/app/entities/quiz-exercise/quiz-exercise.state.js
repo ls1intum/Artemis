@@ -29,6 +29,9 @@
                     $translatePartialLoader.addPart('exercise');
                     $translatePartialLoader.addPart('global');
                     return $translate.refresh();
+                }],
+                courseEntity: [function () {
+                    return null;
                 }]
             }
         })
@@ -134,31 +137,6 @@
                     return currentStateData;
                 }]
             }
-        })
-        .state('quiz-exercise.edit', {
-            parent: 'quiz-exercise',
-            url: '/{id}/edit',
-            data: {
-                authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']
-            },
-            onEnter: ['$stateParams', '$state', '$uibModal', function($stateParams, $state, $uibModal) {
-                $uibModal.open({
-                    templateUrl: 'app/entities/quiz-exercise/quiz-exercise-dialog.html',
-                    controller: 'QuizExerciseDialogController',
-                    controllerAs: 'vm',
-                    backdrop: 'static',
-                    size: 'lg',
-                    resolve: {
-                        entity: ['QuizExercise', function(QuizExercise) {
-                            return QuizExercise.get({id : $stateParams.id}).$promise;
-                        }]
-                    }
-                }).result.then(function() {
-                    $state.go('quiz-exercise', null, { reload: 'quiz-exercise' });
-                }, function() {
-                    $state.go('^');
-                });
-            }]
         })
         .state('quiz-exercise.delete', {
             parent: 'quiz-exercise',

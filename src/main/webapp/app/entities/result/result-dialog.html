@@ -53,9 +53,8 @@
 
         <div class="form-group">
             <label data-translate="artemisApp.result.submission" for="field_submission">Submission</label>
-            <select class="form-control" id="field_submission" name="submission" ng-model="vm.result.submission" ng-options="submission as submission.id for submission in vm.submissions | orderBy:'id' track by submission.id">
-                <option value=""></option>
-            </select>
+            <input type="text" class="form-control" id="field_submission" name="submission"
+                   ng-model="vm.result.submission ? vm.result.submission.id : '-'" readonly />
         </div>
         <div class="form-group">
             <label data-translate="artemisApp.result.participation" for="field_participation">Participation</label>

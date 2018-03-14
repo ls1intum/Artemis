@@ -251,19 +251,19 @@ function ReEvaluateMultipleChoiceQuestionController($translate, $translatePartia
      * @param answer {answerOption} the answer, which will be reset
      */
     function resetAnswer(answer) {
-        for (var i = 0; i < backUpQuestion.answerOptions.length; i++) {
-            if (backUpQuestion.answerOptions[i].id === answer.id) {
 
-                //find correct answer if they have another order
-                vm.question.answerOptions[vm.question.answerOptions.indexOf(answer)]
-                    = angular.copy(backUpQuestion.answerOptions[i]);
-                answer = angular.copy(backUpQuestion.answerOptions[i]);
+        //find correct answer if they have another order
+        var backUpAnswer = backUpQuestion.answerOptions.find( function (answerBackup) {
+            return answer.id === answerBackup.id;
+        });
 
-                // reset answer editor
-                setUpAnswerEditors();
+        // reset answer in question
+        vm.question.answerOptions[vm.question.answerOptions.indexOf(answer)]
+            = angular.copy(backUpAnswer);
+        answer = angular.copy(backUpAnswer);
 
-            }
-        }
+        // reset answer editor
+        setUpAnswerEditors();
     }
 
     /**

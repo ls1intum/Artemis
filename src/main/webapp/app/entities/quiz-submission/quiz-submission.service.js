@@ -2,8 +2,7 @@
     'use strict';
     angular
         .module('artemisApp')
-        .factory('QuizSubmission', QuizSubmission)
-        .factory('QuizSubmissionForExercise', QuizSubmissionForExercise);
+        .factory('QuizSubmission', QuizSubmission);
 
     QuizSubmission.$inject = ['$resource'];
 
@@ -29,24 +28,6 @@
             'submitForPreview': {
                 url: 'api/courses/:courseId/exercises/:exerciseId/submissions/preview',
                 method: 'POST'
-            }
-        });
-    }
-
-    QuizSubmissionForExercise.$inject = ['$resource'];
-
-    function QuizSubmissionForExercise ($resource) {
-        var resourceUrl = 'api/courses/:courseId/exercises/:exerciseId/submissions/my-latest';
-
-        return $resource(resourceUrl, {}, {
-            'get': {
-                method: 'GET',
-                transformResponse: function (data) {
-                    if (data) {
-                        data = angular.fromJson(data);
-                    }
-                    return data;
-                }
             }
         });
     }

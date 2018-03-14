@@ -60,6 +60,45 @@ public class CourseService {
     }
 
     /**
+     * Check if the current user has at least Student-level permissions for the given course
+     *
+     * @param course the course to check permissions for
+     * @return true, if the user has the required permissions, false otherwise
+     */
+    public boolean userHasStudentPermissions(Course course) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return authCheckService.isStudentInCourse(course, user) ||
+            authCheckService.isTeachingAssistantInCourse(course, user) ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isAdmin();
+    }
+
+    /**
+     * Check if the current user has at least TA-level permissions for the given course
+     *
+     * @param course the course to check permissions for
+     * @return true, if the user has the required permissions, false otherwise
+     */
+    public boolean userHasTAPermissions(Course course) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return authCheckService.isTeachingAssistantInCourse(course, user) ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isAdmin();
+    }
+
+    /**
+     * Check if the current user has at least Instructor-level permissions for the given course
+     *
+     * @param course the course to check permissions for
+     * @return true, if the user has the required permissions, false otherwise
+     */
+    public boolean userHasInstructorPermissions(Course course) {
+        User user = userService.getUserWithGroupsAndAuthorities();
+        return authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isAdmin();
+    }
+
+    /**
      * Get all the courses with exercises.
      *
      * @return the list of entities
@@ -72,8 +111,9 @@ public class CourseService {
 
     /**
      * Get all courses with exercises (filtered for given user)
+     *
      * @param principal the user principal
-     * @param user the user entity
+     * @param user      the user entity
      * @return the list of all courses including exercises for the user
      */
     @Transactional(readOnly = true)
