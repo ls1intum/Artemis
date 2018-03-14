@@ -149,12 +149,14 @@ entity Result (result) {
   successful Boolean,
   buildArtifact Boolean,
   score Long,
-  rated Boolean
+  rated Boolean,
+  hasFeedback Boolean
 }
 
 entity Feedback(feedback) {
 	text String,
 	detailText String,
+	positive Boolean,
 	type FeedbackType
 }
 

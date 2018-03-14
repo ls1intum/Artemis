@@ -42,6 +42,9 @@
             vm.isSaving = true;
             for(var i = 0; i < vm.result.feedbacks.length; i++) {
                 vm.result.feedbacks[i].type = 'MANUAL';
+                if(!vm.result.feedbacks[i].positive) {
+                    vm.result.feedbacks[i].positive = false;
+                }
             }
             if (vm.result.id !== null) {
                 Result.update(vm.result, onSaveSuccess, onSaveError);

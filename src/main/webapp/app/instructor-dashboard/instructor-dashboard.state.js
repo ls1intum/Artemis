@@ -83,7 +83,11 @@
                                     score: 100,
                                     id: null
                                 };
-                            }
+                            },
+                            translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                                $translatePartialLoader.addPart('error');
+                                return $translate.refresh();
+                            }]
                         },
                     }).result.then(function () {
                         $state.go('instructor-dashboard', $state.params, {reload: true});
@@ -107,6 +111,10 @@
                         resolve: {
                             entity: ['Exercise', function (Exercise) {
                                 return Exercise.get({id: $stateParams.exerciseId}).$promise;
+                            }],
+                            translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                                $translatePartialLoader.addPart('error');
+                                return $translate.refresh();
                             }]
                         }
                     }).result.then(function () {
@@ -131,6 +139,10 @@
                     resolve: {
                         entity: ['Exercise', function (Exercise) {
                             return Exercise.get({id: $stateParams.exerciseId}).$promise;
+                        }],
+                        translatePartialLoader: ['$translate', '$translatePartialLoader', function ($translate, $translatePartialLoader) {
+                            $translatePartialLoader.addPart('error');
+                            return $translate.refresh();
                         }]
                     }
                 }).result.then(function () {

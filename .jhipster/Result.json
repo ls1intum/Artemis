@@ -46,6 +46,10 @@
         {
             "fieldName": "rated",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "hasFeedback",
+            "fieldType": "Boolean"
         }
     ],
     "changelogDate": "20160609110918",
