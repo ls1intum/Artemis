@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('ShowDragAndDropStatisticController', ShowDragAndDropStatisticController);
 
-    ShowDragAndDropStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent', 'DragAndDropQuestionStatistic', 'DragAndDropQuestionStatisticForStudent', 'DragAndDropQuestionUtil', 'ArtemisMarkdown', 'QuizStatisticService'];
+    ShowDragAndDropStatisticController.$inject = ['$translate', '$scope', '$state', 'Principal', 'JhiWebsocketService', 'QuizExercise', 'QuizExerciseForStudent', 'DragAndDropQuestionUtil', 'ArtemisMarkdown', 'QuizStatisticService'];
 
-    function ShowDragAndDropStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionStatistic, DragAndDropQuestionStatisticForStudent, DragAndDropQuestionUtil, ArtemisMarkdown, QuizStatisticService) {
+    function ShowDragAndDropStatisticController($translate, $scope, $state, Principal, JhiWebsocketService, QuizExercise, QuizExerciseForStudent, DragAndDropQuestionUtil, ArtemisMarkdown, QuizStatisticService) {
 
         var vm = this;
 
@@ -46,11 +46,11 @@
             // use different REST-call if the User is a Student
             if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
                 QuizExercise.get({id: _.get($state, "params.quizId")})
-                    .$promise.then(loadQuiz);
+                    .$promise.then(loadQuiz, false);
             }
             else {
                 QuizExerciseForStudent.get({id: _.get($state, "params.quizId")})
-                    .$promise.then(loadQuiz);
+                    .$promise.then(loadQuiz, false);
             }
             //subscribe websocket for new statistical data
             var websocketChannelForData = '/topic/statistic/' + _.get($state, "params.quizId");
@@ -61,15 +61,10 @@
             JhiWebsocketService.subscribe(websocketChannelForReleaseState);
 
             // ask for new Data if the websocket for new statistical data was notified
-            JhiWebsocketService.receive(websocketChannelForData).then(null, null, function (notify) {
-                if (Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    DragAndDropQuestionStatistic.get({id: vm.questionStatistic.id})
-                        .$promise.then(loadNewData);
-                }
-                else {
-                    DragAndDropQuestionStatisticForStudent.get({id: vm.questionStatistic.id})
-                        .$promise.then(loadNewData);
-                }
+
+            JhiWebsocketService.receive(websocketChannelForData)
+                .then(null, null, function (quiz) {
+                    loadQuiz(quiz, true);
 
             });
             // refresh release information
@@ -102,8 +97,9 @@
          * This functions loads the Quiz, which is necessary to build the Web-Template
          *
          * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
+         * @param {boolean} refresh: true if method is called from Websocket
          */
-        function loadQuiz(quiz) {
+        function loadQuiz(quiz, refresh) {
             // if the Student finds a way to the Website, while the Statistic is not released
             //      -> the Student will be send back to Courses
             if ((!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
@@ -122,29 +118,13 @@
             if (vm.question === null) {
                 $state.go('courses');
             }
-
-            vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
-            loadLayout();
             vm.questionStatistic = vm.question.questionStatistic;
-            loadData();
-        }
 
-        /**
-         * load the new dragAndDropQuestionStatistic from the server
-         * if the Websocket has been notified
-         *
-         * @param {DragAndDropQuestionStatistic} statistic:
-         *                          the new multipleChoiceQuestionStatistic
-         *                          from the server with the new Data.
-         */
-        function loadNewData(statistic) {
-            // if the Student finds a way to the Website, while the Statistic is not released
-            //          -> the Student will be send back to Courses
-            if ((!Principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-                && !quiz.quizPointStatistic.released) {
-                $state.go('courses');
+            //load Layout only at the opening (not if the websocket refreshed the data)
+            if (!refresh) {
+                vm.questionTextRendered = ArtemisMarkdown.htmlForMarkdown(vm.question.text);
+                loadLayout();
             }
-            vm.questionStatistic = statistic;
             loadData();
         }
 
@@ -156,13 +136,13 @@
             orderDropLocationByPos();
 
             // reset old data
-            label = new Array(vm.question.dropLocations.length);
+            label = [];
             backgroundColor = [];
             backgroundSolutionColor = [];
 
             //set label and backgroundcolor based on the dropLocations
             vm.question.dropLocations.forEach(function (dropLocation, i) {
-                label[i] = (String.fromCharCode(65 + i) + ".");
+                label.push(String.fromCharCode(65 + i) + ".");
                 backgroundColor.push(
                     {
                         backgroundColor: "#428bca",
@@ -246,16 +226,17 @@
         function loadData() {
 
             // reset old data
-            ratedData = new Array(vm.question.dropLocations.length);
-            unratedData = new Array(vm.question.dropLocations.length);
+            ratedData = [];
+            unratedData = [];
 
             //set data based on the dropLocations for each dropLocation
-            vm.question.dropLocations.forEach(function (dropLocation, i) {
-                var dropLocationCounter = vm.questionStatistic.dropLocationCounters.find(function (dlCounter) {
+            vm.question.dropLocations.forEach(function (dropLocation) {
+                var dropLocationCounter = vm.questionStatistic.dropLocationCounters
+                    .find(function (dlCounter) {
                     return dropLocation.id === dlCounter.dropLocation.id;
                 });
-                ratedData[i] = dropLocationCounter.ratedCounter;
-                unratedData[i] = dropLocationCounter.unRatedCounter;
+                ratedData.push(dropLocationCounter.ratedCounter);
+                unratedData.push(dropLocationCounter.unRatedCounter);
             });
             //add data for the last bar (correct Solutions)
             ratedCorrectData = vm.questionStatistic.ratedCorrectCounter;
@@ -342,7 +323,8 @@
             while (change) {
                 change = false;
                 for (var i = 0; i < vm.question.dropLocations.length - 1; i++) {
-                    if ((vm.question.dropLocations[i].posX ) > vm.question.dropLocations[i + 1].posX) {
+                    if ((vm.question.dropLocations[i].posX )
+                        > vm.question.dropLocations[i + 1].posX) {
                         // switch DropLocations
                         var temp = vm.question.dropLocations[i];
                         vm.question.dropLocations[i] = vm.question.dropLocations[i + 1];
@@ -462,7 +444,8 @@
                         var meta = chartInstance.controller.getDatasetMeta(i);
                         meta.data.forEach(function (bar, index) {
                             var data = (Math.round(dataset.data[index] * 100) / 100);
-                            var dataPercentage = (Math.round((dataset.data[index] / vm.participants) * 1000) / 10);
+                            var dataPercentage = (Math.round(
+                                (dataset.data[index] / vm.participants) * 1000) / 10);
 
                             var position = bar.tooltipPosition();
 
@@ -476,14 +459,16 @@
 
                                     if (vm.participants !== 0) {
                                         ctx.fillStyle = 'white';
-                                        ctx.fillText(dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     }
                                 }
                                 //if the bar is too high -> write the amountValue inside the bar
                                 else {
                                     ctx.fillStyle = 'white';
                                     if (vm.participants !== 0) {
-                                        ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y + 10);
+                                        ctx.fillText(data + " / " + dataPercentage.toString()
+                                            + "%", position.x, position.y + 10);
                                     } else {
                                         ctx.fillText(data, position.x, position.y + 10);
                                     }
@@ -493,7 +478,8 @@
                             else {
                                 ctx.fillStyle = 'black';
                                 if (vm.participants !== 0) {
-                                    ctx.fillText(data + " / " + dataPercentage.toString() + "%", position.x, position.y - 10);
+                                    ctx.fillText(data + " / " + dataPercentage.toString()
+                                        + "%", position.x, position.y - 10);
                                 } else {
                                     ctx.fillText(data, position.x, position.y - 10);
                                 }

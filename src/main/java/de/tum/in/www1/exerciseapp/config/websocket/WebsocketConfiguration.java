@@ -1,26 +1,31 @@
 package de.tum.in.www1.exerciseapp.config.websocket;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.exerciseapp.security.AuthoritiesConstants;
 import io.github.jhipster.config.JHipsterProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
 import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.messaging.converter.CompositeMessageConverter;
+import org.springframework.messaging.converter.DefaultContentTypeResolver;
+import org.springframework.messaging.converter.MappingJackson2MessageConverter;
+import org.springframework.messaging.converter.MessageConverter;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.config.annotation.*;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 
 import java.security.Principal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
 @Configuration
 //@EnableWebSocketMessageBroker
@@ -31,9 +36,12 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final JHipsterProperties jHipsterProperties;
+    private final ObjectMapper objectMapper;
 
-    public WebsocketConfiguration(JHipsterProperties jHipsterProperties) {
+    public WebsocketConfiguration(JHipsterProperties jHipsterProperties,
+                                  MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.jHipsterProperties = jHipsterProperties;
+        this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
 
     @Override
@@ -55,6 +63,21 @@ public class WebsocketConfiguration extends WebSocketMessageBrokerConfigurationS
     @Override
     public WebSocketHandler subProtocolWebSocketHandler() {
         return new CustomSubProtocolWebSocketHandler(clientInboundChannel(), clientOutboundChannel());
+    }
+
+    @Override
+    public CompositeMessageConverter brokerMessageConverter() {
+        // NOTE: We need to replace the default messageConverter for WebSocket messages
+        // with a messageConverter that uses the same ObjectMapper that our REST endpoints use.
+        // This gives us consistency in how specific datatypes are serialized (e.g. timestamps)
+        DefaultContentTypeResolver resolver = new DefaultContentTypeResolver();
+        resolver.setDefaultMimeType(MimeTypeUtils.APPLICATION_JSON);
+        MappingJackson2MessageConverter converter = new MappingJackson2MessageConverter();
+        converter.setObjectMapper(objectMapper);
+        converter.setContentTypeResolver(resolver);
+        Set<MessageConverter> messageConverterSet = new HashSet<>();
+        messageConverterSet.add(converter);
+        return new CompositeMessageConverter(messageConverterSet);
     }
 
     @Bean

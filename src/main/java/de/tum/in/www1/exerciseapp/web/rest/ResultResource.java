@@ -38,14 +38,18 @@ public class ResultResource {
     private final ResultService resultService;
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
-    private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final FeedbackService feedbackService;
     private final UserService userService;
 
-    public ResultResource(UserService userService, ResultRepository resultRepository, Optional<LtiService> ltiService, ParticipationService participationService,
-                          ResultService resultService, AuthorizationCheckService authCheckService,
-                          Optional<ContinuousIntegrationService> continuousIntegrationService, FeedbackService feedbackService,
-                          ExerciseService exerciseService, CourseService courseService) {
+    public ResultResource(UserService userService,
+                          ResultRepository resultRepository,
+                          Optional<LtiService> ltiService,
+                          ParticipationService participationService,
+                          ResultService resultService,
+                          AuthorizationCheckService authCheckService,
+                          FeedbackService feedbackService,
+                          ExerciseService exerciseService,
+                          CourseService courseService) {
 
         this.userService = userService;
         this.resultRepository = resultRepository;
@@ -53,7 +57,6 @@ public class ResultResource {
         this.participationService = participationService;
         this.resultService = resultService;
         this.courseService = courseService;
-        this.continuousIntegrationService = continuousIntegrationService;
         this.feedbackService = feedbackService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -255,7 +258,8 @@ public class ResultResource {
     @Timed
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
-                                              @RequestParam(defaultValue = "false") boolean showAllResults) {
+                                              @RequestParam(defaultValue = "false") boolean showAllResults,
+                                              @RequestParam(defaultValue = "false") boolean ratedOnly) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -266,6 +270,8 @@ public class ResultResource {
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
+        //TODO use rated only in case it is true
 
         List<Result> results;
         if (showAllResults) {

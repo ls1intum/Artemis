@@ -68,6 +68,7 @@
             "preview": "Preview Quiz",
             "solution": "Sample Solution",
             "quizIsOverText": "The quiz has ended. Please wait. The results will load automatically.",
+            "notParticipatedText": "The quiz has ended and you have not participated. There are no results to display.",
             "statisticsNotPublished": "The instructor has not published any statistics.",
             "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended.",
             "re-evaluate": {

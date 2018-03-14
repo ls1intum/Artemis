@@ -101,6 +101,7 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropSubmittedAnswer.class.getName() + ".mappings", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.exerciseapp.domain.DragAndDropMapping.class.getName(), jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
+            cm.createCache("files", jcacheConfiguration);
         };
     }
 }

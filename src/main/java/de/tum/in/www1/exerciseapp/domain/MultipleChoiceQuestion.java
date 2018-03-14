@@ -1,6 +1,8 @@
 package de.tum.in.www1.exerciseapp.domain;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -23,6 +25,7 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     @OrderColumn
     @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonView(QuizView.Before.class)
     private List<AnswerOption> answerOptions = new ArrayList<>();
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
@@ -236,6 +239,25 @@ public class MultipleChoiceQuestion extends Question implements Serializable {
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+
+    @Override
+    public void filterForStudentsDuringQuiz() {
+        super.filterForStudentsDuringQuiz();
+        for (AnswerOption answerOption : getAnswerOptions()) {
+            answerOption.setIsCorrect(null);
+            answerOption.setExplanation(null);
+        }
+    }
+
+    @Override
+    public void filterForStatisticWebsocket() {
+        super.filterForStatisticWebsocket();
+        for (AnswerOption answerOption : getAnswerOptions()) {
+            answerOption.setIsCorrect(null);
+            answerOption.setExplanation(null);
+        }
+    }
 
     @Override
     public Boolean isValid() {

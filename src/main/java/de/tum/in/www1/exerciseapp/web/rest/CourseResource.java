@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.exerciseapp.domain.*;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ParticipationState;
-import de.tum.in.www1.exerciseapp.repository.ParticipationRepository;
-import de.tum.in.www1.exerciseapp.repository.ResultRepository;
 import de.tum.in.www1.exerciseapp.service.*;
 import de.tum.in.www1.exerciseapp.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.exerciseapp.web.rest.util.HeaderUtil;
@@ -43,24 +41,18 @@ public class CourseResource {
 
     private final UserService userService;
     private final CourseService courseService;
-    private final ExerciseService exerciseService;
-    private final ParticipationRepository participationRepository;
-    private final ResultRepository resultRepository;
+    private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
     private final ObjectMapper objectMapper;
 
     public CourseResource(UserService userService,
                           CourseService courseService,
-                          ExerciseService exerciseService,
-                          ParticipationRepository participationRepository,
-                          ResultRepository resultRepository,
+                          ParticipationService participationService,
                           AuthorizationCheckService authCheckService,
                           MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.userService = userService;
         this.courseService = courseService;
-        this.exerciseService = exerciseService;
-        this.participationRepository = participationRepository;
-        this.resultRepository = resultRepository;
+        this.participationService = participationService;
         this.authCheckService = authCheckService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
@@ -155,14 +147,14 @@ public class CourseResource {
 
         // get all participations of this user
         // TODO: in the future, we should limit this to active courses to improve performance
-        List<Participation> participations = participationRepository.findByStudentUsernameWithEagerResults(principal.getName());
+        List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
 
         for (Course course : courses) {
             ObjectNode courseJson = objectMapper.valueToTree(course);
             ArrayNode exercisesJson = objectMapper.createArrayNode();
             for (Exercise exercise : course.getExercises()) {
                 // add participation with result to each exercise
-                ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, participations);
+                ObjectNode exerciseJson = exerciseToJsonWithParticipation(exercise, participations, principal.getName());
                 exercisesJson.add(exerciseJson);
             }
 
@@ -218,7 +210,7 @@ public class CourseResource {
 
 
     /**
-     * GET /user/:courseId/courseResult
+     * GET /courses/:courseId/getAllCourseScoresOfCourseUsers
      *
      * @param courseId the Id of the course
      * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:
@@ -239,13 +231,22 @@ public class CourseResource {
      * and return a JSON ObjectNode that includes the exercise data, plus the found
      * participation with its most recent relevant result
      *
-     * @param exercise the exercise to create a JSON ObjectNode for
+     * @param exercise       the exercise to create a JSON ObjectNode for
      * @param participations the set of participations, wherein to search for the relevant participation
      * @return the JSON for the given exercise
      */
-    private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, List<Participation> participations) {
+    private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, List<Participation> participations, String username) {
         // get user's participation for the exercise
         Participation participation = exercise.findRelevantParticipation(participations);
+
+        // for quiz exercises also check SubmissionHashMap for submission by this user (active participation)
+        // if participation was not found in database
+        if (participation == null && exercise instanceof QuizExercise) {
+            QuizSubmission submission = QuizScheduleService.getQuizSubmission(exercise.getId(), username);
+            if (submission.getSubmissionDate() != null) {
+                participation = new Participation().exercise(exercise).initializationState(ParticipationState.INITIALIZED);
+            }
+        }
 
         // add results to participation
         ObjectNode participationJson = objectMapper.createObjectNode();
@@ -258,7 +259,20 @@ public class CourseResource {
                 List<Result> results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
 
                 // add results to json
-                participationJson.set("results", objectMapper.valueToTree(results));
+                ArrayNode resultsJson = objectMapper.valueToTree(results);
+                if (result != null) {
+                    // remove participation from inner result json
+                    ObjectNode resultJson = (ObjectNode) resultsJson.get(0);
+                    resultJson.set("participation", null);
+                }
+                participationJson.set("results", resultsJson);
+            }
+
+            // remove questions and quizStatistics from inner quizExercise in participation json
+            if (exercise instanceof QuizExercise) {
+                ObjectNode exerciseJson = (ObjectNode) participationJson.get("exercise");
+                exerciseJson.set("questions", null);
+                exerciseJson.set("quizPointStatistic", null);
             }
         }
 

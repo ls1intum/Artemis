@@ -13,8 +13,13 @@ import scala.util.parsing.json._
 
 class QuizParticipationSimulation extends Simulation {
 
-    // TODO replace exerciseID with id of dynamically created exercise
-    val exerciseId = 118
+    // TODO: update these values to fit the tested exercise
+    val exerciseId = 187
+    val backgroundPicturePath = "/api/files/drag-and-drop/backgrounds/98/DragAndDropBackground_2018-02-16T11-45-42-684_7f0aa8e4.png"
+
+    // TODO: Adjust these numbers for desired load
+    val numUsersSubmit = 200
+    val numUsersNoSubmit = 200
 
     val feeder: Iterator[Map[String, String]] = Iterator.tabulate(500)(i => Map(
         "username" -> ("<USERNAME>"),   // TODO: generate real username for each value of i (removed for security)
@@ -33,6 +38,7 @@ class QuizParticipationSimulation extends Simulation {
         .acceptLanguageHeader("fr,fr-fr;q=0.8,en-us;q=0.5,en;q=0.3")
         .connectionHeader("keep-alive")
         .userAgentHeader("Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:33.0) Gecko/20100101 Firefox/33.0")
+        .disableClientSharing
 
     val headers_http = Map(
         "Accept" -> """application/json"""
@@ -46,13 +52,11 @@ class QuizParticipationSimulation extends Simulation {
     /**
       * Selects random answers and adds submittedAnswers to the submission
       *
-      * @param submissionString the submission as a JSON string
-      * @param questionsString  the questions of the exercise as a JSON string
+      * @param questionsString the questions of the exercise as a JSON string
       * @return the submission including the submittedAnswers as a JSON string
       */
-    def selectRandomAnswers(submissionString: String, questionsString: String): String = {
+    def selectRandomAnswers(questionsString: String, submit: Boolean): String = {
         // parse json strings into objects (Map or List)
-        val submission = JSON.parseFull(submissionString).get.asInstanceOf[Map[String, Any]]
         val questions = JSON.parseFull(questionsString).get.asInstanceOf[List[Any]]
 
         // save submitted answers in a List
@@ -121,7 +125,11 @@ class QuizParticipationSimulation extends Simulation {
         })
 
         // add submitted answers to submission
-        val result = submission + ("submittedAnswers" -> submittedAnswers)
+        var result: Map[String, Any] = Map("submittedAnswers" -> submittedAnswers)
+
+        if (submit) {
+            result = result + ("submitted" -> true)
+        }
 
         // convert back into json string
         Json.stringify(result)
@@ -144,37 +152,26 @@ class QuizParticipationSimulation extends Simulation {
             .formParam("submit", "Login")
             .check(status.is(200))
             .check(headerRegex("Set-Cookie", "XSRF-TOKEN=([^;]*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed
-        .pause(5 seconds)
+        .pause(10 seconds)
 
-    val loadDashboard: ChainBuilder = exec(
-        http("Get dashboard")
+    val loadDashboard: ChainBuilder = rendezVous(Math.min(numUsersSubmit, numUsersNoSubmit))
+        .exec(http("Get dashboard")
             .get("/api/courses/for-dashboard")
             .headers(headers_http_authenticated)
             .check(status.is(200))).exitHereIfFailed
-        .pause(10 seconds, 30 seconds)
+        .pause(5 seconds)
 
-    val startQuiz: ChainBuilder = exec(
-        http("Get Quiz")
-            .get("/api/quiz-exercises/" + exerciseId + "/for-student")
-            .headers(headers_http_authenticated)
-            .check(status.is(200))
-            .check(jsonPath("$.questions").saveAs("questions"))).exitHereIfFailed
-        .exec(http("Load Picture") // TODO: replace Picture url, or comment out the entire "Load Picture" part
-            .get("/api/files/drag-and-drop/backgrounds/67/DragAndDropBackground_2018-02-13T01-02-38-250_013a3522.png")
-            .headers(headers_http_authenticated)
-            .check(status.is(200)))
-        .exec(http("Start Quiz")
-            .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
-            .headers(headers_http_authenticated)
-            .check(status.is(200))
-            .check(bodyString.saveAs("submission"))
-            .check(jsonPath("$.id").saveAs("submissionID"))).exitHereIfFailed
-        .exec(http("Load Participation")
+    val startQuiz: ChainBuilder = rendezVous(Math.min(numUsersSubmit, numUsersNoSubmit))
+        .exec(http("Get Participation with Quiz")
             .get("/api/courses/1/exercises/" + exerciseId + "/participation")
             .headers(headers_http_authenticated)
             .check(status.is(200))
-            .check(jsonPath("$.id").saveAs("participationID"))).exitHereIfFailed
-        .pause(5 seconds)
+            .check(jsonPath("$.exercise.questions").saveAs("questions"))
+            .resources(
+                http("Load Picture").get(backgroundPicturePath).headers(headers_http_authenticated)
+            )
+        ).exitHereIfFailed
+        .pause(5 seconds, 15 seconds)
 
     val workOnQuiz: ChainBuilder = exec(
         ws("Connect WebSocket")
@@ -184,47 +181,32 @@ class QuizParticipationSimulation extends Simulation {
             .sendText("CONNECT\nX-XSRF-TOKEN:${xsrf_token}\naccept-version:1.1,1.0\nheart-beat:10000,10000\n\n\u0000")
             .check(wsAwait.within(10 seconds).until(1)))
         .exec(ws("Subscribe Submission")
-            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/quizSubmissions/${submissionID}\n\n\u0000"))
+            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/user/topic/quizExercise/" + exerciseId + "/submission\n\n\u0000"))
         .pause(5 seconds)
         .repeat(20) {
             exec(ws("Send Answers")
-                .sendText(session => "SEND\ndestination:/topic/quizSubmissions/${submissionID}/save\n\n" + selectRandomAnswers(session("submission").as[String], session("questions").as[String]) + "\u0000")
+                .sendText(session => "SEND\ndestination:/topic/quizExercise/" + exerciseId + "/submission\n\n" + selectRandomAnswers(session("questions").as[String], false) + "\u0000")
                 .check(wsListen.within(10 seconds).until(1)))
                 .pause(5 seconds)
         }
 
+    val submitQuiz: ChainBuilder = rendezVous(numUsersSubmit)
+        .exec(ws("Submit Answers")
+            .sendText(session => "SEND\ndestination:/topic/quizExercise/" + exerciseId + "/submission\n\n" + selectRandomAnswers(session("questions").as[String], true) + "\u0000")
+            .check(wsListen.within(10 seconds).until(1)))
+        .pause(5 seconds)
+
     val waitForResult: ChainBuilder = pause(10 seconds)
         .exec(ws("Subscribe Participation")
-            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/topic/participation/${participationID}/newResults\n\n\u0000")
+            .sendText("SUBSCRIBE\nid:sub-1\ndestination:/user/topic/quizExercise/" + exerciseId + "/participation\n\n\u0000")
             .check(wsAwait.within(600 seconds).until(1)))
-        .exec(http("Load Quiz At End")
-            .get("/api/quiz-exercises/" + exerciseId + "/for-student")
-            .headers(headers_http_authenticated)
-            .check(status.is(200)))
-        .exec(http("Load Submission At End")
-            .get("/api/courses/1/exercises/" + exerciseId + "/submissions/my-latest")
-            .headers(headers_http_authenticated)
-            .check(status.is(200)))
-        .exec(http("Load Results")
-            .get("/api/courses/1/exercises/1/participations/${participationID}/results?showAllResults=false&ratedOnly=true")
-            .headers(headers_http_authenticated)
-            .check(status.is(200)))
-
-    val submitQuiz: ChainBuilder =
-        pause(5 seconds, 10 seconds)
-            .exec(http("Submit Quiz")
-                .put("/api/quiz-submissions")
-                .headers(headers_http_authenticated)
-                .header("Content-Type", "application/json")
-                .body(StringBody(session => selectRandomAnswers(session("submission").as[String], session("questions").as[String])))
-                .check(status.is(200)))
 
     val usersNoSubmit: ScenarioBuilder = scenario("Users without submit").exec(login, loadDashboard, startQuiz, workOnQuiz, waitForResult)
     val usersSubmit: ScenarioBuilder = scenario("Users with submit").exec(login, loadDashboard, startQuiz, workOnQuiz, submitQuiz, waitForResult)
 
     setUp(
-        usersNoSubmit.inject(rampUsers(100) over (20 seconds)),
-        usersSubmit.inject(rampUsers(200) over (20 seconds))
+        usersNoSubmit.inject(rampUsers(numUsersNoSubmit) over (20 seconds)),
+        usersSubmit.inject(rampUsers(numUsersSubmit) over (20 seconds))
     ).protocols(httpConf)
 
 }

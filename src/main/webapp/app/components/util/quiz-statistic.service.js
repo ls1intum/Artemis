@@ -117,7 +117,8 @@
         /**
          * check if it's allowed to release the Statistic (allowed if the quiz is finished)
          *
-         * @param quizExercise the quizExercise, which will be checked if the release of the statistic is allowed
+         * @param quizExercise the quizExercise,
+         *                      which will be checked if the release of the statistic is allowed
          * @returns {boolean} true if it's allowed, false if not
          */
         function releaseButtonDisabled(quizExercise) {

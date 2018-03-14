@@ -3,8 +3,10 @@ package de.tum.in.www1.exerciseapp.domain;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.exerciseapp.domain.enumeration.ScoringType;
 import de.tum.in.www1.exerciseapp.domain.scoring.ScoringStrategyFactory;
+import de.tum.in.www1.exerciseapp.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -35,35 +37,45 @@ public abstract class Question implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonView(QuizView.Before.class)
     private Long id;
 
     @Column(name = "title")
+    @JsonView(QuizView.Before.class)
     private String title;
 
     @Column(name = "text")
+    @JsonView(QuizView.Before.class)
     private String text;
 
     @Column(name = "hint")
+    @JsonView(QuizView.Before.class)
     private String hint;
 
     @Column(name = "explanation")
+    @JsonView(QuizView.After.class)
     private String explanation;
 
     @Column(name = "score")
+    @JsonView(QuizView.Before.class)
     private Integer score;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "scoring_type")
+    @JsonView(QuizView.Before.class)
     private ScoringType scoringType;
 
     @Column(name = "randomize_order")
+    @JsonView(QuizView.Before.class)
     private Boolean randomizeOrder;
 
     @Column(name = "invalid")
+    @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @JoinColumn(unique = true)
+    @JsonView(QuizView.After.class)
     private QuestionStatistic questionStatistic;
 
     @ManyToOne
@@ -226,6 +238,21 @@ public abstract class Question implements Serializable {
      */
     public boolean isAnswerCorrect(SubmittedAnswer submittedAnswer) {
         return ScoringStrategyFactory.makeScoringStrategy(this).calculateScore(this, submittedAnswer) == getScore();
+    }
+
+    /**
+     * filter out information about correct answers
+     */
+    public void filterForStudentsDuringQuiz() {
+        setExplanation(null);
+        setQuestionStatistic(null);
+    }
+
+    /**
+     * filter out information about correct answers
+     */
+    public void filterForStatisticWebsocket() {
+        setExplanation(null);
     }
 
     /**

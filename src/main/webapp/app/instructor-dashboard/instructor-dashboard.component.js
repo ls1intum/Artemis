@@ -21,7 +21,7 @@
         vm.sortReverse = false;
 
         vm.$onInit = init;
-        vm.buildDurationString = buildDurationString;
+        vm.durationString = durationString;
         vm.export = exportData;
         vm.goToBuildPlan = goToBuildPlan;
         vm.goToRepository = goToRepository;
@@ -29,14 +29,22 @@
         vm.showDetails = showDetails;
         vm.sort = sort;
         vm.toggleShowAllResults = toggleShowAllResults;
-        vm.exercise = Exercise.get({id : vm.exerciseId});
 
         function init() {
-            getResults();
+            Exercise.get({id : vm.exerciseId}).$promise.then(function(exercise) {
+                vm.exercise = exercise;
+                getResults();
+            });
         }
 
-        function buildDurationString(completionDate, initializationDate) {
-            return $filter('amDifference')(completionDate, initializationDate, 'minutes');
+        function durationString(completionDate, initializationDate) {
+            if (vm.exercise.type === 'quiz') {
+                //TODO: distinguish between live mode and practice mode
+                return $filter('amDifference')(completionDate, vm.exercise.releaseDate, 'minutes');
+            }
+            else {
+                return $filter('amDifference')(completionDate, initializationDate, 'minutes');
+            }
         }
 
         function exportData() {
@@ -56,11 +64,19 @@
             }
         }
 
+        //TODO: only use rated results here for quizzes
+
         function getResults() {
-            vm.results = ExerciseResults.query({
+            ExerciseResults.query({
                 courseId: vm.courseId,
                 exerciseId: vm.exerciseId,
-                showAllResults: vm.showAllResults
+                showAllResults: vm.showAllResults,
+                ratedOnly: vm.exercise.type === 'quiz'
+            }).$promise.then(function(results) {
+                results.forEach(function(result) {
+                    result.participation.results = [result];
+                });
+                vm.results = results;
             });
         }
 

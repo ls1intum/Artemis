@@ -78,7 +78,7 @@
         <td><result participation="result.participation" is-quiz="$ctrl.exercise.type === 'quiz'"></result></td>
         <td>{{ result.submissionCount }}</td>
         <td><span ng-show="result.score != null">{{result.score}}%</span></td>
-        <td>{{$ctrl.buildDurationString(result.completionDate, result.participation.initializationDate)}} minutes</td>
+        <td>{{$ctrl.durationString(result.completionDate, result.participation.initializationDate)}} minutes</td>
         <td ng-if="$ctrl.exercise.type !== 'quiz'">
             <button class="btn btn-default btn-xs" ng-click="$ctrl.goToRepository(result)"><i
                 class="fa fa-code-fork"></i>&nbsp;Repository

@@ -2,12 +2,9 @@ package de.tum.in.www1.exerciseapp.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.exerciseapp.config.Constants;
-import de.tum.in.www1.exerciseapp.domain.DragAndDropQuestion;
-import de.tum.in.www1.exerciseapp.domain.DragItem;
-import de.tum.in.www1.exerciseapp.domain.User;
 import de.tum.in.www1.exerciseapp.repository.DragAndDropQuestionRepository;
 import de.tum.in.www1.exerciseapp.repository.DragItemRepository;
-import de.tum.in.www1.exerciseapp.service.AuthorizationCheckService;
+import de.tum.in.www1.exerciseapp.service.FileService;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +18,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.UUID;
@@ -33,17 +29,13 @@ import java.util.UUID;
 @RequestMapping("/api")
 public class FileUploadResource {
 
-    private final AuthorizationCheckService authCheckService;
-    private final DragAndDropQuestionRepository dragAndDropQuestionRepository;
-    private final DragItemRepository dragItemRepository;
-
-    public FileUploadResource(AuthorizationCheckService authCheckService, DragAndDropQuestionRepository dragAndDropQuestionRepository, DragItemRepository dragItemRepository) {
-        this.authCheckService = authCheckService;
-        this.dragAndDropQuestionRepository = dragAndDropQuestionRepository;
-        this.dragItemRepository = dragItemRepository;
-    }
-
     private final Logger log = LoggerFactory.getLogger(FileUploadResource.class);
+
+    private final FileService fileService;
+
+    public FileUploadResource(FileService fileService) {
+        this.fileService = fileService;
+    }
 
     /**
      * POST  /fileUpload : Upload a new file.
@@ -115,9 +107,7 @@ public class FileUploadResource {
     @Timed
     public ResponseEntity<byte[]> getTempFile(@PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-
-        File file = new File(Constants.TEMP_FILEPATH + filename);
-        return responseEntityForFile(file);
+        return responseEntityForFilePath(Constants.TEMP_FILEPATH + filename);
     }
 
     /**
@@ -132,17 +122,7 @@ public class FileUploadResource {
     @Timed
     public ResponseEntity<byte[]> getDragAndDropBackgroundFile(@PathVariable Long questionId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-
-        DragAndDropQuestion question = dragAndDropQuestionRepository.findOne(questionId);
-        if (question == null) {
-            return ResponseEntity.notFound().build();
-        }
-        if (authCheckService.isAllowedToSeeExercise(question.getExercise(), null)) {
-            File file = new File(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename);
-            return responseEntityForFile(file);
-        } else {
-            return ResponseEntity.status(403).build(); // 403 FORBIDDEN
-        }
+        return responseEntityForFilePath(Constants.DRAG_AND_DROP_BACKGROUND_FILEPATH + filename);
     }
 
     /**
@@ -157,36 +137,25 @@ public class FileUploadResource {
     @Timed
     public ResponseEntity<byte[]> getDragItemFile(@PathVariable Long dragItemId, @PathVariable String filename) {
         log.debug("REST request to get file : {}", filename);
-
-        DragItem dragItem = dragItemRepository.findOne(dragItemId);
-        if (dragItem == null) {
-            return ResponseEntity.notFound().build();
-        }
-        if (authCheckService.isAllowedToSeeExercise(dragItem.getQuestion().getExercise(), null)) {
-            File file = new File(Constants.DRAG_ITEM_FILEPATH + filename);
-            return responseEntityForFile(file);
-        } else {
-            return ResponseEntity.status(403).build(); // 403 FORBIDDEN
-        }
+        return responseEntityForFilePath(Constants.DRAG_ITEM_FILEPATH + filename);
     }
 
     /**
      * Reads the file and turns it into a ResponseEntity
      *
-     * @param file the file to read
+     * @param path the path for the file to read
      * @return ResponseEntity with status 200 and the file as byte[], status 404 if the file doesn't exist, or status 500 if there is an error while reading the file
      */
-    private ResponseEntity<byte[]> responseEntityForFile(File file) {
-        if (file.exists()) {
-            try {
-                return ResponseEntity.ok(Files.readAllBytes(file.toPath()));
-            } catch (IOException e) {
-                e.printStackTrace();
-                return ResponseEntity.status(500).build();
+    private ResponseEntity<byte[]> responseEntityForFilePath(String path) {
+        try {
+            byte[] file = fileService.getFileForPath(path);
+            if (file == null) {
+                return ResponseEntity.notFound().build();
             }
-        } else {
-            return ResponseEntity.notFound().build();
+            return ResponseEntity.ok(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).build();
         }
     }
-
 }
