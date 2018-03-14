@@ -5,9 +5,9 @@
         .module('artemisApp')
         .controller('QuizReEvaluateController', QuizReEvaluateController);
 
-    QuizReEvaluateController.$inject = ['$state', '$scope', '$rootScope', '$uibModal', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'Question', 'QuizPointStatistic', 'courseEntity'];
+    QuizReEvaluateController.$inject = ['$state', '$scope', '$rootScope', '$uibModal', '$stateParams', 'previousState', 'entity', 'QuizExercise', 'courseEntity'];
 
-    function QuizReEvaluateController($state, $scope, $rootScope, $uibModal, $stateParams, previousState, entity, QuizExercise, Question, QuizPointStatistic, courseEntity) {
+    function QuizReEvaluateController($state, $scope, $rootScope, $uibModal, $stateParams, previousState, entity, QuizExercise, courseEntity) {
         var vm = this;
 
         prepareEntity(entity);
