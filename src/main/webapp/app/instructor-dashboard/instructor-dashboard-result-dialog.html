@@ -43,13 +43,10 @@
                 />
                 <span class="text-danger" ng-show="editForm.score.$dirty && editForm.score.$invalid">Score is required and should be a number.</span>
             </div>
-            <div class="col-md-1">
-                <label class="control-label artemis-label">Successful</label>
-            </div>
-            <div class="col-md-5">
-                <input type="checkbox" class="form-control" name="successful" id="field_successful"
-                       ng-model="vm.result.successful" ng-disabled="true"
-                />
+            <div class="checkbox col-md-6">
+                <label class="artemis-label">
+                    <input type="checkbox" name="successful" ng-model="vm.result.successful" ng-disabled="true"> Successful
+                </label>
             </div>
         </div>
         <br/>
@@ -71,15 +68,10 @@
                     </label>
                     <textarea class="form-control" id="feedbackErrorText" name="feedbackErrorText"  ng-model="vm.result.feedbacks[index].detailText"></textarea>
                 </div>
-                <div class="col-md-1">
-                    <label class="control-label artemis-label">
-                        Positive
+                <div class="checkbox col-md-6">
+                    <label class="artemis-label">
+                        <input type="checkbox" name="positive" ng-model="vm.result.feedbacks[index].positive"> Positive
                     </label>
-                </div>
-                <div class="col-md-5">
-                    <input type="checkbox" class="form-control" name="positive" id="field_positive"
-                           ng-model="vm.result.feedbacks[index].positive"
-                    />
                 </div>
             </div>
             <br/>

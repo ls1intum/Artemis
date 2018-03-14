@@ -25,8 +25,8 @@
         vm.resultString = resultString;
         vm.hasResults = hasResults;
         vm.showDetails = showDetails;
-        vm.getOuterCssClass = getOuterCssClass;
-        vm.getIconCssClass = getIconCSSClass;
+        vm.getTextColorClass = getTextColorClass;
+        vm.getResultIconClass = getResultIconClass;
 
         function init() {
             refresh(false);
@@ -154,7 +154,7 @@
          *
          * @return {string} the css class
          */
-        function getOuterCssClass() {
+        function getTextColorClass() {
             var result = vm.results[0];
             if (result.score == null) {
                 if (result.successful) {
@@ -173,12 +173,14 @@
             }
         }
 
+        //TODO think about a better color scheme
+
         /**
          * Get the css class for the result icon as a string
          *
          * @return {string} the css class
          */
-        function getIconCSSClass() {
+        function getResultIconClass() {
             var result = vm.results[0];
             if (result.score == null) {
                 if (result.successful) {
@@ -187,7 +189,7 @@
                     return "fa-times-circle-o";
                 }
             } else {
-                if (result.score > 40) {
+                if (result.score > 80) {
                     return "fa-check-circle-o";
                 } else {
                     return "fa-times-circle-o";

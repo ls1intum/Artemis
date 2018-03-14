@@ -9596,11 +9596,11 @@ ui bootstrap tweaks
 a.result-orange:hover {
   color: orange; }
 
-#feedbackErrorText {
-  resize: vertical; }
-
 #field_successful, #field_positive {
   margin-top: 20px; }
 
 .artemis-label {
-  margin-top: 27px; }
+  margin-top: 20px; }
+
+#feedbackErrorText {
+  resize: vertical; }
