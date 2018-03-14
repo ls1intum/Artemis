@@ -258,7 +258,8 @@ public class ResultResource {
     @Timed
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
-                                              @RequestParam(defaultValue = "false") boolean showAllResults) {
+                                              @RequestParam(defaultValue = "false") boolean showAllResults,
+                                              @RequestParam(defaultValue = "false") boolean ratedOnly) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOne(exerciseId);
@@ -269,6 +270,8 @@ public class ResultResource {
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+
+        //TODO use rated only in case it is true
 
         List<Result> results;
         if (showAllResults) {

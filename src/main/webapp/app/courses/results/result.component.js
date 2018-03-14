@@ -29,6 +29,7 @@
         vm.getResultIconClass = getResultIconClass;
 
         function init() {
+
             refresh(false);
 
             var websocketChannel = '/topic/participation/' + vm.participation.id + '/newResults';
@@ -81,6 +82,7 @@
         }
 
         function refreshResult(forceLoad) {
+            //TODO remove '!vm.participation.results' and think about removing forceLoad as well
             if (forceLoad || !vm.participation.results) {
                 // load results from server
                 vm.results = ParticipationResult.query({
