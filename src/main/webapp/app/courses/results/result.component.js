@@ -10,7 +10,6 @@
             bindings: {
                 isQuiz: '<',
                 participation: '<',
-                showScore: '<',
                 onNewResult: '&'
             },
             templateUrl: 'app/courses/results/result.html',
@@ -23,7 +22,7 @@
         var vm = this;
 
         vm.$onInit = init;
-        vm.buildResultString = buildResultString;
+        vm.resultString = resultString;
         vm.hasResults = hasResults;
         vm.showDetails = showDetails;
 
@@ -98,7 +97,7 @@
             }
         }
 
-        function buildResultString(result) {
+        function resultString(result) {
             if (result.resultString === 'No tests found') {
                 return 'Build failed';
             } else {
