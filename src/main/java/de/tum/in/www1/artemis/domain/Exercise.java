@@ -63,7 +63,6 @@ public abstract class Exercise implements Serializable {
     @OneToMany(mappedBy = "exercise")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonView(QuizView.Before.class)
     private Set<Participation> participations = new HashSet<>();
 
     @ManyToOne
