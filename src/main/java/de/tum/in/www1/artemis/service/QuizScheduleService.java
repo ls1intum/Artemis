@@ -202,6 +202,7 @@ public class QuizScheduleService {
         if (scheduledFuture != null) {
             scheduledFuture.cancel(false);
         }
+        //TODO: delete all participations, submissions and results hashmap entries that correspond to this quiz
     }
 
     /**
@@ -219,6 +220,9 @@ public class QuizScheduleService {
      */
     private void run() {
         long start = System.currentTimeMillis();
+
+        //TODO: absolutely make 100% sure that no null pointer exceptions can occur here.
+        //TODO: in case we have an exception, we need proper logging
 
         //create Participations and Results if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
         for (long quizId : submissionHashMap.keySet()) {

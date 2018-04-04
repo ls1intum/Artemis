@@ -52,6 +52,7 @@ public class QuizSubmissionWebsocketService {
         User user = userService.getUserWithGroupsAndAuthoritiesByLogin(username);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
             // TODO: notify user that they are not allowed to participate in this quiz
+            // TODO: principal does not work correctly here, so in case isAdmin() returns false, we have a problem even if the user would be allowed
             messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", null);
             return;
         }
