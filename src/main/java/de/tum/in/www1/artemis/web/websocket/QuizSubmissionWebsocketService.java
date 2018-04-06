@@ -21,18 +21,15 @@ public class QuizSubmissionWebsocketService {
     private final QuizExerciseService quizExerciseService;
     private final ParticipationService participationService;
     private final SimpMessageSendingOperations messagingTemplate;
-    private final UserService userService;
     private final AuthorizationCheckService authCheckService;
 
     public QuizSubmissionWebsocketService(QuizExerciseService quizExerciseService,
                                           ParticipationService participationService,
                                           SimpMessageSendingOperations messagingTemplate,
-                                          UserService userService,
                                           AuthorizationCheckService authCheckService) {
         this.quizExerciseService = quizExerciseService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;
-        this.userService = userService;
         this.authCheckService = authCheckService;
     }
 
@@ -43,16 +40,7 @@ public class QuizSubmissionWebsocketService {
         // check if submission is still allowed
         QuizExercise quizExercise = quizExerciseService.findOne(exerciseId);
         if (!quizExercise.isSubmissionAllowed()) {
-            // TODO: notify user that submission was not saved because quiz is not active
-            messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", null);
-            return;
-        }
-
-        // check if user is allowed to participate in this quiz
-        User user = userService.getUserWithGroupsAndAuthoritiesByLogin(username);
-        if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
-            // TODO: notify user that they are not allowed to participate in this quiz
-            // TODO: principal does not work correctly here, so in case isAdmin() returns false, we have a problem even if the user would be allowed
+            // TODO: notify user that submission was not saved because quiz is not active over payload and handle this case in the client
             messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", null);
             return;
         }
@@ -64,7 +52,7 @@ public class QuizSubmissionWebsocketService {
             // if the quiz is active, so there is no way the student could have already practiced
             Result result = (Result) participation.getResults().toArray()[0];
             if (result.getSubmission().isSubmitted()) {
-                // TODO: notify user that submission was not saved because they already submitted
+                // TODO: notify user that submission was not saved because they already submitted over payload and handle this case in the client
                 messagingTemplate.convertAndSendToUser(username, "/topic/quizExercise/" + exerciseId + "/submission", null);
                 return;
             }
