@@ -110,20 +110,6 @@ public class BambooService implements ContinuousIntegrationService {
             getRepositorySlugFromUrl(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
-
-        // Empty commit - Bamboo bug workaround
-
-        try {
-            Repository repo = gitService.getOrCheckoutRepository(repositoryUrl);
-            gitService.commitAndPush(repo, "Setup");
-            gitService.deleteLocalRepository(repo);
-        } catch (GitAPIException e) {
-            e.printStackTrace();
-            throw new GitException("Git error while doing empty commit");
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new GitException("IOError while doing empty commit");
-        }
     }
 
     @Override
