@@ -354,6 +354,7 @@ public class QuizExerciseResource {
 
         quizExerciseService.delete(id);
         quizScheduleService.cancelScheduledQuizStart(id);
+        quizScheduleService.clearQuizData(id);
 
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
