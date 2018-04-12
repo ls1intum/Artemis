@@ -4,16 +4,13 @@
 <div>
     <div class="button-toolbar pull-right">
         <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
-            <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.archive.title">ARCHIVE</span>
+            <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.archive.title">Archive</span>
         </button>
         <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
-            <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.cleanup.title">CLEANUP</span>
+            <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.cleanup.title">Cleanup</span>
         </button>
-        <button type="submit"
-                ui-sref="participation-for-exercise({exerciseId:$ctrl.exerciseId})"
-                class="btn btn-primary btn-sm">
-            <span ></span>
-            <span class="fa fa-list-alt">&nbsp;Participations</span>
+        <button type="submit" ui-sref="participation-for-exercise({exerciseId:$ctrl.exerciseId})" class="btn btn-info btn-sm">
+            <span class="hidden-sm-down" data-translate="artemisApp.exercise.participations">Participations</span>
         </button>
 
         <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Export

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.swift.bitbucket.cli.BitbucketClient;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -45,6 +46,7 @@ public class BitbucketService implements VersionControlService {
     public BitbucketService(UserService userService) {
         this.userService = userService;
     }
+
 
     @Override
     public URL copyRepository(URL baseRepositoryUrl, String username) {

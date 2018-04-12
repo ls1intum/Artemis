@@ -1,6 +1,6 @@
 # ArTEMiS: AuTomated assEssment Management System 
 
-**Curent version:** 1.4.3
+**Curent version:** 1.4.4
 
 The following UML diagram shows the top-level design of ArTEMiS which is decomposed into an application client and an application server. The application server then connects to a version control system (VCS), a continuous integration system (CIS) and a user management system (UMS).
 

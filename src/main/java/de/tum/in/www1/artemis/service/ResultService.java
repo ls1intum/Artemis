@@ -37,10 +37,13 @@ public class ResultService {
     @Async
     public void onResultNotified(Participation participation) {
         // fetches the new build result
-        continuousIntegrationService.get().onBuildCompleted(participation);
-        // notify user via websocket
-        messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
-        // handles new results and sends them to LTI consumers
-        ltiService.onNewBuildResult(participation);
+        Result result = continuousIntegrationService.get().onBuildCompleted(participation);
+        if (result != null) {
+            // notify user via websocket
+            // TODO: send the result directly to the client to save 1 REST call and DB access
+            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
+            // handles new results and sends them to LTI consumers
+            ltiService.onNewBuildResult(participation);
+        }
     }
 }

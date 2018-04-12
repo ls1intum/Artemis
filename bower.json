@@ -1,5 +1,5 @@
 {
-  "version": "1.4.3",
+  "version": "1.4.4",
   "name": "artemis",
   "appPath": "src/main/webapp/",
   "testPath": "src/test/javascript/spec",
