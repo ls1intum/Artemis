@@ -55,7 +55,7 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
             log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
         }
         EnumSet<DispatcherType> disps = EnumSet.of(DispatcherType.REQUEST, DispatcherType.FORWARD, DispatcherType.ASYNC);
-        addLoggingFilter(servletContext, disps);
+//        addLoggingFilter(servletContext, disps);
         initMetrics(servletContext, disps);
         if (env.acceptsProfiles(JHipsterConstants.SPRING_PROFILE_PRODUCTION)) {
             initCachingHttpHeadersFilter(servletContext, disps);
@@ -160,14 +160,14 @@ public class WebConfigurer implements ServletContextInitializer, EmbeddedServlet
         metricsAdminServlet.setLoadOnStartup(2);
     }
 
-    private void addLoggingFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
-        log.debug("Registering Logging Filter");
-        FilterRegistration.Dynamic loggingFilter = servletContext.addFilter("httpLoggingFilter",
-            new HttpLoggingFilter());
-
-        loggingFilter.addMappingForUrlPatterns(disps, true, "/*");
-        loggingFilter.setAsyncSupported(true);
-    }
+//    private void addLoggingFilter(ServletContext servletContext, EnumSet<DispatcherType> disps) {
+//        log.debug("Registering Logging Filter");
+//        FilterRegistration.Dynamic loggingFilter = servletContext.addFilter("httpLoggingFilter",
+//            new HttpLoggingFilter());
+//
+//        loggingFilter.addMappingForUrlPatterns(disps, true, "/*");
+//        loggingFilter.setAsyncSupported(true);
+//    }
 
     @Bean
     public CorsFilter corsFilter() {
