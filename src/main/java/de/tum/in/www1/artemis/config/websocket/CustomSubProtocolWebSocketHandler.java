@@ -36,24 +36,24 @@ public class CustomSubProtocolWebSocketHandler extends SubProtocolWebSocketHandl
         super.afterConnectionClosed(session, closeStatus);
     }
 
-    /**
-     * Handle an outbound Spring Message to a WebSocket client.
-     */
-    @Override
-    public void handleMessage(Message<?> message) throws MessagingException {
-        String sessionId = resolveSessionId(message);
-        customWebsocketSessionHandler.handleOutboundMessage(sessionId, message);
-        super.handleMessage(message);
-    }
-
-    /**
-     * Handle an inbound message from a WebSocket client.
-     */
-    @Override
-    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
-        customWebsocketSessionHandler.handleInboundMessage(session, message);
-        super.handleMessage(session, message);
-    }
+//    /**
+//     * Handle an outbound Spring Message to a WebSocket client.
+//     */
+//    @Override
+//    public void handleMessage(Message<?> message) throws MessagingException {
+//        String sessionId = resolveSessionId(message);
+//        customWebsocketSessionHandler.handleOutboundMessage(sessionId, message);
+//        super.handleMessage(message);
+//    }
+//
+//    /**
+//     * Handle an inbound message from a WebSocket client.
+//     */
+//    @Override
+//    public void handleMessage(WebSocketSession session, WebSocketMessage<?> message) throws Exception {
+//        customWebsocketSessionHandler.handleInboundMessage(session, message);
+//        super.handleMessage(session, message);
+//    }
 
     private String resolveSessionId(Message<?> message) {
         for (SubProtocolHandler handler : getProtocolHandlers()) {
