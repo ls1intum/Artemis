@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -120,9 +121,15 @@ public class CourseService {
     public List<Course> findAllWithExercisesForUser(Principal principal, User user) {
         if (authCheckService.isAdmin()) {
             // admin => fetch all courses with all exercises immediately
-            List<Course> courses = findAllWithExercises();
-            // filter unnecessary information anyway
-            for (Course course : courses) {
+            List<Course> allCourses = findAllWithExercises();
+            List<Course> userCourses = new ArrayList<Course>();
+            // filter old courses and unnecessary information anyway
+            for (Course course : allCourses) {
+                if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
+                    //skip old courses
+                    continue;
+                }
+                userCourses.add(course);
                 for (Exercise exercise : course.getExercises()) {
                     if (exercise instanceof QuizExercise) {
                         QuizExercise quizExercise = (QuizExercise) exercise;
@@ -130,22 +137,36 @@ public class CourseService {
                     }
                 }
             }
-            return courses;
+            return userCourses;
         } else {
             // not admin => fetch visible courses first
-            List<Course> courses = findAll();
-            Stream<Course> userCourses = courses.stream().filter(
-                course -> user.getGroups().contains(course.getStudentGroupName()) ||
-                    user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
-                    user.getGroups().contains(course.getInstructorGroupName())
-            );
-            courses = userCourses.collect(Collectors.toList());
-            for (Course course : courses) {
+            List<Course> allCourses = findAll();
+            List<Course> userCourses = new ArrayList<Course>();
+            // filter old courses and courses the user should not be able to see
+            for (Course course : allCourses) {
+                if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
+                    //skip old courses
+                    continue;
+                }
+                //Instructors and TAs see all courses that have not yet finished
+                if (user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
+                    user.getGroups().contains(course.getInstructorGroupName())) {
+
+                    userCourses.add(course);
+                }
+                //Students see all courses that have already startet
+                if (user.getGroups().contains(course.getStudentGroupName())) {
+                    if (course.getStartDate() != null && course.getStartDate().isAfter(ZonedDateTime.now())) {
+                        userCourses.add(course);
+                    }
+                }
+            }
+            for (Course course : userCourses) {
                 // fetch visible exercises for each course after filtering
                 List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal, user);
                 course.setExercises(new HashSet<>(exercises));
             }
-            return courses;
+            return userCourses;
         }
     }
 

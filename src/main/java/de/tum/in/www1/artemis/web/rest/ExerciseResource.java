@@ -292,7 +292,7 @@ public class ExerciseResource {
             File zipFile = exerciseService.cleanup(id, deleteRepositories);
             if (zipFile == null) {
                 return ResponseEntity.ok()
-                    .headers(HeaderUtil.createAlert("The zip file could not be created, possibly because all repositories have already been deleted or this is not a programming exercise.", ""))
+                    .headers(HeaderUtil.createAlert("The zip file could not be created, possibly because repositories have already been deleted or this is not a programming exercise.", ""))
                     .build();
             }
             InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));

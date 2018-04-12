@@ -10,11 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.swift.bitbucket.cli.BitbucketClient;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -23,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-@Transactional
 @Profile("bitbucket")
 public class BitbucketService implements VersionControlService {
 
