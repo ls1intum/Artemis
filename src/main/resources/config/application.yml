@@ -94,7 +94,7 @@ jhipster:
         default-include-pattern: /api/.*
         title: ArTEMiS API
         description: ArTEMiS API documentation
-        version: 1.4.3
+        version: 1.4.4
         terms-of-service-url:
         contact-name:
         contact-url:

@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
+import org.swift.bitbucket.cli.BitbucketClient;
+import org.swift.bitbucket.cli.objects.RemoteRepository;
 import org.swift.common.cli.CliClient;
 
 import java.io.IOException;
@@ -40,6 +42,15 @@ import java.util.regex.Pattern;
 public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
+
+    @Value("${artemis.bitbucket.url}")
+    private URL BITBUCKET_SERVER_URL;
+
+    @Value("${artemis.bitbucket.user}")
+    private String BITBUCKET_USER;
+
+    @Value("${artemis.bitbucket.password}")
+    private String BITBUCKET_PASSWORD;
 
     @Value("${artemis.bamboo.url}")
     private URL BAMBOO_SERVER_URL;
@@ -69,6 +80,20 @@ public class BambooService implements ContinuousIntegrationService {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
+    }
+
+    public BitbucketClient getBitbucketClient() {
+        final BitbucketClient bitbucketClient = new BitbucketClient();
+        //setup the Bamboo Client to use the correct username and password
+
+        String[] args = new String[]{
+            "-s", BITBUCKET_SERVER_URL.toString(),
+            "--user", BITBUCKET_USER,
+            "--password", BITBUCKET_PASSWORD,
+        };
+
+        bitbucketClient.doWork(args); //only invoke this to set server address, username and password so that the following action will work
+        return bitbucketClient;
     }
 
     private BambooClient getBambooClient() {
@@ -215,24 +240,29 @@ public class BambooService implements ContinuousIntegrationService {
      */
     public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) throws BambooException {
 
-        final BambooClient bambooClient = new BambooClient();
-        String[] args = new String[]{
-            "--field1", "repository.stash.projectKey", "--value1", bitbucketProject,
-            "--field2", "repository.stash.repositoryId", "--value2", "2499", // Doesn't seem to be required
-            "--field3", "repository.stash.repositorySlug", "--value3", bitbucketRepository,
-            "--field4", "repository.stash.repositoryUrl", "--value4", buildSshRepositoryUrl(bitbucketProject, bitbucketRepository), // e.g. "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
-            "--field5", "repository.stash.server", "--value5", BITBUCKET_APPLICATION_LINK_ID,
-            "--field6", "repository.stash.branch", "--value6", "master",
-            "-s", BAMBOO_SERVER_URL.toString(),
-            "--user", BAMBOO_USER,
-            "--password", BAMBOO_PASSWORD
-        };
-        //workaround to pass additional fields
-        bambooClient.doWork(args);
-
         try {
+            //get the repositoryId to find the correct value for field2 below
+            final BitbucketClient bitbucketClient = getBitbucketClient();
+            RemoteRepository remoteRepository = bitbucketClient.getRepositoryHelper().getRemoteRepository(bitbucketProject, bitbucketRepository, true);
+
+            final BambooClient bambooClient = new BambooClient();
+            String[] args = new String[]{
+                "--field1", "repository.stash.projectKey", "--value1", bitbucketProject,
+                "--field2", "repository.stash.repositoryId", "--value2", remoteRepository.getId().toString(),
+                "--field3", "repository.stash.repositorySlug", "--value3", bitbucketRepository,
+                "--field4", "repository.stash.repositoryUrl", "--value4", buildSshRepositoryUrl(bitbucketProject, bitbucketRepository), // e.g. "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
+                "--field5", "repository.stash.server", "--value5", BITBUCKET_APPLICATION_LINK_ID,
+                "--field6", "repository.stash.branch", "--value6", "master",
+                "-s", BAMBOO_SERVER_URL.toString(),
+                "--user", BAMBOO_USER,
+                "--password", BAMBOO_PASSWORD,
+//            "--targetServer", "https://repobruegge.in.tum.de"     //in the future, we might be able to use this and save many other arguments above, then we could also get rid of BITBUCKET_APPLICATION_LINK_ID
+            };
+            //workaround to pass additional fields
+            bambooClient.doWork(args);
+
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-            String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, null, bambooProject + "-" + bambooPlan, "STASH", null, false, true, true);
+            String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, null, bambooProject + "-" + bambooPlan, "BITBUCKET_SERVER", null, false, true, true);
             log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful." + message);
             return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
@@ -267,7 +297,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation
      */
     @Override
-    public void onBuildCompleted(Participation participation) {
+    public Result onBuildCompleted(Participation participation) {
         log.debug("Retrieving build result...");
         Boolean isOldBuildResult = true;
         Map buildResults = new HashMap<>();
@@ -289,6 +319,13 @@ public class BambooService implements ContinuousIntegrationService {
             buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
         }
 
+        if (buildResults.containsKey("buildReason")) {
+            String buildReason = (String)buildResults.get("buildReason");
+            if (buildReason.contains("First build for this plan")) {
+                return null;
+            }
+        }
+
         Result result = new Result();
         result.setSuccessful((boolean) buildResults.get("successful"));
         result.setResultString((String) buildResults.get("buildTestSummary"));
@@ -307,6 +344,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
         addFeedbackToResult(result, buildResultDetails);
         resultRepository.save(result);
+        return result;
     }
 
     /**
@@ -413,6 +451,9 @@ public class BambooService implements ContinuousIntegrationService {
             result.put("successful", successful);
             String buildTestSummary = (String) response.getBody().get("buildTestSummary");
             result.put("buildTestSummary", buildTestSummary);
+            if (response.getBody().containsKey("buildReason")) {
+                result.put("buildReason", response.getBody().get("buildReason"));
+            }
             String dateString = (String) response.getBody().get("buildCompletedDate");
             ZonedDateTime buildCompletedDate = ZonedDateTime.parse(dateString);
             result.put("buildCompletedDate", buildCompletedDate);
@@ -634,7 +675,7 @@ public class BambooService implements ContinuousIntegrationService {
 
     private String getProjectKeyFromUrl(URL repositoryUrl) {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        return repositoryUrl.getFile().split("/")[2];
+        return repositoryUrl.getFile().split("/")[2].toUpperCase();
     }
 
 

@@ -54,7 +54,7 @@ public interface ContinuousIntegrationService {
      *
      * @param participation participation for which build has completed
      */
-    public void onBuildCompleted(Participation participation);
+    public Result onBuildCompleted(Participation participation);
 
     /**
      * Get the current status of the build for the given participation, i.e. INACTIVE, QUEUED, or BUILDING.
