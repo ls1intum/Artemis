@@ -236,7 +236,7 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
-        Exercise exercise = exerciseService.findOne(id);
+        Exercise exercise = exerciseService.findOneLoadParticipations(id);
         if (Optional.ofNullable(exercise).isPresent()) {
             Course course = exercise.getCourse();
             User user = userService.getUserWithGroupsAndAuthorities();
@@ -260,7 +260,7 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Void> reset(@PathVariable Long id) {
         log.debug("REST request to reset Exercise : {}", id);
-        Exercise exercise = exerciseService.findOne(id);
+        Exercise exercise = exerciseService.findOneLoadParticipations(id);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
