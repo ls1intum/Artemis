@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
-import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -151,7 +150,7 @@ public class ExerciseService {
         log.debug("Request to find Exercise with participations loaded: {}", id);
         Exercise exercise = findOne(id);
         if(Optional.ofNullable(exercise).isPresent()) {
-            exercise.getParticipations();
+            exercise.getParticipations().size();
         }
         return exercise;
     }
@@ -161,7 +160,7 @@ public class ExerciseService {
      *
      * @param exercise
      */
-    @Transactional
+    @Transactional(noRollbackFor={Throwable.class})
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
@@ -187,7 +186,7 @@ public class ExerciseService {
      *
      * @param id id of the exercise for which build plans in respective participations are deleted
      */
-    @Transactional
+    @Transactional(noRollbackFor={Throwable.class})
     public java.io.File cleanup(Long id, boolean deleteRepositories) throws java.io.IOException {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
@@ -200,7 +199,7 @@ public class ExerciseService {
                     try {
                         continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
                     }
-                    catch(BambooException ex) {
+                    catch(Exception ex) {
                         log.error(ex.getMessage());
                         if (ex.getCause() != null) {
                             log.error(ex.getCause().getMessage());
@@ -217,7 +216,7 @@ public class ExerciseService {
                         Repository repo = gitService.get().getOrCheckoutRepository(participation);
                         //2. collect the repo file
                         studentRepositories.add(repo);
-                    } catch (GitAPIException | IOException ex) {
+                    } catch (Exception ex) {
                         log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected", ex);
                     }
                 }
@@ -243,7 +242,7 @@ public class ExerciseService {
                     try {
                         //3. delete the locally cloned repo again
                         gitService.get().deleteLocalRepository(participation);
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected", e);
                     }
                     //4. finally delete the repository on the VC Server
@@ -263,7 +262,6 @@ public class ExerciseService {
 
         return new java.io.File(finalZipFilePath.toString());
     }
-
 
     public Path zipAllRepositories(List<Repository> repositories, Path zipFilePath) throws IOException {
 
@@ -296,7 +294,7 @@ public class ExerciseService {
 
 
     //does not delete anything
-    @Transactional
+    @Transactional(readOnly = true)
     public java.io.File archive(Long id) {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to archive all participations repositories for Exercise : {}", exercise.getTitle());

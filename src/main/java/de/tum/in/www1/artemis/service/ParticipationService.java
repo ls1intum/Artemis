@@ -15,7 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 /**
  * Service Implementation for managing Participation.
@@ -352,23 +354,33 @@ public class ParticipationService {
      *
      * @param id the id of the entity
      */
-    @Transactional
+    @Transactional(noRollbackFor={Throwable.class})
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         log.debug("Request to delete Participation : {}", id);
         Participation participation = participationRepository.findOne(id);
         if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
-                continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+                try {
+                    continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
+                }
+                catch(Exception ex) {
+                    log.error("Could not delete build plan: " + ex.getMessage());
+                }
             }
             if (deleteRepository && participation.getRepositoryUrl() != null) {
-                versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
+                try {
+                    versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
+                }
+                catch(Exception ex) {
+                    log.error("Could not delete repository: " + ex.getMessage());
+                }
             }
 
             // delete local repository cache
             try {
                 gitService.get().deleteLocalRepository(participation);
-            } catch (Exception e) {
-                log.error("Error while deleting local repository", e);
+            } catch (Exception ex) {
+                log.error("Error while deleting local repository", ex.getMessage());
             }
 
         }

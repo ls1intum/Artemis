@@ -1,13 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.Feedback;
+import de.tum.in.www1.artemis.domain.Participation;
+import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.exception.BambooException;
-import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +25,6 @@ import org.swift.bitbucket.cli.BitbucketClient;
 import org.swift.bitbucket.cli.objects.RemoteRepository;
 import org.swift.common.cli.CliClient;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +37,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Service
-@Transactional
 @Profile("bamboo")
 public class BambooService implements ContinuousIntegrationService {
 
@@ -285,7 +284,7 @@ public class BambooService implements ContinuousIntegrationService {
             log.info("Delete build plan was successful. " + message);
             return message;
         } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-            log.error(e.getMessage(), e);
+            log.error(e.getMessage());
             throw new BambooException("Something went wrong while deleting the build plan", e);
         }
     }
@@ -297,6 +296,7 @@ public class BambooService implements ContinuousIntegrationService {
      * @param participation
      */
     @Override
+    @Transactional
     public Result onBuildCompleted(Participation participation) {
         log.debug("Retrieving build result...");
         Boolean isOldBuildResult = true;

@@ -102,27 +102,24 @@ public class CourseResource {
     }
 
     /**
-     * GET  /courses : get all the courses.
+     * GET  /courses : get all courses for administration purposes.
      *
      * @return the list of courses (the user has access to)
      */
     @GetMapping("/courses")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public List<Course> getAllCourses() {
         log.debug("REST request to get all Courses the user has access to");
         User user = userService.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseService.findAll();
         Stream<Course> userCourses = courses.stream().filter(
-            course -> user.getGroups().contains(course.getStudentGroupName()) ||
-                user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
-                user.getGroups().contains(course.getInstructorGroupName()) ||
-                authCheckService.isAdmin()
+            course ->   user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
+                        user.getGroups().contains(course.getInstructorGroupName()) ||
+                        authCheckService.isAdmin()
         );
         return userCourses.collect(Collectors.toList());
     }
-
-    //TODO: create a second method for the administration of courses, so that in this case, courses are only visible to Admins and TAs of this course
 
     /**
      * GET /courses/for-dashboard
@@ -142,11 +139,10 @@ public class CourseResource {
         ArrayNode coursesJson = objectMapper.createArrayNode();
 
         // get all courses with exercises for this user
-        // TODO: in the future, we should limit this to active courses to improve performance
         List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
 
         // get all participations of this user
-        // TODO: in the future, we should limit this to active courses to improve performance
+        // TODO: we should limit this to active courses to improve performance, i.e. only find participations for exercises in the courses list
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
 
         for (Course course : courses) {
