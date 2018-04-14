@@ -156,7 +156,7 @@ public class CourseService {
                 }
                 //Students see all courses that have already startet
                 if (user.getGroups().contains(course.getStudentGroupName())) {
-                    if (course.getStartDate() != null && course.getStartDate().isAfter(ZonedDateTime.now())) {
+                    if (course.getStartDate() != null && course.getStartDate().isBefore(ZonedDateTime.now())) {
                         userCourses.add(course);
                     }
                 }
