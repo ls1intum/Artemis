@@ -7,7 +7,7 @@
             "courses": "Kurse",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
-                "main": "Entitäten",
+                "main": "Kursverwaltung",
                 "course": "Course",
                 "exercise": "Exercise",
                 "participation": "Participation",
@@ -50,7 +50,7 @@
                 "register": "Registrierung"
             },
             "admin": {
-                "main": "Administration",
+                "main": "Serververwaltung",
                 "userManagement": "Benutzerverwaltung",
                 "tracker": "Benutzer Aktivitäten",
                 "metrics": "Metriken",
