@@ -122,7 +122,7 @@ public class CourseService {
         if (authCheckService.isAdmin()) {
             // admin => fetch all courses with all exercises immediately
             List<Course> allCourses = findAllWithExercises();
-            List<Course> userCourses = new ArrayList<Course>();
+            Set<Course> userCourses = new HashSet<Course>();
             // filter old courses and unnecessary information anyway
             for (Course course : allCourses) {
                 if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
@@ -130,6 +130,7 @@ public class CourseService {
                     continue;
                 }
                 userCourses.add(course);
+                //fetch all exercises
                 for (Exercise exercise : course.getExercises()) {
                     if (exercise instanceof QuizExercise) {
                         QuizExercise quizExercise = (QuizExercise) exercise;
@@ -137,11 +138,11 @@ public class CourseService {
                     }
                 }
             }
-            return userCourses;
+            return new ArrayList<>(userCourses);
         } else {
             // not admin => fetch visible courses first
             List<Course> allCourses = findAll();
-            List<Course> userCourses = new ArrayList<Course>();
+            Set<Course> userCourses = new HashSet<Course>();
             // filter old courses and courses the user should not be able to see
             for (Course course : allCourses) {
                 if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
@@ -154,8 +155,8 @@ public class CourseService {
 
                     userCourses.add(course);
                 }
-                //Students see all courses that have already startet
-                if (user.getGroups().contains(course.getStudentGroupName())) {
+                //Students see all courses that have already started
+                else if (user.getGroups().contains(course.getStudentGroupName())) {
                     if (course.getStartDate() != null && course.getStartDate().isBefore(ZonedDateTime.now())) {
                         userCourses.add(course);
                     }
@@ -166,7 +167,7 @@ public class CourseService {
                 List<Exercise> exercises = exerciseService.findAllForCourse(course, true, principal, user);
                 course.setExercises(new HashSet<>(exercises));
             }
-            return userCourses;
+            return new ArrayList<>(userCourses);
         }
     }
 
