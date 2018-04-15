@@ -288,25 +288,9 @@ public class ExerciseResource {
         if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
              return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        if (deleteRepositories) {
-            File zipFile = exerciseService.cleanup(id, deleteRepositories);
-            if (zipFile == null) {
-                return ResponseEntity.ok()
-                    .headers(HeaderUtil.createAlert("The zip file could not be created, possibly because repositories have already been deleted or this is not a programming exercise.", ""))
-                    .build();
-            }
-            InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
-            log.info("Cleanup build plans and archive repositories was successful for Exercise : {}", id);
-            return ResponseEntity.ok()
-                .contentLength(zipFile.length())
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header("filename", zipFile.getName())
-                .body(resource);
-        } else {
-            exerciseService.cleanup(id, deleteRepositories);
-            log.info("Cleanup build plans was successful for Exercise : {}", id);
-            return ResponseEntity.ok().headers(HeaderUtil.createAlert("Cleanup was successful.", "")).build();
-        }
+        exerciseService.cleanup(id, deleteRepositories);
+        log.info("Cleanup build plans was successful for Exercise : {}", id);
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert("Cleanup was successful. Repositories have been deleted: " + deleteRepositories, "")).build();
     }
 
 
