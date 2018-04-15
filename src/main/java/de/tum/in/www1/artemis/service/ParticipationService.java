@@ -384,6 +384,13 @@ public class ParticipationService {
             }
 
         }
+        if (participation.getResults() != null && participation.getResults().size() > 0) {
+            log.info("Will delete " + participation.getResults().size() + " results");
+            for (Result result : participation.getResults()) {
+                resultRepository.delete(result.getId());
+            }
+        }
+
         participationRepository.delete(id);
     }
 
