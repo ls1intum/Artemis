@@ -28,7 +28,6 @@ public class Result implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     @JsonView(QuizView.Before.class)
     private Long id;
 

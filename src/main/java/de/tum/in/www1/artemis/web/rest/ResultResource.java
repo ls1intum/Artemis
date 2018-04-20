@@ -171,21 +171,6 @@ public class ResultResource {
             .body(result);
     }
 
-    //Deactivated because it would load all (thousands) results and completely overload the server
-    //TODO: activate this call again using the infinite scroll page mechanism
-//    /**
-//     * GET  /results : get all the results.
-//     *
-//     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-//     */
-//    @GetMapping("/results")
-//    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
-//    @Timed
-//    public List<Result> getAllResults() {
-//        log.debug("REST request to get all Results");
-//        return resultRepository.findAll();
-//    }
-
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results for "id" participation.
      *
@@ -257,13 +242,13 @@ public class ResultResource {
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
-                                              @RequestParam(defaultValue = "false") boolean showAllResults,
                                               @RequestParam(defaultValue = "false") boolean ratedOnly) {
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
@@ -274,24 +259,42 @@ public class ResultResource {
 
         //TODO use rated only in case it is true
 
-        List<Result> results;
-        if (showAllResults) {
-            results = resultRepository.findLatestResultsForExercise(exerciseId);
-        } else {
-            results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
+        List<Result> results = new ArrayList<>();
+
+        for (Participation participation : exercise.getParticipations()) {
+            if (participation.getResults().isEmpty()) {
+                continue;
+            }
+
+            Result newestResult = null;
+
+            for (Result result : participation.getResults()) {
+                if (newestResult == null) {
+                    newestResult = result;
+                }
+                else {
+                    if (newestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+                        newestResult = result;
+                    }
+                }
+            }
+            newestResult.setSubmissionCount(new Long(participation.getResults().size()));
+            results.add(newestResult);
         }
 
-        //Each object array in the list contains two Long values, participation id (index 0) and
-        //number of results for this participation (index 1)
-        List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
-
-        //Matches each result with the number of results in corresponding participation
-        results.forEach(result ->
-            submissionCounts.forEach(submissionCount -> {
-                if (result.getParticipation().getId().equals(submissionCount[0])) {
-                    result.setSubmissionCount((Long) submissionCount[1]);
-                }
-            }));
+//        List<Result> results = resultRepository.findLatestResultsForExercise(exerciseId);
+//
+//        //Each object array in the list contains two Long values, participation id (index 0) and
+//        //number of results for this participation (index 1)
+//        List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
+//
+//        //Matches each result with the number of results in corresponding participation
+//        results.forEach(result ->
+//            submissionCounts.forEach(submissionCount -> {
+//                if (result.getParticipation().getId().equals(submissionCount[0])) {
+//                    result.setSubmissionCount((Long) submissionCount[1]);
+//                }
+//            }));
 
         return ResponseEntity.ok().body(results);
     }

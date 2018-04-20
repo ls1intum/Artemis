@@ -70,13 +70,13 @@
             ExerciseResults.query({
                 courseId: vm.courseId,
                 exerciseId: vm.exerciseId,
-                showAllResults: vm.showAllResults,
                 ratedOnly: vm.exercise.type === 'quiz'
             }).$promise.then(function(results) {
                 results.forEach(function(result) {
                     result.participation.results = [result];
                 });
-                vm.results = results;
+                vm.allResults = results;
+                filterResults()
             });
         }
 
@@ -138,7 +138,16 @@
 
         function toggleShowAllResults(newValue) {
             vm.showAllResults = newValue;
-            getResults();
+            filterResults()
+        }
+
+        function filterResults() {
+            if (vm.showAllResults) {
+                vm.results = vm.allResults
+            }
+            else {
+                vm.results = vm.allResults.filter(result => result.successful == true);
+            }
         }
     }
 })();

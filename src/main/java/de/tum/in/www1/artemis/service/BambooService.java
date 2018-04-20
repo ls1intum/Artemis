@@ -309,7 +309,7 @@ public class BambooService implements ContinuousIntegrationService {
         }
 
         if (isOldBuildResult) {
-            log.debug("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
+            log.warn("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
             try {
                 Thread.sleep(RESULT_RETRIEVAL_DELAY);
             } catch (InterruptedException e) {
@@ -325,6 +325,8 @@ public class BambooService implements ContinuousIntegrationService {
                 return null;
             }
         }
+
+        //TODO: only save this result if it is newer than the last saved result for this participation
 
         Result result = new Result();
         result.setSuccessful((boolean) buildResults.get("successful"));
