@@ -94,7 +94,6 @@ public class LtiService {
      */
     public void handleLaunchRequest(LtiLaunchRequestDTO launchRequest, Exercise exercise) throws ArtemisAuthenticationException, AuthenticationException {
 
-
         // Authenticate the the LTI user
         Optional<Authentication> auth = authenticateLtiUser(launchRequest);
 
@@ -105,7 +104,7 @@ public class LtiService {
 
             onSuccessfulLtiAuthentication(launchRequest, exercise);
 
-        } else  {
+        } else {
 
             /*
              *
@@ -114,7 +113,6 @@ public class LtiService {
              * -> If the user signs in manually later, we use it in LtiAuthenticationSuccessListener
              *
              */
-
 
             // Find (new) session ID
             String sessionId = null;
@@ -142,9 +140,7 @@ public class LtiService {
                 log.debug("Remembering launchRequest for session ID {}", sessionId);
                 launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
             }
-
         }
-
     }
 
 
@@ -385,7 +381,6 @@ public class LtiService {
 
             log.debug("Reporting to LTI consumer: Score {} for Participation {}", score, participation);
 
-
             try {
                 // Using PatchedIMSPOXRequest until they fixed the problem: https://github.com/IMSGlobal/basiclti-util-java/issues/27
                 HttpPost request = PatchedIMSPOXRequest.buildReplaceResult(ltiOutcomeUrl1.getUrl(), OAUTH_KEY, OAUTH_SECRET, ltiOutcomeUrl1.getSourcedId(), score, null, false);
@@ -400,10 +395,7 @@ public class LtiService {
             } catch (Exception e) {
                 log.error("Reporting to LTI consumer failed: {}", e);
             }
-
-
         });
-
     }
 
 

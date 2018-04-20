@@ -22,8 +22,5 @@ public interface LtiOutcomeUrlRepository extends JpaRepository<LtiOutcomeUrl,Lon
     @Query("select ltiOutcomeUrl from LtiOutcomeUrl ltiOutcomeUrl where ltiOutcomeUrl.user.login = ?#{principal} and ltiOutcomeUrl.exercise.id = :#{#exercise.id}")
     Optional<LtiOutcomeUrl> findByUserIsCurrentUserAndExercise(@Param("exercise") Exercise exercise);
 
-
     Optional<LtiOutcomeUrl> findByUserAndExercise(User user, Exercise exercise);
-
-
 }

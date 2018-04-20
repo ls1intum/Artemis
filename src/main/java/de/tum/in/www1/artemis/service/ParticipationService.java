@@ -91,6 +91,9 @@ public class ParticipationService {
 
         // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
+//            if (exercise.getCourse().isOnlineCourse()) {
+//                participation.setLti(true);
+//            } //TODO use in the future
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(ParticipationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);
@@ -100,6 +103,7 @@ public class ParticipationService {
             participation.setInitializationState(ParticipationState.INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise) {
+//            participation.setLti(false);    // QuizExercises do not support LTI at the moment
             if (participation.getInitializationState() == null) {
                 participation.setInitializationState(ParticipationState.INITIALIZED);
             }
@@ -382,7 +386,6 @@ public class ParticipationService {
             } catch (Exception ex) {
                 log.error("Error while deleting local repository", ex.getMessage());
             }
-
         }
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             log.info("Will delete " + participation.getResults().size() + " results");

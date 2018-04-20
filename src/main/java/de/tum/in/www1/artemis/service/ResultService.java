@@ -4,6 +4,8 @@ import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.domain.QuizSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ResultRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -16,6 +18,8 @@ import java.util.Optional;
  */
 @Service
 public class ResultService {
+
+    private final Logger log = LoggerFactory.getLogger(ResultService.class);
 
     private final ResultRepository resultRepository;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -36,6 +40,8 @@ public class ResultService {
      */
     @Async
     public void onResultNotified(Participation participation) {
+        log.info("Received new build result for participatin " + participation.getId());
+        Long start = System.currentTimeMillis();
         // fetches the new build result
         Result result = continuousIntegrationService.get().onBuildCompleted(participation);
         if (result != null) {
@@ -43,7 +49,12 @@ public class ResultService {
             // TODO: send the result directly to the client to save 1 REST call and DB access
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
             // handles new results and sends them to LTI consumers
+            //TODO: can we avoid this for non LTI students?
+//            if (participation.isLti()) {
+//            }
             ltiService.onNewBuildResult(participation);
+            Long end = System.currentTimeMillis();
+            log.info("It took " + (end-start) + "ms to receive " + result);
         }
     }
 }

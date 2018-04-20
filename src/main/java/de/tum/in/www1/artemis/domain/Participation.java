@@ -52,6 +52,10 @@ public class Participation implements Serializable {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
+//    @Column(name = "lti")
+//    private Boolean lti;  //TODO: use this in the future
+
+
     @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     @JsonIgnoreProperties("participation")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -130,6 +134,19 @@ public class Participation implements Serializable {
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
     }
+
+//    public Boolean isLti() {
+//        return lti;
+//    }
+//
+//    public Participation lti(Boolean lti) {
+//        this.lti = lti;
+//        return this;
+//    }
+//
+//    public void setLti(Boolean lti) {
+//        this.lti = lti;
+//    }
 
     public Set<Result> getResults() {
         return results;
