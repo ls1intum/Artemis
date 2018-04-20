@@ -246,6 +246,7 @@ public class ResultResource {
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
                                               @RequestParam(defaultValue = "false") boolean ratedOnly) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
         Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
@@ -260,6 +261,8 @@ public class ResultResource {
         //TODO use rated only in case it is true
 
         List<Result> results = new ArrayList<>();
+
+        //TODO: can we improve the performance, but still garantuee that the return value is correct?
 
         for (Participation participation : exercise.getParticipations()) {
             if (participation.getResults().isEmpty()) {
@@ -295,6 +298,8 @@ public class ResultResource {
 //                    result.setSubmissionCount((Long) submissionCount[1]);
 //                }
 //            }));
+
+        log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
 
         return ResponseEntity.ok().body(results);
     }
