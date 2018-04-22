@@ -150,7 +150,9 @@
                 vm.results = vm.allResults
             }
             else {
-                vm.results = vm.allResults.filter(result => result.successful == true);
+                vm.results = vm.allResults.filter(function(result) {
+                    return result.successful;
+                });
             }
         }
 
