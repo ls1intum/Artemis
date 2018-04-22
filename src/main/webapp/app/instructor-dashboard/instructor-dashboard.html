@@ -72,7 +72,23 @@
         <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
         <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
-        <td><result participation="result.participation" is-quiz="$ctrl.exercise.type === 'quiz'"></result></td>
+        <td>
+
+            <span ng-class="$ctrl.getTextColorClass(result)">
+                <i ng-if="result.participation.exercise.type !== 'quiz'" class="fa fa-lg" ng-class="$ctrl.getResultIconClass(result)"></i>&nbsp;
+                <span ng-switch on="!result.hasFeedback">
+                    <span ng-switch-when="true">{{$ctrl.resultString(result)}},</span>
+                    <span ng-switch-when="false">
+                        <a ng-class="$ctrl.getTextColorClass(result)" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>,
+                    </span>
+                </span>
+                <strong>Score: {{result.score}}%</strong>, Submission: <span am-time-ago="$result.completionDate"></span>
+            </span>
+            <span ng-if="result.buildArtifact">
+                <a href="/api/participations/{{result.participation.id}}/buildArtifact"> &nbsp; <i class="fa fa-file"></i> Download Build Result</a>
+            </span>
+
+        </td>
         <td>{{ result.submissionCount }}</td>
         <td><span ng-show="result.score != null">{{result.score}}%</span></td>
         <td>{{$ctrl.durationString(result.completionDate, result.participation.initializationDate)}} minutes</td>

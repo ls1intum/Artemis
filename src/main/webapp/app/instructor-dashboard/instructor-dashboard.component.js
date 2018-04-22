@@ -17,7 +17,7 @@
     function InstructorDashboardController($window, $filter, moment, $uibModal, Exercise, ExerciseResults, Participation) {
         var vm = this;
 
-        vm.showAllResults = false;
+        vm.showAllResults = true;
         vm.sortReverse = false;
 
         vm.$onInit = init;
@@ -29,6 +29,9 @@
         vm.showDetails = showDetails;
         vm.sort = sort;
         vm.toggleShowAllResults = toggleShowAllResults;
+        vm.resultString = resultString;
+        vm.getTextColorClass = getTextColorClass;
+        vm.getResultIconClass = getResultIconClass;
 
         function init() {
             Exercise.get({id : vm.exerciseId}).$promise.then(function(exercise) {
@@ -142,6 +145,7 @@
         }
 
         function filterResults() {
+            vm.results = {}
             if (vm.showAllResults) {
                 vm.results = vm.allResults
             }
@@ -149,5 +153,64 @@
                 vm.results = vm.allResults.filter(result => result.successful == true);
             }
         }
+
+
+        //helper functions copied from result.component.js //TODO: think about a better solution
+
+        function resultString(result) {
+            if (result.resultString === 'No tests found') {
+                return 'Build failed';
+            } else {
+                return result.resultString;
+            }
+        }
+
+        /**
+         * Get the css class for the entire text as a string
+         *
+         * @return {string} the css class
+         */
+        function getTextColorClass(result) {
+            if (result.score == null) {
+                if (result.successful) {
+                    return "text-success";
+                } else {
+                    return "text-danger";
+                }
+            } else {
+                if (result.score > 80) {
+                    return "text-success";
+                } else if (result.score > 40) {
+                    return "result-orange";
+                } else {
+                    return "text-danger";
+                }
+            }
+        }
+
+        //TODO think about a better color scheme
+
+        /**
+         * Get the css class for the result icon as a string
+         *
+         * @return {string} the css class
+         */
+        function getResultIconClass(result) {
+            if (result.score == null) {
+                if (result.successful) {
+                    return "fa-check-circle-o";
+                } else {
+                    return "fa-times-circle-o";
+                }
+            } else {
+                if (result.score > 80) {
+                    return "fa-check-circle-o";
+                } else {
+                    return "fa-times-circle-o";
+                }
+            }
+        }
+
+
     }
 })();

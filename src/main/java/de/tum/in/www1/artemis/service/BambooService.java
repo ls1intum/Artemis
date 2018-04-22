@@ -326,7 +326,7 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
 
-        //TODO: only save this result if it is newer than the last saved result for this participation
+        //TODO: only save this result if it is newer (e.g. + 5s) than the last saved result for this participation
 
         Result result = new Result();
         result.setSuccessful((boolean) buildResults.get("successful"));
