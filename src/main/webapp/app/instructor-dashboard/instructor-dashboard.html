@@ -85,7 +85,7 @@
                         <a ng-class="$ctrl.getTextColorClass(result)" ng-click="$ctrl.showDetails(result)">{{result.resultString}}</a>,
                     </span>
                 </span>
-                <strong>Score: {{result.score}}%</strong>, Submission: <span am-time-ago="$result.completionDate"></span>
+                <strong>Score: {{result.score}}%</strong>, Submission: <span am-time-ago="result.completionDate"></span>
             </span>
             <span ng-if="result.buildArtifact">
                 <a href="/api/participations/{{result.participation.id}}/buildArtifact"> &nbsp; <i class="fa fa-file"></i> Download Build Result</a>
