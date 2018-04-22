@@ -130,7 +130,8 @@ public class ResultResource {
             if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
                 resultService.onResultNotified(participation);
                 return ResponseEntity.ok().build();
-            } else {
+            }
+            else {
                 log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
@@ -271,17 +272,22 @@ public class ResultResource {
 
             Result newestResult = null;
 
+            //find the newest result
             for (Result result : participation.getResults()) {
                 if (newestResult == null) {
                     newestResult = result;
                 }
                 else {
-                    if (newestResult.getCompletionDate().isBefore(result.getCompletionDate())) {
+                    if (result.getCompletionDate().isAfter(newestResult.getCompletionDate())) {
+                        //result is newer (after) current newestResult
                         newestResult = result;
                     }
                 }
             }
             newestResult.setSubmissionCount(new Long(participation.getResults().size()));
+            if (newestResult.isSuccessful() == false) {
+                log.debug(newestResult.getResultString() + " " + newestResult.getScore());
+            }
             results.add(newestResult);
         }
 

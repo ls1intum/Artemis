@@ -40,7 +40,7 @@ public class ResultService {
      */
     @Async
     public void onResultNotified(Participation participation) {
-        log.info("Received new build result for participatin " + participation.getId());
+        log.info("Received new build result for participation " + participation.getId());
         Long start = System.currentTimeMillis();
         // fetches the new build result
         Result result = continuousIntegrationService.get().onBuildCompleted(participation);
