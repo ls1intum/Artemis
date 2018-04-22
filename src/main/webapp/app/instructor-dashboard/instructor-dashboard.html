@@ -21,13 +21,16 @@
     </div>
 
 
-
     <label class="radio-inline">
-        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults(false)" ng-value="false">
+        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults('unsuccessful')" ng-value="'unsuccessful'">
+        Show unsuccessful
+    </label>
+    <label class="radio-inline">
+        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults('successful')" ng-value="'successful'">
         Show successful
     </label>
     <label class="radio-inline">
-        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults(true)" ng-value="true">
+        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults('all')" ng-value="'all'">
         Show all
     </label>
 

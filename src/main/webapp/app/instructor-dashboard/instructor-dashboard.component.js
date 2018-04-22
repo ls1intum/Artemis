@@ -17,7 +17,7 @@
     function InstructorDashboardController($window, $filter, moment, $uibModal, Exercise, ExerciseResults, Participation) {
         var vm = this;
 
-        vm.showAllResults = true;
+        vm.showAllResults = 'all';
         vm.sortReverse = false;
 
         vm.$onInit = init;
@@ -146,13 +146,19 @@
 
         function filterResults() {
             vm.results = {}
-            if (vm.showAllResults) {
-                vm.results = vm.allResults
+
+            if (vm.showAllResults == 'successful') {
+                vm.results = vm.allResults.filter(function(result) {
+                    return result.successful == true;
+                });
+            }
+            else if (vm.showAllResults == 'unsuccessful') {
+                vm.results = vm.allResults.filter(function(result) {
+                    return result.successful == false;
+                });
             }
             else {
-                vm.results = vm.allResults.filter(function(result) {
-                    return result.successful;
-                });
+                vm.results = vm.allResults
             }
         }
 
