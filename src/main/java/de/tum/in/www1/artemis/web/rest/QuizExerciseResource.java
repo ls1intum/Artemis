@@ -222,7 +222,7 @@ public class QuizExerciseResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        log.info("    checked permissions after {} ms", System.currentTimeMillis() - start);
+        log.debug("    checked permissions after {} ms", System.currentTimeMillis() - start);
 
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents();
@@ -231,7 +231,7 @@ public class QuizExerciseResource {
         // TODO: check if statistic is released
         quizExercise.setQuizPointStatistic(null);
 
-        log.info("    filtered info after {} ms", System.currentTimeMillis() - start);
+        log.debug("    filtered info after {} ms", System.currentTimeMillis() - start);
 
         return ResponseEntity.ok(quizExercise);
     }

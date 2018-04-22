@@ -170,16 +170,16 @@ public class QuizExerciseService {
         log.debug("Request to get Quiz Exercise : {}", id);
         long start = System.currentTimeMillis();
         QuizExercise quizExercise = quizExerciseRepository.findOne(id);
-        log.info("    loaded quiz after {} ms", System.currentTimeMillis() - start);
+        log.debug("    loaded quiz after {} ms", System.currentTimeMillis() - start);
         if (quizExercise != null) {
             quizExercise.getQuestions().size();
-            log.info("    loaded questions after {} ms", System.currentTimeMillis() - start);
+            log.debug("    loaded questions after {} ms", System.currentTimeMillis() - start);
             quizExercise.getQuizPointStatistic().getPointCounters().size();
-            log.info("    loaded quiz point statistic after {} ms", System.currentTimeMillis() - start);
+            log.debug("    loaded quiz point statistic after {} ms", System.currentTimeMillis() - start);
             for (Question question : quizExercise.getQuestions()) {
                 question.getQuestionStatistic().getRatedCorrectCounter();
             }
-            log.info("    loaded question statistics after {} ms", System.currentTimeMillis() - start);
+            log.debug("    loaded question statistics after {} ms", System.currentTimeMillis() - start);
         }
         return quizExercise;
     }
