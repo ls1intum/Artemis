@@ -192,7 +192,7 @@ public abstract class Exercise implements Serializable {
      * @return the found participation, or null, if none exist
      */
     public Participation findRelevantParticipation(List<Participation> participations) {
-        Participation result = null;
+        Participation relevantParticipation = null;
         for (Participation participation : participations) {
             if (participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
@@ -202,11 +202,11 @@ public abstract class Exercise implements Serializable {
                 } else if (participation.getInitializationState() == ParticipationState.INACTIVE) {
                     // ParticipationState INACTIVE is also ok
                     // => if we can't find INITIALIZED, we return that one
-                    result = participation;
+                    relevantParticipation = participation;
                 }
             }
         }
-        return result;
+        return relevantParticipation;
     }
 
     /**
