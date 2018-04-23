@@ -262,7 +262,7 @@ public class ResultResource {
         //TODO use rated only in case the given request param is true
 
         List<Result> results = new ArrayList<>();
-        
+
         List<Participation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
 
         for (Participation participation : participations) {
