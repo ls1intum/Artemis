@@ -4,7 +4,7 @@
     <facet type="Spring" name="Spring">
       <configuration />
     </facet>
-    <facet type="web" name="Web Gradle : ArTEMiS-1.4.4.war">
+    <facet type="web" name="Web Gradle : ArTEMiS-1.4.5.war">
       <configuration>
         <webroots>
           <root url="file://$MODULE_DIR$/../../src/main/webapp" relative="/" />
