@@ -259,51 +259,23 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        //TODO use rated only in case it is true
+        //TODO use rated only in case the given request param is true
 
         List<Result> results = new ArrayList<>();
+        
+        List<Participation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
 
-        //TODO: can we improve the performance, but still garantuee that the return value is correct?
+        for (Participation participation : participations) {
 
-        for (Participation participation : exercise.getParticipations()) {
-            if (participation.getResults().isEmpty()) {
+            Result relevantResult = exercise.findLatestRelevantResult(participation);
+
+            if (relevantResult == null) {
                 continue;
             }
 
-            Result newestResult = null;
-
-            //find the newest result
-            for (Result result : participation.getResults()) {
-                if (newestResult == null) {
-                    newestResult = result;
-                }
-                else {
-                    if (result.getCompletionDate().isAfter(newestResult.getCompletionDate())) {
-                        //result is newer (after) current newestResult
-                        newestResult = result;
-                    }
-                }
-            }
-            newestResult.setSubmissionCount(new Long(participation.getResults().size()));
-            if (newestResult.isSuccessful() == false) {
-                log.debug(newestResult.getResultString() + " " + newestResult.getScore());
-            }
-            results.add(newestResult);
+            relevantResult.setSubmissionCount(new Long(participation.getResults().size()));
+            results.add(relevantResult);
         }
-
-//        List<Result> results = resultRepository.findLatestResultsForExercise(exerciseId);
-//
-//        //Each object array in the list contains two Long values, participation id (index 0) and
-//        //number of results for this participation (index 1)
-//        List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
-//
-//        //Matches each result with the number of results in corresponding participation
-//        results.forEach(result ->
-//            submissionCounts.forEach(submissionCount -> {
-//                if (result.getParticipation().getId().equals(submissionCount[0])) {
-//                    result.setSubmissionCount((Long) submissionCount[1]);
-//                }
-//            }));
 
         log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
 
