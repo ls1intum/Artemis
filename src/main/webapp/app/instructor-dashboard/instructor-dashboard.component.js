@@ -12,9 +12,9 @@
             templateUrl: 'app/instructor-dashboard/instructor-dashboard.html'
         });
 
-    InstructorDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal', 'Exercise', 'ExerciseResults', 'Participation'];
+    InstructorDashboardController.$inject = ['$window', '$filter', 'moment', '$uibModal', 'Exercise', 'ExerciseResults', 'Participation', 'Repository', '$sce'];
 
-    function InstructorDashboardController($window, $filter, moment, $uibModal, Exercise, ExerciseResults, Participation) {
+    function InstructorDashboardController($window, $filter, moment, $uibModal, Exercise, ExerciseResults, Participation, Repository, $sce) {
         var vm = this;
 
         vm.showAllResults = 'all';
@@ -32,6 +32,7 @@
         vm.resultString = resultString;
         vm.getTextColorClass = getTextColorClass;
         vm.getResultIconClass = getResultIconClass;
+        vm.hasFeedback = hasFeedback;
 
         function init() {
             Exercise.get({id : vm.exerciseId}).$promise.then(function(exercise) {
@@ -111,6 +112,19 @@
                             }
                         }).then(function (response) {
                             vm.details = response.data;
+                            if (vm.details.length == 0) {
+                                Repository.buildlogs({
+                                    participationId: result.participation.id
+                                }, function (buildLogs) {
+                                    _.forEach(buildLogs, function (buildLog) {
+                                        buildLog.log = $sce.trustAsHtml(buildLog.log);
+                                    });
+                                    vm.buildLogs = buildLogs;
+                                    vm.loading = false;
+                                });
+                            } else {
+                                vm.loading = false;
+                            }
                         }).finally(function () {
                             vm.loading = false;
                         });
@@ -171,6 +185,13 @@
             } else {
                 return result.resultString;
             }
+        }
+
+        function hasFeedback(result) {
+            if (resultString(result) === 'Build failed') {
+                return true;
+            }
+            else return result.hasFeedback;
         }
 
         /**
