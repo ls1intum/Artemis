@@ -563,9 +563,9 @@ boom@5.x.x:
   dependencies:
     hoek "4.x.x"
 
-bower@1.7.9:
-  version "1.7.9"
-  resolved "https://registry.yarnpkg.com/bower/-/bower-1.7.9.tgz#b7296c2393e0d75edaa6ca39648132dd255812b0"
+bower@1.8.4:
+  version "1.8.4"
+  resolved "https://registry.yarnpkg.com/bower/-/bower-1.8.4.tgz#e7876a076deb8137f7d06525dc5e8c66db82f28a"
 
 brace-expansion@^1.0.0, brace-expansion@^1.1.7:
   version "1.1.8"
@@ -2556,9 +2556,9 @@ generate-object-property@^1.1.0:
   dependencies:
     is-property "^1.0.0"
 
-generator-jhipster@4.14.0:
-  version "4.14.0"
-  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-4.14.0.tgz#c38a99e1a3668274859fec2f551b011a2cae90f8"
+generator-jhipster@4.14.3:
+  version "4.14.3"
+  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-4.14.3.tgz#f99f8b1cd590b1fdc2908a43d66249daff8baac0"
   dependencies:
     chalk "2.3.0"
     cheerio "0.22.0"
