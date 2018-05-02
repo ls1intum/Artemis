@@ -3,17 +3,20 @@
 <jhi-alert></jhi-alert>
 <div>
     <div class="button-toolbar pull-right">
-        <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
+        <button ng-if="$ctrl.exercise.type !== 'quiz'" has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
             <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.archive.title">Archive</span>
         </button>
-        <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
+        <button ng-if="$ctrl.exercise.type !== 'quiz'" has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
             <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.cleanup.title">Cleanup</span>
         </button>
         <button type="submit" ui-sref="participation-for-exercise({exerciseId:$ctrl.exerciseId})" class="btn btn-info btn-sm">
             <span class="hidden-sm-down" data-translate="artemisApp.exercise.participations">Participations</span>
         </button>
 
-        <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Export
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.exportNames()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Names
+            to CSV
+        </button>
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results
             to CSV
         </button>
         <button class="btn btn-primary btn-sm" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
