@@ -22,7 +22,8 @@
 
         vm.$onInit = init;
         vm.durationString = durationString;
-        vm.export = exportData;
+        vm.exportResults = exportResults;
+        vm.exportNames = exportNames;
         vm.goToBuildPlan = goToBuildPlan;
         vm.goToRepository = goToRepository;
         vm.refresh = getResults;
@@ -51,7 +52,40 @@
             }
         }
 
-        function exportData() {
+        function exportResults() {
+            if (vm.sortedResults.length > 0) {
+                var rows = [];
+                vm.sortedResults.forEach(function (result, index) {
+                    var studentName = result.participation.student.firstName;
+                    var studentId = result.participation.student.login;
+                    var score = result.score;
+                    if (index === 0) {
+                        if (vm.exercise.type === 'quiz') {
+                            rows.push('data:text/csv;charset=utf-8,Name, Username, Score')
+                        }
+                        else {
+                            rows.push('data:text/csv;charset=utf-8,Name, Username, Score, Repo Link')
+                        }
+                    }
+                    if (vm.exercise.type === 'quiz') {
+                        rows.push(studentName + ', ' + studentId + ', ' + score);
+                    }
+                    else {
+                        var repoLink = result.participation.repositoryUrl;
+                        rows.push(studentName + ', ' + studentId + ', ' + score + ', ' + repoLink);
+                    }
+                });
+                var csvContent = rows.join('\n');
+                var encodedUri = encodeURI(csvContent);
+                var link = document.createElement('a');
+                link.setAttribute('href', encodedUri);
+                link.setAttribute('download', 'results-scores.csv');
+                document.body.appendChild(link); // Required for FF
+                link.click();
+            }
+        }
+
+        function exportNames() {
             if (vm.sortedResults.length > 0) {
                 var rows = [];
                 vm.sortedResults.forEach(function (result, index) {
@@ -62,11 +96,12 @@
                 var encodedUri = encodeURI(csvContent);
                 var link = document.createElement('a');
                 link.setAttribute('href', encodedUri);
-                link.setAttribute('download', 'results.csv');
+                link.setAttribute('download', 'results-names.csv');
                 document.body.appendChild(link); // Required for FF
                 link.click();
             }
         }
+
 
         //TODO: only use rated results here for quizzes
 
