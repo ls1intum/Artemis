@@ -1,7 +1,7 @@
 # ExerciseApplication
 This application was generated using JHipster 4.14.4, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.4](http://www.jhipster.tech/documentation-archive/v4.14.4).
 
-**Curent version:** 1.4.6
+**Curent version:** 1.4.7
 
 The following UML diagram shows the top-level design of ArTEMiS which is decomposed into an application client and an application server. The application server then connects to a version control system (VCS), a continuous integration system (CIS) and a user management system (UMS).
 

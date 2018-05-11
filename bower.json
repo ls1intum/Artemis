@@ -1,5 +1,5 @@
 {
-  "version": "1.4.6",
+  "version": "1.4.7",
   "name": "artemis",
   "appPath": "src/main/webapp/",
   "testPath": "src/test/javascript/spec",
@@ -36,7 +36,7 @@
     "font-awesome-animation": "^0.0.9",
     "lodash": "^4.13.1",
     "bootstrap-treeview": "^1.2.0",
-    "ace-builds": "1.3.0",
+    "ace-builds": "1.3.3",
     "angular-ui-ace": "bower",
     "angular-file-saver": "1.1.3",
     "remarkable": "^1.7.1",
