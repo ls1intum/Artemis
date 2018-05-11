@@ -1,9 +1,13 @@
 {
   "generator-jhipster": {
+    "promptValues": {
+      "packageName": "de.tum.in.www1.artemis",
+      "nativeLanguage": "en"
+    },
     "jhipsterVersion": "4.14.4",
-    "baseName": "ExerciseApplication",
-    "packageName": "de.tum.in.www1.exerciseapp",
-    "packageFolder": "de/tum/in/www1/exerciseapp",
+    "baseName": "ArTEMiS",
+    "packageName": "de.tum.in.www1.artemis",
+    "packageFolder": "de/tum/in/www1/artemis",
     "serverPort": "8080",
     "authenticationType": "session",
     "hibernateCache": "ehcache",
@@ -13,27 +17,26 @@
     "devDatabaseType": "mysql",
     "prodDatabaseType": "mysql",
     "searchEngine": false,
+    "messageBroker": false,
     "buildTool": "gradle",
     "enableSocialSignIn": false,
+    "enableSwaggerCodegen": true,
     "rememberMeKey": "1e8ac98bc31f6bc463c70dace796da10dba1f4f3",
+    "clientFramework": "angular1",
     "useSass": true,
+    "clientPackageManager": "yarn",
     "applicationType": "monolith",
     "testFrameworks": [
-      "gatling",
-      "cucumber",
-      "protractor"
+      "gatling"
     ],
     "jhiPrefix": "jhi",
+    "otherModules": [],
     "enableTranslation": true,
     "nativeLanguage": "en",
     "languages": [
       "en",
       "de"
     ],
-    "messageBroker": false,
-    "serviceDiscoveryType": false,
-    "clientFramework": "angular1",
-    "clientPackageManager": "yarn",
     "cacheProvider": "ehcache",
     "enableHibernateCache": true
   }
