@@ -175,12 +175,12 @@
          */
         function loadDataInDiagram() {
             if (vm.rated) {
-                vm.participants = vm.quizExercise.quizPointStatistic.participantsRated;
+                vm.participants = vm.quizPointStatistic.participantsRated;
                 vm.data = ratedData;
             }
             // else: load the unrated data
             else {
-                vm.participants = vm.quizExercise.quizPointStatistic.participantsUnrated;
+                vm.participants = vm.quizPointStatistic.participantsUnrated;
                 vm.data = unratedData;
             }
         }
