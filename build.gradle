@@ -51,7 +51,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '1.4.6'
+version = '1.4.7'
 description = 'AuTomated assEssment Management System for Interactive Learning'
 
 bootRepackage {
