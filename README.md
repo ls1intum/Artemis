@@ -15,7 +15,7 @@ While ArTEMiS includes generic adapters to these three external systems with a d
 
 ## Exercise Workflow
 
-Conducting a programming exercise consists of 7 steps distributed among instructor, \system{} and students:
+Conducting a programming exercise consists of 7 steps distributed among the instructor, ArTEMiS and students:
 
 1. **Instructor prepares exercise:** Set up a repository containing the exercise code and test cases, build instructions on the CI server, and configures the exercise in ArTEMiS.
 2. **Student starts exercise:** Click on start exercise on ArTEMiS which automatically generates a copy of the repository with the exercise code and configures a build plan accordingly.
@@ -40,21 +40,24 @@ This allows the students to immediately recognize which tasks are already fulfil
 
 ## Development Setup
 
-Before you can build this project, you must install and configure the following dependencies on your machine:
+Before you can build ArTEMiS, you must install and configure the following dependencies/tools on your machine:
 
-1. [Node.js](https://nodejs.org): We use Node to run a development web server and build the project.
-Depending on your system, you can install Node either from source or as a pre-packaged bundle.
-2. [Yarn](https://yarnpkg.com): We use Yarn to manage Node dependencies.
+1. [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of ArTEMiS.
+
+2. [MySQL Database Server](https://dev.mysql.com/downloads/mysql): ArTEMiS uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle) 
+
+3. [Node.js](https://nodejs.org): We use Node to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+
+4. [Yarn](https://yarnpkg.com): We use Yarn to manage Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
-After installing Node, you should be able to run the following command to install development tools.
-You will only need to run this command when dependencies change in [package.json](package.json).
+After installing Node, you should be able to run the following command to install development tools. You will only need to run this command when dependencies change in [package.json](package.json).
 
 ```
 yarn install
 ```
 
-We use [Gulp](https://gulpjs.com) as our build system. Install the Gulp command-line tool globally with:
+We use [Gulp](https://gulpjs.com) as build system. Install the Gulp command-line tool globally with:
 
 ```
 yarn global add gulp-cli
@@ -68,9 +71,7 @@ auto-refreshes when files change on your hard drive.
 gulp
 ```
 
-[Bower](https://bower.io) is used to manage CSS and JavaScript dependencies used in this application. You can upgrade dependencies by
-specifying a newer version in [bower.json](bower.json). You can also run `bower update` and `bower install` to manage dependencies.
-Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
+[Bower](https://bower.io) is used to manage CSS and JavaScript dependencies used in the ArTEMiS application client (in the browser). You can upgrade dependencies by specifying a newer version in [bower.json](bower.json). You can also run `bower update` and `bower install` to manage dependencies. Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
 
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
@@ -78,7 +79,7 @@ ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Bo
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 
-To start ArTEMiS from the development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
+To start ArTEMiS in your development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
 
 ```
 artemis:
@@ -125,8 +126,16 @@ gulp
 
 After that you should be able to access http://127.0.0.1:8080/ and login with your TUM Online account (if you use our JIRA instance).
 
+## Profiles
+
+ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments should be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
+
+    --spring.profiles.active=dev,bamboo,bitbucket,jira 
+
+This is in particular important, when you want to use your TUMOnline account as credential to login, because the class JiraAuthenticationProvider is only activated, when the spring profile jira is active in the run configuration.
+
 ## Docker Setup
-If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can use Docker. Docker can be used to setup development containers on your own computer for the required external components MySQL, Bitbucket (version control), Bamboo (continuous integration) and JIRA (user management).
+If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can use Docker, however this might be difficult and is only recommend for developers with Docker experience. Docker can be used to setup development containers on your own computer for the required external components MySQL, Bitbucket (version control), Bamboo (continuous integration) and JIRA (user management).
 
 1. Install Docker and `docker-compose`
 2. Run `docker-compose -f src/main/docker/dev.yml up`. 
@@ -161,12 +170,6 @@ If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can
             oauth-secret: 7pipQv9MeidmZvMsTL
             create-user-prefix: edx_
 
-    
-## Profiles
-
-ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
-
-    --spring.profiles.active=dev,bamboo,bitbucket,jira 
 
 ## Building for production
 
