@@ -2758,9 +2758,9 @@ generate-object-property@^1.1.0:
   dependencies:
     is-property "^1.0.0"
 
-generator-jhipster@4.14.3:
-  version "4.14.3"
-  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-4.14.3.tgz#f99f8b1cd590b1fdc2908a43d66249daff8baac0"
+generator-jhipster@4.14.4:
+  version "4.14.4"
+  resolved "https://registry.yarnpkg.com/generator-jhipster/-/generator-jhipster-4.14.4.tgz#81f5ceb2f6f56d5e1057ff5691ef451c90265db4"
   dependencies:
     chalk "2.3.0"
     cheerio "0.22.0"
