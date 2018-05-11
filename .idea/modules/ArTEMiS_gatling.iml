@@ -76,6 +76,6 @@
     <orderEntry type="library" name="Gradle: io.netty:netty-common:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: commons-pool:commons-pool:1.6" level="project" />
     <orderEntry type="library" name="Gradle: ch.qos.logback:logback-core:1.1.11" level="project" />
-    <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-configuration-processor:1.5.12.RELEASE" level="project" />
+    <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-configuration-processor:1.5.13.RELEASE" level="project" />
   </component>
 </module>
