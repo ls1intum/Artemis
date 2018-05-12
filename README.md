@@ -44,12 +44,11 @@ Before you can build ArTEMiS, you must install and configure the following depen
 
 1. [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of ArTEMiS.
 
-2. [MySQL Database Server](https://dev.mysql.com/downloads/mysql): ArTEMiS uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle) 
+2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): ArTEMiS uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle) 
 
-3. [Node.js](https://nodejs.org): We use Node to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+3. [Node.js 9](https://nodejs.org): We use Node (>=6.9.0 && <=9.11.1) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
 
-4. [Yarn](https://yarnpkg.com): We use Yarn to manage Node dependencies.
-Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
+4. [Yarn](https://yarnpkg.com): We use Yarn to manage Node dependencies. Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
 After installing Node, you should be able to run the following command to install development tools. You will only need to run this command when dependencies change in [package.json](package.json).
 
@@ -201,11 +200,11 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ## Data Model
 
-The ArTEMiS application server uses the following data model in the MySQL database. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system. Each submission is automatically tested by the continuous integration server, which notifies the ArTEMiS application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manaully" create results.
+The ArTEMiS application server uses a data model in the MySQL database. The followind UML class diagram shows a simplified version of it. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system. Each submission is automatically tested by the continuous integration server, which notifies the ArTEMiS application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manaully" create results.
 
 ![Data Model](doc/DataModel.png "Data Model")
 
-In the future, we want to allow different types of exercises, so expect multiple subclasses for programming, modeling and quiz exercises.
+**Please note:** The real data model has become a bit more complex. We allow different types of exercises by having multiple subclasses for programming, modeling and quiz exercises. For each result, we store feedback and a submission. Quiz exercises support multiple choice and drag and drop questions.  
 
 
 ## Server Architecture
