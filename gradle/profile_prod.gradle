@@ -49,14 +49,8 @@ gitProperties {
     keys = ['git.branch', 'git.commit.id.abbrev']
 }
 
-// Workaround for https://github.com/srs/gradle-node-plugin/issues/134 doesn't work with yarn
-if (!project.hasProperty('nodeInstall')) {
-    gulpBuildWithOpts.dependsOn yarn_install
-} else {
-    gulpBuildWithOpts.dependsOn npm_install
-}
 gulpBuildWithOpts.dependsOn bower
-bower.dependsOn npmInstall
+bower.dependsOn yarn_install
 processResources.dependsOn gulpBuildWithOpts
 test.dependsOn gulp_test
 bootRun.dependsOn gulp_test
