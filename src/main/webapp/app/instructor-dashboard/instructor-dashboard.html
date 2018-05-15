@@ -82,11 +82,11 @@
 
             <span ng-class="$ctrl.getTextColorClass(result)">
                 <i ng-if="result.participation.exercise.type !== 'quiz'" class="fa fa-lg" ng-class="$ctrl.getResultIconClass(result)"></i>&nbsp;
-                <span ng-switch on="$ctrl.hasFeedback($ctrl.results[0])">
+                <span ng-switch on="$ctrl.hasFeedback(result)">
                     <span ng-switch-when="true">
                         <a ng-class="$ctrl.getTextColorClass(result)" ng-click="$ctrl.showDetails(result)">{{$ctrl.resultString(result)}}</a>,
                     </span>
-                    <span ng-switch-when="false">{{$ctrl.resultString(result)}},</span>
+                    <span ng-switch-when="false" ng-class="$ctrl.getTextColorClass(result)">{{$ctrl.resultString(result)}},</span>
                 </span>
                 <strong>Score: {{result.score}}%</strong>, Submission: <span am-time-ago="result.completionDate"></span>
             </span>

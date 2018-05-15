@@ -123,6 +123,9 @@
             if (resultString(result) === 'Build failed') {
                 return true;
             }
+            if (result.hasFeedback === null) {
+                return false;
+            }
             else return result.hasFeedback;
         }
 
