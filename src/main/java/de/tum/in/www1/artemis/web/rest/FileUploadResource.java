@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.repository.DragAndDropQuestionRepository;
-import de.tum.in.www1.artemis.repository.DragItemRepository;
 import de.tum.in.www1.artemis.service.FileService;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
