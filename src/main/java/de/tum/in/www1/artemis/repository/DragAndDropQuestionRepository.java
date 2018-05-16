@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.repository;
 
 import de.tum.in.www1.artemis.domain.DragAndDropQuestion;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import org.springframework.data.jpa.repository.*;
 
 
 /**

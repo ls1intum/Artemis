@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.QuizSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import org.slf4j.Logger;
@@ -9,7 +8,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
