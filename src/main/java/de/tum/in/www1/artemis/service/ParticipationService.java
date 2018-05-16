@@ -19,6 +19,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ParticipationState.INITIALIZED;
+
 /**
  * Service Implementation for managing Participation.
  */
@@ -100,12 +102,12 @@ public class ParticipationService {
             participation = configureRepository(participation, programmingExercise);
             participation = copyBuildPlan(participation, programmingExercise);
             participation = configureBuildPlan(participation, programmingExercise);
-            participation.setInitializationState(ParticipationState.INITIALIZED);
+            participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise) {
 //            participation.setLti(false);    // QuizExercises do not support LTI at the moment
             if (participation.getInitializationState() == null) {
-                participation.setInitializationState(ParticipationState.INITIALIZED);
+                participation.setInitializationState(INITIALIZED);
             }
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
                 participation.setInitializationDate(ZonedDateTime.now());
@@ -174,7 +176,7 @@ public class ParticipationService {
 
         // construct participation
         participation = new Participation()
-            .initializationState(ParticipationState.INITIALIZED)
+            .initializationState(INITIALIZED)
             .exercise(quizExercise)
             .addResults(result);
 
@@ -202,7 +204,7 @@ public class ParticipationService {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
         participation = copyBuildPlan(participation, programmingExercise);
         participation = configureBuildPlan(participation, programmingExercise);
-        participation.setInitializationState(ParticipationState.INITIALIZED);
+        participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {
             //only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
@@ -304,7 +306,7 @@ public class ParticipationService {
     public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
         log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
 
-        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
+        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, INITIALIZED);
         if(!Optional.ofNullable(participation).isPresent()) {
             participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
         }
@@ -338,9 +340,9 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public Participation findOneByBuildPlanId(String buildPlanId) {
+    public List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, ParticipationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return participationRepository.findOneByBuildPlanId(buildPlanId);
+        return participationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
 
     @Transactional(readOnly = true)

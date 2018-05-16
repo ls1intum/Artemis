@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -124,8 +125,17 @@ public class ResultResource {
         if (planKey.contains("base")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        Participation participation = participationService.findOneByBuildPlanId(planKey);
-        if (Optional.ofNullable(participation).isPresent()) {
+        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, ParticipationState.INITIALIZED);
+        if (participations.size() > 0) {
+            Participation participation = participations.get(0);
+            if (participations.size() > 1) {
+                //in the rare case of multiple participations, take the latest one.
+                for (Participation otherParticipation : participations) {
+                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
+                        participation = otherParticipation;
+                    }
+                }
+            }
             //TODO: we should also get build dates after the due date, but mark the result accordingly
             if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
                 resultService.onResultNotified(participation);
