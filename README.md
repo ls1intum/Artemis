@@ -133,42 +133,6 @@ ArTEMiS uses Spring profiles to segregate parts of the application configuration
 
 This is in particular important, when you want to use your TUMOnline account as credential to login, because the class JiraAuthenticationProvider is only activated, when the spring profile jira is active in the run configuration.
 
-## Docker Setup
-If you want to connect to your own JIRA, Bitbucket and Bamboo instances, you can use Docker, however this might be difficult and is only recommend for developers with Docker experience. Docker can be used to setup development containers on your own computer for the required external components MySQL, Bitbucket (version control), Bamboo (continuous integration) and JIRA (user management).
-
-1. Install Docker and `docker-compose`
-2. Run `docker-compose -f src/main/docker/dev.yml up`. 
-3. This will startup the following containers. When accessing for the first time you need to setup a license and an admin user. 
-    1. Bitbucket: [http://127.0.0.1:7990](http://127.0.0.1:7990)
-    2. Bamboo: [http://127.0.0.1:8085](http://127.0.0.1:8085)
-    3. JIRA: [http://127.0.0.1:8000](http://127.0.0.1:8000)
-    4. MySQL: 127.0.0.1:3306 (user `root` without password)
-4. In Bamboo go to `Administration` -> `Application Links` and add Bitbucket using the URL `http://exerciseapplication-bitbucket:7990`. Use OAuth without Impersonation.
-5. In Bitbucket go to `Administration` -> `Application Links` and add Bamboo using the URL `http://exerciseapplication-bamboo:8085`. Use OAuth without Impersonation.
-6. Configure JIRA/Bitbucket/Bamboo with Groups, Test Users, Plans etc. Please note that as default JIRA/Bitbucket/Bamboo do have seperate user databases and test users might need to be created on all instances.
-7. Change `application-dev.yml` to add the following elements:
-    
-        artemis:
-          repo-clone-path: ./repos/
-          result-retrieval-delay: 5000
-          encryption-password: X7RNnJUzeoUpB2EQsK
-          jira:
-            url: http://localhost:8000
-            admin-group-name: jira-administrators
-          bitbucket:
-            url: http://localhost:7990
-            user: bitbucket
-            password: bitbucket
-          bamboo:
-            url: http://localhost:8085
-            bitbucket-application-link-id: 0c3af16d-2aef-3660-8dd8-4f87042833de
-            user: bamboo
-            password: bamboo
-          lti:
-            oauth-key: exerciseapp_lti_key
-            oauth-secret: 7pipQv9MeidmZvMsTL
-            create-user-prefix: edx_
-
 
 ## Building for production
 
