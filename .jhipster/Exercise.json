@@ -26,11 +26,16 @@
         {
             "fieldName": "dueDate",
             "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "maxScore",
+            "fieldType": "Double"
         }
     ],
     "changelogDate": "20160609094621",
     "entityTableName": "exercise",
     "dto": "no",
     "pagination": "infinite-scroll",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }
