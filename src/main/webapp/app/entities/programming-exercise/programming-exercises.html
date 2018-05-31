@@ -22,6 +22,7 @@
                     <th jh-sort-by="title"><span data-translate="artemisApp.exercise.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="releaseDate"><span data-translate="artemisApp.exercise.releaseDate">Release Date</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="dueDate"><span data-translate="artemisApp.exercise.dueDate">Due Date</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="maxScore"><span data-translate="artemisApp.exercise.maxScore">Max Score</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="course.title" ng-hide="vm.course"><span data-translate="artemisApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="baseRepositoryUrl"><span data-translate="artemisApp.programmingExercise.baseRepositoryUrl">Base Repository Url</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="baseBuildPlanId"><span data-translate="artemisApp.programmingExercise.baseBuildPlanId">Base Build Plan Id</span> <span class="glyphicon glyphicon-sort"></span></th>
@@ -36,6 +37,7 @@
                     <td>{{programmingExercise.title}}</td>
                     <td>{{programmingExercise.releaseDate | date:'medium'}}</td>
                     <td>{{programmingExercise.dueDate | date:'medium'}}</td>
+                    <td>{{programmingExercise.maxScore}}</td>
                     <td ng-hide="vm.course">
                         <a ui-sref="course-detail({id:programmingExercise.course.id})">{{programmingExercise.course.title}}</a>
                     </td>

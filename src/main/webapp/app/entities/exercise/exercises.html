@@ -30,6 +30,7 @@
                     <th jh-sort-by="title"><span data-translate="artemisApp.exercise.title">Title</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="releaseDate"><span data-translate="artemisApp.exercise.releaseDate">Release Date</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="dueDate"><span data-translate="artemisApp.exercise.dueDate">Due Date</span> <span class="glyphicon glyphicon-sort"></span></th>
+                    <th jh-sort-by="maxScore"><span data-translate="artemisApp.exercise.maxScore">Max Score</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th jh-sort-by="course.title" ng-hide="vm.course"><span data-translate="artemisApp.exercise.course">Course</span> <span class="glyphicon glyphicon-sort"></span></th>
                     <th></th>
                 </tr>
@@ -40,6 +41,7 @@
                     <td>{{exercise.title}}</td>
                     <td>{{exercise.releaseDate | date:'medium'}}</td>
                     <td>{{exercise.dueDate | date:'medium'}}</td>
+                    <td>{{exercise.maxScore}}</td>
                     <td ng-hide="vm.course">
                         <a ui-sref="course-detail({id:exercise.course.id})">{{exercise.course.title}}</a>
                     </td>

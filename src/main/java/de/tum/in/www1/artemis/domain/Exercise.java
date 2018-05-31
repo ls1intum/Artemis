@@ -59,6 +59,9 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime dueDate;
 
+    @Column(name = "max_score")
+    private Double maxScore;
+
     @OneToMany(mappedBy = "exercise")
     @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -117,6 +120,19 @@ public abstract class Exercise implements Serializable {
 
     public void setDueDate(ZonedDateTime dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public Double getMaxScore() {
+        return maxScore;
+    }
+
+    public Exercise maxScore(Double maxScore) {
+        this.maxScore = maxScore;
+        return this;
+    }
+
+    public void setMaxScore(Double maxScore) {
+        this.maxScore = maxScore;
     }
 
     public Set<Participation> getParticipations() {
@@ -253,6 +269,7 @@ public abstract class Exercise implements Serializable {
             ", title='" + getTitle() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
+            ", maxScore=" + getMaxScore() +
             "}";
     }
 }

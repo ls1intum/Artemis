@@ -16,6 +16,10 @@
         <dd>
             <span>{{vm.programmingExercise.dueDate | date:'medium'}}</span>
         </dd>
+        <dt><span data-translate="artemisApp.exercise.maxScore">Max Score</span></dt>
+        <dd>
+            <span>{{vm.programmingExercise.maxScore}}</span>
+        </dd>
         <dt><span data-translate="artemisApp.exercise.course">Course</span></dt>
         <dd>
             <a ui-sref="course-detail({id:vm.programmingExercise.course.id})">{{vm.programmingExercise.course.title}}</a>

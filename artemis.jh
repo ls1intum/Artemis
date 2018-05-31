@@ -46,7 +46,8 @@ entity Course (course) {
 entity Exercise (exercise) {        //abstract
   title String,
   releaseDate ZonedDateTime,
-  dueDate ZonedDateTime
+  dueDate ZonedDateTime,
+  maxScore Double
 }
 
 entity ProgrammingExercise {        //extends Exercise
