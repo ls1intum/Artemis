@@ -5,12 +5,12 @@
 </span>
 <span ng-if="$ctrl.hasResults()">
     <span ng-class="$ctrl.getTextColorClass()">
-        <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg" ng-class="$ctrl.getResultIconClass()"></i>&nbsp;
-        <span ng-switch on="!$ctrl.results[0].hasFeedback">
-            <span ng-switch-when="true">{{$ctrl.resultString($ctrl.results[0])}},</span>
-            <span ng-switch-when="false">
-                <a ng-class="$ctrl.getTextColorClass()" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.results[0].resultString}}</a>,
+        <i ng-if="$ctrl.results[0].participation.exercise.type !== 'quiz'" class="fa fa-lg" ng-class="$ctrl.getResultIconClass()"></i>
+        <span ng-switch on="$ctrl.hasFeedback($ctrl.results[0])">
+            <span ng-switch-when="true">
+                <a ng-class="$ctrl.getTextColorClass()" ng-click="$ctrl.showDetails($ctrl.results[0])">{{$ctrl.resultString($ctrl.results[0])}}</a>,
             </span>
+            <span ng-switch-when="false">{{$ctrl.resultString($ctrl.results[0])}},</span>
         </span>
         <strong>Score: {{$ctrl.results[0].score}}%</strong>, Submission: <span am-time-ago="$ctrl.results[0].completionDate"></span>
     </span>

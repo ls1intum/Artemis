@@ -22,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -142,7 +141,6 @@ public class CourseResource {
         List<Course> courses = courseService.findAllWithExercisesForUser(principal, user);
 
         // get all participations of this user
-        // TODO: we should limit this to active courses to improve performance, i.e. only find participations for exercises in the courses list
         List<Participation> participations = participationService.findWithResultsByStudentUsername(principal.getName());
 
         for (Course course : courses) {
@@ -249,20 +247,18 @@ public class CourseResource {
         if (participation != null) {
             participationJson = objectMapper.valueToTree(participation);
 
-            // add relevant result if exercise is a quiz, or not overdue
-            if (exercise instanceof QuizExercise || exercise.getDueDate() == null || exercise.getDueDate().isAfter(ZonedDateTime.now())) {
-                Result result = exercise.findLatestRelevantResult(participation);
-                List<Result> results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
+            // only transmit the relevant result
+            Result result = exercise.findLatestRelevantResult(participation);
+            List<Result> results = Optional.ofNullable(result).map(Arrays::asList).orElse(new ArrayList<>());
 
-                // add results to json
-                ArrayNode resultsJson = objectMapper.valueToTree(results);
-                if (result != null) {
-                    // remove participation from inner result json
-                    ObjectNode resultJson = (ObjectNode) resultsJson.get(0);
-                    resultJson.set("participation", null);
-                }
-                participationJson.set("results", resultsJson);
+            // add results to json
+            ArrayNode resultsJson = objectMapper.valueToTree(results);
+            if (result != null) {
+                // remove participation from inner result json
+                ObjectNode resultJson = (ObjectNode) resultsJson.get(0);
+                resultJson.set("participation", null);
             }
+            participationJson.set("results", resultsJson);
 
             // remove questions and quizStatistics from inner quizExercise in participation json
             if (exercise instanceof QuizExercise) {

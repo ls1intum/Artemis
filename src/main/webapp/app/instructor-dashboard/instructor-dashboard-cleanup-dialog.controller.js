@@ -34,14 +34,14 @@
                     if(vm.deleteRepositories) {
                         AlertService.add({
                             type: 'success',
-                            msg: 'Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished. The archive zip file with all repositories is currently being downloaded',
+                            msg: 'Cleanup was successful. All build plans and repositories have been deleted. All participations have been marked as Finished.',
                             timeout: 30000
                         });
                     }
                     else {
                         AlertService.add({
                             type: 'success',
-                            msg: 'Cleanup was successful. All build plans have been deleted. Students can now resume their participation',
+                            msg: 'Cleanup was successful. All build plans have been deleted. Students can resume their participation.',
                             timeout: 30000
                         });
                     }

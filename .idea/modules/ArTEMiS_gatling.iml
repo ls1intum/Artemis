@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="ArTEMiS:gatling" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.artemis" external.system.module.type="sourceSet" external.system.module.version="1.4.4" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="ArTEMiS:gatling" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.artemis" external.system.module.type="sourceSet" external.system.module.version="1.4.7" type="JAVA_MODULE" version="4">
   <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
     <output url="file://$MODULE_DIR$/../../out/gatling/classes" />
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../../src/gatling">
-      <sourceFolder url="file://$MODULE_DIR$/../../src/gatling/java" isTestSource="false" />
-    </content>
+    <content url="file://$MODULE_DIR$/../../src/gatling" />
     <content url="file://$MODULE_DIR$/../../src/test/gatling">
       <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling/conf" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling/user-files/body" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling/user-files/data" type="java-resource" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling/user-files/simulations" type="java-resource" />
     </content>
@@ -44,8 +41,8 @@
     <orderEntry type="library" name="Gradle: org.scala-lang:scala-reflect:2.11.8" level="project" />
     <orderEntry type="library" name="Gradle: org.scala-lang:scala-library:2.11.8" level="project" />
     <orderEntry type="library" name="Gradle: com.tdunning:t-digest:3.1" level="project" />
-    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.8.10" level="project" />
-    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.8.10" level="project" />
+    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.8.11" level="project" />
+    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.8.11.1" level="project" />
     <orderEntry type="library" name="Gradle: org.bouncycastle:bcpkix-jdk15on:1.56" level="project" />
     <orderEntry type="library" name="Gradle: org.asynchttpclient:async-http-client:2.0.29" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-codec-http:4.0.44.Final" level="project" />
@@ -57,7 +54,7 @@
     <orderEntry type="library" name="Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1" level="project" />
     <orderEntry type="library" name="Gradle: org.hdrhistogram:HdrHistogram:2.1.9" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.8.0" level="project" />
-    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.8.10" level="project" />
+    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.8.11" level="project" />
     <orderEntry type="library" name="Gradle: org.bouncycastle:bcprov-jdk15on:1.56" level="project" />
     <orderEntry type="library" name="Gradle: org.asynchttpclient:netty-resolver-dns:2.0.29" level="project" />
     <orderEntry type="library" name="Gradle: org.asynchttpclient:netty-codec-dns:2.0.29" level="project" />
@@ -72,13 +69,13 @@
     <orderEntry type="library" name="Gradle: org.slf4j:slf4j-api:1.7.25" level="project" />
     <orderEntry type="library" name="Gradle: org.jodd:jodd-core:3.8.0" level="project" />
     <orderEntry type="library" name="Gradle: org.jodd:jodd-log:3.8.0" level="project" />
-    <orderEntry type="library" name="Gradle: org.reactivestreams:reactive-streams:1.0.1" level="project" />
+    <orderEntry type="library" name="Gradle: org.reactivestreams:reactive-streams:1.0.2" level="project" />
     <orderEntry type="library" name="Gradle: org.javassist:javassist:3.21.0-GA" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-transport:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-buffer:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: io.netty:netty-common:4.0.44.Final" level="project" />
     <orderEntry type="library" name="Gradle: commons-pool:commons-pool:1.6" level="project" />
     <orderEntry type="library" name="Gradle: ch.qos.logback:logback-core:1.1.11" level="project" />
-    <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-configuration-processor:1.5.9.RELEASE" level="project" />
+    <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-configuration-processor:1.5.13.RELEASE" level="project" />
   </component>
 </module>

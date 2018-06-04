@@ -143,6 +143,7 @@
                                 baseFilePath: null,
                                 releaseDate: null,
                                 dueDate: null,
+                                maxScore: null,
                                 id: null,
                                 course: Course.get({id: $stateParams.courseid})
                             };

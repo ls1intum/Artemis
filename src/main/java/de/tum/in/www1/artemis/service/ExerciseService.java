@@ -181,23 +181,22 @@ public class ExerciseService {
     }
 
     /**
-     * Delete build plans (except BASE) and optionally repositores of all exercise participations.
+     * Delete build plans (except BASE) and optionally repositories of all exercise participations.
      *
      * @param id id of the exercise for which build plans in respective participations are deleted
      */
-    @Transactional(noRollbackFor = {Throwable.class})
-    public java.io.File cleanup(Long id, boolean deleteRepositories) throws java.io.IOException {
+    @Transactional(noRollbackFor={Throwable.class})
+    public void cleanup(Long id, boolean deleteRepositories) throws java.io.IOException {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
-        List<Repository> studentRepositories = new ArrayList<>();
-        Path finalZipFilePath = null;
 
         if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
             exercise.getParticipations().forEach(participation -> {
                 if (participation.getBuildPlanId() != null) {     //ignore participations without build plan id
                     try {
                         continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-                    } catch (Exception ex) {
+                    }
+                    catch(Exception ex) {
                         log.error(ex.getMessage());
                         if (ex.getCause() != null) {
                             log.error(ex.getCause().getMessage());
@@ -208,42 +207,15 @@ public class ExerciseService {
                     participation.setBuildPlanId(null);
                     participationService.save(participation);
                 }
-                if (deleteRepositories == true && participation.getRepositoryUrl() != null) {     //ignore participations without repository URL
-                    try {
-                        //1. clone the repository
-                        Repository repo = gitService.get().getOrCheckoutRepository(participation);
-                        //2. collect the repo file
-                        studentRepositories.add(repo);
-                    } catch (Exception ex) {
-                        log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected", ex);
-                    }
-                }
             });
 
             if (deleteRepositories == false) {
-                return null;    //in this case, we are done
+                return ;    //in this case, we are done
             }
-
-            if (studentRepositories.isEmpty()) {
-                log.info("No student repositories have been found.");
-                return null;
-            }
-
-            //from here on, deleteRepositories is true and does not need to be evaluated again
-            log.info("Create zip file for all repositories");
-            Files.createDirectories(Paths.get("zippedRepos"));
-            finalZipFilePath = Paths.get("zippedRepos", exercise.getCourse().getTitle() + " " + exercise.getTitle() + " Student Repositories.zip");
-            zipAllRepositories(studentRepositories, finalZipFilePath);
 
             exercise.getParticipations().forEach(participation -> {
                 if (participation.getRepositoryUrl() != null) {      //ignore participations without repository URL
-                    try {
-                        //3. delete the locally cloned repo again
-                        gitService.get().deleteLocalRepository(participation);
-                    } catch (Exception e) {
-                        log.error("Archiving and deleting the repository " + participation.getRepositoryUrlAsUrl() + " did not work as expected", e);
-                    }
-                    //4. finally delete the repository on the VC Server
+                    //delete the repository on the VC Server
                     versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
                     participation.setRepositoryUrl(null);
                     participation.setInitializationState(ParticipationState.FINISHED);
@@ -251,14 +223,11 @@ public class ExerciseService {
                 }
             });
 
-            scheduleForDeletion(finalZipFilePath, 300);
 
         } else {
             log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
-            return null;
+            return;
         }
-
-        return new java.io.File(finalZipFilePath.toString());
     }
 
     public Path zipAllRepositories(List<Repository> repositories, Path zipFilePath) throws IOException {

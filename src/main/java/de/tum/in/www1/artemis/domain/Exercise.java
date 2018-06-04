@@ -10,7 +10,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
-
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
@@ -59,6 +58,9 @@ public abstract class Exercise implements Serializable {
     @Column(name = "due_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime dueDate;
+
+    @Column(name = "max_score")
+    private Double maxScore;
 
     @OneToMany(mappedBy = "exercise")
     @JsonIgnore
@@ -118,6 +120,19 @@ public abstract class Exercise implements Serializable {
 
     public void setDueDate(ZonedDateTime dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public Double getMaxScore() {
+        return maxScore;
+    }
+
+    public Exercise maxScore(Double maxScore) {
+        this.maxScore = maxScore;
+        return this;
+    }
+
+    public void setMaxScore(Double maxScore) {
+        this.maxScore = maxScore;
     }
 
     public Set<Participation> getParticipations() {
@@ -192,7 +207,7 @@ public abstract class Exercise implements Serializable {
      * @return the found participation, or null, if none exist
      */
     public Participation findRelevantParticipation(List<Participation> participations) {
-        Participation result = null;
+        Participation relevantParticipation = null;
         for (Participation participation : participations) {
             if (participation.getExercise().equals(this)) {
                 if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
@@ -202,11 +217,11 @@ public abstract class Exercise implements Serializable {
                 } else if (participation.getInitializationState() == ParticipationState.INACTIVE) {
                     // ParticipationState INACTIVE is also ok
                     // => if we can't find INITIALIZED, we return that one
-                    result = participation;
+                    relevantParticipation = participation;
                 }
             }
         }
-        return result;
+        return relevantParticipation;
     }
 
     /**
@@ -254,6 +269,7 @@ public abstract class Exercise implements Serializable {
             ", title='" + getTitle() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
+            ", maxScore=" + getMaxScore() +
             "}";
     }
 }

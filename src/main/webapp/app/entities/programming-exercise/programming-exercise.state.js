@@ -171,6 +171,7 @@
                                 publishBuildPlanUrl: null,
                                 releaseDate: null,
                                 dueDate: null,
+                                maxScore: null,
                                 id: null,
                                 allowOnlineEditor: null,
                                 course: Course.get({id: $stateParams.courseid})

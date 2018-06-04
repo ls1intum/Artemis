@@ -27,6 +27,7 @@
         vm.showDetails = showDetails;
         vm.getTextColorClass = getTextColorClass;
         vm.getResultIconClass = getResultIconClass;
+        vm.hasFeedback = hasFeedback;
 
         function init() {
 
@@ -102,6 +103,10 @@
                 });
             } else {
                 // take results from participation
+                angular.forEach(vm.participation.results, function(result) {
+                    result.participation = vm.participation;
+                });
+
                 vm.results = vm.participation.results;
             }
         }
@@ -112,6 +117,16 @@
             } else {
                 return result.resultString;
             }
+        }
+
+        function hasFeedback(result) {
+            if (resultString(result) === 'Build failed') {
+                return true;
+            }
+            if (result.hasFeedback === null) {
+                return false;
+            }
+            else return result.hasFeedback;
         }
 
         function hasResults() {

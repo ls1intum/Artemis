@@ -303,15 +303,16 @@ public class BambooService implements ContinuousIntegrationService {
         Map buildResults = new HashMap<>();
         try {
             buildResults = retrieveLatestBuildResult(participation.getBuildPlanId());
-            isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > RESULT_RETRIEVAL_DELAY;
-        } catch (Exception e) {
-            // First try failed.
+            isOldBuildResult = TimeUnit.SECONDS.toMillis(ZonedDateTime.now().toEpochSecond() - ((ZonedDateTime) buildResults.get("buildCompletedDate")).toEpochSecond()) > (20 * 1000);     // older than 20s
+        } catch (Exception ex) {
+            log.warn("Exception when retrieving a Bamboo build result for build plan " + participation.getBuildPlanId() + ": " + ex.getMessage());
         }
 
+        //TODO: put this request into a timer / queue instead of blocking the request! Because blocking the request actually means that other requests cannot be exectuted
         if (isOldBuildResult) {
-            log.debug("It seems we got an old build result from Bamboo. Waiting " + RESULT_RETRIEVAL_DELAY / 1000 + "s to retrieve build result...");
+            log.warn("It seems we got an old build result from Bamboo for build plan " + participation.getBuildPlanId() + ". Waiting 1s to retrieve build result...");
             try {
-                Thread.sleep(RESULT_RETRIEVAL_DELAY);
+                Thread.sleep(1000);
             } catch (InterruptedException e) {
                 log.error("Sleep error", e);
             }
@@ -325,6 +326,8 @@ public class BambooService implements ContinuousIntegrationService {
                 return null;
             }
         }
+
+        //TODO: only save this result if it is newer (e.g. + 5s) than the last saved result for this participation --> this avoids saving exact same results multiple times
 
         Result result = new Result();
         result.setSuccessful((boolean) buildResults.get("successful"));
@@ -519,7 +522,7 @@ public class BambooService implements ContinuousIntegrationService {
         ResponseEntity<Map> response = null;
         try {
             response = restTemplate.exchange(
-                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries",
+                BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=logEntries&max-results=250",
                 HttpMethod.GET,
                 entity,
                 Map.class);

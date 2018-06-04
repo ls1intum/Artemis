@@ -19,6 +19,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ParticipationState.INITIALIZED;
+
 /**
  * Service Implementation for managing Participation.
  */
@@ -91,17 +93,21 @@ public class ParticipationService {
 
         // specific to programming exercises
         if (exercise instanceof ProgrammingExercise) {
+//            if (exercise.getCourse().isOnlineCourse()) {
+//                participation.setLti(true);
+//            } //TODO use in the future
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(ParticipationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);
             participation = configureRepository(participation, programmingExercise);
             participation = copyBuildPlan(participation, programmingExercise);
             participation = configureBuildPlan(participation, programmingExercise);
-            participation.setInitializationState(ParticipationState.INITIALIZED);
+            participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
         } else if (exercise instanceof QuizExercise) {
+//            participation.setLti(false);    // QuizExercises do not support LTI at the moment
             if (participation.getInitializationState() == null) {
-                participation.setInitializationState(ParticipationState.INITIALIZED);
+                participation.setInitializationState(INITIALIZED);
             }
             if (!Optional.ofNullable(participation.getInitializationDate()).isPresent()) {
                 participation.setInitializationDate(ZonedDateTime.now());
@@ -170,7 +176,7 @@ public class ParticipationService {
 
         // construct participation
         participation = new Participation()
-            .initializationState(ParticipationState.INITIALIZED)
+            .initializationState(INITIALIZED)
             .exercise(quizExercise)
             .addResults(result);
 
@@ -198,7 +204,7 @@ public class ParticipationService {
         ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
         participation = copyBuildPlan(participation, programmingExercise);
         participation = configureBuildPlan(participation, programmingExercise);
-        participation.setInitializationState(ParticipationState.INITIALIZED);
+        participation.setInitializationState(INITIALIZED);
         if (participation.getInitializationDate() == null) {
             //only set the date if it was not set before (which should NOT be the case)
             participation.setInitializationDate(ZonedDateTime.now());
@@ -300,7 +306,7 @@ public class ParticipationService {
     public Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username) {
         log.debug("Request to get initialized/inactive Participation for User {} for Exercise with id: {}", username, exerciseId);
 
-        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INITIALIZED);
+        Participation participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, INITIALIZED);
         if(!Optional.ofNullable(participation).isPresent()) {
             participation = participationRepository.findOneByExerciseIdAndStudentLoginAndInitializationState(exerciseId, username, ParticipationState.INACTIVE);
         }
@@ -334,14 +340,19 @@ public class ParticipationService {
     }
 
     @Transactional(readOnly = true)
-    public Participation findOneByBuildPlanId(String buildPlanId) {
+    public List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, ParticipationState state) {
         log.debug("Request to get Participation for build plan id: {}", buildPlanId);
-        return participationRepository.findOneByBuildPlanId(buildPlanId);
+        return participationRepository.findByBuildPlanIdAndInitializationState(buildPlanId, state);
     }
 
     @Transactional(readOnly = true)
     public List<Participation> findByExerciseId(Long exerciseId) {
         return participationRepository.findByExerciseId(exerciseId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Participation> findByExerciseIdWithEagerResults(Long exerciseId) {
+        return participationRepository.findByExerciseIdWithEagerResults(exerciseId);
     }
 
     @Transactional(readOnly = true)
@@ -382,8 +393,14 @@ public class ParticipationService {
             } catch (Exception ex) {
                 log.error("Error while deleting local repository", ex.getMessage());
             }
-
         }
+        if (participation.getResults() != null && participation.getResults().size() > 0) {
+            log.info("Will delete " + participation.getResults().size() + " results");
+            for (Result result : participation.getResults()) {
+                resultRepository.delete(result.getId());
+            }
+        }
+
         participationRepository.delete(id);
     }
 

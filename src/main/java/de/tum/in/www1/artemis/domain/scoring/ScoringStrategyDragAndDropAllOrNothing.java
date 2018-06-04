@@ -2,8 +2,6 @@ package de.tum.in.www1.artemis.domain.scoring;
 
 import de.tum.in.www1.artemis.domain.*;
 
-import java.util.Set;
-
 /**
  * All or nothing means the full score is given if the answer is 100% correct,
  * otherwise a score of 0 is given

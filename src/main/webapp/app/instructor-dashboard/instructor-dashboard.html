@@ -3,10 +3,10 @@
 <jhi-alert></jhi-alert>
 <div>
     <div class="button-toolbar pull-right">
-        <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
+        <button ng-if="$ctrl.exercise.type !== 'quiz'" has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.archive">
             <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.archive.title">Archive</span>
         </button>
-        <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
+        <button ng-if="$ctrl.exercise.type !== 'quiz'" has-any-authority="ROLE_ADMIN, ROLE_INSTRUCTOR" class="btn btn-danger btn-sm" ui-sref="instructor-dashboard.cleanup">
             <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.cleanup.title">Cleanup</span>
         </button>
         <button ng-if="$ctrl.exercise.type !== 'quiz'" class="btn btn-primary btn-sm" ui-sref="instructor-dashboard.exportRepos">
@@ -17,7 +17,10 @@
             <span class="hidden-sm-down" data-translate="artemisApp.exercise.participations">Participations</span>
         </button>
 
-        <button class="btn btn-primary btn-sm" ng-click="$ctrl.export()"><i class="fa fa-download fa-fw"></i>&nbsp;Export
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.exportNames()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Names
+            to CSV
+        </button>
+        <button class="btn btn-primary btn-sm" ng-click="$ctrl.exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results
             to CSV
         </button>
         <button class="btn btn-primary btn-sm" ng-click="$ctrl.refresh()"><i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
@@ -25,13 +28,16 @@
     </div>
 
 
-
     <label class="radio-inline">
-        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults(false)" ng-value="false">
+        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults('unsuccessful')" ng-value="'unsuccessful'">
+        Show unsuccessful
+    </label>
+    <label class="radio-inline">
+        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults('successful')" ng-value="'successful'">
         Show successful
     </label>
     <label class="radio-inline">
-        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults(true)" ng-value="true">
+        <input type="radio" ng-model="$ctrl.showAllResults"  ng-click="$ctrl.toggleShowAllResults('all')" ng-value="'all'">
         Show all
     </label>
 
@@ -76,7 +82,23 @@
         <td>{{ $index + 1 }}</td>
         <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
         <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
-        <td><result participation="result.participation" is-quiz="$ctrl.exercise.type === 'quiz'"></result></td>
+        <td>
+
+            <span ng-class="$ctrl.getTextColorClass(result)">
+                <i ng-if="result.participation.exercise.type !== 'quiz'" class="fa fa-lg" ng-class="$ctrl.getResultIconClass(result)"></i>
+                <span ng-switch on="$ctrl.hasFeedback(result)">
+                    <span ng-switch-when="true">
+                        <a ng-class="$ctrl.getTextColorClass(result)" ng-click="$ctrl.showDetails(result)">{{$ctrl.resultString(result)}}</a>,
+                    </span>
+                    <span ng-switch-when="false">{{$ctrl.resultString(result)}},</span>
+                </span>
+                <strong>Score: {{result.score}}%</strong>, Submission: <span am-time-ago="result.completionDate"></span>
+            </span>
+            <span ng-if="result.buildArtifact">
+                <a href="/api/participations/{{result.participation.id}}/buildArtifact"> &nbsp; <i class="fa fa-file"></i> Download Build Result</a>
+            </span>
+
+        </td>
         <td>{{ result.submissionCount }}</td>
         <td><span ng-show="result.score != null">{{result.score}}%</span></td>
         <td>{{$ctrl.durationString(result.completionDate, result.participation.initializationDate)}} minutes</td>

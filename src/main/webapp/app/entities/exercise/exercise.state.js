@@ -107,6 +107,7 @@
                                     publishBuildPlanUrl: null,
                                     releaseDate: null,
                                     dueDate: null,
+                                    maxScore: null,
                                     id: null,
                                     allowOnlineEditor: null
                                 };
@@ -141,6 +142,7 @@
                                     publishBuildPlanUrl: null,
                                     releaseDate: null,
                                     dueDate: null,
+                                    maxScore: null,
                                     id: null,
                                     allowOnlineEditor: null
                                 };

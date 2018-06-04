@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -124,13 +125,23 @@ public class ResultResource {
         if (planKey.contains("base")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        Participation participation = participationService.findOneByBuildPlanId(planKey);
-        if (Optional.ofNullable(participation).isPresent()) {
+        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, ParticipationState.INITIALIZED);
+        if (participations.size() > 0) {
+            Participation participation = participations.get(0);
+            if (participations.size() > 1) {
+                //in the rare case of multiple participations, take the latest one.
+                for (Participation otherParticipation : participations) {
+                    if (otherParticipation.getInitializationDate().isAfter(participation.getInitializationDate())) {
+                        participation = otherParticipation;
+                    }
+                }
+            }
             //TODO: we should also get build dates after the due date, but mark the result accordingly
             if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
                 resultService.onResultNotified(participation);
                 return ResponseEntity.ok().build();
-            } else {
+            }
+            else {
                 log.warn("REST request for new result of overdue exercise. Participation: {}", participation);
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
@@ -170,21 +181,6 @@ public class ResultResource {
             .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, result.getId().toString()))
             .body(result);
     }
-
-    //Deactivated because it would load all (thousands) results and completely overload the server
-    //TODO: activate this call again using the infinite scroll page mechanism
-//    /**
-//     * GET  /results : get all the results.
-//     *
-//     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-//     */
-//    @GetMapping("/results")
-//    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
-//    @Timed
-//    public List<Result> getAllResults() {
-//        log.debug("REST request to get all Results");
-//        return resultRepository.findAll();
-//    }
 
     /**
      * GET  /courses/:courseId/exercises/:exerciseId/participations/:participationId/results : get all the results for "id" participation.
@@ -257,13 +253,14 @@ public class ResultResource {
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/results")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
+    @Transactional(readOnly = true)
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
                                               @PathVariable Long exerciseId,
-                                              @RequestParam(defaultValue = "false") boolean showAllResults,
                                               @RequestParam(defaultValue = "false") boolean ratedOnly) {
+        long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
-        Exercise exercise = exerciseService.findOne(exerciseId);
+        Exercise exercise = exerciseService.findOneLoadParticipations(exerciseId);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
@@ -272,26 +269,25 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
-        //TODO use rated only in case it is true
+        //TODO use rated only in case the given request param is true
 
-        List<Result> results;
-        if (showAllResults) {
-            results = resultRepository.findLatestResultsForExercise(exerciseId);
-        } else {
-            results = resultRepository.findEarliestSuccessfulResultsForExercise(exerciseId);
+        List<Result> results = new ArrayList<>();
+
+        List<Participation> participations = participationService.findByExerciseIdWithEagerResults(exerciseId);
+
+        for (Participation participation : participations) {
+
+            Result relevantResult = exercise.findLatestRelevantResult(participation);
+
+            if (relevantResult == null) {
+                continue;
+            }
+
+            relevantResult.setSubmissionCount(new Long(participation.getResults().size()));
+            results.add(relevantResult);
         }
 
-        //Each object array in the list contains two Long values, participation id (index 0) and
-        //number of results for this participation (index 1)
-        List<Object[]> submissionCounts = resultRepository.findSubmissionCountsForStudents(exerciseId);
-
-        //Matches each result with the number of results in corresponding participation
-        results.forEach(result ->
-            submissionCounts.forEach(submissionCount -> {
-                if (result.getParticipation().getId().equals(submissionCount[0])) {
-                    result.setSubmissionCount((Long) submissionCount[1]);
-                }
-            }));
+        log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
 
         return ResponseEntity.ok().body(results);
     }

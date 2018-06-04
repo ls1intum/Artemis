@@ -8,7 +8,6 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
-
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
@@ -28,7 +27,6 @@ public class Result implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-
     @JsonView(QuizView.Before.class)
     private Long id;
 

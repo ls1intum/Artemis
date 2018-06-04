@@ -1,17 +1,13 @@
 package de.tum.in.www1.artemis.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
-
 import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -51,6 +47,10 @@ public class Participation implements Serializable {
     @Column(name = "initialization_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
+
+//    @Column(name = "lti")
+//    private Boolean lti;  //TODO: use this in the future
+
 
     @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
     @JsonIgnoreProperties("participation")
@@ -130,6 +130,19 @@ public class Participation implements Serializable {
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
     }
+
+//    public Boolean isLti() {
+//        return lti;
+//    }
+//
+//    public Participation lti(Boolean lti) {
+//        this.lti = lti;
+//        return this;
+//    }
+//
+//    public void setLti(Boolean lti) {
+//        this.lti = lti;
+//    }
 
     public Set<Result> getResults() {
         return results;
