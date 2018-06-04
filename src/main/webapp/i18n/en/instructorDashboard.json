@@ -8,6 +8,10 @@
             "archive": {
                 "title": "Archive",
                 "question": "Are you sure you want to archive ALL student repositories for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}?"
+            },
+            "exportRepos": {
+                "title": "Download Repos",
+                "question": "Enter all ids of students you want to download the repo from"
             }
         }
     }

@@ -9604,3 +9604,11 @@ a.result-orange:hover {
 
 #feedbackErrorText {
   resize: vertical; }
+
+.export-textarea {
+  min-height: 60px;
+  width: 100%; }
+
+.export-submit:disabled{
+  color: #adadad;
+}

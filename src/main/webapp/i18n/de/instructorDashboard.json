@@ -8,6 +8,10 @@
             "archive": {
                 "title": "Archivieren",
                 "question": "Sollen wirklich ALLE Studierenden Repositories für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} archiviert werden?"
+            },
+            "exportRepos": {
+                "title": "Abgaben herunterladen",
+                "question": "Tragen sie hier alle Kennungen der Studenten ein, die heruntergeladen werden sollen"
             }
         }
     }

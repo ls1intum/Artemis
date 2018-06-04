@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -335,6 +336,39 @@ public class ExerciseResource {
         }
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         log.info("Archive repositories was successful for Exercise : {}", id);
+        return ResponseEntity.ok()
+            .contentLength(zipFile.length())
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header("filename", zipFile.getName())
+            .body(resource);
+    }
+    /**
+    * GET  /exercises/:id/participations/:studentIds : sends all submissions from studentlist as zip
+        *
+        * @param id the id of the exercise to get the repos from
+        * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * @return ResponseEntity with status
+     */
+    @GetMapping(value = "/exercises/{id}/participations/{studentIds}")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long id, @PathVariable String studentIds) throws IOException {
+        Exercise exercise = exerciseService.findOne(id);
+        Course course = exercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
+
+        File zipFile = exerciseService.exportParticipations(id,studentList);
+        if (zipFile == null) {
+            return ResponseEntity.noContent()
+                .headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created", ""))
+                .build();
+        }
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
         return ResponseEntity.ok()
             .contentLength(zipFile.length())
             .contentType(MediaType.APPLICATION_OCTET_STREAM)

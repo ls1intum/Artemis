@@ -102,8 +102,7 @@ public class ExerciseService {
             authCheckService.isTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
             exercises = exerciseRepository.findByCourseId(course.getId());
-        }
-        else if (authCheckService.isStudentInCourse(course, user)) {
+        } else if (authCheckService.isStudentInCourse(course, user)) {
             // user is student for this course and might not have the right to see it so we have to filter
             exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());
             // filter out exercises that are not released (or explicitly made visible to students) yet
@@ -149,7 +148,7 @@ public class ExerciseService {
     public Exercise findOneLoadParticipations(Long id) {
         log.debug("Request to find Exercise with participations loaded: {}", id);
         Exercise exercise = findOne(id);
-        if(Optional.ofNullable(exercise).isPresent()) {
+        if (Optional.ofNullable(exercise).isPresent()) {
             exercise.getParticipations().size();
         }
         return exercise;
@@ -160,7 +159,7 @@ public class ExerciseService {
      *
      * @param exercise
      */
-    @Transactional(noRollbackFor={Throwable.class})
+    @Transactional(noRollbackFor = {Throwable.class})
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
@@ -186,7 +185,7 @@ public class ExerciseService {
      *
      * @param id id of the exercise for which build plans in respective participations are deleted
      */
-    @Transactional(noRollbackFor={Throwable.class})
+    @Transactional(noRollbackFor = {Throwable.class})
     public java.io.File cleanup(Long id, boolean deleteRepositories) throws java.io.IOException {
         Exercise exercise = findOneLoadParticipations(id);
         log.info("Request to cleanup all participations for Exercise : {}", exercise.getTitle());
@@ -198,8 +197,7 @@ public class ExerciseService {
                 if (participation.getBuildPlanId() != null) {     //ignore participations without build plan id
                     try {
                         continuousIntegrationService.get().deleteBuildPlan(participation.getBuildPlanId());
-                    }
-                    catch(Exception ex) {
+                    } catch (Exception ex) {
                         log.error(ex.getMessage());
                         if (ex.getCause() != null) {
                             log.error(ex.getCause().getMessage());
@@ -292,6 +290,63 @@ public class ExerciseService {
         return zipFilePath;
     }
 
+    @Transactional(readOnly = true)
+    public java.io.File exportParticipations(Long id, List<String> studentIds) {
+        Exercise exercise = findOneLoadParticipations(id);
+        List<Path> zippedRepoFiles = new ArrayList<>();
+        Path zipFilePath = null;
+        if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
+            exercise.getParticipations().forEach(participation -> {
+                try {
+                    if (participation.getRepositoryUrl() != null && studentIds.contains(participation.getStudent().getLogin())) {
+                        boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
+
+                        Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                        log.info("Create temporary zip file for repository " + repo.getLocalPath().toString());
+
+                        Path zippedRepoFile = gitService.get().zipRepository(repo);
+                        zippedRepoFiles.add(zippedRepoFile);
+                        boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor() == true;
+                        if(!allowInlineEditor){ //if onlineeditor is not allowed we are free to delete
+                            log.info("Delete temporary repoistory "+ repo.getLocalPath().toString());
+                            gitService.get().deleteLocalRepository(participation);
+                        }
+                        if (allowInlineEditor && !repoAlreadyExists){ //if onlineEditor is allowed only delete if the repo didn't exist beforehand
+                            log.info("Delete temporary repoistory "+ repo.getLocalPath().toString());
+                            gitService.get().deleteLocalRepository(participation);
+                        }
+
+                    }
+                } catch (IOException | GitAPIException ex) {
+                    log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected");
+                }
+            });
+            if (!exercise.getParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
+                try {
+                    // create a large zip file with all zipped repos and provide it for download
+                    log.info("Create zip file for all repositories");
+                    zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() +studentIds.hashCode()+ ".zip");
+                    createZipFile(zipFilePath, zippedRepoFiles);
+                    scheduleForDeletion(zipFilePath, 10);
+
+                    log.info("Delete all temporary zip repo files");
+                    //delete the temporary zipped repo files
+                    for (Path zippedRepoFile : zippedRepoFiles) {
+                        Files.delete(zippedRepoFile);
+                    }
+                } catch (IOException ex) {
+                    log.error("Archiving and deleting the local repositories did not work as expected");
+                }
+            } else {
+                log.info("The zip file could not be created. Ignoring the request to export repositories", id);
+                return null;
+            }
+        } else {
+            log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", id);
+            return null;
+        }
+        return new java.io.File(zipFilePath.toString());
+    }
 
     //does not delete anything
     @Transactional(readOnly = true)
@@ -335,13 +390,11 @@ public class ExerciseService {
                 } catch (IOException ex) {
                     log.error("Archiving and deleting the local repositories did not work as expected");
                 }
-            }
-            else {
+            } else {
                 log.info("The zip file could not be created. Ignoring the request to archive repositories", id);
                 return null;
             }
-        }
-        else {
+        } else {
             log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to archive repositories", id);
             return null;
         }
