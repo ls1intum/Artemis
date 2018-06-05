@@ -362,11 +362,13 @@ public class ExerciseService {
                 } catch (IOException ex) {
                     log.error("Archiving and deleting the local repositories did not work as expected");
                 }
-            } else {
+            }
+            else {
                 log.info("The zip file could not be created. Ignoring the request to archive repositories", id);
                 return null;
             }
-        } else {
+        }
+        else {
             log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to archive repositories", id);
             return null;
         }
