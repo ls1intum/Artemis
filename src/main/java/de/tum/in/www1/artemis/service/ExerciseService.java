@@ -102,7 +102,8 @@ public class ExerciseService {
             authCheckService.isTeachingAssistantInCourse(course, user)) {
             // user can see this exercise
             exercises = exerciseRepository.findByCourseId(course.getId());
-        } else if (authCheckService.isStudentInCourse(course, user)) {
+        }
+        else if (authCheckService.isStudentInCourse(course, user)) {
             // user is student for this course and might not have the right to see it so we have to filter
             exercises = withLtiOutcomeUrlExisting ? exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), principal) : exerciseRepository.findByCourseId(course.getId());
             // filter out exercises that are not released (or explicitly made visible to students) yet
@@ -148,7 +149,7 @@ public class ExerciseService {
     public Exercise findOneLoadParticipations(Long id) {
         log.debug("Request to find Exercise with participations loaded: {}", id);
         Exercise exercise = findOne(id);
-        if (Optional.ofNullable(exercise).isPresent()) {
+        if(Optional.ofNullable(exercise).isPresent()) {
             exercise.getParticipations().size();
         }
         return exercise;
@@ -159,7 +160,7 @@ public class ExerciseService {
      *
      * @param exercise
      */
-    @Transactional(noRollbackFor = {Throwable.class})
+    @Transactional(noRollbackFor={Throwable.class})
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
@@ -275,7 +276,7 @@ public class ExerciseService {
 
                         Path zippedRepoFile = gitService.get().zipRepository(repo);
                         zippedRepoFiles.add(zippedRepoFile);
-                        boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor() == true;
+                        boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
                         if(!allowInlineEditor){ //if onlineeditor is not allowed we are free to delete
                             log.info("Delete temporary repoistory "+ repo.getLocalPath().toString());
                             gitService.get().deleteLocalRepository(participation);
@@ -306,11 +307,13 @@ public class ExerciseService {
                 } catch (IOException ex) {
                     log.error("Archiving and deleting the local repositories did not work as expected");
                 }
-            } else {
+            }
+            else {
                 log.info("The zip file could not be created. Ignoring the request to export repositories", id);
                 return null;
             }
-        } else {
+        }
+        else {
             log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", id);
             return null;
         }
