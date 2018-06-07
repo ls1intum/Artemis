@@ -26,6 +26,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.sun.activation.registries.LogSupport.log;
+
 /**
  * REST controller for managing Course.
  */
@@ -152,8 +154,10 @@ public class CourseResource {
                 exercisesJson.add(exerciseJson);
             }
 
+            double totalScore = courseService.getTotalScoreForUserInCourseWithId(course.getId(), user.getId());
             // add exercises to course
             courseJson.set("exercises", exercisesJson);
+            courseJson.set("totalScore", objectMapper.convertValue(totalScore, JsonNode.class));
             coursesJson.add(courseJson);
         }
 

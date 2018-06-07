@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -26,15 +27,17 @@ public class CourseService {
     private final UserService userService;
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
+    private final ParticipationRepository participationRepository;
 
     public CourseService(CourseRepository courseRepository,
                          UserService userService,
                          ExerciseService exerciseService,
-                         AuthorizationCheckService authCheckService) {
+                         AuthorizationCheckService authCheckService, ParticipationRepository participationRepository) {
         this.courseRepository = courseRepository;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -215,6 +218,7 @@ public class CourseService {
         //key stores the userId to identify if he already got a score, value contains the Result itself with the score of the user
         HashMap<Long, Result> allOverallSummedScoresOfCourse = new HashMap<>();
 
+        //overall score for one user
         for (Exercise exercise : exercisesOfCourse) {
             Set<Participation> participations = exercise.getParticipations();
             boolean exerciseHasDueDate = exercise.getDueDate() != null;
@@ -245,6 +249,28 @@ public class CourseService {
         }
 
         return allOverallScores;
+    }
+
+    @Transactional(readOnly = true)
+    public double getTotalScoreForUserInCourseWithId(Long courseId, Long userId) {
+        Course course = findOne(courseId);
+        Set<Exercise> exercisesOfCourse = course.getExercises();
+        double courseTotalResult = 0.0;
+        User user = userService.getUser();
+
+        //overall score for one user
+        for (Exercise exercise : exercisesOfCourse) {
+            //can retrieve only those participations from the user
+            Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+            boolean exerciseHasDueDate = exercise.getDueDate() != null;
+            if(participation != null) {
+                Result bestResultForExercise = choseResultInParticipation(participation, exerciseHasDueDate);
+                log.debug("For this exercise " + exercise.getTitle() + "  the score is " + bestResultForExercise.getScore());
+                courseTotalResult = (bestResultForExercise.getScore()*0.01 * exercise.getMaxScore() + courseTotalResult);
+            }
+        }
+        log.debug("The total score for the course " + course.getTitle() + " is " + courseTotalResult);
+        return courseTotalResult;
     }
 
     /**
@@ -289,4 +315,6 @@ public class CourseService {
 
         return chosenResult;
     }
+
+
 }
