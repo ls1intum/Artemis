@@ -6,7 +6,8 @@
         .factory('CourseExercises', CourseExercises)
         .factory('CourseProgrammingExercises', CourseProgrammingExercises)
         .factory('CourseQuizExercises', CourseQuizExercises)
-        .factory('CourseScores', CourseScores);
+        .factory('CourseScores', CourseScores)
+        .factory('CourseTotalScore', CourseTotalScore);
 
 
     Course.$inject = ['$resource', 'DateUtils'];
@@ -156,10 +157,31 @@
     CourseScores.$inject = ['$resource'];
 
     function CourseScores($resource) {
+
         var resourceUrl =  'api/courses/:courseId/getAllCourseScoresOfCourseUsers';
 
         return $resource(resourceUrl, {}, {
             'query': { method: 'GET', isArray: true},
+            'get': {
+                method: 'GET',
+                transformResponse: function (data) {
+                    if (data) {
+                        data = angular.fromJson(data);
+                    }
+                    return data;
+                },
+                ignoreLoadingBar: true
+            }
+        });
+    }
+
+    CourseTotalScore.$inject = ['$resource'];
+
+    function CourseTotalScore($resource) {
+        var resourceUrl =  'api/courses/:id/getCourseTotalScoreForUser';
+
+        return $resource(resourceUrl, {}, {
+            'query': { method: 'GET'},
             'get': {
                 method: 'GET',
                 transformResponse: function (data) {
