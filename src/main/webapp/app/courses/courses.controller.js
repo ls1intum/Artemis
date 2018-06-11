@@ -5,13 +5,15 @@
         .module('artemisApp')
         .controller('CoursesController', CoursesController);
 
-    CoursesController.$inject = ['$scope', '$q', '$state', 'Course', '$http', 'Principal'];
+    CoursesController.$inject = ['$scope', '$q', '$state', 'Course', '$http', 'Principal', 'CourseTotalScore' ];
 
-    function CoursesController($scope, $q, $state, Course, $http, Principal) {
+    function CoursesController($scope, $q, $state, Course, $http, Principal, CourseTotalScore) {
         var vm = this;
 
         vm.filterByCourseId = _.toInteger(_.get($state, "params.courseId"));
         vm.filterByExerciseId = _.toInteger(_.get($state, "params.exerciseId"));
+
+        vm.listOfCourseScores = {};
 
         loadAll();
 
@@ -51,6 +53,13 @@
                 }
             }).catch(function () {
                 return null;
+            });
+        }
+
+        $scope.buttonClicked = function buttonClicked(courseId) {
+            console.log(courseId);
+            CourseTotalScore.query({id: courseId}).$promise.then(function (totalScoreInfo) {
+                vm.listOfCourseScores[courseId]= totalScoreInfo.totalScore;
             });
         }
     }

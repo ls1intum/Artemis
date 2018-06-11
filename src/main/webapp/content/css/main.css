@@ -4706,10 +4706,14 @@ button.list-group-item-danger {
     clear: both; }
 
 .panel-heading {
-  padding: 10px 15px;
-  border-bottom: 1px solid transparent;
-  border-top-right-radius: 3px;
-  border-top-left-radius: 3px; }
+    align-items: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-right-radius: 3px;
+    border-top-left-radius: 3px; }
   .panel-heading > .dropdown .dropdown-toggle {
     color: inherit; }
 
@@ -8223,7 +8227,8 @@ body {
   vertical-align: baseline; }
 
 .panel-heading {
-  outline: none; }
+  outline: none;
+}
 
 .panel.collapsed .panel-body,
 .panel.collapsed .panel-second-header,
@@ -9407,6 +9412,28 @@ ul#strength {
   width: 20px; }
   .point:last {
     margin: 0 !important; }
+
+  .totalScoreWrapper {
+      display: flex;
+      align-items: center;
+      flex-direction: row;
+      float: right;
+  }
+
+  .btn-total-score {
+      color: #337ab7;
+      border: none;
+  }
+
+  .btn-total-score:focus {
+       outline:0;
+   }
+
+  .span-total-score {
+      margin-left: 5px;
+      margin-right: 5px;
+      width: 20px;
+  }
 
 /* ==========================================================================
 Custom alerts for notification
