@@ -252,23 +252,43 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public double getTotalScoreForUserInCourseWithId(Long courseId, Long userId) {
+    public double getTotalScoreForUserInCourseWithId(Long courseId) {
         Course course = findOne(courseId);
         Set<Exercise> exercisesOfCourse = course.getExercises();
         double courseTotalResult = 0.0;
         User user = userService.getUser();
 
-        //overall score for one user
-        for (Exercise exercise : exercisesOfCourse) {
-            //can retrieve only those participations from the user
-            Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
-            boolean exerciseHasDueDate = exercise.getDueDate() != null;
-            if(participation != null) {
-                Result bestResultForExercise = choseResultInParticipation(participation, exerciseHasDueDate);
-                log.debug("For this exercise " + exercise.getTitle() + "  the score is " + bestResultForExercise.getScore());
-                courseTotalResult = (bestResultForExercise.getScore()*0.01 * exercise.getMaxScore() + courseTotalResult);
+            //retrieves all the participations of the user in a course
+            List<Participation> participations = participationRepository.findByCourseIdAndStudentLogin(courseId, user.getLogin());
+
+            for (Exercise exercise : exercisesOfCourse) {
+               List<Participation> exerciseParticipations = participations
+                   .stream()
+                   .filter(participation -> participation.getExercise().getId() == exercise.getId())
+                   .collect(Collectors.toList());
+
+               //if more than one participation for execrise then we pick the latest one
+                exerciseParticipations.sort(Comparator.comparing(Participation::getInitializationDate).reversed());
+
+                log.debug("Retrieving " + exerciseParticipations.size() + " participations");
+
+                boolean exerciseHasDueDate = exercise.getDueDate() != null;
+
+                if(exerciseParticipations != null && !exerciseParticipations.isEmpty()) {
+
+                    //find best result within deadline for the latest participation
+                    Result bestResultForExercise = choseResultInParticipation(exerciseParticipations.get(0), exerciseHasDueDate);
+
+                    log.debug(bestResultForExercise.toString());
+
+                    if(exercise.getMaxScore() != null)  {
+                        courseTotalResult = (bestResultForExercise.getScore()*0.01 * exercise.getMaxScore() + courseTotalResult);
+
+                        log.debug("For this exercise " + exercise.getTitle() + "  the score is " + bestResultForExercise.getScore());
+                    }
+                }
             }
-        }
+
         log.debug("The total score for the course " + course.getTitle() + " is " + courseTotalResult);
         return courseTotalResult;
     }
