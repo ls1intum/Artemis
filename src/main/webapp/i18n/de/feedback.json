@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "feedback" : {
             "home": {
                 "title": "Feedbacks",
@@ -17,7 +18,6 @@
             },
             "text": "Text",
             "detailText": "Detail Text",
-            "positive": "Positive",
             "type": "Type",
             "result": "Result"
         }

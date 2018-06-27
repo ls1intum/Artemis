@@ -53,7 +53,7 @@ public abstract class Exercise implements Serializable {
 
     @Column(name = "release_date")
     @JsonView(QuizView.Before.class)
-    protected ZonedDateTime releaseDate;
+    private ZonedDateTime releaseDate;
 
     @Column(name = "due_date")
     @JsonView(QuizView.Before.class)
@@ -64,7 +64,7 @@ public abstract class Exercise implements Serializable {
 
     @OneToMany(mappedBy = "exercise")
     @JsonIgnore
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
     private Set<Participation> participations = new HashSet<>();
 
     @ManyToOne
@@ -144,13 +144,13 @@ public abstract class Exercise implements Serializable {
         return this;
     }
 
-    public Exercise addParticipations(Participation participation) {
+    public Exercise addParticipation(Participation participation) {
         this.participations.add(participation);
         participation.setExercise(this);
         return this;
     }
 
-    public Exercise removeParticipations(Participation participation) {
+    public Exercise removeParticipation(Participation participation) {
         this.participations.remove(participation);
         participation.setExercise(null);
         return this;
@@ -218,6 +218,8 @@ public abstract class Exercise implements Serializable {
                     // ParticipationState INACTIVE is also ok
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
+                } else if (participation.getExercise() instanceof ModelingExercise) {
+                    return participation;
                 }
             }
         }

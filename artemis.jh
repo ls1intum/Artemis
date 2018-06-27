@@ -58,7 +58,6 @@ entity ProgrammingExercise {        //extends Exercise
 }
 
 entity ModelingExercise {           //extends Exercise
-	baseFilePath String
 }
 
 
@@ -151,7 +150,14 @@ entity Result (result) {
   buildArtifact Boolean,
   score Long,
   rated Boolean,
-  hasFeedback Boolean
+  hasFeedback Boolean,
+  assessmentType AssessmentType
+}
+
+enum AssessmentType {
+    AUTOMATIC,
+    MANUAL,
+    SEMIAUTOMATIC
 }
 
 entity Feedback(feedback) {
@@ -186,7 +192,7 @@ entity Submission {  //abstract
 }
 
 entity ModelingSubmission {         //extends Submission
-	submissionPath String
+	model String
 }
 
 entity QuizSubmission {             //extends Submission
@@ -202,6 +208,11 @@ entity DragAndDropMapping {
 	dragItemIndex Integer
     dropLocationIndex Integer
     invalid Boolean
+}
+
+entity ApollonDiagram {
+    title String
+    jsonRepresentation String
 }
 
 relationship OneToMany {
@@ -227,7 +238,8 @@ relationship OneToOne {
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
     Result{submission} to Submission,
-    LtiUserId{user} to User
+    LtiUserId{user} to User,
+    Result{assessor} to User
 }
 
 relationship ManyToOne {

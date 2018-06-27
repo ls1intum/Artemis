@@ -384,7 +384,7 @@ public class QuizScheduleService {
             result.evaluateSubmission();
 
             // add result to participation
-            participation.addResults(result);
+            participation.addResult(result);
             participation.setInitializationState(ParticipationState.FINISHED);
 
             //save participation with result and quizSubmission

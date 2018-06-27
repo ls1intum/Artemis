@@ -6,6 +6,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -38,4 +40,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findOneWithAuthoritiesByLogin(String login);
 
     Page<User> findAllByLoginNot(Pageable pageable, String login);
+
+    @Query("SELECT r.participation.student.id FROM Result r WHERE r.submission.id = :#{#submissionId}")
+    Long findUserIdBySubmissionId(@Param("submissionId") Long submissionId);
 }

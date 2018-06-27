@@ -1,0 +1,20 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "title",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "jsonRepresentation",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20180313165121",
+    "entityTableName": "apollon_diagram",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

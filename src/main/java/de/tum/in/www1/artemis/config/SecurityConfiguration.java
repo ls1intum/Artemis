@@ -2,10 +2,9 @@ package de.tum.in.www1.artemis.config;
 
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.PBEPasswordEncoder;
+import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import io.github.jhipster.config.JHipsterProperties;
-import io.github.jhipster.security.AjaxAuthenticationFailureHandler;
-import io.github.jhipster.security.AjaxAuthenticationSuccessHandler;
-import io.github.jhipster.security.AjaxLogoutSuccessHandler;
 import org.jasypt.encryption.pbe.StandardPBEStringEncryptor;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,9 +19,10 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.data.repository.query.SecurityEvaluationContextExtension;
-import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.web.filter.CorsFilter;
@@ -39,31 +39,28 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final UserDetailsService userDetailsService;
-    private final JHipsterProperties jHipsterProperties;
-    private final RememberMeServices rememberMeServices;
+    private final TokenProvider tokenProvider;
     private final CorsFilter corsFilter;
     private final SecurityProblemSupport problemSupport;
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
+    private final JHipsterProperties jHipsterProperties;
 
-    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService,
-                                 JHipsterProperties jHipsterProperties, RememberMeServices rememberMeServices,
-                                 CorsFilter corsFilter, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, SecurityProblemSupport problemSupport) {
-
+    public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService,TokenProvider tokenProvider,CorsFilter corsFilter, SecurityProblemSupport problemSupport, Optional<AuthenticationProvider> remoteUserAuthenticationProvider, JHipsterProperties jHipsterProperties) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
-        this.jHipsterProperties = jHipsterProperties;
-        this.rememberMeServices = rememberMeServices;
+        this.tokenProvider = tokenProvider;
         this.corsFilter = corsFilter;
-        this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
         this.problemSupport = problemSupport;
+        this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
+        this.jHipsterProperties = jHipsterProperties;
     }
 
     @PostConstruct
     public void init() {
         try {
             authenticationManagerBuilder
-            .userDetailsService(userDetailsService)
-            .passwordEncoder(passwordEncoder());
+                .userDetailsService(userDetailsService)
+                .passwordEncoder(passwordEncoder());
             if(remoteUserAuthenticationProvider.isPresent()) {
                 authenticationManagerBuilder.authenticationProvider(remoteUserAuthenticationProvider.get());
             }
@@ -76,7 +73,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private String ENCRYPTION_PASSWORD;
 
     @Bean
-    public PBEPasswordEncoder passwordEncoder() {
+    public PasswordEncoder passwordEncoder() {
         PBEPasswordEncoder encoder = new PBEPasswordEncoder();
         encoder.setPbeStringEncryptor(encryptor());
         return encoder;
@@ -90,20 +87,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return encryptor;
     }
 
-    public AjaxAuthenticationSuccessHandler ajaxAuthenticationSuccessHandler() {
-        return new AjaxAuthenticationSuccessHandler();
-    }
-
-    @Bean
-    public AjaxAuthenticationFailureHandler ajaxAuthenticationFailureHandler() {
-        return new AjaxAuthenticationFailureHandler();
-    }
-
-    @Bean
-    public AjaxLogoutSuccessHandler ajaxLogoutSuccessHandler() {
-        return new AjaxLogoutSuccessHandler();
-    }
-
     @Override
     public void configure(WebSecurity web) throws Exception {
         web.ignoring()
@@ -112,7 +95,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/bower_components/**")
             .antMatchers("/i18n/**")
             .antMatchers("/content/**")
-            .antMatchers("/swagger-ui/index.html")
             .antMatchers("/test/**");
 
         web.ignoring()
@@ -133,34 +115,19 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .accessDeniedHandler(problemSupport)
         .and()
             .rememberMe()
-            .rememberMeServices(rememberMeServices)
             .rememberMeParameter("remember-me")
             .key(jHipsterProperties.getSecurity().getRememberMe().getKey())
-        .and()
-            .formLogin()
-            .loginProcessingUrl("/api/authentication")
-            .successHandler(ajaxAuthenticationSuccessHandler())
-            .failureHandler(ajaxAuthenticationFailureHandler())
-            .usernameParameter("j_username")
-            .passwordParameter("j_password")
-            .permitAll()
-        .and()
-            .logout()
-            .logoutUrl("/api/logout")
-            .logoutSuccessHandler(ajaxLogoutSuccessHandler())
-            .permitAll()
         .and()
             .headers()
             .frameOptions()
             .disable()
         .and()
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+        .and()
             .authorizeRequests()
-            .antMatchers("/api/register").permitAll()
-            .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
-            .antMatchers("/api/account/reset-password/init").permitAll()
-            .antMatchers("/api/account/reset-password/finish").permitAll()
             .antMatchers("/api/profile-info").permitAll()
             .antMatchers("/api/**").authenticated()
             .antMatchers("/websocket/tracker").hasAuthority(AuthoritiesConstants.ADMIN)
@@ -168,13 +135,17 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/**").hasAuthority(AuthoritiesConstants.ADMIN)
             .antMatchers("/v2/api-docs/**").permitAll()
-            .antMatchers("/swagger-resources/configuration/ui").permitAll()
-            .antMatchers("/swagger-ui/index.html").hasAuthority(AuthoritiesConstants.ADMIN);
+        .and()
+            .apply(securityConfigurerAdapter());
+
+    }
+
+    private JWTConfigurer securityConfigurerAdapter() {
+        return new JWTConfigurer(tokenProvider);
     }
 
     @Bean
     public SecurityEvaluationContextExtension securityEvaluationContextExtension() {
         return new SecurityEvaluationContextExtension();
     }
-
 }

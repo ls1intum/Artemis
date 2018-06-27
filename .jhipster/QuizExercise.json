@@ -50,9 +50,10 @@
             "fieldType": "Integer"
         }
     ],
-    "changelogDate": "20170831094146",
+    "changelogDate": "20171130173540",
     "entityTableName": "quiz_exercise",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

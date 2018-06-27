@@ -1,0 +1,117 @@
+
+{
+    "arTeMiSApp": {
+        "quizExercise" : {
+            "home": {
+                "title": "Quiz Exercises",
+                "createLabel": "Create a new Quiz Exercise",
+                "createOrEditLabel": "Create or edit a Quiz Exercise"
+            },
+            "created": "A new Quiz Exercise is created with identifier {{ param }}",
+            "updated": "A Quiz Exercise is updated with identifier {{ param }}",
+            "deleted": "A Quiz Exercise is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Quiz Exercise {{ id }}?"
+            },
+            "edit": {
+                "title": "Edit Quiz Exercise for {{ param }}",
+                "addQuestion": "Add Question",
+                "invalidInput": "Invalid Input",
+                "pendingChanges": "Unsaved Changes",
+                "saving": "Saving…",
+                "saved": "Saved!",
+                "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\", once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)"
+            },
+            "new": {
+                "title": "New Quiz Exercise for {{ param }}"
+            },
+            "description": "Description",
+            "explanation": "Explanation",
+            "randomizeQuestionOrder": "Present Questions in Random Order",
+            "allowedNumberOfAttempts": "Allowed Number Of Attempts",
+            "isVisibleBeforeStart": "Is Visible Before Start",
+            "isOpenForPractice": "Is Open For Practice",
+            "isPlannedToStart": "Is Planned To Start",
+            "openForPractice": "Release For Practice",
+            "startNow": "Start Now",
+            "showNow": "Set Visible",
+            "duration": "Duration",
+            "minutes": "minutes",
+            "seconds": "seconds",
+            "minutesShort": "min",
+            "secondsShort": "s",
+            "questions": "Questions",
+            "multipleChoiceQuestion": "Add Multiple-Choice Question",
+            "dragAndDropQuestion": "Add Drag-And-Drop Question",
+            "status": "Status",
+            "startTime": "Start Time",
+            "quizPointStatistic": "Quiz Point Statistic",
+            "quiz": "Quiz",
+            "totalPoints": "Total Points",
+            "totalScore": "Result",
+            "remainingTime": "Remaining Time",
+            "waitingForStart": "Waiting for Start",
+            "quizInstructions": {
+                "default": "Mark the correct answers for each question and click the \"Submit\" button, when you're done.",
+                "wait": "Please wait until the quiz has ended to see your results.",
+                "result": "You have finished the quiz with {{userScore}} out of {{maxScore}} points ({{percentage}} %).",
+                "waitForStart": "Please wait.<br><br>This page will refresh automatically, when the quiz starts.",
+                "timeUntilPlannedStart": "Time until planned start:"
+            },
+            "lastSaved": "Saved",
+            "submitted": "Submitted",
+            "connected": "Connected",
+            "disconnected": "Disconnected",
+            "unsavedChanges": "Unsaved Changes",
+            "statistics": "Statistics",
+            "practiceMode": "Practice",
+            "previewMode": "Preview",
+            "preview": "Preview Quiz",
+            "solution": "Sample Solution",
+            "quizIsOverText": "The quiz has ended. Please wait. The results will load automatically.",
+            "statisticsNotPublished": "The instructor has not published any statistics.",
+            "successfullySubmittedText": "Your answers have been successfully submitted!<br><br>The results will appear when the quiz has ended.",
+            "re-evaluate": {
+                "title": "Re-evaluate Quiz Exercise for {{ param }}",
+                "resetQuiz": "Reset Quiz Exercise",
+                "setQuestionInvalid": "Set question invalid",
+                "questionIsInvalid": "Question is invalid",
+                "setAnswerInvalid": "Set answer invalid",
+                "answerIsInvalid": "Answer is invalid",
+                "warning": {
+                    "warning": "Warning!",
+                    "confirm": "Confirm changes",
+                    "problems": "The following problems may occur:",
+                    "answer_deleted": "Answer option deleted:",
+                    "answer_invalid": "Answer option set invalid:",
+                    "answer_correctness": "Solution of an answer option changed:",
+                    "question_deleted": "Question deleted:",
+                    "question_invalid": "Question set invalid:",
+                    "scoring_change": "Scoring changed:",
+                    "no_changes": "No changes, which affect the existing results",
+                    "statistic": "The existing statistics must be recalculated!",
+                    "results": "The existing results must be recalculated!",
+                    "resulttext":{
+                        "answer_deleted": "The answer option will be removed from all results",
+                        "answer_invalid": "All participants receive the points for the invalid answer",
+                        "question_deleted": "The question will be removed from all results",
+                        "question_invalid": "All participants receive the points for the invalid question",
+                        "scoring_change": "The scores will be recalculated. A participant could also lose points"
+                    },
+                    "confirmtext": "Do you really want to perform these changes?",
+                    "succesfully_confirm": "Changes successfully adopted!"
+                }
+            },
+            "invalidReasons" : {
+                "quizTitle": "Quiz: The title is missing.",
+                "quizDuration": "Quiz: The duration is missing or invalid.",
+                "noQuestion": "Quiz: The quiz has no question.",
+                "questionTitle": "Question {{index}}: The title is missing.",
+                "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
+                "questionCorrectMapping": "Question {{index}}: No correct mapping.",
+                "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
+                "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly."
+            }
+        }
+    }
+}

@@ -27,7 +27,7 @@
             "fieldValues": "AUTOMATIC,MANUAL"
         }
     ],
-    "changelogDate": "20170930120856",
+    "changelogDate": "20171130173553",
     "entityTableName": "feedback",
     "dto": "no",
     "pagination": "no",

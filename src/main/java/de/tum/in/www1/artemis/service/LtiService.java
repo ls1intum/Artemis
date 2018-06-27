@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.util.PatchedIMSPOXRequest;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
@@ -10,7 +11,10 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.util.RandomUtil;
+import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpResponse;
@@ -26,6 +30,9 @@ import org.imsglobal.lti.launch.LtiVerifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -39,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -70,10 +78,11 @@ public class LtiService {
     private final Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider;
     private final LtiUserIdRepository ltiUserIdRepository;
     private final HttpServletResponse response;
+    private final TokenProvider tokenProvider;
 
     public final HashMap<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
 
-    public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository, PasswordEncoder passwordEncoder, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
+    public LtiService(UserService userService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository, PasswordEncoder passwordEncoder, Optional<ArtemisAuthenticationProvider> artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response, TokenProvider tokenProvider) {
         this.userService = userService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
@@ -82,6 +91,7 @@ public class LtiService {
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiUserIdRepository = ltiUserIdRepository;
         this.response = response;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -178,12 +188,10 @@ public class LtiService {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-
         if (SecurityUtils.isAuthenticated()) {
             //1. Case: User is already signed in. We are done here.
             return Optional.of(auth);
         }
-
 
         //If the LTI launch is used from edX studio, edX sends dummy data. (id="student")
         //Catch this case here.
@@ -191,7 +199,7 @@ public class LtiService {
             throw new InternalAuthenticationServiceException("Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.");
         }
 
-        String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.exercisebruegge.in.tum.de";
+        String email = launchRequest.getLis_person_contact_email_primary() != null ? launchRequest.getLis_person_contact_email_primary() : launchRequest.getUser_id() + "@lti.artemis.ase.in.tum.de";
         String username = this.USER_PREFIX + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
         String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 

@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "modelingExercise" : {
             "home": {
                 "title": "Modeling Exercises",
@@ -14,8 +15,7 @@
             },
             "detail": {
                 "title": "Modeling Exercise"
-            },
-            "baseFilePath": "Base File Path"
+            }
         }
     }
 }

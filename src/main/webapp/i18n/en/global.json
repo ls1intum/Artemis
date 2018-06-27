@@ -5,17 +5,16 @@
         "menu": {
             "home": "Home",
             "courses": "Courses",
+            "course": "Course Administration",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
-                "main": "Course Administration",
+                "main": "Entities",
                 "course": "Course",
                 "exercise": "Exercise",
-                "participation": "Participation",
-                "result": "Result",
-                "ltiUserId": "Lti User Id",
                 "programmingExercise": "Programming Exercise",
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
+                "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "question": "Question",
                 "multipleChoiceQuestion": "Multiple Choice Question",
@@ -24,21 +23,25 @@
                 "dragAndDropQuestion": "Drag And Drop Question",
                 "dropLocation": "Drop Location",
                 "dragItem": "Drag Item",
+                "participation": "Participation",
+                "ltiUserId": "Lti User Id",
+                "result": "Result",
+                "feedback": "Feedback",
                 "submission": "Submission",
                 "modelingSubmission": "Modeling Submission",
                 "quizSubmission": "Quiz Submission",
                 "dragAndDropSubmittedAnswer": "Drag And Drop Submitted Answer",
                 "dragAndDropAssignment": "Drag And Drop Assignment",
-                "feedback": "Feedback",
-                "ltiOutcomeUrl": "Lti Outcome Url",
                 "statistic": "Statistic",
                 "quizPointStatistic": "Quiz Point Statistic",
                 "questionStatistic": "Question Statistic",
-                "multipleChoiceStatistic": "Multiple Choice Statistic",
-                "dragAndDropStatistic": "Drag And Drop Statistic",
+                "multipleChoiceQuestionStatistic": "Multiple Choice Question Statistic",
+                "dragAndDropQuestionStatistic": "Drag And Drop Question Statistic",
+                "statisticCounter": "Statistic Counter",
+                "pointCounter": "Point Counter",
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
-                "dragAndDropMapping": "Drag And Drop Mapping",
+                "apollonDiagram": "Apollon Diagram",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -77,8 +80,15 @@
         },
         "messages": {
             "info": {
-                "authenticated": "Please <a class=\"alert-link\" href=\"\" ng-click=\"vm.login()\">sign in</a> using your TUM credentials.",
-                "register": "You don't have an account yet? <a class=\"alert-link\" href=\"\" ng-click=\"vm.register()\">Register a new account</a>"
+                "authenticated": {
+                    "prefix": "If you want to ",
+                    "link": "sign in",
+                    "suffix": ", you can try the default accounts:<br/>- Administrator (login=\"admin\" and password=\"admin\") <br/>- User (login=\"user\" and password=\"user\")."
+                },
+                "register": {
+                    "noaccount": "You don't have an account yet?",
+                    "link": "Register a new account"
+                }
             },
             "error": {
                 "dontmatch": "The password and its confirmation do not match!"
@@ -107,7 +117,8 @@
             "id": "ID"
         },
         "ribbon": {
-            "dev":"Development"
+            "dev":"Development",
+            "test": "Test Server"
         },
         "item-count": "Showing {{first}} - {{second}} of {{total}} items."
     },
@@ -118,7 +129,6 @@
             "back": "Back",
             "cancel": "Cancel",
             "delete": "Delete",
-            "reset" : "Reset",
             "edit": "Edit",
             "open": "Open",
             "save": "Save",
@@ -127,6 +137,7 @@
             "cleanup": "Cleanup",
             "archive": "Archive",
             "submit": "Submit",
+            "reset" : "Reset",
             "re-evaluate": "Re-evaluate",
             "close": "Close"
         },
@@ -164,7 +175,7 @@
         "NotNull": "Field {{ fieldName }} cannot be empty!",
         "Size": "Field {{ fieldName }} does not meet min/max size requirements!",
         "userexists": "Login name already used!",
-        "emailexists": "E-mail is already in use!",
+        "emailexists": "Email is already in use!",
         "idexists": "A new {{ entityName }} cannot already have an ID",
         "invalid.build.plan.id": "The Build Plan ID seems to be invalid. Please make sure it exists and is accessible for ArTEMiS.",
         "invalid.repository.url": "The Repository URL seems to be invalid. Please make sure it exists and is accessible for ArTEMiS."

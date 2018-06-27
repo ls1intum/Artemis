@@ -1,0 +1,14 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="mai (generated)" id="1524408867295-1">
+        <dropColumn columnName="submission_path" tableName="submission"/>
+    </changeSet>
+    <changeSet author="mai (generated)" id="1524408867295-2">
+        <addColumn tableName="exercise">
+            <column name="max_score" type="double"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="mai (generated)" id="1524408867295-3">
+        <dropColumn columnName="base_file_path" tableName="exercise"/>
+    </changeSet>
+</databaseChangeLog>

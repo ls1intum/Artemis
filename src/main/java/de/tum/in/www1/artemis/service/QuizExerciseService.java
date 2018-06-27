@@ -228,10 +228,8 @@ public class QuizExerciseService {
     @Transactional
     public void delete(Long id) {
         log.debug("Request to delete Exercise : {}", id);
-
         // delete all participations belonging to this quiz
-        participationService.deleteAllByExerciseId(id);
-
+        participationService.deleteAllByExerciseId(id, false, false);
         quizExerciseRepository.delete(id);
     }
 

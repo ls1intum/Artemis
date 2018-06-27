@@ -125,7 +125,7 @@ public class CourseService {
             // filter old courses and unnecessary information anyway
             for (Course course : allCourses) {
                 if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
-                    //skip old courses
+                    //skip old courses that have already finished
                     continue;
                 }
                 userCourses.add(course);
@@ -145,7 +145,7 @@ public class CourseService {
             // filter old courses and courses the user should not be able to see
             for (Course course : allCourses) {
                 if (course.getEndDate() != null && course.getEndDate().isBefore(ZonedDateTime.now())) {
-                    //skip old courses
+                    //skip old courses that have already finished
                     continue;
                 }
                 //Instructors and TAs see all courses that have not yet finished
@@ -154,9 +154,9 @@ public class CourseService {
 
                     userCourses.add(course);
                 }
-                //Students see all courses that have already started
+                //Students see all courses that have already started (and not yet finished)
                 else if (user.getGroups().contains(course.getStudentGroupName())) {
-                    if (course.getStartDate() != null && course.getStartDate().isBefore(ZonedDateTime.now())) {
+                    if (course.getStartDate() == null || course.getStartDate().isBefore(ZonedDateTime.now())) {
                         userCourses.add(course);
                     }
                 }

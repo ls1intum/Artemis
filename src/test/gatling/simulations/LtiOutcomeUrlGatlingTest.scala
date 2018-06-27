@@ -1,3 +1,5 @@
+package simulations
+
 import _root_.io.gatling.core.scenario.Simulation
 import ch.qos.logback.classic.LoggerContext
 import io.gatling.core.Predef._

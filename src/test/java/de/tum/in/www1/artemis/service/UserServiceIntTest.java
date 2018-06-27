@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.ArTEMiSApp;
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.domain.PersistentToken;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.repository.PersistentTokenRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.util.RandomUtil;
+
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +19,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -37,9 +36,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UserServiceIntTest {
 
     @Autowired
-    private PersistentTokenRepository persistentTokenRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -49,7 +45,6 @@ public class UserServiceIntTest {
 
     @Before
     public void init() {
-        persistentTokenRepository.deleteAll();
         user = new User();
         user.setLogin("johndoe");
         user.setPassword(RandomStringUtils.random(60));
@@ -59,19 +54,6 @@ public class UserServiceIntTest {
         user.setLastName("doe");
         user.setImageUrl("http://placehold.it/50x50");
         user.setLangKey("en");
-    }
-
-    @Test
-    @Transactional
-    public void testRemoveOldPersistentTokens() {
-        userRepository.saveAndFlush(user);
-        int existingCount = persistentTokenRepository.findByUser(user).size();
-        LocalDate today = LocalDate.now();
-        generateUserToken(user, "1111-1111", today);
-        generateUserToken(user, "2222-2222", today.minusDays(32));
-        assertThat(persistentTokenRepository.findByUser(user)).hasSize(existingCount + 2);
-        userService.removeOldPersistentTokens();
-        assertThat(persistentTokenRepository.findByUser(user)).hasSize(existingCount + 1);
     }
 
     @Test
@@ -163,17 +145,6 @@ public class UserServiceIntTest {
         assertThat(users).isEmpty();
     }
 
-    private void generateUserToken(User user, String tokenSeries, LocalDate localDate) {
-        PersistentToken token = new PersistentToken();
-        token.setSeries(tokenSeries);
-        token.setUser(user);
-        token.setTokenValue(tokenSeries + "-data");
-        token.setTokenDate(localDate);
-        token.setIpAddress("127.0.0.1");
-        token.setUserAgent("Test agent");
-        persistentTokenRepository.saveAndFlush(token);
-    }
-
     @Test
     @Transactional
     public void assertThatAnonymousUserIsNotGet() {
@@ -182,8 +153,8 @@ public class UserServiceIntTest {
             userRepository.saveAndFlush(user);
         }
         final PageRequest pageable = new PageRequest(0, (int) userRepository.count());
-        final Page<User> allUsers = userRepository.findAll(pageable);
-        assertThat(allUsers.getContent().stream()
+        final Page<UserDTO> allManagedUsers = userService.getAllManagedUsers(pageable);
+        assertThat(allManagedUsers.getContent().stream()
             .noneMatch(user -> Constants.ANONYMOUS_USER.equals(user.getLogin())))
             .isTrue();
     }

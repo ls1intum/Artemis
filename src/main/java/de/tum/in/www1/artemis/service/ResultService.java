@@ -38,7 +38,7 @@ public class ResultService {
      */
     @Async
     public void onResultNotified(Participation participation) {
-        log.info("Received new build result for participation " + participation.getId());
+        log.debug("Received new build result for participation " + participation.getId());
         Long start = System.currentTimeMillis();
         // fetches the new build result
         Result result = continuousIntegrationService.get().onBuildCompleted(participation);
@@ -47,12 +47,12 @@ public class ResultService {
             // TODO: send the result directly to the client to save 1 REST call and DB access
             messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
             // handles new results and sends them to LTI consumers
-            //TODO: can we avoid this for non LTI students?
+            //TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
 //            if (participation.isLti()) {
 //            }
             ltiService.onNewBuildResult(participation);
-            Long end = System.currentTimeMillis();
-            log.info("It took " + (end-start) + "ms to receive " + result);
+//            Long end = System.currentTimeMillis();
+//            log.info("It took " + (end-start) + "ms to receive " + result);
         }
     }
 }

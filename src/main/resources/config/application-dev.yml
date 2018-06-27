@@ -22,7 +22,6 @@ logging:
 spring:
     profiles:
         active: dev
-        include: swagger
     devtools:
         restart:
             enabled: true
@@ -32,7 +31,7 @@ spring:
         serialization.indent_output: true
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:mysql://localhost:3306/ExerciseApplication?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false
+        url: jdbc:mysql://localhost:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false
         username: root
         password:
         hikari:
@@ -60,6 +59,12 @@ spring:
         cache-seconds: 1
     thymeleaf:
         cache: false
+    zipkin: # Use the "zipkin" Maven profile to have the Spring Cloud Zipkin dependencies
+        base-url: http://localhost:9411
+        enabled: false
+        locator:
+            discovery:
+                enabled: true
 
 liquibase:
     contexts: dev
@@ -134,13 +139,19 @@ jhipster:
         allowed-origins: "*"
         allowed-methods: "*"
         allowed-headers: "*"
-        exposed-headers: "Link,X-Total-Count"
+        exposed-headers: "Authorization,Link,X-Total-Count"
         allow-credentials: true
         max-age: 1800
     security:
         remember-me:
             # security key (this key should be unique for your application, and kept secret)
             key: 1e8ac98bc31f6bc463c70dace796da10dba1f4f3
+        authentication:
+            jwt:
+                secret: my-secret-token-to-change-in-production
+                # Token is valid 24 hours
+                token-validity-in-seconds: 86400
+                token-validity-in-seconds-for-remember-me: 2592000
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: ArTEMiS@localhost
         base-url: http://127.0.0.1:8080

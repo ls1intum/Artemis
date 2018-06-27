@@ -1,0 +1,27 @@
+<h2>
+    <span jhiTranslate="arTeMiSApp.apollonDiagram.home.title">Apollon Diagrams</span>
+</h2>
+
+<jhi-alert></jhi-alert>
+
+<button (click)="openCreateDiagramDialog()" class="btn btn-primary">
+    <span class="fa fa-plus"></span>
+    <span jhiTranslate="arTeMiSApp.apollonDiagram.home.createLabel">Create a New Apollon Diagram</span>
+</button>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr *ngFor="let diagram of apollonDiagrams">
+            <td>{{ getTitleForApollonDiagram(diagram) }}</td>
+            <td>
+                <button class="btn btn-primary" (click)="goToDetailsPage(diagram.id)">Open</button>
+            </td>
+        </tr>
+    </tbody>
+</table>

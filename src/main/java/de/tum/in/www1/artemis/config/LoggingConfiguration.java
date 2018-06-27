@@ -31,7 +31,7 @@ public class LoggingConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(LoggingConfiguration.class);
 
-    private final LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+    private LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 
     private final String appName;
 
@@ -39,8 +39,7 @@ public class LoggingConfiguration {
 
     private final JHipsterProperties jHipsterProperties;
 
-    public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort,
-         JHipsterProperties jHipsterProperties) {
+    public LoggingConfiguration(@Value("${spring.application.name}") String appName, @Value("${server.port}") String serverPort, JHipsterProperties jHipsterProperties) {
         this.appName = appName;
         this.serverPort = serverPort;
         this.jHipsterProperties = jHipsterProperties;

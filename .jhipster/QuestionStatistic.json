@@ -19,9 +19,10 @@
             "fieldType": "Integer"
         }
     ],
-    "changelogDate": "20171026164301",
+    "changelogDate": "20180116211219",
     "entityTableName": "question_statistic",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

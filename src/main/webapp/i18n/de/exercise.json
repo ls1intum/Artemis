@@ -1,30 +1,30 @@
 
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "exercise" : {
             "home": {
-                "title": "Übung",
-                "createLabel": "Übung erstellen",
-                "createOrEditLabel": "Übung erstellen oder bearbeiten"
+                "title": "Exercises",
+                "createLabel": "Exercise erstellen",
+                "createOrEditLabel": "Exercise erstellen oder bearbeiten"
             },
-            "created": "Übung erstellt mit ID {{ param }}",
-            "updated": "Übung aktualisiert mit ID {{ param }}",
-            "deleted": "Übung gelöscht mit ID {{ param }}",
+            "created": "Exercise erstellt mit ID {{ param }}",
+            "updated": "Exercise aktualisiert mit ID {{ param }}",
+            "deleted": "Exercise gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll die Übung {{ id }} wirklich dauerhaft gelöscht werden?"
-            },
-            "reset": {
-                "question": "Soll die Übung {{ id }} wirklich komplett zurückgesetzt werden?"
+                "question": "Soll Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Übung"
+                "title": "Exercise"
             },
-            "title": "Titel",
-            "releaseDate": "Veröffentlichungsdatum",
-            "dueDate": "Abgabe Datum",
-            "maxScore": "Max Punkte",
-            "participations": "Teilnahmen",
-            "course": "Kurs"
+            "title": "Title",
+            "releaseDate": "Release Date",
+            "dueDate": "Due Date",
+            "maxScore": "Max Score",
+            "participations": "Participations",
+            "course": "Course",
+            "welcome": "<strong>Welcome to ArTEMiS!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
+            "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
+            "startError": "<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong>"
         },
         "exerciseLtiConfiguration" : {
             "lti": "LTI",

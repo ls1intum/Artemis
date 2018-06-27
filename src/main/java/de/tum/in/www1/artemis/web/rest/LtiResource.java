@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.LtiService;
 import de.tum.in.www1.artemis.service.UserService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
@@ -14,6 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -46,11 +49,13 @@ public class LtiResource {
     private final LtiService ltiService;
     private final UserService userService;
     private final ExerciseRepository exerciseRepository;
+    private final TokenProvider tokenProvider;
 
-    public LtiResource(LtiService ltiService, UserService userService, ExerciseRepository exerciseRepository) {
+    public LtiResource(LtiService ltiService, UserService userService, ExerciseRepository exerciseRepository, TokenProvider tokenProvider) {
         this.ltiService = ltiService;
         this.userService = userService;
         this.exerciseRepository = exerciseRepository;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -83,7 +88,7 @@ public class LtiResource {
         try {
             ltiService.handleLaunchRequest(launchRequest, exercise);
         } catch (Exception ex) {
-            log.error("Error during LIT launch request of exercise " + exercise.getTitle() + ": " + ex.getMessage());
+            log.error("Error during LIT launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest + "\nError: " + ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
             return;
         }
@@ -92,6 +97,8 @@ public class LtiResource {
         //Display a welcome message to the user
         Boolean isNewUser = SecurityUtils.isAuthenticated() && TimeUnit.SECONDS.toMinutes(ZonedDateTime.now().toEpochSecond() - userService.getUser().getCreatedDate().toEpochMilli() * 1000) < 15;
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String jwt = tokenProvider.createToken(authentication, true);
 
         String redirectUrl = request.getScheme() + // "http"
             "://" +                                // "://"
@@ -99,7 +106,8 @@ public class LtiResource {
             (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "" ) +
             "/#/courses/" + exercise.getCourse().getId() + "/exercise/" + exercise.getId() +
             (isNewUser ? "?welcome" : "") +
-            (!SecurityUtils.isAuthenticated() ? "?login" : "");
+            (!SecurityUtils.isAuthenticated() ? "?login" : "") +
+            (isNewUser || !SecurityUtils.isAuthenticated() ? "&" : "") + "jwt=" + jwt;
 
         response.sendRedirect(redirectUrl);
     }

@@ -26,9 +26,10 @@
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20170831094153",
+    "changelogDate": "20171130173547",
     "entityTableName": "drag_and_drop_question",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

@@ -78,6 +78,7 @@ public class QuizExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
         }
 
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         QuizExercise result = quizExerciseService.save(quizExercise);
         quizScheduleService.scheduleQuizStart(result);
 
@@ -140,6 +141,7 @@ public class QuizExerciseResource {
             }
         }
 
+        quizExercise.setMaxScore(quizExercise.getMaxTotalScore().doubleValue());
         QuizExercise result = quizExerciseService.save(quizExercise);
         quizScheduleService.scheduleQuizStart(result);
 

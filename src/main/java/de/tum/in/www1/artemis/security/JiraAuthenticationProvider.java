@@ -89,11 +89,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> authenticationResponse = null;
         try {
-            authenticationResponse = restTemplate.exchange(
-                JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups",
-                HttpMethod.GET,
-                entity,
-                Map.class);
+            authenticationResponse = restTemplate.exchange(JIRA_URL + "/rest/api/2/user?username=" + username + "&expand=groups", HttpMethod.GET, entity, Map.class);
         } catch (HttpStatusCodeException e) {
             if (e.getStatusCode().value() == 401) {
                 throw new BadCredentialsException("Wrong credentials");
@@ -101,16 +97,18 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
                 throw new ProviderNotFoundException("Could not authenticate via JIRA");
             }
         }
+
         if (authenticationResponse != null) {
             Map content = authenticationResponse.getBody();
             User user = userRepository.findOneByLogin((String) content.get("name")).orElseGet(() -> {
                 return userService.createUser((String) content.get("name"), "",
-                    (String) content.get("displayName"), "", (String) content.get("emailAddress"), null,
-                    "en");
+                    (String) content.get("displayName"), "", (String) content.get("emailAddress"), null, "en");
             });
             user.setGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items")));
             user.setAuthorities(buildAuthoritiesFromGroups(getGroupStrings((ArrayList) ((Map) content.get("groups")).get("items"))));
             userRepository.save(user);
+
+
             if (!user.getActivated()) {
                 userService.activateRegistration(user.getActivationKey());
             }
@@ -119,8 +117,7 @@ public class JiraAuthenticationProvider implements ArtemisAuthenticationProvider
             if (matchingUser.isPresent()) {
                 return matchingUser.get();
             } else {
-                throw new UsernameNotFoundException("User " + username + " was not found in the " +
-                    "database");
+                throw new UsernameNotFoundException("User " + username + " was not found in the database");
             }
         } else {
             throw new InternalAuthenticationServiceException("JIRA Authentication failed for user " + username);
