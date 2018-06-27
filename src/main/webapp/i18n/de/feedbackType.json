@@ -1,6 +1,6 @@
 {
-    "artemisApp": {
-        "feedbackType" : {
+    "arTeMiSApp": {
+        "FeedbackType" : {
             "null": "",
             "AUTOMATIC": "AUTOMATIC",
             "MANUAL": "MANUAL"

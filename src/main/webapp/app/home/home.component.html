@@ -1,0 +1,17 @@
+<div class="row">
+    <div class="col-md-8 offset-md-2 text-center">
+        <h1 data-translate="home.title">Welcome to ArTEMiS!</h1>
+        <p class="lead" translate="home.subtitle">Interactive Learning with an AuTomated assEssment Management System</p>
+        <div [ngSwitch]="isAuthenticated()">
+            <div class="alert alert-success" *ngSwitchCase="true">
+                <span *ngIf="account">
+                    You are logged in as user "{{account.login}}". Go to your <a class="alert-link" routerLink="courses">courses</a> to get started.
+                </span>
+            </div>
+
+            <div class="lead" *ngSwitchCase="false">
+                Please <a class="alert-link" (click)="login()" jhiTranslate="global.messages.info.authenticated.link">sign in</a> using your TUM credentials.
+            </div>
+        </div>
+    </div>
+</div>

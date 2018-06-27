@@ -7,6 +7,8 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.github.jhipster.web.util.ResponseUtil;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for managing Result.
@@ -100,11 +103,20 @@ public class ResultResource {
         if(!result.getFeedbacks().isEmpty()) {
             result.setHasFeedback(true);
         }
+
         Result savedResult = resultRepository.save(result);
+        try {
+            // TODO this seems to break in too many cases - track how often this warning can be found in server logs
+            participation.addResult(savedResult);
+            participationService.save(participation);
+        } catch (NullPointerException e) {
+            log.warn("Unable to load result list for participation");
+        }
         result.getFeedbacks().forEach(feedback -> {
             feedback.setResult(savedResult);
             feedbackService.save(feedback);
         });
+
         ltiService.ifPresent(ltiService -> ltiService.onNewBuildResult(savedResult.getParticipation()));
         return ResponseEntity.created(new URI("/api/results/" + result.getId()))
             .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
@@ -255,8 +267,10 @@ public class ResultResource {
     @Timed
     @Transactional(readOnly = true)
     public ResponseEntity<List<Result>> getResultsForExercise(@PathVariable Long courseId,
-                                              @PathVariable Long exerciseId,
-                                              @RequestParam(defaultValue = "false") boolean ratedOnly) {
+                                                              @PathVariable Long exerciseId,
+                                                              @RequestParam(defaultValue = "false") boolean ratedOnly,
+                                                              @RequestParam(defaultValue = "false") boolean withSubmissions,
+                                                              @RequestParam(defaultValue = "false") boolean withAssessors) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get Results for Exercise : {}", exerciseId);
 
@@ -288,6 +302,19 @@ public class ResultResource {
         }
 
         log.info("getResultsForExercise took " + (System.currentTimeMillis() - start) + "ms for " + results.size() + " results.");
+
+        if (withSubmissions) {
+            results.forEach(result -> {
+                Hibernate.initialize(result.getSubmission()); // eagerly load the association
+            });
+            results = results.stream().filter(result -> result.getSubmission() != null && result.getSubmission().isSubmitted()).collect(Collectors.toList());
+        }
+
+        if (withAssessors) {
+            results.forEach(result -> {
+                Hibernate.initialize(result.getAssessor()); // eagerly load the association
+            });
+        }
 
         return ResponseEntity.ok().body(results);
     }
@@ -403,5 +430,20 @@ public class ResultResource {
         }
         resultRepository.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+    }
+
+    /**
+     * GET  /results/submission/{submissionId} : get the result for a submission id
+     *
+     * @param submissionId the id of the submission
+     * @return the ResponseEntity with status 200 (OK) and the list of results in body
+     */
+    @GetMapping(value = "/results/submission/{submissionId}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Result> getResultForSubmission(@PathVariable Long submissionId) {
+        log.debug("REST request to get Result for submission : {}", submissionId);
+        Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
+        return ResponseUtil.wrapOrNotFound(result);
     }
 }

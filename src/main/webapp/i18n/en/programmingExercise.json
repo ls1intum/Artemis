@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "programmingExercise" : {
             "home": {
                 "title": "Programming Exercises",
@@ -19,6 +20,9 @@
             "baseBuildPlanId": "Base Build Plan Id",
             "publishBuildPlanUrl": "Publish Build Plan Url",
             "allowOnlineEditor": "Allow Online Editor"
+        },
+        "editor": {
+            "title": "Editor"
         }
     }
 }

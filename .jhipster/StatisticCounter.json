@@ -11,9 +11,10 @@
             "fieldType": "Integer"
         }
     ],
-    "changelogDate": "20171102180815",
+    "changelogDate": "20180116211222",
     "entityTableName": "statistic_counter",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

@@ -5,17 +5,16 @@
         "menu": {
             "home": "Startseite",
             "courses": "Kurse",
+            "course": "Kursadministration",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
-                "main": "Kursverwaltung",
-                "course": "Course",
+                "main": "Entitäten",
+                "course": "Kurse",
                 "exercise": "Exercise",
-                "participation": "Participation",
-                "result": "Result",
-                "ltiUserId": "Lti User Id",
                 "programmingExercise": "Programming Exercise",
                 "modelingExercise": "Modeling Exercise",
                 "quizExercise": "Quiz Exercise",
+                "ltiOutcomeUrl": "Lti Outcome Url",
                 "submittedAnswer": "Submitted Answer",
                 "question": "Question",
                 "multipleChoiceQuestion": "Multiple Choice Question",
@@ -24,20 +23,25 @@
                 "dragAndDropQuestion": "Drag And Drop Question",
                 "dropLocation": "Drop Location",
                 "dragItem": "Drag Item",
+                "participation": "Participation",
+                "ltiUserId": "Lti User Id",
+                "result": "Result",
+                "feedback": "Feedback",
                 "submission": "Submission",
                 "modelingSubmission": "Modeling Submission",
                 "quizSubmission": "Quiz Submission",
                 "dragAndDropSubmittedAnswer": "Drag And Drop Submitted Answer",
                 "dragAndDropAssignment": "Drag And Drop Assignment",
-                "feedback": "Feedback",
-                "statistic": "Statistik",
+                "statistic": "Statistic",
                 "quizPointStatistic": "Quiz Point Statistic",
                 "questionStatistic": "Question Statistic",
-                "multipleChoiceStatistic": "Multiple Choice Statistic",
-                "dragAndDropStatistic": "Drag And Drop Statistic",
+                "multipleChoiceQuestionStatistic": "Multiple Choice Question Statistic",
+                "dragAndDropQuestionStatistic": "Drag And Drop Question Statistic",
+                "statisticCounter": "Statistic Counter",
+                "pointCounter": "Point Counter",
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
-                "dragAndDropMapping": "Drag And Drop Mapping",
+                "apollonDiagram": "Apollon-Diagramm",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -50,7 +54,7 @@
                 "register": "Registrierung"
             },
             "admin": {
-                "main": "Serververwaltung",
+                "main": "Server-Administration",
                 "userManagement": "Benutzerverwaltung",
                 "tracker": "Benutzer Aktivitäten",
                 "metrics": "Metriken",
@@ -76,8 +80,15 @@
         },
         "messages": {
             "info": {
-                "authenticated": "Wenn Sie sich <a class=\"alert-link\" href=\"\" ng-click=\"vm.login()\">anmelden</a> möchten, versuchen Sie es mit <br/>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br/>- Benutzer (Name=\"user\" und Passwort=\"user\").",
-                "register": "Sie haben noch keinen Zugang? <a class=\"alert-link\" href=\"\" ng-click=\"vm.register()\">Registrieren Sie sich</a>"
+                "authenticated": {
+                    "prefix": "Wenn Sie sich ",
+                    "link": "anmelden",
+                    "suffix": " möchten, versuchen Sie es mit <br/>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br/>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                },
+                "register": {
+                    "noaccount": "Sie haben noch keinen Zugang?",
+                    "link": "Registrieren Sie sich"
+                }
             },
             "error": {
                 "dontmatch": "Das bestätigte Passwort entspricht nicht dem neuen Passwort!"
@@ -106,7 +117,8 @@
             "id" : "ID"
         },
         "ribbon": {
-            "dev":"Development"
+            "dev":"Development",
+            "test": "Test Server"
         },
         "item-count": "Ergebnis {{first}} - {{second}} von {{total}} Elemente."
     },
@@ -117,11 +129,11 @@
             "back": "Zurück",
             "cancel": "Abbrechen",
             "delete": "Löschen",
-            "reset": "Zurücksetzen",
             "edit": "Bearbeiten",
             "open": "Öffnen",
             "save": "Speichern",
             "view": "Details",
+            "reset": "Zurücksetzen",
             "preview": "Vorschau",
             "cleanup": "Aufräumen",
             "archive": "Archivieren",
@@ -163,7 +175,9 @@
         "Size": "Feld {{fieldName}} erfüllt nicht die minimalen/maximalen Voraussetzungen!",
         "userexists": "Benutzername bereits vergeben!",
         "emailexists": "Email wird bereits verwendet!",
-        "idexists": "Ein neuer {{entityName}} kann noch keine ID haben"
+        "idexists": "Ein neuer {{entityName}} kann noch keine ID haben",
+        "invalid.build.plan.id": "Die Build Plan ID scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist.",
+        "invalid.repository.url": "Die Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist."
     },
     "footer": "Dies ist Ihre Fußzeile",
     "justNow": "gerade eben"

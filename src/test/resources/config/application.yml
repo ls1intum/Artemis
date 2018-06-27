@@ -13,7 +13,6 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-
 spring:
     application:
         name: ArTEMiS
@@ -23,7 +22,7 @@ spring:
         type: simple
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:ExerciseApplication;DB_CLOSE_DELAY=-1
+        url: jdbc:h2:mem:ArTEMiS;DB_CLOSE_DELAY=-1
         name:
         username:
         password:
@@ -86,9 +85,11 @@ jhipster:
         from: test@localhost
         base-url: http://127.0.0.1:8080
     security:
-        remember-me:
-            # security key (this key should be unique for your application, and kept secret)
-            key: 1e8ac98bc31f6bc463c70dace796da10dba1f4f3
+        authentication:
+            jwt:
+                secret: ec6a94b26152dfa3450c291e774f82060362ca03
+                # Token is valid 24 hours
+                token-validity-in-seconds: 86400
     metrics: # DropWizard Metrics configuration, used by MetricsConfiguration
         jmx.enabled: true
         logs: # Reports Dropwizard metrics in the logs

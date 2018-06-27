@@ -1,0 +1,24 @@
+<div class="modal-header">
+    <h4 class="modal-title">Feedback</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+            ng-click="$close()">&times;</button>
+</div>
+<div class="modal-body" id="result-detail-body" style="position: relative;">
+    <div ng-repeat="feedback in $ctrl.details track by $index" ng-init="lastDetail = $last">
+        <p ng-if="feedback.type === 'AUTOMATIC'">Error in method &nbsp;<code-error>{{feedback.text}}</code-error>:</p>
+        <p ng-if="feedback.type === 'MANUAL' && !feedback.positive"><code-error>Feedback &nbsp;{{feedback.text}}:</code-error></p>
+        <p ng-if="feedback.type === 'MANUAL' && feedback.positive"><code-success>Feedback &nbsp;{{feedback.text}}:</code-success></p>
+        <pre ng-if="feedback.detailText" ng-bind="feedback.detailText"></pre>
+        <pre ng-if="!feedback.detailText">No feedback available</pre>
+        <hr ng-if="!lastDetail">
+    </div>
+    <div ng-if="$ctrl.details.length == 0">
+        <dl class="buildoutput dl-horizontal" ng-hide="$ctrl.buildLogs.length == 0">
+            <dt ng-repeat-start="logEntry in $ctrl.buildLogs">{{logEntry.time | date:'yyyy-MM-dd HH:mm:ss'}}</dt>
+            <dd ng-repeat-end ng-bind-html="logEntry.log"></dd>
+        </dl>
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-outline-secondary pull-right" ng-click="$close()">Close</button>
+</div>

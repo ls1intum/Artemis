@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -43,15 +44,21 @@ public class CourseResource {
     private final ParticipationService participationService;
     private final AuthorizationCheckService authCheckService;
     private final ObjectMapper objectMapper;
+    private final CourseRepository courseRepository;
+    private final ExerciseService exerciseService;
 
     public CourseResource(UserService userService,
                           CourseService courseService,
                           ParticipationService participationService,
+                          CourseRepository courseRepository,
+                          ExerciseService exerciseService,
                           AuthorizationCheckService authCheckService,
                           MappingJackson2HttpMessageConverter springMvcJacksonConverter) {
         this.userService = userService;
         this.courseService = courseService;
         this.participationService = participationService;
+        this.courseRepository = courseRepository;
+        this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
     }
@@ -198,6 +205,14 @@ public class CourseResource {
     @Timed
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);
+        Course course = courseRepository.findOne(id);
+        if (course == null) {
+            return ResponseEntity.notFound().build();
+        }
+        for(Exercise exercise : course.getExercises()) {
+            exerciseService.delete(exercise.getId());
+        }
+
         courseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }

@@ -32,7 +32,7 @@ public class DatabaseConfiguration {
 
     public DatabaseConfiguration(Environment env, CacheManager cacheManager) {
         this.env = env;
-        this.cacheManager = cacheManager;
+    this.cacheManager = cacheManager;
     }
 
     @Bean

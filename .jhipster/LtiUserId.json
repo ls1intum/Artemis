@@ -16,9 +16,10 @@
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20161123125152",
+    "changelogDate": "20171130173551",
     "entityTableName": "lti_user_id",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

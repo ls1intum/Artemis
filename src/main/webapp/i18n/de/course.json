@@ -1,29 +1,29 @@
 
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "course" : {
             "home": {
-                "title": "Kurse",
-                "createLabel": "Kurs erstellen",
-                "createOrEditLabel": "Kurs erstellen oder bearbeiten"
+                "title": "Courses",
+                "createLabel": "Course erstellen",
+                "createOrEditLabel": "Course erstellen oder bearbeiten"
             },
-            "created": "Kurs erstellt mit ID {{ param }}",
-            "updated": "Kurs aktualisiert mit ID {{ param }}",
-            "deleted": "Kurs gelöscht mit ID {{ param }}",
+            "created": "Course erstellt mit ID {{ param }}",
+            "updated": "Course aktualisiert mit ID {{ param }}",
+            "deleted": "Course gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll der Kurs {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Course {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Kurs"
+                "title": "Course"
             },
-            "title": "Titel",
-            "studentGroupName": "Studenten Gruppen Name",
-            "teachingAssistantGroupName": "Tutor Gruppen Name",
-            "instructorGroupName": "Dozent Gruppenname",
-            "startDate": "Anfangsdatum",
-            "endDate": "Enddatum",
-            "onlineCourse": "Online Kurs",
-            "exercises": "Aufgaben",
+            "title": "Title",
+            "studentGroupName": "Student Group Name",
+            "teachingAssistantGroupName": "Teaching Assistant Group Name",
+            "instructorGroupName": "Instructor Group Name",
+            "startDate": "Start Date",
+            "endDate": "End Date",
+            "onlineCourse": "Online Course",
+            "exercises": "Exercises",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
             "modelingExercises": "Modellierungsaufgaben (Beta)"

@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.Column;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.Transient;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -11,28 +13,30 @@ import java.util.Objects;
  */
 @Entity
 @DiscriminatorValue(value="M")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class ModelingSubmission extends Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Column(name = "submission_path")
-    private String submissionPath;
+    @Transient
+    @JsonProperty
+    private String model;
 
-    // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
-    public String getSubmissionPath() {
-        return submissionPath;
+    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
+
+    public String getModel() {
+        return model;
     }
 
-    public ModelingSubmission submissionPath(String submissionPath) {
-        this.submissionPath = submissionPath;
+    public ModelingSubmission model(String model) {
+        this.model = model;
         return this;
     }
 
-    public void setSubmissionPath(String submissionPath) {
-        this.submissionPath = submissionPath;
+    public void setModel(String model) {
+        this.model = model;
     }
-    // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
     public boolean equals(Object o) {
@@ -58,7 +62,6 @@ public class ModelingSubmission extends Submission implements Serializable {
     public String toString() {
         return "ModelingSubmission{" +
             "id=" + getId() +
-            ", submissionPath='" + getSubmissionPath() + "'" +
             "}";
     }
 }

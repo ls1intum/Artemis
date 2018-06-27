@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "answerOption" : {
             "home": {
                 "title": "Answer Options",
@@ -19,8 +20,7 @@
             "hint": "Hint",
             "explanation": "Explanation",
             "isCorrect": "Is Correct",
-            "question": "Question",
-            "invalid": "ungültig"
+            "question": "Question"
         }
     }
 }

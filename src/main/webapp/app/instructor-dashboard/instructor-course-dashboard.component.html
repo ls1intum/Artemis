@@ -1,0 +1,55 @@
+<div *ngIf="course">
+    <h2>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{rows.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
+<jhi-alert></jhi-alert>
+    <div class="table-responsive" *ngIf="rows">
+        <table class="table table-striped">
+            <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse"  [callback]="callback">
+                <th jhiSortBy="firstName">
+                    <span jhiTranslate="logs.table.name">Name</span> <span class="fa fa-sort"></span>
+                </th>
+
+                <th jhiSortBy="login">
+                    <span jhiTranslate="userManagement.login">Login</span> <span class="fa fa-sort"></span>
+                </th>
+
+
+                <th jhiSortBy="participated">
+                    <span jhiTranslate="instructorDashboard.participated">Participated in exercises</span> <span class="fa fa-sort"></span>
+                </th>
+
+                <th jhiSortBy="participationInPercent">
+                    <span jhiTranslate="instructorDashboard.participated">Participated in exercises %</span> <span class="fa fa-sort"></span>
+                </th>
+
+                <th jhiSortBy="successful">
+                    <span jhiTranslate="instructorDashboard.completedExercises">Successfully completed exercises</span> <span class="fa fa-sort"></span>
+                </th>
+
+                <th jhiSortBy="successfullyCompletedInPercent">
+                    <span jhiTranslate="instructorDashboard.completed">Successfully completed %</span> <span class="fa fa-sort"></span>
+                </th>
+
+                <th jhiSortBy="overallScore">
+                    <span jhiTranslate="instructorDashboard.overallScore">Overall Score</span> <span class="fa fa-sort"></span>
+                </th>
+
+
+
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let row of rows | sortBy: predicate: reverse">
+                <td>{{ row.firstName }} {{ row.lastName }}</td>
+                <td>{{ row.login }}</td>
+                <td>{{ row.participated }}</td>
+                <td>{{ row.participationInPercent | number: '0.0-0'}}%</td>
+                <td>{{ row.successful }}</td>
+                <td>{{ row.successfullyCompletedInPercent | number: '0.0-0'}}%</td>
+                <td>{{ row.overallScore | number: '0.0-0'}}%</td>
+
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

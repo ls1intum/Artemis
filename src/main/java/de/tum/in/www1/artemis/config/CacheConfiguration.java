@@ -96,6 +96,7 @@ public class CacheConfiguration {
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropQuestion.class.getName() + ".correctMappings", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropSubmittedAnswer.class.getName() + ".mappings", jcacheConfiguration);
             cm.createCache(de.tum.in.www1.artemis.domain.DragAndDropMapping.class.getName(), jcacheConfiguration);
+            cm.createCache(de.tum.in.www1.artemis.domain.ApollonDiagram.class.getName(), jcacheConfiguration);
             // jhipster-needle-ehcache-add-entry
             cm.createCache("files", jcacheConfiguration);
         };

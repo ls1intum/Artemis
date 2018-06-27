@@ -1,13 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="ArTEMiS:main" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.artemis" external.system.module.type="sourceSet" external.system.module.version="1.4.7" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="ArTEMiS:main" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.artemis" external.system.module.type="sourceSet" external.system.module.version="2.0.1" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Spring" name="Spring">
       <configuration />
     </facet>
-    <facet type="web" name="Web Gradle : ArTEMiS-1.4.7.war">
+    <facet type="web" name="Web">
+      <configuration>
+        <webroots />
+        <sourceRoots>
+          <root url="file://$MODULE_DIR$/../../build/swagger/src/main/java" />
+          <root url="file://$MODULE_DIR$/../../src/main/java" />
+          <root url="file://$MODULE_DIR$/../../src/main/scala" />
+          <root url="file://$MODULE_DIR$/../../src/main/resources" />
+        </sourceRoots>
+      </configuration>
+    </facet>
+    <facet type="web" name="Web Gradle : ArTEMiS-2.0.1.war">
       <configuration>
         <webroots>
-          <root url="file://$MODULE_DIR$/../../src/main/webapp" relative="/" />
+          <root url="file://$MODULE_DIR$/../../build/www" relative="/" />
         </webroots>
       </configuration>
     </facet>
@@ -21,36 +32,10 @@
     <content url="file://$MODULE_DIR$/../../src/main">
       <sourceFolder url="file://$MODULE_DIR$/../../src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/main/resources" type="java-resource" />
+      <excludeFolder url="file://$MODULE_DIR$/../../src/main/webapp/ng1/bower_components" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/bamboo-cli-7.8.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/upm-cli-7.8.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/commons-lang-2.4.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
     <orderEntry type="module-library">
       <library>
         <CLASSES>
@@ -63,7 +48,16 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/jsap-2.1.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/bamboo-cli-7.8.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/httpclient-4.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -81,34 +75,16 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/commons-io-2.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
           <root url="jar://$MODULE_DIR$/../../libs/cli-7.8.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/httpmime-4.5.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/json-simple-1.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/bitbucket-cli-7.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -126,7 +102,25 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/commons-io-2.4.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/upm-cli-7.8.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/jsap-2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/httpmime-4.5.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -144,7 +138,25 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/httpclient-4.5.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/bitbucket-cli-7.8.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/commons-lang-2.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/json-simple-1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -175,6 +187,7 @@
     <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-starter-thymeleaf:1.5.13.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-starter-web:1.5.13.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.zalando:problem-spring-web:0.22.1" level="project" />
+    <orderEntry type="library" name="Gradle: io.jsonwebtoken:jjwt:0.9.0" level="project" />
     <orderEntry type="library" name="Gradle: org.zalando:jackson-datatype-problem:0.20.1" level="project" />
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.8.11.1" level="project" />
     <orderEntry type="library" name="Gradle: io.springfox:springfox-swagger2:2.8.0" level="project" />
@@ -183,7 +196,6 @@
     <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.8.0" level="project" />
     <orderEntry type="library" name="Gradle: org.hibernate:hibernate-jcache:5.2.12.Final" level="project" />
     <orderEntry type="library" name="Gradle: javax.cache:cache-api:1.0.0" level="project" />
-    <orderEntry type="library" name="Gradle: org.hibernate:hibernate-ehcache:5.2.12.Final" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-starter-data-jpa:1.5.13.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.hibernate:hibernate-entitymanager:5.2.12.Final" level="project" />
     <orderEntry type="library" name="Gradle: org.hibernate:hibernate-envers:5.2.12.Final" level="project" />
@@ -192,7 +204,6 @@
     <orderEntry type="library" name="Gradle: org.apache.commons:commons-lang3:3.5" level="project" />
     <orderEntry type="library" name="Gradle: commons-io:commons-io:2.5" level="project" />
     <orderEntry type="library" name="Gradle: javax.transaction:javax.transaction-api:1.2" level="project" />
-    <orderEntry type="library" name="Gradle: org.apache.geronimo.javamail:geronimo-javamail_1.4_mail:1.8.4" level="project" />
     <orderEntry type="library" name="Gradle: org.ehcache:ehcache:3.2.3" level="project" />
     <orderEntry type="library" name="Gradle: org.hibernate:hibernate-validator:5.3.6.Final" level="project" />
     <orderEntry type="library" name="Gradle: org.liquibase:liquibase-core:3.5.5" level="project" />
@@ -206,7 +217,6 @@
     <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-loader-tools:1.5.13.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-starter-logging:1.5.13.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-starter-undertow:1.5.13.RELEASE" level="project" />
-    <orderEntry type="library" name="Gradle: org.springframework.cloud:spring-cloud-spring-service-connector:1.2.5.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework:spring-context-support:4.3.17.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.security:spring-security-config:4.2.6.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.security:spring-security-data:4.2.6.RELEASE" level="project" />
@@ -215,6 +225,7 @@
     <orderEntry type="library" name="Gradle: io.springfox:springfox-bean-validators:2.8.0" level="project" />
     <orderEntry type="library" name="Gradle: mysql:mysql-connector-java:5.1.46" level="project" />
     <orderEntry type="library" name="Gradle: org.mapstruct:mapstruct-jdk8:1.2.0.Final" level="project" />
+    <orderEntry type="library" name="Gradle: com.google.code.gson:gson:2.8.2" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot:1.5.13.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: com.jcraft:jsch:0.1.54" level="project" />
     <orderEntry type="library" name="Gradle: com.googlecode.javaewah:JavaEWAH:1.1.6" level="project" />
@@ -222,7 +233,6 @@
     <orderEntry type="library" name="Gradle: org.apache.httpcomponents:httpclient:4.5.5" level="project" />
     <orderEntry type="library" name="Gradle: io.dropwizard.metrics:metrics-healthchecks:3.2.5" level="project" />
     <orderEntry type="library" name="Gradle: io.dropwizard.metrics:metrics-annotation:3.2.5" level="project" />
-    <orderEntry type="library" name="Gradle: net.sf.ehcache:ehcache:2.10.4" level="project" />
     <orderEntry type="library" name="Gradle: ch.qos.logback:logback-classic:1.1.11" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.data:spring-data-jpa:1.11.12.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: org.springframework.data:spring-data-commons:1.13.12.RELEASE" level="project" />
@@ -287,13 +297,12 @@
     <orderEntry type="library" name="Gradle: org.zalando:problem:0.20.1" level="project" />
     <orderEntry type="library" name="Gradle: com.google.guava:guava:23.5-jre" level="project" />
     <orderEntry type="library" name="Gradle: com.google.code.findbugs:jsr305:3.0.2" level="project" />
-    <orderEntry type="library" name="Gradle: org.springframework.cloud:spring-cloud-core:1.2.5.RELEASE" level="project" />
     <orderEntry type="library" name="Gradle: aopalliance:aopalliance:1.0" level="project" />
-    <orderEntry type="library" name="Gradle: io.swagger:swagger-annotations:1.5.14" level="project" />
     <orderEntry type="library" name="Gradle: org.apache.httpcomponents:httpcore:4.4.9" level="project" />
     <orderEntry type="library" name="Gradle: commons-codec:commons-codec:1.10" level="project" />
     <orderEntry type="library" name="Gradle: junit:junit:4.12" level="project" />
     <orderEntry type="library" name="Gradle: net.oauth.core:oauth:20100527" level="project" />
+    <orderEntry type="library" name="Gradle: io.swagger:swagger-annotations:1.5.14" level="project" />
     <orderEntry type="library" name="Gradle: joda-time:joda-time:2.9.9" level="project" />
     <orderEntry type="library" name="Gradle: javax.activation:activation:1.1.1" level="project" />
     <orderEntry type="library" name="Gradle: org.apache.tomcat:tomcat-jdbc:8.5.31" level="project" />

@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "dragItem" : {
             "home": {
                 "title": "Drag Items",
@@ -17,7 +18,9 @@
             },
             "pictureFilePath": "Picture File Path",
             "text": "Text",
-            "invalid": "Invalid",
+            "correctScore": "Correct Score",
+            "incorrectScore": "Incorrect Score",
+            "correctLocation": "Correct Location",
             "question": "Question"
         }
     }

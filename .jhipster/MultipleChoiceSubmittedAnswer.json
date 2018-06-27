@@ -11,9 +11,10 @@
         }
     ],
     "fields": [],
-    "changelogDate": "20170831094152",
+    "changelogDate": "20171130173546",
     "entityTableName": "multiple_choice_submitted_answer",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

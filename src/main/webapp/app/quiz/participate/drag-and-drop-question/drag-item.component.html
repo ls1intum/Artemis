@@ -1,0 +1,14 @@
+<div class="drag-item" ngClass="{'no-click': clickDisabled}">
+    <div class="drag-item-picture" *ngIf="dragItem && dragItem.pictureFilePath"
+         dnd-draggable [dragEnabled]="!clickDisabled" [dragData]="dragItem">
+        <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
+    </div>
+    <div class="drag-item-text" *ngIf="dragItem && !dragItem.pictureFilePath">
+        <div fittext [activateOnResize]="true" [maxFontSize]="32" [minFontSize]="16">
+            <span dnd-draggable [dragEnabled]="!clickDisabled" [dragData]="dragItem">{{dragItem.text}}</span>
+        </div>
+    </div>
+    <div class="invalid" *ngIf="invalid">
+        <span jhiTranslate="arTeMiSApp.showStatistic.invalid"></span>
+    </div>
+</div>

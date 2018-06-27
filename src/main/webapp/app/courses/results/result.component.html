@@ -1,0 +1,23 @@
+<!--
+  -- When using the result component make sure that the reference to the participation input is changed if the result changes
+  -- e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
+-->
+<span *ngIf="!result || (!result.score && result.score !== 0)">
+    <span class="text-muted"><i class="fa fa-circle-o fa-lg"></i>&nbsp;No results</span>
+    <!-- <span class="text-primary"  *ngIf="queued"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Build is queued</span> -->
+    <!-- <span class="text-primary"  *ngIf="building"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Building...</span> -->
+</span>
+<ng-container *ngIf="result && (result.score || result.score === 0)">
+    <span [ngClass]="textColorClass">
+        <i *ngIf="participation.exercise.type !== 'quiz'" class="fa fa-lg" [ngClass]="resultIconClass"></i>
+        <span *ngIf="hasFeedback">
+            <a [ngClass]="textColorClass" (click)="showDetails(result)">{{resultString}}</a>,
+        </span>
+        <span *ngIf="!hasFeedback">{{result.resultString}},</span>
+        <strong>Score: {{result.score}}%</strong>, Submission: <span>{{result.completionDate | amTimeAgo}}</span>
+    </span>
+    <span *ngIf="result.buildArtifact">
+        <a (click)="downloadBuildResult(participation.id)"> &nbsp; <i class="fa fa-file"></i> Download Build Result</a>
+    </span>
+</ng-container>
+

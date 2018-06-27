@@ -1,0 +1,65 @@
+<div>
+    <h2>
+        <span *ngIf="course">{{course.title}} - </span><span *ngIf="modelingExercises">{{modelingExercises.length}} </span>
+        <span jhiTranslate="arTeMiSApp.modelingExercise.home.title">Modeling Exercises</span>
+        <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-modeling-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]">
+            <span class="fa fa-plus"></span>
+            <span  jhiTranslate="arTeMiSApp.modelingExercise.home.createLabel">
+            Create new Modeling Exercise
+            </span>
+        </button>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <div class="row">
+    </div>
+    <br/>
+    <div class="table-responsive" *ngIf="modelingExercises">
+        <table class="table table-striped">
+            <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span>&nbsp;<span class="fa fa-sort"></span></th>
+                <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span>&nbsp;<span class="fa fa-sort"></span></th>
+                <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<span class="fa fa-sort"></span></th>
+                <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<span class="fa fa-sort"></span></th>
+                <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<span class="fa fa-sort"></span></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody infinite-scroll (scrolled)="loadPage(page + 1)" [infiniteScrollDisabled]="page >= links['last']" [infiniteScrollDistance]="0">
+            <tr *ngFor="let modelingExercise of modelingExercises | sortBy: predicate: reverse ;trackBy: trackId">
+                <td><a [routerLink]="['../modeling-exercise', modelingExercise.id ]">{{modelingExercise.id}}</a></td>
+                <td>{{modelingExercise.title}}</td>
+                <td>{{modelingExercise.releaseDate | date:'medium'}}</td>
+                <td>{{modelingExercise.dueDate | date:'medium'}}</td>
+                <td>{{modelingExercise.maxScore}}</td>
+                <td class="text-right">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit"
+                                [routerLink]="['../modeling-exercise', modelingExercise.id ]"
+                                class="btn btn-info btn-sm">
+                            <span class="fa fa-eye"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'modeling-exercise/'+ modelingExercise.id + '/edit'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-primary btn-sm">
+                            <span class="fa fa-pencil"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'modeling-exercise/'+ modelingExercise.id + '/delete'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm">
+                            <span class="fa fa-remove"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "quizExercise" : {
             "home": {
                 "title": "Quiz Exercises",
@@ -17,7 +18,7 @@
                 "addQuestion": "Add Question",
                 "invalidInput": "Invalid Input",
                 "pendingChanges": "Unsaved Changes",
-                "saving": "Saving…",
+                "saving": "Saving...",
                 "saved": "Saved!",
                 "quizHasStarted": "The quiz has started. No more changes allowed.<br><br>Retroactive corrections can be made, once the quiz has ended. To do so, go back to the overview and click on \"Re-evaluate\", once the quiz has ended. (\"Re-evaluate\" is not available to TAs.)"
             },
@@ -85,6 +86,9 @@
                     "element_deleted": "Question-element deleted:",
                     "element_invalid": "Question-element set invalid:",
                     "element_correctness": "Solution mappings or solution of an answer option changed:",
+                    "answer_deleted": "Answer option deleted:",
+                    "answer_invalid": "Answer option set invalid:",
+                    "answer_correctness": "Solution of an answer option changed:",
                     "question_deleted": "Question deleted:",
                     "question_invalid": "Question set invalid:",
                     "scoring_change": "Scoring changed:",
@@ -94,6 +98,8 @@
                     "resulttext":{
                         "element_deleted": "The question-element will be removed from all results",
                         "element_invalid": "All participants receive the points for the invalid question-element",
+                        "answer_deleted": "The answer option will be removed from all results",
+                        "answer_invalid": "All participants receive the points for the invalid answer",
                         "question_deleted": "The question will be removed from all results",
                         "question_invalid": "All participants receive the points for the invalid question",
                         "scoring_change": "The scores will be recalculated. A participant could also lose points"

@@ -16,9 +16,10 @@
         }
     ],
     "fields": [],
-    "changelogDate": "20171026164300",
+    "changelogDate": "20180116211218",
     "entityTableName": "quiz_point_statistic",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

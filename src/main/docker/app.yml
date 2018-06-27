@@ -1,14 +1,21 @@
 version: '2'
 services:
-    exerciseapplication-app:
-        image: exerciseapplication
+    artemis-app:
+        image: artemis
         environment:
-            - SPRING_PROFILES_ACTIVE=prod,swagger
-            - SPRING_DATASOURCE_URL=jdbc:mysql://exerciseapplication-mysql:3306/exerciseapplication?useUnicode=true&characterEncoding=utf8&useSSL=false
-            - JHIPSTER_SLEEP=10 # gives time for the database to boot before the application
+            - SPRING_PROFILES_ACTIVE=prod
+            - SPRING_CLOUD_CONFIG_URI=http://admin:$${jhipster.registry.password}@jhipster-registry:8761/config
+            - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/ArTEMiS?useUnicode=true&characterEncoding=utf8&useSSL=false
+            - JHIPSTER_SLEEP=30 # gives time for the JHipster Registry to boot before the application
         ports:
             - 8080:8080
-    exerciseapplication-mysql:
+    artemis-mysql:
         extends:
             file: mysql.yml
-            service: exerciseapplication-mysql
+            service: artemis-mysql
+    jhipster-registry:
+        extends:
+            file: jhipster-registry.yml
+            service: jhipster-registry
+        environment:
+            - SPRING_CLOUD_CONFIG_SERVER_NATIVE_SEARCH_LOCATIONS=file:./central-config/docker-config/

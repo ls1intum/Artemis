@@ -20,9 +20,10 @@
             "fieldType": "Double"
         }
     ],
-    "changelogDate": "20170831094148",
+    "changelogDate": "20171130173542",
     "entityTableName": "submitted_answer",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

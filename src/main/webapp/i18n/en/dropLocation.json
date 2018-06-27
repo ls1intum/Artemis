@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "dropLocation" : {
             "home": {
                 "title": "Drop Locations",
@@ -19,7 +20,6 @@
             "posY": "Pos Y",
             "width": "Width",
             "height": "Height",
-            "invalid": "Invalid",
             "question": "Question"
         }
     }

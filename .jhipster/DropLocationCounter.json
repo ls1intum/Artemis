@@ -17,9 +17,10 @@
         }
     ],
     "fields": [],
-    "changelogDate": "20171026164305",
+    "changelogDate": "20180116211225",
     "entityTableName": "drop_location_counter",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

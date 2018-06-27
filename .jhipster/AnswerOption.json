@@ -30,9 +30,10 @@
             "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20170831094151",
+    "changelogDate": "20171130173545",
     "entityTableName": "answer_option",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

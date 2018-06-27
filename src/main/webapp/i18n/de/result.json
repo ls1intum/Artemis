@@ -1,30 +1,29 @@
 
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "result" : {
             "home": {
-                "title": "Ergebnisse",
-                "createLabel": "Ergebnis erstellen",
-                "createOrEditLabel": "Ergebnis erstellen oder bearbeiten"
+                "title": "Results",
+                "createLabel": "Result erstellen",
+                "createOrEditLabel": "Result erstellen oder bearbeiten"
             },
-            "created": "Ergebnis erstellt mit ID {{ param }}",
-            "updated": "Ergebnis aktualisiert mit ID {{ param }}",
-            "deleted": "Ergebnis gelöscht mit ID {{ param }}",
+            "created": "Result erstellt mit ID {{ param }}",
+            "updated": "Result aktualisiert mit ID {{ param }}",
+            "deleted": "Result gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Ergebnis {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Result {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Ergebnis"
+                "title": "Result"
             },
-            "resultString": "Ergebnis Text",
-            "completionDate": "Absolvierungszeitpunkt",
-            "successful": "Erfolgreich",
-            "buildArtifact": "Build Artefakt",
-            "score": "Punktzahl",
-            "rated": "Benotet",
-            "submission": "Abgabe",
+            "resultString": "Result String",
+            "completionDate": "Completion Date",
+            "successful": "Successful",
+            "buildArtifact": "Build Artifact",
+            "score": "Score",
+            "submission": "Submission",
             "feedbacks": "Feedbacks",
-            "participation": "Teilnahme"
+            "participation": "Participation"
         }
     }
 }

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -72,6 +73,15 @@ public class Result implements Serializable {
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Participation participation;
+
+    @OneToOne(cascade=CascadeType.MERGE, fetch = FetchType.LAZY)
+    @JoinColumn(unique = false)
+    private User assessor;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "assessment_type")
+    @JsonView(QuizView.After.class)
+    private AssessmentType assessmentType;
 
     /**
      * This property stores the total number of results in the participation this result belongs to.
@@ -222,13 +232,13 @@ public class Result implements Serializable {
         return this;
     }
 
-    public Result addFeedbacks(Feedback feedback) {
+    public Result addFeedback(Feedback feedback) {
         this.feedbacks.add(feedback);
         feedback.setResult(this);
         return this;
     }
 
-    public Result removeFeedbacks(Feedback feedback) {
+    public Result removeFeedback(Feedback feedback) {
         this.feedbacks.remove(feedback);
         feedback.setResult(null);
         return this;
@@ -249,6 +259,32 @@ public class Result implements Serializable {
 
     public void setParticipation(Participation participation) {
         this.participation = participation;
+    }
+
+    public User getAssessor() {
+        return assessor;
+    }
+
+    public Result assessor(User assessor) {
+        this.assessor = assessor;
+        return this;
+    }
+
+    public void setAssessor(User assessor) {
+        this.assessor = assessor;
+    }
+
+    public AssessmentType getAssessmentType() {
+        return assessmentType;
+    }
+
+    public Result assessmentType(AssessmentType assessmentType) {
+        this.assessmentType = assessmentType;
+        return this;
+    }
+
+    public void setAssessmentType(AssessmentType assessmentType) {
+        this.assessmentType = assessmentType;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 

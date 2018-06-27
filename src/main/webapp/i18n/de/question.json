@@ -1,29 +1,30 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "question" : {
             "home": {
-                "title": "Fragen",
-                "createLabel": "Frage erstellen",
-                "createOrEditLabel": "Frage erstellen oder bearbeiten"
+                "title": "Questions",
+                "createLabel": "Question erstellen",
+                "createOrEditLabel": "Question erstellen oder bearbeiten"
             },
-            "created": "Frage erstellt mit ID {{ param }}",
-            "updated": "Frage aktualisiert mit ID {{ param }}",
-            "deleted": "Frage gelöscht mit ID {{ param }}",
+            "created": "Question erstellt mit ID {{ param }}",
+            "updated": "Question aktualisiert mit ID {{ param }}",
+            "deleted": "Question gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Frage {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Question {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Frage"
+                "title": "Question"
             },
-            "title": "Titel",
+            "title": "Title",
             "text": "Text",
-            "hint": "Hinweis",
-            "explanation": "Erklärung",
-            "score": "Punkte",
-            "randomizeOrder": "Zufällige Reihenfolge",
-            "scoringType": "Bewertungsweise",
-            "questionStatistic": "Frage-Statistik",
-            "exercise": "Übung",
+            "hint": "Hint",
+            "explanation": "Explanation",
+            "score": "Score",
+            "scoringType": "Scoring Type",
+            "randomizeOrder": "Randomize Order",
+            "questionStatistic": "Question Statistic",
+            "exercise": "Exercise",
             "yourScore": "Erreichte Punktzahl",
             "invalid": "Ungültig",
             "invalidText": "Diese Frage ist ungültig und wird daher als komplett richtig gelöst bewertet"

@@ -14,9 +14,10 @@
             "fieldType": "Double"
         }
     ],
-    "changelogDate": "20170831094201",
+    "changelogDate": "20171130173556",
     "entityTableName": "quiz_submission",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

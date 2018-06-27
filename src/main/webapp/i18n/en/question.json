@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "question" : {
             "home": {
                 "title": "Questions",
@@ -19,9 +20,10 @@
             "text": "Text",
             "hint": "Hint",
             "explanation": "Explanation",
-            "score": "Points",
-            "randomizeOrder": "Random Order",
+            "score": "Score",
             "scoringType": "Scoring Type",
+            "randomizeOrder": "Randomize Order",
+            "questionStatistic": "Question Statistic",
             "exercise": "Exercise",
             "yourScore": "Your Score",
             "invalid": "Invalid",

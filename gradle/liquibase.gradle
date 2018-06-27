@@ -46,7 +46,7 @@ def liquibaseCommand(command) {
         args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL5InnoDBDialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
         args "--username=root"
         args "--password="
-        args "--url=jdbc:mysql://localhost:3306/ExerciseApplication"
+        args "--url=jdbc:mysql://localhost:3306/ArTEMiS"
         args "--driver=com.mysql.jdbc.Driver"
         args command
     }
