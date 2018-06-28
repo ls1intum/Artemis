@@ -1,0 +1,44 @@
+
+<div *ngIf="dropLocation">
+    <h2><span jhiTranslate="arTeMiSApp.dropLocation.detail.title">Drop Location</span> {{dropLocation.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.dropLocation.posX">Pos X</span></dt>
+        <dd>
+            <span>{{dropLocation.posX}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dropLocation.posY">Pos Y</span></dt>
+        <dd>
+            <span>{{dropLocation.posY}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dropLocation.width">Width</span></dt>
+        <dd>
+            <span>{{dropLocation.width}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dropLocation.height">Height</span></dt>
+        <dd>
+            <span>{{dropLocation.height}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dropLocation.question">Question</span></dt>
+        <dd>
+            <div *ngIf="dropLocation.question">
+                <a [routerLink]="['/drag-and-drop-question', dropLocation.question?.id]">{{dropLocation.question?.id}}</a>
+            </div>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'drop-location/'+ dropLocation.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

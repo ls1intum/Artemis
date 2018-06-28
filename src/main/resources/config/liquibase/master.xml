@@ -5,13 +5,42 @@
     xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
     <include file="config/liquibase/changelog/00000000000000_initial_schema.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20160609093907_added_entity_Course.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20160609094621_added_entity_Exercise.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20160609100233_added_entity_Participation.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20160609110918_added_entity_Result.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20170831094159_added_entity_Submission.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173536_added_entity_Course.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173537_added_entity_Exercise.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173538_added_entity_ProgrammingExercise.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173539_added_entity_ModelingExercise.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173540_added_entity_QuizExercise.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173541_added_entity_LtiOutcomeUrl.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173542_added_entity_SubmittedAnswer.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173543_added_entity_Question.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173544_added_entity_MultipleChoiceQuestion.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173545_added_entity_AnswerOption.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173546_added_entity_MultipleChoiceSubmittedAnswer.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173547_added_entity_DragAndDropQuestion.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173548_added_entity_DropLocation.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173549_added_entity_DragItem.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173550_added_entity_Participation.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173551_added_entity_LtiUserId.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173552_added_entity_Result.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173553_added_entity_Feedback.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173555_added_entity_ModelingSubmission.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173556_added_entity_QuizSubmission.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173557_added_entity_DragAndDropSubmittedAnswer.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173558_added_entity_DragAndDropAssignment.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-changelog - JHipster will add liquibase changelogs here -->
-    <include file="config/liquibase/changelog/20160609094621_added_entity_constraints_Exercise.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20160609100233_added_entity_constraints_Participation.xml" relativeToChangelogFile="false"/>
-    <include file="config/liquibase/changelog/20160609110918_added_entity_constraints_Result.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173537_added_entity_constraints_Exercise.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173541_added_entity_constraints_LtiOutcomeUrl.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173542_added_entity_constraints_SubmittedAnswer.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173543_added_entity_constraints_Question.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173545_added_entity_constraints_AnswerOption.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173546_added_entity_constraints_MultipleChoiceSubmittedAnswer.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173548_added_entity_constraints_DropLocation.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173549_added_entity_constraints_DragItem.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173550_added_entity_constraints_Participation.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173551_added_entity_constraints_LtiUserId.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173552_added_entity_constraints_Result.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173553_added_entity_constraints_Feedback.xml" relativeToChangelogFile="false"/>
+    <include file="config/liquibase/changelog/20171130173558_added_entity_constraints_DragAndDropAssignment.xml" relativeToChangelogFile="false"/>
     <!-- jhipster-needle-liquibase-add-constraints-changelog - JHipster will add liquibase constraints changelogs here -->
 </databaseChangeLog>

@@ -1,0 +1,40 @@
+
+<div *ngIf="dragAndDropAssignment">
+    <h2><span jhiTranslate="arTeMiSApp.dragAndDropAssignment.detail.title">Drag And Drop Assignment</span> {{dragAndDropAssignment.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.dragAndDropAssignment.item">Item</span></dt>
+        <dd>
+            <div *ngIf="dragAndDropAssignment.item">
+                <a [routerLink]="['/drag-item', dragAndDropAssignment.item?.id]">{{dragAndDropAssignment.item?.id}}</a>
+            </div>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dragAndDropAssignment.location">Location</span></dt>
+        <dd>
+            <div *ngIf="dragAndDropAssignment.location">
+                <a [routerLink]="['/drop-location', dragAndDropAssignment.location?.id]">{{dragAndDropAssignment.location?.id}}</a>
+            </div>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dragAndDropAssignment.submittedAnswer">Submitted Answer</span></dt>
+        <dd>
+            <div *ngIf="dragAndDropAssignment.submittedAnswer">
+                <a [routerLink]="['/drag-and-drop-submitted-answer', dragAndDropAssignment.submittedAnswer?.id]">{{dragAndDropAssignment.submittedAnswer?.id}}</a>
+            </div>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'drag-and-drop-assignment/'+ dragAndDropAssignment.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

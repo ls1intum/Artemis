@@ -1,0 +1,16 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "submissionPath",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20171130173555",
+    "entityTableName": "modeling_submission",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

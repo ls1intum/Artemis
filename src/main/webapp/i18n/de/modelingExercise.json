@@ -1,0 +1,22 @@
+
+{
+    "arTeMiSApp": {
+        "modelingExercise" : {
+            "home": {
+                "title": "Modeling Exercises",
+                "createLabel": "Modeling Exercise erstellen",
+                "createOrEditLabel": "Modeling Exercise erstellen oder bearbeiten"
+            },
+            "created": "Modeling Exercise erstellt mit ID {{ param }}",
+            "updated": "Modeling Exercise aktualisiert mit ID {{ param }}",
+            "deleted": "Modeling Exercise gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Modeling Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Modeling Exercise"
+            },
+            "baseFilePath": "Base File Path"
+        }
+    }
+}

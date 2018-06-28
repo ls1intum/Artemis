@@ -1,0 +1,30 @@
+
+{
+    "arTeMiSApp": {
+        "quizExercise" : {
+            "home": {
+                "title": "Quiz Exercises",
+                "createLabel": "Quiz Exercise erstellen",
+                "createOrEditLabel": "Quiz Exercise erstellen oder bearbeiten"
+            },
+            "created": "Quiz Exercise erstellt mit ID {{ param }}",
+            "updated": "Quiz Exercise aktualisiert mit ID {{ param }}",
+            "deleted": "Quiz Exercise gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Quiz Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Quiz Exercise"
+            },
+            "description": "Description",
+            "explanation": "Explanation",
+            "randomizeQuestionOrder": "Randomize Question Order",
+            "allowedNumberOfAttempts": "Allowed Number Of Attempts",
+            "isVisibleBeforeStart": "Is Visible Before Start",
+            "isOpenForPractice": "Is Open For Practice",
+            "isPlannedToStart": "Is Planned To Start",
+            "duration": "Duration",
+            "questions": "Questions"
+        }
+    }
+}

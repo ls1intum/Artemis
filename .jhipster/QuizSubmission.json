@@ -1,0 +1,18 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "submittedAnswers",
+            "otherEntityName": "submittedAnswer",
+            "otherEntityRelationshipName": "submission"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20171130173556",
+    "entityTableName": "quiz_submission",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

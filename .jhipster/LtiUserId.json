@@ -1,0 +1,25 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "user",
+            "otherEntityName": "user",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "ltiUserId"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "ltiUserId",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20171130173551",
+    "entityTableName": "lti_user_id",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

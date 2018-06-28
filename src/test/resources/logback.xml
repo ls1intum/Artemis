@@ -3,7 +3,7 @@
 <configuration scan="true">
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
-    <logger name="de.tum.in.www1.exerciseapp" level="INFO"/>
+    <logger name="de.tum.in.www1.artemis" level="INFO"/>
 
     <logger name="io.github.jhipster" level="WARN"/>
 

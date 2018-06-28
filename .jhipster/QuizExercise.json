@@ -1,0 +1,51 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "questions",
+            "otherEntityName": "question",
+            "otherEntityRelationshipName": "exercise"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "description",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "explanation",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "randomizeQuestionOrder",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "allowedNumberOfAttempts",
+            "fieldType": "Integer"
+        },
+        {
+            "fieldName": "isVisibleBeforeStart",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "isOpenForPractice",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "isPlannedToStart",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "duration",
+            "fieldType": "Integer"
+        }
+    ],
+    "changelogDate": "20171130173540",
+    "entityTableName": "quiz_exercise",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

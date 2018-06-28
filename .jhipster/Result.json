@@ -1,9 +1,24 @@
 {
+    "fluentMethods": true,
     "relationships": [
         {
+            "relationshipType": "one-to-one",
+            "relationshipName": "submission",
+            "otherEntityName": "submission",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "result"
+        },
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "feedbacks",
+            "otherEntityName": "feedback",
+            "otherEntityRelationshipName": "result"
+        },
+        {
+            "relationshipType": "many-to-one",
             "relationshipName": "participation",
             "otherEntityName": "participation",
-            "relationshipType": "many-to-one",
             "otherEntityField": "id"
         }
     ],
@@ -13,17 +28,26 @@
             "fieldType": "String"
         },
         {
-            "fieldName": "buildCompletionDate",
+            "fieldName": "completionDate",
             "fieldType": "ZonedDateTime"
         },
         {
-            "fieldName": "buildSuccessful",
+            "fieldName": "successful",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "buildArtifact",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "score",
+            "fieldType": "Long"
         }
     ],
-    "changelogDate": "20160609110918",
-    "dto": "no",
-    "service": "no",
+    "changelogDate": "20171130173552",
     "entityTableName": "result",
-    "pagination": "no"
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

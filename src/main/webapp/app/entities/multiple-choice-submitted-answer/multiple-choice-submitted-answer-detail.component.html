@@ -1,0 +1,28 @@
+
+<div *ngIf="multipleChoiceSubmittedAnswer">
+    <h2><span jhiTranslate="arTeMiSApp.multipleChoiceSubmittedAnswer.detail.title">Multiple Choice Submitted Answer</span> {{multipleChoiceSubmittedAnswer.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.multipleChoiceSubmittedAnswer.selectedOptions">Selected Options</span></dt>
+        <dd>
+            <span *ngFor="let selectedOptions of multipleChoiceSubmittedAnswer.selectedOptions; let last = last">
+                <a [routerLink]="['/answer-option', selectedOptions?.id ]">{{selectedOptions.id}}</a>{{last ? '' : ', '}}
+            </span>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'multiple-choice-submitted-answer/'+ multipleChoiceSubmittedAnswer.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

@@ -1,0 +1,27 @@
+
+{
+    "arTeMiSApp": {
+        "dragItem" : {
+            "home": {
+                "title": "Drag Items",
+                "createLabel": "Drag Item erstellen",
+                "createOrEditLabel": "Drag Item erstellen oder bearbeiten"
+            },
+            "created": "Drag Item erstellt mit ID {{ param }}",
+            "updated": "Drag Item aktualisiert mit ID {{ param }}",
+            "deleted": "Drag Item gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Drag Item {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Drag Item"
+            },
+            "pictureFilePath": "Picture File Path",
+            "text": "Text",
+            "correctScore": "Correct Score",
+            "incorrectScore": "Incorrect Score",
+            "correctLocation": "Correct Location",
+            "question": "Question"
+        }
+    }
+}

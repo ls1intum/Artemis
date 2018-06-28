@@ -1,0 +1,54 @@
+
+<div *ngIf="result">
+    <h2><span jhiTranslate="arTeMiSApp.result.detail.title">Result</span> {{result.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.result.resultString">Result String</span></dt>
+        <dd>
+            <span>{{result.resultString}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.result.completionDate">Completion Date</span></dt>
+        <dd>
+            <span>{{result.completionDate | date:'medium'}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.result.successful">Successful</span></dt>
+        <dd>
+            <span>{{result.successful}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.result.buildArtifact">Build Artifact</span></dt>
+        <dd>
+            <span>{{result.buildArtifact}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.result.score">Score</span></dt>
+        <dd>
+            <span>{{result.score}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.result.submission">Submission</span></dt>
+        <dd>
+            <div *ngIf="result.submission">
+                <a [routerLink]="['/submission', result.submission?.id]">{{result.submission?.id}}</a>
+            </div>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.result.participation">Participation</span></dt>
+        <dd>
+            <div *ngIf="result.participation">
+                <a [routerLink]="['/participation', result.participation?.id]">{{result.participation?.id}}</a>
+            </div>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'result/'+ result.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

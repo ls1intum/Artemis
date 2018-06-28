@@ -1,0 +1,25 @@
+
+{
+    "arTeMiSApp": {
+        "ltiOutcomeUrl" : {
+            "home": {
+                "title": "Lti Outcome Urls",
+                "createLabel": "Lti Outcome Url erstellen",
+                "createOrEditLabel": "Lti Outcome Url erstellen oder bearbeiten"
+            },
+            "created": "Lti Outcome Url erstellt mit ID {{ param }}",
+            "updated": "Lti Outcome Url aktualisiert mit ID {{ param }}",
+            "deleted": "Lti Outcome Url gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Lti Outcome Url {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Lti Outcome Url"
+            },
+            "url": "Url",
+            "sourcedId": "Sourced Id",
+            "user": "User",
+            "exercise": "Exercise"
+        }
+    }
+}

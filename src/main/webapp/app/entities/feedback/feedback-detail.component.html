@@ -1,0 +1,36 @@
+
+<div *ngIf="feedback">
+    <h2><span jhiTranslate="arTeMiSApp.feedback.detail.title">Feedback</span> {{feedback.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.feedback.text">Text</span></dt>
+        <dd>
+            <span>{{feedback.text}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.feedback.detailText">Detail Text</span></dt>
+        <dd>
+            <span>{{feedback.detailText}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.feedback.result">Result</span></dt>
+        <dd>
+            <div *ngIf="feedback.result">
+                <a [routerLink]="['/result', feedback.result?.id]">{{feedback.result?.id}}</a>
+            </div>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'feedback/'+ feedback.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

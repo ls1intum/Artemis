@@ -10,6 +10,7 @@ buildscript {
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.9.RELEASE"
+        classpath "gradle.plugin.org.detoeuf:swagger-codegen-plugin:1.7.4"
         classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.4.17"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
@@ -37,7 +38,6 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'war'
 apply plugin: 'propdeps'
 apply plugin: 'com.moowork.node'
-apply plugin: 'com.moowork.gulp'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'idea'
 
@@ -50,13 +50,13 @@ dependencyManagement {
 
 defaultTasks 'bootRun'
 
-group = 'de.tum.in.www1.exerciseapp'
+group = 'de.tum.in.www1.artemis'
 version = '0.0.1-SNAPSHOT'
 
 description = ''
 
 bootRepackage {
-   mainClass = 'de.tum.in.www1.exerciseapp.ExerciseApplicationApp'
+   mainClass = 'de.tum.in.www1.artemis.ArTeMiSApp'
 }
 
 war {
@@ -64,7 +64,7 @@ war {
 }
 
 springBoot {
-    mainClass = 'de.tum.in.www1.exerciseapp.ExerciseApplicationApp'
+    mainClass = 'de.tum.in.www1.artemis.ArTeMiSApp'
     executable = true
     buildInfo()
 }
@@ -105,34 +105,18 @@ test {
     reports.html.enabled = false
 }
 
-task cucumberTest(type: Test) {
-    description = "Execute cucumber BDD tests."
-    group = "verification"
-    include '**/CucumberTest*'
-
-    // uncomment if the tests reports are not generated
-    // see https://github.com/jhipster/generator-jhipster/pull/2771 and https://github.com/jhipster/generator-jhipster/pull/4484
-    // ignoreFailures true
-    reports.html.enabled = false
-}
-
-check.dependsOn cucumberTest
 task testReport(type: TestReport) {
     destinationDir = file("$buildDir/reports/tests")
     reportOn test
 }
 
-task cucumberTestReport(type: TestReport) {
-    destinationDir = file("$buildDir/reports/tests")
-    reportOn cucumberTest
-}
 
-apply from: 'gradle/yeoman.gradle'
 apply from: 'gradle/docker.gradle'
 apply from: 'gradle/sonar.gradle'
 apply from: 'gradle/liquibase.gradle'
 apply from: 'gradle/gatling.gradle'
 apply from: 'gradle/mapstruct.gradle'
+apply from: 'gradle/swagger.gradle'
 //jhipster-needle-gradle-apply-from - JHipster will add additional gradle scripts to be applied here
 
 if (project.hasProperty('prod')) {
@@ -147,6 +131,10 @@ if (project.hasProperty('graphite')) {
 
 if (project.hasProperty('prometheus')) {
     apply from: 'gradle/prometheus.gradle'
+}
+
+if (project.hasProperty('zipkin')) {
+    apply from: 'gradle/zipkin.gradle'
 }
 
 configurations {
@@ -205,12 +193,15 @@ dependencies {
     compile "org.springframework.boot:spring-boot-starter-websocket"
     compile "org.springframework.boot:spring-boot-starter-thymeleaf"
     compile "org.zalando:problem-spring-web"
+    compile "org.springframework.cloud:spring-cloud-starter-eureka"
+    compile "org.springframework.cloud:spring-cloud-starter-config"
     compile "org.springframework.cloud:spring-cloud-spring-service-connector"
     compile "org.springframework:spring-context-support"
     compile "org.springframework.security:spring-security-config"
     compile "org.springframework.security:spring-security-data"
     compile "org.springframework.security:spring-security-web"
     compile "org.springframework.security:spring-security-messaging"
+    compile "io.jsonwebtoken:jjwt"
     compile ("io.springfox:springfox-swagger2") {
         exclude module: 'mapstruct'
     }
@@ -218,8 +209,6 @@ dependencies {
     compile "mysql:mysql-connector-java"
     compile "org.mapstruct:mapstruct-jdk8:${mapstruct_version}"
     testCompile "com.jayway.jsonpath:json-path"
-    testCompile "info.cukes:cucumber-junit"
-    testCompile "info.cukes:cucumber-spring"
     testCompile ("org.springframework.boot:spring-boot-starter-test") {
         exclude group: 'com.vaadin.external.google', module: 'android-json'
     }

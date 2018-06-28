@@ -1,16 +1,35 @@
 {
     "global": {
-        "title": "ExerciseApplication",
+        "title": "ArTEMiS",
         "browsehappy": "Sie benutzen einen <strong>veralteten</strong> Browser. Bitte <a href=\"http://browsehappy.com/?locale=de/\">aktualisieren Sie Ihren Browser</a>, um die Benutzerfreundlichkeit zu erhöhen.",
         "menu": {
             "home": "Startseite",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entitäten",
+                "submission": "Submission",
                 "course": "Course",
                 "exercise": "Exercise",
+                "programmingExercise": "Programming Exercise",
+                "modelingExercise": "Modeling Exercise",
+                "quizExercise": "Quiz Exercise",
+                "ltiOutcomeUrl": "Lti Outcome Url",
+                "submittedAnswer": "Submitted Answer",
+                "question": "Question",
+                "multipleChoiceQuestion": "Multiple Choice Question",
+                "answerOption": "Answer Option",
+                "multipleChoiceSubmittedAnswer": "Multiple Choice Submitted Answer",
+                "dragAndDropQuestion": "Drag And Drop Question",
+                "dropLocation": "Drop Location",
+                "dragItem": "Drag Item",
                 "participation": "Participation",
+                "ltiUserId": "Lti User Id",
                 "result": "Result",
+                "feedback": "Feedback",
+                "modelingSubmission": "Modeling Submission",
+                "quizSubmission": "Quiz Submission",
+                "dragAndDropSubmittedAnswer": "Drag And Drop Submitted Answer",
+                "dragAndDropAssignment": "Drag And Drop Assignment",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -49,8 +68,15 @@
         },
         "messages": {
             "info": {
-                "authenticated": "Wenn Sie sich <a class=\"alert-link\" href=\"\" ng-click=\"vm.login()\">anmelden</a> möchten, versuchen Sie es mit <br/>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br/>- Benutzer (Name=\"user\" und Passwort=\"user\").",
-                "register": "Sie haben noch keinen Zugang? <a class=\"alert-link\" href=\"\" ng-click=\"vm.register()\">Registrieren Sie sich</a>"
+                "authenticated": {
+                    "prefix": "Wenn Sie sich ",
+                    "link": "anmelden",
+                    "suffix": " möchten, versuchen Sie es mit <br/>- Administrator (Name=\"admin\" und Passwort=\"admin\")<br/>- Benutzer (Name=\"user\" und Passwort=\"user\")."
+                },
+                "register": {
+                    "noaccount": "Sie haben noch keinen Zugang?",
+                    "link": "Registrieren Sie sich"
+                }
             },
             "error": {
                 "dontmatch": "Das bestätigte Passwort entspricht nicht dem neuen Passwort!"
