@@ -1,0 +1,48 @@
+
+<div *ngIf="participation">
+    <h2><span jhiTranslate="arTeMiSApp.participation.detail.title">Participation</span> {{participation.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.participation.repositoryUrl">Repository Url</span></dt>
+        <dd>
+            <span>{{participation.repositoryUrl}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.participation.buildPlanId">Build Plan Id</span></dt>
+        <dd>
+            <span>{{participation.buildPlanId}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.participation.initializationState">Initialization State</span></dt>
+        <dd>
+            <span jhiTranslate="{{'arTeMiSApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.participation.initializationDate">Initialization Date</span></dt>
+        <dd>
+            <span>{{participation.initializationDate | date:'medium'}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.participation.student">Student</span></dt>
+        <dd>
+            {{participation.student?.login}}
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.participation.exercise">Exercise</span></dt>
+        <dd>
+            <div *ngIf="participation.exercise">
+                <a [routerLink]="['/exercise', participation.exercise?.id]">{{participation.exercise?.title}}</a>
+            </div>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'participation/'+ participation.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

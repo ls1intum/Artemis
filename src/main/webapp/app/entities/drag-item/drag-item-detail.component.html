@@ -1,0 +1,50 @@
+
+<div *ngIf="dragItem">
+    <h2><span jhiTranslate="arTeMiSApp.dragItem.detail.title">Drag Item</span> {{dragItem.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.dragItem.pictureFilePath">Picture File Path</span></dt>
+        <dd>
+            <span>{{dragItem.pictureFilePath}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dragItem.text">Text</span></dt>
+        <dd>
+            <span>{{dragItem.text}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dragItem.correctScore">Correct Score</span></dt>
+        <dd>
+            <span>{{dragItem.correctScore}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dragItem.incorrectScore">Incorrect Score</span></dt>
+        <dd>
+            <span>{{dragItem.incorrectScore}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dragItem.correctLocation">Correct Location</span></dt>
+        <dd>
+            <div *ngIf="dragItem.correctLocation">
+                <a [routerLink]="['/drop-location', dragItem.correctLocation?.id]">{{dragItem.correctLocation?.id}}</a>
+            </div>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.dragItem.question">Question</span></dt>
+        <dd>
+            <div *ngIf="dragItem.question">
+                <a [routerLink]="['/drag-and-drop-question', dragItem.question?.id]">{{dragItem.question?.id}}</a>
+            </div>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'drag-item/'+ dragItem.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

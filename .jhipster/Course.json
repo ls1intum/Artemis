@@ -1,9 +1,10 @@
 {
+    "fluentMethods": true,
     "relationships": [
         {
+            "relationshipType": "one-to-many",
             "relationshipName": "exercises",
             "otherEntityName": "exercise",
-            "relationshipType": "one-to-many",
             "otherEntityRelationshipName": "course"
         }
     ],
@@ -15,11 +16,16 @@
         {
             "fieldName": "studentGroupName",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "teachingAssistantGroupName",
+            "fieldType": "String"
         }
     ],
-    "changelogDate": "20160609093907",
-    "dto": "no",
-    "service": "no",
+    "changelogDate": "20171130173536",
     "entityTableName": "course",
-    "pagination": "infinite-scroll"
+    "dto": "no",
+    "pagination": "no",
+    "service": "serviceClass",
+    "jpaMetamodelFiltering": false
 }

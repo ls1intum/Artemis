@@ -2,7 +2,6 @@ import org.gradle.internal.os.OperatingSystem
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'com.moowork.node'
-apply plugin: 'com.moowork.gulp'
 
 dependencies {
     compile "org.springframework.boot:spring-boot-devtools"
@@ -17,12 +16,12 @@ bootRun {
     args = []
 }
 
-task gulpConstantDev(type: GulpTask) {
-    args = ["ngconstant:dev", "--no-notification"]
+task webpackBuildDev(type: YarnTask) {
+    args = ["run", "webpack:build"]
 }
 
 war {
-    webAppDirName = 'src/main/webapp/'
+    webAppDirName = 'build/www/'
 }
 
 processResources {
@@ -30,10 +29,13 @@ processResources {
         filter {
             it.replace('#project.version#', version)
         }
+    }
+    filesMatching('**/bootstrap.yml') {
         filter {
             it.replace('#spring.profiles.active#', profiles)
         }
     }
 }
 
-processResources.dependsOn gulpConstantDev
+processResources.dependsOn webpackBuildDev
+webpackBuildDev.onlyIf { project.hasProperty('webpack') }

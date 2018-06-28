@@ -1,0 +1,23 @@
+
+{
+    "arTeMiSApp": {
+        "submission" : {
+            "home": {
+                "title": "Submissions",
+                "createLabel": "Create a new Submission",
+                "createOrEditLabel": "Create or edit a Submission"
+            },
+            "created": "A new Submission is created with identifier {{ param }}",
+            "updated": "A Submission is updated with identifier {{ param }}",
+            "deleted": "A Submission is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Submission {{ id }}?"
+            },
+            "detail": {
+                "title": "Submission"
+            },
+            "submitted": "Submitted",
+            "type": "Type"
+        }
+    }
+}

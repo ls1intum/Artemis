@@ -1,6 +1,6 @@
 
 {
-    "exerciseApplicationApp": {
+    "arTeMiSApp": {
         "exercise" : {
             "home": {
                 "title": "Exercises",
@@ -17,13 +17,10 @@
                 "title": "Exercise"
             },
             "title": "Title",
-            "baseProjectKey": "Base Project Key",
-            "baseRepositorySlug": "Base Repository Slug",
-            "baseBuildPlanSlug": "Base Build Plan Slug",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
-            "course": "Course",
-            "participations": "Participations"
+            "participations": "Participations",
+            "course": "Course"
         }
     }
 }

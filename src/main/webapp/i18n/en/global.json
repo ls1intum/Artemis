@@ -1,16 +1,35 @@
 {
     "global": {
-        "title": "ExerciseApplication",
+        "title": "ArTEMiS",
         "browsehappy": "You are using an <strong>outdated</strong> browser. Please <a href=\"http://browsehappy.com/?locale=en\">upgrade your browser</a> to improve your experience.",
         "menu": {
             "home": "Home",
             "jhipster-needle-menu-add-element": "JHipster will add additional menu entries here (do not translate!)",
             "entities": {
                 "main": "Entities",
+                "submission": "Submission",
                 "course": "Course",
                 "exercise": "Exercise",
+                "programmingExercise": "Programming Exercise",
+                "modelingExercise": "Modeling Exercise",
+                "quizExercise": "Quiz Exercise",
+                "ltiOutcomeUrl": "Lti Outcome Url",
+                "submittedAnswer": "Submitted Answer",
+                "question": "Question",
+                "multipleChoiceQuestion": "Multiple Choice Question",
+                "answerOption": "Answer Option",
+                "multipleChoiceSubmittedAnswer": "Multiple Choice Submitted Answer",
+                "dragAndDropQuestion": "Drag And Drop Question",
+                "dropLocation": "Drop Location",
+                "dragItem": "Drag Item",
                 "participation": "Participation",
+                "ltiUserId": "Lti User Id",
                 "result": "Result",
+                "feedback": "Feedback",
+                "modelingSubmission": "Modeling Submission",
+                "quizSubmission": "Quiz Submission",
+                "dragAndDropSubmittedAnswer": "Drag And Drop Submitted Answer",
+                "dragAndDropAssignment": "Drag And Drop Assignment",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -49,8 +68,15 @@
         },
         "messages": {
             "info": {
-                "authenticated": "If you want to <a class=\"alert-link\" href=\"\" ng-click=\"vm.login()\">sign in</a>, you can try the default accounts:<br/>- Administrator (login=\"admin\" and password=\"admin\") <br/>- User (login=\"user\" and password=\"user\").",
-                "register": "You don't have an account yet? <a class=\"alert-link\" href=\"\" ng-click=\"vm.register()\">Register a new account</a>"
+                "authenticated": {
+                    "prefix": "If you want to ",
+                    "link": "sign in",
+                    "suffix": ", you can try the default accounts:<br/>- Administrator (login=\"admin\" and password=\"admin\") <br/>- User (login=\"user\" and password=\"user\")."
+                },
+                "register": {
+                    "noaccount": "You don't have an account yet?",
+                    "link": "Register a new account"
+                }
             },
             "error": {
                 "dontmatch": "The password and its confirmation do not match!"

@@ -1,0 +1,30 @@
+
+<div *ngIf="ltiUserId">
+    <h2><span jhiTranslate="arTeMiSApp.ltiUserId.detail.title">Lti User Id</span> {{ltiUserId.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.ltiUserId.ltiUserId">Lti User Id</span></dt>
+        <dd>
+            <span>{{ltiUserId.ltiUserId}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.ltiUserId.user">User</span></dt>
+        <dd>
+            {{ltiUserId.user?.id}}
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'lti-user-id/'+ ltiUserId.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

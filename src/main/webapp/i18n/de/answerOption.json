@@ -1,0 +1,26 @@
+
+{
+    "arTeMiSApp": {
+        "answerOption" : {
+            "home": {
+                "title": "Answer Options",
+                "createLabel": "Answer Option erstellen",
+                "createOrEditLabel": "Answer Option erstellen oder bearbeiten"
+            },
+            "created": "Answer Option erstellt mit ID {{ param }}",
+            "updated": "Answer Option aktualisiert mit ID {{ param }}",
+            "deleted": "Answer Option gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Answer Option {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Answer Option"
+            },
+            "text": "Text",
+            "hint": "Hint",
+            "explanation": "Explanation",
+            "isCorrect": "Is Correct",
+            "question": "Question"
+        }
+    }
+}

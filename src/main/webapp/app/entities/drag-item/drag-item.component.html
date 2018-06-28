@@ -1,0 +1,76 @@
+<div>
+    <h2>
+        <span jhiTranslate="arTeMiSApp.dragItem.home.title">Drag Items</span>
+        <button class="btn btn-primary float-right jh-create-entity create-drag-item" [routerLink]="['/', { outlets: { popup: ['drag-item-new'] } }]">
+            <span class="fa fa-plus"></span>
+            <span  jhiTranslate="arTeMiSApp.dragItem.home.createLabel">
+            Create new Drag Item
+            </span>
+        </button>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <div class="row">
+    </div>
+    <br/>
+    <div class="table-responsive" *ngIf="dragItems">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+            <th><span jhiTranslate="global.field.id">ID</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragItem.pictureFilePath">Picture File Path</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragItem.text">Text</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragItem.correctScore">Correct Score</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragItem.incorrectScore">Incorrect Score</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragItem.correctLocation">Correct Location</span></th>
+            <th><span jhiTranslate="arTeMiSApp.dragItem.question">Question</span></th>
+            <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let dragItem of dragItems ;trackBy: trackId">
+                <td><a [routerLink]="['../drag-item', dragItem.id ]">{{dragItem.id}}</a></td>
+                <td>{{dragItem.pictureFilePath}}</td>
+                <td>{{dragItem.text}}</td>
+                <td>{{dragItem.correctScore}}</td>
+                <td>{{dragItem.incorrectScore}}</td>
+                <td>
+                    <div *ngIf="dragItem.correctLocation">
+                        <a [routerLink]="['../drop-location', dragItem.correctLocation?.id ]" >{{dragItem.correctLocation?.id}}</a>
+                    </div>
+                </td>
+                <td>
+                    <div *ngIf="dragItem.question">
+                        <a [routerLink]="['../drag-and-drop-question', dragItem.question?.id ]" >{{dragItem.question?.id}}</a>
+                    </div>
+                </td>
+                <td class="text-right">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit"
+                                [routerLink]="['../drag-item', dragItem.id ]"
+                                class="btn btn-info btn-sm">
+                            <span class="fa fa-eye"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'drag-item/'+ dragItem.id + '/edit'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-primary btn-sm">
+                            <span class="fa fa-pencil"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'drag-item/'+ dragItem.id + '/delete'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm">
+                            <span class="fa fa-remove"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

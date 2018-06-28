@@ -1,0 +1,6 @@
+# API-first development with swagger
+# This file will be used at compile time to generate Spring-MVC endpoint stubs using swagger-codegen
+swagger: "2.0"
+info:
+  version: 0.0.1
+paths: {}

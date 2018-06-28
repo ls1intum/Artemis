@@ -1,0 +1,46 @@
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+
+    <div class="modal-header">
+        <h4 class="modal-title" id="myDragAndDropAssignmentLabel" jhiTranslate="arTeMiSApp.dragAndDropAssignment.home.createOrEditLabel">Create or edit a Drag And Drop Assignment</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+                (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <div class="form-group" [hidden]="!dragAndDropAssignment.id">
+            <label for="id" jhiTranslate="global.field.id">ID</label>
+            <input type="text" class="form-control" id="id" name="id"
+                   [(ngModel)]="dragAndDropAssignment.id" readonly />
+        </div>
+
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropAssignment.item" for="field_item">Item</label>
+            <select class="form-control" id="field_item" name="item" [(ngModel)]="dragAndDropAssignment.item" >
+                <option [ngValue]="null"></option>
+                <option [ngValue]="dragItemOption.id === dragAndDropAssignment.item?.id ? dragAndDropAssignment.item : dragItemOption" *ngFor="let dragItemOption of dragitems; trackBy: trackDragItemById">{{dragItemOption.id}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropAssignment.location" for="field_location">Location</label>
+            <select class="form-control" id="field_location" name="location" [(ngModel)]="dragAndDropAssignment.location" >
+                <option [ngValue]="null"></option>
+                <option [ngValue]="dropLocationOption.id === dragAndDropAssignment.location?.id ? dragAndDropAssignment.location : dropLocationOption" *ngFor="let dropLocationOption of droplocations; trackBy: trackDropLocationById">{{dropLocationOption.id}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.dragAndDropAssignment.submittedAnswer" for="field_submittedAnswer">Submitted Answer</label>
+            <select class="form-control" id="field_submittedAnswer" name="submittedAnswer" [(ngModel)]="dragAndDropAssignment.submittedAnswer" >
+                <option [ngValue]="null"></option>
+                <option [ngValue]="dragAndDropSubmittedAnswerOption.id === dragAndDropAssignment.submittedAnswer?.id ? dragAndDropAssignment.submittedAnswer : dragAndDropSubmittedAnswerOption" *ngFor="let dragAndDropSubmittedAnswerOption of draganddropsubmittedanswers; trackBy: trackDragAndDropSubmittedAnswerById">{{dragAndDropSubmittedAnswerOption.id}}</option>
+            </select>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+            <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+            <span class="fa fa-save"></span>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+    </div>
+</form>

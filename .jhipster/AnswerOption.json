@@ -1,0 +1,35 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "many-to-one",
+            "relationshipName": "question",
+            "otherEntityName": "multipleChoiceQuestion",
+            "otherEntityField": "id"
+        }
+    ],
+    "fields": [
+        {
+            "fieldName": "text",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "hint",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "explanation",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "isCorrect",
+            "fieldType": "Boolean"
+        }
+    ],
+    "changelogDate": "20171130173545",
+    "entityTableName": "answer_option",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

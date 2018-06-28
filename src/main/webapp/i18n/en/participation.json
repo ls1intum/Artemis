@@ -1,6 +1,6 @@
 
 {
-    "exerciseApplicationApp": {
+    "arTeMiSApp": {
         "participation" : {
             "home": {
                 "title": "Participations",
@@ -16,10 +16,12 @@
             "detail": {
                 "title": "Participation"
             },
-            "cloneUrl": "Clone Url",
-            "repositorySlug": "Repository Slug",
-            "student": "Student",
+            "repositoryUrl": "Repository Url",
+            "buildPlanId": "Build Plan Id",
+            "initializationState": "Initialization State",
+            "initializationDate": "Initialization Date",
             "results": "Results",
+            "student": "Student",
             "exercise": "Exercise"
         }
     }

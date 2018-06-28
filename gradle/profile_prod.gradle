@@ -1,7 +1,6 @@
 apply plugin: 'org.springframework.boot'
 apply plugin: 'com.gorylenko.gradle-git-properties'
 apply plugin: 'com.moowork.node'
-apply plugin: 'com.moowork.gulp'
 
 dependencies {
 
@@ -20,8 +19,13 @@ bootRun {
     args = []
 }
 
-task gulpBuildWithOpts(type: GulpTask) {
-    args = ["build", "--no-notification"]
+
+task webpack_test(type: YarnTask, dependsOn: 'yarn_install') {
+    args = ["run", "webpack:test"]
+}
+
+task webpack(type: YarnTask, dependsOn: 'yarn_install') {
+    args = ["run", "webpack:prod"]
 }
 
 war {
@@ -33,6 +37,8 @@ processResources {
         filter {
             it.replace('#project.version#', version)
         }
+    }
+    filesMatching('**/bootstrap.yml') {
         filter {
             it.replace('#spring.profiles.active#', profiles)
         }
@@ -49,13 +55,5 @@ gitProperties {
     keys = ['git.branch', 'git.commit.id.abbrev']
 }
 
-// Workaround for https://github.com/srs/gradle-node-plugin/issues/134 doesn't work with yarn
-if (!project.hasProperty('nodeInstall')) {
-    gulpBuildWithOpts.dependsOn yarn_install
-} else {
-    gulpBuildWithOpts.dependsOn npm_install
-}
-gulpBuildWithOpts.dependsOn bower
-processResources.dependsOn gulpBuildWithOpts
-test.dependsOn gulp_test
-bootRun.dependsOn gulp_test
+test.dependsOn webpack_test
+processResources.dependsOn webpack

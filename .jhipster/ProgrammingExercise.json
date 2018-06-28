@@ -1,0 +1,28 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "baseRepositoryUrl",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "baseBuildPlanId",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "publishBuildPlanUrl",
+            "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "allowOnlineEditor",
+            "fieldType": "Boolean"
+        }
+    ],
+    "changelogDate": "20171130173538",
+    "entityTableName": "programming_exercise",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

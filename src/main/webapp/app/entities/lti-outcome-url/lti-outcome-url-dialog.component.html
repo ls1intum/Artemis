@@ -1,0 +1,49 @@
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+
+    <div class="modal-header">
+        <h4 class="modal-title" id="myLtiOutcomeUrlLabel" jhiTranslate="arTeMiSApp.ltiOutcomeUrl.home.createOrEditLabel">Create or edit a Lti Outcome Url</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+                (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <div class="form-group" [hidden]="!ltiOutcomeUrl.id">
+            <label for="id" jhiTranslate="global.field.id">ID</label>
+            <input type="text" class="form-control" id="id" name="id"
+                   [(ngModel)]="ltiOutcomeUrl.id" readonly />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.ltiOutcomeUrl.url" for="field_url">Url</label>
+            <input type="text" class="form-control" name="url" id="field_url"
+                [(ngModel)]="ltiOutcomeUrl.url" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.ltiOutcomeUrl.sourcedId" for="field_sourcedId">Sourced Id</label>
+            <input type="text" class="form-control" name="sourcedId" id="field_sourcedId"
+                [(ngModel)]="ltiOutcomeUrl.sourcedId" />
+        </div>
+
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.ltiOutcomeUrl.user" for="field_user">User</label>
+            <select class="form-control" id="field_user" name="user" [(ngModel)]="ltiOutcomeUrl.user" >
+                <option [ngValue]="null"></option>
+                <option [ngValue]="userOption.id === ltiOutcomeUrl.user?.id ? ltiOutcomeUrl.user : userOption" *ngFor="let userOption of users; trackBy: trackUserById">{{userOption.id}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.ltiOutcomeUrl.exercise" for="field_exercise">Exercise</label>
+            <select class="form-control" id="field_exercise" name="exercise" [(ngModel)]="ltiOutcomeUrl.exercise" >
+                <option [ngValue]="null"></option>
+                <option [ngValue]="exerciseOption.id === ltiOutcomeUrl.exercise?.id ? ltiOutcomeUrl.exercise : exerciseOption" *ngFor="let exerciseOption of exercises; trackBy: trackExerciseById">{{exerciseOption.id}}</option>
+            </select>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+            <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+            <span class="fa fa-save"></span>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+    </div>
+</form>

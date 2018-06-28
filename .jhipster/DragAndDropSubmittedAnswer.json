@@ -1,0 +1,18 @@
+{
+    "fluentMethods": true,
+    "relationships": [
+        {
+            "relationshipType": "one-to-many",
+            "relationshipName": "assignments",
+            "otherEntityName": "dragAndDropAssignment",
+            "otherEntityRelationshipName": "submittedAnswer"
+        }
+    ],
+    "fields": [],
+    "changelogDate": "20171130173557",
+    "entityTableName": "drag_and_drop_submitted_answer",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

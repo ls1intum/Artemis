@@ -1,0 +1,25 @@
+
+{
+    "arTeMiSApp": {
+        "programmingExercise" : {
+            "home": {
+                "title": "Programming Exercises",
+                "createLabel": "Create a new Programming Exercise",
+                "createOrEditLabel": "Create or edit a Programming Exercise"
+            },
+            "created": "A new Programming Exercise is created with identifier {{ param }}",
+            "updated": "A Programming Exercise is updated with identifier {{ param }}",
+            "deleted": "A Programming Exercise is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Programming Exercise {{ id }}?"
+            },
+            "detail": {
+                "title": "Programming Exercise"
+            },
+            "baseRepositoryUrl": "Base Repository Url",
+            "baseBuildPlanId": "Base Build Plan Id",
+            "publishBuildPlanUrl": "Publish Build Plan Url",
+            "allowOnlineEditor": "Allow Online Editor"
+        }
+    }
+}

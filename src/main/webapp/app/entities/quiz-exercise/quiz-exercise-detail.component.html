@@ -1,0 +1,54 @@
+
+<div *ngIf="quizExercise">
+    <h2><span jhiTranslate="arTeMiSApp.quizExercise.detail.title">Quiz Exercise</span> {{quizExercise.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.quizExercise.description">Description</span></dt>
+        <dd>
+            <span>{{quizExercise.description}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.quizExercise.explanation">Explanation</span></dt>
+        <dd>
+            <span>{{quizExercise.explanation}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder">Randomize Question Order</span></dt>
+        <dd>
+            <span>{{quizExercise.randomizeQuestionOrder}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.quizExercise.allowedNumberOfAttempts">Allowed Number Of Attempts</span></dt>
+        <dd>
+            <span>{{quizExercise.allowedNumberOfAttempts}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.quizExercise.isVisibleBeforeStart">Is Visible Before Start</span></dt>
+        <dd>
+            <span>{{quizExercise.isVisibleBeforeStart}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.quizExercise.isOpenForPractice">Is Open For Practice</span></dt>
+        <dd>
+            <span>{{quizExercise.isOpenForPractice}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.quizExercise.isPlannedToStart">Is Planned To Start</span></dt>
+        <dd>
+            <span>{{quizExercise.isPlannedToStart}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</span></dt>
+        <dd>
+            <span>{{quizExercise.duration}}</span>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'quiz-exercise/'+ quizExercise.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>
