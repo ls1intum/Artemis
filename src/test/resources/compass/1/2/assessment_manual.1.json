@@ -1,0 +1,18 @@
+{
+  "assessments": [
+    {
+      "type": "class",
+      "id": "D0aXU5Sx8fiL",
+      "credits": 0.0,
+      "comment": "ich mach das weil ich böse bin",
+      "mode": "manual"
+
+    },
+    {
+      "type": "attribute",
+      "id": "UWy0QMFJrQcz",
+      "credits": 1.0,
+      "mode": "manual"
+    }
+  ]
+}

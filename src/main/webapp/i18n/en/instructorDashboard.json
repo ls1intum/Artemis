@@ -1,18 +1,22 @@
 {
-    "artemisApp": {
-        "instructorDashboard": {
-            "cleanup": {
-                "title": "Cleanup",
-                "question": "Are you sure you want to delete ALL student build plans for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}? This action can NOT be undone!"
-            },
-            "archive": {
-                "title": "Archive",
-                "question": "Are you sure you want to archive ALL student repositories for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}?"
-            },
-            "exportRepos": {
-                "title": "Download Repos",
-                "question": "Enter all ids of students you want to download the repo from"
-            }
+    "instructorDashboard": {
+        "title": "Course Dashboard",
+        "participated": "Participated in exercises",
+        "completed": "Successfully completed",
+        "completedExercises": "Successfully completed exercises",
+        "overallScore": "Overall score",
+        "students": "Students",
+        "cleanup": {
+            "title": "Cleanup",
+            "question": "Are you sure you want to delete ALL student build plans for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}? This action can NOT be undone!"
+        },
+        "archive": {
+            "title": "Archive",
+            "question": "Are you sure you want to archive ALL student repositories for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}?"
+        },
+        "exportRepos": {
+            "title": "Download Repos",
+            "question": "Enter all ids of students you want to download the repo from"
         }
     }
 }

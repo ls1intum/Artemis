@@ -112,7 +112,7 @@ public class ExerciseResource {
         if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
         }
-        if (!versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
+        if (exercise.getBaseRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
         }
         return null;

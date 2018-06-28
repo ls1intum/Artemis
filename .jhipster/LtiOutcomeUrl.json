@@ -1,15 +1,16 @@
 {
+    "fluentMethods": true,
     "relationships": [
         {
+            "relationshipType": "many-to-one",
             "relationshipName": "user",
             "otherEntityName": "user",
-            "relationshipType": "many-to-one",
             "otherEntityField": "id"
         },
         {
+            "relationshipType": "many-to-one",
             "relationshipName": "exercise",
             "otherEntityName": "exercise",
-            "relationshipType": "many-to-one",
             "otherEntityField": "id"
         }
     ],
@@ -23,9 +24,10 @@
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20161002111935",
-    "dto": "no",
-    "service": "no",
+    "changelogDate": "20171130173541",
     "entityTableName": "lti_outcome_url",
-    "pagination": "no"
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

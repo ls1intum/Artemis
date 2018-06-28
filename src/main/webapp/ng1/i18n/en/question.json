@@ -1,0 +1,30 @@
+
+{
+    "arTeMiSApp": {
+        "question" : {
+            "home": {
+                "title": "Questions",
+                "createLabel": "Create a new Question",
+                "createOrEditLabel": "Create or edit a Question"
+            },
+            "created": "A new Question is created with identifier {{ param }}",
+            "updated": "A Question is updated with identifier {{ param }}",
+            "deleted": "A Question is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Question {{ id }}?"
+            },
+            "detail": {
+                "title": "Question"
+            },
+            "title": "Title",
+            "text": "Text",
+            "hint": "Hint",
+            "explanation": "Explanation",
+            "score": "Score",
+            "scoringType": "Scoring Type",
+            "randomizeOrder": "Randomize Order",
+            "questionStatistic": "Question Statistic",
+            "exercise": "Exercise"
+        }
+    }
+}

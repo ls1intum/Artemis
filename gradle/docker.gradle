@@ -25,6 +25,6 @@ task buildDocker(type: DockerBuildImage, dependsOn: 'copyDockerFiles') {
     description = "Package application as Docker image"
     group = "Docker"
     inputDir = project.file("${project.buildDir}/docker")
-    tags = ["exerciseapplication:latest".toString(), "exerciseapplication:${project.version}".toString()]
+    tags = ["artemis:latest".toString(), "artemis:${project.version}".toString()]
 }
 

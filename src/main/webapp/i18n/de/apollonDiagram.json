@@ -1,0 +1,28 @@
+
+{
+    "arTeMiSApp": {
+        "apollonDiagram" : {
+            "home": {
+                "title": "Apollon-Diagramme",
+                "createLabel": "Apollon-Diagramm erstellen",
+                "createOrEditLabel": "Apollon-Diagramm erstellen oder bearbeiten"
+            },
+            "created": "Apollon Diagram erstellt mit ID {{ param }}",
+            "updated": "Apollon Diagram aktualisiert mit ID {{ param }}",
+            "deleted": "Apollon Diagram gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Apollon Diagram {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Apollon-Diagramm"
+            },
+            "title": "Titel",
+            "jsonRepresentation": "JSON-Repräsentation",
+            "assessment": {
+                "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+                "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+                "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat."
+            }
+        }
+    }
+}

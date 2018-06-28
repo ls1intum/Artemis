@@ -1,0 +1,130 @@
+<div class="p-4">
+    <jhi-alert></jhi-alert>
+
+    <div class="row">
+        <div class="col">
+            <h2>
+                Modeling Editor <span *ngIf="modelingExercise">for Exercise: {{modelingExercise.title}}</span>
+            </h2>
+        </div>
+        <div class="col text-right">
+            <span *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></span>
+            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted">
+                <span class="fa fa-save"></span>
+                <span jhiTranslate="entity.action.save">Save</span></button>
+            <button class="btn btn-success" (click)="submit()"
+                    [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
+                    [hidden]="submission?.submitted">Submit</button>
+        </div>
+    </div>
+
+    <div class="row" *ngIf="modelingExercise">
+        <div class="col">
+            <p class="mb-3"><span><strong>Description:</strong></span> {{ modelingExercise.description }}</p>
+        </div>
+        <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ modelingExercise.maxScore }}</strong></p></div>
+    </div>
+
+    <ng-template #help let-c="close" let-d="dismiss">
+        <div class="modal-header">
+            <h4 class="modal-title">How to use the modeling editor</h4>
+            <button type="button" class="close" aria-label="Close" (click)="d()"><span aria-hidden="true">&times;</span></button>
+        </div>
+        <div class="modal-body">
+            <table class="table">
+                <tr>
+                    <th>Add Class</th>
+                    <td>To add a class, simply drag and drop one of the elements on the right side into the editor area on the left side.</td>
+                    <td><img width="500" src="../../content/images/help-add-class.jpg"></td>
+                </tr>
+                <tr>
+                    <th>Edit Class</th>
+                    <td>To edit a class, double click it and a popup will open up, in which you can edit its components, e.g. name, attributes, methods, etc.</td>
+                    <td><img width="500" src="../../content/images/help-edit-class.jpg"></td>
+                </tr>
+                <tr>
+                    <th>Move Class</th>
+                    <td>To move a class, select it with a single click and either use your keyboard arrows or drag and drop it.</td>
+                    <td><img src="../../content/images/help-move-class.jpg"></td>
+                </tr>
+                <tr>
+                    <th>Delete Class</th>
+                    <td>To delete a class, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>Add Association</th>
+                    <td>To add a association, select the source class with a single click and you will see four blue circles. Those are the possible connection points for associations. Click and hold on one of those and drag it to another blue circle to create a association.</td>
+                    <td><img width="500" src="../../content/images/help-add-association.jpg"></td>
+                </tr>
+                <tr>
+                    <th>Edit Association</th>
+                    <td>To edit a association, double click it and a popup will open up, in which you can edit its properties, e.g. type.</td>
+                    <td><img width="500" src="../../content/images/help-edit-association.jpg"></td>
+                </tr>
+                <tr>
+                    <th>Delete Association</th>
+                    <td>To delete a association, select it with a single click and either press <code>Delete</code> or <code>Backspace</code> on your keyboard.</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <th>Undo & Redo</th>
+                    <td>With <code>Ctrl+Z</code> and <code>Ctrl+Y</code> you can undo and redo your changes.</td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-outline" (click)="c()">Close</button>
+        </div>
+    </ng-template>
+    <div *ngIf="!submission?.submitted"><button class="btn btn-warning" (click)="open(help)"><i class="fa fa-question-circle-o"></i>&nbsp;Help</button></div><br>
+
+    <div class="row">
+        <div [ngClass]="{'col-9': submission?.submitted, 'col-12': !submission?.submitted}">
+            <div #editorContainer style="width: 100%; height: 100vh;"></div>
+            <div class="assessments">
+                <div class="assessments__container">
+                    <div class="assessments__canvas">
+                        <ng-container *ngIf="assessments && positions">
+                            <div *ngFor="let assessment of assessments"
+                                 [style.top.px]="positions[assessment.id].y"
+                                 [style.left.px]="positions[assessment.id].x">
+                                <i class="fa" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></i>
+                                <i class="fa half" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></i>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-3" *ngIf="submission?.submitted">
+            <h4>Assessment</h4>
+            <p *ngIf="!assessments">There is no assessment available yet.</p>
+            <ng-container *ngIf="assessments">
+                <p>Select entities and/or associations in the editor to filter the assessment.</p>
+                <table class="table">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>Element</th>
+                            <th class="text-center">Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let assessment of assessments" [hidden]="(assessment.credits === 0 && !assessment.comment) || !isSelected(assessment.id, assessment.type)">
+                            <td>
+                                <ng-container [ngSwitch]="assessment.type">
+                                    <span *ngSwitchCase="'relationship'">association</span>
+                                    <span *ngSwitchDefault>{{assessment.type}}</span>
+                                </ng-container>
+                                <code class="text-primary">{{assessmentsNames[assessment.id]}}</code><br>
+                                <span *ngIf="assessment.comment" [ngClass]="{'text-success': assessment.credits > 0, 'text-danger': assessment.credits < 0}"><strong>Feedback:</strong> {{assessment.comment}}</span>
+                            </td>
+                            <td class="text-center">{{assessment.credits | number:'1.0-1'}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </ng-container>
+        </div>
+    </div>
+</div>

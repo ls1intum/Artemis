@@ -1,0 +1,118 @@
+<div>
+    <h2>
+        <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
+        <button *ngIf="courseId" class="btn btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['new']">
+            <span class="fa fa-plus"></span>
+            <span  jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
+                Create new Quiz Exercise
+            </span>
+        </button>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <div class="row">
+    </div>
+    <br/>
+    <div class="table-responsive" *ngIf="quizExercises">
+        <table class="table table-striped">
+            <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th jhiSortBy="id"><span jhiTranslate="global.field.id">ID</span><span class="fa fa-sort"></span></th>
+                <th jhiSortBy="title"><span jhiTranslate="arTeMiSApp.exercise.title">Title</span><span class="fa fa-sort"></span></th>
+                <th jhiSortBy="status"><span jhiTranslate="arTeMiSApp.quizExercise.status">Status</span><span class="fa fa-sort"></span></th>
+                <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.quizExercise.startTime">Start Time</span><span class="fa fa-sort"></span></th>
+                <th jhiSortBy="duration"><span jhiTranslate="arTeMiSApp.quizExercise.duration">Duration</span><span class="fa fa-sort"></span></th>
+                <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span><span class="fa fa-sort"></span></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let quizExercise of quizExercises | sortBy: predicate: reverse ;trackBy: trackId">
+                <td><a [routerLink]="['/quiz-exercise', quizExercise.id ]">{{quizExercise.id}}</a></td>
+                <td>{{quizExercise.title}}</td>
+                <td>{{quizExercise.status}}</td>
+                <td>{{quizExercise.isPlannedToStart ? (quizExercise.releaseDate | date:'medium') : "-"}}</td>
+                <td>
+                    {{fullMinutesForSeconds(quizExercise.duration)}}
+                    <span
+                        jhiTranslate="{{quizExercise.duration % 60 ? 'arTeMiSApp.quizExercise.minutesShort' : 'arTeMiSApp.quizExercise.minutes'}}"></span>
+                    <span *ngIf="quizExercise.duration % 60">
+                        {{quizExercise.duration % 60}}
+                        <span jhiTranslate="arTeMiSApp.quizExercise.secondsShort"></span>
+                    </span>
+                </td>
+                <td>{{quizExercise.maxScore}}</td>
+                <td class="text-right">
+                    <div class="btn-group flex-btn-group-container">
+                        <button type="submit"
+                                (click)="openForPractice(quizExercise.id)"
+                                class="btn btn-warning btn-sm"
+                                *ngIf="quizExercise.status === QuizStatus.CLOSED">
+                            <span class="fa fa-play-circle"></span>
+                            <span class="hidden-sm-down"
+                                  jhiTranslate="arTeMiSApp.quizExercise.openForPractice"></span>
+                        </button>
+                        <button type="submit"
+                                (click)="startQuiz(quizExercise.id)"
+                                class="btn btn-warning btn-sm"
+                                *ngIf="quizExercise.status === QuizStatus.VISIBLE">
+                            <span class="fa fa-play-circle"></span>
+                            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.quizExercise.startNow"></span>
+                        </button>
+                        <button type="submit"
+                                (click)="showQuiz(quizExercise.id)"
+                                class="btn btn-warning btn-sm"
+                                *ngIf="quizExercise.status === QuizStatus.HIDDEN">
+                            <span class="fa fa-eye"></span>
+                            <span class="hidden-sm-down" jhiTranslate="arTeMiSApp.quizExercise.showNow"></span>
+                        </button>
+                        <div class="d-inline-block" ngbDropdown>
+                            <button class="btn btn-info btn-sm" ngbDropdownToggle>
+                                <span class="fa fa-eye"></span>
+                                &nbsp;
+                                <span class="caret"></span>
+                            </button>
+                            <div ngbDropdownMenu>
+                                <button class="dropdown-item" jhiTranslate="arTeMiSApp.quizExercise.preview"
+                                        [routerLink]="['/quiz', quizExercise.id, 'preview']"
+                                ></button>
+                                <button class="dropdown-item" jhiTranslate="arTeMiSApp.quizExercise.solution"
+                                        [routerLink]="['/quiz', quizExercise.id, 'solution']"
+                                ></button>
+                            </div>
+                        </div>
+                        <button type="submit"
+                                [routerLink]="['/quiz', quizExercise.id, 'quiz-point-statistic']"
+                                class="btn btn-success btn-sm">
+                            <span class="fa fa-signal"></span>
+                            <span class="hidden-sm-down" jhiTranslate="global.menu.entities.statistic"></span>
+                        </button>
+                        <button type="submit"
+                                [hidden]="quizIsOver(quizExercise) && userIsInstructor()"
+                                [disabled]="quizExercise.status === QuizStatus.ACTIVE || (quizIsOver(quizExercise) && !userIsInstructor())"
+                                [routerLink]="['edit', quizExercise.id]"
+                                class="btn btn-primary btn-sm">
+                            <span class="fa fa-pencil"></span>
+                            <span class="hidden-sm-down" jhiTranslate="entity.action.edit"></span>
+                        </button>
+                        <button type="submit"
+                                [hidden]="!quizIsOver(quizExercise) || !userIsInstructor()"
+                                [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]"
+                                class="btn btn-primary btn-sm">
+                            <span class="fa fa-pencil"></span>
+                            <span class="hidden-sm-down" jhiTranslate="entity.action.re-evaluate"></span>
+                        </button>
+                        <button type="submit"
+                                [routerLink]="['/', { outlets: { popup: 'quiz-exercise/'+ quizExercise.id + '/delete'} }]"
+                                replaceUrl="true"
+                                queryParamsHandling="merge"
+                                class="btn btn-danger btn-sm">
+                            <span class="fa fa-remove"></span>
+                            <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

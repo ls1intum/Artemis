@@ -7,8 +7,10 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -74,11 +76,13 @@ public class BambooService implements ContinuousIntegrationService {
     private final GitService gitService;
     private final ResultRepository resultRepository;
     private final FeedbackRepository feedbackRepository;
+    private final ParticipationRepository participationRepository;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository) {
+    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
+        this.participationRepository = participationRepository;
     }
 
     public BitbucketClient getBitbucketClient() {
@@ -310,7 +314,7 @@ public class BambooService implements ContinuousIntegrationService {
 
         //TODO: put this request into a timer / queue instead of blocking the request! Because blocking the request actually means that other requests cannot be exectuted
         if (isOldBuildResult) {
-            log.warn("It seems we got an old build result from Bamboo for build plan " + participation.getBuildPlanId() + ". Waiting 1s to retrieve build result...");
+            log.debug("It seems we got an old build result from Bamboo for build plan " + participation.getBuildPlanId() + ". Waiting 1s to retrieve build result...");
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
@@ -341,12 +345,16 @@ public class BambooService implements ContinuousIntegrationService {
         if (result.getFeedbacks() != null && result.getFeedbacks().size() > 0) {
             //cleanup
             for(Feedback feedback : new ArrayList<Feedback>(result.getFeedbacks())) {
-                result.removeFeedbacks(feedback);
+                result.removeFeedback(feedback);
                 feedbackRepository.delete(feedback);
             }
         }
         addFeedbackToResult(result, buildResultDetails);
         resultRepository.save(result);
+        //The following was intended to prevent caching problems, but does not work properly due to lazy instantiation exceptions
+//        Hibernate.initialize(participation.getResults());
+//        participation.addResult(result);
+//        participationRepository.save(participation);
         return result;
     }
 
@@ -389,7 +397,7 @@ public class BambooService implements ContinuousIntegrationService {
                 feedback.setType(FeedbackType.AUTOMATIC);
                 feedback.setPositive(false);
                 feedback = feedbackRepository.save(feedback);
-                result.addFeedbacks(feedback);
+                result.addFeedback(feedback);
             }
         } catch(Exception failedToParse) {
             log.error("Parsing from bamboo to feedback failed" + failedToParse);

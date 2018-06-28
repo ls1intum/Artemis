@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import org.slf4j.Logger;
@@ -31,6 +32,7 @@ public class ParticipationService {
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
 
     private final ParticipationRepository participationRepository;
+    private final ExerciseRepository exerciseRepository;
     private final ResultRepository resultRepository;
     private final QuizSubmissionService quizSubmissionService;
     private final UserService userService;
@@ -39,6 +41,7 @@ public class ParticipationService {
     private final Optional<VersionControlService> versionControlService;
 
     public ParticipationService(ParticipationRepository participationRepository,
+                                ExerciseRepository exerciseRepository,
                                 ResultRepository resultRepository,
                                 QuizSubmissionService quizSubmissionService,
                                 UserService userService,
@@ -46,6 +49,7 @@ public class ParticipationService {
                                 Optional<ContinuousIntegrationService> continuousIntegrationService,
                                 Optional<VersionControlService> versionControlService) {
         this.participationRepository = participationRepository;
+        this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionService = quizSubmissionService;
         this.userService = userService;
@@ -104,8 +108,7 @@ public class ParticipationService {
             participation = configureBuildPlan(participation, programmingExercise);
             participation.setInitializationState(INITIALIZED);
             participation.setInitializationDate(ZonedDateTime.now());
-        } else if (exercise instanceof QuizExercise) {
-//            participation.setLti(false);    // QuizExercises do not support LTI at the moment
+        } else if (exercise instanceof QuizExercise || exercise instanceof ModelingExercise) {
             if (participation.getInitializationState() == null) {
                 participation.setInitializationState(INITIALIZED);
             }
@@ -146,7 +149,7 @@ public class ParticipationService {
                 if (result != null) {
                     Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
                     result.setSubmission(submission);
-                    participation.addResults(result);
+                    participation.addResult(result);
                 }
 
                 return participation;
@@ -178,7 +181,7 @@ public class ParticipationService {
         participation = new Participation()
             .initializationState(INITIALIZED)
             .exercise(quizExercise)
-            .addResults(result);
+            .addResult(result);
 
         if (quizExercise.isEnded() && quizSubmission.getSubmissionDate() != null) {
             // update result and participation state
@@ -401,7 +404,10 @@ public class ParticipationService {
             }
         }
 
-        participationRepository.delete(id);
+        Exercise exercise = participation.getExercise();
+        exercise.removeParticipation(participation);
+        exerciseRepository.save(exercise);
+        participationRepository.delete(participation);
     }
 
     /**
@@ -410,11 +416,13 @@ public class ParticipationService {
      * @param exerciseId the id of the exercise
      */
     @Transactional
-    public void deleteAllByExerciseId(Long exerciseId) {
+    public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
         List<Participation> participationsToDelete = participationRepository.findByExerciseId(exerciseId);
 
+        //TODO: improve performance
+
         for (Participation participation : participationsToDelete) {
-            delete(participation.getId(), true, true);
+            delete(participation.getId(), deleteBuildPlan, deleteRepository);
         }
     }
 }

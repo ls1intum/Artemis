@@ -1,0 +1,77 @@
+<div class="p-4">
+    <jhi-alert></jhi-alert>
+
+    <div class="row">
+        <div class="col">
+            <h2>
+                Assessment <span *ngIf="result">for Submission: {{result.participation.student.firstName}} {{result.participation.student.lastName}}</span>
+            </h2>
+        </div>
+        <div class="col text-right">
+            <span *ngIf="result && result.participation"><jhi-result [participation]="result.participation"></jhi-result></span>
+            <span *ngIf="result?.assessmentType === 'AUTOMATIC' || !result?.rated">
+                <button class="btn btn-primary" (click)="saveAssessment()" [disabled]="!assessments || !assessmentsAreValid">Save Assessment</button>
+                <button class="btn btn-success" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid">Submit Assessment</button>
+            </span>
+        </div>
+    </div>
+
+    <div class="row" *ngIf="modelingExercise">
+        <div class="col">
+            <p class="mb-3">
+                <strong>Exercise:</strong> {{ modelingExercise.title }}<br>
+                <strong>Description:</strong> {{ modelingExercise.description }}
+            </p>
+        </div>
+        <div class="col text-right" *ngIf="result?.assessmentType === 'AUTOMATIC' || !result?.rated"><h5><strong>Score:</strong> {{ totalScore }}/{{ modelingExercise.maxScore }}</h5></div>
+    </div>
+
+    <div><button type="submit" (click)="previousState()" class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+    </button></div><br>
+
+    <div class="row">
+        <div class="col-8 col-xl-9">
+            <div #editorContainer style="width: 100%; height: 100vh;"></div>
+            <div class="assessments">
+                <div class="assessments__container">
+                    <div class="assessments__canvas">
+                        <ng-container *ngIf="assessments && positions">
+                            <div *ngFor="let assessment of assessments"
+                                 [style.top.px]="positions[assessment.id].y"
+                                 [style.left.px]="positions[assessment.id].x">
+                                <i class="fa" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngFor="let i of numberToArray(assessment.credits, 0)"></i>
+                                <i class="fa half" [ngClass]="{'fa-check': assessment.credits > 0, 'fa-times': assessment.credits < 0}" *ngIf="assessment.credits % 1 !== 0"></i>
+                            </div>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-4 col-xl-3">
+            <div *ngIf="invalidError !== ''" class="alert alert-danger" role="alert">{{invalidError}}</div>
+            <div *ngIf="(!selectedEntities && !selectedRelationships) || (selectedEntities?.length === 0 && selectedRelationships?.length === 0)">Select an element to <ng-container [ngSwitch]="result?.assessmentType === 'MANUAL' && result?.rated">
+                <span *ngSwitchCase="false">grade the element</span>
+                <span *ngSwitchCase="true">show the score of the element</span>
+            </ng-container>.</div>
+            <ng-container *ngIf="assessments">
+                <div *ngFor="let assessment of assessments" [hidden]="!isSelected(assessment.id, assessment.type)">
+                    <div class="card">
+                        <div class="card-header"><h4 class="card-title">Score for <ng-container [ngSwitch]="assessment.type"><span *ngSwitchCase="'relationship'">association</span><span *ngSwitchDefault>{{assessment.type}}</span></ng-container> <code *ngIf="assessmentsNames" class="text-primary">{{assessmentsNames[assessment.id]}}</code></h4></div>
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label>Score</label>
+                                <input type="number" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()" [disabled]="result?.assessmentType === 'MANUAL' && result?.rated">
+                            </div>
+                            <div class="form-group">
+                                <label>Comment</label>
+                                <input type="text" [(ngModel)]="assessment.comment" [disabled]="result?.assessmentType === 'MANUAL' && result?.rated">
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+</div>

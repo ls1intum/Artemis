@@ -1,0 +1,50 @@
+{
+  "assessments": [
+    {
+      "type": "class",
+      "id": "D0aXU5Sx8fiL",
+      "credits": 1.0,
+      "mode": "manual"
+
+    },
+    {
+      "type": "attribute",
+      "id": "oLnRVrUfICzQ",
+      "credits": 1.0,
+      "mode": "manual"
+
+    },
+    {
+      "type": "class",
+      "id": "n4kDW4FL0JyS",
+      "credits": 1.0,
+      "mode": "manual"
+
+    },
+    {
+      "type": "method",
+      "id": "LfbMShA49SJe",
+      "credits": 0.0,
+      "comment" : "Parameter missing",
+      "mode": "manual"
+    },
+    {
+      "type": "class",
+      "id": "hBzPRCUGt7ox",
+      "credits": 0.0,
+      "comment": "empty class, 0p"
+    },
+    {
+      "type": "relationship",
+      "id": "fY6dR31e3BgQ",
+      "credits": 1.0,
+      "mode": "manual"
+    },
+    {
+      "type": "relationship",
+      "id": "p8EywX4Cf9c3",
+      "credits": 1.0,
+      "mode": "manual"
+    }
+  ]
+}

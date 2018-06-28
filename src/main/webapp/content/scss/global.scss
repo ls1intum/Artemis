@@ -1,0 +1,413 @@
+@import 'bootstrap-variables';
+@import 'editor';
+@import 'quiz';
+
+/* ==============================================================
+Bootstrap tweaks
+===============================================================*/
+
+body, h1, h2, h3, h4 {
+    font-weight: 300;
+}
+
+a {
+    color: #533f03;
+    font-weight: bold;
+}
+
+a:not(.btn):hover {
+    color: #533f03;
+    font-weight: bold;
+}
+
+.popover{
+    max-width: 100%;
+}
+
+/* ==========================================================================
+Browser Upgrade Prompt
+========================================================================== */
+.browserupgrade {
+    margin: 0.2em 0;
+    background: #ccc;
+    color: #000;
+    padding: 0.2em 0;
+}
+
+/* ==========================================================================
+Generic styles
+========================================================================== */
+
+/* Error highlight on input fields */
+.ng-valid[required], .ng-valid.required  {
+  border-left: 5px solid green;
+}
+
+.ng-invalid:not(form)  {
+  border-left: 5px solid red;
+}
+
+/* other generic styles */
+
+.jh-card {
+    //padding: 1.5%;
+    margin-top: 20px;
+    //border: border-primary;
+}
+
+.error {
+    color: white;
+    background-color: red;
+}
+
+.pad {
+    padding: 10px;
+}
+
+.w-40 {
+    width: 40% !important;
+}
+
+.w-60 {
+    width: 60% !important;
+}
+
+.break {
+    white-space: normal;
+    word-break:break-all;
+}
+
+.readonly {
+    background-color: #eee;
+    opacity: 1;
+}
+
+.footer {
+    border-top: 1px solid rgba(0,0,0,.125);
+}
+
+/* ==========================================================================
+make sure browsers use the pointer cursor for anchors, even with no href
+========================================================================== */
+a:hover {
+  cursor: pointer;
+}
+
+.hand, [jhisortby] {
+    cursor: pointer;
+}
+
+/* ==========================================================================
+Custom alerts for notification
+========================================================================== */
+.alerts {
+    .alert {
+        text-overflow: ellipsis;
+        pre{
+            background: none;
+            border: none;
+            font: inherit;
+            color: inherit;
+            padding: 0;
+            margin: 0;
+        }
+        .popover pre {
+            font-size: 10px;
+        }
+    }
+    .toast {
+        position: fixed;
+        width: 100%;
+        &.left {
+            left: 5px;
+        }
+        &.right {
+            right: 5px;
+        }
+        &.top {
+            top: 55px;
+        }
+        &.bottom {
+            bottom: 55px;
+        }
+    }
+}
+
+@media screen and (min-width: 480px) {
+    .alerts .toast {
+        width: 50%;
+    }
+}
+
+/* ==========================================================================
+entity tables helpers
+========================================================================== */
+
+/* Remove Bootstrap padding from the element
+   http://stackoverflow.com/questions/19562903/remove-padding-from-columns-in-bootstrap-3 */
+@mixin no-padding($side) {
+    @if $side == 'all' {
+        .no-padding {
+            padding: 0 !important;
+        }
+    } @else {
+        .no-padding-#{$side} {
+            padding-#{$side}: 0 !important;
+        }
+    }
+}
+@include no-padding("left");
+@include no-padding("right");
+@include no-padding("top");
+@include no-padding("bottom");
+@include no-padding("all");
+
+/* bootstrap 3 input-group 100% width
+   http://stackoverflow.com/questions/23436430/bootstrap-3-input-group-100-width */
+.width-min { width: 1% !important; }
+
+/* Makes toolbar not wrap on smaller screens
+   http://www.sketchingwithcss.com/samplechapter/cheatsheet.html#right */
+.flex-btn-group-container {
+   display: -webkit-flex;
+   display: flex !important;
+   -webkit-flex-direction: row;
+   flex-direction: row;
+   -webkit-justify-content: flex-end;
+   justify-content: flex-end;
+}
+
+/* ==========================================================================
+entity detail page css
+========================================================================== */
+.row.jh-entity-details > {
+    dd {
+        margin-bottom: 15px;
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .row.jh-entity-details > {
+        dt {
+            margin-bottom: 15px;
+        }
+        dd {
+            border-bottom: 1px solid #eee;
+            padding-left: 180px;
+            margin-left: 0;
+        }
+    }
+}
+
+/* ==========================================================================
+ui bootstrap tweaks
+========================================================================== */
+.nav, .pagination, .carousel, .card-title a {
+    cursor: pointer;
+}
+
+.datetime-picker-dropdown > li.date-picker-menu div > table .btn-default,
+.uib-datepicker-popup  > li > div.uib-datepicker > table .btn-default {
+    border: 0;
+}
+
+.datetime-picker-dropdown > li.date-picker-menu div > table:focus,
+.uib-datepicker-popup  > li > div.uib-datepicker > table:focus {
+    outline: none;
+}
+
+.thread-dump-modal-lock {
+    max-width: 450px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+ }
+
+.card-header {
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-right-radius: 3px;
+    border-top-left-radius: 3px; }
+.card-header > .dropdown .dropdown-toggle {
+    color: inherit; }
+
+.card-title {
+    margin-top: 0;
+    margin-bottom: 0;
+    font-size: 16px;
+    color: inherit; }
+.card-title > a,
+.card-title > small,
+.card-title > .small,
+.card-title > small > a,
+.card-title > .small > a {
+    color: inherit; }
+
+.card-body {
+    input {
+        max-width: 100%;
+    }
+}
+
+/* jhipster-needle-scss-add-main JHipster will add new css style */
+
+.result-orange {
+    color: orange;
+}
+
+a.result-orange:hover {
+    color: orange;
+}
+
+.negative, .positive {
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-family: Menlo, Monaco, Consolas, Courier New, monospace;
+}
+
+.negative {
+    color: #c7254e;
+    background-color: #f9f2f4;
+}
+
+.positive {
+    color: green;
+    background-color: #f2f9f2;
+}
+
+table {
+    .col-xs-1 {
+        width: 8.33333%;
+    }
+    .col-xs-2 {
+        width: 16.66667%;
+    }
+    .col-xs-3 {
+        width: 25%;
+    }
+    .col-xs-6 {
+        width: 50%;
+    }
+}
+
+pre {
+    display: block;
+    padding: 9.5px;
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.42857;
+    word-break: break-all;
+    word-wrap: break-word;
+    color: #333;
+    background-color: #f5f5f5;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+code-error, code-success {
+    padding: 2px 4px;
+    font-size: 90%;
+    border-radius: 4px;
+    font-family: Menlo, Monaco, Consolas, Courier New, monospace;
+}
+
+code-success {
+    padding: 2px 4px;
+    font-size: 90%;
+    color: green;
+    background-color: #f2f9f2;
+    border-radius: 4px;
+    font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+code-error {
+    color: #c7254e;
+    background-color: #f9f2f4;
+}
+
+code.password {
+    color: transparent;
+    background: black;
+}
+
+code.password::selection {
+    background: #3297fd;
+    color: white;
+}
+
+code.password:hover {
+    color: white;
+}
+
+.apollon-editor label {
+    margin-bottom: 0;
+}
+
+.assessments {
+    width: calc(100% - 30px);
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 15px;
+    overflow: hidden;
+    pointer-events: none;
+    &__container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: calc(100% + 15px);
+        height: calc(100% + 15px);
+        overflow: scroll;
+    }
+    &__canvas {
+        min-width: 3000px;
+        min-height: 3000px;
+        > div {
+            position: absolute;
+            z-index: 1;
+            text-align: right;
+            transform: translateX(-100%);
+            min-width: 65px;
+            padding: 5px;
+            i {
+                vertical-align: middle;
+                &.half {
+                    position: relative;
+                    &:before {
+                        display: block;
+                        width: 60%;
+                        overflow: hidden;
+                    }
+                    &:after {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        opacity: 0.3;
+                    }
+                }
+            }
+            .fa-check {
+                color: $success;
+                &.half {
+                    &:after {
+                        content: "\F00C";
+                    }
+                }
+                ~ i {
+                    margin-left: -0.5em;
+                }
+            }
+            .fa-times {
+                color: $danger;
+                &.half {
+                    &:after {
+                        content: "\f00d";
+                    }
+                }
+                ~ i {
+                    margin-left: -0.2em;
+                }
+            }
+        }
+    }
+}

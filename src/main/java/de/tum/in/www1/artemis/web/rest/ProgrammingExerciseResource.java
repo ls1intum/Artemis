@@ -40,16 +40,18 @@ public class ProgrammingExerciseResource {
     private final AuthorizationCheckService authCheckService;
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
     private final Optional<VersionControlService> versionControlService;
+    private final ExerciseService exerciseService;
 
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, UserService userService,
                                        AuthorizationCheckService authCheckService, CourseService courseService,
-                                       Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService) {
+                                       Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userService = userService;
         this.courseService = courseService;
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
+        this.exerciseService = exerciseService;
     }
 
     /**
@@ -61,7 +63,7 @@ public class ProgrammingExerciseResource {
         if(!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
         }
-        if(!versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
+        if(exercise.getBaseRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
         }
         return null;
@@ -152,10 +154,10 @@ public class ProgrammingExerciseResource {
     public List<ProgrammingExercise> getAllProgrammingExercises() {
         log.debug("REST request to get all ProgrammingExercises");
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findAll();
+        User user = userService.getUserWithGroupsAndAuthorities();
         Stream<ProgrammingExercise> authorizedExercises = exercises.stream().filter(
             exercise -> {
                 Course course = exercise.getCourse();
-                User user = userService.getUserWithGroupsAndAuthorities();
                 return authCheckService.isTeachingAssistantInCourse(course, user) ||
                     authCheckService.isInstructorInCourse(course, user) ||
                     authCheckService.isAdmin();
@@ -228,7 +230,7 @@ public class ProgrammingExerciseResource {
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        programmingExerciseRepository.delete(id);
+        exerciseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 import java.io.Serializable;
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**
@@ -16,24 +17,32 @@ public class ModelingExercise extends Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    @Column(name = "base_file_path")
-    private String baseFilePath;
+    @Column(name = "description")
+    private String description;
 
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
 
-    public String getBaseFilePath() {
-        return baseFilePath;
+    public String getDescription() {
+        return description;
     }
 
-    public ModelingExercise baseFilePath(String baseFilePath) {
-        this.baseFilePath = baseFilePath;
+    public ModelingExercise description(String description) {
+        this.description = description;
         return this;
     }
 
-    public void setBaseFilePath(String baseFilePath) {
-        this.baseFilePath = baseFilePath;
+    public void setDescription(String description) {
+        this.description = description;
     }
+
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
+
+    public Boolean isEnded() {
+        if (getDueDate() == null) {
+            return false;
+        }
+        return ZonedDateTime.now().isAfter(getDueDate());
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -59,7 +68,8 @@ public class ModelingExercise extends Exercise implements Serializable {
     public String toString() {
         return "ModelingExercise{" +
             "id=" + getId() +
-            ", baseFilePath='" + getBaseFilePath() + "'" +
+            ", description='" + getDescription() + "'" +
+            ", maxScore='" + getMaxScore() + "'" +
             "}";
     }
 }

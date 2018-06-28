@@ -369,7 +369,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     @Override
     public Boolean isVisibleToStudents() {
-        return isVisibleBeforeStart || (isPlannedToStart && releaseDate != null && releaseDate.isBefore(ZonedDateTime.now()));
+        return isVisibleBeforeStart || (isPlannedToStart && getReleaseDate() != null && getReleaseDate().isBefore(ZonedDateTime.now()));
     }
 
     /**
@@ -594,6 +594,20 @@ public class QuizExercise extends Exercise implements Serializable {
             }
         }
         return maxScore;
+    }
+
+    @Override
+    public Double getMaxScore() {
+        //TODO: this is just a temporary solution for legacy exercises, in the future we could run a script to enter these
+        //values into the database and assumee that maxScore is always set, then the method getMaxTotalScore() could be removed
+        Double score = super.getMaxScore();
+        if (score != null) {
+            return score;
+        }
+        else if (questions != null && Hibernate.isInitialized(questions)) {
+            return getMaxTotalScore().doubleValue();
+        }
+        return null;
     }
 
     @Override

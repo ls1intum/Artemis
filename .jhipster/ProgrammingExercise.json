@@ -19,9 +19,10 @@
             "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20170831094144",
+    "changelogDate": "20171130173538",
     "entityTableName": "programming_exercise",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

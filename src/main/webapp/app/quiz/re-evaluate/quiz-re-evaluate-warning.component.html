@@ -1,0 +1,63 @@
+<div style="padding: 20px">
+    <h2><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.warning"></span></h2>
+    <div style="padding: 10px">
+        <h4><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.problems"></span> </h4>
+        <ul>
+            <li *ngIf="questionElementDeleted" style="padding-top: 5px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.element_deleted"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.results"></span>
+                        <p style="margin-left: 10px" jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.resulttext.element_deleted"></p></li>
+                    <li><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.statistic"></span></li>
+                </ul></li>
+            <li *ngIf="questionElementInvalid" style="padding-top: 5px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.element_invalid"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.results"></span>
+                        <p style="margin-left: 10px" jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.resulttext.element_invalid"></p></li>
+                    <li><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.statistic"></span></li>
+                </ul> </li>
+            <li *ngIf="questionCorrectness" style="padding-top: 5px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.element_correctness"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.results"></span>
+                        <p style="margin-left: 10px; color: red" jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p></li>
+                </ul></li>
+            <li *ngIf="questionDeleted" style="padding-top: 5px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.question_deleted"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.results"></span>
+                        <p style="margin-left: 10px" jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.resulttext.question_deleted"></p></li>
+                    <li><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.statistic"></span></li>
+                </ul></li>
+            <li *ngIf="questionInvalid" style="padding-top: 5px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.question_invalid"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.results"></span>
+                        <p style="margin-left: 10px" jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.resulttext.question_invalid"></p></li>
+                    <li><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.statistic"></span></li>
+                </ul></li>
+            <li *ngIf="scoringChanged" style="padding-top: 5px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.scoring_change"></span>
+                <ul style="padding-left: 15px">
+                    <li style="margin-bottom: -10px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.results"></span>
+                        <p style="color:red; margin-left: 10px" jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.resulttext.scoring_change"></p></li>
+                </ul></li>
+            <li *ngIf="!(questionElementInvalid || questionElementDeleted || questionCorrectness || questionInvalid || questionDeleted || scoringChanged )"
+                style="padding-top: 5px"><span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.no_changes"></span></li>
+        </ul>
+    </div>
+    <div class="edit-quiz-footer-content">
+        <h4>
+            <span *ngIf="!successful && !failed && !busy" jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.confirmtext"></span>
+            <span *ngIf="successful && !busy" style="color:green"><span class="fa fa-ok"></span>&nbsp;<span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.succesfully_confirm"></span></span>
+            <span *ngIf="failed && !busy" style="color:red"><span class="fa fa-remove"></span>&nbsp;<span>Saving Quiz Failed! Please try again later.</span></span>
+            <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait, conducting changes!</span></span>
+        </h4>
+        &nbsp;
+        <div class="form-group">
+            <button [disabled]="busy" *ngIf="!successful" type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+                <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel"></span>
+            </button>
+            <button [disabled]="busy" *ngIf="!successful && !failed" type="submit" (click)="confirmChange()" class="btn btn-primary">
+                <span class="fa fa-check-circle"></span>&nbsp;<span jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.warning.confirm"></span>
+            </button>
+            <button *ngIf="successful && !failed" type="submit" (click)="close()" class="btn btn-primary">
+                <span class="fa fa-check-circle"></span>&nbsp;<span jhiTranslate="entity.action.close"></span>
+            </button></div>
+    </div>
+</div>

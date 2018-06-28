@@ -30,9 +30,10 @@
             "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20170831094154",
+    "changelogDate": "20171130173548",
     "entityTableName": "drop_location",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

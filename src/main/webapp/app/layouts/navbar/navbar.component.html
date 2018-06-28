@@ -1,0 +1,336 @@
+<nav class="navbar navbar-dark navbar-expand-md jh-navbar">
+    <div class="jh-logo-container float-left">
+        <a class="jh-navbar-toggler d-lg-none float-right" href="javascript:void(0);" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation" (click)="toggleNavbar()">
+            <i class="fa fa-bars"></i>
+        </a>
+        <a class="navbar-brand logo float-left" routerLink="/" (click)="collapseNavbar()">
+            <span class="logo-img"></span>
+            <span class="logo-ls1"></span>
+            <span jhiTranslate="global.title" class="navbar-title">ArTEMiS</span> <span class="navbar-version">{{version}}</span>
+        </a>
+    </div>
+    <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed" [ngSwitch]="isAuthenticated()">
+        <ul class="navbar-nav ml-auto">
+            <li *ngSwitchCase="true" class="nav-item">
+                <a class="nav-link" routerLink="courses" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                    <span>
+                        <i class="fa fa-graduation-cap fa-lg" aria-hidden="true"></i>
+                        <span jhiTranslate="global.menu.courses" class="d-md-none d-lg-inline">Courses</span>
+                    </span>
+                </a>
+            </li>
+            <li *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']" class="nav-item">
+                <a *ngSwitchCase="true" class="nav-link" routerLink="course" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                    <span>
+                        <i class="fa fa-th-list" aria-hidden="true"></i>
+                        <span jhiTranslate="global.menu.course" class="d-md-none d-lg-inline">Course Administration</span>
+                    </span>
+                </a>
+            </li>
+            <!-- jhipster-needle-add-element-to-menu - JHipster will add new menu items here -->
+            <!--<li *ngSwitchCase="true" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="entity-menu">
+                    <span>
+                        <i class="fa fa-th-list" aria-hidden="true"></i>
+                        <span jhiTranslate="global.menu.entities.main">
+                            Entities
+                        </span>
+                    </span>
+                </a>
+                <ul class="dropdown-menu" ngbDropdownMenu>
+                    <li>
+                        <a class="dropdown-item" routerLink="course" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.course">Course</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="exercise" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.exercise">Exercise</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="programming-exercise" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.programmingExercise">Programming Exercise</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="modeling-exercise" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.modelingExercise">Modeling Exercise</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="quiz-exercise" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.quizExercise">Quiz Exercise</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="lti-outcome-url" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.ltiOutcomeUrl">Lti Outcome Url</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="submitted-answer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.submittedAnswer">Submitted Answer</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="question" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.question">Question</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="multiple-choice-question" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.multipleChoiceQuestion">Multiple Choice Question</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="answer-option" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.answerOption">Answer Option</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="multiple-choice-submitted-answer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.multipleChoiceSubmittedAnswer">Multiple Choice Submitted Answer</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="drag-and-drop-question" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.dragAndDropQuestion">Drag And Drop Question</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="drop-location" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.dropLocation">Drop Location</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="drag-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.dragItem">Drag Item</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="participation" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.participation">Participation</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="lti-user-id" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.ltiUserId">Lti User Id</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="result" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.result">Result</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="feedback" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.feedback">Feedback</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="submission" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.submission">Submission</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="modeling-submission" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.modelingSubmission">Modeling Submission</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="quiz-submission" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.quizSubmission">Quiz Submission</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="drag-and-drop-submitted-answer" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.dragAndDropSubmittedAnswer">Drag And Drop Submitted Answer</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="drag-and-drop-assignment" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.dragAndDropAssignment">Drag And Drop Assignment</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="statistic" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.statistic">Statistic</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="quiz-point-statistic" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.quizPointStatistic">Quiz Point Statistic</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="question-statistic" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.questionStatistic">Question Statistic</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="multiple-choice-question-statistic" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.multipleChoiceQuestionStatistic">Multiple Choice Question Statistic</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="drag-and-drop-question-statistic" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.dragAndDropQuestionStatistic">Drag And Drop Question Statistic</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="statistic-counter" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.statisticCounter">Statistic Counter</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="point-counter" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.pointCounter">Point Counter</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="answer-counter" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.answerCounter">Answer Counter</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="drop-location-counter" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.dropLocationCounter">Drop Location Counter</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="apollon-diagram" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-asterisk" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.entities.apollonDiagram">Apollon Diagram</span>
+                        </a>
+                    </li>
+                    <!-- jhipster-needle-add-entity-to-menu - JHipster will add entities to the menu here -->
+                <!--</ul>
+            </li>-->
+            <li *jhiHasAnyAuthority="'ROLE_ADMIN'" ngbDropdown class="nav-item dropdown pointer" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="admin-menu">
+                    <span>
+                        <i class="fa fa-user-plus" aria-hidden="true"></i>
+                        <span jhiTranslate="global.menu.admin.main" class="d-md-none d-lg-inline">Server Administration</span>
+                    </span>
+                </a>
+                <ul class="dropdown-menu" ngbDropdownMenu>
+                    <li>
+                        <a class="dropdown-item" routerLink="user-management" routerLinkActive="active" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-user" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.admin.userManagement">User management</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="jhi-tracker" routerLinkActive="active" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-eye" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.admin.tracker">User tracker</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="jhi-metrics" routerLinkActive="active" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-tachometer" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.admin.metrics">Metrics</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="jhi-health" routerLinkActive="active" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-heart" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.admin.health">Health</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="jhi-configuration" routerLinkActive="active" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-list" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.admin.configuration">Configuration</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="audits" routerLinkActive="active" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-bell" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.admin.audits">Audits</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" routerLink="logs" routerLinkActive="active" (click)="collapseNavbar()">
+                            <i class="fa fa-fw fa-tasks" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.admin.logs">Logs</span>
+                        </a>
+                    </li>
+                    <!-- jhipster-needle-add-element-to-admin-menu - JHipster will add entities to the admin menu here -->
+                </ul>
+            </li>
+            <!-- <li ngbDropdown class="nav-item dropdown pointer" *ngIf="languages">
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="languagesnavBarDropdown" *ngIf="languages.length > 1">
+                    <span>
+                        <i class="fa fa-flag" aria-hidden="true"></i>
+                        <span jhiTranslate="global.menu.language">Language</span>
+                    </span>
+                </a>
+                <ul class="dropdown-menu" ngbDropdownMenu *ngIf="languages.length > 1">
+                    <li *ngFor="let language of languages">
+                        <a class="dropdown-item" [jhiActiveMenu]="language" href="javascript:void(0);" (click)="changeLanguage(language);collapseNavbar();">{{language | findLanguageFromKey}}</a>
+                    </li>
+                </ul>
+            </li> -->
+            <li ngbDropdown class="nav-item dropdown pointer" placement="bottom-right" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">
+                <a class="nav-link dropdown-toggle" ngbDropdownToggle href="javascript:void(0);" id="account-menu">
+                  <span *ngIf="!getImageUrl()">
+                      <i class="fa fa-user" aria-hidden="true"></i>
+                      <span jhiTranslate="global.menu.account.main" *ngIf="!currAccount" class="d-md-none d-lg-inline">Account</span>
+                      <span *ngIf="currAccount" class="d-md-none d-lg-inline">{{currAccount.login}}</span>
+                  </span>
+                  <span *ngIf="getImageUrl()">
+                      <img [src]="getImageUrl()" class="profile-image img-circle" alt="Avatar">
+                  </span>
+                </a>
+                <ul class="dropdown-menu" ngbDropdownMenu>
+                    <li *ngSwitchCase="true">
+                        <a class="dropdown-item" *ngIf="getCurrentAccount()" (click)="logout()" id="logout">
+                            <i class="fa fa-fw fa-sign-out" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.account.logout">Sign out</span>
+                        </a>
+                    </li>
+                    <li *ngSwitchCase="false">
+                        <a class="dropdown-item" (click)="login()" id="login">
+                            <i class="fa fa-fw fa-sign-in" aria-hidden="true"></i>
+                            <span jhiTranslate="global.menu.account.login">Sign in</span>
+                        </a>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+</nav>

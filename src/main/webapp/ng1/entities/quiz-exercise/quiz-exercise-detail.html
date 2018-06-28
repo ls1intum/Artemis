@@ -1,0 +1,205 @@
+<div class="container">
+    <h1>
+        <span
+            ng-if="vm.quizExercise.id"
+            data-translate="arTeMiSApp.quizExercise.edit.title"
+            data-translate-values="{param: vm.quizExercise.course.title}"
+        ></span>
+        <span
+            ng-if="!vm.quizExercise.id"
+            data-translate="arTeMiSApp.quizExercise.new.title"
+            data-translate-values="{param: vm.quizExercise.course.title}"
+        ></span>
+    </h1>
+    <hr/>
+    <div class="edit-quiz">
+        <input
+            id="quiz-title"
+            class="form-control"
+            ng-model="vm.quizExercise.title"
+            placeholder="Quiz Title"
+        />
+        <div class="quiz-options">
+            <div class="form-group">
+                <span
+                    data-translate="arTeMiSApp.quizExercise.duration"
+                    class="colon-suffix"
+                ></span>
+                <input
+                    class="form-control"
+                    title="Duration"
+                    type="number"
+                    min="0"
+                    max="999"
+                    ng-model="vm.duration.minutes"
+                    ng-blur="vm.onDurationChange()"
+                />
+                <span
+                    data-translate="arTeMiSApp.quizExercise.minutes"
+                ></span>
+                <input
+                    class="form-control"
+                    title="Duration"
+                    type="number"
+                    max="999"
+                    min="-99"
+                    ng-model="vm.duration.seconds"
+                    ng-blur="vm.onDurationChange()"
+                />
+                <span
+                    data-translate="arTeMiSApp.quizExercise.seconds"
+                ></span>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            ng-model="vm.quizExercise.randomizeQuestionOrder"
+                        />
+                        <span
+                            data-translate="arTeMiSApp.quizExercise.randomizeQuestionOrder"
+                        ></span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            ng-model="vm.quizExercise.isPlannedToStart"
+                        />
+                        <span
+                            data-translate="arTeMiSApp.quizExercise.startTime"
+                            class="colon-suffix"
+                        ></span>
+                    </label>
+                </div>
+                <div class="input-group">
+                    <input ng-disabled="!vm.quizExercise.isPlannedToStart"
+                           id="field_startDate"
+                           type="datetime-local"
+                           class="form-control"
+                           title="Planned Start"
+                           name="startDate"
+                           ng-model="vm.dateTime"
+                    />
+                </div>
+            </div>
+        </div>
+        <div class="question" ng-repeat="question in vm.quizExercise.questions">
+            <edit-multiple-choice-question
+                ng-if="question.type === 'multiple-choice'"
+                question="question"
+                question-index="$index + 1"
+                on-delete="vm.deleteQuestion(question)"
+                on-updated="vm.onQuestionUpdated()"
+            ></edit-multiple-choice-question>
+            <edit-drag-and-drop-question
+                ng-if="question.type === 'drag-and-drop'"
+                question="question"
+                question-index="$index + 1"
+                on-delete="vm.deleteQuestion(question)"
+                on-updated="vm.onQuestionUpdated()"
+            ></edit-drag-and-drop-question>
+        </div>
+        <div class="form-group">
+            <button class="btn btn-light" ng-click="vm.addMultipleChoiceQuestion()"
+                    data-translate="arTeMiSApp.quizExercise.multipleChoiceQuestion"
+            >mc</button>
+            <button class="btn btn-light" ng-click="vm.addDragAndDropQuestion()"
+                    data-translate="arTeMiSApp.quizExercise.dragAndDropQuestion"
+            >d&d</button>
+        </div>
+    </div>
+    <div class="edit-quiz-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div class="form-group">
+                    <span
+                        data-translate="arTeMiSApp.quizExercise.status"
+                        class="colon-suffix"
+                    ></span>
+                    <select
+                        ng-if="vm.showDropdown() === 'isOpenForPractice'"
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptionsPractice"
+                        ng-model="vm.quizExercise.isOpenForPractice"
+                        title="status"
+                    >
+                    </select>
+                    <select
+                        ng-if="vm.showDropdown() === 'isVisibleBeforeStart'"
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptionsVisible"
+                        ng-model="vm.quizExercise.isVisibleBeforeStart"
+                        title="status"
+                    >
+                    </select>
+                    <select
+                        ng-if="vm.showDropdown() === 'active'"
+                        class="form-control"
+                        ng-options="option.key as option.label for option in vm.statusOptionsActive"
+                        ng-model="vm.true"
+                        title="status"
+                        disabled
+                    >
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span
+                        ng-if="!vm.pendingChanges() && !vm.isSaving"
+                        data-translate="arTeMiSApp.quizExercise.edit.saved"
+                        class="badge badge-success"
+                    ></span>
+                    <span
+                        ng-if="vm.pendingChanges() && vm.validQuiz() && !vm.isSaving"
+                        data-translate="arTeMiSApp.quizExercise.edit.pendingChanges"
+                        class="badge badge-secondary"
+                    ></span>
+                    <span
+                        ng-if="vm.isSaving"
+                        data-translate="arTeMiSApp.quizExercise.edit.saving"
+                        class="badge badge-secondary"
+                    ></span>
+                    <span
+                        ng-if="!vm.validQuiz()"
+                        class="badge badge-danger quiz-tooltip"
+                    >
+                        <span class="quiz-tooltiptext">{{vm.invalidReasonsHTML()}}</span>
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span data-translate="arTeMiSApp.quizExercise.edit.invalidInput"></span>
+                        <span>({{vm.invalidReasons().length}})</span>
+                    </span>
+                    <button
+                        ng-class="{'btn btn-secondary': !vm.pendingChanges(), 'btn btn-danger': vm.pendingChanges()}"
+                        ng-click="vm.cancel()"
+                        data-translate="{{vm.pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}"
+                    ></button>
+                    <button
+                        ng-if="!vm.validQuiz()"
+                        class="btn btn-success"
+                        ng-click="vm.save()"
+                        ng-class="{disabled: !vm.pendingChanges() || !vm.validQuiz() || vm.hasSavedQuizStarted() || vm.isSaving}"
+                        title="{{vm.invalidReasonsHTML()}}"
+                        data-translate="entity.action.save"
+                    ></button>
+                    <button
+                        ng-if="vm.validQuiz()"
+                        class="btn btn-success quiz-tooltip"
+                        ng-click="vm.save()"
+                        ng-class="{disabled: !vm.pendingChanges() || !vm.validQuiz() || vm.hasSavedQuizStarted() || vm.isSaving}"
+                        data-translate="entity.action.save"
+                    ></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div ng-if="vm.hasSavedQuizStarted()">
+    <div class="quiz-is-active-background"></div>
+    <div class="quiz-is-active-overlay alert alert-warning" >
+        <span data-translate="arTeMiSApp.quizExercise.edit.quizHasStarted"></span>
+    </div>
+</div>

@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
+import de.tum.in.www1.artemis.config.Constants;
 
 import de.tum.in.www1.artemis.ArTEMiSApp;
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import io.github.jhipster.config.JHipsterProperties;
 import org.junit.Before;

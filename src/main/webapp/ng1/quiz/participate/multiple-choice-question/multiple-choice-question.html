@@ -1,0 +1,79 @@
+<div class="mc-question" ng-class="{disabled: vm.clickDisabled && !vm.showResult, result: vm.showResult && !vm.forceSampleSolution, incorrect: (vm.score || 0) < vm.question.score && !vm.forceSampleSolution}">
+    <h2><span>{{vm.questionIndex}})</span> {{vm.question.title}}</h2>
+    <p ng-bind-html="vm.rendered.text"></p><span style="color:red;" ng-if="vm.question.invalid" data-translate="arTeMiSApp.question.invalidText"></span>
+    <h4 ng-if="vm.question.hint || (vm.question.explanation && vm.showResult)">
+        <span class="label label-info" uib-popover-html="vm.rendered.hint" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.hint">
+            <i class="fa fa-question-circle-o"></i>
+            <span data-translate="arTeMiSApp.question.hint"></span>
+        </span> &nbsp;
+        <span class="label label-primary" uib-popover-html="vm.rendered.explanation" popover-placement="right-top" popover-trigger="mouseenter" ng-if="vm.question.explanation && vm.showResult">
+            <i class="fa fa-exclamation-circle"></i>
+            <span data-translate="arTeMiSApp.question.explanation"></span>
+        </span>
+    </h4>
+    <div class="question-score" ng-if="!vm.showResult || vm.forceSampleSolution">
+        <span data-translate="arTeMiSApp.question.score" class="colon-suffix"></span>
+        <span>{{vm.question.score}}</span>
+    </div>
+    <div class="question-score result" ng-if="vm.showResult && !vm.forceSampleSolution" ng-class="{incorrect: (vm.score || 0) < vm.question.score}">
+        <span data-translate="arTeMiSApp.question.yourScore" class="colon-suffix"></span>
+        <span>{{vm.score || 0}}/{{vm.question.score}}</span>
+    </div>
+    <div class="answer-options" ng-if="!vm.showResult">
+        <div ng-repeat="answerOption in vm.question.answerOptions" class="answer-option" ng-class="{'click-disabled': vm.clickDisabled}" ng-click="vm.toggleSelection(answerOption)">
+            <div class="content">
+                <div class="text" ng-bind-html="vm.rendered.answerOptions[$index].text"></div>
+                <div class="hint">
+                    <span class="label label-info" uib-popover-html="vm.rendered.answerOptions[$index].hint" popover-placement="left-top" popover-trigger="mouseenter" ng-if="answerOption.hint">
+                        <i class="fa fa-question-circle-o"></i>
+                        <span data-translate="arTeMiSApp.question.hint"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="selection">
+                <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
+                <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>
+            </div>
+        </div>
+    </div>
+    <table class="answer-options-result" ng-if="vm.showResult">
+        <tr>
+            <th class="content">Answer</th>
+            <th class="solution">Solution</th>
+            <th class="result-symbol" ng-if="!vm.forceSampleSolution"></th>
+            <th class="selection" ng-if="!vm.forceSampleSolution">You</th>
+        </tr>
+        <tr class="answer-option" ng-repeat="answerOption in vm.question.answerOptions">
+            <td class="content">
+                <div class="text" ng-bind-html="vm.rendered.answerOptions[$index].text"></div>
+                <div class="hint">
+                    <span class="label label-info" uib-popover-html="vm.rendered.answerOptions[$index].hint" popover-placement="left-top" popover-trigger="mouseenter" ng-if="answerOption.hint">
+                        <i class="fa fa-question-circle-o"></i>
+                        <span data-translate="arTeMiSApp.question.hint"></span>
+                    </span>
+                    <span class="label label-primary" uib-popover-html="vm.rendered.answerOptions[$index].explanation" popover-placement="left-top" popover-trigger="mouseenter" ng-if="answerOption.explanation">
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span data-translate="arTeMiSApp.question.explanation"></span>
+                    </span>
+                </div>
+            </td>
+            <td class="solution">
+                <span ng-if="!answerOption.invalid && !vm.question.invalid && answerOption.isCorrect" class="correct">Correct</span>
+                <span ng-if="!answerOption.invalid && !vm.question.invalid && !answerOption.isCorrect" class="wrong">Wrong</span>
+                <span ng-if="answerOption.invalid || vm.question.invalid" class="wrong" data-translate="arTeMiSApp.question.invalid"></span>
+                &nbsp<span uib-tooltip="Invalid answers will be assessed as correct."
+                           tooltip-placement="top-right"
+                           style="color:black;"
+                           class="fa fa-question-circle"
+                           ng-if="answerOption.invalid || vm.question.invalid"></span>
+            </td>
+            <td class="result-symbol" ng-if="!vm.forceSampleSolution">
+                <i class="fa fa-2x fa-exclamation-triangle warning" ng-if=" !vm.question.invalid && !answerOption.invalid && ((vm.isAnswerOptionSelected(answerOption) && !answerOption.isCorrect) || (!vm.isAnswerOptionSelected(answerOption) && answerOption.isCorrect )) "></i>
+            </td>
+            <td class="selection" ng-if="!vm.forceSampleSolution">
+                <i class="fa fa-2x fa-check-square-o" ng-if="vm.isAnswerOptionSelected(answerOption)"></i>
+                <i class="fa fa-2x fa-square-o" ng-if="!vm.isAnswerOptionSelected(answerOption)"></i>
+            </td>
+        </tr>
+    </table>
+</div>

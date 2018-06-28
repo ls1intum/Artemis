@@ -10,6 +10,14 @@
             "otherEntityRelationshipName": "result"
         },
         {
+            "relationshipType": "one-to-one",
+            "relationshipName": "assessor",
+            "otherEntityName": "user",
+            "otherEntityField": "id",
+            "ownerSide": true,
+            "otherEntityRelationshipName": "result"
+        },
+        {
             "relationshipType": "one-to-many",
             "relationshipName": "feedbacks",
             "otherEntityName": "feedback",
@@ -50,9 +58,14 @@
         {
             "fieldName": "hasFeedback",
             "fieldType": "Boolean"
+        },
+        {
+            "fieldName": "assessmentType",
+            "fieldType": "AssessmentType",
+            "fieldValues": "AUTOMATIC,MANUAL,SEMIAUTOMATIC"
         }
     ],
-    "changelogDate": "20160609110918",
+    "changelogDate": "20171130173552",
     "entityTableName": "result",
     "dto": "no",
     "pagination": "no",

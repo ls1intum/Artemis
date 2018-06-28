@@ -32,7 +32,7 @@
             "fieldType": "Double"
         }
     ],
-    "changelogDate": "20160609094621",
+    "changelogDate": "20171130173537",
     "entityTableName": "exercise",
     "dto": "no",
     "pagination": "infinite-scroll",

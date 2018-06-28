@@ -1,18 +1,22 @@
 {
-    "artemisApp": {
-        "instructorDashboard": {
-            "cleanup": {
-                "title": "Aufräumen",
-                "question": "Sollen wirklich ALLE Studierenden Build Pläne für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
-            },
-            "archive": {
-                "title": "Archivieren",
-                "question": "Sollen wirklich ALLE Studierenden Repositories für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} archiviert werden?"
-            },
-            "exportRepos": {
-                "title": "Abgaben herunterladen",
-                "question": "Tragen sie hier alle Kennungen der Studenten ein, die heruntergeladen werden sollen"
-            }
+    "instructorDashboard": {
+        "title": "Kursübersicht",
+        "participated": "Teilgenommen an Übungen",
+        "completed": "Erfolgreich abgeschlossen",
+        "completedExercises": "Erfolgreich abgeschlossene Übungen",
+        "overallScore": "Gesamtwert",
+        "students": "Studenten",
+        "cleanup": {
+            "title": "Aufräumen",
+            "question": "Sollen wirklich ALLE Studierenden Build Pläne für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
+        },
+        "archive": {
+            "title": "Archivieren",
+            "question": "Sollen wirklich ALLE Studierenden Repositories für die Programmieraufgabe {{ exerciseTitle }} im Kurs {{ courseTitle }} archiviert werden?"
+        },
+        "exportRepos": {
+            "title": "Abgaben herunterladen",
+            "question": "Tragen sie hier alle Kennungen der Studenten ein, die heruntergeladen werden sollen"
         }
     }
 }

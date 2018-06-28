@@ -50,18 +50,18 @@ public class RepositoryResource {
     }
 
     /**
-     * GET /repository/{id}/files: List all file names of the repository
+     * GET /repository/{participationId}/files: List all file names of the repository
      *
-     * @param id Participation ID
+     * @param participationId Participation ID
      * @param authentication
      * @return
      * @throws IOException
      * @throws GitAPIException
      */
-    @GetMapping(value = "/repository/{id}/files", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long id, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
-        log.debug("REST request to files for Participation : {}", id);
-        Participation participation = participationService.findOne(id);
+    @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Collection<String>> getFiles(@PathVariable Long participationId, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to files for Participation : {}", participationId);
+        Participation participation = participationService.findOne(participationId);
 
         if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
@@ -83,19 +83,19 @@ public class RepositoryResource {
 
 
     /**
-     * GET /repository/{id}/file: Get the content of a file
+     * GET /repository/{participationId}/file: Get the content of a file
      *
-     * @param id Participation ID
+     * @param participationId Participation ID
      * @param filename
      * @param authentication
      * @return
      * @throws IOException
      * @throws GitAPIException
      */
-    @GetMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public ResponseEntity<String> getFile(@PathVariable Long id, @RequestParam("file")  String filename, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
-        log.debug("REST request to file {} for Participation : {}", filename, id);
-        Participation participation = participationService.findOne(id);
+    @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<String> getFile(@PathVariable Long participationId, @RequestParam("file")  String filename, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to file {} for Participation : {}", filename, participationId);
+        Participation participation = participationService.findOne(participationId);
 
         if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
@@ -121,9 +121,9 @@ public class RepositoryResource {
 
 
     /**
-     * POST /repository/{id}/file: Create new file
+     * POST /repository/{participationId}/file: Create new file
      *
-     * @param id Participation ID
+     * @param participationId Participation ID
      * @param filename
      * @param request
      * @param authentication
@@ -131,10 +131,10 @@ public class RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    @PostMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> createFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
-        log.debug("REST request to create file {} for Participation : {}", filename, id);
-        Participation participation = participationService.findOne(id);
+    @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to create file {} for Participation : {}", filename, participationId);
+        Participation participation = participationService.findOne(participationId);
 
         if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
@@ -166,9 +166,9 @@ public class RepositoryResource {
 
 
     /**
-     * PUT /repository/{id}/file: Update the file content
+     * PUT /repository/{participationId}/file: Update the file content
      *
-     * @param id Participation ID
+     * @param participationId Participation ID
      * @param filename
      * @param request
      * @param authentication
@@ -176,10 +176,10 @@ public class RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    @PutMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
-        log.debug("REST request to update file {} for Participation : {}", filename, id);
-        Participation participation = participationService.findOne(id);
+    @PutMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to update file {} for Participation : {}", filename, participationId);
+        Participation participation = participationService.findOne(participationId);
 
         if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
@@ -204,9 +204,9 @@ public class RepositoryResource {
 
 
     /**
-     * DELETE /repository/{id}/file: Delete the file
+     * DELETE /repository/{participationId}/file: Delete the file
      *
-     * @param id Participation ID
+     * @param participationId Participation ID
      * @param filename
      * @param request
      * @param authentication
@@ -214,10 +214,10 @@ public class RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    @DeleteMapping(value = "/repository/{id}/file", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> deleteFile(@PathVariable Long id, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
-        log.debug("REST request to delete file {} for Participation : {}", filename, id);
-        Participation participation = participationService.findOne(id);
+    @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file")  String filename, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to delete file {} for Participation : {}", filename, participationId);
+        Participation participation = participationService.findOne(participationId);
 
         if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
@@ -243,19 +243,19 @@ public class RepositoryResource {
 
 
     /**
-     * POST /repository/{id}/commit: Commit into the participation repository
+     * POST /repository/{participationId}/commit: Commit into the participation repository
      *
-     * @param id Participation ID
+     * @param participationId Participation ID
      * @param request
      * @param authentication
      * @return
      * @throws IOException
      * @throws GitAPIException
      */
-    @PostMapping(value = "/repository/{id}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateFile(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
-        log.debug("REST request to commit Repository for Participation : {}", id);
-        Participation participation = participationService.findOne(id);
+    @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateFile(@PathVariable Long participationId, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to commit Repository for Participation : {}", participationId);
+        Participation participation = participationService.findOne(participationId);
 
         if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
@@ -272,19 +272,19 @@ public class RepositoryResource {
 
 
     /**
-     * GET /repository/{id}: Get the "clean" status of the repository. Clean = No uncommitted changes.
+     * GET /repository/{participationId}: Get the "clean" status of the repository. Clean = No uncommitted changes.
      *
-     * @param id Participation ID
+     * @param participationId Participation ID
      * @param request
      * @param authentication
      * @return
      * @throws IOException
      * @throws GitAPIException
      */
-    @GetMapping(value = "/repository/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long id, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
-        log.debug("REST request to get clean status for Repository for Participation : {}", id);
-        Participation participation = participationService.findOne(id);
+    @GetMapping(value = "/repository/{participationId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long participationId, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
+        log.debug("REST request to get clean status for Repository for Participation : {}", participationId);
+        Participation participation = participationService.findOne(participationId);
 
         if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 
@@ -306,15 +306,15 @@ public class RepositoryResource {
 
 
     /**
-     * GET  /repository/:id/buildlogs : get the build log from Bamboo for the "id" repository.
+     * GET  /repository/:participationId/buildlogs : get the build log from Bamboo for the "participationId" repository.
      *
-     * @param id the id of the result to retrieve
+     * @param participationId the participationId of the result to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the result, or with status 404 (Not Found)
      */
-    @GetMapping(value = "/repository/{id}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<?> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, AbstractAuthenticationToken authentication) {
-        log.debug("REST request to get build log : {}", id);
-        Participation participation = participationService.findOne(id);
+    @GetMapping(value = "/repository/{participationId}/buildlogs", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> getResultDetails(@PathVariable Long participationId, @RequestParam(required = false) String username, AbstractAuthenticationToken authentication) {
+        log.debug("REST request to get build log : {}", participationId);
+        Participation participation = participationService.findOne(participationId);
 
         if (!userHasPermissions(participation)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
 

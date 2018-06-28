@@ -23,8 +23,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static de.tum.in.www1.artemis.repository.CustomAuditEventRepository.EVENT_DATA_COLUMN_MAX_LENGTH;
 import static org.assertj.core.api.Assertions.assertThat;
+import static de.tum.in.www1.artemis.repository.CustomAuditEventRepository.EVENT_DATA_COLUMN_MAX_LENGTH;
 
 /**
  * Test class for the CustomAuditEventRepository class.
@@ -169,7 +169,6 @@ public class CustomAuditEventRepositoryIntTest {
         assertThat(persistentAuditEvent.getData().get("test-key")).isEqualTo("test-value");
         assertThat(persistentAuditEvent.getAuditEventDate()).isEqualTo(event.getTimestamp().toInstant());
     }
-
 
     @Test
     public void addAuditEventTruncateLargeData() {

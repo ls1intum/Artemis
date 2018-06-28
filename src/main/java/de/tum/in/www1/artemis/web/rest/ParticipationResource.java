@@ -13,6 +13,7 @@ import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -101,6 +102,10 @@ public class ParticipationResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         if (Optional.ofNullable(exercise).isPresent()) {
+            if (participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName()) != null) {
+                // participation already exists
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("participation", "participationAlreadyExists", "There is already a participation for the given exercise and user.")).body(null);
+            }
             Participation participation = participationService.init(exercise, principal.getName());
             return ResponseEntity.created(new URI("/api/participations/" + participation.getId()))
                 .body(participation);
@@ -245,6 +250,7 @@ public class ParticipationResource {
     }
 
     @GetMapping(value = "/participations/{id}/repositoryWebUrl")
+    @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationRepositoryWebUrl(@PathVariable Long id, Authentication authentication) {
         log.debug("REST request to get Participation : {}", id);
@@ -264,10 +270,14 @@ public class ParticipationResource {
     }
 
     @GetMapping(value = "/participations/{id}/buildPlanWebUrl")
+    @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity<String> getParticipationBuildPlanWebUrl(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
         Participation participation = participationService.findOne(id);
+        if (participation == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         Course course = participation.getExercise().getCourse();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
             if(!courseService.userHasTAPermissions(course)) {
@@ -285,6 +295,7 @@ public class ParticipationResource {
 
 
     @GetMapping(value = "/participations/{id}/buildArtifact")
+    @Timed
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     public ResponseEntity getParticipationBuildArtifact(@PathVariable Long id) {
         log.debug("REST request to get Participation build artifact: {}", id);
@@ -310,9 +321,13 @@ public class ParticipationResource {
     @GetMapping(value = "/courses/{courseId}/exercises/{exerciseId}/participation")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
+    @Transactional(readOnly = true)
     public ResponseEntity<MappingJacksonValue> getParticipation(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request to get Participation for Exercise : {}", exerciseId);
         Exercise exercise = exerciseService.findOne(exerciseId);
+        if (exercise == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        }
         Course course = exercise.getCourse();
         if (!courseService.userHasStudentPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -320,6 +335,12 @@ public class ParticipationResource {
         MappingJacksonValue result;
         if (exercise instanceof QuizExercise) {
             result = participationForQuizExercise((QuizExercise) exercise, principal.getName());
+        } else if (exercise instanceof ModelingExercise) {
+            Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
+            if (participation != null) {
+                participation.getResults().size(); // eagerly load the association
+            }
+            result = participation == null ? null : new MappingJacksonValue(participation);
         } else {
             Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
             result = participation == null ? null : new MappingJacksonValue(participation);

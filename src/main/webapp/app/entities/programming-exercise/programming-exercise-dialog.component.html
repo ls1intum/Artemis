@@ -1,0 +1,75 @@
+<form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+
+    <div class="modal-header">
+        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="arTeMiSApp.programmingExercise.home.createOrEditLabel">Create or edit a Programming Exercise</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+                (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <div class="form-group" [hidden]="!programmingExercise.id">
+            <label for="id" jhiTranslate="global.field.id">ID</label>
+            <input type="text" class="form-control" id="id" name="id"
+                   [(ngModel)]="programmingExercise.id" readonly />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.title" for="field_title">Title</label>
+            <input type="text" class="form-control" name="title" id="field_title"
+                   [(ngModel)]="programmingExercise.title" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.releaseDate" for="field_releaseDate">Release Date</label>
+            <div class="d-flex">
+                <input id="field_releaseDate" type="datetime-local" class="form-control" name="releaseDate" [(ngModel)]="programmingExercise.releaseDate"
+                />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.dueDate" for="field_dueDate">Due Date</label>
+            <div class="d-flex">
+                <input id="field_dueDate" type="datetime-local" class="form-control" name="dueDate" [(ngModel)]="programmingExercise.dueDate"
+                />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
+            <input type="text" class="form-control" name="maxScore" id="field_maxScore"
+                   [(ngModel)]="programmingExercise.maxScore" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
+            <select class="form-control" id="field_course" name="course" [(ngModel)]="programmingExercise.course" >
+                <option [ngValue]="null"></option>
+                <option [ngValue]="course.id === programmingExercise.course?.id ? programmingExercise.course : course" *ngFor="let course of courses; trackBy: trackCourseById">{{course.title}}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.baseRepositoryUrl" for="field_baseRepositoryUrl">Base Repository Url</label>
+            <input type="text" class="form-control" name="baseRepositoryUrl" id="field_baseRepositoryUrl"
+                [(ngModel)]="programmingExercise.baseRepositoryUrl" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.baseBuildPlanId" for="field_baseBuildPlanId">Base Build Plan Id</label>
+            <input type="text" class="form-control" name="baseBuildPlanId" id="field_baseBuildPlanId"
+                [(ngModel)]="programmingExercise.baseBuildPlanId" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.publishBuildPlanUrl" for="field_publishBuildPlanUrl">Publish Build Plan Url</label>
+            <input type="checkbox" class="form-control" name="publishBuildPlanUrl" id="field_publishBuildPlanUrl"
+                [(ngModel)]="programmingExercise.publishBuildPlanUrl" />
+        </div>
+        <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.programmingExercise.allowOnlineEditor" for="field_allowOnlineEditor">Allow Online Editor</label>
+            <input type="checkbox" class="form-control" name="allowOnlineEditor" id="field_allowOnlineEditor"
+                [(ngModel)]="programmingExercise.allowOnlineEditor" />
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
+            <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+            <span class="fa fa-save"></span>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+        </button>
+    </div>
+</form>

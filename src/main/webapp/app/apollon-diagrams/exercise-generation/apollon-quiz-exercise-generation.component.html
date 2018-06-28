@@ -1,0 +1,23 @@
+<form name="form" role="form" (ngSubmit)="save()" novalidate>
+    <div class="modal-header">
+        <h4 class="modal-title">Generate a Quiz Exercise</h4>
+    </div>
+
+    <div class="modal-body">
+        <label for="GenerateQuizExercise_Course" class="form-control-label">Course</label>
+        <select id="GenerateQuizExercise_Course" class="form-control" name="selectedCourse" [(ngModel)]="selectedCourse">
+            <option *ngFor="let course of courses" [ngValue]="course">{{ course.title }}</option>
+        </select>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="dismiss()">
+            <span class="fa fa-ban"></span>
+            <span>Cancel</span>
+        </button>
+        <button type="submit" class="btn btn-success">
+            <span class="fa fa-save"></span>
+            <span>Generate</span>
+        </button>
+    </div>
+</form>

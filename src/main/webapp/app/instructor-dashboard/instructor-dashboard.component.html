@@ -1,0 +1,141 @@
+<div *ngIf="exercise">
+    <h2>{{exercise.course.title}} - {{exercise.title}} <small>{{results.length}} results</small></h2>
+    <jhi-alert></jhi-alert>
+    <div>
+        <div class="button-toolbar pull-right">
+            <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
+                <button *ngIf="exercise.type !== 'quiz'"
+                        class="btn btn-danger btn-sm"
+                        [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/archive'} }]"
+                        replaceUrl="true"
+                        queryParamsHandling="merge">
+                    <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span>Archive</span>
+                </button>
+                <button *ngIf="exercise.type !== 'quiz'"
+                        class="btn btn-danger btn-sm"
+                        [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/cleanup'} }]"
+                        replaceUrl="true"
+                        queryParamsHandling="merge">
+                    <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span>Cleanup</span>
+                </button>
+            </span>
+            <button type="submit"
+                    routerLink="/exercise/{{exercise.id}}/participation"
+                    class="btn btn-primary btn-sm">
+                <i class="fa fa-eraser" aria-hidden="true"></i>&nbsp;<span>Participations</span>
+            </button>
+
+            <button class="btn btn-primary btn-sm" (click)="exportNames()">
+                <i class="fa fa-download fa-fw"></i>&nbsp;Export Names
+            </button>
+            <button class="btn btn-primary btn-sm" (click)="exportResults()">
+                <i class="fa fa-download fa-fw"></i>&nbsp;Export Results
+            </button>
+            <button class="btn btn-primary btn-sm" (click)="refresh()">
+                <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
+            </button>
+            <button *ngIf="exercise.type === 'modeling-exercise'" class="btn btn-primary btn-sm" (click)="resetOptimality()">
+                <i class="fa fa-refresh fa-fw"></i>&nbsp;Recalculate Optimality
+            </button>
+        </div>
+
+
+
+        <label class="radio-inline">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')" [value]="'unsuccessful'">
+            Show unsuccessful
+        </label>
+        <label class="radio-inline">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('successful')" [value]="'successful'">
+            Show successful
+        </label>
+        <label class="radio-inline">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'">
+            Show all
+        </label>
+        <label class="radio-inline" *ngIf="exercise.type === 'modeling-exercise'">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('optimal')" [value]="'optimal'">
+            Show optimal
+        </label>
+
+    </div>
+    <div class="table-responsive" *ngIf="results">
+        <table class="table table-striped exercise-table">
+            <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th></th>
+                <th jhiSortBy="participation.student.firstName">
+                    <a class="th-link">Student name</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="completionDate">
+                    <a class="th-link">Completion date</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="successful">
+                    <a class="th-link">Result</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="submissionCount">
+                    <a class="th-link">Submission count</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="score">
+                    <a class="th-link">Score</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="duration">
+                    <a class="th-link">Duration</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="assessmentType">
+                    <a class="th-link">Assessment Type</a> <span class="fa fa-sort"></span>
+                </th>
+                <th *ngIf="exercise.type === 'modeling-exercise'" jhiSortBy="assessor.firstName">
+                    <a class="th-link">Assessor</a> <span class="fa fa-sort"></span>
+                </th>
+                <th *ngIf="exercise.type !== 'quiz'"></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr [ngStyle]="result.optimal && {'font-weight': 'bold'}" *ngFor="let result of results | sortBy: predicate: reverse; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
+                <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
+                <td>
+                    <jhi-result [participation]="result.participation"></jhi-result>
+                </td>
+                <td>{{ result.submissionCount }}</td>
+                <td>
+                    <span *ngIf="result.score != null">{{result.score}}%</span>
+                </td>
+                <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate: exercise.releaseDate))}} minutes</td>
+                <td>{{ result.assessmentType }}</td>
+                <td *ngIf="exercise.type === 'modeling-exercise'">
+                    <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }}</span>
+                </td>
+                <td *ngIf="exercise.type !== 'quiz'">
+                    <button *ngIf="exercise.type == 'programming-exercise'" class="btn btn-outline-secondary btn-sm" (click)="goToRepository(result)"><i
+                        class="fa fa-code-fork"></i>&nbsp;Repository
+                    </button>
+                    <button *ngIf="exercise.type == 'programming-exercise'" class="btn btn-outline-secondary btn-sm" (click)="goToBuildPlan(result)">
+                        <i class="fa fa-file-code-o"></i>&nbsp;Build plan
+                    </button>
+
+                    <button routerLink="/editor/{{result.participation.id}}" class="btn btn-outline-secondary btn-sm" *ngIf="result.participation.exercise.allowOnlineEditor">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Online editor
+                    </button>
+
+                    <button *ngIf="exercise.type == 'modeling-exercise' && result.submission"
+                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
+                            [queryParams]="{optimal: false}"
+                            class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assessment editor
+                    </button>
+                    <!-- result.optimal -->
+
+                    <button *ngIf="exercise.type !== 'modeling-exercise'"
+                            [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new'} }]"
+                            class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-asterisk"></i>&nbsp;New result
+                    </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

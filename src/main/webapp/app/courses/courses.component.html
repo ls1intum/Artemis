@@ -1,0 +1,17 @@
+<div *ngIf="courses">
+    <jhi-alert></jhi-alert>
+    <div *ngFor="let course of courses;trackBy: trackId">
+        <div class="card card-primary card-inverse jh-card border-primary">
+            <h4 class="card-header bg-primary text-white">
+                <strong>{{course.title}}</strong>
+                &nbsp;
+                <a class="text-primary card-link" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA']" routerLink="/course/{{course.id}}/dashboard" routerLinkActive="active">
+                    <i class="fa fa-info-circle fa-fw" style="color:white;"></i>
+                </a>
+            </h4>
+            <div class="card-body card-block">
+                <jhi-exercise-list [course]="course" [filterByExerciseId]="filterByExerciseId"></jhi-exercise-list>
+            </div>
+        </div>
+    </div>
+</div>

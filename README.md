@@ -1,7 +1,17 @@
-# ExerciseApplication
+# ArTEMiS: AuTomated assEssment Management System 
 This application was generated using JHipster 4.14.4, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.4](http://www.jhipster.tech/documentation-archive/v4.14.4).
 
-**Curent version:** 1.4.7
+**Curent version:** 2.0.1
+
+## Main features
+ArTEMiS has the following main features:
+1. **Programming exercises** with version control and automatic assessment with test cases and continuous integration
+2. **Quiz exercises** with multiple choice questions and drag and drop questions (beta)
+3. **Modeling exercises** with semi-automatic assessment using machine learning concepts (coming soon)
+
+All these exercises are supposed to be run either live in-class with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
+
+## Top-Level Design
 
 The following UML diagram shows the top-level design of ArTEMiS which is decomposed into an application client and an application server. The application server then connects to a version control system (VCS), a continuous integration system (CIS) and a user management system (UMS).
 
@@ -15,7 +25,7 @@ While ArTEMiS includes generic adapters to these three external systems with a d
 
 ## Exercise Workflow
 
-Conducting a programming exercise consists of 7 steps distributed among the instructor, ArTEMiS and students:
+Conducting a programming exercise consists of 7 steps distributed among instructor, ArTEMiS and students:
 
 1. **Instructor prepares exercise:** Set up a repository containing the exercise code and test cases, build instructions on the CI server, and configures the exercise in ArTEMiS.
 2. **Student starts exercise:** Click on start exercise on ArTEMiS which automatically generates a copy of the repository with the exercise code and configures a build plan accordingly.
@@ -40,45 +50,39 @@ This allows the students to immediately recognize which tasks are already fulfil
 
 ## Development Setup
 
-Before you can build ArTEMiS, you must install and configure the following dependencies/tools on your machine:
+This project uses Spring Boot with Java 8 on the application server and Angular 5 with TypeScript on the client.
 
-1. [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of ArTEMiS.
+Before you can build this project, you must install and configure the following dependencies on your machine:
 
-2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): ArTEMiS uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle) 
+1. [Node.js](https://nodejs.org): We use Node to run a development web server and build the project.
+Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+2. [Yarn](https://yarnpkg.com): We use Yarn to manage Node dependencies.
+Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
 
-3. [Node.js 9](https://nodejs.org): We use Node (>=6.9.0 && <=9.11.1) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
-
-4. [Yarn](https://yarnpkg.com): We use Yarn to manage Node dependencies. Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
-
-After installing Node, you should be able to run the following command to install development tools. You will only need to run this command when dependencies change in [package.json](package.json).
+After installing Node, you should be able to run the following command to install development tools.
+You will only need to run this command when dependencies change in [package.json](package.json).
 
 ```
 yarn install
 ```
 
-We use [Gulp](https://gulpjs.com) as build system. Install the Gulp command-line tool globally with:
+To compile TypeScript code to JavaScript code and start the hot module replacement feature in Webpack, use the following command, see [Working with Angular]()https://www.jhipster.tech/development/#working-with-angular)
 
 ```
-yarn global add gulp-cli
+yarn start
 ```
 
-Run the following commands in two separate terminals to create a blissful development experience where your browser
-auto-refreshes when files change on your hard drive.
-
-```
-./gradlew
-gulp
-```
-
-[Bower](https://bower.io) is used to manage CSS and JavaScript dependencies used in the ArTEMiS application client (in the browser). You can upgrade dependencies by specifying a newer version in [bower.json](bower.json). You can also run `bower update` and `bower install` to manage dependencies. Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
+[Bower](https://bower.io) is used to manage CSS and JavaScript dependencies used in this application (in the hybrid mode with Angular 1.5.8). You can upgrade dependencies by
+specifying a newer version in [bower.json](bower.json). You can also run `bower update` and `bower install` to manage dependencies.
+Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
 
 For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
-ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Boot](http://projects.spring.io/spring-boot) development on the application server and Javascript ([Angular 1](https://angularjs.org)) development on the application client in the browser. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
+ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Boot](http://projects.spring.io/spring-boot) development on the application server and Javascript ([Angular 5](https://angular.io)) development on the application client in the browser. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 
-To start ArTEMiS in your development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
+To start ArTEMiS from the development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
 
 ```
 artemis:
@@ -109,40 +113,41 @@ artemis:
     name: ArTEMiS
     email: <email>
 ```
-Change the entries with ```<...>``` with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can conncet to your local JIRA, Bitbucket and Bamboo instances (see Docker Setup below). 
+Change the entries with ```<...>``` with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances (see Docker setup below). 
 
-In addition, you have to install MySQL, setup a root user without password and create an ExerciseApplication scheme.
+In addition, you have to install MySQL, setup a root user without password. The required ArTEMiS scheme will be created / updated automatically at startup of the server application.
 
-Then ArTEMiS should startup by running the main class ```de.tum.in.www1.artemis.ArTEMiSApp``` using Spring Boot.
+The ArTEMiS server should startup by running the main class ```de.tum.in.www1.artemis.ArTEMiSApp``` using Spring Boot.
 
-To access ArTEMiS in your browser, you have to install npm and execute the following commands in the terminal / command line in the ArTEMiS root folder:
+To access the ArTEMiS client in your browser, you have to install node, npm and yarn (see above) and execute the following commands in the terminal / command line in the ArTEMiS root folder:
 
 ```
-npm install
+yarn install
 bower install
-gulp
+yarn start
 ```
 
-After that you should be able to access http://127.0.0.1:8080/ and login with your TUM Online account (if you use our JIRA instance).
+Please note, that `bower install` is only necessary for the hybrid mode (with Angular 1 --> ng1) and will hopefully be removed soon.
+`yarn install` is only necessary when dependencies to node modules change. `yarn start` compiles the TypeScript client code and starts the client with automatic code replacement.
+This means, whenever you change a TypeScript file and save, the client is automatically reloaded with the new code. 
+After that you should be able to access http://127.0.0.1:9000/ and login with your TUM Online account (if you use our JIRA instance).
 
+    
 ## Profiles
 
-ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments should be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
+ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
 
     --spring.profiles.active=dev,bamboo,bitbucket,jira 
 
-This is in particular important, when you want to use your TUMOnline account as credential to login, because the class JiraAuthenticationProvider is only activated, when the spring profile jira is active in the run configuration.
-
-
 ## Building for production
 
-To optimize the ExerciseApplication application for production, run:
+To optimize the ArTEMiS application for production, run:
 
 ```
 ./gradlew -Pprod clean bootRepackage
 ```
 
-This will concatenate and minify the client CSS and JavaScript files. It will also modify `index.html` so it references these new files.
+This will concatenate and minify the client CSS and TypeScript / JavaScript files. It will also modify `index.html` so it references these new files.
 To ensure everything worked, run:
 
 ```
@@ -164,11 +169,12 @@ The Continuous Integration Server typically delegates the build jobs to local bu
 
 ## Data Model
 
-The ArTEMiS application server uses a data model in the MySQL database. The followind UML class diagram shows a simplified version of it. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system. Each submission is automatically tested by the continuous integration server, which notifies the ArTEMiS application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manaully" create results.
+The ArTEMiS application server used the following (initial) data model in the MySQL database. It supports multiple courses with multiple exercises. Each student in the participating student group can participate in the exercise by clicking the **Start Exercise** button. Then a repository and a build plan for the student (User) will be created and configured. The initialization state variable (Enum) helps to track the progress of this complex operation and allows to recover from errors. A student can submit multiple solutions by committing and pushing the source code changes to a given example code into the version control system. Each submission is automatically tested by the continuous integration server, which notifies the ArTEMiS application server, when a new result exists. In addition, teaching assistants can assess student solutions and "manually" create results.
+The current data model is more complex and supports different types of exercises such as programming exercises, modeling exercises and quiz exercises.
 
 ![Data Model](doc/DataModel.png "Data Model")
 
-**Please note:** The real data model has become a bit more complex. We allow different types of exercises by having multiple subclasses for programming, modeling and quiz exercises. For each result, we store feedback and a submission. Quiz exercises support multiple choice and drag and drop questions.  
+In the future, we want to allow different types of exercises, so expect multiple subclasses for programming, modeling and quiz exercises.
 
 
 ## Server Architecture

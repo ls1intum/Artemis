@@ -1,0 +1,28 @@
+
+{
+    "arTeMiSApp": {
+        "apollonDiagram" : {
+            "home": {
+                "title": "Apollon Diagrams",
+                "createLabel": "Create a new Apollon Diagram",
+                "createOrEditLabel": "Create or edit an Apollon Diagram"
+            },
+            "created": "Apollon Diagram created with ID {{ param }}",
+            "updated": "Apollon Diagram updated with ID {{ param }}",
+            "deleted": "Apollon Diagram deleted with ID {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Apollon Diagram {{ id }}?"
+            },
+            "detail": {
+                "title": "Apollon Diagram"
+            },
+            "title": "Title",
+            "jsonRepresentation": "JSON Representation",
+            "assessment": {
+                "saveSuccessful": "Your assessment was saved successfully!",
+                "submitSuccessful": "Your assessment was submitted successfully!",
+                "resultDismissed": "Your assessment was dismissed because another tutor already rated this model."
+            }
+        }
+    }
+}

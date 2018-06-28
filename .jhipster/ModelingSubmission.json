@@ -3,13 +3,14 @@
     "relationships": [],
     "fields": [
         {
-            "fieldName": "submissionPath",
+            "fieldName": "model",
             "fieldType": "String"
         }
     ],
-    "changelogDate": "20170831094200",
+    "changelogDate": "20171130173555",
     "entityTableName": "modeling_submission",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

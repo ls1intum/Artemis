@@ -21,7 +21,7 @@ import java.util.Set;
  */
 @Entity
 @Table(name = "participation", uniqueConstraints = @UniqueConstraint(columnNames = {"student_id", "exercise_id", "initialization_state"}))
-@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class Participation implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -153,13 +153,13 @@ public class Participation implements Serializable {
         return this;
     }
 
-    public Participation addResults(Result result) {
+    public Participation addResult(Result result) {
         this.results.add(result);
         result.setParticipation(this);
         return this;
     }
 
-    public Participation removeResults(Result result) {
+    public Participation removeResult(Result result) {
         this.results.remove(result);
         result.setParticipation(null);
         return this;

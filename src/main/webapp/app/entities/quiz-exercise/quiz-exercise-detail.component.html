@@ -1,0 +1,235 @@
+<div class="container" *ngIf="quizExercise">
+    <h3>
+        <span
+            *ngIf="quizExercise.id && quizExercise.course"
+            jhiTranslate="arTeMiSApp.quizExercise.edit.title"
+            translateValues="{param: '{{quizExercise.course.title}}'}"
+        ></span>
+        <span
+            *ngIf="!quizExercise.id && quizExercise.course"
+            jhiTranslate="arTeMiSApp.quizExercise.new.title"
+            translateValues="{param: '{{quizExercise.course.title}}'}"
+        ></span>
+    </h3>
+    <hr/>
+    <div class="edit-quiz">
+        <input
+            id="quiz-title"
+            class="form-control"
+            [(ngModel)]="quizExercise.title"
+            placeholder="Quiz Title"
+        />
+        <div class="quiz-options">
+            <div class="form-group">
+                <span
+                    jhiTranslate="arTeMiSApp.quizExercise.duration"
+                    class="colon-suffix"
+                ></span>
+                <input
+                    class="form-control"
+                    title="Duration"
+                    type="number"
+                    min="0"
+                    max="999"
+                    (ngModelChange)="onDurationChange()"
+                    [(ngModel)]="duration.minutes"
+                    (blur)="onDurationChange()"
+                />
+                <span
+                    jhiTranslate="arTeMiSApp.quizExercise.minutes"
+                ></span>
+                <input
+                    class="form-control"
+                    title="Duration"
+                    type="number"
+                    max="999"
+                    min="-99"
+                    (ngModelChange)="onDurationChange()"
+                    [(ngModel)]="duration.seconds"
+                    (blur)="onDurationChange()"
+                />
+                <span
+                    jhiTranslate="arTeMiSApp.quizExercise.seconds"
+                ></span>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            [(ngModel)]="quizExercise.randomizeQuestionOrder"
+                        />
+                        <span
+                            jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder"
+                        ></span>
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="checkbox">
+                    <label>
+                        <input
+                            type="checkbox"
+                            [(ngModel)]="quizExercise.isPlannedToStart"
+                        />
+                        <span
+                            jhiTranslate="arTeMiSApp.quizExercise.startTime"
+                            class="colon-suffix"
+                        ></span>
+                    </label>
+                </div>
+                <form class="form-inline">
+                    <div class="form-group">
+                        <div class="input-group">
+                            <input class="form-control" placeholder="yyyy-mm-dd"
+                                   [disabled]="!quizExercise.isPlannedToStart"
+                                   name="dp" [(ngModel)]="date"
+                                   (ngModelChange)="onDateChange()"
+                                   ngbDatepicker #d="ngbDatepicker">
+                            <button [disabled]="!quizExercise.isPlannedToStart"
+                                    class="btn btn-outline-secondary"
+                                    (click)="d.toggle()"
+                                    type="button" style="cursor: pointer;">
+                                <i class="fa fa-calendar"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <div class="time-picker">
+                    <ngb-timepicker
+                        (ngModelChange)="onTimeChange()"
+                        [disabled]="!quizExercise.isPlannedToStart"
+                        [(ngModel)]="time">
+                    </ngb-timepicker>
+                </div>
+            </div>
+        </div>
+        <div class="question" *ngFor="let question of quizExercise.questions; let i = index">
+            <div *ngIf="question.type === 'multiple-choice'">
+            <jhi-edit-multiple-choice-question
+                [question]="question"
+                [questionIndex]="i + 1"
+                [doDelete]="deleteQuestion.bind(question)"
+                [doUpdated]="onQuestionUpdated()"
+            ></jhi-edit-multiple-choice-question>
+            </div>
+            <div *ngIf="question.type === 'drag-and-drop'">
+            <jhi-edit-drag-and-drop-question
+                [question]="question"
+                [questionIndex]="i + 1"
+                [doDelete]="deleteQuestion.bind(question)"
+                [doUpdated]="onQuestionUpdated()"
+            ></jhi-edit-drag-and-drop-question>
+            </div>
+        </div>
+        <div class="d-inline-block" ngbDropdown>
+            <button ngbDropdownToggle class="btn btn-default">
+                <span jhiTranslate="arTeMiSApp.quizExercise.edit.addQuestion"></span>
+                <span class="caret"></span>
+            </button>
+            <div ngbDropdownMenu>
+                <button class="dropdown-item" (click)="addMultipleChoiceQuestion()"
+                        jhiTranslate="arTeMiSApp.quizExercise.multipleChoiceQuestion"
+                ></button>
+                <button class="dropdown-item" (click)="addDragAndDropQuestion()"
+                        jhiTranslate="arTeMiSApp.quizExercise.dragAndDropQuestion"
+                ></button>
+            </div>
+        </div>
+    </div>
+    <div class="edit-quiz-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div class="form-group">
+                    <span
+                        jhiTranslate="arTeMiSApp.quizExercise.status"
+                        class="colon-suffix"
+                    ></span>
+                    <select
+                        *ngIf="showDropdown() === 'isOpenForPractice'"
+                        class="form-control"
+                        [(ngModel)]="quizExercise.isOpenForPractice"
+                        title="status"
+                    >
+                        <option *ngFor="let option of statusOptionsPractice" [value]="option.key">{{option.label}}
+                        </option>
+                    </select>
+                    <select
+                        *ngIf="showDropdown() === 'isVisibleBeforeStart'"
+                        class="form-control"
+                        [(ngModel)]="quizExercise.isVisibleBeforeStart"
+                        title="status"
+                    >
+                        <option *ngFor="let option of statusOptionsVisible" [value]="option.key">{{option.label}}
+                        </option>
+                    </select>
+                    <select
+                        *ngIf="showDropdown() === 'active'"
+                        class="form-control"
+                        [(ngModel)]="isTrue"
+                        title="status"
+                        disabled
+                    >
+                        <option *ngFor="let option of statusOptionsActive" [value]="option.key">{{option.label}}
+                        </option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <span
+                        *ngIf="!pendingChanges() && !isSaving"
+                        jhiTranslate="arTeMiSApp.quizExercise.edit.saved"
+                        class="badge badge-success"
+                    ></span>
+                    <span
+                        *ngIf="pendingChanges() && validQuiz() && !isSaving"
+                        jhiTranslate="arTeMiSApp.quizExercise.edit.pendingChanges"
+                        class="badge badge-secondary"
+                    ></span>
+                    <span
+                        *ngIf="isSaving"
+                        jhiTranslate="arTeMiSApp.quizExercise.edit.saving"
+                        class="badge badge-secondary"
+                    ></span>
+                    <ng-template #tooltipTranslate>
+                        <div *ngFor="let reason of invalidReasons()">
+                            <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{reason.translateKey}}" translateValues="{index: '{{reason.translateValues}}'"></p>
+                            <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{reason.translateKey}}"></p>
+                        </div>
+                    </ng-template>
+                    <span
+                        *ngIf="!validQuiz()"
+                        class="badge badge-danger"
+                        [ngbTooltip]="tooltipTranslate"
+                        tooltip-placement="top-right"
+                        tooltip-class="invalid-reasons-tooltip"
+                    >
+                        <i class="fa fa-exclamation-circle"></i>
+                        <span jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput"></span>
+                        <span>({{invalidReasons().length}})</span>
+                    </span>
+                    <button
+                        *ngIf="quizExercise.course"
+                        class="btn btn-default"
+                        [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise']"
+                        jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}"
+                    ></button>
+                    <button
+                        class="btn btn-success"
+                        (click)="save()"
+                        [ngClass]="{disabled: !pendingChanges() || !validQuiz() || hasSavedQuizStarted() || isSaving}"
+                        jhiTranslate="entity.action.save"
+                        [ngbTooltip]="validQuiz() ? '' : tooltipTranslate"
+                        tooltip-placement="top-right"
+                        tooltip-class="invalid-reasons-tooltip"
+                    ></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div *ngIf="hasSavedQuizStarted()">
+    <div class="quiz-is-active-background"></div>
+    <div class="quiz-is-active-overlay alert alert-warning">
+        <span jhiTranslate="arTeMiSApp.quizExercise.edit.quizHasStarted"></span>
+    </div>
+</div>

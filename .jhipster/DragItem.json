@@ -22,9 +22,10 @@
             "fieldType": "Boolean"
         }
     ],
-    "changelogDate": "20170831094155",
+    "changelogDate": "20171130173549",
     "entityTableName": "drag_item",
     "dto": "no",
     "pagination": "no",
-    "service": "no"
+    "service": "no",
+    "jpaMetamodelFiltering": false
 }

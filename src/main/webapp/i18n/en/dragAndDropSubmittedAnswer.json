@@ -1,5 +1,6 @@
+
 {
-    "artemisApp": {
+    "arTeMiSApp": {
         "dragAndDropSubmittedAnswer" : {
             "home": {
                 "title": "Drag And Drop Submitted Answers",
@@ -15,7 +16,7 @@
             "detail": {
                 "title": "Drag And Drop Submitted Answer"
             },
-            "mappings": "Mappings"
+            "assignments": "Assignments"
         }
     }
 }

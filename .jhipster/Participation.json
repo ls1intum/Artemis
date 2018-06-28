@@ -39,9 +39,10 @@
             "fieldType": "ZonedDateTime"
         }
     ],
-    "changelogDate": "20160609100233",
+    "changelogDate": "20171130173550",
     "entityTableName": "participation",
     "dto": "no",
     "pagination": "no",
-    "service": "serviceClass"
+    "service": "serviceClass",
+    "jpaMetamodelFiltering": false
 }

@@ -38,9 +38,9 @@ public class MetricsConfiguration extends MetricsConfigurerAdapter {
 
     private final Logger log = LoggerFactory.getLogger(MetricsConfiguration.class);
 
-    private final MetricRegistry metricRegistry = new MetricRegistry();
+    private MetricRegistry metricRegistry = new MetricRegistry();
 
-    private final HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
+    private HealthCheckRegistry healthCheckRegistry = new HealthCheckRegistry();
 
     private final JHipsterProperties jHipsterProperties;
 
