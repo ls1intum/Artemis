@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.config;
 
 import de.tum.in.www1.artemis.repository.UserRepository;
 import io.github.jhipster.config.JHipsterProperties;
+import io.github.jhipster.config.jcache.BeanClassLoaderAwareJCacheRegionFactory;
 import org.ehcache.config.builders.CacheConfigurationBuilder;
 import org.ehcache.config.builders.ResourcePoolsBuilder;
 import org.ehcache.expiry.Duration;
@@ -21,6 +22,9 @@ public class CacheConfiguration {
     private final javax.cache.configuration.Configuration<Object, Object> jcacheConfiguration;
 
     public CacheConfiguration(JHipsterProperties jHipsterProperties) {
+
+        BeanClassLoaderAwareJCacheRegionFactory.setBeanClassLoader(this.getClass().getClassLoader());
+
         JHipsterProperties.Cache.Ehcache ehcache =
             jHipsterProperties.getCache().getEhcache();
 
