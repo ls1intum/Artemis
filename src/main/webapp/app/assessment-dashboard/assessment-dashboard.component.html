@@ -1,0 +1,102 @@
+<div *ngIf="exercise">
+    <h2>{{exercise.course.title}} - {{exercise.title}}
+        <small>{{results.length}} results</small>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <div>
+        <div class="button-toolbar pull-right">
+            <button class="btn btn-primary btn-sm" (click)="refresh()">
+                <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
+            </button>
+            <button *ngIf="exercise.type === 'modeling-exercise'" class="btn btn-primary btn-sm"
+                    (click)="resetOptimality()">
+                <i class="fa fa-refresh fa-fw"></i>&nbsp;Recalculate Optimality
+            </button>
+        </div>
+
+        <label class="radio-inline">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')"
+                   [value]="'unsuccessful'">
+            Show unsuccessful
+        </label>
+        <label class="radio-inline">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('successful')"
+                   [value]="'successful'">
+            Show successful
+        </label>
+        <label class="radio-inline">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'">
+            Show all
+        </label>
+        <label class="radio-inline" *ngIf="exercise.type === 'modeling-exercise'">
+            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('optimal')"
+                   [value]="'optimal'">
+            Show optimal
+        </label>
+
+    </div>
+    <div class="table-responsive" *ngIf="results">
+        <table class="table table-striped exercise-table">
+            <thead>
+            <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
+                <th></th>
+                <th jhiSortBy="participation.student.firstName">
+                    <a class="th-link">Student name</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="completionDate">
+                    <a class="th-link">Completion date</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="successful">
+                    <a class="th-link">Result</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="submissionCount">
+                    <a class="th-link">Submission count</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="score">
+                    <a class="th-link">Score</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="duration">
+                    <a class="th-link">Duration</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="assessmentType">
+                    <a class="th-link">Assessment Type</a> <span class="fa fa-sort"></span>
+                </th>
+                <th jhiSortBy="assessor.firstName">
+                    <a class="th-link">Assessor</a> <span class="fa fa-sort"></span>
+                </th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr [ngStyle]="result.optimal && {'font-weight': 'bold'}"
+                *ngFor="let result of results | sortBy: predicate: reverse; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
+                <td>{{ result.completionDate | date:'MMM d, y HH:mm:ss' }}</td>
+                <td>
+                    <jhi-result [participation]="result.participation"></jhi-result>
+                </td>
+                <td>{{ result.submissionCount }}</td>
+                <td>
+                    <span *ngIf="result.score != null">{{result.score}}%</span>
+                </td>
+                <td>{{durationString(result.completionDate, (result.participation.initializationDate ?
+                    result.participation.initializationDate: exercise.releaseDate))}} minutes
+                </td>
+                <td>{{ result.assessmentType }}</td>
+                <td *ngIf="exercise.type === 'modeling-exercise'">
+                    <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }}</span>
+                </td>
+                <td>
+                    <button *ngIf="exercise.type == 'modeling-exercise' && result.submission"
+                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
+                            [queryParams]="{optimal: false}"
+                            class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assessment editor
+                    </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
