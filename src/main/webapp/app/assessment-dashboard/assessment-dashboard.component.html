@@ -1,8 +1,5 @@
 <div *ngIf="exercise">
-    <h2>{{exercise.course.title}} - {{exercise.title}}
-        <small>{{results.length}} results</small>
-    </h2>
-    <jhi-alert></jhi-alert>
+    <h2>Assessment dashboard for exercise "{{exercise.title}}"</h2>
     <div>
         <div class="button-toolbar pull-right">
             <button class="btn btn-primary btn-sm" (click)="refresh()">
@@ -10,31 +7,45 @@
             </button>
             <button *ngIf="exercise.type === 'modeling-exercise'" class="btn btn-primary btn-sm"
                     (click)="resetOptimality()">
-                <i class="fa fa-refresh fa-fw"></i>&nbsp;Recalculate Optimality
+                <i class="fa fa-refresh fa-fw"></i>&nbsp;Reset optimal model selection
             </button>
         </div>
-
-        <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('unsuccessful')"
-                   [value]="'unsuccessful'">
-            Show unsuccessful
-        </label>
-        <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('successful')"
-                   [value]="'successful'">
-            Show successful
-        </label>
-        <label class="radio-inline">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('all')" [value]="'all'">
-            Show all
-        </label>
-        <label class="radio-inline" *ngIf="exercise.type === 'modeling-exercise'">
-            <input type="radio" [(ngModel)]="showAllResults" (click)="toggleShowAllResults('optimal')"
-                   [value]="'optimal'">
-            Show optimal
-        </label>
-
     </div>
+     <h2>
+        <small [ngStyle]="assessedResults === allResults.length && allResults.length > 0 && {'color': '#5cb85c'}">
+            {{assessedResults}} out of {{allResults.length}} models assessed
+        </small>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <h5>Optimal models to assess first:</h5>
+    <div class="table-responsive" *ngIf="optimalResults && optimalResults.length > 0">
+        <table class="table table-striped exercise-table">
+            <tbody>
+            <tr [ngStyle]="result.optimal && {'font-weight': 'bold'}"
+                *ngFor="let result of optimalResults; let i = index">
+                <td>{{ i + 1 }}</td>
+                <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
+                <td>
+                    <button *ngIf="exercise.type == 'modeling-exercise' && result.submission && result.optimal"
+                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
+                            [queryParams]="{optimal: false}"
+                            class="btn btn-outline-success btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess model
+                    </button>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+    <div *ngIf="optimalResults && optimalResults.length === 0">
+        <div *ngIf="assessedResults === results.length">
+            <p style="color: #5cb85c">Congratulation all models have been assessed</p>
+        </div>
+        <div *ngIf="assessedResults !== results.length">
+            <p>Currently there are no optimal models to assess. Try pushing the refresh button</p>
+        </div>
+    </div>
+    <h5>Other models:</h5>
     <div class="table-responsive" *ngIf="results">
         <table class="table table-striped exercise-table">
             <thead>
@@ -88,11 +99,17 @@
                     <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }}</span>
                 </td>
                 <td>
-                    <button *ngIf="exercise.type == 'modeling-exercise' && result.submission"
+                    <button *ngIf="exercise.type == 'modeling-exercise' && result.submission && !result.rated"
                             routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-secondary btn-sm">
-                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assessment editor
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess model
+                    </button>
+                    <button *ngIf="exercise.type == 'modeling-exercise' && result.submission && result.rated"
+                            routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
+                            [queryParams]="{optimal: false}"
+                            class="btn btn-outline-secondary btn-sm">
+                        <i class="fa fa-folder-open fa-fw"></i>&nbsp;Open assessment
                     </button>
                 </td>
             </tr>

@@ -28,10 +28,11 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     nextOptimalSubmissionIds = [];
-    showAllResults: string;
     results: Result[];
     allResults: Result[];
+    optimalResults: Result[];
     eventSubscriber: Subscription;
+    assessedResults: number;
 
     constructor(private route: ActivatedRoute,
                 private momentDiff: DifferencePipe,
@@ -43,9 +44,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 private eventManager: JhiEventManager) {
         this.reverse = false;
         this.predicate = 'id';
-        this.showAllResults = 'all';
         this.results = [];
         this.allResults = [];
+        this.optimalResults = [];
     }
 
     ngOnInit() {
@@ -58,16 +59,16 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 this.getResults(true);
             });
         });
-        this.registerChangeInCourses();
+        this.registerChangeInResults();
     }
 
-    registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('resultListModification', response => this.getResults(false));
+    registerChangeInResults() {
+        this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getResults(true));
     }
 
     getResults(forceReload: boolean) {
         this.exerciseResultService.query(this.exercise.course.id, this.exercise.id, {
-            showAllResults: this.showAllResults,
+            showAllResults: 'all',
             ratedOnly: false,
             withSubmissions: true,
             withAssessors: true
@@ -78,41 +79,32 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
             });
             this.allResults = tempResults;
             this.filterResults(forceReload);
+            this.assessedResults = this.allResults.filter(result => result.rated).length;
         });
     }
 
     filterResults(forceReload: boolean) {
         this.results = [];
-            if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
-                this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
-                    this.nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
-                    this.filterOptimal();
-                });
-            } else {
-                this.filterOptimal();
-            }
-        if (this.showAllResults === 'successful') {
-            this.results = this.allResults.filter(function(result) {
-                return result.successful === true;
+        if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
+            this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
+                this.nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
+                this.applyFilter();
             });
-        } else if (this.showAllResults === 'unsuccessful') {
-            this.results = this.allResults.filter(function(result) {
-                return result.successful === false;
-            });
-        } else if (this.showAllResults === 'all') {
-            this.results = this.allResults;
+        } else {
+            this.applyFilter();
         }
     }
 
-    filterOptimal() {
+    applyFilter() {
         this.allResults.forEach(result => {
             result.optimal = result.submission && this.nextOptimalSubmissionIds.includes(result.submission.id);
         });
-        if (this.showAllResults === 'optimal') {
-            this.results = this.allResults.filter(result => {
-                return result.optimal;
-            });
-        }
+        this.optimalResults = this.results = this.allResults.filter(result => {
+            return result.optimal;
+        });
+        this.results = this.allResults.filter(function(result) {
+            return result.optimal === false;
+        });
     }
 
     durationString(completionDate, initializationDate) {
@@ -122,11 +114,6 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     showDetails(result: Result) {
         const modalRef = this.modalService.open(JhiResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
-    }
-
-    toggleShowAllResults(newValue) {
-        this.showAllResults = newValue;
-        this.filterResults(false);
     }
 
     refresh() {
