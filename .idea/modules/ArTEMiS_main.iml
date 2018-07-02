@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<module external.linked.project.id="ArTEMiS:main" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.artemis" external.system.module.type="sourceSet" external.system.module.version="2.0.1" type="JAVA_MODULE" version="4">
+<module external.linked.project.id="ArTEMiS:main" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.artemis" external.system.module.type="sourceSet" external.system.module.version="2.0.2" type="JAVA_MODULE" version="4">
   <component name="FacetManager">
     <facet type="Spring" name="Spring">
       <configuration />
@@ -15,7 +15,7 @@
         </sourceRoots>
       </configuration>
     </facet>
-    <facet type="web" name="Web Gradle : ArTEMiS-2.0.1.war">
+    <facet type="web" name="Web Gradle : ArTEMiS-2.0.2.war">
       <configuration>
         <webroots>
           <root url="file://$MODULE_DIR$/../../build/www" relative="/" />
@@ -29,6 +29,7 @@
     <content url="file://$MODULE_DIR$/../../build/generated/source/apt/main">
       <sourceFolder url="file://$MODULE_DIR$/../../build/generated/source/apt/main" isTestSource="false" generated="true" />
     </content>
+    <content url="file://$MODULE_DIR$/../../build/www" />
     <content url="file://$MODULE_DIR$/../../src/main">
       <sourceFolder url="file://$MODULE_DIR$/../../src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/main/resources" type="java-resource" />
@@ -57,43 +58,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/upm-cli-7.8.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
           <root url="jar://$MODULE_DIR$/../../libs/httpcore-4.4.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/httpclient-4.5.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/jsap-2.1.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/cli-7.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -120,6 +85,15 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/httpclient-4.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
           <root url="jar://$MODULE_DIR$/../../libs/commons-io-2.4.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -138,6 +112,24 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/upm-cli-7.8.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/jsap-2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
           <root url="jar://$MODULE_DIR$/../../libs/commons-codec-1.9.jar!/" />
         </CLASSES>
         <JAVADOC />
@@ -148,6 +140,15 @@
       <library>
         <CLASSES>
           <root url="jar://$MODULE_DIR$/../../libs/httpmime-4.5.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../libs/cli-7.8.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
