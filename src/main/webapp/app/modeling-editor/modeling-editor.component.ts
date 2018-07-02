@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild, HostListener } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Participation, ParticipationService } from '../entities/participation';
@@ -11,15 +11,18 @@ import { ParticipationResultService } from '../entities/result/result.service';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
 import * as $ from 'jquery';
-import {ModelingEditorService} from './modeling-editor.service';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import { ModelingEditorService } from './modeling-editor.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ComponentCanDeactivate } from '../shared';
+import { Observable } from 'rxjs/Observable';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
     providers: [ParticipationResultService, ModelingAssessmentService, ApollonDiagramService]
 })
-export class ModelingEditorComponent implements OnInit, OnDestroy {
+export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild('editorContainer') editorContainer: ElementRef;
 
     private subscription: Subscription;
@@ -50,7 +53,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
         private modelingEditorService: ModelingEditorService,
-        private modalService: NgbModal
+        private modalService: NgbModal,
+        private translateService: TranslateService
     ) {}
 
     ngOnInit() {
@@ -235,5 +239,20 @@ export class ModelingEditorComponent implements OnInit, OnDestroy {
 
     open(content) {
         this.modalService.open(content, {size: 'lg'});
+    }
+
+    // function to check whether there are pending changes
+    canDeactivate(): Observable<boolean> | boolean {
+        if (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState())) {
+            return false;
+        }
+        return true;
+    }
+
+    @HostListener('window:beforeunload', ['$event'])
+    unloadNotification($event: any) {
+        if (!this.canDeactivate()) {
+            $event.returnValue = this.translateService.instant('pendingChanges');
+        }
     }
 }

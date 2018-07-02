@@ -41,6 +41,7 @@ import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.m
 import { QuizReEvaluateWrapper } from './quiz/re-evaluate/quiz-re-evaluate.directive';
 import { QuizReEvaluateComponent } from './quiz/re-evaluate/quiz-re-evaluate.component';
 import { Principal } from './shared';
+import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 
 declare var angular: any;
 
@@ -117,6 +118,7 @@ declare var angular: any;
         DifferencePipe,
         JhiWebsocketService,
         Principal,
+        PendingChangesGuard,
     /**
      * @description Providing $scope:
      *  Angular 2+ is using this instead of $scope.
