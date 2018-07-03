@@ -11,7 +11,8 @@
             <span *ngIf="result && result.participation"><jhi-result [participation]="result.participation"></jhi-result></span>
             <span *ngIf="result?.assessmentType === 'AUTOMATIC' || !result?.rated">
                 <button class="btn btn-primary" (click)="saveAssessment()" [disabled]="!assessments || !assessmentsAreValid">Save Assessment</button>
-                <button class="btn btn-success" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid">Submit Assessment</button>
+                <button class="btn btn-success" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid" [hidden]="result && result.rated">Submit Assessment</button>
+                <button class="btn btn-danger" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid" [hidden]="!result || !result.rated">Override Assessment</button>
             </span>
         </div>
     </div>
