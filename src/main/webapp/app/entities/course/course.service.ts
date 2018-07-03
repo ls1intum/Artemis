@@ -53,6 +53,11 @@ export class CourseService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
+    getCourseTotalScore(id: number): Observable<EntityResponseType> {
+        return this.http.get<Object>(`${this.resourceUrl}/${id}/getCourseTotalScoreForUser`, { observe: 'response'})
+            .map((res: any) => this.convertGenericFromServer(res));
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Course = this.convertItemFromServer(res.body);
         return res.clone({body});
@@ -77,6 +82,11 @@ export class CourseService {
         copy.endDate = this.dateUtils
             .convertDateTimeFromServer(course.endDate);
         return copy;
+    }
+
+    private convertGenericFromServer(any) {
+        const entity = Object.assign({}, any);
+        return entity;
     }
 
     /**

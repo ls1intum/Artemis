@@ -249,6 +249,32 @@ ui bootstrap tweaks
     }
 }
 
+.header-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.total-score-wrapper {
+    margin-left: auto;
+    float: right;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    margin-right: 10px;
+}
+
+.btn-total-score {
+    color: #337ab7;
+    border-radius: 6px;
+    border: none;
+}
+
+.span-total-score {
+    margin-left: 10px;
+    width: 20px;
+}
+
+
 /* jhipster-needle-scss-add-main JHipster will add new css style */
 
 .result-orange {

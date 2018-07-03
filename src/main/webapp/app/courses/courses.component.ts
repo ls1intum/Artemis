@@ -15,6 +15,7 @@ export class CoursesComponent implements OnInit {
     courses: Course[];
     filterByCourseId: number;
     filterByExerciseId: number;
+    coursesTotalScore = new Map<string, string>();
     private sub: any;
 
     constructor(
@@ -47,10 +48,21 @@ export class CoursesComponent implements OnInit {
             },
             (res: Course[]) => this.onError(res)
         );
+
     }
 
     trackId(index: number, item: Course) {
         return item.id;
+    }
+
+    calculateCourseTotalScore(id: number) {
+        this.courseService.getCourseTotalScore(id).subscribe(
+            (res: any) => {
+                this.coursesTotalScore.set(res.body.courseId, res.body.totalScore);
+                console.log(res);
+            },
+            (res: any) => this.onError(res)
+        );
     }
 
     private onError(error) {
