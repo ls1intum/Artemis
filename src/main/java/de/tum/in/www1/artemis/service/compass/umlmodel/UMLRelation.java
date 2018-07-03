@@ -48,25 +48,46 @@ public class UMLRelation extends UMLElement {
         similarity += reference.source.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
         similarity += reference.target.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
 
-        if ((!reference.sourceRole.isEmpty() || !this.sourceRole.isEmpty()) && reference.sourceRole.equals(this.sourceRole)) {
-            similarity += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+        if (!reference.sourceRole.isEmpty() || !this.sourceRole.isEmpty()) {
+            if (reference.sourceRole.equals(this.sourceRole)) {
+                similarity += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+            }
             weight += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
         }
-        if ((!reference.targetRole.isEmpty() || !this.targetRole.isEmpty()) && reference.targetRole.equals(this.targetRole)) {
-            similarity += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+        if (!reference.targetRole.isEmpty() || !this.targetRole.isEmpty()) {
+            if (reference.targetRole.equals(this.targetRole)) {
+                similarity += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+            }
             weight += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
         }
-        if ((!reference.sourceMultiplicity.isEmpty() || !this.sourceMultiplicity.isEmpty()) && reference.sourceMultiplicity.equals(this.sourceMultiplicity)) {
-            similarity += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+        if (!reference.sourceMultiplicity.isEmpty() || !this.sourceMultiplicity.isEmpty()) {
+            if (reference.sourceMultiplicity.equals(this.sourceMultiplicity)) {
+                similarity += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+            }
             weight += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
         }
-        if ((!reference.targetMultiplicity.isEmpty() || !this.targetMultiplicity.isEmpty()) && reference.targetMultiplicity.equals(this.targetMultiplicity)) {
-            similarity += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+        if (!reference.targetMultiplicity.isEmpty() || !this.targetMultiplicity.isEmpty()) {
+            if (reference.targetMultiplicity.equals(this.targetMultiplicity)) {
+                similarity += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+            }
             weight += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
         }
 
         if (type == UMLRelationType.ASSOCIATION_BIDIRECTIONAL) {
             double similarityReverse = 0;
+
+            if (reference.targetRole.equals(this.sourceRole)) {
+                similarityReverse += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+            }
+            if (reference.sourceRole.equals(this.targetRole)) {
+                similarityReverse += CompassConfiguration.RELATION_ROLE_OPTIONAL_WEIGHT;
+            }
+            if (reference.targetMultiplicity.equals(this.sourceMultiplicity)) {
+                similarityReverse += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+            }
+            if (reference.sourceMultiplicity.equals(this.targetMultiplicity)) {
+                similarityReverse += CompassConfiguration.RELATION_MULTIPLICITY_OPTIONAL_WEIGHT;
+            }
 
             similarityReverse += reference.source.similarity(target) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;
             similarityReverse += reference.target.similarity(source) * CompassConfiguration.RELATION_ELEMENT_WEIGHT;

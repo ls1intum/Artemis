@@ -45,7 +45,7 @@ public class CompassService {
     private final static int TIME_TO_CHECK_FOR_UNUSED_ENGINES = 3600000;
 
     private final static double CONFIDENCE_THRESHOLD = 0.75;
-    private final static double COVERAGE_THRESHOLD = 0.9;
+    private final static double COVERAGE_THRESHOLD = 0.85;
 
     private final static int NUMBER_OF_OPTIMAL_MODELS = 3;
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
