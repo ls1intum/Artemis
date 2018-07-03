@@ -45,7 +45,7 @@ public class CompassService {
     private final static int TIME_TO_CHECK_FOR_UNUSED_ENGINES = 3600000;
 
     private final static double CONFIDENCE_THRESHOLD = 0.75;
-    private final static double COVERAGE_THRESHOLD = 0.85;
+    private final static double COVERAGE_THRESHOLD = 0.8;
 
     private final static int NUMBER_OF_OPTIMAL_MODELS = 3;
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
@@ -199,7 +199,7 @@ public class CompassService {
         BigDecimal pointsSum = new BigDecimal(0);
         for (Map.Entry<String, Double> entry: jsonIdPointsMapping.entrySet()) {
             BigDecimal bd = new BigDecimal(entry.getValue());
-            double fractionalPart = bd.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.1)).doubleValue();
+            double fractionalPart = bd.remainder(BigDecimal.ONE).subtract(new BigDecimal(0.15)).doubleValue();
             bd = bd.setScale(0, RoundingMode.DOWN);
             if (fractionalPart >= 0.5) {
                 bd = bd.add(new BigDecimal(1));
