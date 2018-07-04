@@ -14,7 +14,10 @@
                 <span jhiTranslate="entity.action.save">Save</span></button>
             <button class="btn btn-success" (click)="submit()"
                     [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
-                    [hidden]="submission?.submitted">Submit</button>
+                    [hidden]="submission?.submitted || !isActive">Submit</button>
+            <button class="btn btn-warning" (click)="submit()"
+                    [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
+                    [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
         </div>
     </div><br>
 

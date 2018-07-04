@@ -41,6 +41,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     totalScore: number;
     positions: {};
     diagramState = null;
+    isActive: boolean;
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,
@@ -66,6 +67,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         this.result = data.participation.results[0];
                     }
                     this.modelingExercise = this.participation.exercise;
+                    this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
                     this.submission = data.modelingSubmission;
                     if (this.submission && this.submission.model) {
                         this.initializeApollonEditor(JSON.parse(this.submission.model));
@@ -183,7 +185,11 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.initializeAssessmentInfo();
                 });
             }
-            this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+            if (this.isActive) {
+                this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+            } else {
+                this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+            }
         });
         this.initializeApollonEditor(JSON.parse(this.submission.model));
     }
