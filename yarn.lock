@@ -158,9 +158,9 @@
   dependencies:
     tslib "^1.7.1"
 
-"@ls1intum/apollon@^0.4.8":
-  version "0.4.8"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-0.4.8.tgz#9c5311e87cf69338abbe7e51ff9c08236bacc928"
+"@ls1intum/apollon@^0.4.9":
+  version "0.4.9"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-0.4.9.tgz#fd400e398833a2873a0791d2553a1650a727e309"
   dependencies:
     react "^16.2.0"
     react-dnd "^2.5.4"
