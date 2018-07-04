@@ -1,11 +1,11 @@
-import { Component, Input, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, Pipe, PipeTransform, HostListener } from '@angular/core';
 import { Course, CourseExerciseService, CourseService } from '../../entities/course';
 import { Exercise } from '../../entities/exercise';
 import { JhiWebsocketService, Principal } from '../../shared';
 import { WindowRef } from '../../shared/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { ResultService } from '../../entities/result';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
 import { ExerciseParticipationService, Participation, ParticipationService } from '../../entities/participation';
@@ -70,6 +70,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     numOfOverdueExercises = 0;
     showOverdueExercises = false;
     private repositoryPassword: string;
+    lastPopoverRef: NgbPopover;
 
     constructor(private jhiWebsocketService: JhiWebsocketService,
                 private jhiAlertService: JhiAlertService,
@@ -276,4 +277,22 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         return 'inactive';
     }
 
+    @HostListener('document:click', ['$event'])
+    clickOutside(event) {
+        // If there's a last element-reference AND the click-event target is outside this element
+        if (this.lastPopoverRef && !(this.lastPopoverRef as any)._elementRef.nativeElement.contains(event.target) &&
+            !(this.lastPopoverRef as any)._windowRef.location.nativeElement.contains(event.target)) {
+            this.lastPopoverRef.close();
+            this.lastPopoverRef = null;
+        }
+    }
+
+    setCurrentPopoverOpen(popReference) {
+        // If there's a last element-reference AND the new reference is different
+        if (this.lastPopoverRef && this.lastPopoverRef !== popReference) {
+            this.lastPopoverRef.close();
+        }
+        // Registering new popover ref
+        this.lastPopoverRef = popReference;
+    }
 }
