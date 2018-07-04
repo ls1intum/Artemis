@@ -195,7 +195,9 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                         exercise['participation'] = data.participation;
                         exercise.participationStatus = this.participationStatus(exercise);
                     }
-                    this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                    if (exercise.type === 'programming-exercise') {
+                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                    }
                 }, error => {
                     console.log(error);
                     this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
