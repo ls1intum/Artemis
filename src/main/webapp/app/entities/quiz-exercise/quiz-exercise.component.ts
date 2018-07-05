@@ -202,30 +202,48 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Checks if the quiz exercise is over
-     * @param quizExercise The quiz exercise we want to know if it's over
+     * Exports quiz in json format
+     * @param quizExerciseId The quiz exercise id we want to export
      */
-    exportQuiz(quizExerciseId) {
+    exportQuizById(quizExerciseId) {
         this.quizExerciseService.find(quizExerciseId).subscribe(
             (res: HttpResponse<QuizExercise>) => {
                 const exercise = res.body;
-                let questions = exercise.questions;
-                let quizJson = JSON.stringify(questions);
-                let blob = new Blob([quizJson], {type: 'application/json'});
-
-                if (window.navigator.msSaveOrOpenBlob) { //IE & Edge
-                    window.navigator.msSaveBlob(blob, 'quiz.json');
-                } else {//Chrome & FF
-                    const url = window.URL.createObjectURL(blob);
-                    const anchor = document.createElement("a");
-                    anchor.href = url;
-                    anchor.download = 'quiz.json';
-                    document.body.appendChild(anchor); //For FF
-                    anchor.click();
-                    document.body.removeChild(anchor);
-                }
+                QuizExerciseComponent.exportQuiz(exercise, true);
             }
         );
+    }
+
+    /**
+     * Exports quiz in json format
+     * @param quizExercise The quiz exercise we want to export
+     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     */
+    static exportQuiz(quizExercise: any, exportAll: boolean) {
+        let questions = [];
+        if (exportAll === true) {
+            questions = quizExercise.questions;
+        } else {
+            for (let question of quizExercise.questions) {
+                if (question.exportQuiz === true)
+                    questions.push(question);
+            }
+        }
+        if (questions.length === 0) return;
+        let quizJson = JSON.stringify(questions);
+        let blob = new Blob([quizJson], {type: 'application/json'});
+
+        if (window.navigator.msSaveOrOpenBlob) { //IE & Edge
+            window.navigator.msSaveBlob(blob, 'quiz.json');
+        } else {//Chrome & FF
+            const url = window.URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = 'quiz.json';
+            document.body.appendChild(anchor); //For FF
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
     }
 
     /**

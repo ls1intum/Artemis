@@ -2,6 +2,7 @@ import { Directive, DoCheck, ElementRef, Inject, Injector, Input, OnChanges, OnD
 import { UpgradeComponent } from '@angular/upgrade/static';
 import { QuizExercise } from './quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
+import { QuizExerciseComponent } from './quiz-exercise.component';
 import { Course } from '../course/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
@@ -379,27 +380,7 @@ class QuizExerciseDetailController {
         if (this.hasSavedQuizStarted() || !this.validQuiz()) {
             return;
         }
-
-        let questions = [];
-        for (let question of this.quizExercise.questions) {
-            if (question.exportQuiz === true)
-                questions.push(question);
-        }
-        if (questions.length === 0) return;
-        let quizJson = JSON.stringify(questions);
-        let blob = new Blob([quizJson], {type: 'application/json'});
-
-        if (window.navigator.msSaveOrOpenBlob) { //IE & Edge
-            window.navigator.msSaveBlob(blob, 'quiz.json');
-        } else { //Chrome & FF
-            const url = window.URL.createObjectURL(blob);
-            const anchor = document.createElement("a");
-            anchor.href = url;
-            anchor.download = 'quiz.json';
-            document.body.appendChild(anchor); //For FF
-            anchor.click();
-            document.body.removeChild(anchor);
-        }
+        QuizExerciseComponent.exportQuiz(this.quizExercise, false);
     }
 
     /**
