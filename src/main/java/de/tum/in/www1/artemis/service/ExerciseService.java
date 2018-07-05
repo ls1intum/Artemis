@@ -275,7 +275,6 @@ public class ExerciseService {
 
                         Repository repo = gitService.get().getOrCheckoutRepository(participation);
                         log.info("Create temporary zip file for repository " + repo.getLocalPath().toString());
-
                         Path zippedRepoFile = gitService.get().zipRepository(repo);
                         zippedRepoFiles.add(zippedRepoFile);
                         boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();

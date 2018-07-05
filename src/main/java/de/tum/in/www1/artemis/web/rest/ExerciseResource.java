@@ -336,13 +336,15 @@ public class ExerciseResource {
      * @return ResponseEntity with status
      */
     @GetMapping(value = "/exercises/{id}/participations/{studentIds}")
-    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Resource> exportSubmissions(@PathVariable Long id, @PathVariable String studentIds) throws IOException {
         Exercise exercise = exerciseService.findOne(id);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) && !authCheckService.isAdmin()) {
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
