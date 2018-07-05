@@ -327,6 +327,29 @@ class QuizExerciseDetailController {
     }
 
     /**
+     * Export the quiz to json file
+     */
+    exportQuiz() {
+        if (this.hasSavedQuizStarted() || this.pendingChanges() || !this.validQuiz()) {
+            return;
+        }
+        var quizJson = JSON.stringify(this.quizExercise.questions);
+        var blob = new Blob([quizJson], {type: 'application/text'});
+
+        if (window.navigator.msSaveOrOpenBlob) {//IE & Edge
+            window.navigator.msSaveBlob(blob, "quiz.json");
+        } else {//Chrome & FF
+            const url = window.URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = "quiz.json";
+            document.body.appendChild(anchor); //For FF
+            anchor.click();
+            document.body.removeChild(anchor);
+        }
+    }
+
+    /**
      * Save the quiz to the server
      */
     save() {

@@ -139,7 +139,9 @@
             "archive": "Archivieren",
             "submit": "Absenden",
             "re-evaluate": "Überarbeiten",
-            "close": "Schließen"
+            "close": "Schließen",
+            "import": "TODO: Write proper German word for Import here,",
+            "export": "TODO: Write proper German word for Export here,"
         },
         "detail": {
             "field": "Feld",
