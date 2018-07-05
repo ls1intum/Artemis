@@ -87,6 +87,11 @@
                             <span class="hidden-sm-down" jhiTranslate="global.menu.entities.statistic"></span>
                         </button>
                         <button type="submit"
+                                (click)="exportQuiz(quizExercise.id)"
+                                class="btn btn-primary btn-sm">
+                            <span class="hidden-sm-down" jhiTranslate="entity.action.export"></span>
+                        </button>
+                        <button type="submit"
                                 [hidden]="quizIsOver(quizExercise) && userIsInstructor()"
                                 [disabled]="quizExercise.status === QuizStatus.ACTIVE || (quizIsOver(quizExercise) && !userIsInstructor())"
                                 [routerLink]="['edit', quizExercise.id]"

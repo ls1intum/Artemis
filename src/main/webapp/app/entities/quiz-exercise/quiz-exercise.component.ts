@@ -202,6 +202,33 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Checks if the quiz exercise is over
+     * @param quizExercise The quiz exercise we want to know if it's over
+     */
+    exportQuiz(quizExerciseId) {
+        this.quizExerciseService.find(quizExerciseId).subscribe(
+            (res: HttpResponse<QuizExercise>) => {
+                const exercise = res.body;
+                let questions = exercise.questions;
+                let quizJson = JSON.stringify(questions);
+                let blob = new Blob([quizJson], {type: 'application/json'});
+
+                if (window.navigator.msSaveOrOpenBlob) { //IE & Edge
+                    window.navigator.msSaveBlob(blob, 'quiz.json');
+                } else {//Chrome & FF
+                    const url = window.URL.createObjectURL(blob);
+                    const anchor = document.createElement("a");
+                    anchor.href = url;
+                    anchor.download = 'quiz.json';
+                    document.body.appendChild(anchor); //For FF
+                    anchor.click();
+                    document.body.removeChild(anchor);
+                }
+            }
+        );
+    }
+
+    /**
      * Make the given quiz-exercise visible to students
      *
      * @param quizExerciseId the quiz exercise id to start

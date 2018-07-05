@@ -387,15 +387,15 @@ class QuizExerciseDetailController {
         }
         if (questions.length === 0) return;
         let quizJson = JSON.stringify(questions);
-        let blob = new Blob([quizJson], {type: 'application/text'});
+        let blob = new Blob([quizJson], {type: 'application/json'});
 
-        if (window.navigator.msSaveOrOpenBlob) {//IE & Edge
-            window.navigator.msSaveBlob(blob, "quiz.json");
-        } else {//Chrome & FF
+        if (window.navigator.msSaveOrOpenBlob) { //IE & Edge
+            window.navigator.msSaveBlob(blob, 'quiz.json');
+        } else { //Chrome & FF
             const url = window.URL.createObjectURL(blob);
             const anchor = document.createElement("a");
             anchor.href = url;
-            anchor.download = "quiz.json";
+            anchor.download = 'quiz.json';
             document.body.appendChild(anchor); //For FF
             anchor.click();
             document.body.removeChild(anchor);
