@@ -336,14 +336,34 @@ class QuizExerciseDetailController {
         }
         let fileReader = new FileReader();
         fileReader.onload = (e) => {
-            var questions = JSON.parse(fileReader.result);
-            for (var question of questions) {
+            let questions = JSON.parse(fileReader.result);
+            for (let question of questions) {
+                delete question.questionStatistic;
+                delete question.id;
                 if (question.type === "multiple-choice") {
-                    // Remove extra information from the quiz,
-                    delete question.questionStatistic;
-                    delete question.id;
-                    for (var j in question.answerOptions) {
-                        delete question.answerOptions[j].id;
+                    for (let answerOption of question.answerOptions) {
+                        delete answerOption.id;
+                    }
+                    this.quizExercise.questions = this.quizExercise.questions.concat([question]);
+                } else if (question.type === "drag-and-drop") {
+                    // Renaming id property with tempID property,
+                    for (let dropLocation of question.dropLocations) {
+                        dropLocation.tempID =dropLocation.id;
+                        delete dropLocation.id;
+                    }
+                    for (let dragItem of question.dragItems) {
+                        dragItem.tempID =dragItem.id;
+                        delete dragItem.id;
+                    }
+                    for (let correctMapping of question.correctMappings) {
+                        delete correctMapping.id;
+                        delete correctMapping.dragItemIndex;
+                        delete correctMapping.dropLocationIndex;
+                        delete correctMapping.invalid;
+                        correctMapping.dragItem.tempID = correctMapping.dragItem.id;
+                        delete correctMapping.dragItem.id;
+                        correctMapping.dropLocation.tempID = correctMapping.dropLocation.id;
+                        delete correctMapping.dropLocation.id;
                     }
                     this.quizExercise.questions = this.quizExercise.questions.concat([question]);
                 }
