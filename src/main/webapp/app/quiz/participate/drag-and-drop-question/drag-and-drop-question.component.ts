@@ -50,7 +50,10 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     constructor(private artemisMarkdown: ArtemisMarkdown,
                 private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
-    ngOnInit() {}
+    ngOnInit() {
+        setTimeout(this.firefoxWorkaround, 200);
+        setTimeout(this.firefoxWorkaround, 1000);
+    }
 
     ngOnDestroy() {}
 
@@ -59,6 +62,8 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      */
     drag() {
         this.dropAllowed = true;
+        setTimeout(this.firefoxWorkaround, 200);
+        setTimeout(this.firefoxWorkaround, 1000);
     }
 
     /**
@@ -66,6 +71,15 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      */
     drop() {
         this.dropAllowed = false;
+        setTimeout(this.firefoxWorkaround, 200);
+        setTimeout(this.firefoxWorkaround, 1000);
+    }
+
+    firefoxWorkaround() {
+        const elements: any = document.getElementsByClassName("no-line-height");
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].style.lineHeight = null;
+        }
     }
 
     /**

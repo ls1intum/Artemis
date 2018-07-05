@@ -4,9 +4,9 @@
         <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
     </div>
     <div class="drag-item-text" *ngIf="dragItem && !dragItem.pictureFilePath">
-        <div fittext [activateOnResize]="true" [maxFontSize]="32" [minFontSize]="16">
-            <span dnd-draggable [dragEnabled]="!clickDisabled" [dragData]="dragItem">{{dragItem.text}}</span>
-        </div>
+        <span class="no-line-height" style="line-height: normal!important;" fittext="true" [activateOnResize]="true" [maxFontSize]="32" [minFontSize]="16">
+            <span style="width: 100%!important; height: 100%!important; border: none" dnd-draggable [dragEnabled]="!clickDisabled" [dragData]="dragItem">{{dragItem.text}}</span>
+        </span>
     </div>
     <div class="invalid" *ngIf="invalid">
         <span jhiTranslate="arTeMiSApp.showStatistic.invalid"></span>
