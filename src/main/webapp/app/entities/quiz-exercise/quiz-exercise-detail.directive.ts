@@ -348,11 +348,11 @@ class QuizExerciseDetailController {
                 } else if (question.type === "drag-and-drop") {
                     // Renaming id property with tempID property,
                     for (let dropLocation of question.dropLocations) {
-                        dropLocation.tempID =dropLocation.id;
+                        dropLocation.tempID = dropLocation.id;
                         delete dropLocation.id;
                     }
                     for (let dragItem of question.dragItems) {
-                        dragItem.tempID =dragItem.id;
+                        dragItem.tempID = dragItem.id;
                         delete dragItem.id;
                     }
                     for (let correctMapping of question.correctMappings) {
@@ -376,11 +376,18 @@ class QuizExerciseDetailController {
      * Export the quiz to json file
      */
     exportQuiz() {
-        if (this.hasSavedQuizStarted() || this.pendingChanges() || !this.validQuiz()) {
+        if (this.hasSavedQuizStarted() || !this.validQuiz()) {
             return;
         }
-        var quizJson = JSON.stringify(this.quizExercise.questions);
-        var blob = new Blob([quizJson], {type: 'application/text'});
+
+        let questions = [];
+        for (let question of this.quizExercise.questions) {
+            if (question.exportQuiz === true)
+                questions.push(question);
+        }
+        if (questions.length === 0) return;
+        let quizJson = JSON.stringify(questions);
+        let blob = new Blob([quizJson], {type: 'application/text'});
 
         if (window.navigator.msSaveOrOpenBlob) {//IE & Edge
             window.navigator.msSaveBlob(blob, "quiz.json");

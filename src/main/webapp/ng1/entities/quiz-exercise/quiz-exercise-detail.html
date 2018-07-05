@@ -183,7 +183,7 @@
                         data-translate="{{vm.pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}"
                     ></button>
                     <button
-                        ng-if="!vm.pendingChanges()"
+                        ng-if="vm.validQuiz()"
                         class="btn btn-secondary"
                         ng-click="vm.exportQuiz()"
                         data-translate="entity.action.export"
