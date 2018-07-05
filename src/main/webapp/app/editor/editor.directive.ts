@@ -104,9 +104,9 @@ class EditorController {
     }
 
     /** Collapse parts of the editor (file browser, build output...) */
-    toggleCollapse = function($event, horizontal) {
+    toggleCollapse = function(event: any, horizontal) {
 
-        const target = $event.toElement || $event.relatedTarget || $event.target;
+        const target = event.toElement || event.relatedTarget || event.target;
 
         target.blur();
 
