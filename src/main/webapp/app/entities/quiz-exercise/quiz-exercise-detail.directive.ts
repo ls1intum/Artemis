@@ -81,6 +81,7 @@ class QuizExerciseDetailController {
         key: true,
         label: 'Active'
     }];
+    importFile = null;
 
     init() {
         if (this.quizExercise) {
@@ -324,6 +325,31 @@ class QuizExerciseDetailController {
             });
         }
         return reasonString.substr(0, reasonString.length - 5);
+    }
+
+    /**
+     * Import the quiz from a json file
+     */
+    importQuiz() {
+        if (this.hasSavedQuizStarted() || this.pendingChanges() || !this.validQuiz()) {
+            return;
+        }
+        let fileReader = new FileReader();
+        fileReader.onload = (e) => {
+            var questions = JSON.parse(fileReader.result);
+            for (var question of questions) {
+                if (question.type === "multiple-choice") {
+                    // Remove extra information from the quiz,
+                    delete question.questionStatistic;
+                    delete question.id;
+                    for (var j in question.answerOptions) {
+                        delete question.answerOptions[j].id;
+                    }
+                    this.quizExercise.questions = this.quizExercise.questions.concat([question]);
+                }
+            }
+        }
+        fileReader.readAsText(this.importFile);
     }
 
     /**
