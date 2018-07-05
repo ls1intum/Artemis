@@ -1,0 +1,26 @@
+<div class="card" ng-show="$ctrl.readmeRendered != null" resizable r-directions="['left']" r-width="$ctrl.initialInstructionsWidth" id="cardInstructions">
+    <div class="card-header text-white bg-primary" ng-click="$ctrl.editor.toggleCollapse($event, false)">
+        <span class="pull-right "><i class="fa fa-chevron-right"></i></span>
+        <h3 class="card-title">
+            <i class="fa fa-list-alt"></i>
+            <span> &nbsp; Instructions &nbsp; </span>
+        </h3>
+    </div>
+
+    <div class="card-second-header" ng-show="$ctrl.steps.length > 0">
+        <div class="stepwizard">
+            <div class="stepwizard-row">
+                <div ng-repeat="step in $ctrl.steps" class="stepwizard-step" >
+                    <div data-toggle="tooltip" data-placement="bottom" title="{{step.title}}" class="btn btn-light btn-circle" ng-switch on="step.done">
+                        <i class="fa fa-lg fa-check text-success"  ng-switch-when="true"></i>
+                        <i class="fa fa-lg fa-times text-danger" ng-switch-when="false"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card-body instructions">
+
+    </div>
+</div>

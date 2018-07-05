@@ -1,0 +1,11 @@
+
+<div ui-ace="{
+  onLoad: aceLoaded,
+  onChange: aceChanged
+}" class="panel panel-default" ng-if="$ctrl.file" style="height: 100%"></div>
+
+
+
+<p class="text-center lead text-muted" ng-if="!$ctrl.file" style="padding-top: 50px">
+    Select a file to get started!
+</p>

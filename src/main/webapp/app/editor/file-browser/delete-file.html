@@ -1,0 +1,24 @@
+<form name="deleteForm" ng-submit="$ctrl.delete()">
+    <div class="modal-header bootstrap-modal-fix">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+                ng-click="$ctrl.clear()">&times;</button>
+        <h4 class="modal-title">Delete file</h4>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+
+
+
+        <p class="text-danger">Are you sure you want to delete the file <strong>{{$ctrl.file}}</strong>?</p>
+
+
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" ng-click="$ctrl.clear()">
+            <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" class="btn btn-danger" ng-disabled="deleteForm.$invalid">
+            <span class="fa fa-trash"></span>&nbsp;<span>Delete file</span>
+        </button>
+    </div>
+</form>
