@@ -233,35 +233,6 @@ public class ExerciseService {
         }
     }
 
-    public Path zipAllRepositories(List<Repository> repositories, Path zipFilePath) throws IOException {
-
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
-
-            repositories.forEach(repository -> {
-                Path repoPath = repository.getLocalPath();
-                Path parentRepoPath = repoPath.getParent();
-                try {
-                    Files.walk(repoPath)
-                        .filter(path -> !Files.isDirectory(path))
-                        .forEach(path -> {
-                            ZipEntry zipEntry = new ZipEntry(parentRepoPath.relativize(path).toString());
-                            try {
-                                zipOutputStream.putNextEntry(zipEntry);
-                                Files.copy(path, zipOutputStream);
-                                zipOutputStream.closeEntry();
-                            } catch (Exception e) {
-                                log.error("Create zip file error", e);
-                            }
-                        });
-                } catch (IOException e) {
-                    log.error("Create zip file error", e);
-                }
-            });
-
-        }
-        return zipFilePath;
-    }
-
     @Transactional(readOnly = true)
     public java.io.File exportParticipations(Long id, List<String> studentIds) {
         Exercise exercise = findOneLoadParticipations(id);
