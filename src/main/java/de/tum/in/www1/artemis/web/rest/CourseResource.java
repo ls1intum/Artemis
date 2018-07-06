@@ -254,6 +254,7 @@ public class CourseResource {
         final ObjectNode totalScoreInfo = mapper.createObjectNode();
         totalScoreInfo.set("courseId", mapper.convertValue(courseId, JsonNode.class));
         totalScoreInfo.set("userId", mapper.convertValue(userService.getUser().getId(), JsonNode.class));
+        totalScoreInfo.set("totalScore", objectMapper.convertValue(courseService.getTotalScoreForUserInCourseWithId(courseId), JsonNode.class));
         return totalScoreInfo;
     }
 
