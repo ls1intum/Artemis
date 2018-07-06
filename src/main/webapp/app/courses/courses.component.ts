@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseService } from '../entities/course';
+import { Course, CourseService, CourseScoreCalculationService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
@@ -15,12 +15,12 @@ export class CoursesComponent implements OnInit {
     courses: Course[];
     filterByCourseId: number;
     filterByExerciseId: number;
-    coursesTotalScore = new Map<string, string>();
     private sub: any;
 
     constructor(
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
+        private courseCalculationService: CourseScoreCalculationService,
         private route: ActivatedRoute) {}
 
     ngOnInit(): void {
@@ -42,27 +42,17 @@ export class CoursesComponent implements OnInit {
         this.courseService.findAll().subscribe(
             (res: Course[]) => {
                 this.courses = res;
+                this.courseCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {
                     this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
                 }
             },
             (res: Course[]) => this.onError(res)
         );
-
     }
 
     trackId(index: number, item: Course) {
         return item.id;
-    }
-
-    calculateCourseTotalScore(id: number) {
-        this.courseService.getCourseTotalScore(id).subscribe(
-            (res: any) => {
-                this.coursesTotalScore.set(res.body.courseId, res.body.totalScore);
-                console.log(res);
-            },
-            (res: any) => this.onError(res)
-        );
     }
 
     private onError(error) {
