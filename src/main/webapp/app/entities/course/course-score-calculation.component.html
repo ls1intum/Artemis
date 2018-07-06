@@ -1,0 +1,38 @@
+<div>
+    <h2>
+        <span>{{course.title}}</span>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <div class="row">
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th><span>Score Aggregation</span></th>
+                <th><span>Total score</span></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Total score for the quizzes</td>
+                <td>{{quizzesTotalScore}}</td>
+            </tr>
+            <tr>
+                <td>Total score for the programming exercises</td>
+                <td>{{programmingExerciseTotalScore}}</td>
+            </tr>
+            <tr>
+                <td>Total score for the modeling exercises</td>
+                <td>{{modelingExerciseTotalScore}}</td>
+            </tr>
+            <tr>
+                <td><b>Total score for the course</b></td>
+                <td><b>{{totalScore}}</b></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
