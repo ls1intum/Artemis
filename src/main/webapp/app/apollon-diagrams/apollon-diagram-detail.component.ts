@@ -10,7 +10,7 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 @Component({
     selector: 'jhi-apollon-diagram-detail',
     templateUrl: './apollon-diagram-detail.component.html',
-    providers: []
+    providers: [ApollonDiagramService]
 })
 export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
     @ViewChild('editorContainer') editorContainer: ElementRef;
