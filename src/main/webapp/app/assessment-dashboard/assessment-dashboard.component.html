@@ -45,8 +45,9 @@
             <p><strong>Currently there are no optimal models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
-    <h5 style="padding-top: 5px">Other models:</h5>
-    <div class="table-responsive" *ngIf="results">
+    <h5 style="padding-top: 5px">Other submissions:</h5>
+    <p *ngIf="!allSubmissionsVisible"><strong><a (click)="makeAllSubmissionsVisible()">Show {{results.length}} other submissions</a></strong></p>
+    <div class="table-responsive" *ngIf="results && allSubmissionsVisible">
         <table class="table table-striped exercise-table">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">

@@ -33,6 +33,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     optimalResults: Result[];
     eventSubscriber: Subscription;
     assessedResults: number;
+    allSubmissionsVisible: boolean;
 
     constructor(private route: ActivatedRoute,
                 private momentDiff: DifferencePipe,
@@ -124,6 +125,10 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.modelingAssessmentService.resetOptimality(this.exercise.id).subscribe(() => {
             this.filterResults(true);
         });
+    }
+
+    makeAllSubmissionsVisible() {
+        this.allSubmissionsVisible = true;
     }
 
     ngOnDestroy() {
