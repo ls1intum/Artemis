@@ -53,10 +53,6 @@ export class CourseService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
-    getCourseTotalScore(id: number): Observable<EntityResponseType> {
-        return this.http.get<Object>(`${this.resourceUrl}/${id}/getCourseTotalScoreForUser`, { observe: 'response'})
-            .map((res: any) => this.convertGenericFromServer(res));
-    }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Course = this.convertItemFromServer(res.body);
@@ -82,11 +78,6 @@ export class CourseService {
         copy.endDate = this.dateUtils
             .convertDateTimeFromServer(course.endDate);
         return copy;
-    }
-
-    private convertGenericFromServer(any) {
-        const entity = Object.assign({}, any);
-        return entity;
     }
 
     /**
@@ -323,9 +314,10 @@ export class CourseScoresService {
 @Injectable()
 export class CourseScoreCalculationService {
 
+    private resourceUrl =  SERVER_API_URL + 'api/courses';
     private courses: Course[] = [];
 
-    constructor(private dateUtils: JhiDateUtils) { }
+    constructor(private dateUtils: JhiDateUtils, private http: HttpClient) { }
 
     setCourses(courses: Course[]) {
         const coursesArray: Course[] = courses;
@@ -340,15 +332,17 @@ export class CourseScoreCalculationService {
 
     getCourse(courseId: number): Course {
         let course: Course;
-        for (let i = 0; i < this.courses.length; i++) {
-            if (this.courses[i].id == courseId) {
-                course = this.courses[i];
-                return course;
+        if(this.courses.length > 0) {
+            for (let i = 0; i < this.courses.length; i++) {
+                if (this.courses[i].id == courseId) {
+                    course = this.courses[i];
+                    return course;
+                }
             }
-        } 
+        }
     }
 
-    getExercisesByCourseId(courseId: number) {
+    getExercisesByCourse(courseId: number) {
         const course: Course = this.getCourse(courseId);
         const exercises: Exercise[] = course.exercises;
         let exercisesArray: Exercise[] = [];
