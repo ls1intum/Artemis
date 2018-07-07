@@ -1,7 +1,7 @@
-import {JhiAlertService, JhiEventManager} from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Exercise, ExerciseService } from '../entities/exercise';
 import { Course, CourseService } from '../entities/course';
 import { ExerciseResultService } from '../entities/result/result.service';
@@ -34,8 +34,10 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     assessedResults: number;
     allSubmissionsVisible: boolean;
+    busy: boolean;
 
     constructor(private route: ActivatedRoute,
+                private router: Router,
                 private momentDiff: DifferencePipe,
                 private courseService: CourseService,
                 private exerciseService: ExerciseService,
@@ -128,7 +130,23 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     makeAllSubmissionsVisible() {
-        this.allSubmissionsVisible = true;
+        if (!this.busy) {
+            this.allSubmissionsVisible = true;
+        }
+    }
+
+    assessNextOptimal(attempts) {
+        this.busy = true;
+        if (this.nextOptimalSubmissionIds.length === 0) {
+            setTimeout(() => {
+                this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
+                    this.nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
+                    this.assessNextOptimal(attempts + 1);
+                })
+            }, 500 + 1000 * attempts);
+        } else {
+            this.router.navigate(['apollon-diagrams', 'exercise', this.exercise.id, this.nextOptimalSubmissionIds.pop(), 'tutor']);
+        }
     }
 
     ngOnDestroy() {
