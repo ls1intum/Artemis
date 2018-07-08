@@ -3,6 +3,52 @@
     <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
   </h2>
   <jhi-alert></jhi-alert>
+  <div class="row">
+  </div>
+  <br/>
+  <div class="table-responsive" *ngIf="quizExercises">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>
+            <span jhiTranslate="global.field.id">ID</span>
+            <span class="fa fa-sort"></span>
+          </th>
+          <th>
+            <span jhiTranslate="arTeMiSApp.exercise.title">Title</span>
+            <span class="fa fa-sort"></span>
+          </th>
+          <th>
+            <span jhiTranslate="arTeMiSApp.exercise.type">Status</span>
+            <span class="fa fa-sort"></span>
+          </th>
+          <th>
+            <span jhiTranslate="entity.action.export">Start Time</span>
+            <span class="fa fa-sort"></span>
+          </th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let question of questions">
+          <td>
+            <a [routerLink]="['/quiz-exercise', quizExercise.id ]">{{question.id}}</a>
+          </td>
+          <td>{{question.title}}</td>
+          <td>{{question.type}}</td>
+          <td>{{question.exportQuiz}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="edit-quiz-footer">
+    <div class="container">
+      <div class="edit-quiz-footer-content">
+        <div class="form-group">
+          <button class="btn btn-success" ng-click="exportQuiz()" data-translate="entity.action.export">Export</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
-<br/>
 </div>

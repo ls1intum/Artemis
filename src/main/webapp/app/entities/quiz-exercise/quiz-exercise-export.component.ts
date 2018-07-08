@@ -1,7 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
+import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
+import { TranslateService } from '@ngx-translate/core';
 import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { Question } from '../question';
@@ -17,12 +20,17 @@ export class QuizExerciseExportComponent implements OnInit {
 
   repository: QuizExerciseService;
   router: Router;
+  translateService: TranslateService;
 
   constructor(private route: ActivatedRoute,
     private quizExerciseService: QuizExerciseService,
     private jhiAlertService: JhiAlertService,
-    router: Router) {
+    router: Router,
+    translateService: TranslateService,
+    @Inject(NG1TRANSLATE_SERVICE) private $translate: any,
+    @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any) {
     this.router = router;
+    this.translateService = translateService;
   }
 
   ngOnInit() {
@@ -36,7 +44,7 @@ export class QuizExerciseExportComponent implements OnInit {
     this.quizExerciseService.findForCourse(courseId).subscribe(
       (res: HttpResponse<QuizExercise[]>) => {
         this.quizExercises = res.body;
-        for (let quizExercise of this.quizExercises) {
+        for (const quizExercise of this.quizExercises) {
           this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
             this.questions.concat(quizExercise.questions);
           });
