@@ -161,9 +161,9 @@ public class CourseResource {
 
             // add exercises to course
             courseJson.set("exercises", exercisesJson);
+            courseJson.set("totalScore", objectMapper.convertValue(courseService.getTotalScoreForUserInCourseWithId(course.getId()), JsonNode.class));
             coursesJson.add(courseJson);
         }
-
         // return json array of courses
         return coursesJson;
     }
@@ -234,6 +234,30 @@ public class CourseResource {
         if (!userHasPermission(course)) return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         return ResponseEntity.ok(courseService.getAllOverallScoresOfCourse(courseId));
     }
+
+
+    /**
+     * GET /courses/:courseId/getCourseTotalScoreForUser
+     *
+     * @param courseId the Id of the course
+     * @return collection of Results where the sum of the best result per exercise, for each student in a course is cointained:
+     * ResultId refers in this case to the studentId, the score still needs to be divided by the amount of exercises (done in the webapp)
+     */
+    @GetMapping("/courses/{courseId}/getCourseTotalScoreForUser")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public JsonNode getCourseTotalScoreForUser(@PathVariable("courseId") Long courseId) {
+        log.debug("REST request to get courseScore for course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+
+        final ObjectMapper mapper = new ObjectMapper();
+        final ObjectNode totalScoreInfo = mapper.createObjectNode();
+        totalScoreInfo.set("courseId", mapper.convertValue(courseId, JsonNode.class));
+        totalScoreInfo.set("userId", mapper.convertValue(userService.getUser().getId(), JsonNode.class));
+        totalScoreInfo.set("totalScore", objectMapper.convertValue(courseService.getTotalScoreForUserInCourseWithId(courseId), JsonNode.class));
+        return totalScoreInfo;
+    }
+
 
     /**
      * Find the participation in participations that belongs to the given exercise

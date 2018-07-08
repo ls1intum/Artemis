@@ -37,6 +37,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
                 this.course = courseResponse.body;
             });
     }
+
     previousState() {
         window.history.back();
     }

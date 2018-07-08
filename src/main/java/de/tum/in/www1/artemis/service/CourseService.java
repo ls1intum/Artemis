@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,11 @@ public class CourseService {
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
+    private static final double INITIAL_TOTAL_SCORE = 0.0;
+    private static final double SCORE_NORMALIZATION_VALUE = 0.01;
+
     private final CourseRepository courseRepository;
+    private final ParticipationRepository participationRepository;
     private final UserService userService;
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
@@ -30,8 +35,9 @@ public class CourseService {
     public CourseService(CourseRepository courseRepository,
                          UserService userService,
                          ExerciseService exerciseService,
-                         AuthorizationCheckService authCheckService) {
+                         AuthorizationCheckService authCheckService, ParticipationRepository participationRepository) {
         this.courseRepository = courseRepository;
+        this.participationRepository = participationRepository;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
@@ -245,6 +251,54 @@ public class CourseService {
         }
 
         return allOverallScores;
+    }
+
+    /**
+     * Getting the total score a student has achieved until that moment for the specific course
+     *
+     * @param courseId the courseId
+     * @return the double value of the total score
+     */
+    @Transactional(readOnly = true)
+    public double getTotalScoreForUserInCourseWithId(Long courseId) {
+        Course course = findOne(courseId);
+        Set<Exercise> exercisesOfCourse = course.getExercises();
+        double courseTotalResult = INITIAL_TOTAL_SCORE;
+        User user = userService.getUser();
+
+        //retrieves all the participations of the user in a course
+        List<Participation> participations = participationRepository.findByCourseIdAndStudentLogin(courseId, user.getLogin());
+
+        for (Exercise exercise : exercisesOfCourse) {
+            List<Participation> exerciseParticipations = participations
+                .stream()
+                .filter(participation -> participation.getExercise().getId() == exercise.getId())
+                .collect(Collectors.toList());
+
+            //if more than one participation for exercise then we pick the latest one
+            exerciseParticipations.sort(Comparator.comparing(Participation::getInitializationDate).reversed());
+
+            log.debug("Retrieving " + exerciseParticipations.size() + " participations");
+
+            boolean exerciseHasDueDate = exercise.getDueDate() != null;
+
+            if(exerciseParticipations != null && !exerciseParticipations.isEmpty()) {
+
+                //find best result within deadline for the latest participation
+                Result bestResultForExercise = choseResultInParticipation(exerciseParticipations.get(0), exerciseHasDueDate);
+
+                log.debug(bestResultForExercise.toString());
+
+                if(exercise.getMaxScore() != null)  {
+                    courseTotalResult = (bestResultForExercise.getScore()*SCORE_NORMALIZATION_VALUE * exercise.getMaxScore() + courseTotalResult);
+
+                    log.debug("For this exercise " + exercise.getTitle() + "  the score is " + bestResultForExercise.getScore()*SCORE_NORMALIZATION_VALUE * exercise.getMaxScore());
+                }
+            }
+        }
+
+        log.debug("The total score for the course " + course.getTitle() + " is " + courseTotalResult);
+        return courseTotalResult;
     }
 
     /**

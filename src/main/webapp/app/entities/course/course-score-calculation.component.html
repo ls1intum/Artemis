@@ -1,0 +1,48 @@
+<div *ngIf="course">
+    <h2>
+        <span>{{course.title}}</span>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <div class="row">
+    </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <th><span>Score Aggregation</span></th>
+                <th><span>Absolute Score</span></th>
+                <th><span>Relative Score (%)</span></th>
+                <th><span>Max Absolute Score</span></th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td>Score for the quizzes</td>
+                <td>{{quizzesTotalScore}}</td>
+                <td>{{quizzesTotalRelativeScore}}%</td>
+                <td>{{quizzesTotalMaxScore}}</td>
+            </tr>
+            <tr>
+                <td>Score for the programming exercises</td>
+                <td>{{programmingExerciseTotalScore}}</td>
+                <td>{{programmingExerciseTotalRelativeScore}}%</td>
+                <td>{{programmingExerciseTotalMaxScore}}</td>
+            </tr>
+            <tr>
+                <td>Score for the modeling exercises</td>
+                <td>{{modelingExerciseTotalScore}}</td>
+                <td>{{modelingExerciseTotalRelativeScore}}%</td>
+                <td>{{modelingExerciseTotalMaxScore}}</td>
+            </tr>
+            <tr>
+                <td><b>Total score for the course</b></td>
+                <td><b>{{totalScore}}</b></td>
+                <td><b>{{totalRelativeScore}}%</b></td>
+                <td><b>{{totalMaxScore}}</b></td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
