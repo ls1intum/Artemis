@@ -27,7 +27,6 @@ public class CourseService {
     private static final double SCORE_NORMALIZATION_VALUE = 0.01;
 
     private final CourseRepository courseRepository;
-    private final ParticipationRepository participationRepository;
     private final UserService userService;
     private final ExerciseService exerciseService;
     private final AuthorizationCheckService authCheckService;
@@ -35,9 +34,8 @@ public class CourseService {
     public CourseService(CourseRepository courseRepository,
                          UserService userService,
                          ExerciseService exerciseService,
-                         AuthorizationCheckService authCheckService, ParticipationRepository participationRepository) {
+                         AuthorizationCheckService authCheckService) {
         this.courseRepository = courseRepository;
-        this.participationRepository = participationRepository;
         this.userService = userService;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
