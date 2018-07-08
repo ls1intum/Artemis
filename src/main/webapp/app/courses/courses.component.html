@@ -11,8 +11,9 @@
                     </a>
                 </h4>
                 <div class="total-score-wrapper">
+                    <span class="span-total-score">Total Score: {{displayTotalRelativeScoreForCourse(course)}} %</span>
                     <button  class="btn-total-score btn-sm" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_USER']" routerLink="/course/{{course.id}}/score-calculation">
-                        See total score
+                        See more details
                     </button>
                 </div>
             </div>

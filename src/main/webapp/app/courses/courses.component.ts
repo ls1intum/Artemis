@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService, CourseScoreCalculationService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
+import {Exercise} from "app/entities/exercise";
 
 @Component({
     selector: 'jhi-courses',
@@ -12,7 +13,9 @@ import { JhiAlertService } from 'ng-jhipster';
                 ]
 })
 export class CoursesComponent implements OnInit {
+
     courses: Course[];
+    exercises: Exercise[];
     filterByCourseId: number;
     filterByExerciseId: number;
     private sub: any;
@@ -20,7 +23,7 @@ export class CoursesComponent implements OnInit {
     constructor(
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
-        private courseCalculationService: CourseScoreCalculationService,
+        private courseScoreCalculationService: CourseScoreCalculationService,
         private route: ActivatedRoute) {}
 
     ngOnInit(): void {
@@ -42,7 +45,7 @@ export class CoursesComponent implements OnInit {
         this.courseService.findAll().subscribe(
             (res: Course[]) => {
                 this.courses = res;
-                this.courseCalculationService.setCourses(this.courses);
+                this.courseScoreCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {
                     this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
                 }
@@ -64,6 +67,16 @@ export class CoursesComponent implements OnInit {
         setTimeout(() => {
             this.jhiAlertService.info('arTeMiSApp.exercise.welcome');
         }, 500);
+    }
+
+    displayTotalRelativeScoreForCourse(course: Course): number {
+        if (course.exercises.length > 0) {
+            return this.courseScoreCalculationService
+                .calculateTotalScores(course.exercises)
+                .get('relativeScore');
+        } else {
+            return 0;
+        }
     }
 
     // TODO migrate repository functionality from courses.controller

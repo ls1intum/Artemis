@@ -314,10 +314,37 @@ export class CourseScoresService {
 @Injectable()
 export class CourseScoreCalculationService {
 
-    private resourceUrl =  SERVER_API_URL + 'api/courses';
+    private SCORE_NORMALIZATION_VALUE = 0.01;
     private courses: Course[] = [];
 
     constructor(private dateUtils: JhiDateUtils, private http: HttpClient) { }
+
+    calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
+        let scores = new Map<string, number>();
+        let absoluteScore = 0;
+        let relativeScore = 0;
+        let maxScore = 0;
+        for (let i = 0; i < courseExercises.length; i++) {
+            const exercise = courseExercises[i];
+            if (exercise.maxScore !== null) {
+                maxScore = maxScore + exercise.maxScore;
+                const participation: Participation = this.getParticipationForExercise(exercise);
+                if (participation !== undefined) {
+                    const result: Result = this.getResultForParticipation(participation, exercise.dueDate);
+                    absoluteScore = absoluteScore + result.score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
+                    relativeScore = relativeScore + result.score;
+                }
+            }
+        }
+        scores.set('absoluteScore', Math.round(absoluteScore * 100) / 100);
+        if (maxScore > 0) {
+            scores.set('relativeScore', Math.round(absoluteScore/maxScore * 100));
+        } else {
+            scores.set('relativeScore', 0);
+        }
+        scores.set('maxScore', maxScore);
+        return scores;
+    }
 
     setCourses(courses: Course[]) {
         const coursesArray: Course[] = courses;
@@ -392,7 +419,7 @@ export class CourseScoreCalculationService {
             }
 
             // when the db has stored null for score
-            if (chosenResult.score === null) {
+            if (chosenResult.score == null) {
                 chosenResult.score = 0;
             }
 
