@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseService } from '../entities/course';
+import { Course, CourseService, CourseScoreCalculationService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
@@ -20,6 +20,7 @@ export class CoursesComponent implements OnInit {
     constructor(
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
+        private courseCalculationService: CourseScoreCalculationService,
         private route: ActivatedRoute) {}
 
     ngOnInit(): void {
@@ -41,6 +42,7 @@ export class CoursesComponent implements OnInit {
         this.courseService.findAll().subscribe(
             (res: Course[]) => {
                 this.courses = res;
+                this.courseCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {
                     this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
                 }

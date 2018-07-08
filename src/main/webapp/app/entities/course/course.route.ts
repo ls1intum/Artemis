@@ -5,6 +5,7 @@ import { CourseComponent } from './course.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CoursePopupComponent } from './course-dialog.component';
 import { CourseDeletePopupComponent } from './course-delete-dialog.component';
+import { CourseScoreCalculationComponent } from './course-score-calculation-component';
 
 export const courseRoute: Routes = [
     {
@@ -20,6 +21,15 @@ export const courseRoute: Routes = [
         component: CourseDetailComponent,
         data: {
             authorities: ['ROLE_USER'],
+            pageTitle: 'arTeMiSApp.course.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    },
+    {
+        path: 'course/:id/score-calculation',
+        component: CourseScoreCalculationComponent,
+        data: {
+            authorities: ['ROLE_USER', 'ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService]
