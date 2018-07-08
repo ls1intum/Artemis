@@ -1,5 +1,6 @@
 {
     "assessmentDashboard": {
-        "title": "Bewertungsübersicht"
+        "title": "Bewertungsübersicht",
+        "noSubmissionFound": "Keine Abgaben gefunden"
     }
 }

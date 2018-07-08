@@ -1,5 +1,6 @@
 {
     "assessmentDashboard": {
-        "title": "Assessment Dashboard"
+        "title": "Assessment Dashboard",
+        "noSubmissionFound": "No submission found"
     }
 }

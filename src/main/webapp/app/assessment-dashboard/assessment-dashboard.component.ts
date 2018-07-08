@@ -139,7 +139,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     assessNextOptimal(attempts) {
         if (attempts > 3) {
             this.busy = false;
-            this.jhiAlertService.info('No submission found');
+            this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
             return;
         }
         this.busy = true;

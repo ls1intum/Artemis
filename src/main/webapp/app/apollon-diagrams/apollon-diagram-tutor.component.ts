@@ -279,7 +279,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         if (attempts > 4) {
             this.busy = false;
             this.done = true;
-            this.jhiAlertService.info('No submission found');
+            this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
             return;
         }
         this.busy = true;

@@ -74,12 +74,6 @@
                 <th jhiSortBy="duration">
                     <a class="th-link">Duration</a> <span class="fa fa-sort"></span>
                 </th>
-                <th jhiSortBy="assessmentType">
-                    <a class="th-link">Assessment Type</a> <span class="fa fa-sort"></span>
-                </th>
-                <th *ngIf="exercise.type === 'modeling-exercise'" jhiSortBy="assessor.firstName">
-                    <a class="th-link">Assessor</a> <span class="fa fa-sort"></span>
-                </th>
                 <th *ngIf="exercise.type !== 'quiz'"></th>
             </tr>
             </thead>
@@ -96,10 +90,6 @@
                     <span *ngIf="result.score != null">{{result.score}}%</span>
                 </td>
                 <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate: exercise.releaseDate))}} minutes</td>
-                <td>{{ result.assessmentType }}</td>
-                <td *ngIf="exercise.type === 'modeling-exercise'">
-                    <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }}</span>
-                </td>
                 <td *ngIf="exercise.type !== 'quiz'">
                     <button *ngIf="exercise.type == 'programming-exercise'" class="btn btn-outline-secondary btn-sm" (click)="goToRepository(result)"><i
                         class="fa fa-code-fork"></i>&nbsp;Repository
