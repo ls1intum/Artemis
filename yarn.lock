@@ -158,7 +158,7 @@
   dependencies:
     tslib "^1.7.1"
 
-"@ls1intum/apollon@^0.4.11":
+"@ls1intum/apollon@^0.4.9":
   version "0.4.11"
   resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-0.4.11.tgz#52ee04d47e15d1481cc42c89c1ebc6c069b1b5cd"
   dependencies:
