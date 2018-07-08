@@ -254,54 +254,6 @@ public class CourseService {
     }
 
     /**
-     * Getting the total score a student has achieved until that moment for the specific course
-     *
-     * @param courseId the courseId
-     * @return the double value of the total score
-     */
-    @Transactional(readOnly = true)
-    public double getTotalScoreForUserInCourseWithId(Long courseId) {
-        Course course = findOne(courseId);
-        Set<Exercise> exercisesOfCourse = course.getExercises();
-        double courseTotalResult = INITIAL_TOTAL_SCORE;
-        User user = userService.getUser();
-
-        //retrieves all the participations of the user in a course
-        List<Participation> participations = participationRepository.findByCourseIdAndStudentLogin(courseId, user.getLogin());
-
-        for (Exercise exercise : exercisesOfCourse) {
-            List<Participation> exerciseParticipations = participations
-                .stream()
-                .filter(participation -> participation.getExercise().getId() == exercise.getId())
-                .collect(Collectors.toList());
-
-            //if more than one participation for exercise then we pick the latest one
-            exerciseParticipations.sort(Comparator.comparing(Participation::getInitializationDate).reversed());
-
-            log.debug("Retrieving " + exerciseParticipations.size() + " participations");
-
-            boolean exerciseHasDueDate = exercise.getDueDate() != null;
-
-            if(exerciseParticipations != null && !exerciseParticipations.isEmpty()) {
-
-                //find best result within deadline for the latest participation
-                Result bestResultForExercise = choseResultInParticipation(exerciseParticipations.get(0), exerciseHasDueDate);
-
-                log.debug(bestResultForExercise.toString());
-
-                if(exercise.getMaxScore() != null)  {
-                    courseTotalResult = (bestResultForExercise.getScore()*SCORE_NORMALIZATION_VALUE * exercise.getMaxScore() + courseTotalResult);
-
-                    log.debug("For this exercise " + exercise.getTitle() + "  the score is " + bestResultForExercise.getScore()*SCORE_NORMALIZATION_VALUE * exercise.getMaxScore());
-                }
-            }
-        }
-
-        log.debug("The total score for the course " + course.getTitle() + " is " + courseTotalResult);
-        return courseTotalResult;
-    }
-
-    /**
      * Find the best Result in a Participation
      *
      * @param participation the participation you want the best result from
