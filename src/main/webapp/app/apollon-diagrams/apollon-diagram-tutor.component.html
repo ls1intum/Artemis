@@ -17,6 +17,10 @@
         </div>
     </div>
 
+    <h2>
+        <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while finding the next submission!</span></span>
+    </h2>
+
     <div class="row" *ngIf="modelingExercise">
         <div class="col">
             <p class="mb-3">
@@ -27,9 +31,14 @@
         <div class="col text-right" *ngIf="result?.assessmentType === 'AUTOMATIC' || !result?.rated"><h5><strong>Score:</strong> {{ totalScore }}/{{ modelingExercise.maxScore }}</h5></div>
     </div>
 
-    <div><button type="submit" (click)="previousState()" class="btn btn-info">
-        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
-    </button></div><br>
+    <div>
+        <button type="submit" (click)="previousState()" class="btn btn-info">
+            <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+        </button>
+        <button *ngIf="result?.rated && !done" [disabled]="busy" class="btn btn-success btn-sm" (click)="assessNextOptimal(0)">
+            <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
+        </button>
+    </div><br>
 
     <div class="row">
         <div class="col-8 col-xl-9">

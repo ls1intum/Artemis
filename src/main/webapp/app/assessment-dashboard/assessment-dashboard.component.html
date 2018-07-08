@@ -3,12 +3,12 @@
     <div>
         <div class="button-toolbar pull-right">
             <button [disabled]="busy || (optimalResults && optimalResults.length === 0 && assessedResults === results.length)" class="btn btn-success btn-sm" (click)="assessNextOptimal(0)">
-                <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next optimal model
+                <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
             </button>
             <button [disabled]="busy" class="btn btn-primary btn-sm" (click)="refresh()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
             </button>
-            <button *ngIf="exercise.type === 'modeling-exercise'" class="btn btn-primary btn-sm"
+            <button *jhiHasAnyAuthority="['ROLE_ADMIN']" class="btn btn-primary btn-sm"
                     [disabled]="busy"
                     (click)="resetOptimality()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Reset assessment order
@@ -22,7 +22,7 @@
     </h2>
     <jhi-alert></jhi-alert>
     <h2>
-        <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while calculating the next optimal model!</span></span>
+        <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while finding the next submission!</span></span>
     </h2>
     <h5>ArTEMiS optimized the assessment order to minimize your correction effort. Please assess the following submissions first:</h5>
     <div class="table-responsive" *ngIf="optimalResults && optimalResults.length > 0">
@@ -49,7 +49,7 @@
             <p style="color: #5cb85c"><strong>Congratulation all models have been assessed</strong></p>
         </div>
         <div *ngIf="assessedResults !== results.length">
-            <p><strong>Currently there are no optimal models to assess. Try pushing the refresh button</strong></p>
+            <p><strong>Currently there are no models to assess. Try pushing the refresh button</strong></p>
         </div>
     </div>
     <h5 style="padding-top: 5px">Other submissions:</h5>

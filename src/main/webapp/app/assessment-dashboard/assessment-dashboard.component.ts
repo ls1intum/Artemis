@@ -37,6 +37,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     busy: boolean;
 
     constructor(private route: ActivatedRoute,
+                private jhiAlertService: JhiAlertService,
                 private router: Router,
                 private momentDiff: DifferencePipe,
                 private courseService: CourseService,
@@ -138,6 +139,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     assessNextOptimal(attempts) {
         if (attempts > 3) {
             this.busy = false;
+            this.jhiAlertService.info('No submission found');
             return;
         }
         this.busy = true;
