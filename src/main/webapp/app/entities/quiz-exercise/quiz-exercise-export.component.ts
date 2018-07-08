@@ -1,26 +1,29 @@
-import { Component, Inject, OnInit } from '@angular/core';
-import { QuizExerciseService } from './quiz-exercise.service';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
-import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs/Subscription';
+
+import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
+import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
+
+import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { Question } from '../question';
+import { EMAIL_ALREADY_USED_TYPE } from '../../shared';
 
 @Component({
   selector: 'jhi-quiz-exercise-export',
   templateUrl: './quiz-exercise-export.component.html'
 })
-export class QuizExerciseExportComponent implements OnInit {
-  quizExercises: QuizExercise[];
-  questions: Question[];
+export class QuizExerciseExportComponent implements OnInit, OnDestroy {
+  questions: Question[] = new Array(0);
   courseId: number;
 
-  repository: QuizExerciseService;
-  router: Router;
+  private subscription: Subscription;
   translateService: TranslateService;
+  router: Router;
 
   constructor(private route: ActivatedRoute,
     private quizExerciseService: QuizExerciseService,
@@ -34,19 +37,24 @@ export class QuizExerciseExportComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.route.params.subscribe(params => {
+    this.subscription = this.route.params.subscribe(params => {
       this.courseId = params['courseId'];
       this.loadForCourse(this.courseId);
     });
   }
 
+  ngOnDestroy() {
+    this.subscription.unsubscribe();
+  }
+
   private loadForCourse(courseId) {
     this.quizExerciseService.findForCourse(courseId).subscribe(
       (res: HttpResponse<QuizExercise[]>) => {
-        this.quizExercises = res.body;
-        for (const quizExercise of this.quizExercises) {
+        const quizExercises = res.body;
+        for (const quizExercise of quizExercises) {
           this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-            this.questions.concat(quizExercise.questions);
+            const question = response.body;
+            this.questions.push(question);
           });
         }
       },
