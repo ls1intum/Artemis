@@ -2,7 +2,7 @@
     <h2>Assessment dashboard for exercise "{{exercise.title}}"</h2>
     <div>
         <div class="button-toolbar pull-right">
-            <button [disabled]="busy" class="btn btn-success btn-sm" (click)="assessNextOptimal(0)">
+            <button [disabled]="busy || (optimalResults && optimalResults.length === 0 && assessedResults === results.length)" class="btn btn-success btn-sm" (click)="assessNextOptimal(0)">
                 <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next optimal model
             </button>
             <button [disabled]="busy" class="btn btn-primary btn-sm" (click)="refresh()">

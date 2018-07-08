@@ -136,13 +136,17 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     assessNextOptimal(attempts) {
+        if (attempts > 3) {
+            this.busy = false;
+            return;
+        }
         this.busy = true;
         if (this.nextOptimalSubmissionIds.length === 0) {
             setTimeout(() => {
                 this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
                     this.nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
                     this.assessNextOptimal(attempts + 1);
-                })
+                });
             }, 500 + 1000 * attempts);
         } else {
             this.router.navigate(['apollon-diagrams', 'exercise', this.exercise.id, this.nextOptimalSubmissionIds.pop(), 'tutor']);
