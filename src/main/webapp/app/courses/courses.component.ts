@@ -2,7 +2,6 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService, CourseScoreCalculationService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import {Exercise} from "app/entities/exercise";
 
 @Component({
     selector: 'jhi-courses',
@@ -15,7 +14,6 @@ import {Exercise} from "app/entities/exercise";
 export class CoursesComponent implements OnInit {
 
     courses: Course[];
-    exercises: Exercise[];
     filterByCourseId: number;
     filterByExerciseId: number;
     private sub: any;
