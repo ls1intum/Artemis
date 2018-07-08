@@ -119,8 +119,8 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
             }
         }
         scores.set('absoluteScore', Math.round(absoluteScore * 100) / 100);
-        if (courseExercises.length > 0) {
-            scores.set('relativeScore', Math.round(relativeScore/courseExercises.length * 100) / 100);
+        if (maxScore > 0) {
+            scores.set('relativeScore', Math.round(absoluteScore/maxScore * 100));
         } else {
             scores.set('relativeScore', 0);
         }
