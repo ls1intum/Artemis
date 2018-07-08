@@ -11,10 +11,6 @@
       <thead>
         <tr>
           <th>
-            <span jhiTranslate="global.field.id">ID</span>
-            <span class="fa fa-sort"></span>
-          </th>
-          <th>
             <span jhiTranslate="arTeMiSApp.exercise.title">Title</span>
             <span class="fa fa-sort"></span>
           </th>
@@ -31,12 +27,20 @@
       </thead>
       <tbody>
         <tr *ngFor="let question of questions">
-          <td>
-            <a [routerLink]="['/quiz-exercise', quizExercise.id ]">{{question.id}}</a>
-          </td>
           <td>{{question.title}}</td>
           <td>{{question.type}}</td>
-          <td>{{question.exportQuiz}}</td>
+          <!-- <td>
+            <span jhiTranslate="arTeMiSApp.exercise.mcqType">Multiple Choice Question</span>
+            <span *ngif="question.type == 'drag-and-drop'" jhiTranslate="arTeMiSApp.exercise.dndType">Drag and Drop</span>
+          </td> -->
+          <td class="text-right">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" [(ngModel)]="question.exportQuiz" />
+                <span data-translate="entity.action.export"></span>
+              </label>
+            </div>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -45,7 +49,7 @@
     <div class="container">
       <div class="edit-quiz-footer-content">
         <div class="form-group">
-          <button class="btn btn-success" ng-click="exportQuiz()" data-translate="entity.action.export">Export</button>
+          <button class="btn btn-success" (click)="exportQuiz()" data-translate="entity.action.import">Export</button>
         </div>
       </div>
     </div>

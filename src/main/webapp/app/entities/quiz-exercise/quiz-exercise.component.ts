@@ -203,35 +203,25 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
 
     /**
      * Exports quiz in json format
-     * @param quizExerciseId The quiz exercise id we want to export
-     */
-    exportQuizById(quizExerciseId) {
-        this.quizExerciseService.find(quizExerciseId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
-                const exercise = res.body;
-                QuizExerciseComponent.exportQuiz(exercise, true);
-            }
-        );
-    }
-
-    /**
-     * Exports quiz in json format
-     * @param quizExercise The quiz exercise we want to export
+     * @param quizQuestions Quiz questions we want to export
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
-    static exportQuiz(quizExercise: any, exportAll: boolean) {
+    static exportQuiz(quizQuestions: any, exportAll: boolean) {
         let questions = [];
         if (exportAll === true) {
-            questions = quizExercise.questions;
+            questions = quizQuestions;
         } else {
-            for (let question of quizExercise.questions) {
-                if (question.exportQuiz === true)
+            for (let question of quizQuestions) {
+                if (question.exportQuiz === true) {
                     questions.push(question);
+                }
             }
         }
-        if (questions.length === 0) return;
+        if (questions.length === 0) {
+            return;
+        }
         let quizJson = JSON.stringify(questions);
-        let blob = new Blob([quizJson], {type: 'application/json'});
+        let blob = new Blob([quizJson], { type: 'application/json' });
 
         if (window.navigator.msSaveOrOpenBlob) { // IE & Edge
             window.navigator.msSaveBlob(blob, 'quiz.json');
@@ -244,6 +234,20 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
             anchor.click();
             document.body.removeChild(anchor);
         }
+    }
+
+    /**
+     * Exports quiz in json format
+     * @param quizExerciseId The quiz exercise id we want to export
+     * @param exportAll If true exports all questions, else exports only those whose export flag is true
+     */
+    exportQuizById(quizExerciseId: number, exportAll: boolean) {
+        this.quizExerciseService.find(quizExerciseId).subscribe(
+            (res: HttpResponse<QuizExercise>) => {
+                const exercise = res.body;
+                QuizExerciseComponent.exportQuiz(exercise.questions, exportAll);
+            }
+        );
     }
 
     /**

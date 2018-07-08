@@ -11,7 +11,7 @@
         <button *ngIf="courseId" class="btn btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['export']">
             <span class="fa fa-plus"></span>
             <span  jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
-                Export Quiz Exercies
+                Export Quiz Exercises
             </span>
         </button>
     </h2>
@@ -94,7 +94,7 @@
                             <span class="hidden-sm-down" jhiTranslate="global.menu.entities.statistic"></span>
                         </button>
                         <button type="submit"
-                                (click)="exportQuizById(quizExercise.id)"
+                                (click)="exportQuizById(quizExercise.id, true)"
                                 class="btn btn-primary btn-sm">
                             <span class="hidden-sm-down" jhiTranslate="entity.action.export"></span>
                         </button>

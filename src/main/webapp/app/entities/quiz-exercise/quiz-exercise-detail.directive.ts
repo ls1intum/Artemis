@@ -15,7 +15,7 @@ import * as moment from 'moment';
  *  The upgrade is realized as given Angular tutorial:
  *  https://angular.io/guide/upgrade#using-angularjs-component-directives-from-angular-code */
 /* tslint:disable-next-line:directive-selector */
-@Directive({selector: 'quiz-exercise-detail'})
+@Directive({ selector: 'quiz-exercise-detail' })
 /* tslint:disable-next-line:directive-class-suffix */
 export class QuizExerciseDetailWrapper extends UpgradeComponent implements OnInit, OnChanges, DoCheck, OnDestroy {
     /** The names of the input and output properties here must match the names of the
@@ -183,7 +183,7 @@ class QuizExerciseDetailController {
      * @param question {Question} the question to remove
      */
     deleteQuestion(question) {
-        this.quizExercise.questions = this.quizExercise.questions.filter(function(q) {
+        this.quizExercise.questions = this.quizExercise.questions.filter(function (q) {
             return q !== question;
         });
     }
@@ -211,7 +211,7 @@ class QuizExerciseDetailController {
             'isVisibleBeforeStart',
             'isOpenForPractice',
             'questions'
-        ].some(function(key) {
+        ].some(function (key) {
             return this.quizExercise[key] !== this.savedEntity[key];
         }, this);
     }
@@ -226,10 +226,10 @@ class QuizExerciseDetailController {
         }
         const isGenerallyValid = this.quizExercise.title && this.quizExercise.title !== '' &&
             this.quizExercise.duration && this.quizExercise.questions && this.quizExercise.questions.length;
-        const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
+        const areAllQuestionsValid = this.quizExercise.questions.every(function (question) {
             switch (question.type) {
                 case 'multiple-choice':
-                    return question.title && question.title !== '' && question.answerOptions.some(function(answerOption) {
+                    return question.title && question.title !== '' && question.answerOptions.some(function (answerOption) {
                         return answerOption.isCorrect;
                     });
                 case 'drag-and-drop':
@@ -272,20 +272,20 @@ class QuizExerciseDetailController {
                 translateValues: {}
             });
         }
-        this.quizExercise.questions.forEach(function(question, index) {
+        this.quizExercise.questions.forEach(function (question, index) {
             if (!question.title || question.title === '') {
                 reasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
-                    translateValues: {index: index + 1}
+                    translateValues: { index: index + 1 }
                 });
             }
             if (question.type === 'multiple-choice') {
-                if (!question.answerOptions.some(function(answerOption) {
-                        return answerOption.isCorrect;
-                    })) {
+                if (!question.answerOptions.some(function (answerOption) {
+                    return answerOption.isCorrect;
+                })) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
-                        translateValues: {index: index + 1}
+                        translateValues: { index: index + 1 }
                     });
                 }
             }
@@ -293,18 +293,18 @@ class QuizExerciseDetailController {
                 if (!question.correctMappings || question.correctMappings.length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
-                        translateValues: {index: index + 1}
+                        translateValues: { index: index + 1 }
                     });
                 } else if (this.dragAndDropQuestionUtil.solve(question, []).length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
-                        translateValues: {index: index + 1}
+                        translateValues: { index: index + 1 }
                     });
                 }
                 if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
-                        translateValues: {index: index + 1}
+                        translateValues: { index: index + 1 }
                     });
                 }
             }
@@ -380,7 +380,7 @@ class QuizExerciseDetailController {
         if (this.hasSavedQuizStarted() || !this.validQuiz()) {
             return;
         }
-        QuizExerciseComponent.exportQuiz(this.quizExercise, false);
+        QuizExerciseComponent.exportQuiz(this.quizExercise.questions, false);
     }
 
     /**

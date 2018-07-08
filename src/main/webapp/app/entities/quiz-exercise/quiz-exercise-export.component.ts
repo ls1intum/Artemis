@@ -1,8 +1,7 @@
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
-import { Subscription } from 'rxjs/Subscription';
 
 import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
 import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
@@ -11,17 +10,16 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { Question } from '../question';
-import { EMAIL_ALREADY_USED_TYPE } from '../../shared';
+import { QuizExerciseComponent } from './quiz-exercise.component';
 
 @Component({
   selector: 'jhi-quiz-exercise-export',
   templateUrl: './quiz-exercise-export.component.html'
 })
-export class QuizExerciseExportComponent implements OnInit, OnDestroy {
+export class QuizExerciseExportComponent implements OnInit {
   questions: Question[] = new Array(0);
   courseId: number;
 
-  private subscription: Subscription;
   translateService: TranslateService;
   router: Router;
 
@@ -37,14 +35,10 @@ export class QuizExerciseExportComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.subscription = this.route.params.subscribe(params => {
+    this.route.params.subscribe(params => {
       this.courseId = params['courseId'];
       this.loadForCourse(this.courseId);
     });
-  }
-
-  ngOnDestroy() {
-    this.subscription.unsubscribe();
   }
 
   private loadForCourse(courseId) {
@@ -53,8 +47,11 @@ export class QuizExerciseExportComponent implements OnInit, OnDestroy {
         const quizExercises = res.body;
         for (const quizExercise of quizExercises) {
           this.quizExerciseService.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-            const question = response.body;
-            this.questions.push(question);
+            const quizExerciese = response.body;
+            for (const question of quizExerciese.questions) {
+              question.exportQuiz = true;
+              this.questions.push(question);
+            }
           });
         }
       },
@@ -64,5 +61,9 @@ export class QuizExerciseExportComponent implements OnInit, OnDestroy {
 
   private onError(error) {
     this.jhiAlertService.error(error.message, null, null);
+  }
+
+  exportQuiz() {
+    QuizExerciseComponent.exportQuiz(this.questions, false);
   }
 }
