@@ -233,14 +233,14 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         let quizJson = JSON.stringify(questions);
         let blob = new Blob([quizJson], {type: 'application/json'});
 
-        if (window.navigator.msSaveOrOpenBlob) { //IE & Edge
+        if (window.navigator.msSaveOrOpenBlob) { // IE & Edge
             window.navigator.msSaveBlob(blob, 'quiz.json');
-        } else {//Chrome & FF
+        } else { // Chrome & FF
             const url = window.URL.createObjectURL(blob);
-            const anchor = document.createElement("a");
+            const anchor = document.createElement('a');
             anchor.href = url;
             anchor.download = 'quiz.json';
-            document.body.appendChild(anchor); //For FF
+            document.body.appendChild(anchor); // For FF
             anchor.click();
             document.body.removeChild(anchor);
         }

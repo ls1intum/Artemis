@@ -5,7 +5,8 @@
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
-                "createOrEditLabel": "Quiz erstellen oder bearbeiten"
+                "createOrEditLabel": "Quiz erstellen oder bearbeiten",
+                "exportLabel": "TODO: Write German for Export Quiz Exercises"
             },
             "created": "Quiz erstellt mit ID {{ param }}",
             "updated": "Quiz aktualisiert mit ID {{ param }}",

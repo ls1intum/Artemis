@@ -40,6 +40,7 @@ import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.m
 import { QuizReEvaluateWrapper } from './quiz/re-evaluate/quiz-re-evaluate.directive';
 import { QuizReEvaluateComponent } from './quiz/re-evaluate/quiz-re-evaluate.component';
 import { Principal } from './shared';
+import { QuizExerciseExportComponent } from './quiz-exercise-export/quiz-exercise-export.component';
 
 declare var angular: any;
 
@@ -92,7 +93,8 @@ declare var angular: any;
         QuizExerciseDetailWrapper,
         QuizExerciseDetailComponent,
         QuizReEvaluateWrapper,
-        QuizReEvaluateComponent
+        QuizReEvaluateComponent,
+        QuizExerciseExportComponent
     ],
     /**
      * @description Entry components:

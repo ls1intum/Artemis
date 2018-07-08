@@ -1,11 +1,11 @@
-
 {
     "arTeMiSApp": {
         "quizExercise": {
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
-                "createOrEditLabel": "Quiz erstellen oder bearbeiten"
+                "createOrEditLabel": "Quiz erstellen oder bearbeiten",
+                "exportLabel": "TODO: Write German for Export Quiz Exercises"
             },
             "created": "Quiz erstellt mit ID {{ param }}",
             "updated": "Quiz aktualisiert mit ID {{ param }}",
@@ -95,7 +95,7 @@
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
                     "statistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
-                    "resulttext":{
+                    "resulttext": {
                         "element_deleted": "Das Frage-Element wird aus allen Ergebnissen entfernt",
                         "element_invalid": "Alle Teilnehmer erhalten die Punkte für das ungültige Frage-Element",
                         "answer_deleted": "Die Antwortmöglichkeit wird aus allen Ergebnissen entfernt",
@@ -108,7 +108,7 @@
                     "succesfully_confirm": "Änderungen erfolgreich übernommen!"
                 }
             },
-            "invalidReasons" : {
+            "invalidReasons": {
                 "quizTitle": "Quiz: Der Titel fehlt.",
                 "quizDuration": "Quiz: Die Dauer fehlt oder ist ungültig.",
                 "noQuestion": "Quiz: Das Quiz hat keine Fragen.",
