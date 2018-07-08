@@ -97,48 +97,48 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     }
 
     calculateTotalAbsoluteScoreForTheCourse(courseId: number) {
-        let scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
         this.totalScore = scores.get('absoluteScore');
     }
 
     calculateTotalAbsoluteScoreForQuizzes(courseId: number) {
         const quizExercises = this.courseExercises.filter(courseExercise => courseExercise.type === 'quiz');
-        let scores = this.courseCalculationService.calculateTotalScores(quizExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(quizExercises);
         this.quizzesTotalScore = scores.get('absoluteScore');
     }
 
     calculateTotalAbsoluteScoreForProgrammingExercises(courseId: number) {
         const programmingExercises = this.courseExercises.filter(programmingExercise => programmingExercise.type === 'programming-exercise');
-        let scores = this.courseCalculationService.calculateTotalScores(programmingExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(programmingExercises);
         this.programmingExerciseTotalScore = scores.get('absoluteScore');
     }
 
     calculateTotalAbsoluteScoreForModelingExercises(courseId: number) {
         const modelingExercises = this.courseExercises.filter(modelingExercise => modelingExercise.type === 'modeling-exercise');
-        let scores = this.courseCalculationService.calculateTotalScores(modelingExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(modelingExercises);
         this.modelingExerciseTotalScore = scores.get('absoluteScore');
     }
 
     calculateTotalRelativeScoreForTheCourse(courseId: number) {
-        let scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
         this.totalRelativeScore = scores.get('relativeScore');
     }
 
     calculateTotalRelativeScoreForQuizzes(courseId: number) {
         const quizExercises = this.courseExercises.filter(courseExercise => courseExercise.type === 'quiz');
-        let scores = this.courseCalculationService.calculateTotalScores(quizExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(quizExercises);
         this.quizzesTotalRelativeScore = scores.get('relativeScore');
     }
 
     calculateTotalRelativeScoreForProgrammingExercises(courseId: number) {
         const programmingExercises = this.courseExercises.filter(programmingExercise => programmingExercise.type === 'programming-exercise');
-        let scores = this.courseCalculationService.calculateTotalScores(programmingExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(programmingExercises);
         this.programmingExerciseTotalRelativeScore = scores.get('relativeScore');
     }
 
     calculateTotalRelativeScoreForModelingExercises(courseId: number) {
         const modelingExercises = this.courseExercises.filter(modelingExercise => modelingExercise.type === 'modeling-exercise');
-        let scores = this.courseCalculationService.calculateTotalScores(modelingExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(modelingExercises);
         this.modelingExerciseTotalRelativeScore = scores.get('relativeScore');
     }
 
@@ -149,19 +149,19 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
 
     calculateTotalMaxScoreForQuizzes(courseId: number) {
         const quizExercises = this.courseExercises.filter(courseExercise => courseExercise.type === 'quiz');
-        let scores = this.courseCalculationService.calculateTotalScores(quizExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(quizExercises);
         this.quizzesTotalMaxScore = scores.get('maxScore');
     }
 
     calculateTotalMaxScoreForProgrammingExercises(courseId: number) {
         const programmingExercises = this.courseExercises.filter(programmingExercise => programmingExercise.type === 'programming-exercise');
-        let scores = this.courseCalculationService.calculateTotalScores(programmingExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(programmingExercises);
         this.programmingExerciseTotalMaxScore = scores.get('maxScore');
     }
 
     calculateTotalMaxScoreForModelingExercises(courseId: number) {
         const modelingExercises = this.courseExercises.filter(modelingExercise => modelingExercise.type === 'modeling-exercise');
-        let scores = this.courseCalculationService.calculateTotalScores(modelingExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(modelingExercises);
         this.modelingExerciseTotalMaxScore = scores.get('maxScore');
     }
 }
