@@ -8,7 +8,7 @@
             <button [disabled]="busy" class="btn btn-primary btn-sm" (click)="refresh()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
             </button>
-            <button *jhiHasAnyAuthority="['ROLE_ADMIN']" class="btn btn-primary btn-sm"
+            <button *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm"
                     [disabled]="busy"
                     (click)="resetOptimality()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Reset assessment order

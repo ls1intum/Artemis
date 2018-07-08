@@ -33,6 +33,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     positions: {};
     busy: boolean;
     done: boolean;
+    timeout: any;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -86,6 +87,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        clearTimeout(this.timeout);
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -281,16 +283,18 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             return;
         }
         this.busy = true;
-        setTimeout(() => {
+        this.timeout = setTimeout(() => {
             this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
                 const nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
                 if (nextOptimalSubmissionIds.length === 0) {
                     this.assessNextOptimal(attempts + 1);
                 } else {
-                    this.router.navigate(['apollon-diagrams', 'exercise', this.modelingExercise.id, nextOptimalSubmissionIds.pop(), 'tutor']);
+                    // We have to fake path change to make angular reload the component
+                    const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
+                    this.router.navigateByUrl(`/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`);
                 }
             });
-        }, attempts === 0 ? 0 : (500 + (attempts - 1) * 1000));
+        }, attempts === 0 ? 0 : 500 + (attempts - 1) * 1000);
     }
 
     numberToArray(n: number, startFrom: number): number[] {
@@ -300,6 +304,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     previousState() {
-        window.history.back();
+        this.router.navigate(['course', this.modelingExercise.course.id, 'exercise', this.modelingExercise.id, 'assessment']);
     }
 }
