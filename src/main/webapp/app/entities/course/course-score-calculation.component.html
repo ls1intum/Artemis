@@ -7,7 +7,7 @@
     </div>
     <br/>
     <div class="table-responsive">
-        <table class="table table-striped">
+        <table *ngIf="courseId !== '13'"class="table table-striped">
             <thead>
             <tr>
                 <th><span>Score Aggregation</span></th>
@@ -43,6 +43,44 @@
                 <td><b>{{totalMaxScore}}</b></td>
             </tr>
             </tbody>
+        </table>
+
+        <table *ngIf="courseId === '13'" class="table table-striped">
+          <thead>
+          <tr>
+              <th><span>Score Aggregation</span></th>
+              <th><span>Absolute Score</span></th>
+              <th><span>Relative Score (%)</span></th>
+              <th><span>Max Absolute Score</span></th>
+              <th></th>
+          </tr>
+          </thead>
+          <tbody>
+            <tr>
+                <td>Score for the quizzes</td>
+                <td>{{quizzesTotalScore}}</td>
+                <td>{{quizzesTotalRelativeScore}}%</td>
+                <td>{{quizzesTotalMaxScore}}</td>
+            </tr>
+            <tr>
+                <td>Score for the homework</td>
+                <td>{{eistHomeworkTotalScore}}</td>
+                <td>{{eistHomeworkRelativeScore}}%</td>
+                <td>{{eistHomeworkMaxScore}}</td>
+            </tr>
+            <tr>
+                <td>Score for in-class exercises</td>
+                <td>{{eistInClassTotalScore}}</td>
+                <td>{{eistInClassRelativeScore}}%</td>
+                <td>{{eistInClassMaxScore}}</td>
+            </tr>
+          <tr>
+              <td><b>Total score for the course</b></td>
+              <td><b>{{totalScore}}</b></td>
+              <td><b>{{totalRelativeScore}}%</b></td>
+              <td><b>{{totalMaxScore}}</b></td>
+          </tr>
+          </tbody>
         </table>
     </div>
 </div>

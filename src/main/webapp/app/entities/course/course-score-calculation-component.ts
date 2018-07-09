@@ -22,18 +22,24 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     quizzesTotalScore = 0;
     programmingExerciseTotalScore = 0;
     modelingExerciseTotalScore = 0;
+    eistHomeworkTotalScore = 0;
+    eistInClassTotalScore = 0;
 
     // relative score
     totalRelativeScore = 0;
     quizzesTotalRelativeScore = 0;
     programmingExerciseTotalRelativeScore = 0;
     modelingExerciseTotalRelativeScore = 0;
+    eistHomeworkRelativeScore = 0;
+    eistInClassRelativeScore = 0;
 
     // max score
     totalMaxScore = 0;
     quizzesTotalMaxScore = 0;
     programmingExerciseTotalMaxScore = 0;
     modelingExerciseTotalMaxScore = 0;
+    eistHomeworkMaxScore = 0;
+    eistInClassMaxScore = 0;
 
     constructor(
         private courseService: CourseService,
@@ -48,7 +54,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
 
-        if(this.course == undefined) {
+        if (this.course === undefined) {
                 this.courseService.findAll().subscribe(
                     (res: Course[]) => {
                         this.courseCalculationService.setCourses(res);
@@ -64,6 +70,26 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
             this.calculateAbsoluteScores(this.courseId);
             this.calculateRelativeScores(this.courseId);
             this.calculateMaxScores(this.courseId);
+
+            if (this.courseId === '13') { // EIST
+                const homeworkFilter = courseExercise => {
+                  return courseExercise.title.match(/Homework.*/g);
+                };
+                const homeworkScores = this.calculateScores(this.courseId, homeworkFilter);
+                this.eistHomeworkTotalScore = homeworkScores.get('absoluteScore');
+                this.eistHomeworkRelativeScore = homeworkScores.get('relativeScore');
+                this.eistHomeworkMaxScore = homeworkScores.get('maxScore');
+
+                const inClassFilter = courseExercise => {
+                  return courseExercise.title.match(/(Lecture.*)|(Good Morning Quiz.*)|(Quiz.*)/g);
+                };
+
+                const inClassScores = this.calculateScores(this.courseId, inClassFilter);
+                this.eistInClassTotalScore = inClassScores.get('absoluteScore');
+                this.eistInClassRelativeScore = inClassScores.get('relativeScore');
+                this.eistInClassMaxScore = inClassScores.get('maxScore');
+            }
+
         }
     }
 
@@ -94,6 +120,12 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
         this.calculateTotalMaxScoreForProgrammingExercises(courseId);
         this.calculateTotalMaxScoreForModelingExercises(courseId);
         this.calculateTotalMaxScoreForTheCourse(courseId);
+    }
+
+    calculateScores(courseId: number, filterFunction: (Object) => boolean) {
+        filterFunction = filterFunction !== undefined ? filterFunction : () => true;
+        const filteredExercises = this.courseExercises.filter(filterFunction);
+        return this.courseCalculationService.calculateTotalScores(filteredExercises);
     }
 
     calculateTotalAbsoluteScoreForTheCourse(courseId: number) {
@@ -143,7 +175,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     }
 
     calculateTotalMaxScoreForTheCourse(courseId: number) {
-        let scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
+        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
         this.totalMaxScore = scores.get('maxScore');
     }
 
