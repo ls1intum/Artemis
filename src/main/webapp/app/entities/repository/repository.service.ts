@@ -40,8 +40,8 @@ export class RepositoryFileService {
         return this.http.get<any[]>(`${this.resourceUrl}/${participationId}/files`);
     }
 
-    get(participationId: number): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/${participationId}/file`)
+    get(participationId: number, fileName: string): Observable<any> {
+        return this.http.get<any>(`${this.resourceUrl}/${participationId}/file/${fileName}`)
             .map(data => ({fileContent: data}));
     }
 
