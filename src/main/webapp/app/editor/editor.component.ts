@@ -1,6 +1,6 @@
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import {Component, OnDestroy, OnInit} from '@angular/core';
+import {Component, OnChanges, OnDestroy, OnInit, SimpleChanges} from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Participation, ParticipationService } from '../entities/participation';
@@ -23,7 +23,7 @@ import * as $ from 'jquery';
  * @desc This component acts as a wrapper for the upgraded editor component (directive).
  * The dependencies are passed along to the directive, from there to the legacy component.
  */
-export class EditorComponent implements OnInit, OnDestroy {
+export class EditorComponent implements OnInit, OnChanges, OnDestroy {
 
     /** Dependencies as defined by the upgraded Editor component */
     participation: Participation;
@@ -55,11 +55,12 @@ export class EditorComponent implements OnInit, OnDestroy {
      * @desc Framework function which is executed when the component is instantiated.
      * Used to assign parameters which are used by the component
      */
-    ngOnInit() {
+    ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             /** Query the participationService for the participationId given by the params */
             this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
                 this.participation = response.body;
+                this.checkIfRepositoryIsClean();
                 console.log(this.participation);
             });
             /** Assign file from params given by the URL */
@@ -74,6 +75,16 @@ export class EditorComponent implements OnInit, OnDestroy {
 
         /** Assign repository */
         this.repository = this.repositoryService;
+    }
+
+    ngOnChanges(changes: SimpleChanges) {
+        this.checkIfRepositoryIsClean();
+    }
+
+    checkIfRepositoryIsClean(): void {
+        this.repository.isClean(this.participation.id).subscribe(res => {
+            this.bIsCommitted = res.isClean;
+        });
     }
 
     updateSaveStatusLabel(event) {
@@ -103,6 +114,22 @@ export class EditorComponent implements OnInit, OnDestroy {
                 $card.width('55px');
             }
         }
+    };
+
+    commit(event) {
+
+        const target = event.toElement || event.relatedTarget || event.target;
+
+        target.blur();
+        this.bIsBuilding = true;
+        this.repository.commit(this.participation.id).subscribe(
+            res => {
+                this.bIsCommitted = true;
+                console.log('Successfully committed');
+            },
+            err => {
+                console.log('Error occured');
+            });
     };
 
     /**
