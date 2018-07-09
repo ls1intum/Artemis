@@ -1,11 +1,17 @@
 <!-- TODO: use an Angular 5 compatible ace-editor
 --  TODO: try https://github.com/fxmontigny/ng2-ace-editor
 -->
-<div ui-ace="{
-  onLoad: aceLoaded,
-  onChange: aceChanged
-}" class="panel panel-default" *ngIf="file" style="height: 100%"></div>
+<!--<div ui-ace="{-->
+  <!--onLoad: aceLoaded,-->
+  <!--onChange: aceChanged-->
+<!--}" class="panel panel-default" *ngIf="file" style="height: 100%"></div>-->
 
-<p class="text-center lead text-muted" *ngIf="file" style="padding-top: 50px">
+<div ace-editor [(text)]="editorText" [mode]="'sql'" [options]="editorOptions" [readOnly]="editorReadOnly"
+[autoUpdateContent]="editorAutoUpdate" [durationBeforeCallback]="editorDurationBeforeCallback"
+     (textChanged)="onEditorTextChanged($event)" class="panel panel-default"
+     style="min-height: 200px; width:100%; height: 100%; overflow: auto;" *ngIf="file">
+</div>
+
+<p class="text-center lead text-muted" *ngIf="!file" style="padding-top: 50px">
     Select a file to get started!
 </p>

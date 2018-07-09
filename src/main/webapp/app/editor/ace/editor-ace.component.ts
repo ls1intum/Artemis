@@ -7,6 +7,7 @@ import {WindowRef} from '../../shared/websocket/window.service';
 import {JhiAlertService} from 'ng-jhipster';
 import {CourseExerciseService} from '../../entities/course';
 import {JhiWebsocketService} from '../../shared';
+import {EditorComponent} from '../editor.component';
 
 @Component({
     selector: 'jhi-editor-ace',
@@ -27,15 +28,26 @@ import {JhiWebsocketService} from '../../shared';
 export class EditorAceComponent implements OnInit, OnDestroy, OnChanges {
 
     sessions : object = {};
-    bIsSaved : boolean = true;
+
+    /**
+     * Ace Editor Options
+     */
+
+    editorText: string = ''; // possible two way binding
+    editorMode; //string or object
+    editorOptions;
+    editorReadOnly: boolean = false;
+    editorAutoUpdate: boolean = true; //change content when [text] change
+    editorDurationBeforeCallback = 1000; //wait 1s before callback 'textChanged' sends new value
 
     @Input() participation: Participation;
     @Input() fileName: string;
     @Output() saveStatusChange = new EventEmitter<object>();
 
-    constructor(private jhiWebsocketService: JhiWebsocketService,
+    constructor(private parent: EditorComponent,
+                private jhiWebsocketService: JhiWebsocketService,
                 private repositoryFileService: RepositoryFileService,
-                public modalService: NgbModal,) {
+                public modalService: NgbModal) {
     }
 
     /**
@@ -58,6 +70,7 @@ export class EditorAceComponent implements OnInit, OnDestroy, OnChanges {
     }
 
     onSaveStatusChange(statusChange: object) {
+        console.log('EMITTING STATUS CHANGE');
         this.saveStatusChange.emit(statusChange);
     }
 
@@ -68,21 +81,17 @@ export class EditorAceComponent implements OnInit, OnDestroy, OnChanges {
         const unsavedFiles = sessionKeys.filter(session => session['unsavedChanges'] == true).length;
 
         if(unsavedFiles > 0) {
-            this.bIsSaved = false;
             if(this.onSaveStatusChange) {
-                this.onSaveStatusChange({$event: {
-                        bIsSaved: this.bIsSaved,
-                        saveStatusLabel: '<i class="fa fa-circle-o-notch fa-spin text-info"></i> <span class="text-info">Unsaved changes in ' + unsavedFiles + ' files.</span>'
-                    }
+                this.onSaveStatusChange({
+                    bIsSaved: false,
+                    saveStatusLabel: '<i class="fa fa-circle-o-notch fa-spin text-info"></i> <span class="text-info">Unsaved changes in ' + unsavedFiles + ' files.</span>'
                 });
             }
         } else {
-            this.bIsSaved= true;
             if(this.onSaveStatusChange) {
-                this.onSaveStatusChange({$event: {
-                        bIsSaved: this.bIsSaved,
-                        saveStatusLabel: '<i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>'
-                    }
+                this.onSaveStatusChange({
+                    bIsSaved: true,
+                    saveStatusLabel: '<i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>'
                 });
             }
         }
@@ -94,7 +103,10 @@ export class EditorAceComponent implements OnInit, OnDestroy, OnChanges {
 
         /** Query the repositoryFileService for the specified file in the repository */
         // TODO: pass filename into get
-        this.repositoryFileService.get(this.participation.id).subscribe(fileObj => {
+        this.repositoryFileService.get(this.participation.id, fileName).subscribe(fileObj => {
+
+            console.log('We got a fileObj!');
+            console.log(fileObj);
 
             if(!this.sessions[fileName]) {
                 // var ModeList = ace.require("ace/ext/modelist");
@@ -114,6 +126,14 @@ export class EditorAceComponent implements OnInit, OnDestroy, OnChanges {
         }, err => {
             console.log('There was an error while getting file: ' + err.body.msg);
         });
+    }
+
+    /**
+     * Callback function for text changes in the Ace Editor
+     * @param code
+     */
+    onEditorTextChanged(code) {
+        console.log("new code", code);
     }
 
     /**
