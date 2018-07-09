@@ -57,17 +57,17 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
             });
             this.exerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<Exercise>) => {
                 this.exercise = res.body;
-                this.getResults(true);
+                this.getResults();
             });
         });
         this.registerChangeInCourses();
     }
 
     registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('resultListModification', response => this.getResults(false));
+        this.eventSubscriber = this.eventManager.subscribe('resultListModification', () => this.getResults());
     }
 
-    getResults(forceReload: boolean) {
+    getResults() {
         this.exerciseResultService.query(this.exercise.course.id, this.exercise.id, {
             showAllResults: this.showAllResults,
             ratedOnly: this.exercise.type === 'quiz',
@@ -79,22 +79,12 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
                 result.participation.results = [result];
             });
             this.allResults = tempResults;
-            this.filterResults(forceReload);
+            this.filterResults();
         });
     }
 
-    filterResults(forceReload: boolean) {
+    filterResults() {
         this.results = [];
-        if (this.exercise.type === 'modeling-exercise') {
-            if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
-                this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
-                    this.nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
-                    this.filterOptimal();
-                });
-            } else {
-                this.filterOptimal();
-            }
-        }
         if (this.showAllResults === 'successful') {
             this.results = this.allResults.filter(function(result) {
                 return result.successful === true;
@@ -105,17 +95,6 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
             });
         } else if (this.showAllResults === 'all') {
             this.results = this.allResults;
-        }
-    }
-
-    filterOptimal() {
-        this.allResults.forEach(result => {
-            result.optimal = result.submission && this.nextOptimalSubmissionIds.includes(result.submission.id);
-        });
-        if (this.showAllResults === 'optimal') {
-            this.results = this.allResults.filter(result => {
-                return result.optimal;
-            });
         }
     }
 
@@ -140,7 +119,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
 
     toggleShowAllResults(newValue) {
         this.showAllResults = newValue;
-        this.filterResults(false);
+        this.filterResults();
     }
 
     exportNames() {
@@ -193,13 +172,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     }
 
     refresh() {
-        this.getResults(true);
-    }
-
-    resetOptimality() {
-        this.modelingAssessmentService.resetOptimality(this.exercise.id).subscribe(() => {
-            this.filterResults(true);
-        });
+        this.getResults();
     }
 
     ngOnDestroy() {

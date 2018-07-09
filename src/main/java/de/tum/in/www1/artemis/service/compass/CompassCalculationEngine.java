@@ -136,6 +136,7 @@ public class CompassCalculationEngine implements CalculationEngine {
     @Override
     public void notifyNewAssessment(String assessment, long modelId) {
         lastUsed = LocalDateTime.now();
+        modelSelector.addAlreadyAssessedModel(modelId);
         buildAssessment(modelId, new JsonParser().parse(assessment).getAsJsonObject());
         assessModelsAutomatically();
     }
@@ -170,6 +171,8 @@ public class CompassCalculationEngine implements CalculationEngine {
         if (!isAssessed && (modelIndex.getModelMap().get(modelId) == null ||
             !modelIndex.getModelMap().get(modelId).isEntirelyAssessed())) {
             modelSelector.removeAlreadyAssessedModel(modelId);
+        } else if (isAssessed) {
+            modelSelector.addAlreadyAssessedModel(modelId);
         }
     }
 

@@ -22,6 +22,8 @@
                 <span>{{exercise.title}}</span>
                 <a class="text-primary" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']"><i class="fa fa-info-circle fa-fw"
                    routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
+                <a class="text-primary" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']"><i *ngIf="exercise.type == 'modeling-exercise'"
+                   class="fa fa-graduation-cap fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
 
                 <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
                       ngbTooltip="Only visible to teaching assistants and instructors. Release date: {{exercise.releaseDate | date:'MMM d, y H:mm'}}">
@@ -65,6 +67,8 @@
                             <i class="fa fa-folder-open fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Open exercise</span></a>
                         <ng-template #popContent><div [innerHtml]="getClonePopoverTemplate(exercise) | safeHtml"></div></ng-template>
                         <button placement="left"
+                                #popoverRef="ngbPopover"
+                                (click)="setCurrentPopoverOpen(popoverRef)"
                                 [ngbPopover]="popContent"
                                 type="button" class="btn btn-primary btn-sm btn-block"><i
                             class="fa fa-download fa-fw"></i>&nbsp;<span class="d-none d-md-inline">Clone repository</span>
