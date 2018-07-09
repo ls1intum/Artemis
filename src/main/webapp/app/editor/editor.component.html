@@ -10,10 +10,10 @@
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown pointer">
                     <!-- TODO: migrate on-new-result; show-score -->
-                    <result participation="participation" [hidden]="isBuilding" on-new-result="$ctrl.updateLatestResult($event)" show-score="true"></result>
-                    <button type="button" class="btn btn-primary navbar-btn" [disabled]="!isSaved || isBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
-                        <span *ngIf="isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
-                        <span *ngIf="!isBuilding"><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
+                    <!--<result participation="participation" [hidden]="isBuilding" on-new-result="updateLatestResult($event)" show-score="true"></result>-->
+                    <button type="button" class="btn btn-primary navbar-btn" [disabled]="!bIsSaved || bIsBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
+                        <span *ngIf="bIsBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
+                        <span *ngIf="!bIsBuilding"><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
                     </button>
                 </li>
             </ul>
@@ -34,14 +34,14 @@
                 </div>
 
                 <!-- TODO: migrate directive arguments -->
-                <editor-file-browser participation="participation" file="file" on-created-file="$ctrl.isCommitted = false" on-deleted-file="$ctrl.isCommitted = false" repository-files="$ctrl.repositoryFiles"></editor-file-browser>
+                <!--<editor-file-browser participation="participation" file="file" on-created-file="$ctrl.isCommitted = false" on-deleted-file="$ctrl.isCommitted = false" repository-files="$ctrl.repositoryFiles"></editor-file-browser>-->
 
                 <div class="card-footer" [innerHtml]="saveStatusLabel | safeHtml"></div>
                 <div class="card-footer">
-                    <span *ngIf="isCommitted">
+                    <span *ngIf="bIsCommitted">
                         <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
                     </span>
-                    <span *ngIf="!isCommitted">
+                    <span *ngIf="!bIsCommitted">
                         <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
                     </span>
                 </div>
@@ -50,18 +50,18 @@
 
         <div class="editor-center">
             <!-- TODO: check directive arguments -->
-            <editor-ace participation="participation" file="$ctrl.file" on-save-status-change="$ctrl.updateSaveStatusLabel($event)"></editor-ace>
+            <jhi-editor-ace participation="participation" file="file" (saveStatusChange)="updateSaveStatusLabel($event)"></jhi-editor-ace>
         </div>
 
         <div class="editor-sidebar-right">
             <!-- TODO: check directive arguments -->
-            <editor-instructions *ngIf="repositoryFiles" participation="participation" latest-result="$ctrl.latestResult"></editor-instructions>
+            <!--<editor-instructions *ngIf="repositoryFiles" participation="participation" latest-result="$ctrl.latestResult"></editor-instructions>-->
         </div>
     </div>
 
     <div class="editor-bottom">
         <!-- TODO: check directive arguments -->
-        <editor-build-output participation="participation" is-building="isBuilding"></editor-build-output>
+        <!--<editor-build-output participation="participation" is-building="isBuilding"></editor-build-output>-->
     </div>
 
 </div>
