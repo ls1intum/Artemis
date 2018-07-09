@@ -5,19 +5,14 @@ import { EditorComponent } from './editor.component';
 
 export const editorRoute: Routes = [
     {
-        path: 'editor',
+        path: 'editor/:participationId',
         component: EditorComponent,
         data: {
             authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
-        },
-        canActivate: [UserRouteAccessService]
-    }, {
-        path: 'editor/:courseId/exercise/:exerciseId',
-        component: EditorComponent,
-        data: {
-            authorities: ['ROLE_USER'],
-            pageTitle: 'arTeMiSApp.course.home.title'
+            pageTitle: 'arTeMiSApp.editor.home.title',
+            flushRepositoryCacheAfter: 900000, // 15 min
+            participationCache: {},
+            repositoryCache: {}
         },
         canActivate: [UserRouteAccessService]
     }
