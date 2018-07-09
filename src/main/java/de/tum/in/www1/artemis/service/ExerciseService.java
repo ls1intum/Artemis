@@ -233,6 +233,13 @@ public class ExerciseService {
         }
     }
 
+    /**
+     * Get participations of coding exercises of a requested list of students packed together in one zip file.
+     *
+     * @param id the id of the exercise entity
+     * @param studentIds TUM Student-Login ID of requested students
+     * @return a zip file containing all requested participations
+     */
     @Transactional(readOnly = true)
     public java.io.File exportParticipations(Long id, List<String> studentIds) {
         Exercise exercise = findOneLoadParticipations(id);
@@ -245,16 +252,16 @@ public class ExerciseService {
                         boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
 
                         Repository repo = gitService.get().getOrCheckoutRepository(participation);
-                        log.info("Create temporary zip file for repository " + repo.getLocalPath().toString());
+                        log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
                         Path zippedRepoFile = gitService.get().zipRepository(repo);
                         zippedRepoFiles.add(zippedRepoFile);
                         boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
                         if(!allowInlineEditor){ //if onlineeditor is not allowed we are free to delete
-                            log.info("Delete temporary repoistory "+ repo.getLocalPath().toString());
+                            log.debug("Delete temporary repoistory "+ repo.getLocalPath().toString());
                             gitService.get().deleteLocalRepository(participation);
                         }
                         if (allowInlineEditor && !repoAlreadyExists){ //if onlineEditor is allowed only delete if the repo didn't exist beforehand
-                            log.info("Delete temporary repoistory "+ repo.getLocalPath().toString());
+                            log.debug("Delete temporary repoistory "+ repo.getLocalPath().toString());
                             gitService.get().deleteLocalRepository(participation);
                         }
 
@@ -266,12 +273,12 @@ public class ExerciseService {
             if (!exercise.getParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
                 try {
                     // create a large zip file with all zipped repos and provide it for download
-                    log.info("Create zip file for all repositories");
+                    log.debug("Create zip file for all repositories");
                     zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() +studentIds.hashCode()+ ".zip");
                     createZipFile(zipFilePath, zippedRepoFiles);
                     scheduleForDeletion(zipFilePath, 10);
 
-                    log.info("Delete all temporary zip repo files");
+                    log.debug("Delete all temporary zip repo files");
                     //delete the temporary zipped repo files
                     for (Path zippedRepoFile : zippedRepoFiles) {
                         Files.delete(zippedRepoFile);
@@ -281,12 +288,12 @@ public class ExerciseService {
                 }
             }
             else {
-                log.info("The zip file could not be created. Ignoring the request to export repositories", id);
+                log.debug("The zip file could not be created. Ignoring the request to export repositories", id);
                 return null;
             }
         }
         else {
-            log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", id);
+            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", id);
             return null;
         }
         return new java.io.File(zipFilePath.toString());

@@ -9,7 +9,7 @@
         <p jhiTranslate="instructorDashboard.exportRepos.question"
            translateValues="{exerciseTitle: '{{exercise.title}}', courseTitle: '{{exercise.course.title}}'}">Confirm export
         </p>
-        <textarea name="studentIds" class="export-textarea" [(ngModel)]="list" required></textarea>
+        <textarea name="studentIds" class="export-textarea" [(ngModel)]="studentIdList" required></textarea>
         <p>(This action can take several minutes depending on number and size of repositories.)</p>
     </div>
 
@@ -17,7 +17,7 @@
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
             <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" [disabled]="!list && !exportInProgress" class="btn btn-default">
+        <button type="submit" [disabled]="!studentIdList && !exportInProgress" class="btn btn-default">
             <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span data-translate="entity.action.exportRepos">Export</span>
         </button>
     </div>
