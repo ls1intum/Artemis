@@ -23,7 +23,8 @@ import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModul
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
 import { EditorComponentWrapper } from './editor/editor.directive';
-import { EditorComponent } from './editor/editor.component';
+import { EditorComponent } from './editor';
+import { ArTEMiSEditorModule } from './editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
 import { ng1AuthServiceProvider } from './shared/auth/ng1-auth-wrapper.service';
@@ -66,6 +67,7 @@ declare var angular: any;
         ArTEMiSEntityModule,
         ArTEMiSApollonDiagramsModule,
         ArTEMiSCoursesModule,
+        ArTEMiSEditorModule,
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
@@ -80,15 +82,6 @@ declare var angular: any;
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
-        /**
-         * @description Upgraded component declarations:
-         * Each upgraded component from the legacy ng1 app will be upgraded as a directive and declared here.
-         * This directive can then either be used directly in a template in the ng5 app
-         * or (optionally) wrapped into a 'empty' component, which just contains the newly created directive.
-         * Makes handling and using the upgraded component (which is a ng5 directive) more intuitive.
-         */
-        EditorComponentWrapper,
-        EditorComponent,
         QuizExerciseDetailWrapper,
         QuizExerciseDetailComponent,
         QuizReEvaluateWrapper,

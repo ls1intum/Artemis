@@ -1,12 +1,12 @@
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Participation, ParticipationService } from '../entities/participation';
 import { RepositoryService, RepositoryFileService } from '../entities/repository/repository.service';
 import { HttpResponse } from '@angular/common/http';
-import { NG1WEBSOCKET_SERVICE } from '../shared/websocket/ng1-websocket.service';
+import * as $ from 'jquery';
 
 @Component({
     selector: 'jhi-editor',
@@ -31,6 +31,12 @@ export class EditorComponent implements OnInit, OnDestroy {
     file: any;
     paramSub: Subscription;
     repositoryFiles: string[];
+    saveStatusLabel: string;
+
+    /** File Status Booleans **/
+    bIsSaved: boolean = true;
+    bIsBuilding: boolean = false;
+    bIsCommitted: boolean;
 
     /**
      * @constructor EditorComponent
@@ -38,13 +44,11 @@ export class EditorComponent implements OnInit, OnDestroy {
      * @param {ParticipationService} participationService
      * @param {RepositoryService} repositoryService
      * @param {RepositoryFileService} repositoryFileService
-     * @param ng1JhiWebsocketService
      */
     constructor(private route: ActivatedRoute,
                 private participationService: ParticipationService,
                 private repositoryService: RepositoryService,
-                private repositoryFileService: RepositoryFileService,
-                @Inject(NG1WEBSOCKET_SERVICE) private ng1JhiWebsocketService: any) {}
+                private repositoryFileService: RepositoryFileService) {}
 
     /**
      * @function ngOnInit
@@ -70,6 +74,35 @@ export class EditorComponent implements OnInit, OnDestroy {
         /** Assign repository */
         this.repository = this.repositoryService;
     }
+
+    updateSaveStatusLabel(event) {
+        this.bIsSaved = event.isSaved;
+        if (!this.bIsSaved) {
+            this.bIsCommitted = false;
+        }
+        this.saveStatusLabel = event.saveStatusLabel;
+    }
+
+    /** Collapse parts of the editor (file browser, build output...) */
+    toggleCollapse = function(event: any, horizontal) {
+
+        const target = event.toElement || event.relatedTarget || event.target;
+
+        target.blur();
+
+        const $card = $(target).closest('.card');
+
+        if ($card.hasClass('collapsed')) {
+            $card.removeClass('collapsed');
+        } else {
+            $card.addClass('collapsed');
+            if (horizontal) {
+                $card.height('35px');
+            } else {
+                $card.width('55px');
+            }
+        }
+    };
 
     /**
      * @function ngOnDestroy
