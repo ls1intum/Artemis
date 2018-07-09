@@ -78,15 +78,16 @@ public class ModelSelector {
             }
         }
 
+        // Do not reassess already assessed models as this will lead to confusion
         // if all models are assessed, select any poorly assessed model
-        for (UMLModel model : modelIndex.getModelCollection()) {
+        /*for (UMLModel model : modelIndex.getModelCollection()) {
             if (model.getLastAssessmentConfidence() < CompassConfiguration.POORLY_ASSESSED_MODEL_THRESHOLD &&
                 !alreadyAssessedModels.contains(model.getModelID())) {
                 alreadyAssessedModels.add(model.getModelID());
                 modelsWaitingForAssessment.add(model.getModelID());
                 return model.getModelID();
             }
-        }
+        }*/
 
         return null;
     }

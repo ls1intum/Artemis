@@ -10,11 +10,16 @@
         <div class="col text-right">
             <span *ngIf="result && result.participation"><jhi-result [participation]="result.participation"></jhi-result></span>
             <span *ngIf="result?.assessmentType === 'AUTOMATIC' || !result?.rated">
-                <button class="btn btn-primary" (click)="saveAssessment()" [disabled]="!assessments || !assessmentsAreValid">Save Assessment</button>
-                <button class="btn btn-success" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid">Submit Assessment</button>
+                <button class="btn btn-primary" (click)="saveAssessment()" [disabled]="!assessments || !assessmentsAreValid" [hidden]="result && result.rated">Save Assessment</button>
+                <button class="btn btn-success" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid" [hidden]="result && result.rated">Submit Assessment</button>
+                <button class="btn btn-danger" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid" [hidden]="!result || !result.rated">Override Assessment</button>
             </span>
         </div>
     </div>
+
+    <h2>
+        <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while finding the next submission!</span></span>
+    </h2>
 
     <div class="row" *ngIf="modelingExercise">
         <div class="col">
@@ -26,9 +31,14 @@
         <div class="col text-right" *ngIf="result?.assessmentType === 'AUTOMATIC' || !result?.rated"><h5><strong>Score:</strong> {{ totalScore }}/{{ modelingExercise.maxScore }}</h5></div>
     </div>
 
-    <div><button type="submit" (click)="previousState()" class="btn btn-info">
-        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
-    </button></div><br>
+    <div>
+        <button type="submit" (click)="previousState()" class="btn btn-info">
+            <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+        </button>
+        <button *ngIf="result?.rated && !done" [disabled]="busy" class="btn btn-success btn-sm" (click)="assessNextOptimal(0)">
+            <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
+        </button>
+    </div><br>
 
     <div class="row">
         <div class="col-8 col-xl-9">
