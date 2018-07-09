@@ -60,6 +60,7 @@ export class EditorComponent implements OnInit, OnDestroy {
             /** Query the participationService for the participationId given by the params */
             this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
                 this.participation = response.body;
+                console.log(this.participation);
             });
             /** Assign file from params given by the URL */
             this.file = params['file'];
@@ -76,7 +77,7 @@ export class EditorComponent implements OnInit, OnDestroy {
     }
 
     updateSaveStatusLabel(event) {
-        this.bIsSaved = event.isSaved;
+        this.bIsSaved = event.bIsSaved;
         if (!this.bIsSaved) {
             this.bIsCommitted = false;
         }
