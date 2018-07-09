@@ -3,7 +3,7 @@
     <nav class="navbar navbar-light navbar-expand-md jh-navbar">
         <div class="jh-logo-container float-left editor-top-left">
             <a class="logo float-left" routerLink="/" (click)="collapseNavbar()">
-                <span jhiTranslate="global.title" class="navbar-title">ArTEMiS:</span> <span>{{participation.exercise.course.title}}</span>
+                <span jhiTranslate="global.title" class="navbar-title">ArTEMiS:</span> <span>{{participation?.exercise.course.title}}</span>
             </a>
         </div>
         <div class="navbar-collapse collapse editor-top-right">
@@ -24,12 +24,13 @@
         <div class="editor-sidebar-left">
             <!-- TODO: replace resizable directive -->
             <!-- TODO: https://github.com/mattlewis92/angular-resizable-element -->
-            <div class="card" resizable r-directions="['right']" r-width="250" id="cardFiles">
+            <!-- TODO: resizable r-directions="['right']" r-width="250"-->
+            <div class="card" id="cardFiles">
                 <div class="card-header bg-primary text-white" (click)="toggleCollapse($event, false)">
                     <span class="pull-right "><i class="fa fa-chevron-left"></i></span>
                     <h3 class="card-title">
                         <i class="fa fa-folder-open"></i>
-                        <span> &nbsp; {{participation.exercise.title}}</span>
+                        <span> &nbsp;{{participation?.exercise.title}}</span>
                     </h3>
                 </div>
 
@@ -50,7 +51,7 @@
 
         <div class="editor-center">
             <!-- TODO: check directive arguments -->
-            <jhi-editor-ace participation="participation" file="file" (saveStatusChange)="updateSaveStatusLabel($event)"></jhi-editor-ace>
+            <jhi-editor-ace [participation]="participation" [fileName]="file" (saveStatusChange)="updateSaveStatusLabel($event)"></jhi-editor-ace>
         </div>
 
         <div class="editor-sidebar-right">
