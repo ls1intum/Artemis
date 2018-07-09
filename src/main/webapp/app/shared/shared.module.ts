@@ -10,7 +10,7 @@ import {
     JhiLoginModalComponent,
     LoginModalService,
     LoginService,
-    Principal,
+    Principal, SafeHtmlPipe,
     StateStorageService,
     UserService
 } from './';
@@ -18,7 +18,7 @@ import { FileUploaderService } from './http/file-uploader.service';
 
 @NgModule({
     imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
-    declarations: [JhiLoginModalComponent, HasAnyAuthorityDirective],
+    declarations: [JhiLoginModalComponent, HasAnyAuthorityDirective, SafeHtmlPipe],
     providers: [
         LoginService,
         LoginModalService,
@@ -32,7 +32,7 @@ import { FileUploaderService } from './http/file-uploader.service';
         DatePipe
     ],
     entryComponents: [JhiLoginModalComponent],
-    exports: [ArTEMiSSharedCommonModule, JhiLoginModalComponent, HasAnyAuthorityDirective, DatePipe],
+    exports: [ArTEMiSSharedCommonModule, JhiLoginModalComponent, HasAnyAuthorityDirective, DatePipe, SafeHtmlPipe],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSSharedModule {}

@@ -1,12 +1,12 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule } from '../shared';
+import {ArTEMiSSharedModule, SafeHtmlPipe} from '../shared';
 import { coursesRoute } from './courses.route';
 import { CourseComponent, CourseExerciseService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { CoursesComponent } from './courses.component';
-import { JhiResultDetailComponent, ResultComponent, SafeHtmlPipe } from './results/result.component';
+import { JhiResultDetailComponent, ResultComponent } from './results/result.component';
 import { ExerciseListComponent, IsNotOverduePipe } from './exercises/exercise-list.component';
 import { RepositoryService } from '../entities/repository/repository.service';
 import { ResultService } from '../entities/result';
@@ -30,8 +30,7 @@ const ENTITY_STATES = [
         ResultComponent,
         JhiResultDetailComponent,
         ExerciseListComponent,
-        IsNotOverduePipe,
-        SafeHtmlPipe
+        IsNotOverduePipe
     ],
     exports: [
         ResultComponent

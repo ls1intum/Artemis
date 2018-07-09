@@ -1,20 +1,11 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, Output, Pipe, PipeTransform, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import {Participation, ParticipationService} from '../../entities/participation';
 import { ParticipationResultService, Result, ResultService } from '../../entities/result';
 import { JhiWebsocketService, Principal } from '../../shared';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DomSanitizer } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
 import { Feedback } from '../../entities/feedback';
-
-@Pipe({name: 'safeHtml'})
-export class SafeHtmlPipe implements PipeTransform {
-    constructor( private sanitizer: DomSanitizer ) { }
-    transform(value) {
-        return this.sanitizer.bypassSecurityTrustHtml(value);
-    }
-}
 
 @Component({
     selector: 'jhi-result',
