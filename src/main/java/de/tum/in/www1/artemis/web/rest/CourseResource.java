@@ -163,6 +163,7 @@ public class CourseResource {
             courseJson.set("exercises", exercisesJson);
             coursesJson.add(courseJson);
         }
+
         // return json array of courses
         return coursesJson;
     }

@@ -16,10 +16,10 @@ import java.util.List;
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
 
+    List<Participation> findByExerciseId(@Param("exerciseId") Long exerciseId);
+
     @Query("select p from Participation p where p.exercise.course.id = :courseId")
     List<Participation> findByCourseId(@Param("courseId") Long courseId);
-
-    List<Participation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
