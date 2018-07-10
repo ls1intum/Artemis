@@ -111,6 +111,17 @@
             <button class="btn btn-light" ng-click="vm.addDragAndDropQuestion()"
                     data-translate="arTeMiSApp.quizExercise.dragAndDropQuestion"
             >d&d</button>
+            <button class="btn btn-light" ng-click="vm.addExistingQuestions()"
+                    data-translate="arTeMiSApp.quizExercise.addExistingQuestions"
+            >eq</button>
+        </div>
+        <div class="form-group" ng-if="vm.showExistingQuestions">
+            <select ng-model="vm.selectedCourse" ng-change="vm.onCourseSelect()">
+                <option ng-repeat="course in vm.courses" value="{{course}}">{{course.title}}</option>
+            </select>
+            <select ng-model="vm.selectedQuizExercise" ng-change="vm.onQuizExerciseSelect()">
+                <option ng-repeat="quizExercise in vm.quizExercises" value="{{quizExercise}}">{{quizExercise.title}}</option>
+            </select>
         </div>
         <div class="form-group" ng-if="vm.validQuiz()">
             <input type="file" file-model="vm.importFile" placeholder="Upload file..." />

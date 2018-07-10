@@ -43,6 +43,7 @@
             "questions": "Questions",
             "multipleChoiceQuestion": "Add Multiple-Choice Question",
             "dragAndDropQuestion": "Add Drag-And-Drop Question",
+            "addExistingQuestions": "Add Existing Questions",
             "status": "Status",
             "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic",

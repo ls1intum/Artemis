@@ -82,6 +82,11 @@ class QuizExerciseDetailController {
         key: true,
         label: 'Active'
     }];
+    showExistingQuestions = false;
+    courses = [];
+    selectedCourse;
+    quizExercises = [];
+    selectedQuizExercise;
     importFile = null;
 
     init() {
@@ -176,6 +181,38 @@ class QuizExerciseDetailController {
             dragItems: [],
             correctMappings: []
         }]);
+    }
+
+    /**
+     * Adds existing questions to the quiz
+     */
+    addExistingQuestions() {
+        if (typeof this.quizExercise === 'undefined') {
+            this.quizExercise = this.entity;
+        }
+        this.courses = new Array(this.course);
+        this.showExistingQuestions = !this.showExistingQuestions;
+    }
+
+    onCourseSelect() {
+        if (this.selectedCourse !== null) {
+            const course = JSON.parse(this.selectedCourse);
+            this.repository.findForCourse(course.id)
+                .subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+                    if (quizExercisesResponse.body) {
+                        this.quizExercises = quizExercisesResponse.body;
+                    } else {
+                        this.onSaveError();
+                    }
+                });
+        }
+    }
+
+    onQuizExerciseSelect() {
+        if (this.selectedQuizExercise !== null) {
+            const quizExercise = JSON.parse(this.selectedQuizExercise);
+            alert(quizExercise.title);
+        }
     }
 
     /**
@@ -336,17 +373,17 @@ class QuizExerciseDetailController {
             return;
         }
         let fileReader = new FileReader();
-        fileReader.onload = (e) => {
+        fileReader.onload = () => {
             let questions = JSON.parse(fileReader.result);
             for (let question of questions) {
                 delete question.questionStatistic;
                 delete question.id;
-                if (question.type === "multiple-choice") {
+                if (question.type === 'multiple-choice') {
                     for (let answerOption of question.answerOptions) {
                         delete answerOption.id;
                     }
                     this.quizExercise.questions = this.quizExercise.questions.concat([question]);
-                } else if (question.type === "drag-and-drop") {
+                } else if (question.type === 'drag-and-drop') {
                     // Renaming id property with tempID property,
                     for (let dropLocation of question.dropLocations) {
                         dropLocation.tempID = dropLocation.id;
@@ -369,7 +406,7 @@ class QuizExerciseDetailController {
                     this.quizExercise.questions = this.quizExercise.questions.concat([question]);
                 }
             }
-        }
+        };
         fileReader.readAsText(this.importFile);
     }
 
