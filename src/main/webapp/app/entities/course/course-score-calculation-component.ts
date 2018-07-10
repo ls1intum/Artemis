@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 
-import { CourseService, CourseScoreCalculationService} from './course.service';
+import { CourseService } from './course.service';
+import { CourseScoreCalculationService } from './courseScoreCalculation.service';
 import {Exercise} from 'app/entities/exercise';
 import {Course} from 'app/entities/course/course.model';
 

@@ -1,6 +1,7 @@
 export * from './course.model';
 export * from './course-popup.service';
 export * from './course.service';
+export * from './courseScoreCalculation.service';
 export * from './course-dialog.component';
 export * from './course-delete-dialog.component';
 export * from './course-score-calculation-component';
