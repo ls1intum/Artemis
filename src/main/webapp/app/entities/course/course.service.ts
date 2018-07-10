@@ -320,30 +320,48 @@ export class CourseScoreCalculationService {
     constructor(private dateUtils: JhiDateUtils, private http: HttpClient) { }
 
     calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
-        let scores = new Map<string, number>();
-        let absoluteScore = 0;
-        let relativeScore = 0;
+        const scores = new Map<string, number>();
+        let absoluteScore = 0.0;
         let maxScore = 0;
-        for (let i = 0; i < courseExercises.length; i++) {
-            const exercise = courseExercises[i];
-            if (exercise.maxScore !== null) {
-                maxScore = maxScore + exercise.maxScore;
-                const participation: Participation = this.getParticipationForExercise(exercise);
-                if (participation !== undefined) {
-                    const result: Result = this.getResultForParticipation(participation, exercise.dueDate);
-                    absoluteScore = absoluteScore + result.score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
-                    relativeScore = relativeScore + result.score;
-                }
-            }
-        }
-        scores.set('absoluteScore', Math.round(absoluteScore * 100) / 100);
+        courseExercises.forEach( exercise => {
+          if (exercise.maxScore !== null) {
+              maxScore = maxScore + exercise.maxScore;
+              const participation: Participation = this.getParticipationForExercise(exercise);
+              if (participation !== undefined) {
+                  const result: Result = this.getResultForParticipation(participation, exercise.dueDate);
+                  absoluteScore = absoluteScore + result.score;
+              }
+          }
+        });
+        scores.set('absoluteScore', absoluteScore);
         if (maxScore > 0) {
-            scores.set('relativeScore', Math.round(absoluteScore/maxScore * 100));
+            scores.set('relativeScore', round(((absoluteScore / maxScore) * 100)), 2);
         } else {
             scores.set('relativeScore', 0);
         }
         scores.set('maxScore', maxScore);
         return scores;
+    }
+
+    private round(value: number, exp: number) { // helper function to make actually rounding possible
+      if (typeof exp === 'undefined' || +exp === 0) {
+        return Math.round(value);
+      }
+
+      value = +value;
+      exp = +exp;
+
+      if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+        return NaN;
+      }
+
+      // Shift
+      value = value.toString().split('e');
+      value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+
+      // Shift back
+      value = value.toString().split('e');
+      return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
     }
 
     setCourses(courses: Course[]) {
