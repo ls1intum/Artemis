@@ -23,9 +23,6 @@ public class CourseService {
 
     private final Logger log = LoggerFactory.getLogger(CourseService.class);
 
-    private static final double INITIAL_TOTAL_SCORE = 0.0;
-    private static final double SCORE_NORMALIZATION_VALUE = 0.01;
-
     private final CourseRepository courseRepository;
     private final UserService userService;
     private final ExerciseService exerciseService;
