@@ -64,6 +64,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
                         this.calculateAbsoluteScores(this.courseId);
                         this.calculateRelativeScores(this.courseId);
                         this.calculateMaxScores(this.courseId);
+                        this.handleEISTCourse2018();
                     }
                 );
         } else {
@@ -71,26 +72,28 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
             this.calculateAbsoluteScores(this.courseId);
             this.calculateRelativeScores(this.courseId);
             this.calculateMaxScores(this.courseId);
+            this.handleEISTCourse2018();
+        }
+    }
 
-            if (this.courseId === 13) { // EIST
-                const homeworkFilter = courseExercise => {
-                  return courseExercise.title.match(/Homework.*/g);
-                };
-                const homeworkScores = this.calculateScores(this.courseId, homeworkFilter);
-                this.eistHomeworkTotalScore = homeworkScores.get('absoluteScore');
-                this.eistHomeworkRelativeScore = homeworkScores.get('relativeScore');
-                this.eistHomeworkMaxScore = homeworkScores.get('maxScore');
+    handleEISTCourse2018() {
+        if (this.courseId === 13) { // EIST
+            const homeworkFilter = courseExercise => {
+                return courseExercise.title.match(/Homework.*/g);
+            };
+            const homeworkScores = this.calculateScores(this.courseId, homeworkFilter);
+            this.eistHomeworkTotalScore = homeworkScores.get('absoluteScore');
+            this.eistHomeworkRelativeScore = homeworkScores.get('relativeScore');
+            this.eistHomeworkMaxScore = homeworkScores.get('maxScore');
 
-                const inClassFilter = courseExercise => {
-                  return courseExercise.title.match(/(Lecture.*)/g);
-                };
+            const inClassFilter = courseExercise => {
+                return courseExercise.title.match(/(Lecture.*)/g);
+            };
 
-                const inClassScores = this.calculateScores(this.courseId, inClassFilter);
-                this.eistInClassTotalScore = inClassScores.get('absoluteScore');
-                this.eistInClassRelativeScore = inClassScores.get('relativeScore');
-                this.eistInClassMaxScore = inClassScores.get('maxScore');
-            }
-
+            const inClassScores = this.calculateScores(this.courseId, inClassFilter);
+            this.eistInClassTotalScore = inClassScores.get('absoluteScore');
+            this.eistInClassRelativeScore = inClassScores.get('relativeScore');
+            this.eistInClassMaxScore = inClassScores.get('maxScore');
         }
     }
 
