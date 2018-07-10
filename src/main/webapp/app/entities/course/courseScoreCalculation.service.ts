@@ -106,7 +106,7 @@ export class CourseScoreCalculationService {
                 return 0;
             });
 
-            if (dueDate != null && dueDate >= resultsArray[0].completionDate) {
+            if (dueDate === null || dueDate >= resultsArray[0].completionDate) {
                 // find the first result that is before the due date
                 chosenResult = resultsArray[0];
             } else if (dueDate < resultsArray[0].completionDate) {
