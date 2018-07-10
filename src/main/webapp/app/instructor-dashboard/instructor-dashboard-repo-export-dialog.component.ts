@@ -6,6 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
 import { Exercise, ExerciseService } from '../entities/exercise';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-repo-export-dialog',
@@ -17,6 +18,7 @@ export class InstructorDashboardExportReposComponent {
 
     exercise: Exercise;
     exportInProgress: boolean;
+    studentIdList: string;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -52,9 +54,8 @@ export class InstructorDashboardExportReposComponent {
               }
           },
           err => {
-              this.archiveInProgress = false;
+              this.exportInProgress = false;
           });
-        )
     }
 }
 
@@ -76,6 +77,7 @@ export class InstructorDashboardExportReposPopupComponent implements OnInit, OnD
             this.instructorDashboardPopupService
                 .open(InstructorDashboardExportReposComponent as Component, params['id'], true);
         });
+        console.log(this.routeSub);
     }
 
     ngOnDestroy() {

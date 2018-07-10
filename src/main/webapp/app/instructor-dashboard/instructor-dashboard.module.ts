@@ -76,7 +76,7 @@ const ENTITY_STATES = [
         RouterModule.forChild(ENTITY_STATES),
         NgbModule,
         ArTEMiSCoursesModule,
-        SortByModule
+        SortByModule,
     ],
     declarations: [
         InstructorDashboardComponent,
@@ -86,8 +86,8 @@ const ENTITY_STATES = [
         InstructorDashboardCleanupPopupComponent,
         InstructorDashboardResultDialogComponent,
         InstructorDashboardResultPopupComponent,
-        InstructorDashboardExportReposComponent
-        InstructorDashboardExportReposPopupComponent
+        InstructorDashboardExportReposComponent,
+        InstructorDashboardExportReposPopupComponent,
     ],
     entryComponents: [
         HomeComponent,
@@ -101,8 +101,8 @@ const ENTITY_STATES = [
         InstructorDashboardCleanupPopupComponent,
         InstructorDashboardResultDialogComponent,
         InstructorDashboardResultPopupComponent,
-        InstructorDashboardExportReposComponent
-        InstructorDashboardExportReposPopupComponent
+        InstructorDashboardExportReposComponent,
+        InstructorDashboardExportReposPopupComponent,
     ],
     providers: [
         InstructorDashboardPopupService
