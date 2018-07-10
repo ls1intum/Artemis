@@ -44,6 +44,11 @@ public abstract class UMLElement {
         }
         UMLElement otherElement = (UMLElement) obj;
 
+        if (otherElement.context == null || this.context == null) {
+            return otherElement.elementID == this.elementID && otherElement.jsonElementID.equals(this.jsonElementID)
+                && otherElement.context == this.context;
+        }
+
         return otherElement.elementID == this.elementID && otherElement.jsonElementID.equals(this.jsonElementID)
             && otherElement.context.equals(this.context);
     }
