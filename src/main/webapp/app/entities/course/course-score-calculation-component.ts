@@ -71,7 +71,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
             this.calculateRelativeScores(this.courseId);
             this.calculateMaxScores(this.courseId);
 
-            if (this.courseId === '13') { // EIST
+            if (this.courseId === 13) { // EIST
                 const homeworkFilter = courseExercise => {
                   return courseExercise.title.match(/Homework.*/g);
                 };
