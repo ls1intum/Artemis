@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 
 import {Result} from '../result/result.model';
 import {Course} from './course.model';
@@ -14,7 +13,7 @@ export class CourseScoreCalculationService {
     private SCORE_NORMALIZATION_VALUE = 0.01;
     private courses: Course[] = [];
 
-    constructor(private dateUtils: JhiDateUtils, private http: HttpClient) { }
+    constructor(private dateUtils: JhiDateUtils) { }
 
     calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
         const scores = new Map<string, number>();
@@ -62,21 +61,16 @@ export class CourseScoreCalculationService {
     }
 
     setCourses(courses: Course[]) {
-        const coursesArray: Course[] = courses;
-        for (let i = 0; i < coursesArray.length; i++) {
-            this.courses.push(this.convertCourseFromServer(coursesArray[i]));
+        for (let i = 0; i < courses.length; i++) {
+            this.courses.push(courses[i]);
         }
-    }
-
-    getCourses(): Course[] {
-        return this.courses;
     }
 
     getCourse(courseId: number): Course {
         let course: Course;
-        if(this.courses.length > 0) {
+        if (this.courses.length > 0) {
             for (let i = 0; i < this.courses.length; i++) {
-                if (this.courses[i].id == courseId) {
+                if (this.courses[i].id === courseId) {
                     course = this.courses[i];
                     return course;
                 }
@@ -84,18 +78,8 @@ export class CourseScoreCalculationService {
         }
     }
 
-    getExercisesByCourse(courseId: number) {
-        const course: Course = this.getCourse(courseId);
-        const exercises: Exercise[] = course.exercises;
-        let exercisesArray: Exercise[] = [];
-        for (let i = 0; i < exercises.length; i++) {
-            exercisesArray.push(this.convertExerciseFromServer(exercises[i]));
-        }
-        return exercisesArray;
-    }
-
     getParticipationForExercise(exercise: Exercise): Participation {
-        let exerciseParticipation: Participation = exercise['participation'];
+        const exerciseParticipation: Participation = exercise['participation'];
         return this.convertParticipationFromServer(exerciseParticipation);
     }
 
@@ -112,7 +96,6 @@ export class CourseScoreCalculationService {
             if (resultsArray.length <= 0) {
                 chosenResult = new Result();
                 chosenResult.score = 0;
-                chosenResult.participation = participation;
                 return chosenResult;
             }
 
@@ -137,9 +120,6 @@ export class CourseScoreCalculationService {
             if (chosenResult.score == null) {
                 chosenResult.score = 0;
             }
-
-            chosenResult.participation = participation;
-
         } else {
             chosenResult = new Result();
             chosenResult.score = 0;
@@ -157,23 +137,5 @@ export class CourseScoreCalculationService {
     private convertParticipationFromServer(participation: Participation): Participation {
         const entity: Participation = Object.assign({}, participation);
         return entity;
-    }
-
-    private convertExerciseFromServer(exercise: Exercise): Exercise {
-        const entity: Exercise = Object.assign({}, exercise);
-        entity.releaseDate = this.dateUtils
-            .convertDateTimeFromServer(exercise.releaseDate);
-        entity.dueDate = this.dateUtils
-            .convertDateTimeFromServer(exercise.dueDate);
-        return entity;
-    }
-
-    private convertCourseFromServer(course: Course): Course {
-        const copy: Course = Object.assign({}, course);
-        copy.startDate = this.dateUtils
-            .convertDateTimeFromServer(course.startDate);
-        copy.endDate = this.dateUtils
-            .convertDateTimeFromServer(course.endDate);
-        return copy;
     }
 }

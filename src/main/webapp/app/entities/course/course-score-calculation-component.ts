@@ -60,14 +60,14 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
                     (res: Course[]) => {
                         this.courseCalculationService.setCourses(res);
                         this.course = this.courseCalculationService.getCourse(this.courseId);
-                        this.courseExercises = this.courseCalculationService.getExercisesByCourse(this.courseId);
+                        this.courseExercises = this.course.exercises;
                         this.calculateAbsoluteScores(this.courseId);
                         this.calculateRelativeScores(this.courseId);
                         this.calculateMaxScores(this.courseId);
                     }
                 );
         } else {
-            this.courseExercises = this.courseCalculationService.getExercisesByCourse(this.courseId);
+            this.courseExercises = this.course.exercises;
             this.calculateAbsoluteScores(this.courseId);
             this.calculateRelativeScores(this.courseId);
             this.calculateMaxScores(this.courseId);
