@@ -25,7 +25,7 @@ export class QuizExerciseDetailWrapper extends UpgradeComponent implements OnIni
     @Input() course: Course;
     @Input() quizExercise: QuizExercise;
     @Input() repository: QuizExerciseService;
-    @Input() courseService: CourseService;
+    @Input() courseRepository: CourseService;
     @Input() dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     @Input() router: Router;
     @Input() translateService: TranslateService;
@@ -55,7 +55,7 @@ class QuizExerciseDetailController {
     savedEntity;
     quizExercise;
     repository;
-    courseService;
+    courseRepository;
     course;
     router;
     translateService;
@@ -115,6 +115,7 @@ class QuizExerciseDetailController {
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
+
         this.updateDuration();
     }
 
@@ -194,14 +195,20 @@ class QuizExerciseDetailController {
         if (typeof this.quizExercise === 'undefined') {
             this.quizExercise = this.entity;
         }
-        this.courseService.findCourses().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
-            }
-        );
+
+        if (this.courses.length === 0) {
+            this.courseRepository.query().subscribe(
+                (res: HttpResponse<Course[]>) => {
+                    this.courses = res.body;
+                }
+            );
+        }
         this.showExistingQuestions = !this.showExistingQuestions;
     }
 
+    /**
+     * Populates quiz exercises for the selected course
+     */
     onCourseSelect() {
         if (this.selectedCourse !== null) {
             const course = JSON.parse(this.selectedCourse);
@@ -216,6 +223,9 @@ class QuizExerciseDetailController {
         }
     }
 
+    /**
+     * Populates quizzes for selected quiz exercise
+     */
     onQuizExerciseSelect() {
         if (this.selectedQuizExercise !== null) {
             this.existingQuestions = [];
@@ -230,6 +240,9 @@ class QuizExerciseDetailController {
         }
     }
 
+    /**
+     * Adds selected quizzes to current quiz exercise
+     */
     addExistingQuestions() {
         var questions = [];
         for (const question of this.existingQuestions) {
@@ -567,6 +580,7 @@ angular
             'course': '<',
             'quizExercise': '<',
             'repository': '<',
+            'courseRepository': '<',
             'courseService': '<',
             'dragAndDropQuestionUtil': '<',
             'router': '<',

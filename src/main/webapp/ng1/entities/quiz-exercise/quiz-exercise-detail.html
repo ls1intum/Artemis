@@ -119,10 +119,10 @@
             <select ng-model="vm.selectedCourse" ng-change="vm.onCourseSelect()">
                 <option ng-repeat="course in vm.courses" value="{{course}}">{{course.title}}</option>
             </select>
-            <select ng-model="vm.selectedQuizExercise" ng-change="vm.onQuizExerciseSelect()">
+            <select ng-model="vm.selectedQuizExercise" ng-change="vm.onQuizExerciseSelect()" ng-if="vm.selectedCourse">
                 <option ng-repeat="quizExercise in vm.quizExercises" value="{{quizExercise}}">{{quizExercise.title}}</option>
             </select>
-            <div class="table-responsive">
+            <div class="table-responsive" ng-if="vm.selectedQuizExercise">
                 <table class="table table-striped">
                     <thead>
                     <tr>
@@ -135,7 +135,7 @@
                             <span class="fa fa-sort"></span>
                         </th>
                         <th>
-                            <span jhiTranslate="entity.action.export">Export</span>
+                            <span jhiTranslate="entity.action.add">Add</span>
                             <span class="fa fa-sort"></span>
                         </th>
                         <th></th>
@@ -145,11 +145,11 @@
                     <tr ng-repeat="question in vm.existingQuestions">
                         <td>{{question.title}}</td>
                         <td>{{question.type}}</td>
-                        <td class="text-right">
+                        <td>
                             <div class="checkbox">
                                 <label>
                                     <input type="checkbox" ng-Model="question.exportQuiz" />
-                                    <span data-translate="entity.action.export"></span>
+                                    <span data-translate="entity.action.add"></span>
                                 </label>
                             </div>
                         </td>
@@ -157,8 +157,8 @@
                     </tbody>
                 </table>
             </div>
-            <button class="btn btn-light" ng-click="vm.addExistingQuestions()"
-                    data-translate="arTeMiSApp.quizExercise.multipleChoiceQuestion"
+            <button class="btn btn-light" ng-click="vm.addExistingQuestions()" ng-if="vm.selectedQuizExercise"
+                    data-translate="entity.action.add"
             >mc</button>
         </div>
         <div class="form-group" ng-if="vm.validQuiz()">

@@ -124,6 +124,7 @@
     },
     "entity": {
         "action": {
+            "add": "TODO: Add German word for Add",
             "addblob": "Blob hinzufügen",
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
