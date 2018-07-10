@@ -44,6 +44,8 @@
             "multipleChoiceQuestion": "Add Multiple-Choice Question",
             "dragAndDropQuestion": "Add Drag-And-Drop Question",
             "addExistingQuestions": "Add Existing Questions",
+            "selectCourse": "Select a Course",
+            "selectQuizExercise": "Select a Quiz Exercise",
             "status": "Status",
             "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic",

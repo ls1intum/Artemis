@@ -44,6 +44,8 @@
             "multipleChoiceQuestion": "Multiple-Choice Frage",
             "dragAndDropQuestion": "Drag-And-Drop Frage",
             "addExistingQuestions": "TODO: Add German word for Add Existing Questions",
+            "selectCourse": "TODO: Add German word for Select a Course",
+            "selectQuizExercise": "TODO: Add German word for Select a Quiz Exercise",
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
             "startTime": "Startzeit",

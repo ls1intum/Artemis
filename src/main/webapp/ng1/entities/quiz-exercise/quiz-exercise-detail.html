@@ -116,12 +116,28 @@
             >eq</button>
         </div>
         <div class="form-group" ng-if="vm.showExistingQuestions">
-            <select ng-model="vm.selectedCourse" ng-change="vm.onCourseSelect()">
-                <option ng-repeat="course in vm.courses" value="{{course}}">{{course.title}}</option>
-            </select>
-            <select ng-model="vm.selectedQuizExercise" ng-change="vm.onQuizExerciseSelect()" ng-if="vm.selectedCourse">
-                <option ng-repeat="quizExercise in vm.quizExercises" value="{{quizExercise}}">{{quizExercise.title}}</option>
-            </select>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <tbody>
+                    <tr>
+                        <td><span data-translate="arTeMiSApp.quizExercise.selectCourse"></span></td>
+                        <td>
+                            <select ng-model="vm.selectedCourse" ng-change="vm.onCourseSelect()">
+                                <option ng-repeat="course in vm.courses" value="{{course}}">{{course.title}}</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><span data-translate="arTeMiSApp.quizExercise.selectQuizExercise"></span></td>
+                        <td>
+                            <select ng-model="vm.selectedQuizExercise" ng-change="vm.onQuizExerciseSelect()" ng-if="vm.selectedCourse">
+                                <option ng-repeat="quizExercise in vm.quizExercises" value="{{quizExercise}}">{{quizExercise.title}}</option>
+                            </select>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
             <div class="table-responsive" ng-if="vm.selectedQuizExercise">
                 <table class="table table-striped">
                     <thead>
