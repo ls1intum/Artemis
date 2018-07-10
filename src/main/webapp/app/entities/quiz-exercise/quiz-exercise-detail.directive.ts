@@ -2,6 +2,7 @@ import { Directive, DoCheck, ElementRef, Inject, Injector, Input, OnChanges, OnD
 import { UpgradeComponent } from '@angular/upgrade/static';
 import { QuizExercise } from './quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
+import { CourseService } from '../course/course.service';
 import { QuizExerciseComponent } from './quiz-exercise.component';
 import { Course } from '../course/course.model';
 import { HttpResponse } from '@angular/common/http';
@@ -24,6 +25,7 @@ export class QuizExerciseDetailWrapper extends UpgradeComponent implements OnIni
     @Input() course: Course;
     @Input() quizExercise: QuizExercise;
     @Input() repository: QuizExerciseService;
+    @Input() courseService: CourseService;
     @Input() dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     @Input() router: Router;
     @Input() translateService: TranslateService;
@@ -53,6 +55,7 @@ class QuizExerciseDetailController {
     savedEntity;
     quizExercise;
     repository;
+    courseService;
     course;
     router;
     translateService;
@@ -191,7 +194,11 @@ class QuizExerciseDetailController {
         if (typeof this.quizExercise === 'undefined') {
             this.quizExercise = this.entity;
         }
-        this.courses = new Array(this.course);
+        this.courseService.findCourses().subscribe(
+            (res: HttpResponse<Course[]>) => {
+                this.courses = res.body;
+            }
+        );
         this.showExistingQuestions = !this.showExistingQuestions;
     }
 
@@ -560,6 +567,7 @@ angular
             'course': '<',
             'quizExercise': '<',
             'repository': '<',
+            'courseService': '<',
             'dragAndDropQuestionUtil': '<',
             'router': '<',
             'translateService': '<'
