@@ -127,34 +127,30 @@
                             </select>
                         </td>
                     </tr>
-                    <tr>
-                        <td><span data-translate="arTeMiSApp.quizExercise.selectQuizExercise"></span></td>
-                        <td>
-                            <select ng-model="vm.selectedQuizExercise" ng-change="vm.onQuizExerciseSelect()" ng-if="vm.selectedCourse">
-                                <option ng-repeat="quizExercise in vm.quizExercises" value="{{quizExercise}}">{{quizExercise.title}}</option>
-                            </select>
-                        </td>
-                    </tr>
+                    <!--<tr>-->
+                        <!--<td><span data-translate="arTeMiSApp.quizExercise.selectQuizExercise"></span></td>-->
+                        <!--<td>-->
+                            <!--<select ng-model="vm.selectedQuizExercise" ng-change="vm.onQuizExerciseSelect()" ng-if="vm.selectedCourse">-->
+                                <!--<option ng-repeat="quizExercise in vm.quizExercises" value="{{quizExercise}}">{{quizExercise.title}}</option>-->
+                            <!--</select>-->
+                        <!--</td>-->
+                    <!--</tr>-->
                     </tbody>
                 </table>
             </div>
-            <div class="table-responsive" ng-if="vm.selectedQuizExercise">
+            <div class="table-responsive" ng-if="vm.existingQuestions.length !== 0">
                 <table class="table table-striped">
                     <thead>
                     <tr>
                         <th>
                             <span jhiTranslate="arTeMiSApp.exercise.title">Title</span>
-                            <span class="fa fa-sort"></span>
                         </th>
                         <th>
                             <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
-                            <span class="fa fa-sort"></span>
                         </th>
                         <th>
                             <span jhiTranslate="entity.action.add">Add</span>
-                            <span class="fa fa-sort"></span>
                         </th>
-                        <th></th>
                     </tr>
                     </thead>
                     <tbody>
@@ -173,7 +169,7 @@
                     </tbody>
                 </table>
             </div>
-            <button class="btn btn-light" ng-click="vm.addExistingQuestions()" ng-if="vm.selectedQuizExercise"
+            <button class="btn btn-light" ng-click="vm.addExistingQuestions()" ng-if="vm.existingQuestions.length !== 0"
                     data-translate="entity.action.add"
             >mc</button>
         </div>

@@ -210,35 +210,47 @@ class QuizExerciseDetailController {
      * Populates quiz exercises for the selected course
      */
     onCourseSelect() {
-        if (this.selectedCourse !== null) {
-            const course = JSON.parse(this.selectedCourse);
-            this.repository.findForCourse(course.id)
-                .subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                    if (quizExercisesResponse.body) {
-                        this.quizExercises = quizExercisesResponse.body;
-                    } else {
-                        this.onSaveError();
-                    }
-                });
+        this.existingQuestions = [];
+        if (this.selectedCourse === null) {
+            return;
         }
-    }
-
-    /**
-     * Populates quizzes for selected quiz exercise
-     */
-    onQuizExerciseSelect() {
-        if (this.selectedQuizExercise !== null) {
-            this.existingQuestions = [];
-            const quizExercise = JSON.parse(this.selectedQuizExercise);
-            this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                const quizExercise = response.body;
-                for (const question of quizExercise.questions) {
-                    question.exportQuiz = true;
-                    this.existingQuestions.push(question);
+        const course = JSON.parse(this.selectedCourse);
+        this.repository.findForCourse(course.id)
+            .subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+                if (quizExercisesResponse.body) {
+                    let quizExercises = quizExercisesResponse.body;
+                    for (const quizExercise of quizExercises) {
+                        this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
+                            const quizExercise = response.body;
+                            for (const question of quizExercise.questions) {
+                                question.exportQuiz = true;
+                                this.existingQuestions.push(question);
+                            }
+                        });
+                    }
+                } else {
+                    this.onSaveError();
                 }
             });
-        }
     }
+
+    // /**
+    //  * Populates quizzes for selected quiz exercise
+    //  */
+    // onQuizExerciseSelect() {
+    //     if (this.selectedQuizExercise !== null) {
+    //         this.existingQuestions = [];
+    //         const quizExercise = JSON.parse(this.selectedQuizExercise);
+    //         this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
+    //             const quizExercise = response.body;
+    //             for (const question of quizExercise.questions) {
+    //                 question.exportQuiz = true;
+    //                 this.existingQuestions.push(question);
+    //             }
+    //         });
+    //     }
+    // }
+
 
     /**
      * Adds selected quizzes to current quiz exercise
