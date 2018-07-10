@@ -141,7 +141,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
       }
     }
 
-    calculateTotalScoreForTheCourse(courseId: number, scoreType: string): Map<string, number> {
+    calculateTotalScoreForTheCourse(courseId: number, scoreType: string): number {
       const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
       return scores.get(scoreType);
     }

@@ -335,7 +335,7 @@ export class CourseScoreCalculationService {
         });
         scores.set('absoluteScore', absoluteScore);
         if (maxScore > 0) {
-            scores.set('relativeScore', round(((absoluteScore / maxScore) * 100)), 2);
+            scores.set('relativeScore', this.round((absoluteScore / maxScore) * 100, 2));
         } else {
             scores.set('relativeScore', 0);
         }
@@ -343,7 +343,7 @@ export class CourseScoreCalculationService {
         return scores;
     }
 
-    private round(value: number, exp: number) { // helper function to make actually rounding possible
+    private round(value, exp) { // helper function to make actually rounding possible
       if (typeof exp === 'undefined' || +exp === 0) {
         return Math.round(value);
       }
