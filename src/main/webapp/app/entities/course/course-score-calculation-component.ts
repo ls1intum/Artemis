@@ -49,7 +49,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
-            this.courseId = params['id'];
+            this.courseId = parseInt(params['id'], 10);
         });
 
         this.course = this.courseCalculationService.getCourse(this.courseId);
