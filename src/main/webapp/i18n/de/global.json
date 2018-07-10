@@ -183,5 +183,6 @@
         "invalid.repository.url": "Die Repository URL scheint ungültig zu sein. Stelle bitte sicher, dass sie existiert und für ArTEMiS zugänglich ist."
     },
     "footer": "Dies ist Ihre Fußzeile",
-    "justNow": "gerade eben"
+    "justNow": "gerade eben",
+    "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen."
 }

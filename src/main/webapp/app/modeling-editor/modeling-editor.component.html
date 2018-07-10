@@ -1,22 +1,25 @@
 <div class="p-4">
     <jhi-alert></jhi-alert>
 
-    <div class="row">
-        <div class="col">
+    <div class="row" [ngClass]="{'align-items-center': submission?.submitted}">
+        <div class="col-12 col-lg-8">
             <h2>
                 Modeling Editor <span *ngIf="modelingExercise">for Exercise: {{modelingExercise.title}}</span>
             </h2>
         </div>
-        <div class="col text-right">
+        <div class="col-12 col-lg-4 text-right">
             <span *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></span>
             <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted">
                 <span class="fa fa-save"></span>
                 <span jhiTranslate="entity.action.save">Save</span></button>
             <button class="btn btn-success" (click)="submit()"
                     [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
-                    [hidden]="submission?.submitted">Submit</button>
+                    [hidden]="submission?.submitted || !isActive">Submit</button>
+            <button class="btn btn-warning" (click)="submit()"
+                    [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
+                    [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
         </div>
-    </div>
+    </div><br>
 
     <div class="row" *ngIf="modelingExercise">
         <div class="col">

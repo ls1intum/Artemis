@@ -3,6 +3,7 @@
         "modelingEditor": {
             "saveSuccessful": "Your diagram was saved successfully!",
             "submitSuccessful": "Your diagram was submitted successfully! Now you can't edit your diagram anymore. Please wait for your feedback.",
+            "submitDeadlineMissed": "Your diagram was submitted successfully! Now you can't edit your diagram anymore. Please wait for your feedback. As you missed the deadline the score will not be counted.",
             "empty": "Unable to submit an empty diagram."
         }
     }
