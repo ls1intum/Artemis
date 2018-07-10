@@ -81,7 +81,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
                 this.eistHomeworkMaxScore = homeworkScores.get('maxScore');
 
                 const inClassFilter = courseExercise => {
-                  return courseExercise.title.match(/(Lecture.*)|(Good Morning Quiz.*)|(Quiz.*)/g);
+                  return courseExercise.title.match(/(Lecture.*)/g);
                 };
 
                 const inClassScores = this.calculateScores(this.courseId, inClassFilter);
