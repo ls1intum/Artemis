@@ -34,8 +34,13 @@
                     </h3>
                 </div>
 
-                <!-- TODO: migrate directive arguments -->
-                <!--<editor-file-browser participation="participation" file="file" on-created-file="$ctrl.isCommitted = false" on-deleted-file="$ctrl.isCommitted = false" repository-files="$ctrl.repositoryFiles"></editor-file-browser>-->
+                <jhi-editor-file-browser [participation]="participation"
+                                         [fileName]="file"
+                                         [repositoryFiles]="repositoryFiles"
+                                         (selectedFile)="updateSelectedFile($event)"
+                                         (createdFile)="updateRepositoryCommitStatus($event)"
+                                         (deletedFile)="updateRepositoryCommitStatus($event)">
+                </jhi-editor-file-browser>
 
                 <div class="card-footer" [innerHtml]="saveStatusLabel | safeHtml"></div>
                 <div class="card-footer">
@@ -50,8 +55,10 @@
         </div>
 
         <div class="editor-center">
-            <!-- TODO: check directive arguments -->
-            <jhi-editor-ace [participation]="participation" [fileName]="file" (saveStatusChange)="updateSaveStatusLabel($event)"></jhi-editor-ace>
+            <jhi-editor-ace [participation]="participation"
+                            [fileName]="file"
+                            (saveStatusChange)="updateSaveStatusLabel($event)">
+            </jhi-editor-ace>
         </div>
 
         <div class="editor-sidebar-right">

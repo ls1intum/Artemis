@@ -8,6 +8,7 @@ import {JhiAlertService} from 'ng-jhipster';
 import {CourseExerciseService} from '../../entities/course';
 import {JhiWebsocketService} from '../../shared';
 import {EditorComponent} from '../editor.component';
+import { TreeModel, TreeModelSettings, Ng2TreeSettings } from 'ng2-tree';
 import * as $ from 'jquery';
 
 @Component({
@@ -28,7 +29,13 @@ import * as $ from 'jquery';
 
 export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges {
 
-    // participation="participation" file="file" on-created-file="$ctrl.isCommitted = false" on-deleted-file="$ctrl.isCommitted = false" repository-files="$ctrl.repositoryFiles"
+    public fileTree: TreeModel;
+    public fileTreeSettings: Ng2TreeSettings = {
+        rootIsVisible: false,
+        showCheckboxes: false,
+        enableCheckboxes: false
+    };
+
     /**
      * bindings:
         participation: '<',
@@ -36,13 +43,13 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         onCreatedFile: '&',
         onDeletedFile: '&',
         repositoryFiles: '<'
-
      */
     @Input() participation: Participation;
     @Input() repositoryFiles;
     @Input() fileName: string;
     @Output() createdFile = new EventEmitter<object>();
     @Output() deletedFile = new EventEmitter<object>();
+    @Output() selectedFile = new EventEmitter<object>();
 
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
@@ -55,11 +62,12 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
      * @desc Framework function which is executed when the component is instantiated.
      * Used to assign parameters which are used by the component
      */
-    ngOnInit(): void {}
+    ngOnInit(): void {
+    }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (this.participation && this.repositoryFiles) {
-            this.getFiles();
+        if (this.participation) {
+            this.getRepositoryFiles();
         }
     }
 
@@ -73,24 +81,41 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         this.deletedFile.emit(statusChange);
     }
 
+    handleNodeSelected(event) {
+        console.log(event);
+        console.log(event.node.value);
+        this.selectedFile.emit({
+            fileName: event.node.value
+        });
+    }
+
     updateRepositoryCommitStatus(event) {
         console.log(event);
-        if(this.onCreatedFile) {
+        if (this.onCreatedFile) {
             this.onCreatedFile({
                 bIsSaved: false
             });
-        } else if(this.onDeletedFile) {
+        } else if (this.onDeletedFile) {
             this.onDeletedFile({
                 bIsSaved: false
             });
         }
     }
 
-    getFiles() {
+    initializeTreeViewer(fileTree): void {
+        this.fileTree = {
+            value: 'root',
+            settings: this.getTreeViewSettings(),
+            children: fileTree
+        };
+    }
+
+    getRepositoryFiles() {
         if (!this.repositoryFiles) {
             /** Query the repositoryFileService for files in the repository */
-            this.repositoryFileService.query(this.participation.id).subscribe(files => {
+            this.repositoryFileService.query(this.parent.participation.id).subscribe(files => {
                 this.repositoryFiles = files;
+                console.log(this.repositoryFiles);
                 this.setupTreeview(this.repositoryFiles);
             }, err => {
                 console.log('There was an error while getting files: ' + err.body.msg);
@@ -103,60 +128,85 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
     setupTreeview(files) {
         let tree = this.buildTree(files);
         tree = this.compressTree(tree);
-        $('#fileTree').treeview({
-            data: tree,
-            levels: 5,
-            expandIcon: 'fa fa-folder',
-            emptyIcon: 'fa fa-file',
-            collapseIcon: 'fa fa-folder-open',
-            showBorder: false
-        }).on('nodeSelected', function (event, node) {
-            this.fileName = node.file;
-            this.folder = node.folder;
-            /*$state.go('editor', {
-                file: node.file
-            }, {notify:false});*/
-        });
+        this.initializeTreeViewer(tree);
+    }
+
+    getTreeViewSettings(): TreeModelSettings {
+
+        /**
+         expandIcon: 'fa fa-folder',
+         emptyIcon: 'fa fa-file',
+         collapseIcon: 'fa fa-folder-open',
+         *
+         */
+
+        return {
+            'static': false,
+            'isCollapsedOnInit': false,
+            'cssClasses': {
+                'expanded': 'fa fa-folder-open',
+                'collapsed': 'fa fa-folder',
+                'leaf': 'fa',
+                'empty': 'fa fa-folder disabled'
+            },
+            'templates': {
+                'leaf': '<i class="fa fa-file-o"></i>'
+            }
+        };
     }
 
     buildTree(files, tree?, folder?) {
+
+        console.log('CALLING BUILDTREE WITH ARGUMENTS: ');
+        console.log(arguments);
+
+        /**
+         * Extract exerciseName for further processing by reading from the participation
+         */
+        const repoUrlSplit = this.participation.repositoryUrl.split('/');
+        const exerciseName = repoUrlSplit[repoUrlSplit.length - 1].slice(0, -4);
+
+        /**
+         * Initialize tree if empty
+         */
         if (tree == null) {
             tree = [];
         }
 
-        for(let file of files) {
+        for (let file of files) {
 
-            // remove leading and trailing slash
-            file = file.replace(/^\/|\/$/g, '');
+            let fileSplit = file.split('\\');
+            fileSplit = fileSplit.slice(fileSplit.indexOf(exerciseName) + 1);
+            file = fileSplit.join('/');
 
-            var fileSplit = file.split('/');
-
-            var node = fileSplit.find(function(element) {
-                return element.text === fileSplit[0];
+            let node = tree.find(function(element) {
+                return element.value === fileSplit[0];
             });
+
             if (node == null) {
                 node = {
-                    text: fileSplit[0]
+                    value: fileSplit[0]
                 };
                 tree.push(node);
             }
 
             fileSplit.shift();
+
             if (fileSplit.length > 0) {
                 // directory node
                 node.selectable = false;
-                node.nodes = this.buildTree([fileSplit.join('/')], node.nodes, folder ? folder + '/' + node.text: node.text);
-                node.folder = node.text;
+                node.children = this.buildTree([fileSplit.join('/')], node.children, folder ? folder + '/' + node.value : node.value);
+                node.folder = node.value;
             } else {
                 // file node
                 node.folder = folder;
-                node.file = (folder ? folder  + '/' : '' )+ node.text;
+                node.file = (folder ? folder  + '/' : '' ) + node.text;
 
-                if(node.file == this.fileName) {
+                if (node.file === this.fileName) {
                     folder = node.folder;
                     node.state = {
                         selected: true
-                    }
+                    };
                 }
             }
         }
@@ -166,15 +216,15 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
     // Compress tree to not contain nodes with only one directory child node
     compressTree(tree) {
 
-        for(let node of tree) {
-            if (node.nodes && node.nodes.length == 1 && node.nodes[0].nodes) {
-                node.text = node.text + ' / ' + node.nodes[0].text;
-                node.nodes = this.compressTree(node.nodes[0].nodes);
-                if(node.nodes[0].nodes) {
+        for (const node of tree) {
+            if (node.children && node.children.length === 1 && node.children[0].children) {
+                node.value = node.value + ' / ' + node.children[0].value;
+                node.children = this.compressTree(node.children[0].children);
+                if (node.children[0].children) {
                     return this.compressTree(tree);
                 }
-            } else if (node.nodes) {
-                node.nodes = this.compressTree(node.nodes);
+            } else if (node.children) {
+                node.children = this.compressTree(node.children);
             }
         }
         return tree;

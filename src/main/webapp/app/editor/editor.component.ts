@@ -61,7 +61,6 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
                 this.participation = response.body;
                 this.checkIfRepositoryIsClean();
-                console.log(this.participation);
             });
             /** Assign file from params given by the URL */
             this.file = params['file'];
@@ -95,8 +94,14 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
         this.saveStatusLabel = event.saveStatusLabel;
     }
 
+    updateSelectedFile(fileObject) {
+        console.log('RECEIVED EVENT WITH NEW FILENAME: ' + fileObject.fileName);
+        console.log(this.repositoryFiles);
+        this.file = fileObject.fileName;
+    }
+
     /** Collapse parts of the editor (file browser, build output...) */
-    toggleCollapse = function(event: any, horizontal) {
+    toggleCollapse(event: any, horizontal: boolean) {
 
         const target = event.toElement || event.relatedTarget || event.target;
 
@@ -108,13 +113,9 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             $card.removeClass('collapsed');
         } else {
             $card.addClass('collapsed');
-            if (horizontal) {
-                $card.height('35px');
-            } else {
-                $card.width('55px');
-            }
+            horizontal ? $card.height('35px') : $card.width('55px');
         }
-    };
+    }
 
     commit(event) {
 
@@ -130,7 +131,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             err => {
                 console.log('Error occured');
             });
-    };
+    }
 
     /**
      * @function ngOnDestroy

@@ -64,6 +64,7 @@ export class EditorAceComponent implements OnInit, OnDestroy, OnChanges {
             this.updateSaveStatusLabel();
         }
         if (changes.fileName && this.fileName) {
+            console.log('FILE CHANGED');
             // current file has changed
             this.loadFile(this.fileName);
         }
@@ -108,7 +109,7 @@ export class EditorAceComponent implements OnInit, OnDestroy, OnChanges {
             console.log('We got a fileObj!');
             console.log(fileObj);
 
-            if(!this.sessions[fileName]) {
+            // if(!this.sessions[fileName]) {
                 // var ModeList = ace.require("ace/ext/modelist");
                 // var mode = ModeList.getModeForPath(file).mode;
 
@@ -120,7 +121,7 @@ export class EditorAceComponent implements OnInit, OnDestroy, OnChanges {
                 //     });
                 // });
 
-            }
+            // }
             // vm.editor.setSession(vm.sessions[file]);
             // vm.editor.focus();
         }, err => {

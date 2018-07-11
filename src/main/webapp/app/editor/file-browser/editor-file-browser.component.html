@@ -4,6 +4,10 @@
 </div>
 
 <div class="card-body">
-    <div id="fileTree"></div>
+    <tree [tree]="fileTree"
+          [settings]="fileTreeSettings"
+          (nodeSelected)="handleNodeSelected($event)"
+          class="treeview">
+    </tree>
 </div>
 
