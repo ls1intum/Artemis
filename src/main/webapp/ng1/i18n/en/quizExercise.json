@@ -46,6 +46,7 @@
             "addExistingQuestions": "Add Existing Questions",
             "selectCourse": "Select a Course",
             "selectQuizExercise": "Select a Quiz Exercise",
+            "addSelectedQuestions": "Add Selected Questions",
             "status": "Status",
             "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic",

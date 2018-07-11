@@ -223,7 +223,7 @@ class QuizExerciseDetailController {
                         this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
                             const quizExercise = response.body;
                             for (const question of quizExercise.questions) {
-                                question.exportQuiz = true;
+                                question.exercise =quizExercise;
                                 this.existingQuestions.push(question);
                             }
                         });
@@ -271,7 +271,7 @@ class QuizExerciseDetailController {
      * @param question {Question} the question to remove
      */
     deleteQuestion(question) {
-        this.quizExercise.questions = this.quizExercise.questions.filter(function (q) {
+        this.quizExercise.questions = this.quizExercise.questions.filter(function(q) {
             return q !== question;
         });
     }

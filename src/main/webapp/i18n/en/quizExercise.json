@@ -44,6 +44,7 @@
             "multipleChoiceQuestion": "Multiple-Choice Question",
             "dragAndDropQuestion": "Drag-And-Drop Question",
             "addExistingQuestions": "Add Existing Questions",
+            "addSelectedQuestions": "Add Selected Questions",
             "selectCourse": "Select a Course",
             "selectQuizExercise": "Select a Quiz Exercise",
             "status": "Status",
