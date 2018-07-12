@@ -24,3 +24,4 @@ export * from './model/base-entity';
 export * from './shared-libs.module';
 export * from './shared-common.module';
 export * from './shared.module';
+export * from './guard/pending-changes.guard';

@@ -20,6 +20,7 @@ import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCoursesModule } from './courses';
 import { ArTEMiSEntityModule } from './entities/entity.module';
 import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModule } from './instructor-dashboard';
+import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
 import { EditorComponentWrapper } from './editor/editor.directive';
@@ -40,6 +41,7 @@ import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.m
 import { QuizReEvaluateWrapper } from './quiz/re-evaluate/quiz-re-evaluate.directive';
 import { QuizReEvaluateComponent } from './quiz/re-evaluate/quiz-re-evaluate.component';
 import { Principal } from './shared';
+import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 
 declare var angular: any;
 
@@ -69,6 +71,7 @@ declare var angular: any;
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
+        ArTEMiSAssessmentDashboardModule,
         ArTEMiSStatisticModule,
         ArTEMiSModelingEditorModule
         // jhipster-needle-angular-add-module JHipster will add new module here
@@ -115,6 +118,7 @@ declare var angular: any;
         DifferencePipe,
         JhiWebsocketService,
         Principal,
+        PendingChangesGuard,
     /**
      * @description Providing $scope:
      *  Angular 2+ is using this instead of $scope.

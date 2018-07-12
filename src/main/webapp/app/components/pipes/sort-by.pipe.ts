@@ -27,15 +27,16 @@ export class SortByPipe implements PipeTransform {
             }
             const keys = predicate.split('.');
             for (const tempKey of keys) {
-                tempA = tempA[tempKey];
-                tempB = tempB[tempKey];
-                if (tempA == null) {
-                    break;
+                if (tempA !== null) {
+                    tempA = tempA[tempKey];
+                }
+                if (tempB !== null) {
+                    tempB = tempB[tempKey];
                 }
             }
-            const result = (tempA < tempB) ? -1 : (tempA > tempB) ? 1 : (
+            const result = (tempA < tempB) ? -1 : (tempA > tempB) ? 1 : (tempA == null && tempB !== null ? -1 : (tempA !== null && tempB == null ? 1 : (
                 (a.id < b.id) ? -1 : (a.id > b.id) ? 1 : 0
-            );
+            )));
             return result * (reverse ? 1 : -1);
         });
         return array;

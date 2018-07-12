@@ -1,4 +1,4 @@
-import { UserRouteAccessService } from '../shared';
+import { UserRouteAccessService, PendingChangesGuard } from '../shared';
 import { Routes } from '@angular/router';
 import { ModelingEditorComponent } from './modeling-editor.component';
 
@@ -10,6 +10,7 @@ export const modelingEditorRoute: Routes = [
             authorities: ['ROLE_USER'],
             pageTitle: 'arTeMiSApp.modelingExercise.home.title'
         },
-        canActivate: [UserRouteAccessService]
+        canActivate: [UserRouteAccessService],
+        canDeactivate: [PendingChangesGuard]
     }
 ];

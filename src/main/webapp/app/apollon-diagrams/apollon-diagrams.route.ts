@@ -41,5 +41,15 @@ export const apollonDiagramsRoutes: Routes = [
             pageTitle: 'arTeMiSApp.apollonDiagram.detail.title'
         },
         canActivate: [UserRouteAccessService]
+    },
+    // We have to fake path change to make angular reload the component
+    {
+        path: 'apollon-diagrams2/exercise/:exerciseId/:submissionId/tutor',
+        component: ApollonDiagramTutorComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'arTeMiSApp.apollonDiagram.detail.title'
+        },
+        canActivate: [UserRouteAccessService]
     }
 ];

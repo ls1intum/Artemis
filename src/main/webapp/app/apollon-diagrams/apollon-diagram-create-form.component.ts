@@ -6,7 +6,7 @@ import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagr
 @Component({
     selector: 'jhi-apollon-diagram-create-form',
     templateUrl: './apollon-diagram-create-form.component.html',
-    providers: []
+    providers: [ApollonDiagramService]
 })
 export class ApollonDiagramCreateFormComponent implements AfterViewInit {
     apollonDiagram: ApollonDiagram;

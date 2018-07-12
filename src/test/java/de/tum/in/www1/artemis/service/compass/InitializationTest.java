@@ -24,6 +24,9 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 
+/**
+ * Make sure to back up your compass folder before running this Test!
+ */
 @Deprecated
 @Ignore
 public class InitializationTest {
