@@ -28,8 +28,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     ratedData;
     unratedData;
     backgroundColor;
-    ratedAverage;
-    unratedAverage;
 
     maxScore;
 
@@ -207,8 +205,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     loadNewData(statistic) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-            && !statistic.released) {
+        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && !statistic.released) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -224,8 +221,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     loadQuizSuccess(quiz) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-            && quiz.quizPointStatistic.released === false) {
+        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released === false) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quiz;
@@ -295,6 +291,17 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             backgroundColor: this.colors
         }];
         console.log(this.datasets);
+    }
+
+    /**
+     *
+     * Recalculate the complete statistic on the server in case something went wrong with it
+     *
+     */
+    recalculate() {
+        this.quizExerciseService.recalculate(this.quizExercise.id).subscribe(res => {
+            this.loadQuizSuccess(res.body);
+        });
     }
 
     /**

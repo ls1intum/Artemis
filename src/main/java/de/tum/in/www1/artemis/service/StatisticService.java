@@ -43,7 +43,6 @@ public class StatisticService {
      * @param payload: release = true , revoke = false.
      */
     @Async
-
     public void releaseStatistic(QuizExercise quizExercise, boolean payload) {
         // notify user via websocket
         // release: payload = true , revoke: payload = false.
@@ -56,7 +55,7 @@ public class StatisticService {
      *
      * @param quizExercise the changed QuizExercise object which will be used to recalculate the existing Results and Statistics
      */
-    public void updateStatisticsAfterReEvaluation(QuizExercise quizExercise){
+    public void recalculateStatistics(QuizExercise quizExercise) {
 
         //reset all statistics
         quizExercise.getQuizPointStatistic().resetStatistic();
@@ -66,7 +65,7 @@ public class StatisticService {
             }
         }
 
-        // update the Results in every participation of the given quizExercise
+        // add the Results in every participation of the given quizExercise to the statistics
         for (Participation participation : participationRepository.findByExerciseId(quizExercise.getId())) {
 
             Result latestRatedResult = null;
@@ -175,7 +174,7 @@ public class StatisticService {
             quizExercise.getQuizPointStatistic().addResult(result.getScore(), result.isRated());
             for (Question question : quizExercise.getQuestions()) {
                 // update QuestionStatistics with the result
-                if (question.getQuestionStatistic() != null && result.getSubmission() instanceof QuizSubmission) {
+                if (question.getQuestionStatistic() != null && quizSubmission instanceof QuizSubmission) {
                     question.getQuestionStatistic().addResult(quizSubmission.getSubmittedAnswerForQuestion(question), result.isRated());
                 }
             }

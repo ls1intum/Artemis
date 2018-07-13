@@ -185,20 +185,39 @@ public class QuizExerciseResource {
     }
 
     /**
-     * GET  /quiz-exercises/:id : get the "id" quizExercise.
+     * GET  /quiz-exercises/:quizExerciseId : get the quizExercise.
      *
-     * @param id the id of the quizExercise to retrieve
+     * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{id}")
+    @GetMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long id) {
-        log.debug("REST request to get QuizExercise : {}", id);
-        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(id);
+    public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
+        log.debug("REST request to get QuizExercise : {}", quizExerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
+        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
+    }
+
+    /**
+     * GET  /quiz-exercises/:quizExerciseId/recalculate-statistics : recalculate all statistics in case something went wrong with them
+     *
+     * @param quizExerciseId the id of the quizExercise for which the statistics should be recalculated
+     * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("/quiz-exercises/{quizExerciseId}/recalculate-statistics")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
+        log.debug("REST request to get QuizExercise : {}", quizExerciseId);
+        QuizExercise quizExercise = quizExerciseService.findOneWithQuestionsAndStatistics(quizExerciseId);
+        if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        statisticService.recalculateStatistics(quizExercise);
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizExercise));
     }
 
@@ -413,7 +432,7 @@ public class QuizExerciseResource {
 
         if (updateOfResultsAndStatisticsNecessary) {
             // update Statistics
-            statisticService.updateStatisticsAfterReEvaluation(quizExercise);
+            statisticService.recalculateStatistics(quizExercise);
         }
 
 
