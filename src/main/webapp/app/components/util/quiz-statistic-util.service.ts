@@ -2,6 +2,8 @@ import { Injectable } from '@angular/core';
 import * as moment from 'moment';
 import { Router } from '@angular/router';
 import { QuizExerciseService } from '../../entities/quiz-exercise';
+import { QuizExercise } from '../../entities/quiz-exercise';
+import { Question } from '../../entities/question';
 
 @Injectable()
 export class QuizStatisticUtil {
@@ -9,13 +11,13 @@ export class QuizStatisticUtil {
                 private quizExerciseService: QuizExerciseService) {}
 
     /**
-     * got to the Template with the previous Statistic
+     * go to the Template with the previous Statistic
      * if first QuestionStatistic -> go to the Quiz-Statistic
      *
      * @param quizExercise: the quizExercise with all statistics
      * @param question: the question of the current statistic
      */
-    previousStatistic(quizExercise, question) {
+    previousStatistic(quizExercise: QuizExercise, question: Question) {
         // find position in quiz
         const index = quizExercise.questions.findIndex(function(quiz) {
             return quiz.id === question.id;
@@ -37,13 +39,13 @@ export class QuizStatisticUtil {
     }
 
     /**
-     * got to the Template with the next Statistic
+     * go to the Template with the next Statistic
      * if last QuestionStatistic -> go to the Quiz-Point-Statistic
      *
      * @param quizExercise: the quizExercise with all statistics
      * @param question: the question of the current statistic
      */
-    nextStatistic(quizExercise, question) {
+    nextStatistic(quizExercise: QuizExercise, question: Question) {
         // find position in quiz
         const index = quizExercise.questions.findIndex(function(quiz) {
             return quiz.id === question.id;
@@ -70,7 +72,7 @@ export class QuizStatisticUtil {
      * @param quizExercise: the quiz, which statistics should be revoked or released
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released, quizExercise) {
+    releaseStatistics(released: boolean, quizExercise: QuizExercise) {
         if (released === quizExercise.quizPointStatistic.released) {
             return;
         }
@@ -101,7 +103,7 @@ export class QuizStatisticUtil {
      *                      which will be checked if the release of the statistic is allowed
      * @returns {boolean} true if it's allowed, false if not
      */
-    releaseButtonDisabled(quizExercise) {
+    releaseButtonDisabled(quizExercise: QuizExercise) {
         if (quizExercise) {
             return (!quizExercise.isPlannedToStart
                 || moment().isBefore(quizExercise.dueDate));
@@ -109,4 +111,5 @@ export class QuizStatisticUtil {
             return true;
         }
     }
+
 }

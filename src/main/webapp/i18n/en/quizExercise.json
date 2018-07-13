@@ -3,7 +3,8 @@
         "quizExercise": {
             "home": {
                 "title": "Quiz Exercises",
-                "createLabel": "Create a new Quiz Exercise",
+                "createLabel": "Create Quiz",
+                "createModelDragAndDrop": "Create Drag and Drop Model Quiz",
                 "createOrEditLabel": "Create or edit a Quiz Exercise",
                 "exportLabel": "Export Quiz Exercises"
             },

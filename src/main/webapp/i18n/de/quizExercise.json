@@ -4,6 +4,7 @@
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
+                "createModelDragAndDrop": "Drag and Drop Model Quiz erstellen",
                 "createOrEditLabel": "Quiz erstellen oder bearbeiten",
                 "exportLabel": "TODO: Write German for Export Quiz Exercises"
             },

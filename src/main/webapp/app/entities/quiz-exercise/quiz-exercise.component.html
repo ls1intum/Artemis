@@ -1,10 +1,11 @@
 <div>
-    <h2>
+    <h4>
+        <span *ngIf="course">{{course.title}} - </span><span *ngIf="quizExercises">{{quizExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
         <button *ngIf="courseId" class="btn btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['new']">
             <span class="fa fa-plus"></span>
-            <span  jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
-                Create new Quiz Exercise
+            <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
+                Create new Quiz
             </span>
         </button>
         <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
@@ -14,7 +15,13 @@
                 Export Quiz Exercises
             </span>
         </button>
-    </h2>
+        <button *ngIf="courseId" class="btn btn-primary float-right" [routerLink]="['/apollon-diagrams']">
+            <span class="fa fa-plus"></span>
+            <span jhiTranslate="arTeMiSApp.quizExercise.home.createModelDragAndDrop">
+                Create new Drag and Drop Model Quiz
+            </span>
+        </button>
+    </h4>
     <jhi-alert></jhi-alert>
     <div class="row">
     </div>
