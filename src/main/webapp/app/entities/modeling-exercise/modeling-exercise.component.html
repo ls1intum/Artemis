@@ -1,14 +1,14 @@
 <div>
-    <h2>
+    <h4>
         <span *ngIf="course">{{course.title}} - </span><span *ngIf="modelingExercises">{{modelingExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.modelingExercise.home.title">Modeling Exercises</span>
         <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-modeling-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'modeling-exercise-new'] } }]">
             <span class="fa fa-plus"></span>
             <span  jhiTranslate="arTeMiSApp.modelingExercise.home.createLabel">
-            Create new Modeling Exercise
+            Create Modeling Exercise
             </span>
         </button>
-    </h2>
+    </h4>
     <jhi-alert></jhi-alert>
     <div class="row">
     </div>
