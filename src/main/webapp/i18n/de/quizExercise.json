@@ -5,6 +5,7 @@
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
+                "createModelDragAndDrop": "Drag and Drop Model Quiz erstellen",
                 "createOrEditLabel": "Quiz erstellen oder bearbeiten"
             },
             "created": "Quiz erstellt mit ID {{ param }}",

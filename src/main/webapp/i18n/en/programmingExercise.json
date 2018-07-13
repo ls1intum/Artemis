@@ -4,7 +4,7 @@
         "programmingExercise" : {
             "home": {
                 "title": "Programming Exercises",
-                "createLabel": "Create a new Programming Exercise",
+                "createLabel": "Create Programming Exercise",
                 "createOrEditLabel": "Create or edit a Programming Exercise"
             },
             "created": "A new Programming Exercise is created with identifier {{ param }}",

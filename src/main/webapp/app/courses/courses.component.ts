@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseService } from '../entities/course';
+import { Course, CourseService, CourseScoreCalculationService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 
 @Component({
@@ -12,6 +12,7 @@ import { JhiAlertService } from 'ng-jhipster';
                 ]
 })
 export class CoursesComponent implements OnInit {
+
     courses: Course[];
     filterByCourseId: number;
     filterByExerciseId: number;
@@ -20,6 +21,7 @@ export class CoursesComponent implements OnInit {
     constructor(
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
+        private courseScoreCalculationService: CourseScoreCalculationService,
         private route: ActivatedRoute) {}
 
     ngOnInit(): void {
@@ -41,6 +43,7 @@ export class CoursesComponent implements OnInit {
         this.courseService.findAll().subscribe(
             (res: Course[]) => {
                 this.courses = res;
+                this.courseScoreCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {
                     this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
                 }
@@ -62,6 +65,16 @@ export class CoursesComponent implements OnInit {
         setTimeout(() => {
             this.jhiAlertService.info('arTeMiSApp.exercise.welcome');
         }, 500);
+    }
+
+    displayTotalRelativeScoreForCourse(course: Course): number {
+        if (course.exercises.length > 0) {
+            return this.courseScoreCalculationService
+                .calculateTotalScores(course.exercises)
+                .get('relativeScore');
+        } else {
+            return 0;
+        }
     }
 
     // TODO migrate repository functionality from courses.controller
