@@ -47,7 +47,7 @@ public class CompassService {
     private final static double CONFIDENCE_THRESHOLD = 0.75;
     private final static double COVERAGE_THRESHOLD = 0.8;
 
-    private final static int NUMBER_OF_OPTIMAL_MODELS = 3;
+    private final static int NUMBER_OF_OPTIMAL_MODELS = 5;
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
 
     public CompassService (JsonAssessmentRepository assessmentRepository, JsonModelRepository modelRepository,

@@ -107,6 +107,7 @@
                     <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }}</span>
                 </td>
                 <td>
+                    <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
                     <button *ngIf="exercise.type == 'modeling-exercise' && result.submission && !result.rated"
                             routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
                             [disabled]="busy"
@@ -114,6 +115,7 @@
                             class="btn btn-outline-secondary btn-sm">
                         <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess model
                     </button>
+                    </span>
                     <button *ngIf="exercise.type == 'modeling-exercise' && result.submission && result.rated"
                             routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
                             [disabled]="busy"
