@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
+import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -20,7 +22,7 @@ public class QuizScheduleService {
 
     private static final Logger log = LoggerFactory.getLogger(QuizScheduleService.class);
 
-    private static Map<Long, Map<String, QuizSubmission>> submissionHashMap = new ConcurrentHashMap<>();
+    private static Map<Long, Map<String, Submission>> submissionHashMap = new ConcurrentHashMap<>();
     private static Map<Long, Map<String, Participation>> participationHashMap = new ConcurrentHashMap<>();
     private static Map<Long, Set<Result>> resultHashMap = new ConcurrentHashMap<>();
     private static Map<Long, ScheduledFuture> quizStartSchedules = new ConcurrentHashMap<>();
@@ -39,22 +41,25 @@ public class QuizScheduleService {
     private final UserService userService;
     private final QuizExerciseService quizExerciseService;
     private final StatisticService statisticService;
+    private final ExerciseService exerciseService;
+    private final ResultRepository resultRepository;
+    private final ModelingSubmissionService modelingSubmissionService;
 
     /**
-     * add a quizSubmission to the submissionHashMap
+     * add a submission to the submissionHashMap
      *
-     * @param quizId         the quizId of the quiz the submission belongs to (first Key)
+     * @param exerciseId     the exerciseId of the exercise the submission belongs to (first Key)
      * @param username       the username of the user, who submitted the submission (second Key)
-     * @param quizSubmission the quizSubmission, which should be added (Value)
+     * @param submission     the submission, which should be added (Value)
      */
-    public static void updateSubmission(Long quizId, String username, QuizSubmission quizSubmission) {
+    public static void updateSubmission(Long exerciseId, String username, Submission submission) {
 
-        if (quizSubmission != null && quizId != null && username != null) {
-            //check if there is already a quizSubmission with the same quiz
-            if (!submissionHashMap.containsKey(quizId)) {
-                submissionHashMap.put(quizId, new ConcurrentHashMap<>());
+        if (submission != null && exerciseId != null && username != null) {
+            // check if there is already a submission with the same exercise
+            if (!submissionHashMap.containsKey(exerciseId)) {
+                submissionHashMap.put(exerciseId, new ConcurrentHashMap<>());
             }
-            submissionHashMap.get(quizId).put(username, quizSubmission);
+            submissionHashMap.get(exerciseId).put(username, submission);
         }
     }
 
@@ -79,17 +84,17 @@ public class QuizScheduleService {
     /**
      * add a participation to participationHashMap to send them back to the user when the quiz ends
      *
-     * @param quizId        the quizId of the quiz the result belongs to (first Key)
+     * @param exerciseId    the exerciseId of the exercise the result belongs to (first Key)
      * @param participation the result, which should be added
      */
-    private static void addParticipation(Long quizId, Participation participation) {
+    private static void addParticipation(Long exerciseId, Participation participation) {
 
-        if (quizId != null && participation != null) {
+        if (exerciseId != null && participation != null) {
             //check if there is already a result with the same quiz
-            if (!participationHashMap.containsKey(quizId)) {
-                participationHashMap.put(quizId, new ConcurrentHashMap<>());
+            if (!participationHashMap.containsKey(exerciseId)) {
+                participationHashMap.put(exerciseId, new ConcurrentHashMap<>());
             }
-            participationHashMap.get(quizId).put(participation.getStudent().getLogin(), participation);
+            participationHashMap.get(exerciseId).put(participation.getStudent().getLogin(), participation);
         }
 
     }
@@ -112,7 +117,7 @@ public class QuizScheduleService {
         //check if the the map contains submissions with the quizId
         if (submissionHashMap.containsKey(quizId)) {
             //return the quizSubmission with the username-Key
-            quizSubmission = submissionHashMap.get(quizId).get(username);
+            quizSubmission = (QuizSubmission) submissionHashMap.get(quizId).get(username);
             if (quizSubmission != null) {
                 return quizSubmission;
             }
@@ -147,12 +152,18 @@ public class QuizScheduleService {
                                ParticipationRepository participationRepository,
                                UserService userService,
                                QuizExerciseService quizExerciseService,
-                               StatisticService statisticService) {
+                               StatisticService statisticService,
+                               ExerciseService exerciseService,
+                               ResultRepository resultRepository,
+                               ModelingSubmissionService modelingSubmissionService) {
         this.messagingTemplate = messagingTemplate;
         this.participationRepository = participationRepository;
         this.userService = userService;
         this.quizExerciseService = quizExerciseService;
         this.statisticService = statisticService;
+        this.exerciseService = exerciseService;
+        this.resultRepository = resultRepository;
+        this.modelingSubmissionService = modelingSubmissionService;
     }
 
     /**
@@ -230,54 +241,59 @@ public class QuizScheduleService {
             long start = System.currentTimeMillis();
 
             //create Participations and Results if the submission was submitted or if the quiz has ended and save them to Database (DB Write)
-            for (long quizId : submissionHashMap.keySet()) {
+            for (long exerciseId : submissionHashMap.keySet()) {
 
-                QuizExercise quizExercise = quizExerciseService.findOneWithQuestions(quizId);
-                // check if quiz has been deleted
-                if (quizExercise == null) {
-                    submissionHashMap.remove(quizId);
+                Exercise exercise = exerciseService.findOne(exerciseId);
+                if (exercise instanceof QuizExercise) {
+                    exercise = quizExerciseService.findOneWithQuestions(exerciseId);
+                }
+                // check if exercise has been deleted
+                if (exercise == null) {
+                    submissionHashMap.remove(exerciseId);
                     continue;
                 }
 
-                // if quiz has ended, all submissions will be processed => we can remove the inner HashMap for this quiz
-                // if quiz hasn't ended, some submissions (those that are not submitted) will stay in HashMap => keep inner HashMap
-                Map<String, QuizSubmission> submissions;
-                if (quizExercise.isEnded()) {
-                    submissions = submissionHashMap.remove(quizId);
+                // if exercise has ended, all submissions will be processed => we can remove the inner HashMap for this quiz
+                // if exercise hasn't ended, some submissions (those that are not submitted) will stay in HashMap => keep inner HashMap
+                Map<String, Submission> submissions;
+                if (((SchedulableExercise) exercise).isEnded()) {
+                    submissions = submissionHashMap.remove(exerciseId);
                 } else {
-                    submissions = submissionHashMap.get(quizId);
+                    submissions = submissionHashMap.get(exerciseId);
                 }
 
-                int num = createParticipations(quizExercise, submissions);
+                int num = createParticipations(exercise, submissions);
 
-                log.info("Processed {} submissions after {} ms in quiz {}", num, System.currentTimeMillis() - start, quizExercise.getTitle());
+                log.info("Processed {} submissions after {} ms in exercise {}", num, System.currentTimeMillis() - start, exercise.getTitle());
             }
 
             // Send out Participations from ParticipationHashMap to each user if the quiz has ended
-            for (long quizId : participationHashMap.keySet()) {
+            for (long exerciseId : participationHashMap.keySet()) {
 
                 // get the Quiz without the statistics and questions from the database
-                QuizExercise quizExercise = quizExerciseService.findOne(quizId);
+                Exercise exercise = exerciseService.findOne(exerciseId);
                 // check if quiz has been deleted
-                if (quizExercise == null) {
-                    participationHashMap.remove(quizId);
+                if (exercise == null) {
+                    participationHashMap.remove(exerciseId);
                     continue;
                 }
 
                 // check if the quiz has ended
-                if (quizExercise.isEnded()) {
+                if (((SchedulableExercise) exercise).isEnded()) {
                     // send the participation with containing result and quiz back to the users via websocket
                     //      and remove the participation from the ParticipationHashMap
                     int counter = 0;
-                    for (Participation participation : participationHashMap.remove(quizId).values()) {
+                    for (Participation participation : participationHashMap.remove(exerciseId).values()) {
                         if (participation.getStudent() == null || participation.getStudent().getLogin() == null) {
                             log.error("Participation is missing student (or student is missing username): {}", participation);
                             continue;
                         }
-                        messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/quizExercise/" + quizId + "/participation", participation);
-                        counter++;
+                        if (exercise instanceof QuizExercise) {
+                            messagingTemplate.convertAndSendToUser(participation.getStudent().getLogin(), "/topic/quizExercise/" + exerciseId + "/participation", participation);
+                            counter++;
+                        }
                     }
-                    log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, quizExercise.getTitle());
+                    log.info("Sent out {} participations after {} ms for quiz {}", counter, System.currentTimeMillis() - start, exercise.getTitle());
                 }
             }
 
@@ -306,44 +322,65 @@ public class QuizScheduleService {
     }
 
     /**
-     * check if the user submitted the submission or if the quiz has ended:
+     * check if the user submitted the submission or if the exercise has ended:
      * if true: -> Create Participation and Result and save to Database (DB Write)
      * Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
      *
-     * @param quizExercise      the quiz which should be checked
-     * @param userSubmissionMap a Map with all submissions for the given quizExercise mapped by the username
+     * @param exercise          the exercise which should be checked
+     * @param userSubmissionMap a Map with all submissions for the given exercise mapped by the username
      * @return the number of created participations
      */
-    private int createParticipations(QuizExercise quizExercise, Map<String, QuizSubmission> userSubmissionMap) {
+    private int createParticipations(Exercise exercise, Map<String, Submission> userSubmissionMap) {
         int counter = 0;
 
         for (String username : userSubmissionMap.keySet()) {
             try {
                 // first case: the user submitted the quizSubmission
                 if (userSubmissionMap.get(username).isSubmitted()) {
-                    QuizSubmission quizSubmission = userSubmissionMap.remove(username);
-                    if (quizSubmission.getType() == null) {
-                        quizSubmission.setType(SubmissionType.MANUAL);
+                    Submission submission = userSubmissionMap.remove(username);
+                    if (submission.getType() == null) {
+                        submission.setType(SubmissionType.MANUAL);
                     }
 
-                    // Create Participation and Result and save to Database (DB Write)
-                    // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
-                    createParticipationWithResultAndWriteItInHashMaps(quizExercise, username, quizSubmission);
+                    if (exercise instanceof QuizExercise) {
+                        // Create Participation and Result and save to Database (DB Write)
+                        // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
+                        createParticipationWithResultAndWriteItInHashMaps((QuizExercise) exercise, username, (QuizSubmission) submission);
+                    } else if (exercise instanceof ModelingExercise) {
+                        // Update Participation and Result and save to Database (DB Write)
+                        // Remove processed Submissions from SubmissionHashMap and write Participations into ParticipationHashMap
+                        updateParticipation(exercise, submission);
+                    }
                     counter++;
                     // second case: the quiz has ended
-                } else if (quizExercise.isEnded()) {
-                    QuizSubmission quizSubmission = userSubmissionMap.remove(username);
-                    quizSubmission.setSubmitted(true);
-                    quizSubmission.setType(SubmissionType.TIMEOUT);
-                    quizSubmission.setSubmissionDate(ZonedDateTime.now());
+                } else if (((SchedulableExercise) exercise).isEnded()) {
+                    Submission submission = userSubmissionMap.remove(username);
+                    submission.setSubmitted(true);
+                    submission.setType(SubmissionType.TIMEOUT);
+                    submission.setSubmissionDate(ZonedDateTime.now());
 
-                    // Create Participation and Result and save to Database (DB Write)
-                    // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
-                    createParticipationWithResultAndWriteItInHashMaps(quizExercise, username, quizSubmission);
+                    if (exercise instanceof QuizExercise) {
+                        // Create Participation and Result and save to Database (DB Write)
+                        // Remove processed Submissions from SubmissionHashMap and write Participations with Result into ParticipationHashMap and Results into ResultHashMap
+                        createParticipationWithResultAndWriteItInHashMaps((QuizExercise) exercise, username, (QuizSubmission) submission);
+                    } else if (exercise instanceof ModelingExercise) {
+                        // Update Participation and Result and save to Database (DB Write)
+                        // Remove processed Submissions from SubmissionHashMap and write Participations into ParticipationHashMap
+                        Participation participation = updateParticipation(exercise, submission);
+                        if (participation != null) {
+                            // manually trigger submit for modelingSubmission to update compass
+                            ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+                            if (modelingSubmission.getModel() == "") {
+                                JsonObject model = modelingSubmissionService.getModel(exercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
+                                modelingSubmission.setModel(model.toString());
+                            }
+                            modelingSubmissionService.submit(modelingSubmission, (ModelingExercise) exercise);
+                        }
+                    }
                     counter++;
                 }
             } catch (Exception e) {
-                log.error("Exception in createParticipations() for {} in quiz {}:\n{}", username, quizExercise.getId(), e.getMessage());
+                log.error("Exception in createParticipations() for {} in exercise {}:\n{}", username, exercise.getId(), e.getMessage());
             }
         }
 
@@ -397,6 +434,26 @@ public class QuizScheduleService {
             QuizScheduleService.addResultToStatistic(quizExercise.getId(), result);
 
             return participation;
+        }
+        return null;
+    }
+
+    private Participation updateParticipation(Exercise exercise, Submission submission) {
+        if (submission != null) {
+            Optional<Result> optionalResult = resultRepository.findDistinctBySubmissionId(submission.getId());
+            if (optionalResult.isPresent()) {
+                Result result = optionalResult.get();
+                result.setSubmission(submission);
+                resultRepository.save(result);
+
+                Participation participation = result.getParticipation();
+                participation.setInitializationState(ParticipationState.FINISHED);
+                participationRepository.save(participation);
+
+                //add the participation to the participationHashMap
+                QuizScheduleService.addParticipation(exercise.getId(), participation);
+                return participation;
+            }
         }
         return null;
     }

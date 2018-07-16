@@ -13,7 +13,7 @@ import java.util.Objects;
 @Entity
 @DiscriminatorValue(value="M")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class ModelingExercise extends Exercise implements Serializable {
+public class ModelingExercise extends Exercise implements Serializable, SchedulableExercise {
 
     private static final long serialVersionUID = 1L;
 
