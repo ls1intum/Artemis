@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import com.google.gson.JsonObject;
-import de.tum.in.www1.artemis.domain.ModelingExercise;
-import de.tum.in.www1.artemis.domain.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.JsonModelRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
@@ -62,8 +59,10 @@ public class ModelingSubmissionService {
         result.setCompletionDate(ZonedDateTime.now());
         modelingSubmission.setSubmissionDate(result.getCompletionDate());
 
+        User user = participation.getStudent();
+
         if (modelingSubmission.getModel() != null && !modelingSubmission.getModel().isEmpty()) {
-            jsonModelRepository.writeModel(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), modelingSubmission.getModel());
+            jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
         }
 
         modelingSubmissionRepository.save(modelingSubmission);
@@ -72,6 +71,9 @@ public class ModelingSubmissionService {
 
         if (modelingSubmission.isSubmitted()) {
             submit(modelingSubmission, modelingExercise);
+        } else {
+            // save submission to HashMap
+            QuizScheduleService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
         }
 
         return result;
