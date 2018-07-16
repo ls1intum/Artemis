@@ -200,10 +200,6 @@ public class ModelingAssessmentResource {
 
     public Result updateManualResult(Long resultId, Long exerciseId, String modelingAssessment, Boolean rated) {
         Result result = resultRepository.findOne(resultId);
-        if (result.getAssessmentType() == AssessmentType.MANUAL && result.isRated()) {
-            // if result is already manually rated, return it
-            return result;
-        }
         result.setRated(rated);
         result.setCompletionDate(ZonedDateTime.now());
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -222,7 +218,7 @@ public class ModelingAssessmentResource {
             // set result if rated
             JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, true);
             Double maxScore = modelingExercise.getMaxScore();
-            Double totalScore = calculateTotalScore(assessmentJson);
+            Double totalScore = Math.min(Math.max(0, calculateTotalScore(assessmentJson)), maxScore);
             Double percentageScore = totalScore/maxScore*100;
             result.setScore(percentageScore.longValue());
             DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2
