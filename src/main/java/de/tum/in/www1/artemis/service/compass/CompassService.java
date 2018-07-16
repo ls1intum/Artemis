@@ -4,10 +4,7 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
-import de.tum.in.www1.artemis.repository.JsonModelRepository;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.grade.GradeParser;
@@ -24,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -47,7 +45,7 @@ public class CompassService {
     private final static double CONFIDENCE_THRESHOLD = 0.75;
     private final static double COVERAGE_THRESHOLD = 0.8;
 
-    private final static int NUMBER_OF_OPTIMAL_MODELS = 3;
+    private final static int NUMBER_OF_OPTIMAL_MODELS = 10;
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
 
     public CompassService (JsonAssessmentRepository assessmentRepository, JsonModelRepository modelRepository,
@@ -69,6 +67,13 @@ public class CompassService {
             return null;
         }
         return compassCalculationEngines.get(exerciseId).getNextOptimalModel();
+    }
+
+    public void removeModelWaitingForAssessment(long exerciseId, long modelId) {
+        if (!loadExerciseIfSuspended(exerciseId)) {
+            return;
+        }
+        compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelId, true);
     }
 
     public Set<Long> getModelsWaitingForAssessment(long exerciseId) {
@@ -112,8 +117,11 @@ public class CompassService {
     /**
      * If a valid result has already produced in the past load it, otherwise calculate a new result
      *
+     * Useful for testing as it does not involve the database
+     *
      * @return Result object for the specific model or null if not found, or the coverage or confidence is not high enough
      */
+    @SuppressWarnings("unused")
     public Grade getResultForModel(long exerciseId, long studentId, long modelId) {
         if (!loadExerciseIfSuspended(exerciseId) || !modelRepository.exists(exerciseId, studentId, modelId)) {
             return null;
@@ -237,7 +245,12 @@ public class CompassService {
         }
         log.info("Compass calculation engine for exercise " + exerciseId + " has to be load from file system");
         Map<Long, JsonObject> models = modelRepository.readModelsForExercise(exerciseId);
+        models.entrySet().removeIf(entry -> {
+            Optional<Result> result = resultRepository.findDistinctBySubmissionId(entry.getKey());
+            return !result.isPresent();
+        });
         Map<Long, JsonObject> manualAssessments = assessmentRepository.readAssessmentsForExercise(exerciseId, true);
+        manualAssessments.entrySet().removeIf(entry -> !models.containsKey(entry.getKey()));
         CalculationEngine calculationEngine = new CompassCalculationEngine(models, manualAssessments);
         compassCalculationEngines.put(exerciseId, calculationEngine);
         // assess models after reload

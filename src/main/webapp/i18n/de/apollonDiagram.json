@@ -22,7 +22,8 @@
                 "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
                 "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
                 "resultDismissed": "Deine Bewertung wurde nicht übernommen, da ein anderer Tutor bereits bewertet hat."
-            }
+            },
+            "lock": "Dieses Modell kann jetzt exklusiv nur noch von Ihnen bearbeitet werden. Bitte bewerten sie dieses Modell bevor Sie ein neues öffnen."
         }
     }
 }
