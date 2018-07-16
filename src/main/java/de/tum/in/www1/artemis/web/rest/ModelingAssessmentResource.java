@@ -218,7 +218,7 @@ public class ModelingAssessmentResource {
             // set result if rated
             JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, true);
             Double maxScore = modelingExercise.getMaxScore();
-            Double totalScore = Math.min(calculateTotalScore(assessmentJson), maxScore);
+            Double totalScore = Math.min(Math.max(0, calculateTotalScore(assessmentJson)), maxScore);
             Double percentageScore = totalScore/maxScore*100;
             result.setScore(percentageScore.longValue());
             DecimalFormat formatter = new DecimalFormat("#.##"); // limit decimal places to 2

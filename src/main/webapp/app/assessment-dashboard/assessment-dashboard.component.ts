@@ -112,8 +112,6 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.allResults.forEach(result => {
             result.optimal = result.submission && ((this.nextOptimalSubmissionIds.includes(result.submission.id) && !result.assessor) ||
                 (result.assessor != null && !result.rated));
-            console.log(result.id);
-            console.log(result.optimal);
         });
         this.optimalResults = this.allResults.filter(result => {
             return result.optimal;

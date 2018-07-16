@@ -222,17 +222,15 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
         this.totalScore = totalScore;
 
-        if (totalScore < 0) {
+        /*if (totalScore < 0) {
             this.assessmentsAreValid = false;
-            this.invalidError = 'The total score (' + totalScore + ') is negative!';
+            this.invalidError = 'The total score (' + totalScore + ') is negative!';*/
         // We want tutors to be able to give more than maxScore - this also helps compass coming up with a more accurate result
         /*} else if (totalScore > maxScore) {
             this.assessmentsAreValid = false;
             this.invalidError = 'The total score (' + totalScore + ') is greater than the max score (' + maxScore + ')!';*/
-        } else {
-            this.assessmentsAreValid = true;
-            this.invalidError = '';
-        }
+        this.assessmentsAreValid = true;
+        this.invalidError = '';
     }
 
     setAssessmentsNames() {
