@@ -43,6 +43,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     hasFeedback: boolean;
     resultIconClass: string;
     resultString: string;
+    exerciseType: string;
 
     constructor(private jhiWebsocketService: JhiWebsocketService,
                 private participationResultService: ParticipationResultService,
@@ -55,6 +56,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         if (this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
+            this.exerciseType = exercise.type;
             this.results = this.participation.results;
 
             this.init();

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SERVER_API_URL } from '../../app.constants';
 import { NG1AUTH_SERVICE } from './ng1-auth-wrapper.service';
+import { JhiAlertService } from 'ng-jhipster';
 
 @Injectable()
 export class AuthServerProvider {
@@ -11,7 +12,8 @@ export class AuthServerProvider {
         private http: HttpClient,
         private $localStorage: LocalStorageService,
         private $sessionStorage: SessionStorageService,
-        @Inject(NG1AUTH_SERVICE) private ng1AuthService: any) {
+        @Inject(NG1AUTH_SERVICE) private ng1AuthService: any,
+        private jhiAlertService: JhiAlertService) {
     }
 
     getToken() {
@@ -93,6 +95,8 @@ export class AuthServerProvider {
             localStorage.clear();
             sessionStorage.clear();
             observer.complete();
+            // clear notifications on logout
+            this.jhiAlertService.clear();
         });
     }
 }

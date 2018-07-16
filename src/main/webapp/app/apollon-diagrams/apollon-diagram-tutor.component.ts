@@ -2,12 +2,13 @@ import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChi
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import ApollonEditor from '@ls1intum/apollon';
-import {ActivatedRoute, Router} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
 import { ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
+import { Principal } from '../shared';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -34,6 +35,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     busy: boolean;
     done: boolean;
     timeout: any;
+    accountId: number;
+    isAuthorized: boolean;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -43,7 +46,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingExerciseService: ModelingExerciseService,
         private resultService: ResultService,
-        private modelingAssessmentService: ModelingAssessmentService
+        private modelingAssessmentService: ModelingAssessmentService,
+        private principal: Principal
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -51,6 +55,11 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        // Used to check if the assessor is the current user
+        this.principal.identity().then(account => {
+            this.accountId = account.id;
+        });
+        this.isAuthorized = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.route.params.subscribe(params => {
             const id = Number(params['submissionId']);
             const exerciseId = Number(params['exerciseId']);
@@ -69,6 +78,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 }
                 data.result.participation.results = [data.result];
                 this.result = data.result;
+                if ((this.result.assessor == null || this.result.assessor.id === this.accountId) && !this.result.rated) {
+                    this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
+                }
                 if (nextOptimal) {
                     this.modelingAssessmentService.getPartialAssessment(exerciseId, id).subscribe(assessments => {
                         this.assessments = assessments.body;
@@ -192,12 +204,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             this.result = res.body;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
             this.done = false;
-            const completionDate = +new Date(this.result.completionDate);
-            const now = +new Date();
-            // check if result is older than 30 seconds
-            if (now - completionDate > 30000) {
-                this.jhiAlertService.info('arTeMiSApp.apollonDiagram.assessment.resultDismissed');
-            }
         });
     }
 
@@ -216,16 +222,15 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
         this.totalScore = totalScore;
 
-        if (totalScore < 0) {
+        /*if (totalScore < 0) {
             this.assessmentsAreValid = false;
-            this.invalidError = 'The total score (' + totalScore + ') is negative!';
-        } else if (totalScore > maxScore) {
+            this.invalidError = 'The total score (' + totalScore + ') is negative!';*/
+        // We want tutors to be able to give more than maxScore - this also helps compass coming up with a more accurate result
+        /*} else if (totalScore > maxScore) {
             this.assessmentsAreValid = false;
-            this.invalidError = 'The total score (' + totalScore + ') is greater than the max score (' + maxScore + ')!';
-        } else {
-            this.assessmentsAreValid = true;
-            this.invalidError = '';
-        }
+            this.invalidError = 'The total score (' + totalScore + ') is greater than the max score (' + maxScore + ')!';*/
+        this.assessmentsAreValid = true;
+        this.invalidError = '';
     }
 
     setAssessmentsNames() {
