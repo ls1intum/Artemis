@@ -109,13 +109,13 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         // A result is optimal if it is part of nextOptimalSubmissionIds and nobody is currently assessing it or you are currently assessing it
         this.allResults.forEach(result => {
             result.optimal = result.submission && ((this.nextOptimalSubmissionIds.includes(result.submission.id) && !result.assessor) ||
-                (result.assessor.id === this.accountId && !result.rated));
+                (result.assessor != null && result.assessor.id === this.accountId && !result.rated));
         });
-        this.optimalResults = this.results = this.allResults.filter(result => {
+        this.optimalResults = this.allResults.filter(result => {
             return result.optimal;
         });
         this.results = this.allResults.filter(result => {
-            return result.optimal === false;
+            return !result.optimal;
         });
     }
 
