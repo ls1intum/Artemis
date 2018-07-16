@@ -4,10 +4,7 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
-import de.tum.in.www1.artemis.repository.JsonModelRepository;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.grade.GradeParser;
@@ -24,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -247,7 +245,12 @@ public class CompassService {
         }
         log.info("Compass calculation engine for exercise " + exerciseId + " has to be load from file system");
         Map<Long, JsonObject> models = modelRepository.readModelsForExercise(exerciseId);
+        models.entrySet().removeIf(entry -> {
+            Optional<Result> result = resultRepository.findDistinctBySubmissionId(entry.getKey());
+            return !result.isPresent();
+        });
         Map<Long, JsonObject> manualAssessments = assessmentRepository.readAssessmentsForExercise(exerciseId, true);
+        manualAssessments.entrySet().removeIf(entry -> !models.containsKey(entry.getKey()));
         CalculationEngine calculationEngine = new CompassCalculationEngine(models, manualAssessments);
         compassCalculationEngines.put(exerciseId, calculationEngine);
         // assess models after reload
