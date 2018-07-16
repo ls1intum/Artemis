@@ -16,7 +16,7 @@
                     [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
                     [hidden]="result && result.rated">Submit Assessment</button>
             <button class="btn btn-danger" (click)="submit()"
-                    [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                    [disabled]="!assessments || !assessmentsAreValid"
                     [hidden]="!result || !result.rated">Override Assessment</button>
         </div>
     </div>
@@ -34,7 +34,7 @@
         </div>
         <div class="col text-right">
             <span><h5><strong>Score:</strong> {{ totalScore }}/{{ modelingExercise.maxScore }}</h5></span>
-            <span *ngIf="result?.assessor && result.assessor.id !== accountId" style="color:red"><h6>Assessor: {{result.assessor.firstName + (isAuthorized ? '' : '- submission locked')}}</h6></span>
+            <span *ngIf="result && result.assessor && result.assessor.id !== accountId && !result.rated" style="color:red"><h6>Assessor: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
         </div>
     </div>
 
@@ -42,7 +42,7 @@
         <button type="submit" (click)="previousState()" class="btn btn-info">
             <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
         </button>
-        <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== accountId)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
+        <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== accountId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
             <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
         </button>
     </div><br>

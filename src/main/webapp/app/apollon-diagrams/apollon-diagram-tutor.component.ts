@@ -78,6 +78,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 }
                 data.result.participation.results = [data.result];
                 this.result = data.result;
+                if ((this.result.assessor == null || this.result.assessor.id === this.accountId) && !this.result.rated) {
+                    this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
+                }
                 if (nextOptimal) {
                     this.modelingAssessmentService.getPartialAssessment(exerciseId, id).subscribe(assessments => {
                         this.assessments = assessments.body;

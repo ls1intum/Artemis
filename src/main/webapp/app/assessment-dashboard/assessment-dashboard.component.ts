@@ -37,6 +37,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     allSubmissionsVisible: boolean;
     busy: boolean;
     accountId: number;
+    isAuthorized: boolean;
 
     constructor(private route: ActivatedRoute,
                 private jhiAlertService: JhiAlertService,
@@ -54,6 +55,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.results = [];
         this.allResults = [];
         this.optimalResults = [];
+        this.isAuthorized = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
     }
 
     ngOnInit() {
@@ -109,7 +111,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         // A result is optimal if it is part of nextOptimalSubmissionIds and nobody is currently assessing it or you are currently assessing it
         this.allResults.forEach(result => {
             result.optimal = result.submission && ((this.nextOptimalSubmissionIds.includes(result.submission.id) && !result.assessor) ||
-                (result.assessor != null && result.assessor.id === this.accountId && !result.rated));
+                (result.assessor != null && !result.rated));
+            console.log(result.id);
+            console.log(result.optimal);
         });
         this.optimalResults = this.allResults.filter(result => {
             return result.optimal;
@@ -159,7 +163,8 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 });
             }, 500 + 1000 * attempts);
         } else {
-            this.router.navigate(['apollon-diagrams', 'exercise', this.exercise.id, this.nextOptimalSubmissionIds.pop(), 'tutor']);
+            const randomInt = Math.floor(Math.random() * (this.nextOptimalSubmissionIds.length));
+            this.router.navigate(['apollon-diagrams', 'exercise', this.exercise.id, this.nextOptimalSubmissionIds[randomInt], 'tutor']);
         }
     }
 

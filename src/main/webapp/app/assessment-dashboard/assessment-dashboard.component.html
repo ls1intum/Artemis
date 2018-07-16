@@ -27,13 +27,33 @@
     <h5>ArTEMiS optimized the assessment order to minimize your correction effort. Please assess the following submissions first:</h5>
     <div class="table-responsive" *ngIf="optimalResults && optimalResults.length > 0">
         <table class="table table-striped exercise-table">
+            <thead>
+            <tr>
+                <th>
+                    <a class="th-link">#</a>
+                </th>
+                <th>
+                    <a class="th-link">Student name</a>
+                </th>
+                <th>
+                    <a class="th-link">Reviewer</a>
+                </th>
+                <th>
+                    <a class="th-link">Action</a>
+                </th>
+                <th></th>
+            </tr>
+            </thead>
             <tbody>
             <tr [ngStyle]="result.optimal && {'font-weight': 'bold'}"
                 *ngFor="let result of optimalResults; let i = index">
                 <td>{{ i + 1 }}</td>
                 <td>{{ result.participation.student.firstName }} {{ result.participation.student.lastName}}</td>
                 <td>
-                    <button *ngIf="exercise.type == 'modeling-exercise' && result.submission && result.optimal"
+                    <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }} (lock)</span>
+                </td>
+                <td>
+                    <button *ngIf="(result.optimal && !result.assessor) || (result.assessor && result.assessor.id === accountId) || isAuthorized"
                             routerLink="/apollon-diagrams/exercise/{{exercise.id}}/{{result.submission.id}}/tutor"
                             [queryParams]="{optimal: false}"
                             class="btn btn-outline-success btn-sm">
@@ -58,7 +78,9 @@
         <table class="table table-striped exercise-table">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" [callback]="callback">
-                <th></th>
+                <th>
+                    <a class="th-link">#</a>
+                </th>
                 <th jhiSortBy="participation.student.firstName">
                     <a class="th-link">Student name</a> <span class="fa fa-sort"></span>
                 </th>
@@ -81,7 +103,10 @@
                     <a class="th-link">Assessment Type</a> <span class="fa fa-sort"></span>
                 </th>
                 <th jhiSortBy="assessor.firstName">
-                    <a class="th-link">Assessor</a> <span class="fa fa-sort"></span>
+                    <a class="th-link">Reviewer</a> <span class="fa fa-sort"></span>
+                </th>
+                <th>
+                    <a class="th-link">Action</a>
                 </th>
                 <th></th>
             </tr>
@@ -103,7 +128,7 @@
                     result.participation.initializationDate: exercise.releaseDate))}} minutes
                 </td>
                 <td>{{ result.assessmentType }}</td>
-                <td *ngIf="exercise.type === 'modeling-exercise'">
+                <td>
                     <span *ngIf="result.assessor">{{ result.assessor.firstName }} {{ result.assessor.lastName }}</span>
                 </td>
                 <td>
