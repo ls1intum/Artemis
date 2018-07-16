@@ -34,7 +34,7 @@
         </div>
         <div class="col text-right">
             <span><h5><strong>Score:</strong> {{ totalScore }}/{{ modelingExercise.maxScore }}</h5></span>
-            <span *ngIf="result && result.assessor && result.assessor.id !== accountId && !result.rated" style="color:red"><h6>Assessor: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
+            <span *ngIf="result && result.assessor" style="color:red"><h6>Reviewer: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
         </div>
     </div>
 
