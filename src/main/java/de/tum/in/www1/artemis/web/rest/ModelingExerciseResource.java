@@ -326,6 +326,9 @@ public class ModelingExerciseResource {
                 Result savedResult = resultRepository.save(relevantResult);
                 log.debug("Assessment locked with result id: " + savedResult.getId() + " for assessor: " + savedResult.getAssessor().getFirstName());
             }
+            if (relevantResult.getAssessor() instanceof HibernateProxy) {
+                relevantResult.setAssessor((User) Hibernate.unproxy(relevantResult.getAssessor()));
+            }
             JsonObject model = modelingSubmissionService.getModel(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), submissionId);
             if (model != null) {
                 modelingSubmission.setModel(model.toString());
