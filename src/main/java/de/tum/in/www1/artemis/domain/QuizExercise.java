@@ -22,7 +22,7 @@ import java.util.*;
 @Entity
 @DiscriminatorValue(value="Q")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class QuizExercise extends Exercise implements Serializable, SchedulableExercise {
+public class QuizExercise extends Exercise implements Serializable {
 
     public enum Status {
         INACTIVE, STARTED, FINISHED
