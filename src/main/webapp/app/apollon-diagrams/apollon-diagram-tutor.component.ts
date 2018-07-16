@@ -201,12 +201,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             this.result = res.body;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
             this.done = false;
-            const completionDate = +new Date(this.result.completionDate);
-            const now = +new Date();
-            // check if result is older than 30 seconds
-            if (now - completionDate > 30000) {
-                this.jhiAlertService.info('arTeMiSApp.apollonDiagram.assessment.resultDismissed');
-            }
         });
     }
 

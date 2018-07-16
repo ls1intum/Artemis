@@ -200,10 +200,6 @@ public class ModelingAssessmentResource {
 
     public Result updateManualResult(Long resultId, Long exerciseId, String modelingAssessment, Boolean rated) {
         Result result = resultRepository.findOne(resultId);
-        if (result.getAssessmentType() == AssessmentType.MANUAL && result.isRated()) {
-            // if result is already manually rated, return it
-            return result;
-        }
         result.setRated(rated);
         result.setCompletionDate(ZonedDateTime.now());
         result.setAssessmentType(AssessmentType.MANUAL);
