@@ -32,6 +32,11 @@ export class QuizExerciseService {
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
+    recalculate(id: number): Observable<EntityResponseType> {
+        return this.http.get<QuizExercise>(`${this.resourceUrl}/${id}/recalculate-statistics`, { observe: 'response'})
+            .map((res: EntityResponseType) => this.convertResponse(res));
+    }
+
     findForCourse(courseId: number): Observable<HttpResponse<QuizExercise[]>> {
         return this.http.get<QuizExercise[]>(`api/courses/${courseId}/quiz-exercises`, { observe: 'response'})
             .map((res: HttpResponse<QuizExercise[]>) => this.convertArrayResponse(res));
