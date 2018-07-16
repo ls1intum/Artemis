@@ -47,7 +47,7 @@ public class CompassService {
     private final static double CONFIDENCE_THRESHOLD = 0.75;
     private final static double COVERAGE_THRESHOLD = 0.8;
 
-    private final static int NUMBER_OF_OPTIMAL_MODELS = 5;
+    private final static int NUMBER_OF_OPTIMAL_MODELS = 10;
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
 
     public CompassService (JsonAssessmentRepository assessmentRepository, JsonModelRepository modelRepository,
@@ -112,8 +112,11 @@ public class CompassService {
     /**
      * If a valid result has already produced in the past load it, otherwise calculate a new result
      *
+     * Useful for testing as it does not involve the database
+     *
      * @return Result object for the specific model or null if not found, or the coverage or confidence is not high enough
      */
+    @SuppressWarnings("unused")
     public Grade getResultForModel(long exerciseId, long studentId, long modelId) {
         if (!loadExerciseIfSuspended(exerciseId) || !modelRepository.exists(exerciseId, studentId, modelId)) {
             return null;
