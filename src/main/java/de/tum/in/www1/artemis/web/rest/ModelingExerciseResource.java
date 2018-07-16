@@ -12,6 +12,7 @@ import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.hibernate.Hibernate;
@@ -55,6 +56,7 @@ public class ModelingExerciseResource {
     private final ObjectMapper objectMapper;
     private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ModelingExerciseService modelingExerciseService;
+    private final CompassService compassService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository,
                                     UserService userService,
@@ -65,7 +67,8 @@ public class ModelingExerciseResource {
                                     ResultRepository resultRepository,
                                     MappingJackson2HttpMessageConverter springMvcJacksonConverter,
                                     JsonAssessmentRepository jsonAssessmentRepository,
-                                    ModelingExerciseService modelingExerciseService) {
+                                    ModelingExerciseService modelingExerciseService,
+                                    CompassService compassService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.userService = userService;
@@ -76,6 +79,7 @@ public class ModelingExerciseResource {
         this.resultRepository = resultRepository;
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.jsonAssessmentRepository = jsonAssessmentRepository;
+        this.compassService = compassService;
     }
 
     /**
@@ -292,7 +296,7 @@ public class ModelingExerciseResource {
 
     @GetMapping("/assessment-editor/{exerciseId}/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional(readOnly = true)
+    @Transactional
     @Timed
     public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
@@ -315,6 +319,12 @@ public class ModelingExerciseResource {
                 modelingSubmission = (ModelingSubmission) relevantResult.getSubmission();
             } else {
                 modelingSubmission = modelingSubmissionService.findByParticipation(relevantResult.getParticipation());
+            }
+            if (relevantResult.getAssessor() == null) {
+                compassService.removeModelWaitingForAssessment(exerciseId, submissionId);
+                relevantResult.setAssessor(user);
+                Result savedResult = resultRepository.save(relevantResult);
+                log.debug("Assessment locked with result id: " + savedResult.getId() + " for assessor: " + savedResult.getAssessor().getFirstName());
             }
             JsonObject model = modelingSubmissionService.getModel(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), submissionId);
             if (model != null) {

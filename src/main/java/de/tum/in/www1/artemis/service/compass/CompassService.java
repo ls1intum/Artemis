@@ -71,6 +71,13 @@ public class CompassService {
         return compassCalculationEngines.get(exerciseId).getNextOptimalModel();
     }
 
+    public void removeModelWaitingForAssessment(long exerciseId, long modelId) {
+        if (!loadExerciseIfSuspended(exerciseId)) {
+            return;
+        }
+        compassCalculationEngines.get(exerciseId).removeModelWaitingForAssessment(modelId, true);
+    }
+
     public Set<Long> getModelsWaitingForAssessment(long exerciseId) {
         if (!loadExerciseIfSuspended(exerciseId)) {
             return new HashSet<>();

@@ -11,6 +11,7 @@ import { Result } from '../entities/result';
 import { JhiResultDetailComponent } from '../courses/results/result.component';
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
+import { Principal } from '../shared';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -35,6 +36,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     assessedResults: number;
     allSubmissionsVisible: boolean;
     busy: boolean;
+    accountId: number;
 
     constructor(private route: ActivatedRoute,
                 private jhiAlertService: JhiAlertService,
@@ -45,7 +47,8 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 private exerciseResultService: ExerciseResultService,
                 private modelingAssessmentService: ModelingAssessmentService,
                 private modalService: NgbModal,
-                private eventManager: JhiEventManager) {
+                private eventManager: JhiEventManager,
+                private principal: Principal) {
         this.reverse = false;
         this.predicate = 'id';
         this.results = [];
@@ -54,6 +57,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.principal.identity().then(account => {
+            this.accountId = account.id;
+        });
         this.paramSub = this.route.params.subscribe(params => {
             this.courseService.find(params['courseId']).subscribe((res: HttpResponse<Course>) => {
                 this.course = res.body;
@@ -100,13 +106,15 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     applyFilter() {
+        // A result is optimal if it is part of nextOptimalSubmissionIds and nobody is currently assessing it or you are currently assessing it
         this.allResults.forEach(result => {
-            result.optimal = result.submission && this.nextOptimalSubmissionIds.includes(result.submission.id);
+            result.optimal = result.submission && ((this.nextOptimalSubmissionIds.includes(result.submission.id) && !result.assessor) ||
+                (result.assessor.id === this.accountId && !result.rated));
         });
         this.optimalResults = this.results = this.allResults.filter(result => {
             return result.optimal;
         });
-        this.results = this.allResults.filter(function(result) {
+        this.results = this.allResults.filter(result => {
             return result.optimal === false;
         });
     }

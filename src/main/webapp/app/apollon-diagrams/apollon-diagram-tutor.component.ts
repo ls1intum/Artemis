@@ -2,12 +2,13 @@ import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChi
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import ApollonEditor from '@ls1intum/apollon';
-import {ActivatedRoute, Router} from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
 import { ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
+import { Principal } from '../shared';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -34,6 +35,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     busy: boolean;
     done: boolean;
     timeout: any;
+    accountId: number;
+    isAuthorized: boolean;
 
     constructor(
         private jhiAlertService: JhiAlertService,
@@ -43,7 +46,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingExerciseService: ModelingExerciseService,
         private resultService: ResultService,
-        private modelingAssessmentService: ModelingAssessmentService
+        private modelingAssessmentService: ModelingAssessmentService,
+        private principal: Principal
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
@@ -51,6 +55,11 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        // Used to check if the assessor is the current user
+        this.principal.identity().then(account => {
+            this.accountId = account.id;
+        });
+        this.isAuthorized = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.route.params.subscribe(params => {
             const id = Number(params['submissionId']);
             const exerciseId = Number(params['exerciseId']);
