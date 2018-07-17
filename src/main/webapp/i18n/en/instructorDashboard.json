@@ -17,7 +17,7 @@
         "exportRepos": {
             "warning": "Confirm Export",
             "title": "Download Repos",
-            "question": "Enter all ids of students you want to download the repo from"
+            "question": "Enter all logins (e.g ga87fix) of students you want to download the repository from"
         }
     }
 }
