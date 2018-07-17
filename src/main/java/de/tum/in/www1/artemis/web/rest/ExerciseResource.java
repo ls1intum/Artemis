@@ -348,6 +348,9 @@ public class ExerciseResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
+        if(studentList.isEmpty() || studentList == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
 
         File zipFile = exerciseService.exportParticipations(id,studentList);
         if (zipFile == null) {
