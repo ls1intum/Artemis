@@ -22,7 +22,8 @@
                 "saveSuccessful": "Your assessment was saved successfully!",
                 "submitSuccessful": "Your assessment was submitted successfully!",
                 "resultDismissed": "Your assessment was dismissed because another tutor already rated this model."
-            }
+            },
+            "lock": "You do now have the lock on this submission. Only you can assess this model. Please assess this model before opening other submissions."
         }
     }
 }
