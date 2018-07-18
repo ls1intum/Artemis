@@ -140,6 +140,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 mode: 'MODELING_ONLY'
             });
             this.updateSubmissionModel();
+            setInterval(() => {
+                this.saveDiagram();
+            }, 60000);
         }
     }
 
