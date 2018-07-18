@@ -42,6 +42,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     positions: {};
     diagramState = null;
     isActive: boolean;
+    isSaving: boolean;
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,
@@ -56,7 +57,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         private modelingEditorService: ModelingEditorService,
         private modalService: NgbModal,
         private translateService: TranslateService
-    ) {}
+    ) {
+        this.isSaving = false;
+    }
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -146,17 +149,20 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
         this.submission.submitted = false;
         this.updateSubmissionModel();
+        this.isSaving = true;
 
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
                 this.result = res.body;
                 this.submission = this.result.submission;
+                this.isSaving = false;
                 this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
             });
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(sub => {
                 this.result = sub.body;
                 this.submission = this.result.submission;
+                this.isSaving = false;
                 this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
             });
         }

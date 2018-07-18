@@ -9,9 +9,16 @@
         </div>
         <div class="col-12 col-lg-4 text-right">
             <span *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></span>
-            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted">
-                <span class="fa fa-save"></span>
-                <span jhiTranslate="entity.action.save">Save</span></button>
+            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
+                <ng-container *ngIf="!isSaving">
+                    <span class="fa fa-save"></span>
+                    <span jhiTranslate="entity.action.save">Save</span>
+                </ng-container>
+                <ng-container *ngIf="isSaving">
+                    <span class="fa fa-refresh"></span>
+                    <span>Saving...</span>
+                </ng-container>
+            </button>
             <button class="btn btn-success" (click)="submit()"
                     [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
                     [hidden]="submission?.submitted || !isActive">Submit</button>
