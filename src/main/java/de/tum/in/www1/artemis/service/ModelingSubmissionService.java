@@ -7,6 +7,9 @@ import de.tum.in.www1.artemis.repository.JsonModelRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +19,7 @@ import java.util.Optional;
 @Service
 @Transactional
 public class ModelingSubmissionService {
+    private final Logger log = LoggerFactory.getLogger(ModelingSubmissionService.class);
 
     private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final ResultRepository resultRepository;
@@ -42,32 +46,44 @@ public class ModelingSubmissionService {
      * @param participation the participation where the result should be saved
      * @return the result entity
      */
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public Result save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
-        // update submission properties
-        modelingSubmission.setType(SubmissionType.MANUAL);
-
         Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
         Result result;
         if (!optionalResult.isPresent()) {
-            // create and save result
-            result = initializeResult(participation, modelingSubmission);
+            try {
+                // create new result
+                resultRepository.insertWithCondition(participation.getId());
+                Optional<Result> newResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
+                if (newResult.isPresent()) {
+                    result = initializeResult(participation, newResult.get());
+                } else {
+                    result = initializeResult(participation, null);
+                }
+            } catch (Exception e) {
+                throw new ConflictException("Conflict exception", "Tried to call createModelingSubmission() more than once for the same participation");
+            }
         } else {
             result = optionalResult.get();
         }
 
-        result.setCompletionDate(ZonedDateTime.now());
-        modelingSubmission.setSubmissionDate(result.getCompletionDate());
+        if (result.getId() == null) {
+            // there is no existing result and new result could not be created
+            return null;
+        }
+
+        // update submission properties
+        modelingSubmission.setSubmissionDate(ZonedDateTime.now());
+        modelingSubmission.setType(SubmissionType.MANUAL);
+        modelingSubmissionRepository.save(modelingSubmission);
+
+        result.setSubmission(modelingSubmission);
+        resultRepository.save(result);
 
         User user = participation.getStudent();
-
         if (modelingSubmission.getModel() != null && !modelingSubmission.getModel().isEmpty()) {
             jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
         }
-
-        modelingSubmissionRepository.save(modelingSubmission);
-        result.setSubmission(modelingSubmission);
-        resultRepository.save(result);
 
         if (modelingSubmission.isSubmitted()) {
             submit(modelingSubmission, modelingExercise);
@@ -90,15 +106,13 @@ public class ModelingSubmissionService {
         return null;
     }
 
-    private Result initializeResult(Participation participation, ModelingSubmission modelingSubmission) {
-        Result result = new Result().participation(participation).submission(modelingSubmission);
+    private Result initializeResult(Participation participation, Result result) {
+        if (result == null) {
+            result = new Result().participation(participation);
+        }
         result.setRated(false);
         result.setSuccessful(false);
         result.setCompletionDate(ZonedDateTime.now());
-
-        participation.addResult(result);
-        participationService.save(participation);
-
         return result;
     }
 
@@ -109,16 +123,8 @@ public class ModelingSubmissionService {
         if (optionalResult.isPresent()) {
             result = optionalResult.get();
             modelingSubmission = modelingSubmissionRepository.findOne(result.getSubmission().getId());
-        } else {
-            modelingSubmission = new ModelingSubmission();
-            modelingSubmission.setSubmitted(false);
-            modelingSubmission.setType(SubmissionType.MANUAL);
-            result = initializeResult(participation, modelingSubmission);
+            return modelingSubmission;
         }
-        result.setSubmission(modelingSubmission);
-        modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
-
-        resultRepository.save(result);
-        return modelingSubmission;
+        return null;
     }
 }

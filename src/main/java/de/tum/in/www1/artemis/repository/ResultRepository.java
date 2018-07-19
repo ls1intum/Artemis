@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import de.tum.in.www1.artemis.domain.Result;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -49,4 +50,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(Long participationId, boolean rated);
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
+
+    @Modifying
+    @Query(value = "insert into Result (participation_id, rated) select :participationId, 0 from Result where (participation_id = :participationId and rated = 0) having count(*) = 0", nativeQuery = true)
+    void insertWithCondition(@Param("participationId") Long participationId);
 }

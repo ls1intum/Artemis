@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -81,7 +82,7 @@ public class ModelingSubmissionResource {
      */
     @PostMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Transactional
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     @Timed
     public ResponseEntity<Result> createModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to save ModelingSubmission : {}", modelingSubmission);
@@ -104,16 +105,21 @@ public class ModelingSubmissionResource {
         }
 
         Participation participation = participationService.init(modelingExercise, principal.getName());
-        participation.setExercise(modelingExercise);
 
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setSubmitted(false);
-        modelingSubmissionRepository.save(modelingSubmission);
 
         // update and save submission
-        Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        try {
+            Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
 
-        return ResponseEntity.ok(result);
+            participation.addResult(result);
+            participationService.save(participation);
+
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(409).build();
+        }
     }
 
     /**

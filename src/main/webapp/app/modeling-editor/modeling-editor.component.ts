@@ -147,6 +147,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     saveDiagram() {
+        if (this.isSaving) {
+            // don't execute the function if it is already currently executing
+            return;
+        }
         if (!this.submission) {
             this.submission = new ModelingSubmission();
         }
@@ -167,6 +171,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.submission = this.result.submission;
                 this.isSaving = false;
                 this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+            }, (e) => {
+                console.log(e);
             });
         }
     }
