@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import {HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest} from '@angular/common/http';
 import { SERVER_API_URL } from '../../app.constants';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 
@@ -41,7 +41,8 @@ export class RepositoryFileService {
     }
 
     get(participationId: number, fileName: string): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/${participationId}/file/${fileName}`)
+        return this.http.get(`${this.resourceUrl}/${participationId}/file`,
+            { params: new HttpParams().set('file', fileName), responseType: 'text' } )
             .map(data => ({fileContent: data}));
     }
 
