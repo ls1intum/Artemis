@@ -43,6 +43,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     diagramState = null;
     isActive: boolean;
     isSaving: boolean;
+    retryStarted = false;
+    autoSave: NodeJS.Timer;
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,
@@ -66,8 +68,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             if (params['participationId']) {
                 this.modelingEditorService.get(params['participationId']).subscribe(data => {
                     this.participation = data.participation;
-                    if (data.participation.results) {
-                        this.result = data.participation.results[0];
+                    if (this.participation.results) {
+                        this.participation.results.sort((a, b) => +new Date(b.completionDate) - +new Date(a.completionDate));
+                        this.result = this.participation.results[0];
                     }
                     this.modelingExercise = this.participation.exercise;
                     this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
@@ -140,7 +143,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 mode: 'MODELING_ONLY'
             });
             this.updateSubmissionModel();
-            setInterval(() => {
+            this.autoSave = setInterval(() => {
+                if (this.submission && this.submission.submitted) {
+                    clearInterval(this.autoSave);
+                }
                 this.saveDiagram();
             }, 60000);
         }
@@ -171,7 +177,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.submission = this.result.submission;
                 this.isSaving = false;
                 this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-            }, (e) => {
+            }, e => {
                 console.log(e);
             });
         }
@@ -199,13 +205,17 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.assessments = assessments.body;
                     this.initializeAssessmentInfo();
                 });
-            }
-            if (this.isActive) {
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+                this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
             } else {
-                this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+                if (this.isActive) {
+                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+                } else {
+                    this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+                }
             }
+            this.retryStarted = false;
         });
+        clearInterval(this.autoSave);
         this.initializeApollonEditor(JSON.parse(this.submission.model));
     }
 
@@ -214,12 +224,13 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
+        clearInterval(this.autoSave);
     }
 
     updateSubmissionModel() {
         this.diagramState = this.apollonEditor.getState();
         const diagramJson = JSON.stringify(this.diagramState);
-        if (this.submission) {
+        if (this.submission && diagramJson != null) {
             this.submission.model = diagramJson;
         }
     }
@@ -264,7 +275,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
     // function to check whether there are pending changes
     canDeactivate(): Observable<boolean> | boolean {
-        if ((!this.submission && JSON.stringify(this.apollonEditor.getState()) !== '') || (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))) {
+        if ((!this.submission && JSON.stringify(this.apollonEditor.getState()) !== '') ||
+            (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))) {
             return false;
         }
         return true;
@@ -274,6 +286,19 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     unloadNotification($event: any) {
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
+        }
+    }
+
+    retry() {
+        this.retryStarted = true;
+        this.submission.id = null;
+        this.submission.submitted = false;
+        this.assessments = [];
+        clearInterval(this.autoSave);
+        if (this.submission.model) {
+            this.initializeApollonEditor(JSON.parse(this.submission.model));
+        } else {
+            this.initializeApollonEditor({});
         }
     }
 }

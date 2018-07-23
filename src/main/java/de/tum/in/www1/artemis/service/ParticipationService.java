@@ -83,7 +83,9 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (!Optional.ofNullable(participation).isPresent() || (!(exercise instanceof QuizExercise) && participation.getInitializationState() == ParticipationState.FINISHED)) { //create a new participation only if it was finished before (not for quiz exercise)
+        if (!Optional.ofNullable(participation).isPresent() ||
+            (!(exercise instanceof QuizExercise || exercise instanceof ModelingExercise) && participation.getInitializationState() == ParticipationState.FINISHED)) {
+            // create a new participation only if it was finished before (not for quiz exercise)
             participation = new Participation();
             participation.setExercise(exercise);
 

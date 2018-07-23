@@ -48,13 +48,13 @@ public class ModelingSubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public Result save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
-        Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
+        Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), false);
         Result result;
         if (!optionalResult.isPresent()) {
             try {
                 // create new result
                 resultRepository.insertWithCondition(participation.getId());
-                Optional<Result> newResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
+                Optional<Result> newResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), false);
                 if (newResult.isPresent()) {
                     result = initializeResult(participation, newResult.get());
                 } else {

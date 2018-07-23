@@ -29,9 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -259,7 +257,10 @@ public class ModelingExerciseResource {
         ObjectNode data = objectMapper.createObjectNode();
         data.set("participation", objectMapper.valueToTree(participation));
         if (participation.getResults().size() > 0) {
-            Result result = participation.getResults().iterator().next();
+            Set<Result> resultSet = participation.getResults();
+            List<Result> sortedResults = resultSet.stream().collect(Collectors.toList());
+            Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+            Result result = sortedResults.get(0);
             ModelingSubmission modelingSubmission;
             if (result.getSubmission() instanceof HibernateProxy) {
                 modelingSubmission = (ModelingSubmission) Hibernate.unproxy(result.getSubmission());
