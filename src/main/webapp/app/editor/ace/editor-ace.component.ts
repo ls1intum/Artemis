@@ -1,5 +1,4 @@
-import {ResultService} from '../../entities/result';
-import {RepositoryFileService, RepositoryService} from '../../entities/repository/repository.service';
+import {RepositoryFileService} from '../../entities/repository/repository.service';
 import {
     Component,
     EventEmitter,
@@ -13,10 +12,9 @@ import {
     ViewChild
 } from '@angular/core';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {ExerciseParticipationService, Participation, ParticipationService} from '../../entities/participation';
+import {Participation} from '../../entities/participation';
 import {WindowRef} from '../../shared/websocket/window.service';
 import {JhiAlertService} from 'ng-jhipster';
-import {CourseExerciseService} from '../../entities/course';
 import {JhiWebsocketService} from '../../shared';
 import {EditorComponent} from '../editor.component';
 import 'brace/theme/clouds';
@@ -27,11 +25,6 @@ import 'brace/theme/clouds';
     providers: [
         JhiAlertService,
         WindowRef,
-        ResultService,
-        RepositoryService,
-        CourseExerciseService,
-        ParticipationService,
-        ExerciseParticipationService,
         NgbModal,
         RepositoryFileService
     ]
@@ -81,10 +74,14 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         this.editor.setTheme('clouds');
     }
 
+    /**
+     * @function ngOnChanges
+     * @desc Framework lifecycle hook that is called when any data-bound property of a directive changes
+     * @param {SimpleChanges} changes
+     */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.participation && this.participation) {
             this.updateSaveStatusLabel();
-            console.log(this.participation.student.login);
         }
         if (changes.fileName && this.fileName) {
             console.log('FILE CHANGED, loading file: ' + this.fileName);
