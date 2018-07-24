@@ -19,6 +19,7 @@ import {JhiAlertService} from 'ng-jhipster';
 import {CourseExerciseService} from '../../entities/course';
 import {JhiWebsocketService} from '../../shared';
 import {EditorComponent} from '../editor.component';
+import 'brace/theme/clouds';
 
 @Component({
     selector: 'jhi-editor-ace',
@@ -46,11 +47,11 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
     editorText: string = ''; // possible two way binding
     editorFileSessions : object = {};
-    editorMode; //string or object
+    editorMode = 'java'; //string or object
     editorOptions;
     editorReadOnly: boolean = false;
     editorAutoUpdate: boolean = true; //change content when [text] change
-    editorDurationBeforeCallback = 1000; //wait 1s before callback 'textChanged' sends new value
+    editorDurationBeforeCallback = 3000; //wait 3s before callback 'textChanged' sends new value
 
     @Input() participation: Participation;
     @Input() fileName: string;
@@ -77,7 +78,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      * used to handle any additional initialization tasks
      */
     ngAfterViewInit(): void {
-        this.editor.setTheme('chrome');
+        this.editor.setTheme('clouds');
     }
 
     ngOnChanges(changes: SimpleChanges): void {
