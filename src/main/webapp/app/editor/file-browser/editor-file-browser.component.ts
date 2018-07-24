@@ -169,10 +169,6 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     buildTree(files, tree?, folder?) {
-
-        console.log('CALLING BUILDTREE WITH ARGUMENTS: ');
-        console.log(arguments);
-
         /**
          * Extract exerciseName for further processing by reading from the participation
          */
