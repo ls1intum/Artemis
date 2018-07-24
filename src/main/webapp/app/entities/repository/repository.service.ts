@@ -46,8 +46,11 @@ export class RepositoryFileService {
             .map(data => ({fileContent: data}));
     }
 
-    update(participationId: number): Observable<any> {
-        return this.http.put<any>(`${this.resourceUrl}/${participationId}/file`, {});
+    update(participationId: number, fileName: string, fileContent: string): Observable<any> {
+        return this.http.put(`${this.resourceUrl}/${participationId}/file`,
+            {fileContent},
+            { params: new HttpParams().set('file', fileName), responseType: 'text' })
+            .map(data => ({fileContent: data}));
     }
 
     create(participationId: number): Observable<any> {
