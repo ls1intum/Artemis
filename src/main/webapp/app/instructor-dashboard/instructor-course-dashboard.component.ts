@@ -163,7 +163,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     'lastName': result.participation.student.lastName,
                     'id': result.participation.student.id,
                     'login': result.participation.student.login,
-                    'email.': result.participation.student.email,
+                    'email': result.participation.student.email,
                     'exType': 'programming-exercise',
                     'scoreList': scoreExerciseP,
                     'totalScore':0
@@ -175,7 +175,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     'lastName': result.participation.student.lastName,
                     'id': result.participation.student.id,
                     'login': result.participation.student.login,
-                    'email.': result.participation.student.email,
+                    'email': result.participation.student.email,
                     'exType': 'quiz',
                     'scoreList': scoreExerciseQ,
                     'totalScore': 0
@@ -188,7 +188,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     'lastName': result.participation.student.lastName,
                     'id': result.participation.student.id,
                     'login': result.participation.student.login,
-                    'email.': result.participation.student.email,
+                    'email': result.participation.student.email,
                     'exType': 'modelling-exercise',
                     'scoreList': scoreExerciseM,
                     'totalScore': 0
