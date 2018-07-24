@@ -62,8 +62,6 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
                 this.participation = response.body;
                 this.checkIfRepositoryIsClean();
             });
-            /** Assign file from params given by the URL */
-            this.file = params['file'];
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(files => {
                 this.repositoryFiles = files;
