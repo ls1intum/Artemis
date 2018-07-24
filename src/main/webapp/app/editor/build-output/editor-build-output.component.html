@@ -1,7 +1,7 @@
 <!-- TODO: replace resizable directive -->
 <!-- TODO: https://github.com/mattlewis92/angular-resizable-element -->
 <div class="card border" resizable r-directions="['top']" r-height="150" id="cardBuildOutput">
-    <div class="card-header bg-primary text-white" (click)="editor.toggleCollapse($event, true)">
+    <div class="card-header bg-primary text-white" (click)="toggleEditorCollapse($event, true)">
         <span class="pull-right "><i class="fa fa-chevron-down"></i></span>
         <h3 class="card-title">
             <i class="fa fa-terminal"></i>
@@ -10,8 +10,8 @@
 
     </div>
     <div class="card-body">
-        <p class="text-center" [hidden]="!isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building...</p>
-        <p class="text-center" [hidden]="!(buildLogs.length == 0) || isBuilding">No build results available</p>
+        <p class="text-center" [hidden]="!bIsBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building...</p>
+        <p class="text-center" [hidden]="!(buildLogs.length == 0) || bIsBuilding">No build results available</p>
 
         <dl class="buildoutput dl-horizontal" [hidden]="buildLogs.length == 0 || isBuilding">
             <ng-container *ngFor="let logEntry of buildLogs">

@@ -15,6 +15,7 @@ import { EditorAceComponent } from './ace/editor-ace.component';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { EditorFileBrowserComponent } from './file-browser/editor-file-browser.component';
 import { TreeModule } from 'ng2-tree';
+import { EditorBuildOutputComponent } from './build-output/editor-build-output.component';
 
 const ENTITY_STATES = [
     ...editorRoute
@@ -31,7 +32,8 @@ const ENTITY_STATES = [
     declarations: [
         EditorComponent,
         EditorAceComponent,
-        EditorFileBrowserComponent
+        EditorFileBrowserComponent,
+        EditorBuildOutputComponent
     ],
     exports: [
         EditorComponent

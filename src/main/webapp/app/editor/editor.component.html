@@ -68,8 +68,10 @@
     </div>
 
     <div class="editor-bottom">
-        <!-- TODO: check directive arguments -->
-        <!--<editor-build-output participation="participation" is-building="isBuilding"></editor-build-output>-->
+        <jhi-editor-build-output
+            [participation]="participation"
+            [bIsBuilding]="bIsBuilding">
+        </jhi-editor-build-output>
     </div>
 
 </div>
