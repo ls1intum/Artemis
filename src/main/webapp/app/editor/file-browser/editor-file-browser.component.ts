@@ -9,7 +9,6 @@ import {CourseExerciseService} from '../../entities/course';
 import {JhiWebsocketService} from '../../shared';
 import {EditorComponent} from '../editor.component';
 import { TreeModel, TreeModelSettings, Ng2TreeSettings } from 'ng2-tree';
-import * as $ from 'jquery';
 
 @Component({
     selector: 'jhi-editor-file-browser',
@@ -81,12 +80,26 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         this.deletedFile.emit(statusChange);
     }
 
+    /**
+     * Callback function for when a node in the file tree view has been selected
+     * @param event: Corresponding event object, holds the node name and parent informations
+     */
     handleNodeSelected(event) {
-        console.log(event);
-        console.log(event.node.value);
-        this.selectedFile.emit({
-            fileName: event.node.value
-        });
+
+        const parentNodeValue = event.node.parent.node.value;
+        /**
+         * If the selected file is not in the root directory, we need to prepend its name with its parent node name
+         * Otherwise we just emit the node name (value)
+         */
+        if(parentNodeValue != null && parentNodeValue != 'root') {
+            this.selectedFile.emit({
+                fileName: parentNodeValue + '/' + event.node.value
+            });
+        } else {
+            this.selectedFile.emit({
+                fileName: event.node.value
+            });
+        }
     }
 
     updateRepositoryCommitStatus(event) {
