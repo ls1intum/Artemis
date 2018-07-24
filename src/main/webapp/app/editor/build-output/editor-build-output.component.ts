@@ -27,14 +27,12 @@ import * as $ from 'jquery';
     ]
 })
 
-export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+export class EditorBuildOutputComponent implements OnInit, OnDestroy, OnChanges {
 
     buildLogs = [];
 
     @Input() participation: Participation;
     @Input() bIsBuilding: boolean;
-
-    //TODO: component => require: { editor: '^editor' }
 
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
@@ -49,13 +47,6 @@ export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDest
      * Used to assign parameters which are used by the component
      */
     ngOnInit(): void {}
-
-    /**
-     * @function ngAfterViewInit
-     * @desc Framework lifecycle hook that is called after Angular has fully initialized a component's view;
-     * used to handle any additional initialization tasks
-     */
-    ngAfterViewInit(): void {}
 
     /**
      * @function ngOnChanges
@@ -82,7 +73,7 @@ export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDest
 
     getBuildLogs() {
         this.repositoryService.buildlogs(this.participation.id).subscribe( buildLogs => {
-            // TODO: check if buildLogs.log exists
+            // TODO: check if buildLogs.log actually exists
             this.buildLogs = buildLogs;
             $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
         });
