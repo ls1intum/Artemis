@@ -126,7 +126,10 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         if (this.results.length > 0) {
             const rows = [];
             this.results.forEach((result, index) => {
-                const studentName = result.participation.student.firstName;
+                let studentName = result.participation.student.firstName;
+                if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {
+                    studentName = studentName + ' ' + result.participation.student.lastName;
+                }
                 rows.push(index === 0 ? 'data:text/csv;charset=utf-8,' + studentName : studentName);
             });
             const csvContent = rows.join('\n');
@@ -143,7 +146,10 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         if (this.results.length > 0) {
             const rows = [];
             this.results.forEach((result, index) => {
-                const studentName = result.participation.student.firstName;
+                let studentName = result.participation.student.firstName;
+                if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {
+                    studentName = studentName + ' ' + result.participation.student.lastName;
+                }
                 const studentId = result.participation.student.login;
                 const score = result.score;
 
