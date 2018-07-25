@@ -173,9 +173,9 @@
                     data-translate="arTeMiSApp.quizExercise.addSelectedQuestions"
             ></button>
         </div>
-        <div class="form-group" ng-if="vm.validQuiz()">
-            <input type="file" file-model="vm.importFile" placeholder="Upload file..." />
-            <button class="btn btn-light" ng-click="vm.importQuiz()" data-translate="entity.action.import"
+        <div class="form-group">
+            <input type="file" accept=".json" file-model="vm.importFile" placeholder="Upload file..." />
+            <button class="btn btn-light" ng-click="vm.importQuiz()" data-translate="entity.action.import" ng-class="{disabled: !vm.importFile}"
             >import</button>
         </div>
     </div>

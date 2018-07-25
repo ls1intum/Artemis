@@ -3,7 +3,6 @@ import { UpgradeComponent } from '@angular/upgrade/static';
 import { QuizExercise } from './quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { CourseService } from '../course/course.service';
-import { QuizExerciseComponent } from './quiz-exercise.component';
 import { Course } from '../course/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
@@ -419,13 +418,18 @@ class QuizExerciseDetailController {
      * Import the quiz from a json file
      */
     importQuiz() {
-        if (this.hasSavedQuizStarted() || this.pendingChanges() || !this.validQuiz()) {
+        if (this.importFile === null || this.importFile === undefined) {
             return;
         }
         const fileReader = new FileReader();
         fileReader.onload = () => {
-            const questions = JSON.parse(fileReader.result);
-            this.addQuestions(questions);
+            try {
+                const questions = JSON.parse(fileReader.result);
+                this.addQuestions(questions);
+                this.importFile = null;
+            } catch (e) {
+                alert('Import Quiz Failed! Error parsing quiz file.');
+            }
         };
         fileReader.readAsText(this.importFile);
     }
