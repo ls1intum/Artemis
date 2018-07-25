@@ -30,7 +30,12 @@
                 "title": "TODO: Add German for All quiz questions for course {{ param }}",
                 "export": "TODO: Add German for Export",
                 "questionTitle": "TODO: Add German for Question Title",
-                "quizExerciseTitle": "TOdo: Add German for Quiz Exercise Title"
+                "quizExerciseTitle": "TODO: Add German for Quiz Exercise Title"
+            },
+            "filter": {
+                "mcq": "TODO: Add German for Multiple-Choice Question",
+                "dnd": "TODO: Add German for Drag-And-Drop Question",
+                "applyFilter": "TODO: Add German for Apply Filter"
             },
             "description": "Beschreibung",
             "explanation": "Erklärung",

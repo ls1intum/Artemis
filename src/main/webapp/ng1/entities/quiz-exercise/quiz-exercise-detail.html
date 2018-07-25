@@ -120,11 +120,28 @@
                 <table class="table table-striped">
                     <tbody>
                     <tr>
-                        <td><span data-translate="arTeMiSApp.quizExercise.selectCourse"></span></td>
-                        <td>
-                            <select ng-model="vm.selectedCourse" ng-change="vm.onCourseSelect()">
+                        <td width="30%"><span data-translate="arTeMiSApp.quizExercise.selectCourse"></span></td>
+                        <td colspan="2" width="70%">
+                            <select ng-model="vm.selectedCourse" ng-change="vm.onCourseSelect()" style="min-width:100%;">
                                 <option ng-repeat="course in vm.courses" value="{{course}}">{{course.title}}</option>
                             </select>
+                        </td>
+                    </tr>
+                    <tr ng-if="vm.allExistingQuestions.length !== 0">
+                        <td class="checkbox">
+                            <label>
+                                <input type="checkbox" ng-model="vm.dndFilterEnabled" />
+                                <span data-translate="arTeMiSApp.quizExercise.filter.dnd" class="colon-suffix" ></span>
+                            </label>
+                        </td>
+                        <td class="checkbox">
+                            <label>
+                                <input type="checkbox" ng-model="vm.mcqFilterEnabled" />
+                                <span data-translate="arTeMiSApp.quizExercise.filter.mcq" class="colon-suffix" ></span>
+                            </label>
+                        </td>
+                        <td align="right">
+                            <button class="btn btn-light" ng-click="vm.applyFilter()" data-translate="arTeMiSApp.quizExercise.filter.applyFilter" >eq</button>
                         </td>
                     </tr>
                     <!--<tr>-->

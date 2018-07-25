@@ -32,6 +32,11 @@
                 "questionTitle": "Question Title",
                 "quizExerciseTitle": "Quiz Exercise Title"
             },
+            "filter": {
+                "mcq": "Multiple-Choice Question",
+                "dnd": "Drag-And-Drop Question",
+                "applyFilter": "Apply Filter"
+            },
             "description": "Description",
             "explanation": "Explanation",
             "randomizeQuestionOrder": "Present Questions in Random Order",

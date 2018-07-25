@@ -1,4 +1,3 @@
-
 {
     "arTeMiSApp": {
         "quizExercise": {
@@ -25,6 +24,11 @@
             },
             "new": {
                 "title": "Quiz für {{ param }} erstellen"
+            },
+            "filter": {
+                "mcq": "TODO: Add German for Multiple-Choice Question",
+                "dnd": "TODO: Add German for Drag-And-Drop Question",
+                "applyFilter": "TODO: Add German for Apply Filter"
             },
             "description": "Beschreibung",
             "explanation": "Erklärung",
@@ -96,7 +100,7 @@
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
                     "statistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
-                    "resulttext":{
+                    "resulttext": {
                         "answer_deleted": "Die Antwortmöglichkeit wird aus allen Ergebnissen entfernt",
                         "answer_invalid": "Alle Teilnehmer erhalten die Punkte für die ungültige Antwort",
                         "question_deleted": "Die Frage wird aus allen Ergebnissen entfernt",
@@ -107,7 +111,7 @@
                     "succesfully_confirm": "Änderungen erfolgreich übernommen!"
                 }
             },
-            "invalidReasons" : {
+            "invalidReasons": {
                 "quizTitle": "Quiz: Der Titel fehlt.",
                 "quizDuration": "Quiz: Die Dauer fehlt oder ist ungültig.",
                 "noQuestion": "Quiz: Das Quiz hat keine Fragen.",

@@ -88,9 +88,11 @@ class QuizExerciseDetailController {
     courses = [];
     selectedCourse;
     quizExercises = [];
-    selectedQuizExercise;
+    allExistingQuestions = [];
     existingQuestions = [];
     importFile = null;
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
 
     init() {
         if (this.quizExercise) {
@@ -209,7 +211,7 @@ class QuizExerciseDetailController {
      * Populates quiz exercises for the selected course
      */
     onCourseSelect() {
-        this.existingQuestions = [];
+        this.allExistingQuestions = [];
         if (this.selectedCourse === null) {
             return;
         }
@@ -223,8 +225,9 @@ class QuizExerciseDetailController {
                             const quizExerciseResponse = response.body;
                             for (const question of quizExerciseResponse.questions) {
                                 question.exercise = quizExercise;
-                                this.existingQuestions.push(question);
+                                this.allExistingQuestions.push(question);
                             }
+                            this.applyFilter();
                         });
                     }
                 } else {
@@ -249,6 +252,18 @@ class QuizExerciseDetailController {
     //         });
     //     }
     // }
+
+    applyFilter() {
+        this.existingQuestions = [];
+        for (const question of this.allExistingQuestions) {
+            if (this.mcqFilterEnabled === true && question.type === 'multiple-choice') {
+                this.existingQuestions.push(question);
+            }
+            if (this.dndFilterEnabled === true && question.type === 'drag-and-drop') {
+                this.existingQuestions.push(question);
+            }
+        }
+    }
 
     /**
      * Adds selected quizzes to current quiz exercise
