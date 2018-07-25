@@ -214,13 +214,10 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      */
     static exportQuiz(quizQuestions: any, exportAll: boolean) {
         let questions = [];
-        if (exportAll === true) {
-            questions = quizQuestions;
-        } else {
-            for (let question of quizQuestions) {
-                if (question.exportQuiz === true) {
-                    questions.push(question);
-                }
+        for (let question of quizQuestions) {
+            if (exportAll === true || question.exportQuiz === true) {
+                delete question.questionStatistic;
+                questions.push(question);
             }
         }
         if (questions.length === 0) {
