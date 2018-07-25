@@ -26,6 +26,12 @@
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
             },
+            "export": {
+                "title": "All quiz questions for course {{ param }}",
+                "export": "Export",
+                "questionTitle": "Question Title",
+                "quizExerciseTitle": "Quiz Exercise Title"
+            },
             "description": "Description",
             "explanation": "Explanation",
             "randomizeQuestionOrder": "Present Questions in Random Order",

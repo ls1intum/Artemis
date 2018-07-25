@@ -1,55 +1,50 @@
 <div>
-  <h2>
-    <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
-  </h2>
-  <jhi-alert></jhi-alert>
-  <div class="row">
-  </div>
-  <br/>
-  <div class="table-responsive">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>
-            <span jhiTranslate="arTeMiSApp.exercise.title">Title</span>
-          </th>
-          <th>
-            <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
-          </th>
-          <th>
-            <span jhiTranslate="entity.action.export">Export</span>
-          </th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let question of questions">
-          <td>{{question.title}}</td>
-          <td>{{question.type}}</td>
-          <!-- <td>
-            <span jhiTranslate="arTeMiSApp.exercise.mcqType">Multiple Choice Question</span>
-            <span *ngif="question.type == 'drag-and-drop'" jhiTranslate="arTeMiSApp.exercise.dndType">Drag and Drop</span>
-          </td> -->
-          <td class="text-right">
-            <div class="checkbox">
-              <label>
-                <input type="checkbox" [(ngModel)]="question.exportQuiz" />
-                <span data-translate="entity.action.export"></span>
-              </label>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-  <div class="edit-quiz-footer">
-    <div class="container">
-      <div class="edit-quiz-footer-content">
-        <div class="form-group">
-          <button class="btn btn-success" (click)="exportQuiz()" data-translate="entity.action.import">Export</button>
-        </div>
-      </div>
+    <h2>
+        <span jhiTranslate="arTeMiSApp.quizExercise.export.title" translateValues="{param: '{{courseName}}'}">Quiz Exercises</span>
+    </h2>
+    <jhi-alert></jhi-alert>
+    <div class="row">
     </div>
-  </div>
+    <br/>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th width="50%">
+                        <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Question Title</span>
+                    </th>
+                    <th width="25%">
+                        <span jhiTranslate="arTeMiSApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
+                    </th>
+                    <th width="20%">
+                        <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
+                    </th>
+                    <th width="5%">
+                        <span jhiTranslate="entity.action.export">Export</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let question of questions">
+                    <td width="50%">{{question.title}}</td>
+                    <td width="25%">{{question.exercise.title}}</td>
+                    <td width="20%">{{question.type}}</td>
+                    <td width="5%" class="checkbox">
+                        <input type="checkbox" [(ngModel)]="question.exportQuiz" />
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="edit-quiz-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div class="form-group"></div>
+                <div class="form-group">
+                    <button class="btn btn-success" (click)="exportQuiz()" jhiTranslate="arTeMiSApp.quizExercise.export.export">Export</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 </div>

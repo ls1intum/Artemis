@@ -26,6 +26,12 @@
             "new": {
                 "title": "Quiz für {{ param }} erstellen"
             },
+            "export": {
+                "title": "TODO: Add German for All quiz questions for course {{ param }}",
+                "export": "TODO: Add German for Export",
+                "questionTitle": "TODO: Add German for Question Title",
+                "quizExerciseTitle": "TOdo: Add German for Quiz Exercise Title"
+            },
             "description": "Beschreibung",
             "explanation": "Erklärung",
             "randomizeQuestionOrder": "Fragen in zufälliger Reihenfolge anzeigen",

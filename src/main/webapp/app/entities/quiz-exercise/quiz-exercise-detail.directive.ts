@@ -218,11 +218,11 @@ class QuizExerciseDetailController {
         this.repository.findForCourse(course.id)
             .subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
-                    let quizExercises = quizExercisesResponse.body;
+                    const quizExercises = quizExercisesResponse.body;
                     for (const quizExercise of quizExercises) {
                         this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                            const quizExercise = response.body;
-                            for (const question of quizExercise.questions) {
+                            const quizExerciseResponse = response.body;
+                            for (const question of quizExerciseResponse.questions) {
                                 question.exercise = quizExercise;
                                 this.existingQuestions.push(question);
                             }
@@ -251,12 +251,11 @@ class QuizExerciseDetailController {
     //     }
     // }
 
-
     /**
      * Adds selected quizzes to current quiz exercise
      */
     addExistingQuestions() {
-        var questions = [];
+        const questions = [];
         for (const question of this.existingQuestions) {
             if (question.exportQuiz) {
                 questions.push(question);
@@ -271,7 +270,7 @@ class QuizExerciseDetailController {
      * @param question {Question} the question to remove
      */
     deleteQuestion(question) {
-        this.quizExercise.questions = this.quizExercise.questions.filter(function (q) {
+        this.quizExercise.questions = this.quizExercise.questions.filter(function(q) {
             return q !== question;
         });
     }
@@ -299,7 +298,7 @@ class QuizExerciseDetailController {
             'isVisibleBeforeStart',
             'isOpenForPractice',
             'questions'
-        ].some(function (key) {
+        ].some(function(key) {
             return this.quizExercise[key] !== this.savedEntity[key];
         }, this);
     }
@@ -314,10 +313,10 @@ class QuizExerciseDetailController {
         }
         const isGenerallyValid = this.quizExercise.title && this.quizExercise.title !== '' &&
             this.quizExercise.duration && this.quizExercise.questions && this.quizExercise.questions.length;
-        const areAllQuestionsValid = this.quizExercise.questions.every(function (question) {
+        const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             switch (question.type) {
                 case 'multiple-choice':
-                    return question.title && question.title !== '' && question.answerOptions.some(function (answerOption) {
+                    return question.title && question.title !== '' && question.answerOptions.some(function(answerOption) {
                         return answerOption.isCorrect;
                     });
                 case 'drag-and-drop':
@@ -360,7 +359,7 @@ class QuizExerciseDetailController {
                 translateValues: {}
             });
         }
-        this.quizExercise.questions.forEach(function (question, index) {
+        this.quizExercise.questions.forEach(function(question, index) {
             if (!question.title || question.title === '') {
                 reasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
@@ -368,7 +367,7 @@ class QuizExerciseDetailController {
                 });
             }
             if (question.type === 'multiple-choice') {
-                if (!question.answerOptions.some(function (answerOption) {
+                if (!question.answerOptions.some(function(answerOption) {
                     return answerOption.isCorrect;
                 })) {
                     reasons.push({
@@ -423,34 +422,34 @@ class QuizExerciseDetailController {
         if (this.hasSavedQuizStarted() || this.pendingChanges() || !this.validQuiz()) {
             return;
         }
-        let fileReader = new FileReader();
+        const fileReader = new FileReader();
         fileReader.onload = () => {
-            let questions = JSON.parse(fileReader.result);
+            const questions = JSON.parse(fileReader.result);
             this.addQuestions(questions);
         };
         fileReader.readAsText(this.importFile);
     }
 
     addQuestions(questions: any) {
-        for (let question of questions) {
+        for (const question of questions) {
             delete question.questionStatistic;
             delete question.id;
             if (question.type === 'multiple-choice') {
-                for (let answerOption of question.answerOptions) {
+                for (const answerOption of question.answerOptions) {
                     delete answerOption.id;
                 }
                 this.quizExercise.questions = this.quizExercise.questions.concat([question]);
             } else if (question.type === 'drag-and-drop') {
                 // Renaming id property with tempID property,
-                for (let dropLocation of question.dropLocations) {
+                for (const dropLocation of question.dropLocations) {
                     dropLocation.tempID = dropLocation.id;
                     delete dropLocation.id;
                 }
-                for (let dragItem of question.dragItems) {
+                for (const dragItem of question.dragItems) {
                     dragItem.tempID = dragItem.id;
                     delete dragItem.id;
                 }
-                for (let correctMapping of question.correctMappings) {
+                for (const correctMapping of question.correctMappings) {
                     delete correctMapping.id;
                     delete correctMapping.dragItemIndex;
                     delete correctMapping.dropLocationIndex;

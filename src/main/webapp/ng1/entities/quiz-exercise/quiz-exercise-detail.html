@@ -142,26 +142,26 @@
                 <table class="table table-striped">
                     <thead>
                     <tr>
-                        <th>
-                            <span jhiTranslate="arTeMiSApp.exercise.title">Title</span>
+                        <th width="50%">
+                            <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Question Title</span>
                         </th>
-                        <th>
-                            <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercise</span>
+                        <th width="25%">
+                            <span jhiTranslate="arTeMiSApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
                         </th>
-                        <th>
+                        <th width="20%">
                             <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
                         </th>
-                        <th>
+                        <th width="5%">
                             <span jhiTranslate="entity.action.add">Add</span>
                         </th>
                     </tr>
                     </thead>
                     <tbody>
                     <tr ng-repeat="question in vm.existingQuestions">
-                        <td>{{question.title}}</td>
-                        <td>{{question.exercise.title}}</td>
-                        <td>{{question.type}}</td>
-                        <td class="checkbox">
+                        <td width="50%">{{question.title}}</td>
+                        <td width="25%">{{question.exercise.title}}</td>
+                        <td width="20%">{{question.type}}</td>
+                        <td width="5%" class="checkbox">
                             <input type="checkbox" ng-Model="question.exportQuiz"/>
                         </td>
                     </tr>
