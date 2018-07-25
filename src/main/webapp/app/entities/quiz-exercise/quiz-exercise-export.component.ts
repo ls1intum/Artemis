@@ -11,6 +11,7 @@ import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { Question } from '../question';
 import { QuizExerciseComponent } from './quiz-exercise.component';
+import { CourseService, Course } from '../course';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',
@@ -19,13 +20,14 @@ import { QuizExerciseComponent } from './quiz-exercise.component';
 export class QuizExerciseExportComponent implements OnInit {
     questions: Question[] = new Array(0);
     courseId: number;
-    courseName: 'Some course';
+    course: Course;
 
     translateService: TranslateService;
     router: Router;
 
     constructor(private route: ActivatedRoute,
         private quizExerciseService: QuizExerciseService,
+        private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         router: Router,
         translateService: TranslateService,
@@ -43,6 +45,9 @@ export class QuizExerciseExportComponent implements OnInit {
     }
 
     private loadForCourse(courseId) {
+        this.courseService.find(this.courseId).subscribe(res => {
+            this.course = res.body;
+        });
         this.quizExerciseService.findForCourse(courseId).subscribe(
             (res: HttpResponse<QuizExercise[]>) => {
                 const quizExercises = res.body;

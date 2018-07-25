@@ -428,7 +428,7 @@ class QuizExerciseDetailController {
                 this.addQuestions(questions);
                 this.importFile = null;
             } catch (e) {
-                alert('Import Quiz Failed! Error parsing quiz file.');
+                alert('Import Quiz Failed! Invalid quiz file.');
             }
         };
         fileReader.readAsText(this.importFile);
