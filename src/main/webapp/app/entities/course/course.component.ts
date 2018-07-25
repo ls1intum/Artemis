@@ -9,7 +9,8 @@ import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-course',
-    templateUrl: './course.component.html'
+    templateUrl: './course.component.html',
+    styles: ['.course-table {padding-bottom: 5rem}']
 })
 export class CourseComponent implements OnInit, OnDestroy {
     courses: Course[];
