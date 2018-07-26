@@ -40,7 +40,9 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Saves the given submission and the corresponding model
+     * Saves the given submission and the corresponding model and creates the result if necessary.
+     * Furthermore, the submission is added to the AutomaticSubmissionService if not submitted yet.
+     *
      * @param modelingSubmission the submission to submit
      * @param modelingExercise the exercise to submit in
      * @param participation the participation where the result should be saved
@@ -48,9 +50,31 @@ public class ModelingSubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public Result save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
+        User user = participation.getStudent();
+        if (modelingSubmission.getId() != null) {
+            // check if the the submission was already submitted due to auto submit
+            // and return the corresponding result if that's true
+            ModelingSubmission dbModelingSubmission = modelingSubmissionRepository.findOne(modelingSubmission.getId());
+            if (dbModelingSubmission.isSubmitted()) {
+                try {
+                    JsonObject model = getModel(participation.getExercise().getId(), user.getId(), dbModelingSubmission.getId());
+                    dbModelingSubmission.setModel(model.toString());
+                    Optional<Result> dbResult = resultRepository.findDistinctBySubmissionId(dbModelingSubmission.getId());
+                    if (dbResult.isPresent()) {
+                        Result result2 = dbResult.get();
+                        result2.setSubmission(dbModelingSubmission);
+                        return result2;
+                    }
+                } catch (Exception e) {
+                    log.error("Exception while retrieving the model for submission {}:\n{}", dbModelingSubmission.getId(), e.getMessage());
+                }
+            }
+        }
+
         Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), false);
         Result result;
         if (!optionalResult.isPresent()) {
+            // there is no unrated result for the participation
             try {
                 // create new result
                 resultRepository.insertIfNonExisting(participation.getId());
@@ -80,16 +104,15 @@ public class ModelingSubmissionService {
         result.setSubmission(modelingSubmission);
         resultRepository.save(result);
 
-        User user = participation.getStudent();
         if (modelingSubmission.getModel() != null && !modelingSubmission.getModel().isEmpty()) {
             jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
         }
 
         if (modelingSubmission.isSubmitted()) {
             submit(modelingSubmission, modelingExercise);
-        } else {
-            // save submission to HashMap
-            QuizScheduleService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
+        } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
+            // save submission to HashMap if exercise not ended yet
+            AutomaticSubmissionService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
         }
 
         return result;

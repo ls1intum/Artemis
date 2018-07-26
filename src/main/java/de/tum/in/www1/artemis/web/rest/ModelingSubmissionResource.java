@@ -161,6 +161,9 @@ public class ModelingSubmissionResource {
         Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
 
         Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        if (modelingSubmission != result.getSubmission()) {
+            modelingSubmission = (ModelingSubmission) result.getSubmission();
+        }
 
         if (modelingSubmission.isSubmitted()) {
             participation.setInitializationState(ParticipationState.FINISHED);
