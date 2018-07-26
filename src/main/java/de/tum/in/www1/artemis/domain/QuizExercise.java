@@ -22,7 +22,7 @@ import java.util.*;
 @Entity
 @DiscriminatorValue(value="Q")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class QuizExercise extends Exercise implements Serializable, SchedulableExercise {
+public class QuizExercise extends Exercise implements Serializable {
 
     public enum Status {
         INACTIVE, STARTED, FINISHED
@@ -259,6 +259,7 @@ public class QuizExercise extends Exercise implements Serializable, SchedulableE
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
+    @Override
     public Boolean isEnded() {
         return isStarted() && getRemainingTime() + Constants.QUIZ_GRACE_PERIOD_IN_SECONDS <= 0;
     }

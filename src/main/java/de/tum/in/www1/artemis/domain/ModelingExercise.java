@@ -13,7 +13,7 @@ import java.util.Objects;
 @Entity
 @DiscriminatorValue(value="M")
 //@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-public class ModelingExercise extends Exercise implements Serializable, SchedulableExercise {
+public class ModelingExercise extends Exercise implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -36,13 +36,6 @@ public class ModelingExercise extends Exercise implements Serializable, Schedula
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
-
-    public Boolean isEnded() {
-        if (getDueDate() == null) {
-            return false;
-        }
-        return ZonedDateTime.now().isAfter(getDueDate());
-    }
 
     @Override
     public boolean equals(Object o) {
