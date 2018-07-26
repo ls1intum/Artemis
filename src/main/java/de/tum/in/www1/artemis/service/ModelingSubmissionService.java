@@ -53,7 +53,7 @@ public class ModelingSubmissionService {
         if (!optionalResult.isPresent()) {
             try {
                 // create new result
-                resultRepository.insertWithCondition(participation.getId());
+                resultRepository.insertIfNonExisting(participation.getId());
                 Optional<Result> newResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), false);
                 if (newResult.isPresent()) {
                     result = initializeResult(participation, newResult.get());

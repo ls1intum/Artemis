@@ -51,7 +51,13 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     Optional<Result> findDistinctBySubmissionId(Long submissionId);
 
+    /**
+     * This SQL query is used for inserting results if only one unrated result should exist per participation.
+     * Specifically this prevents multiple concurrent inserts with the same participation_id and rated = 0.
+     *
+     * @param participationId   the participation id for which the result should be inserted
+     */
     @Modifying
     @Query(value = "insert into Result (participation_id, rated) select :participationId, 0 from Result where (participation_id = :participationId and rated = 0) having count(*) = 0", nativeQuery = true)
-    void insertWithCondition(@Param("participationId") Long participationId);
+    void insertIfNonExisting(@Param("participationId") Long participationId);
 }
