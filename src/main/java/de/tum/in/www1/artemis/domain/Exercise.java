@@ -174,10 +174,10 @@ public abstract class Exercise implements Serializable {
     }
 
     public Boolean isEnded() {
-        if (dueDate != null) {
-            return ZonedDateTime.now().isBefore(dueDate);
+        if (getDueDate() != null) {
+            return ZonedDateTime.now().isBefore(getDueDate());
         }
-        return true;
+        return false;
     }
 
     public void setOpenForSubmission(boolean openForSubmission) {
