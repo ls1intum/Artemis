@@ -44,7 +44,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
-    autoSave: NodeJS.Timer;
+    autoSaveInterval: NodeJS.Timer;
+    autoSaveTimer: number;
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,
@@ -61,6 +62,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         private translateService: TranslateService
     ) {
         this.isSaving = false;
+        this.autoSaveTimer = 0;
     }
 
     ngOnInit() {
@@ -143,12 +145,16 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 mode: 'MODELING_ONLY'
             });
             this.updateSubmissionModel();
-            this.autoSave = setInterval(() => {
+            this.autoSaveInterval = setInterval(() => {
+                this.autoSaveTimer++;
                 if (this.submission && this.submission.submitted) {
-                    clearInterval(this.autoSave);
+                    clearInterval(this.autoSaveInterval);
+                    this.autoSaveTimer = 0;
                 }
-                this.saveDiagram();
-            }, 60000);
+                if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
+                    this.saveDiagram();
+                }
+            }, 1000);
         }
     }
 
@@ -163,13 +169,22 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.submission.submitted = false;
         this.updateSubmissionModel();
         this.isSaving = true;
+        this.autoSaveTimer = 0;
 
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
                 this.result = res.body;
                 this.submission = this.result.submission;
+                if (!this.submission.model) {
+                    this.updateSubmissionModel();
+                }
                 this.isSaving = false;
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                if (this.submission.submitted) {
+                    this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
+                    this.isActive = false;
+                } else {
+                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                }
             });
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(sub => {
@@ -177,6 +192,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.submission = this.result.submission;
                 this.isSaving = false;
                 this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
             }, e => {
                 console.log(e);
             });
@@ -215,7 +231,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             }
             this.retryStarted = false;
         });
-        clearInterval(this.autoSave);
+        clearInterval(this.autoSaveInterval);
         this.initializeApollonEditor(JSON.parse(this.submission.model));
     }
 
@@ -224,7 +240,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
-        clearInterval(this.autoSave);
+        clearInterval(this.autoSaveInterval);
     }
 
     updateSubmissionModel() {
@@ -294,7 +310,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.submission.id = null;
         this.submission.submitted = false;
         this.assessments = [];
-        clearInterval(this.autoSave);
+        clearInterval(this.autoSaveInterval);
         if (this.submission.model) {
             this.initializeApollonEditor(JSON.parse(this.submission.model));
         } else {
