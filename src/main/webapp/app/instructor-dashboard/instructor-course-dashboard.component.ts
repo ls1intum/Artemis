@@ -124,7 +124,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                         this.titleProgrammingString += p.exercise.title+',';
 
                         break;
-                    case "modelling-exercise":
+                    case "modeling-exercise":
                         maximalZuErreichendePunkteM += p.exercise.maxScore;
 
                         this.allModellingExercises[p.exercise.id] = {
@@ -232,7 +232,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     'id': result.participation.student.id,
                     'login': result.participation.student.login,
                     'email': result.participation.student.email,
-                    'exType': 'modelling-exercise',
+                    'exType': 'modeling-exercise',
                     'totalScore': 0,
                     'scoreListM': {},
                     'scoreListMString': ''
@@ -288,7 +288,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 */
                             break;
 
-                        case "modelling-exercise":
+                        case "modeling-exercise":
                             typeM[result.participation.student.id].totalScore += (result.score * result.participation.exercise.maxScore)/100;
 
                             typeM[result.participation.student.id].scoreListM[result.participation.exercise.id] = {'exID':result.participation.exercise.id, 'exTitle':result.participation.exercise.title,
