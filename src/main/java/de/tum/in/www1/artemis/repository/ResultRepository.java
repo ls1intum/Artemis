@@ -53,7 +53,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     /**
      * This SQL query is used for inserting results if only one unrated result should exist per participation.
-     * Specifically this prevents multiple concurrent inserts with the same participation_id and rated = 0.
+     * This prevents multiple (concurrent) inserts with the same participation_id and rated = 0.
      *
      * @param participationId   the participation id for which the result should be inserted
      */
