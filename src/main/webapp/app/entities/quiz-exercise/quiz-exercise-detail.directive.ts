@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import 'angular';
 import * as moment from 'moment';
+import { FileUploaderService } from '../../shared/http/file-uploader.service';
 
 /** This Angular directive will act as an interface to the 'upgraded' AngularJS component
  *  The upgrade is realized as given Angular tutorial:
@@ -28,6 +29,7 @@ export class QuizExerciseDetailWrapper extends UpgradeComponent implements OnIni
     @Input() dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     @Input() router: Router;
     @Input() translateService: TranslateService;
+    @Input() fileUploaderService: FileUploaderService;
 
     constructor(@Inject(ElementRef) elementRef: ElementRef, @Inject(Injector) injector: Injector) {
         /** We must pass the name of the directive as used by AngularJS (!) to the super */
@@ -58,6 +60,7 @@ class QuizExerciseDetailController {
     course;
     router;
     translateService;
+    fileUploaderService;
     isSaving = false;
     isTrue = true;
     dragAndDropQuestionUtil;
@@ -432,7 +435,7 @@ class QuizExerciseDetailController {
     /**
      * Import the quiz from a json file
      */
-    importQuiz() {
+    async importQuiz() {
         if (this.importFile === null || this.importFile === undefined) {
             return;
         }
@@ -442,7 +445,7 @@ class QuizExerciseDetailController {
                 const questions = JSON.parse(fileReader.result);
                 this.addQuestions(questions);
                 this.importFile = null;
-                var control = document.getElementById("importFileInput") as HTMLInputElement;
+                const control = document.getElementById('importFileInput') as HTMLInputElement;
                 control.value = null;
             } catch (e) {
                 alert('Import Quiz Failed! Invalid quiz file.');
@@ -451,7 +454,7 @@ class QuizExerciseDetailController {
         fileReader.readAsText(this.importFile);
     }
 
-    addQuestions(questions: any) {
+    async addQuestions(questions: any) {
         for (const question of questions) {
             delete question.questionStatistic;
             delete question.id;
@@ -461,12 +464,20 @@ class QuizExerciseDetailController {
                 }
                 this.quizExercise.questions = this.quizExercise.questions.concat([question]);
             } else if (question.type === 'drag-and-drop') {
+                // Duplicate image on server,
+                let fileUploadResponse = await this.fileUploaderService.duplicateFile(question.backgroundFilePath);
+                question.backgroundFilePath = fileUploadResponse.path;
+
                 // Renaming id property with tempID property,
                 for (const dropLocation of question.dropLocations) {
                     dropLocation.tempID = dropLocation.id;
                     delete dropLocation.id;
                 }
                 for (const dragItem of question.dragItems) {
+                    if (dragItem.pictureFilePath !== null) {
+                        fileUploadResponse = await this.fileUploaderService.duplicateFile(dragItem.pictureFilePath);
+                        dragItem.pictureFilePath = fileUploadResponse.path;
+                    }
                     dragItem.tempID = dragItem.id;
                     delete dragItem.id;
                 }
@@ -475,6 +486,11 @@ class QuizExerciseDetailController {
                     delete correctMapping.dragItemIndex;
                     delete correctMapping.dropLocationIndex;
                     delete correctMapping.invalid;
+
+                    if (correctMapping.dragItem.pictureFilePath !== null) {
+                        fileUploadResponse = await this.fileUploaderService.duplicateFile(correctMapping.dragItem.pictureFilePath);
+                        correctMapping.dragItem.pictureFilePath = fileUploadResponse.path;
+                    }
                     correctMapping.dragItem.tempID = correctMapping.dragItem.id;
                     delete correctMapping.dragItem.id;
                     correctMapping.dropLocation.tempID = correctMapping.dropLocation.id;
@@ -606,7 +622,8 @@ angular
             'courseService': '<',
             'dragAndDropQuestionUtil': '<',
             'router': '<',
-            'translateService': '<'
+            'translateService': '<',
+            'fileUploaderService': '<'
         },
         template: require('../../../ng1/entities/quiz-exercise/quiz-exercise-detail.html'),
         controller: QuizExerciseDetailController,
