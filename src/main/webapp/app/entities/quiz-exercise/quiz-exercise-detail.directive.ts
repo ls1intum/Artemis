@@ -442,6 +442,8 @@ class QuizExerciseDetailController {
                 const questions = JSON.parse(fileReader.result);
                 this.addQuestions(questions);
                 this.importFile = null;
+                var control = document.getElementById("importFileInput") as HTMLInputElement;
+                control.value = null;
             } catch (e) {
                 alert('Import Quiz Failed! Invalid quiz file.');
             }
