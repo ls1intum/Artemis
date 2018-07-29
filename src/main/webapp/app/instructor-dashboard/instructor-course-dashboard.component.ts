@@ -252,29 +252,30 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 };
             }
 
-            if (!individualExercisesSeen[result.id]) {
 
-                individualExercisesSeen[result.id] = true;
 
                 let completionDate = new Date(result.completionDate);
                 let dueDate = new Date(result.participation.exercise.dueDate);
 
                 switch (result.participation.exercise.type) {
                     case "quiz":
+                        if (!individualExercisesSeen[result.id]) {
 
-                        typeQ[result.participation.student.id].totalScore += Math.round((result.score * result.participation.exercise.maxScore) / 100);
+                            individualExercisesSeen[result.id] = true;
+
+                            typeQ[result.participation.student.id].totalScore += Math.round((result.score * result.participation.exercise.maxScore) / 100);
 
 
-                        typeQ[result.participation.student.id].scoreListQ[result.participation.exercise.id] = {
-                            'exID': result.participation.exercise.id, 'exTitle': result.participation.exercise.title,
-                            'absoluteScore': Math.round((result.score * result.participation.exercise.maxScore) / 100)
-                        };
-
+                            typeQ[result.participation.student.id].scoreListQ[result.participation.exercise.id] = {
+                                'exID': result.participation.exercise.id,
+                                'exTitle': result.participation.exercise.title,
+                                'absoluteScore': Math.round((result.score * result.participation.exercise.maxScore) / 100)
+                            };
+                        }
                         break;
 
                     case "programming-exercise":
                         if (completionDate.getTime() <= dueDate.getTime()) {
-                            typeP[result.participation.student.id].totalScore += Math.round((result.score * result.participation.exercise.maxScore) / 100);
 
                             typeP[result.participation.student.id].scoreListP[result.participation.exercise.id] = {
                                 'exID': result.participation.exercise.id,
@@ -286,7 +287,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
                     case "modeling-exercise":
                         if (completionDate.getTime() <= dueDate.getTime()) {
-                            typeM[result.participation.student.id].totalScore += Math.round((result.score * result.participation.exercise.maxScore) / 100);
 
                             typeM[result.participation.student.id].scoreListM[result.participation.exercise.id] = {
                                 'exID': result.participation.exercise.id,
@@ -298,13 +298,32 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                         break;
                     default:
                 }
-            }
+
         }
+
+
 
 
         this.typeQ = Object.keys(typeQ).map(key => typeQ[key]);
         this.typeP = Object.keys(typeQ).map(key => typeP[key]);
         this.typeM = Object.keys(typeQ).map(key => typeM[key]);
+
+
+        for(const m of this.typeM){
+            let totalScore = 0;
+            for(const modellings in m.scoreListM){
+                totalScore += m.scoreListM[modellings].absoluteScore;
+            }
+            m.totalScore = totalScore;
+        }
+
+        for(const p of this.typeP){
+            let totalScore = 0;
+            for(const programmings in p.scoreListP){
+                totalScore += p.scoreListP[programmings].absoluteScore;
+            }
+            p.totalScore = totalScore;
+        }
 
         this.mergeScoresForExerciseCategories();
     }
@@ -491,7 +510,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 };
             } else {
                 finalScores[c.participation.student.id].OverallScore = finalScores[c.participation.student.id].QuizTotalScore
-                    + finalScores[c.participation.student.id].ProgrammingTotalScore + finalScores[c.participation.student.id].ModellingTotalScore
+                    + finalScores[c.participation.student.id].ProgrammingTotalScore + finalScores[c.participation.student.id].ModellingTotalScore;
             }
         }
 
