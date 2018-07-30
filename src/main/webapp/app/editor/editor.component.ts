@@ -34,8 +34,8 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     saveStatusLabel: string;
 
     /** File Status Booleans **/
-    bIsSaved: boolean = true;
-    bIsBuilding: boolean = false;
+    bIsSaved = true;
+    bIsBuilding = false;
     bIsCommitted: boolean;
 
     /**
@@ -85,6 +85,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     updateSaveStatusLabel(event) {
+        console.log('updateSaveStatusLabel called');
         this.bIsSaved = event.bIsSaved;
         if (!this.bIsSaved) {
             this.bIsCommitted = false;
@@ -96,6 +97,18 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
         console.log('RECEIVED EVENT WITH NEW FILENAME: ' + fileObject.fileName);
         console.log(this.repositoryFiles);
         this.file = fileObject.fileName;
+    }
+
+    updateRepositoryCommitStatus(event) {
+        console.log('updateRepositoryCommitStatus called');
+        console.log(event);
+        this.bIsSaved = false;
+        /** Query the repositoryFileService for updated files in the repository */
+        this.repositoryFileService.query(this.participation.id).subscribe(files => {
+            this.repositoryFiles = files;
+        }, err => {
+            console.log('There was an error while getting files: ' + err.body.msg);
+        });
     }
 
     /** Collapse parts of the editor (file browser, build output...) */
