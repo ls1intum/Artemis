@@ -1,7 +1,7 @@
 import {ResultService} from '../../entities/result';
 import {RepositoryFileService, RepositoryService} from '../../entities/repository/repository.service';
 import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import {NgbActiveModal, NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {ExerciseParticipationService, Participation, ParticipationService} from '../../entities/participation';
 import {WindowRef} from '../../shared/websocket/window.service';
 import {JhiAlertService} from 'ng-jhipster';
@@ -9,6 +9,8 @@ import {CourseExerciseService} from '../../entities/course';
 import {JhiWebsocketService} from '../../shared';
 import {EditorComponent} from '../editor.component';
 import { TreeModel, TreeModelSettings, Ng2TreeSettings } from 'ng2-tree';
+import {EditorFileBrowserCreateComponent} from './editor-file-browser-create';
+import {EditorFileBrowserDeleteComponent} from './editor-file-browser-delete';
 
 @Component({
     selector: 'jhi-editor-file-browser',
@@ -22,6 +24,7 @@ import { TreeModel, TreeModelSettings, Ng2TreeSettings } from 'ng2-tree';
         ParticipationService,
         ExerciseParticipationService,
         NgbModal,
+        NgbActiveModal,
         RepositoryFileService
     ]
 })
@@ -53,7 +56,8 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
                 private repositoryFileService: RepositoryFileService,
-                public modalService: NgbModal) {
+                public modalService: NgbModal,
+                public activeModal: NgbActiveModal) {
     }
 
     /**
@@ -91,26 +95,13 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
          * If the selected file is not in the root directory, we need to prepend its name with its parent node name
          * Otherwise we just emit the node name (value)
          */
-        if(parentNodeValue != null && parentNodeValue != 'root') {
+        if (parentNodeValue != null && parentNodeValue !== 'root') {
             this.selectedFile.emit({
                 fileName: parentNodeValue + '/' + event.node.value
             });
         } else {
             this.selectedFile.emit({
                 fileName: event.node.value
-            });
-        }
-    }
-
-    updateRepositoryCommitStatus(event) {
-        console.log(event);
-        if (this.onCreatedFile) {
-            this.onCreatedFile({
-                bIsSaved: false
-            });
-        } else if (this.onDeletedFile) {
-            this.onDeletedFile({
-                bIsSaved: false
             });
         }
     }
@@ -239,8 +230,23 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         return tree;
     }
 
-    // TODO: create-Modal
-    // TODO: delete-Modal
+    openCreateFileModal() {
+        const modalRef = this.modalService.open(EditorFileBrowserCreateComponent, {keyboard: true, size: 'lg'});
+        modalRef.componentInstance.participation = this.participation;
+        modalRef.componentInstance.parent = this;
+    }
+
+    openDeleteFileModal() {
+        /**
+         * We only open the modal if the user has a file selected
+         */
+        if (this.fileName) {
+            const modalRef = this.modalService.open(EditorFileBrowserDeleteComponent, {keyboard: true, size: 'lg'});
+            modalRef.componentInstance.participation = this.participation;
+            modalRef.componentInstance.parent = this;
+            modalRef.componentInstance.fileNameToDelete = this.fileName;
+        }
+    }
 
     /**
      * @function ngOnDestroy

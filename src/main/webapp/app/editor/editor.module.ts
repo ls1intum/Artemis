@@ -16,6 +16,8 @@ import { AceEditorModule } from 'ng2-ace-editor';
 import { EditorFileBrowserComponent } from './file-browser/editor-file-browser.component';
 import { TreeModule } from 'ng2-tree';
 import { EditorBuildOutputComponent } from './build-output/editor-build-output.component';
+import { EditorFileBrowserCreateComponent } from './file-browser/editor-file-browser-create';
+import { EditorFileBrowserDeleteComponent } from './file-browser/editor-file-browser-delete';
 
 const ENTITY_STATES = [
     ...editorRoute
@@ -33,6 +35,8 @@ const ENTITY_STATES = [
         EditorComponent,
         EditorAceComponent,
         EditorFileBrowserComponent,
+        EditorFileBrowserCreateComponent,
+        EditorFileBrowserDeleteComponent,
         EditorBuildOutputComponent
     ],
     exports: [
@@ -41,7 +45,9 @@ const ENTITY_STATES = [
     entryComponents: [
         HomeComponent,
         EditorComponent,
-        JhiMainComponent
+        JhiMainComponent,
+        EditorFileBrowserCreateComponent,
+        EditorFileBrowserDeleteComponent
     ],
     providers: [
         JhiAlertService,
