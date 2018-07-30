@@ -53,12 +53,14 @@ export class RepositoryFileService {
             .map(data => ({fileContent: data}));
     }
 
-    create(participationId: number): Observable<any> {
-        return this.http.post<any>(`${this.resourceUrl}/${participationId}/file`, {});
+    create(participationId: number, fileName: string): Observable<any> {
+        return this.http.post<any>(`${this.resourceUrl}/${participationId}/file`, {},
+            { params: new HttpParams().set('file', fileName)});
     }
 
-    delete(participationId: number): Observable<any> {
-        return this.http.delete<any>(`${this.resourceUrl}/${participationId}/file`);
+    delete(participationId: number, fileName: string): Observable<any> {
+        return this.http.delete<any>(`${this.resourceUrl}/${participationId}/file`,
+            { params: new HttpParams().set('file', fileName)});
     }
 }
 
