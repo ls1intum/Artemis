@@ -266,7 +266,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                             'resCompletionDate': resultCompletionDate,
                             'exID': exercise.id,
                             'exTitle': exercise.title,
-                            'absoluteScore': Math.round((result.score * exercise.maxScore) / 10) / 10 // divide afterwards to round to 2 decimal places
+                            'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
                         };
                     }
                     break;
@@ -280,7 +280,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                                 'resCompletionDate': resultCompletionDate,
                                 'exID': exercise.id,
                                 'exTitle': exercise.title,
-                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 10) / 10 // divide afterwards to round to 2 decimal places
+                                'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
                             };
                         }
                     }
@@ -296,7 +296,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                                 'resCompletionDate': resultCompletionDate,
                                 'exID': exercise.id,
                                 'exTitle': exercise.title,
-                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 10) / 10 // divide afterwards to round to 2 decimal places
+                                'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
                             };
                         }
                     // }
@@ -574,11 +574,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         this.paramSub.unsubscribe();
     }
 
-    callback() {
+    round(value, decimals) {
+        return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
     }
-}
-
-
-Number.prototype.round = function(places) {
-    return +(Math.round(this + "e+" + places)  + "e-" + places);
 }
