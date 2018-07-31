@@ -27,7 +27,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     numberOfExercises = 0;
     rows = [];
     results = [];
-    participations = [];
+    participations = [];    //[Participation]
     courseScores = [];
     typeQ = [];
     typeP = [];
@@ -89,13 +89,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         let maximalZuErreichendePunkteM = 0;
         let maximalZuErreichendePunkteP = 0;
 
-        for (const p of this.participations) {
+        for (const participation of this.participations) {
 
-            if (!rows[p.student.id]) {
-                rows[p.student.id] = {
-                    'firstName': p.student.firstName,
-                    'lastName': p.student.lastName,
-                    'login': p.student.login,
+            if (!rows[participation.student.id]) {
+                rows[participation.student.id] = {
+                    'firstName': participation.student.firstName,
+                    'lastName': participation.student.lastName,
+                    'login': participation.student.login,
                     'participated': 0,
                     'participationInPercent': 0,
                     'successful': 0,
@@ -104,42 +104,45 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 };
             }
 
-            rows[p.student.id].participated++;
+            rows[participation.student.id].participated++;
 
-            if (!exercisesSeen[p.exercise.id]) {
-                exercisesSeen[p.exercise.id] = true;
+            const exercise = participation.exercise;
+
+            if (!exercisesSeen[exercise.id]) {
+                exercisesSeen[exercise.id] = true;
                 this.numberOfExercises++;
 
-                switch (p.exercise.type) {
-                    case "quiz":
-                        maximalZuErreichendePunkteQ += p.exercise.maxScore;
 
-                        this.allQuizExercises[p.exercise.id] = {
-                            'exId': p.exercise.id,
-                            'exTitle': p.exercise.title
+                switch (exercise.type) {
+                    case "quiz":
+                        maximalZuErreichendePunkteQ += exercise.maxScore;
+
+                        this.allQuizExercises[exercise.id] = {
+                            'exId': exercise.id,
+                            'exTitle': exercise.title
                         };
-                        this.titleQuizString += p.exercise.title + ',';
+                        this.titleQuizString += exercise.title + ',';
 
                         break;
 
                     case "programming-exercise":
-                        maximalZuErreichendePunkteP += p.exercise.maxScore;
+                        maximalZuErreichendePunkteP += exercise.maxScore;
 
-                        this.allProgrammingExercises[p.exercise.id] = {
-                            'exId': p.exercise.id,
-                            'exTitle': p.exercise.title
+                        this.allProgrammingExercises[exercise.id] = {
+                            'exId': exercise.id,
+                            'exTitle': exercise.title
                         };
-                        this.titleProgrammingString += p.exercise.title + ',';
+                        this.titleProgrammingString += exercise.title + ',';
 
                         break;
                     case "modeling-exercise":
-                        maximalZuErreichendePunkteM += p.exercise.maxScore;
+                        maximalZuErreichendePunkteM += exercise.maxScore;
 
-                        this.allModellingExercises[p.exercise.id] = {
-                            'exId': p.exercise.id,
-                            'exTitle': p.exercise.title
+                        this.allModellingExercises[exercise.id] = {
+                            'exId': exercise.id,
+                            'exTitle': exercise.title
                         };
-                        this.titleModellingString += p.exercise.title + ',';
+                        this.titleModellingString += exercise.title + ',';
                         break;
 
                     default:
@@ -157,12 +160,18 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         console.log('Titel Programming:' + this.titleProgrammingString);
 
         // Successful Participations as the total amount and a relative value to all Exercises
-        for (const r of this.results) {
+        for (const result of this.results) {
 
-            if (r.successful) {
-                rows[r.participation.student.id].successful++;
-                rows[r.participation.student.id].successfullyCompletedInPercent = (rows[r.participation.student.id].successful / this.numberOfExercises) * 100;
+            if (result.successful) {
+                rows[result.participation.student.id].successful++;
+                //TODO delete the following line
+                //rows[result.participation.student.id].successfullyCompletedInPercent = (rows[result.participation.student.id].successful / this.numberOfExercises) * 100;
             }
+        }
+
+        for (const studentId in rows) {
+            //TODO test
+            rows[studentId].successfullyCompletedInPercent = (rows[studentId].successful / this.numberOfExercises) * 100;
         }
 
         // Relative amount of participation in all exercises
@@ -170,30 +179,20 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         const studentSeen = {};
 
 
-        for (const p of this.participations) {
-            if (!studentSeen[p.student.id]) {
-                studentSeen[p.student.id] = true;
-                rows[p.student.id].participationInPercent = (rows[p.student.id].participated / this.numberOfExercises) * 100;
+        for (const participation of this.participations) {
+            if (!studentSeen[participation.student.id]) {
+                studentSeen[participation.student.id] = true;
+                rows[participation.student.id].participationInPercent = (rows[participation.student.id].participated / this.numberOfExercises) * 100;
             }
         }
 
-        // Set the total score of all Exercises (cache-control: no-cache, no-store, max-age=0, must-revalidate
-        // connection: close
-        // content-type: application/json; charset=UTF-8
-        // date: Sat, 14 Jul 2018 08:34:10 GMT
-        // expires: 0
-        // pragma: no-cache
-        // set-cookie: XSRF-TOKEN=b9a821c6-f7bf-4b31-9a96-e833a930f40f; path=/
-        // transfer-encoding: chunked
-        // x-application-context: ArTEMiS:dev,bamboo,bitbucket,jira:8080
-        // x-content-type-options: nosniff
-        // x-powered-by: Express
-        // x-xss-protection: 1; mode=blockas mentioned on the RESTapi division by amount of exercises)
-        for (const s of this.courseScores) {
-            if (s.participation.student) {
-                rows[s.participation.student.id].overallScore = s.score; //this line of code gives you not the overall score!!!! FDE
+        for (const score of this.courseScores) {
+            if (score.participation.student) {
+                rows[score.participation.student.id].overallScore = score.score; //TODO: this line of code gives you not the overall score!!!! FDE
             }
         }
+
+        //why the hell are we doing this???
         this.rows = Object.keys(rows).map(key => rows[key]);
     }
 
@@ -203,48 +202,48 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             return;
         }
 
-
-        const typeQ = {};
-        const typeP = {};
-        const typeM = {};
-        const individualExercisesSeen = {};
+        const studentsQuizScores = {};
+        const studentsProgrammingScores = {};
+        const studentsModelingScores = {};
 
         for (const result of this.results) {
 
+            const student = result.participation.student;
+            const exercise = result.participation.exercise;
 
-            if (!typeP[result.participation.student.id]) {
-                typeP[result.participation.student.id] = {
-                    'firstName': result.participation.student.firstName,
-                    'lastName': result.participation.student.lastName,
-                    'id': result.participation.student.id,
-                    'login': result.participation.student.login,
-                    'email': result.participation.student.email,
+            if (!studentsProgrammingScores[student.id]) {
+                studentsProgrammingScores[student.id] = {
+                    'firstName': student.firstName,
+                    'lastName': student.lastName,
+                    'id': student.id,
+                    'login': student.login,
+                    'email': student.email,
                     'exType': 'programming-exercise',
                     'totalScore': 0,
                     'scoreListP': {},
                     'scoreListPString': ''
                 };
             }
-            if (!typeQ[result.participation.student.id]) {
-                typeQ[result.participation.student.id] = {
-                    'firstName': result.participation.student.firstName,
-                    'lastName': result.participation.student.lastName,
-                    'id': result.participation.student.id,
-                    'login': result.participation.student.login,
-                    'email': result.participation.student.email,
+            if (!studentsQuizScores[student.id]) {
+                studentsQuizScores[student.id] = {
+                    'firstName': student.firstName,
+                    'lastName': student.lastName,
+                    'id': student.id,
+                    'login': student.login,
+                    'email': student.email,
                     'exType': 'quiz',
                     'totalScore': 0,
                     'scoreListQ': {},
                     'scoreListQString': ''
                 };
             }
-            if (!typeM[result.participation.student.id]) {
-                typeM[result.participation.student.id] = {
-                    'firstName': result.participation.student.firstName,
-                    'lastName': result.participation.student.lastName,
-                    'id': result.participation.student.id,
-                    'login': result.participation.student.login,
-                    'email': result.participation.student.email,
+            if (!studentsModelingScores[student.id]) {
+                studentsModelingScores[student.id] = {
+                    'firstName': student.firstName,
+                    'lastName': student.lastName,
+                    'id': student.id,
+                    'login': student.login,
+                    'email': student.email,
                     'exType': 'modeling-exercise',
                     'totalScore': 0,
                     'scoreListM': {},
@@ -254,75 +253,98 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
 
 
-                let completionDate = new Date(result.completionDate);
-                let dueDate = new Date(result.participation.exercise.dueDate);
+            let resultCompletionDate = new Date(result.completionDate);
+            let dueDate = new Date(exercise.dueDate);
 
-                switch (result.participation.exercise.type) {
-                    case "quiz":
-                        if (!individualExercisesSeen[result.id]) {
+            switch (exercise.type) {
+                case "quiz":
+                    if (result.rated === true) {   //There should only be 1 rated result
 
-                            individualExercisesSeen[result.id] = true;
+                        //TODO: delete, we handle this case below
+                        // studentsQuizScores[student.id].totalScore += Math.round((result.score * exercise.maxScore) / 100);
 
-                            typeQ[result.participation.student.id].totalScore += Math.round((result.score * result.participation.exercise.maxScore) / 100);
+                        studentsQuizScores[student.id].scoreListQ[exercise.id] = {
+                            'completionDate': resultCompletionDate,
+                            'exID': exercise.id,
+                            'exTitle': exercise.title,
+                            'absoluteScore': Math.round((result.score * exercise.maxScore) / 100)
+                        };
+                    }
+                    break;
 
+                case "programming-exercise":
+                    if (resultCompletionDate.getTime() <= dueDate.getTime()) {
 
-                            typeQ[result.participation.student.id].scoreListQ[result.participation.exercise.id] = {
-                                'exID': result.participation.exercise.id,
-                                'exTitle': result.participation.exercise.title,
-                                'absoluteScore': Math.round((result.score * result.participation.exercise.maxScore) / 100)
+                        const score = studentsProgrammingScores[student.id].scoreListP[exercise.id];
+                        if (score == null) {// || completionDate.getTime() > score.completionDate.getTime()) {    // we want to have the last result withing the due date (see above)
+                            studentsProgrammingScores[student.id].scoreListP[exercise.id] = {
+                                'completionDate': resultCompletionDate,
+                                'exID': exercise.id,
+                                'exTitle': exercise.title,
+                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 100)
                             };
                         }
-                        break;
-
-                    case "programming-exercise":
-                        if (completionDate.getTime() <= dueDate.getTime()) {
-
-                            typeP[result.participation.student.id].scoreListP[result.participation.exercise.id] = {
-                                'exID': result.participation.exercise.id,
-                                'exTitle': result.participation.exercise.title,
-                                'absoluteScore': Math.round((result.score * result.participation.exercise.maxScore) / 100)
+                        else if (resultCompletionDate.getTime() > score.completionDate.getTime()) {
+                            studentsProgrammingScores[student.id].scoreListP[exercise.id] = {
+                                'completionDate': resultCompletionDate,
+                                'exID': exercise.id,
+                                'exTitle': exercise.title,
+                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 100)
                             };
                         }
-                        break;
+                    }
+                    break;
 
-                    case "modeling-exercise":
-                        if (completionDate.getTime() <= dueDate.getTime()) {
+                case "modeling-exercise":
+                    // we can also have results (due to the manual assessment) that appear after the completion date
+                    // if (completionDate.getTime() <= dueDate.getTime()) {
 
-                            typeM[result.participation.student.id].scoreListM[result.participation.exercise.id] = {
-                                'exID': result.participation.exercise.id,
-                                'exTitle': result.participation.exercise.title,
-                                'absoluteScore': Math.round((result.score * result.participation.exercise.maxScore) / 100)
+                        const score = studentsModelingScores[student.id].scoreListM[exercise.id];
+                        if(score == null || resultCompletionDate.getTime() > score.completionDate) {     // we want to have the last result
+                            studentsModelingScores[student.id].scoreListM[exercise.id] = {
+                                'completionDate': resultCompletionDate,
+                                'exID': exercise.id,
+                                'exTitle': exercise.title,
+                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 100)
                             };
                         }
+                    // }
 
-                        break;
-                    default:
-                }
+                    break;
+                default:
+            }
 
         }
 
 
 
+        //TODO: why the hell are we doing this?
+        this.typeQ = Object.keys(studentsQuizScores).map(key => studentsQuizScores[key]);
+        this.typeP = Object.keys(studentsQuizScores).map(key => studentsProgrammingScores[key]);
+        this.typeM = Object.keys(studentsQuizScores).map(key => studentsModelingScores[key]);
 
-        this.typeQ = Object.keys(typeQ).map(key => typeQ[key]);
-        this.typeP = Object.keys(typeQ).map(key => typeP[key]);
-        this.typeM = Object.keys(typeQ).map(key => typeM[key]);
-
-
-        for(const m of this.typeM){
+        for(const studentsQuizScore of this.typeQ) {
             let totalScore = 0;
-            for(const modellings in m.scoreListM){
-                totalScore += m.scoreListM[modellings].absoluteScore;
+            for(const quizzes in studentsQuizScore.scoreListQ) {
+                totalScore += studentsQuizScore.scoreListQ[quizzes].absoluteScore;
             }
-            m.totalScore = totalScore;
+            studentsQuizScore.totalScore = totalScore;
         }
 
-        for(const p of this.typeP){
+        for(const studentsModelingScore of this.typeM) {
             let totalScore = 0;
-            for(const programmings in p.scoreListP){
-                totalScore += p.scoreListP[programmings].absoluteScore;
+            for(const modellings in studentsModelingScore.scoreListM) {
+                totalScore += studentsModelingScore.scoreListM[modellings].absoluteScore;
             }
-            p.totalScore = totalScore;
+            studentsModelingScore.totalScore = totalScore;
+        }
+
+        for(const studentsProgrammingScore of this.typeP) {
+            let totalScore = 0;
+            for(const programmings in studentsProgrammingScore.scoreListP) {
+                totalScore += studentsProgrammingScore.scoreListP[programmings].absoluteScore;
+            }
+            studentsProgrammingScore.totalScore = totalScore;
         }
 
         this.mergeScoresForExerciseCategories();
