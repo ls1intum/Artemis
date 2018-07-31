@@ -577,4 +577,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     round(value, decimals): Number {
         return Number(Math.round(Number(value+'e'+decimals))+'e-'+decimals);
     }
+
+    roundWithPower(number, precision): Number {
+        var factor = Math.pow(10, precision);
+        var tempNumber = number * factor;
+        var roundedTempNumber = Math.round(tempNumber);
+        return roundedTempNumber / factor;
+    };
+
+    callback() { }
 }
