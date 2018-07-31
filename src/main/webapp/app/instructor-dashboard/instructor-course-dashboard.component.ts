@@ -574,7 +574,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         this.paramSub.unsubscribe();
     }
 
-    round(value, decimals) {
-        return Number(Math.round(value+'e'+decimals)+'e-'+decimals);
+    round(value, decimals): Number {
+        return Number(Math.round(Number(value+'e'+decimals))+'e-'+decimals);
     }
 }
