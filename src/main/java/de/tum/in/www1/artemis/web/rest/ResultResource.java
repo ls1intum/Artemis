@@ -337,9 +337,13 @@ public class ResultResource {
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+        List<Result> results = resultRepository.findAllResultsForCourse(courseId);
         return ResponseEntity.ok().body(results);
     }
+
+
+    //TODO: create your own call and filter out results for quiz exercises with rated = 0
+    //TODO: try to only store one result for programming exercise per student
 
 
     /**

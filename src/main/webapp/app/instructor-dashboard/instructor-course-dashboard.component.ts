@@ -68,11 +68,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         this.courseParticipationService.findAll(courseId).subscribe(res => {
             this.participations = res;
             this.groupResults();
+            //TODO: get rid of this call because all participations are probably stored in this.results anyway, so rather get them from there
         });
 
         this.courseScoresService.find(courseId).subscribe(res => {
             this.courseScores = res;
             this.groupResults();
+            //TODO get rid of this call and refactor the html page
         });
 
     }
@@ -151,26 +153,26 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             }
         }
 
-
-        console.log('Maximal zu erreichende Punkte von Q: ' + maximalZuErreichendePunkteQ);
-        console.log('Maximal zu erreichende Punkte von M: ' + maximalZuErreichendePunkteM);
-        console.log('Maximal zu erreichende Punkte von P: ' + maximalZuErreichendePunkteP);
-        console.log('Titel Quizzes:' + this.titleQuizString);
-        console.log('Titel Modelling:' + this.titleModellingString);
-        console.log('Titel Programming:' + this.titleProgrammingString);
-
         // Successful Participations as the total amount and a relative value to all Exercises
+
+        //TODO: If these values are not needed right away, move this functionality to the place where we check these conditions anyway
         for (const result of this.results) {
 
             if (result.successful) {
-                rows[result.participation.student.id].successful++;
-                //TODO delete the following line
-                //rows[result.participation.student.id].successfullyCompletedInPercent = (rows[result.participation.student.id].successful / this.numberOfExercises) * 100;
+                if(result.participation.exercise.type === "quiz") {
+                    if (result.rated === true) {
+                        rows[result.participation.student.id].successful++;
+                    }
+                }
+                else {
+                    //TODO: also take into account that the last result before the due date has to be taken for programming exercise (see code below)
+                    //TODO: also take into account that the last submission has to be taken for modeling exercises (see code below)
+                    rows[result.participation.student.id].successful++;
+                }
             }
         }
 
         for (const studentId in rows) {
-            //TODO test
             rows[studentId].successfullyCompletedInPercent = (rows[studentId].successful / this.numberOfExercises) * 100;
         }
 
@@ -186,9 +188,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             }
         }
 
-        for (const score of this.courseScores) {
-            if (score.participation.student) {
-                rows[score.participation.student.id].overallScore = score.score; //TODO: this line of code gives you not the overall score!!!! FDE
+        for (const courseScore of this.courseScores) {
+            if (courseScore.participation.student) {
+                rows[courseScore.participation.student.id].overallScore = courseScore.score; //TODO: this line of code gives you not the overall score!!!! FDE
             }
         }
 
@@ -260,14 +262,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 case "quiz":
                     if (result.rated === true) {   //There should only be 1 rated result
 
-                        //TODO: delete, we handle this case below
-                        // studentsQuizScores[student.id].totalScore += Math.round((result.score * exercise.maxScore) / 100);
-
                         studentsQuizScores[student.id].scoreListQ[exercise.id] = {
-                            'completionDate': resultCompletionDate,
+                            'resCompletionDate': resultCompletionDate,
                             'exID': exercise.id,
                             'exTitle': exercise.title,
-                            'absoluteScore': Math.round((result.score * exercise.maxScore) / 100)
+                            'absoluteScore': Math.round((result.score * exercise.maxScore) / 10) / 10 // divide afterwards to round to 2 decimal places
                         };
                     }
                     break;
@@ -275,21 +274,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 case "programming-exercise":
                     if (resultCompletionDate.getTime() <= dueDate.getTime()) {
 
-                        const score = studentsProgrammingScores[student.id].scoreListP[exercise.id];
-                        if (score == null) {// || completionDate.getTime() > score.completionDate.getTime()) {    // we want to have the last result withing the due date (see above)
+                        const existingScore = studentsProgrammingScores[student.id].scoreListP[exercise.id];
+                        if (existingScore == null || resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {    // we want to have the last result withing the due date (see above)
                             studentsProgrammingScores[student.id].scoreListP[exercise.id] = {
-                                'completionDate': resultCompletionDate,
+                                'resCompletionDate': resultCompletionDate,
                                 'exID': exercise.id,
                                 'exTitle': exercise.title,
-                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 100)
-                            };
-                        }
-                        else if (resultCompletionDate.getTime() > score.completionDate.getTime()) {
-                            studentsProgrammingScores[student.id].scoreListP[exercise.id] = {
-                                'completionDate': resultCompletionDate,
-                                'exID': exercise.id,
-                                'exTitle': exercise.title,
-                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 100)
+                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 10) / 10 // divide afterwards to round to 2 decimal places
                             };
                         }
                     }
@@ -299,13 +290,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     // we can also have results (due to the manual assessment) that appear after the completion date
                     // if (completionDate.getTime() <= dueDate.getTime()) {
 
-                        const score = studentsModelingScores[student.id].scoreListM[exercise.id];
-                        if(score == null || resultCompletionDate.getTime() > score.completionDate) {     // we want to have the last result
+                        const existingScore = studentsModelingScores[student.id].scoreListM[exercise.id];
+                        if(existingScore == null || resultCompletionDate.getTime() > existingScore.resCompletionDate) {     // we want to have the last result
                             studentsModelingScores[student.id].scoreListM[exercise.id] = {
-                                'completionDate': resultCompletionDate,
+                                'resCompletionDate': resultCompletionDate,
                                 'exID': exercise.id,
                                 'exTitle': exercise.title,
-                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 100)
+                                'absoluteScore': Math.round((result.score * exercise.maxScore) / 10) / 10 // divide afterwards to round to 2 decimal places
                             };
                         }
                     // }
@@ -355,7 +346,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         const finalScores = {};
 
 
-        for (const q of this.typeQ) {
+        for (const studentsQuizScore of this.typeQ) {
             let stringQ = '';
             let qStringEveryScore = {};
 
@@ -364,14 +355,14 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 let bool = true;
                 let exId = this.allQuizExercises[quizzes].exId;
 
-                for (const scoresQ in q.scoreListQ) {
-                    let exID = q.scoreListQ[scoresQ].exID;
+                for (const scoresQ in studentsQuizScore.scoreListQ) {
+                    let exID = studentsQuizScore.scoreListQ[scoresQ].exID;
                     if (exId == exID) {
                         bool = false;
-                        stringQ += q.scoreListQ[scoresQ].absoluteScore + ',';
+                        stringQ += studentsQuizScore.scoreListQ[scoresQ].absoluteScore + ',';
                         qStringEveryScore = {
                             'exID': exID, 'exTitle': this.allQuizExercises[quizzes].title,
-                            'absoluteScore': q.scoreListQ[scoresQ].absoluteScore
+                            'absoluteScore': studentsQuizScore.scoreListQ[scoresQ].absoluteScore
                         };
                     }
                 }
@@ -384,12 +375,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 }
             }
 
-            if (!finalScores[q.id]) {
-                finalScores[q.id] = {
-                    'firstName': q.firstName,
-                    'lastName': q.lastName,
-                    'login': q.login,
-                    'email': q.email,
+            if (!finalScores[studentsQuizScore.id]) {
+                finalScores[studentsQuizScore.id] = {
+                    'firstName': studentsQuizScore.firstName,
+                    'lastName': studentsQuizScore.lastName,
+                    'login': studentsQuizScore.login,
+                    'email': studentsQuizScore.email,
                     'QuizTotalScore': 0,
                     'QuizEveryScore': {},
                     'QuizScoreString': '',
@@ -404,12 +395,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
                 };
             }
-            finalScores[q.id].QuizTotalScore = q.totalScore;
-            finalScores[q.id].QuizEveryScore = qStringEveryScore;
-            finalScores[q.id].QuizScoreString = stringQ;
+            finalScores[studentsQuizScore.id].QuizTotalScore = studentsQuizScore.totalScore;
+            finalScores[studentsQuizScore.id].QuizEveryScore = qStringEveryScore;
+            finalScores[studentsQuizScore.id].QuizScoreString = stringQ;
         }
 
-        for (const m of this.typeM) {
+        for (const studentsModelingScore of this.typeM) {
 
             let stringM = '';
             let mStringEveryScore = {};
@@ -418,14 +409,14 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 let bool = true;
                 let exId = this.allModellingExercises[modellings].exId;
 
-                for (const scores in m.scoreListM) {
-                    let exID = m.scoreListM[scores].exID;
+                for (const scores in studentsModelingScore.scoreListM) {
+                    let exID = studentsModelingScore.scoreListM[scores].exID;
                     if (exId == exID) {
                         bool = false;
-                        stringM += m.scoreListM[scores].absoluteScore + ',';
+                        stringM += studentsModelingScore.scoreListM[scores].absoluteScore + ',';
                         mStringEveryScore = {
                             'exID': exID, 'exTitle': this.allModellingExercises[modellings].title,
-                            'absoluteScore': m.scoreListM[scores].absoluteScore
+                            'absoluteScore': studentsModelingScore.scoreListM[scores].absoluteScore
                         };
                     }
                 }
@@ -439,15 +430,15 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             }
 
 
-            finalScores[m.id].ModellingTotalScore = m.totalScore;
-            finalScores[m.id].ModellEveryScore = mStringEveryScore;
-            finalScores[m.id].ModellingScoreString = stringM;
+            finalScores[studentsModelingScore.id].ModellingTotalScore = studentsModelingScore.totalScore;
+            finalScores[studentsModelingScore.id].ModellEveryScore = mStringEveryScore;
+            finalScores[studentsModelingScore.id].ModellingScoreString = stringM;
 
 
         }
 
 
-        for (const p of this.typeP) {
+        for (const studentsProgrammingScore of this.typeP) {
 
             let stringP = '';
             let pStringEveryScore = {};
@@ -456,14 +447,14 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 let bool = true;
                 let exId = this.allProgrammingExercises[programmings].exId;
 
-                for (const scores in p.scoreListP) {
-                    let exID = p.scoreListP[scores].exID;
+                for (const scores in studentsProgrammingScore.scoreListP) {
+                    let exID = studentsProgrammingScore.scoreListP[scores].exID;
                     if (exId == exID) {
                         bool = false;
-                        stringP += p.scoreListP[scores].absoluteScore + ',';
+                        stringP += studentsProgrammingScore.scoreListP[scores].absoluteScore + ',';
                         pStringEveryScore = {
                             'exID': exID, 'exTitle': this.allProgrammingExercises[programmings].title,
-                            'absoluteScore': p.scoreListP[scores].absoluteScore
+                            'absoluteScore': studentsProgrammingScore.scoreListP[scores].absoluteScore
                         };
                     }
                 }
@@ -476,63 +467,64 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 }
             }
 
-            finalScores[p.id].ProgrammingTotalScore = p.totalScore;
-            finalScores[p.id].ProgrammingEveryScore = pStringEveryScore;
-            finalScores[p.id].ProgrammingScoreString = stringP;
+            finalScores[studentsProgrammingScore.id].ProgrammingTotalScore = studentsProgrammingScore.totalScore;
+            finalScores[studentsProgrammingScore.id].ProgrammingEveryScore = pStringEveryScore;
+            finalScores[studentsProgrammingScore.id].ProgrammingScoreString = stringP;
 
         }
 
-        for (const c of this.courseScores) {
+        for (const courseScore of this.courseScores) {
 
             let modellingString = '';
             let quizString = '';
             let programmingString = '';
-            let qEveryScore = {};
-            let mEveryScore = {};
-            let pEveryScore = {};
+            let quizEveryScore = {};
+            let modelingEveryScore = {};
+            let programmingEveryScore = {};
 
-            for (var i in this.allModellingExercises) {
+            for (const i in this.allModellingExercises) {
                 modellingString += '0,';
-                mEveryScore = {
+                modelingEveryScore = {
                     'exID': this.allModellingExercises[i].exID, 'exTitle': this.allModellingExercises[i].title,
                     'absoluteScore': 0
                 };
             }
-            for (var i in this.allQuizExercises) {
+            for (const i in this.allQuizExercises) {
                 quizString += '0,';
-                qEveryScore = {
+                quizEveryScore = {
                     'exID': this.allQuizExercises[i].exID, 'exTitle': this.allQuizExercises[i].title,
                     'absoluteScore': 0
                 };
             }
-            for (var i in this.allProgrammingExercises) {
+            for (const i in this.allProgrammingExercises) {
                 programmingString += '0,';
-                pEveryScore = {
+                programmingEveryScore = {
                     'exID': this.allProgrammingExercises[i].exID, 'exTitle': this.allProgrammingExercises[i].title,
                     'absoluteScore': 0
                 };
             }
 
-            if (!finalScores[c.participation.student.id]) {
-                finalScores[c.participation.student.id] = {
-                    'firstName': c.participation.student.firstName,
-                    'lastName': c.participation.student.lastName,
-                    'login': c.participation.student.login,
-                    'email': c.participation.student.email,
+            const student = courseScore.participation.student;
+            if (!finalScores[student.id]) {
+                finalScores[student.id] = {
+                    'firstName': student.firstName,
+                    'lastName': student.lastName,
+                    'login': student.login,
+                    'email': student.email,
                     'QuizTotalScore': 0,
-                    'QuizEveryScore': qEveryScore,
+                    'QuizEveryScore': quizEveryScore,
                     'QuizScoreString': quizString,
                     'ProgrammingTotalScore': 0,
-                    'ProgrammingEveryScore': pEveryScore,
+                    'ProgrammingEveryScore': programmingEveryScore,
                     'ProgrammingScoreString': programmingString,
                     'ModellingTotalScore': 0,
-                    'ModellingEveryScore': mEveryScore,
+                    'ModellingEveryScore': modelingEveryScore,
                     'ModellingScoreString': modellingString,
                     'OverallScore': 0
                 };
             } else {
-                finalScores[c.participation.student.id].OverallScore = finalScores[c.participation.student.id].QuizTotalScore
-                    + finalScores[c.participation.student.id].ProgrammingTotalScore + finalScores[c.participation.student.id].ModellingTotalScore;
+                finalScores[student.id].OverallScore = finalScores[student.id].QuizTotalScore
+                    + finalScores[student.id].ProgrammingTotalScore + finalScores[student.id].ModellingTotalScore;
             }
         }
 
@@ -584,4 +576,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
     callback() {
     }
+}
+
+
+Number.prototype.round = function(places) {
+    return +(Math.round(this + "e+" + places)  + "e-" + places);
 }
