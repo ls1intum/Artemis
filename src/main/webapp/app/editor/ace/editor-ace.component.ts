@@ -32,22 +32,21 @@ import 'brace/theme/clouds';
 
 export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
     @ViewChild('editor') editor;
-    commonFilePathPrefix: string;
 
     /**
      * Ace Editor Options
      */
-
-    editorText: string = ''; // possible two way binding
-    editorFileSessions : object = {};
-    editorMode = 'java'; //string or object
+    editorText = ''; // possible two way binding
+    editorFileSessions: object = {};
+    editorMode = 'java'; // string or object
     editorOptions;
-    editorReadOnly: boolean = false;
-    editorAutoUpdate: boolean = true; //change content when [text] change
-    editorDurationBeforeCallback = 3000; //wait 3s before callback 'textChanged' sends new value
+    editorReadOnly = false;
+    editorAutoUpdate = true; // change content when [text] change
+    editorDurationBeforeCallback = 3000; // wait 3s before callback 'textChanged' sends new value
 
     @Input() participation: Participation;
     @Input() fileName: string;
+    @Input() commonFilePathPrefix: string;
     @Output() saveStatusChange = new EventEmitter<object>();
 
     constructor(private parent: EditorComponent,
@@ -85,9 +84,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         }
         if (changes.fileName && this.fileName) {
             console.log('FILE CHANGED, loading file: ' + this.fileName);
-            if (!this.commonFilePathPrefix) {
-                this.commonFilePathPrefix = this.identifyCommonFilePathPrefix();
-            }
             // current file has changed
             this.loadFile(
                 this.commonFilePathPrefix +
@@ -108,15 +104,15 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         const unsavedFiles = sessionKeys.filter(session =>
             this.editorFileSessions[session].unsavedChanges === true).length;
 
-        if(unsavedFiles > 0) {
-            if(this.onSaveStatusChange) {
+        if (unsavedFiles > 0) {
+            if (this.onSaveStatusChange) {
                 this.onSaveStatusChange({
                     bIsSaved: false,
                     saveStatusLabel: '<i class="fa fa-circle-o-notch fa-spin text-info"></i> <span class="text-info">Unsaved changes in ' + unsavedFiles + ' files.</span>'
                 });
             }
         } else {
-            if(this.onSaveStatusChange) {
+            if (this.onSaveStatusChange) {
                 this.onSaveStatusChange({
                     bIsSaved: true,
                     saveStatusLabel: '<i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>'
@@ -190,34 +186,24 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
 
     /**
-     * Looks for the users identifier within the repository path to identify the common file path
-     * which we need to append to the filename when doing a GET-request to the server
-     * @returns {string}: the prefix path until the actual repository appended by a backslash
-     */
-    identifyCommonFilePathPrefix(): string {
-        const studentLoginIdx = this.parent.repositoryFiles[0]
-            .split('\\')
-            .indexOf(this.participation.student.login);
-        return this.parent.repositoryFiles[0].split('\\').slice(0, studentLoginIdx).join('\\') + '\\';
-    }
-
-    /**
      * Callback function for text changes in the Ace Editor
      * @param code
      */
-    onFileChanged(code) {
+    onFileTextChanged(code) {
         console.log('new code', code);
         const currentFileExtendedName = this.commonFilePathPrefix +
             this.fileName.replace(new RegExp('/', 'g'), '\\');
-        console.log('onFileChanged with ext file name: ' + currentFileExtendedName);
-        this.editorFileSessions[currentFileExtendedName].code = code;
-        this.editorFileSessions[currentFileExtendedName].unsavedChanges = true;
+        if (this.editorFileSessions[currentFileExtendedName] !== code && this.editorText !== '') {
+            console.log('onFileChanged with ext file name: ' + currentFileExtendedName);
+            this.editorFileSessions[currentFileExtendedName].code = code;
+            this.editorFileSessions[currentFileExtendedName].unsavedChanges = true;
 
-        /**
-         * Need to pass the exact and fully extended fileName into the HTTP Put
-         */
-        this.saveFile(currentFileExtendedName);
-        this.updateSaveStatusLabel();
+            /**
+             * Need to pass the exact and fully extended fileName into the HTTP Put
+             */
+            this.saveFile(currentFileExtendedName);
+            this.updateSaveStatusLabel();
+        }
     }
 
     /**

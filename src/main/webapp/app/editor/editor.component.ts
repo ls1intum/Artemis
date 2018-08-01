@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Participation, ParticipationService } from '../entities/participation';
 import { RepositoryService, RepositoryFileService } from '../entities/repository/repository.service';
+import {Result} from '../entities/result';
 import { HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
 
@@ -25,12 +26,14 @@ import * as $ from 'jquery';
  */
 export class EditorComponent implements OnInit, OnChanges, OnDestroy {
 
-    /** Dependencies as defined by the upgraded Editor component */
+    /** Dependencies as defined by the Editor component */
     participation: Participation;
     repository: RepositoryService;
     file: any;
+    commonFilePathPrefix: string;
     paramSub: Subscription;
     repositoryFiles: string[];
+    latestResult: Result;
     saveStatusLabel: string;
 
     /** File Status Booleans **/
@@ -65,6 +68,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(files => {
                 this.repositoryFiles = files;
+                this.commonFilePathPrefix = this.identifyCommonFilePathPrefix();
             }, err => {
                 console.log('There was an error while getting files: ' + err.body.msg);
             });
@@ -91,6 +95,12 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             this.bIsCommitted = false;
         }
         this.saveStatusLabel = event.saveStatusLabel;
+    }
+
+    updateLatestResult($event) {
+        console.log('updateLatestResult called; received new result');
+        this.bIsBuilding = false;
+        this.latestResult = $event.newResult;
     }
 
     updateSelectedFile(fileObject) {
@@ -126,6 +136,18 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             $card.addClass('collapsed');
             horizontal ? $card.height('35px') : $card.width('55px');
         }
+    }
+
+    /**
+     * Looks for the users identifier within the repository path to identify the common file path
+     * which we need to append to the filename when doing a GET-request to the server
+     * @returns {string}: the prefix path until the actual repository appended by a backslash
+     */
+    identifyCommonFilePathPrefix(): string {
+        const studentLoginIdx = this.repositoryFiles[0]
+            .split('\\')
+            .indexOf(this.participation.student.login);
+        return this.repositoryFiles[0].split('\\').slice(0, studentLoginIdx).join('\\') + '\\';
     }
 
     commit(event) {
