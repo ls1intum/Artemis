@@ -8,7 +8,7 @@ import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
     selector: 'jhi-editor-instructions-result-detail',
     templateUrl: '../../courses/results/result-detail.html'
 })
-export class JhiEditorInstructionsResultDetailComponent implements OnInit {
+export class EditorInstructionsResultDetailComponent implements OnInit {
     @Input() result: Result;
     @Input() tests;
     loading: boolean;
