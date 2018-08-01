@@ -12,7 +12,7 @@ import { ResultComponent } from '../courses/results/result.component';
 import { InstructorDashboardArchiveDialogComponent, InstructorDashboardArchivePopupComponent } from './instructor-dashboard-archive-dialog.component';
 import { InstructorDashboardCleanupDialogComponent, InstructorDashboardCleanupPopupComponent } from './instructor-dashboard-cleanup-dialog.component';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
-import { JhiResultDetailComponent } from '../courses';
+import { ResultDetailComponent } from '../courses';
 import { InstructorDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './instructor-dashboard-result-dialog.component';
 import { SortByModule } from '../components/pipes/sort-by.module';
 
@@ -81,7 +81,7 @@ const ENTITY_STATES = [
         InstructorDashboardComponent,
         JhiMainComponent,
         ResultComponent,
-        JhiResultDetailComponent,
+        ResultDetailComponent,
         InstructorDashboardArchiveDialogComponent,
         InstructorDashboardArchivePopupComponent,
         InstructorDashboardCleanupDialogComponent,

@@ -13,7 +13,7 @@ import {RepositoryFileService, RepositoryService} from '../../entities/repositor
 import {EditorComponent} from '../editor.component';
 import {JhiWebsocketService} from '../../shared';
 import {Result, ResultService, ParticipationResultService} from '../../entities/result';
-import {JhiResultDetailComponent} from '../../courses/results/result.component';
+import {ResultDetailComponent} from '../../courses/results/result.component';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {Feedback} from '../../entities/feedback';
 import * as $ from 'jquery';
@@ -298,7 +298,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         if (!result) {
             return;
         }
-        const modalRef = this.modalService.open(JhiResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
         modalRef.componentInstance.tests = tests;
     }

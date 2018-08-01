@@ -170,7 +170,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(JhiResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
         // TODO: why is result.participation null?
     }
@@ -233,7 +233,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     selector: 'jhi-result-detail',
     templateUrl: './result-detail.html'
 })
-export class JhiResultDetailComponent implements OnInit {
+export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
     loading: boolean;
     details: Feedback[];

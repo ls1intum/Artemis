@@ -6,7 +6,7 @@ import { coursesRoute } from './courses.route';
 import { CourseComponent, CourseExerciseService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { CoursesComponent } from './courses.component';
-import { JhiResultDetailComponent, ResultComponent } from './results/result.component';
+import { ResultDetailComponent, ResultComponent } from './results/result.component';
 import { ExerciseListComponent, IsNotOverduePipe } from './exercises/exercise-list.component';
 import { RepositoryService } from '../entities/repository/repository.service';
 import { ResultService } from '../entities/result';
@@ -28,7 +28,7 @@ const ENTITY_STATES = [
     declarations: [
         CoursesComponent,
         ResultComponent,
-        JhiResultDetailComponent,
+        ResultDetailComponent,
         ExerciseListComponent,
         IsNotOverduePipe
     ],
