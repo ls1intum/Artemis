@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import {Component, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
 import {Participation, ParticipationService} from '../../entities/participation';
 import { ParticipationResultService, Result, ResultService } from '../../entities/result';
 import { JhiWebsocketService, Principal } from '../../shared';
@@ -23,13 +23,13 @@ import { Feedback } from '../../entities/feedback';
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
-    // @Output() onNewResult;
+    @Input() building: boolean;
+    @Output() newResult;
 
     results: Result[];
     result: Result;
     websocketChannel: string;
     // queued: boolean;
-    // building: boolean;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string;
@@ -142,13 +142,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }).subscribe(results => {
             this.results = results.body;
             this.init();
-            /*if (this.onNewResult) {
-                this.onNewResult({
-                    $event: {
-                        newResult: results[0]
-                    }
-                });
-            }*/
+            this.newResult.emit({
+                newResult: results[0]
+            });
         });
     }
 
