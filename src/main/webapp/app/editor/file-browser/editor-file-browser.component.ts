@@ -38,14 +38,6 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         enableCheckboxes: false
     };
 
-    /**
-     * bindings:
-        participation: '<',
-        file: '=',
-        onCreatedFile: '&',
-        onDeletedFile: '&',
-        repositoryFiles: '<'
-     */
     @Input() participation: Participation;
     @Input() repositoryFiles;
     @Input() fileName: string;
