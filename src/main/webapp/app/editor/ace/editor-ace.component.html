@@ -1,4 +1,4 @@
-<div ace-editor #editor
+<ace-editor #editor
      [(text)]="editorText"
      [mode]="editorMode"
      [options]="editorOptions"
@@ -9,7 +9,7 @@
      class="panel panel-default"
      style="min-height: 200px; width:100%; height: 100%; overflow: auto;"
      [hidden]="!fileName">
-</div>
+</ace-editor>
 
 <p class="text-center lead text-muted" [hidden]="fileName" style="padding-top: 50px">
     Select a file to get started!

@@ -136,13 +136,12 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
                 console.log('Loaded file with ext file name' + extendedFileName);
                 this.editorFileSessions[extendedFileName] = {};
                 this.editorFileSessions[extendedFileName].code = fileObj.fileContent;
-
-                console.log(this.editorFileSessions);
             }
-
+            /**
+             * Assign the obtained file content to the editor and set focus to the editor
+             */
             this.editorText = fileObj.fileContent;
-            this.editor.nativeElement.focus();
-
+            this.editor._editor.focus();
         }, err => {
             console.log('There was an error while getting file: ' + this.fileName);
             console.log(err);
