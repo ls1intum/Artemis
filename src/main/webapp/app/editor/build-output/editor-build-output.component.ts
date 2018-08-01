@@ -13,6 +13,7 @@ import {RepositoryService} from '../../entities/repository/repository.service';
 import {EditorComponent} from '../editor.component';
 import {JhiWebsocketService} from '../../shared';
 import {Result, ResultService, ParticipationResultService} from '../../entities/result';
+import { ResizeEvent, ResizableDirective } from 'angular-resizable-element';
 import * as $ from 'jquery';
 
 @Component({
