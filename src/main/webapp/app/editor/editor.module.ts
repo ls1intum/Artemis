@@ -15,12 +15,13 @@ import { EditorAceComponent } from './ace/editor-ace.component';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { EditorFileBrowserComponent } from './file-browser/editor-file-browser.component';
 import { TreeModule } from 'ng2-tree';
+import { ResizableModule } from 'angular-resizable-element';
 import { EditorBuildOutputComponent } from './build-output/editor-build-output.component';
 import { EditorFileBrowserCreateComponent } from './file-browser/editor-file-browser-create';
 import { EditorFileBrowserDeleteComponent } from './file-browser/editor-file-browser-delete';
 import { EditorInstructionsComponent } from './instructions/editor-instructions.component';
-import { JhiEditorInstructionsResultDetailComponent } from './instructions/editor-instructions-result-detail';
-
+import { EditorInstructionsResultDetailComponent } from './instructions/editor-instructions-result-detail';
+import { ArTEMiSCoursesModule, ResultComponent } from '../courses';
 const ENTITY_STATES = [
     ...editorRoute
 ];
@@ -29,8 +30,10 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         AceEditorModule,
+        ArTEMiSCoursesModule,
         MomentModule,
         TreeModule,
+        ResizableModule,
         RouterModule.forChild(ENTITY_STATES)
     ],
     declarations: [
@@ -41,7 +44,7 @@ const ENTITY_STATES = [
         EditorFileBrowserDeleteComponent,
         EditorBuildOutputComponent,
         EditorInstructionsComponent,
-        JhiEditorInstructionsResultDetailComponent
+        EditorInstructionsResultDetailComponent
     ],
     exports: [
         EditorComponent
@@ -52,7 +55,8 @@ const ENTITY_STATES = [
         JhiMainComponent,
         EditorFileBrowserCreateComponent,
         EditorFileBrowserDeleteComponent,
-        JhiEditorInstructionsResultDetailComponent
+        EditorInstructionsResultDetailComponent,
+        ResultComponent
     ],
     providers: [
         JhiAlertService,
