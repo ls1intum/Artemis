@@ -1,8 +1,8 @@
 <!-- TODO: replace resizable directive -->
 <!-- TODO: https://github.com/mattlewis92/angular-resizable-element -->
-<div class="card" [hidden]="readmeRendered == null" resizable r-directions="['left']" r-width="$ctrl.initialInstructionsWidth" id="cardInstructions">
+<div class="card" [hidden]="readMeFileRendered == null" resizable r-directions="['left']" r-width="initialInstructionsWidth" id="cardInstructions">
 
-    <div class="card-header text-white bg-primary" (ngClick)="editor.toggleCollapse($event, false)">
+    <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
         <span class="pull-right "><i class="fa fa-chevron-right"></i></span>
         <h3 class="card-title">
             <i class="fa fa-list-alt"></i>

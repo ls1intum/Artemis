@@ -18,6 +18,8 @@ import { TreeModule } from 'ng2-tree';
 import { EditorBuildOutputComponent } from './build-output/editor-build-output.component';
 import { EditorFileBrowserCreateComponent } from './file-browser/editor-file-browser-create';
 import { EditorFileBrowserDeleteComponent } from './file-browser/editor-file-browser-delete';
+import { EditorInstructionsComponent } from './instructions/editor-instructions.component';
+import { JhiEditorInstructionsResultDetailComponent } from './instructions/editor-instructions-result-detail';
 
 const ENTITY_STATES = [
     ...editorRoute
@@ -37,7 +39,9 @@ const ENTITY_STATES = [
         EditorFileBrowserComponent,
         EditorFileBrowserCreateComponent,
         EditorFileBrowserDeleteComponent,
-        EditorBuildOutputComponent
+        EditorBuildOutputComponent,
+        EditorInstructionsComponent,
+        JhiEditorInstructionsResultDetailComponent
     ],
     exports: [
         EditorComponent
@@ -47,7 +51,8 @@ const ENTITY_STATES = [
         EditorComponent,
         JhiMainComponent,
         EditorFileBrowserCreateComponent,
-        EditorFileBrowserDeleteComponent
+        EditorFileBrowserDeleteComponent,
+        JhiEditorInstructionsResultDetailComponent
     ],
     providers: [
         JhiAlertService,
