@@ -17,7 +17,7 @@ import {ResultDetailComponent} from '../../courses/results/result.component';
 import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {Feedback} from '../../entities/feedback';
 import * as $ from 'jquery';
-import Remarkable = require('remarkable');
+import * as Remarkable from 'Remarkable';
 
 @Component({
     selector: 'jhi-editor-instructions',
