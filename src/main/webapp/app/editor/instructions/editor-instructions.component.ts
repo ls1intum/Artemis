@@ -33,9 +33,9 @@ import * as Remarkable from 'Remarkable';
 
 export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
 
-    bIsLoading = true;
+    isLoading = true;
     steps = [];
-    bLoadedDetails = false;
+    loadedDetails = false;
     initialInstructionsWidth: number;
     readMeFileContent: string;
     readMeFileRendered;
@@ -84,7 +84,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
             this.loadReadme();
             this.setupMarkDown();
         }
-        if (changes.latestResult && changes.latestResult.currentValue && !this.bIsLoading) {
+        if (changes.latestResult && changes.latestResult.currentValue && !this.isLoading) {
             // New result available
             this.loadResultsDetails();
         }
@@ -112,20 +112,20 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         if (!this.latestResult) {
             return;
         }
-        this.bIsLoading = true;
+        this.isLoading = true;
 
         this.resultService.details(this.latestResult.id).subscribe( resultDetails => {
             this.resultDetails = resultDetails.body;
-            this.bLoadedDetails = true;
+            this.loadedDetails = true;
             this.renderReadme();
-            this.bIsLoading = false;
+            this.isLoading = false;
         }, err => {
             console.log('Error while loading result details!', err);
         });
     }
 
     renderReadme(readmeFileContent?: string) {
-        this.bIsLoading = true;
+        this.isLoading = true;
         this.steps = [];
         // TODO: https://angular.io/guide/dynamic-component-loader
         // TODO: vm.readmeRendered = $compile(vm.md.render(vm.readme))($scope);
@@ -134,14 +134,14 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
 
         $('.instructions').html(this.readMeFileRendered);
 
-        this.bIsLoading = false;
+        this.isLoading = false;
 
         if ($('.editor-sidebar-right .panel').height() > $('.editor-sidebar-right').height()) {
             // Safari bug workaround
             $('.editor-sidebar-right .panel').height($('.editor-sidebar-right').height() - 2);
         }
 
-        if (!this.bLoadedDetails) {
+        if (!this.loadedDetails) {
             this.loadResultsDetails();
         }
     }

@@ -33,7 +33,7 @@ export class EditorBuildOutputComponent implements OnInit, OnDestroy, OnChanges 
     buildLogs = [];
 
     @Input() participation: Participation;
-    @Input() bIsBuilding: boolean;
+    @Input() isBuilding: boolean;
 
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
@@ -56,7 +56,7 @@ export class EditorBuildOutputComponent implements OnInit, OnDestroy, OnChanges 
      */
     ngOnChanges(changes: SimpleChanges): void {
         if ((changes.participation && this.participation) ||
-            (changes.bIsBuilding && changes.bIsBuilding.currentValue === false && this.participation)) {
+            (changes.isBuilding && changes.isBuilding.currentValue === false && this.participation)) {
             if (!this.participation.results) {
                 this.participationResultService.query(
                     this.participation.exercise.course.id,

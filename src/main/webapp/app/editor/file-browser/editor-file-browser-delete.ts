@@ -14,18 +14,18 @@ export class EditorFileBrowserDeleteComponent implements OnInit {
     @Input() fileNameToDelete: string;
     @Input() parent: EditorFileBrowserComponent;
 
-    bIsLoading: boolean;
+    isLoading: boolean;
 
     constructor(public activeModal: NgbActiveModal,
                 private repositoryFileService: RepositoryFileService) {}
 
     ngOnInit(): void {
-        this.bIsLoading = false;
+        this.isLoading = false;
         console.log('fileNameToDelete: ' + this.fileNameToDelete);
     }
 
     deleteFile() {
-        this.bIsLoading = true;
+        this.isLoading = true;
         // Make sure we have a filename
         if (this.fileNameToDelete) {
 
@@ -40,7 +40,7 @@ export class EditorFileBrowserDeleteComponent implements OnInit {
                 console.log('Error deleting file: ' + extendedNewFileName, err);
             });
         }
-        this.bIsLoading = false;
+        this.isLoading = false;
     }
 
     closeModal() {

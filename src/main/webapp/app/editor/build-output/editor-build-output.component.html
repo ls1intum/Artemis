@@ -10,10 +10,10 @@
 
     </div>
     <div class="card-body">
-        <p class="text-center" [hidden]="!bIsBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building...</p>
-        <p class="text-center" [hidden]="!(buildLogs.length == 0) || bIsBuilding">No build results available</p>
+        <p class="text-center" [hidden]="!isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building...</p>
+        <p class="text-center" [hidden]="!(buildLogs.length == 0) || isBuilding">No build results available</p>
 
-        <dl class="buildoutput dl-horizontal" [hidden]="buildLogs.length == 0 || bIsBuilding">
+        <dl class="buildoutput dl-horizontal" [hidden]="buildLogs.length == 0 || isBuilding">
             <ng-container *ngFor="let logEntry of buildLogs">
                 <dt>{{logEntry.time | date:'yyyy-MM-dd HH:mm:ss'}}</dt>
                 <dd [innerHtml]="logEntry.log | safeHtml"></dd>

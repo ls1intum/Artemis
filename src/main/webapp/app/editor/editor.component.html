@@ -11,12 +11,12 @@
                 <li class="nav-item dropdown pointer">
                     <!-- TODO: show-score required? -->
                     <jhi-result [participation]="participation"
-                            [hidden]="bIsBuilding"
+                            [hidden]="isBuilding"
                             (onNewResult)="updateLatestResult($event)">
                     </jhi-result>
-                    <button type="button" class="btn btn-primary navbar-btn" [disabled]="!bIsSaved || bIsBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
-                        <span *ngIf="bIsBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
-                        <span *ngIf="!bIsBuilding"><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
+                    <button type="button" class="btn btn-primary navbar-btn" [disabled]="!isSaved || isBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
+                        <span *ngIf="isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
+                        <span *ngIf="!isBuilding"><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
                     </button>
                 </li>
             </ul>
@@ -47,10 +47,10 @@
 
                 <div class="card-footer" [innerHtml]="saveStatusLabel | safeHtml"></div>
                 <div class="card-footer">
-                    <span *ngIf="bIsCommitted">
+                    <span *ngIf="isCommitted">
                         <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
                     </span>
-                    <span *ngIf="!bIsCommitted">
+                    <span *ngIf="!isCommitted">
                         <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
                     </span>
                 </div>
@@ -77,7 +77,7 @@
     <div class="editor-bottom">
         <jhi-editor-build-output
             [participation]="participation"
-            [bIsBuilding]="bIsBuilding">
+            [isBuilding]="isBuilding">
         </jhi-editor-build-output>
     </div>
 

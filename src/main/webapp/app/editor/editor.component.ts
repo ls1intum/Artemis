@@ -37,9 +37,9 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     saveStatusLabel: string;
 
     /** File Status Booleans **/
-    bIsSaved = true;
-    bIsBuilding = false;
-    bIsCommitted: boolean;
+    isSaved = true;
+    isBuilding = false;
+    isCommitted: boolean;
 
     /**
      * @constructor EditorComponent
@@ -84,22 +84,22 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
 
     checkIfRepositoryIsClean(): void {
         this.repository.isClean(this.participation.id).subscribe(res => {
-            this.bIsCommitted = res.isClean;
+            this.isCommitted = res.isClean;
         });
     }
 
     updateSaveStatusLabel(event) {
         console.log('updateSaveStatusLabel called');
-        this.bIsSaved = event.bIsSaved;
-        if (!this.bIsSaved) {
-            this.bIsCommitted = false;
+        this.isSaved = event.isSaved;
+        if (!this.isSaved) {
+            this.isCommitted = false;
         }
         this.saveStatusLabel = event.saveStatusLabel;
     }
 
     updateLatestResult($event) {
         console.log('updateLatestResult called; received new result');
-        this.bIsBuilding = false;
+        this.isBuilding = false;
         this.latestResult = $event.newResult;
     }
 
@@ -112,7 +112,7 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     updateRepositoryCommitStatus(event) {
         console.log('updateRepositoryCommitStatus called');
         console.log(event);
-        this.bIsSaved = false;
+        this.isSaved = false;
         /** Query the repositoryFileService for updated files in the repository */
         this.repositoryFileService.query(this.participation.id).subscribe(files => {
             this.repositoryFiles = files;
@@ -155,10 +155,10 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
         const target = event.toElement || event.relatedTarget || event.target;
 
         target.blur();
-        this.bIsBuilding = true;
+        this.isBuilding = true;
         this.repository.commit(this.participation.id).subscribe(
             res => {
-                this.bIsCommitted = true;
+                this.isCommitted = true;
                 console.log('Successfully committed');
             },
             err => {

@@ -107,14 +107,14 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         if (unsavedFiles > 0) {
             if (this.onSaveStatusChange) {
                 this.onSaveStatusChange({
-                    bIsSaved: false,
+                    isSaved: false,
                     saveStatusLabel: '<i class="fa fa-circle-o-notch fa-spin text-info"></i> <span class="text-info">Unsaved changes in ' + unsavedFiles + ' files.</span>'
                 });
             }
         } else {
             if (this.onSaveStatusChange) {
                 this.onSaveStatusChange({
-                    bIsSaved: true,
+                    isSaved: true,
                     saveStatusLabel: '<i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>'
                 });
             }
@@ -158,7 +158,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
         if (this.onSaveStatusChange) {
             this.onSaveStatusChange({
-                bIsSaved: false,
+                isSaved: false,
                 saveStatusLabel: ' <i class="fa fa-circle-o-notch fa-spin text-info"></i><span class="text-info"> Saving file.</span>'
             });
         }
@@ -175,7 +175,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         }, err => {
             if (this.onSaveStatusChange) {
                 this.onSaveStatusChange( {
-                    bIsSaved: false,
+                    isSaved: false,
                     saveStatusLabel: '<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>'
                 });
             }

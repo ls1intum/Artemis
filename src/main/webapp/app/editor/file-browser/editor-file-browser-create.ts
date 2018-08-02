@@ -13,7 +13,7 @@ export class EditorFileBrowserCreateComponent implements OnInit {
     @Input() participation: Participation;
     @Input() parent: EditorFileBrowserComponent;
 
-    bIsLoading: boolean;
+    isLoading: boolean;
     newFileFolder: string;
     newFileName: string;
 
@@ -21,17 +21,17 @@ export class EditorFileBrowserCreateComponent implements OnInit {
                 private repositoryFileService: RepositoryFileService) {}
 
     ngOnInit(): void {
-        this.bIsLoading = false;
+        this.isLoading = false;
     }
 
     createFile() {
-        this.bIsLoading = true;
+        this.isLoading = true;
         // Make sure we have a filename
         if (this.newFileName) {
             // TODO: check if we need to add prefix
             const extendedNewFileName = this.newFileName;
             this.repositoryFileService.create(this.participation.id, extendedNewFileName).subscribe( res => {
-                this.bIsLoading = false;
+                this.isLoading = false;
                 console.log('Successfully created file: ' + extendedNewFileName, res);
                 this.closeModal();
                 // TODO: maybe emit onFileCreated and let parent handle the rest? folder?
@@ -42,7 +42,7 @@ export class EditorFileBrowserCreateComponent implements OnInit {
                 console.log('Error while creating file: ' + extendedNewFileName, err);
             });
         }
-        this.bIsLoading = false;
+        this.isLoading = false;
     }
 
     closeModal() {
