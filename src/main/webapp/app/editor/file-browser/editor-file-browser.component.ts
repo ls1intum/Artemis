@@ -108,6 +108,7 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
 
     getRepositoryFiles() {
         if (!this.repositoryFiles) {
+            console.log('calling getRepositoryFiles() from editor-file-browser!');
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(this.parent.participation.id).subscribe(files => {
                 this.repositoryFiles = files;

@@ -63,12 +63,17 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             /** Query the participationService for the participationId given by the params */
             this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
                 this.participation = response.body;
+                console.log('Received a participation!');
+                console.log(this.participation);
                 this.checkIfRepositoryIsClean();
             });
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(files => {
+                console.log('Received repository files!');
+                console.log(files);
                 this.repositoryFiles = files;
                 this.commonFilePathPrefix = this.identifyCommonFilePathPrefix();
+                console.log('Identified common prefix for files as: ' + this.commonFilePathPrefix);
             }, err => {
                 console.log('There was an error while getting files: ' + err.body.msg);
             });
@@ -151,6 +156,9 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     commit(event) {
+
+        console.log('calling commit() from editor');
+        console.log(event);
 
         const target = event.toElement || event.relatedTarget || event.target;
 

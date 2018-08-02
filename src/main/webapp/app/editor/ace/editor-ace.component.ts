@@ -84,6 +84,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         }
         if (changes.fileName && this.fileName) {
             console.log('FILE CHANGED, loading file: ' + this.fileName);
+            console.log('The current common prefix for files is: ' + this.commonFilePathPrefix);
             // current file has changed
             this.loadFile(
                 this.commonFilePathPrefix +
