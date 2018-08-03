@@ -123,8 +123,14 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     setupTreeview(files) {
+        console.log('Setting up the treeview with files: ');
+        console.log(files);
         let tree = this.buildTree(files);
+        console.log('Tree after build!');
+        console.log(tree);
         tree = this.compressTree(tree);
+        console.log('Tree after compress!');
+        console.log(tree);
         this.initializeTreeViewer(tree);
     }
 
