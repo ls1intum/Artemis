@@ -136,9 +136,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
             /**
              * Assign the obtained file content to the editor and set focus to the editor
              */
-            console.log('Assigning editorText from loadFile()');
-            console.log(fileObj);
-            console.log(fileObj.fileContent);
             this.editorText = fileObj.fileContent;
             this.editor._editor.focus();
         }, err => {
@@ -154,7 +151,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      */
     saveFile(fileName: string) {
         console.log('Saving ' + this.fileName);
-        console.log('Current file sessions', this.editorFileSessions);
 
         if (this.onSaveStatusChange) {
             this.onSaveStatusChange({
