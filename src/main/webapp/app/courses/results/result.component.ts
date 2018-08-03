@@ -1,4 +1,4 @@
-import {Component, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
+import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
 import {Participation, ParticipationService} from '../../entities/participation';
 import { ParticipationResultService, Result, ResultService } from '../../entities/result';
 import { JhiWebsocketService, Principal } from '../../shared';
@@ -24,7 +24,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
     @Input() building: boolean;
-    @Output() newResult;
+    @Output() newResult = new EventEmitter<object>();
 
     results: Result[];
     result: Result;
@@ -144,7 +144,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.results = results.body;
             console.log('received results', results);
             this.init();
-            this.newResult.emit(results[0]);
+            this.newResult.emit({
+                newResult: results[0]
+            });
         });
     }
 
