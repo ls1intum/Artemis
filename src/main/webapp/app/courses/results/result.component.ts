@@ -137,6 +137,8 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         console.log('Calling refreshResult() from result component');
         // TODO remove '!vm.participation.results' and think about removing forceLoad as well
         // load results from server
+        // TODO: solve this differently?
+        const that = this;
         this.participationResultService.query(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
             showAllResults: false,
             ratedOnly: this.participation.exercise.type === 'quiz'
@@ -145,7 +147,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             console.log('received results', results);
             this.init();
             console.log('Calling init functin from result component, will emmit newResult now!');
-            this.newResult.emit({
+            that.newResult.emit({
                 newResult: results[0]
             });
         });

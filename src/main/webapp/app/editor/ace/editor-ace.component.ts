@@ -129,13 +129,16 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
                 // TODO: check how to automatically set editor (brace) mode
                 // var ModeList = ace.require("ace/ext/modelist");
                 // var mode = ModeList.getModeForPath(file).mode;
-                console.log('Loaded file with ext file name' + fileName);
+                console.log('Loaded file ' + fileName);
                 this.editorFileSessions[fileName] = {};
                 this.editorFileSessions[fileName].code = fileObj.fileContent;
             }
             /**
              * Assign the obtained file content to the editor and set focus to the editor
              */
+            console.log('Assigning editorText from loadFile()');
+            console.log(fileObj);
+            console.log(fileObj.fileContent);
             this.editorText = fileObj.fileContent;
             this.editor._editor.focus();
         }, err => {
