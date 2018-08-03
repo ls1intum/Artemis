@@ -152,6 +152,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             console.log('received results', results);
             this.init();
             console.log('Calling init functin from result component, will emmit newResult now!');
+            console.log(this);
             console.log('this.onNewResult: ' + this.onNewResult);
             if (this.onNewResult) {
                 this.onNewResult(results[0]);
