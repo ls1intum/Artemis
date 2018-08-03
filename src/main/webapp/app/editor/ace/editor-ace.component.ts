@@ -136,6 +136,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
             /**
              * Assign the obtained file content to the editor and set focus to the editor
              */
+            console.log('Received file object from get', fileObj);
             this.editorText = fileObj.fileContent;
             this.editor._editor.focus();
         }, err => {
@@ -159,6 +160,9 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
             });
         }
 
+        console.log('Current fileSessions', this.editorFileSessions);
+        console.log('Calling repositoryFileService.update with new code: ');
+        console.log(this.editorFileSessions[fileName].code);
         this.repositoryFileService.update(this.participation.id,
             fileName,
             this.editorFileSessions[fileName].code)

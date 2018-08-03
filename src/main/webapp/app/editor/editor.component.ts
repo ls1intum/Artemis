@@ -99,16 +99,16 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
         this.saveStatusLabel = event.saveStatusLabel;
     }
 
-    updateLatestResult($event) {
+    updateLatestResult(event) {
         console.log('updateLatestResult called; received new result');
         this.isBuilding = false;
-        this.latestResult = $event.newResult;
+        this.latestResult = event.newResult;
     }
 
-    updateSelectedFile(fileObject) {
-        console.log('RECEIVED EVENT WITH NEW FILENAME: ' + fileObject.fileName);
+    updateSelectedFile(event) {
+        console.log('RECEIVED EVENT WITH NEW FILENAME: ' + event.fileName);
         console.log(this.repositoryFiles);
-        this.file = fileObject.fileName;
+        this.file = event.fileName;
     }
 
     updateRepositoryCommitStatus(event) {
