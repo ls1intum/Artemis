@@ -95,11 +95,11 @@ export class EditorBuildOutputComponent implements OnInit, OnDestroy, OnChanges 
     /**
      * @function toggleEditorCollapse
      * @descCalls the parent (editorComponent) toggleCollapse method
-     * @param event
+     * @param $event
      * @param {boolean} horizontal
      */
-    toggleEditorCollapse(event: any, horizontal: boolean) {
-        this.parent.toggleCollapse(event, horizontal);
+    toggleEditorCollapse($event: any, horizontal: boolean) {
+        this.parent.toggleCollapse($event, horizontal);
     }
 
     /**

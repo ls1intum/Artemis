@@ -93,12 +93,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
     }
 
-    onNewResult(newResult: Result) {
-        this.newResult.emit({
-            newResult: newResult
-        });
-    }
-
     /**
      * refresh the participation and load the result if necessary
      *
@@ -150,12 +144,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.results = results.body;
             console.log('received results', results);
             this.init();
-            console.log('Calling init functin from result component, will emmit newResult now!');
-            console.log(this);
-            console.log('this.onNewResult: ' + this.onNewResult);
-            if (this.onNewResult) {
-                this.onNewResult(results[0]);
-            }
+            this.newResult.emit(results[0]);
         });
     }
 

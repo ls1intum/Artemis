@@ -168,7 +168,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
             this.editorFileSessions[fileName].code)
             .debounceTime(3000)
             .distinctUntilChanged()
-            .subscribe(fileObj => {
+            .subscribe(() => {
                 console.log('saved file: ' + this.fileName);
                 this.editorFileSessions[fileName].unsavedChanges = false;
                 this.updateSaveStatusLabel();

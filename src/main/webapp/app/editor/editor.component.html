@@ -12,7 +12,7 @@
                     <!-- TODO: show-score required? -->
                     <jhi-result [participation]="participation"
                             [hidden]="isBuilding"
-                            (onNewResult)="updateLatestResult($event)">
+                            (newResult)="updateLatestResult($event)">
                     </jhi-result>
                     <button type="button" class="btn btn-primary navbar-btn" [disabled]="!isSaved || isBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
                         <span *ngIf="isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>

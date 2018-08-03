@@ -90,30 +90,30 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
         });
     }
 
-    updateSaveStatusLabel(event) {
+    updateSaveStatusLabel($event) {
         console.log('updateSaveStatusLabel called');
-        this.isSaved = event.isSaved;
+        this.isSaved = $event.isSaved;
         if (!this.isSaved) {
             this.isCommitted = false;
         }
-        this.saveStatusLabel = event.saveStatusLabel;
+        this.saveStatusLabel = $event.saveStatusLabel;
     }
 
-    updateLatestResult(event) {
+    updateLatestResult($event) {
         console.log('updateLatestResult called; received new result');
         this.isBuilding = false;
-        this.latestResult = event.newResult;
+        this.latestResult = $event.newResult;
     }
 
-    updateSelectedFile(event) {
-        console.log('RECEIVED EVENT WITH NEW FILENAME: ' + event.fileName);
+    updateSelectedFile($event) {
+        console.log('RECEIVED EVENT WITH NEW FILENAME: ' + $event.fileName);
         console.log(this.repositoryFiles);
-        this.file = event.fileName;
+        this.file = $event.fileName;
     }
 
-    updateRepositoryCommitStatus(event) {
+    updateRepositoryCommitStatus($event) {
         console.log('updateRepositoryCommitStatus called');
-        console.log(event);
+        console.log($event);
         this.isSaved = false;
         /** Query the repositoryFileService for updated files in the repository */
         this.repositoryFileService.query(this.participation.id).subscribe(files => {
@@ -124,9 +124,9 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /** Collapse parts of the editor (file browser, build output...) */
-    toggleCollapse(event: any, horizontal: boolean) {
+    toggleCollapse($event: any, horizontal: boolean) {
 
-        const target = event.toElement || event.relatedTarget || event.target;
+        const target = $event.toElement || $event.relatedTarget || $event.target;
 
         target.blur();
 
@@ -140,12 +140,12 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
         }
     }
 
-    commit(event) {
+    commit($event) {
 
         console.log('calling commit() from editor');
-        console.log(event);
+        console.log($event);
 
-        const target = event.toElement || event.relatedTarget || event.target;
+        const target = $event.toElement || $event.relatedTarget || $event.target;
 
         target.blur();
         this.isBuilding = true;
