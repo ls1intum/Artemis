@@ -151,6 +151,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      */
     saveFile(fileName: string) {
         console.log('Saving ' + this.fileName);
+        console.log('Current file sessions', this.editorFileSessions);
 
         if (this.onSaveStatusChange) {
             this.onSaveStatusChange({
