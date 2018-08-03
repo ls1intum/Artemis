@@ -43,7 +43,6 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
     markDown;
 
     @Input() participation: Participation;
-    @Input() commonFilePathPrefix: string;
     @Input() latestResult: Result;
 
     constructor(private parent: EditorComponent,
@@ -99,8 +98,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
     }
 
     loadReadme() {
-        const extendedFilePath = this.commonFilePathPrefix + 'README.md';
-        this.repositoryFileService.get(this.participation.id, extendedFilePath).subscribe( fileObj => {
+        this.repositoryFileService.get(this.participation.id, 'README.md').subscribe( fileObj => {
            this.readMeFileContent = fileObj.fileContent;
            this.renderReadme();
         }, err => {

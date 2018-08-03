@@ -46,7 +46,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
     @Input() participation: Participation;
     @Input() fileName: string;
-    @Input() commonFilePathPrefix: string;
     @Output() saveStatusChange = new EventEmitter<object>();
 
     constructor(private parent: EditorComponent,
@@ -84,12 +83,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         }
         if (changes.fileName && this.fileName) {
             console.log('FILE CHANGED, loading file: ' + this.fileName);
-            console.log('The current common prefix for files is: ' + this.commonFilePathPrefix);
             // current file has changed
-            this.loadFile(
-                this.commonFilePathPrefix +
-                this.fileName.replace(new RegExp('/', 'g'), '\\')
-            );
+            this.loadFile(this.fileName);
         }
     }
 
@@ -124,19 +119,19 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
     /**
      * Fetches the requested file by filename and opens a new editor session for it (if not yet done)
-     * @param extendedFileName: File of the name to be opened in the editor
+     * @param fileName: Name of the file to be opened in the editor
      */
-    loadFile(extendedFileName: string) {
+    loadFile(fileName: string) {
         /** Query the repositoryFileService for the specified file in the repository */
-        this.repositoryFileService.get(this.participation.id, extendedFileName).subscribe(fileObj => {
+        this.repositoryFileService.get(this.participation.id, fileName).subscribe(fileObj => {
 
-            if (!this.editorFileSessions[extendedFileName]) {
+            if (!this.editorFileSessions[fileName]) {
                 // TODO: check how to automatically set editor (brace) mode
                 // var ModeList = ace.require("ace/ext/modelist");
                 // var mode = ModeList.getModeForPath(file).mode;
-                console.log('Loaded file with ext file name' + extendedFileName);
-                this.editorFileSessions[extendedFileName] = {};
-                this.editorFileSessions[extendedFileName].code = fileObj.fileContent;
+                console.log('Loaded file with ext file name' + fileName);
+                this.editorFileSessions[fileName] = {};
+                this.editorFileSessions[fileName].code = fileObj.fileContent;
             }
             /**
              * Assign the obtained file content to the editor and set focus to the editor
@@ -152,9 +147,9 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     /**
      * @function saveFile
      * @desc Saved the currently selected file; is being called when the file is changed (onFileChanged)
-     * @param extendedFileName: name of currently selected file
+     * @param fileName: name of currently selected file
      */
-    saveFile(extendedFileName: string) {
+    saveFile(fileName: string) {
         console.log('Saving ' + this.fileName);
 
         if (this.onSaveStatusChange) {
@@ -165,13 +160,13 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         }
 
         this.repositoryFileService.update(this.participation.id,
-            extendedFileName,
-            this.editorFileSessions[extendedFileName].code)
+            fileName,
+            this.editorFileSessions[fileName].code)
             .debounceTime(3000)
             .distinctUntilChanged()
             .subscribe(fileObj => {
                 console.log('saved file: ' + this.fileName);
-                this.editorFileSessions[extendedFileName].unsavedChanges = false;
+                this.editorFileSessions[fileName].unsavedChanges = false;
                 this.updateSaveStatusLabel();
         }, err => {
             if (this.onSaveStatusChange) {
@@ -191,17 +186,12 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      */
     onFileTextChanged(code) {
         console.log('new code', code);
-        const currentFileExtendedName = this.commonFilePathPrefix +
-            this.fileName.replace(new RegExp('/', 'g'), '\\');
-        if (this.editorFileSessions[currentFileExtendedName] !== code && this.editorText !== '') {
-            console.log('onFileChanged with ext file name: ' + currentFileExtendedName);
-            this.editorFileSessions[currentFileExtendedName].code = code;
-            this.editorFileSessions[currentFileExtendedName].unsavedChanges = true;
+        if (this.editorFileSessions[this.fileName] !== code && this.editorText !== '') {
+            console.log('onFileChanged with file name: ' + this.fileName);
+            this.editorFileSessions[this.fileName].code = code;
+            this.editorFileSessions[this.fileName].unsavedChanges = true;
 
-            /**
-             * Need to pass the exact and fully extended fileName into the HTTP Put
-             */
-            this.saveFile(currentFileExtendedName);
+            this.saveFile(this.fileName);
             this.updateSaveStatusLabel();
         }
     }

@@ -30,7 +30,6 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
     participation: Participation;
     repository: RepositoryService;
     file: any;
-    commonFilePathPrefix: string;
     paramSub: Subscription;
     repositoryFiles: string[];
     latestResult: Result;
@@ -72,8 +71,6 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
                 console.log('Received repository files!');
                 console.log(files);
                 this.repositoryFiles = files;
-                this.commonFilePathPrefix = this.identifyCommonFilePathPrefix();
-                console.log('Identified common prefix for files as: ' + this.commonFilePathPrefix);
             }, err => {
                 console.log('There was an error while getting files: ' + err.body.msg);
             });
@@ -141,18 +138,6 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
             $card.addClass('collapsed');
             horizontal ? $card.height('35px') : $card.width('55px');
         }
-    }
-
-    /**
-     * Looks for the users identifier within the repository path to identify the common file path
-     * which we need to append to the filename when doing a GET-request to the server
-     * @returns {string}: the prefix path until the actual repository appended by a backslash
-     */
-    identifyCommonFilePathPrefix(): string {
-        const studentLoginIdx = this.repositoryFiles[0]
-            .split('\\')
-            .indexOf(this.participation.student.login);
-        return this.repositoryFiles[0].split('\\').slice(0, studentLoginIdx).join('\\') + '\\';
     }
 
     commit(event) {

@@ -60,7 +60,6 @@
         <div class="editor-center">
             <jhi-editor-ace [participation]="participation"
                             [fileName]="file"
-                            [commonFilePathPrefix]="commonFilePathPrefix"
                             (saveStatusChange)="updateSaveStatusLabel($event)">
             </jhi-editor-ace>
         </div>
@@ -68,7 +67,6 @@
         <div class="editor-sidebar-right">
             <jhi-editor-instructions *ngIf="repositoryFiles"
                                      [participation]="participation"
-                                     [commonFilePathPrefix]="commonFilePathPrefix"
                                      [latestResult]="latestResult">
             </jhi-editor-instructions>
         </div>
