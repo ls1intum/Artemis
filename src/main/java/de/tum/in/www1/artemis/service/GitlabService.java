@@ -60,8 +60,6 @@ public class GitlabService implements VersionControlService {
 
     @Override
     public void configureRepository(URL repositoryUrl, String username) {
-
-
         if(username.startsWith(USER_PREFIX)) {
             // It is an automatically created user
 
@@ -77,7 +75,6 @@ public class GitlabService implements VersionControlService {
             } else {
                 log.debug("Gitlab user {} already exists", username);
             }
-
         }
 
         giveWritePermission(repositoryUrl, username);
@@ -101,12 +98,12 @@ public class GitlabService implements VersionControlService {
     }
 
     private String getNamespaceFromUrl(URL repositoryUrl) {
-        // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git
+        // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git -> EIST2016RME
         return repositoryUrl.getFile().split("/")[1];
     }
 
     private String getProjectNameFromUrl(URL repositoryUrl) {
-        // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git
+        // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git -> RMEXERCISE-ga42xab
         String repositoryName = repositoryUrl.getFile().split("/")[2];
         if (repositoryName.endsWith(".git")) {
             repositoryName = repositoryName.substring(0, repositoryName.length() - 4);
@@ -114,6 +111,12 @@ public class GitlabService implements VersionControlService {
         return repositoryName;
     }
 
+    /**
+     * This returns the URL encoded Identifier (consisting of the namespace and the projectname.
+     *
+     * @param repositoryUrl The repsitoryUrl
+     * @return The already encoded Idenfifier
+     */
     private String getURLEncodedIdentifier(URL repositoryUrl) {
         return getNamespaceFromUrl(repositoryUrl) + "%2F" + getProjectNameFromUrl(repositoryUrl);
     }
@@ -124,13 +127,15 @@ public class GitlabService implements VersionControlService {
      * @param namespace          The namespace of the base project.
      * @param baseProjectName    The project name of the base repository.
      * @param username           The user for whom the repository is being forked.
-     * @return The slug of the forked repository (i.e. its identifier).
+     * @return The name of the forked repository
+     * @throws GitlabException If the creation of the repository failed
      */
     private Map<String, String> createRepository(String namespace, String baseProjectName, String username) throws GitlabException {
         /*
          * In Gitlab, you cannot fork an existing repository with another name. Therefor we create a new repository and
          * specify the base repository as import_url. We authenticate with the private token and the according username.
          */
+        // TODO: Check if we have to wait for a constant amount of time / check the import status as the import is done asynchronous by Gitlab
         String projectName = String.format("%s-%s", baseProjectName, username);
         Map<String, Object> body = new HashMap<>();
         body.put("name", projectName);
@@ -173,7 +178,6 @@ public class GitlabService implements VersionControlService {
         return null;
     }
 
-
     /**
      * Creates an user on Gitlab
      *
@@ -209,7 +213,6 @@ public class GitlabService implements VersionControlService {
             throw new GitlabException("Error while creating user");
         }
     }
-
 
     /**
      * Gives user write permissions for a repository.
@@ -266,11 +269,6 @@ public class GitlabService implements VersionControlService {
         }
     }
 
-    /**
-     *  Check if the given repository url is valid and accessible on Gitlab.
-     * @param repositoryUrl
-     * @return
-     */
     @Override
     public Boolean repositoryUrlIsValid(URL repositoryUrl) {
         String projectIdentifier = getURLEncodedIdentifier(repositoryUrl);
@@ -288,7 +286,7 @@ public class GitlabService implements VersionControlService {
     /**
      * Checks if an username exists on Gitlab
      *
-     * @param username the Gitlab username to check
+     * @param username       The Gitlab username to check
      * @return true if it exists
      * @throws GitlabException
      */
@@ -307,15 +305,17 @@ public class GitlabService implements VersionControlService {
             log.error("Could not check if Gitlab user  " + username + " exists.", e);
             throw new GitlabException("Could not check if Gitlab user exists");
         }
-        return !response.getBody().isEmpty();
+        return !response.getBody().isEmpty(); // The API returns an array of matching users, therefor we can check the size of the List
     }
 
     /**
-     *  Get the user id of the given user.
-     * @param username The username
-     * @return
+     * Get the user id of the given user.
+     *
+     * @param username       The username
+     * @return The user id of the given user
+     * @throws GitlabException if the user id could not be requested.
      */
-    private Integer getUserId(String username) {
+    private Integer getUserId(String username) throws GitlabException {
         HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
@@ -330,30 +330,37 @@ public class GitlabService implements VersionControlService {
             log.error("Error while getting user id of user " + username);
             throw new GitlabException("Error while getting user id", e);
         }
+
         if (response != null && response.getStatusCode().equals(HttpStatus.OK)) {
             if (response.getBody().size() == 0) {
                 log.error("Error while getting user id of user {}: no user found", username);
                 throw new GitlabException("Error while getting user id: No user found");
             }
-            // TODO: maybe parse this into an extra object?
+            // TODO: maybe parse this into an extra object to avoid casts?
             LinkedHashMap<String, Object> user = (LinkedHashMap<String, Object>) response.getBody().get(0);
             return (Integer) user.get("id");
         }
         return -1;
     }
 
-    // TODO: check whether we have to support user-namespaces too
     /**
-     *  Get the namespace id of the given namespace.
-     * @param namespace The namespace
-     * @return
+     * Get the namespace id of the given namespace.
+     *
+     * @param namespace      The namespace
+     * @return The id of the namespace
+     * @throws GitlabException if the namespace id could not be requested.
      */
-    private int getNamespaceId(String namespace) {
+    private Integer getNamespaceId(String namespace) throws GitlabException {
         HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response;
         try {
+            /**
+             * In Gitlab, a namespace can either be an user or a group. As all participations of a specified exercise
+             * should be in the same namespace, only a group-namespace is applicable.
+             */
+            // TODO: check whether we have to support user-namespaces too
             response = restTemplate.exchange(
                 GITLAB_SERVER_URL + "/api/v4/groups/" + namespace,
                 HttpMethod.GET,
@@ -383,9 +390,13 @@ public class GitlabService implements VersionControlService {
     }
 
     /**
-     * Build an URI with already encoded components
-     * @param url The static part of the URI
-     * @param parameter The dynamic part of the URI
+     * Build an URI with already encoded components. No additional characters (like slashes are added in between the components.
+     * This is needed as Gitlab uses URL-encoded namespaces, we therefor don't want the URL to be encoded twice.
+     * This URI consists of 2 components, therefor the URL-encoded namespace is the last part of the URI.
+     * Also see {@link #buildUri(String, String, String)}.
+     *
+     * @param url            The static part of the URI
+     * @param parameter      The dynamic part of the URI
      * @return an URI containing url and parameter without additional encoding
      */
     private URI buildUri(String url, String parameter) {
@@ -393,9 +404,13 @@ public class GitlabService implements VersionControlService {
     }
 
     /**
-     * Build an URI with already encoded components
-     * @param url The static part of the URI
-     * @param parameter The dynamic part of the URI
+     * Build an URI with already encoded components. No additional characters (like slashes are added in between the components.
+     * This is needed as Gitlab uses URL-encoded namespaces, we therefor don't want the URL to be encoded twice.
+     * This URI consists of 3 components, therefor the URL-encoded namespace is the middle part of the URI,
+     * and other static part is added afterwards. Also see {@link #buildUri(String, String)}.
+     *
+     * @param url            The static part of the URI
+     * @param parameter      The dynamic part of the URI
      * @param staticParameter The additional static part after the dynamic parameter
      * @return an URI containing url, dynamic and static parameter without additional encoding
      */
