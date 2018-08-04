@@ -40,6 +40,8 @@ public class GitlabService implements VersionControlService {
     @Value("${artemis.lti.user-prefix}")
     private String USER_PREFIX = "";
 
+    private final String API_PATH = "/api/v4/";
+
     private final UserService userService;
 
     public GitlabService(UserService userService) {
@@ -157,7 +159,7 @@ public class GitlabService implements VersionControlService {
         ResponseEntity<Map> response;
         try {
             response = restTemplate.exchange(
-                GITLAB_SERVER_URL + "/api/v4/projects/",
+                GITLAB_SERVER_URL + API_PATH + "projects/",
                 HttpMethod.POST,
                 entity,
                 Map.class);
@@ -196,7 +198,7 @@ public class GitlabService implements VersionControlService {
      * @throws GitlabException
      */
     public void createUser(String username, String password, String emailAddress, String displayName) throws GitlabException {
-        String baseUrl = GITLAB_SERVER_URL + "/api/v4/users";
+        String baseUrl = GITLAB_SERVER_URL + API_PATH + "users";
         Map<String, Object> body = new HashMap<>();
         body.put("email", emailAddress);
         body.put("username", username);
@@ -230,7 +232,7 @@ public class GitlabService implements VersionControlService {
      * @throws GitlabException
      */
     private void giveWritePermission(URL repositoryUrl, String username) throws GitlabException {
-        URI baseUri = buildUri(GITLAB_SERVER_URL + "/api/v4/projects/", getURLEncodedIdentifier(repositoryUrl), "/members");
+        URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", getURLEncodedIdentifier(repositoryUrl), "/members");
         Map<String, Object> body = new HashMap<>();
         body.put("user_id", getUserId(username));
         body.put("access_level", 30); // TODO: make this configurable? Access Level 30 equals Developer
@@ -265,7 +267,7 @@ public class GitlabService implements VersionControlService {
      * @param repositoryUrl    The repository's URL.
      */
     private void deleteRepositoryImpl(URL repositoryUrl) {
-        URI baseUri = buildUri(GITLAB_SERVER_URL + "/api/v4/projects/", getURLEncodedIdentifier(repositoryUrl));
+        URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", getURLEncodedIdentifier(repositoryUrl));
         log.info("Delete repository " + baseUri);
         HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
         HttpEntity<?> entity = new HttpEntity<>(headers);
@@ -284,7 +286,7 @@ public class GitlabService implements VersionControlService {
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         try {
-            restTemplate.exchange(buildUri(GITLAB_SERVER_URL + "/api/v4/projects/", projectIdentifier), HttpMethod.GET, entity, Map.class);
+            restTemplate.exchange(buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", projectIdentifier), HttpMethod.GET, entity, Map.class);
         } catch (Exception e) {
             return false;
         }
@@ -305,7 +307,7 @@ public class GitlabService implements VersionControlService {
         ResponseEntity<List> response;
         try {
             response = restTemplate.exchange(
-                GITLAB_SERVER_URL + "/api/v4/users?username=" + username, // TODO: this seems to be undocumented, might break
+                GITLAB_SERVER_URL + API_PATH + "users?username=" + username, // TODO: this seems to be undocumented, might break
                 HttpMethod.GET,
                 entity,
                 List.class);
@@ -330,7 +332,7 @@ public class GitlabService implements VersionControlService {
         ResponseEntity<List> response;
         try {
             response = restTemplate.exchange(
-                GITLAB_SERVER_URL + "/api/v4/users?username=" + username,
+                GITLAB_SERVER_URL + API_PATH + "users?username=" + username,
                 HttpMethod.GET,
                 entity,
                 List.class);
@@ -370,7 +372,7 @@ public class GitlabService implements VersionControlService {
              */
             // TODO: check whether we have to support user-namespaces too
             response = restTemplate.exchange(
-                GITLAB_SERVER_URL + "/api/v4/groups/" + namespace,
+                GITLAB_SERVER_URL + API_PATH + "groups/" + namespace,
                 HttpMethod.GET,
                 entity,
                 Map.class);
