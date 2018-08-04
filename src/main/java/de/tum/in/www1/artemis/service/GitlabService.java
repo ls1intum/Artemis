@@ -99,16 +99,24 @@ public class GitlabService implements VersionControlService {
 
     private String getNamespaceFromUrl(URL repositoryUrl) {
         // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git -> EIST2016RME
-        return repositoryUrl.getFile().split("/")[1];
+        String[] urlParts = repositoryUrl.getFile().split("/");
+        if (urlParts.length > 1) {
+            return urlParts[1];
+        }
+        return "";
     }
 
     private String getProjectNameFromUrl(URL repositoryUrl) {
         // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git -> RMEXERCISE-ga42xab
-        String repositoryName = repositoryUrl.getFile().split("/")[2];
-        if (repositoryName.endsWith(".git")) {
-            repositoryName = repositoryName.substring(0, repositoryName.length() - 4);
+        String[] urlParts = repositoryUrl.getFile().split("/");
+        if (urlParts.length > 2) {
+            String repositoryName = urlParts[2];
+            if (repositoryName.endsWith(".git")) {
+                repositoryName = repositoryName.substring(0, repositoryName.length() - 4);
+            }
+            return repositoryName;
         }
-        return repositoryName;
+        return "";
     }
 
     /**
