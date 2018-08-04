@@ -127,11 +127,21 @@ public class ModelingAssessmentResource {
         return ResponseEntity.ok(partialAssessment.get("assessments").toString());
     }
 
+    /**
+     * Returns assessments (if found) for a given participationId and submissionId.
+     *
+     * @param participationId   the participationId for which to find assessments for
+     * @param submissionId      the submissionId for which to find assessments for
+     * @return the ResponseEntity with assessments string as body
+     */
     @GetMapping("/modeling-assessments/participation/{participationId}/submission/{submissionId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<String> getAssessmentBySubmissionId(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Participation participation = participationRepository.findOne(participationId);
+        if (participation == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
+        }
 
         if (!courseService.userHasStudentPermissions(participation.getExercise().getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -150,11 +160,22 @@ public class ModelingAssessmentResource {
         return ResponseEntity.ok("");
     }
 
+    /**
+     * Saves assessments and updates result.
+     *
+     * @param exerciseId            the exerciseId the assessment belongs to
+     * @param resultId              the resultId the assessment belongs to
+     * @param modelingAssessment    the assessments as string
+     * @return the ResponseEntity with result as body
+     */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable Long exerciseId, @PathVariable Long resultId, @RequestBody String modelingAssessment) {
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
+        if (modelingExercise == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
         // fetch course from database to make sure client didn't change groups
         Course course = courseService.findOne(modelingExercise.getCourse().getId());
         if (course == null) {
@@ -172,6 +193,14 @@ public class ModelingAssessmentResource {
         return ResponseEntity.ok(result);
     }
 
+    /**
+     * Saves assessments and updates result. Sets result to rated so the student can see the assessments.
+     *
+     * @param exerciseId            the exerciseId the assessment belongs to
+     * @param resultId              the resultId the assessment belongs to
+     * @param modelingAssessment    the assessments as string
+     * @return the ResponseEntity with result as body
+     */
     @PutMapping("/modeling-assessments/exercise/{exerciseId}/result/{resultId}/submit")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
@@ -191,6 +220,7 @@ public class ModelingAssessmentResource {
 
         Result result = updateManualResult(resultId, exerciseId, modelingAssessment, true);
         Long submissionId = result.getSubmission().getId();
+        // add assessment to compass to include it in the automatic grading process
         compassService.addAssessment(exerciseId, submissionId, modelingAssessment);
 
         return ResponseEntity.ok(result);
@@ -198,6 +228,15 @@ public class ModelingAssessmentResource {
 
     //TODO: move more logic into a new ModelingAssessmentService
 
+    /**
+     * Updates result and set attributes according to rated state.
+     *
+     * @param resultId              the resultId the assessment belongs to
+     * @param exerciseId            the exerciseId the assessment belongs to
+     * @param modelingAssessment    the assessments as string
+     * @param rated                 if the result is rated or not
+     * @return the ResponseEntity with result as body
+     */
     public Result updateManualResult(Long resultId, Long exerciseId, String modelingAssessment, Boolean rated) {
         Result result = resultRepository.findOne(resultId);
         result.setRated(rated);
@@ -212,10 +251,11 @@ public class ModelingAssessmentResource {
 
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
+        // write assessment to file system
         jsonAssessmentRepository.writeAssessment(exerciseId, studentId, submissionId, true, modelingAssessment);
 
         if (rated) {
-            // set result if rated
+            // set score, result string and successful if rated
             JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(exerciseId, studentId, submissionId, true);
             Double maxScore = modelingExercise.getMaxScore();
             Double totalScore = Math.min(Math.max(0, calculateTotalScore(assessmentJson)), maxScore);
@@ -231,6 +271,12 @@ public class ModelingAssessmentResource {
         return result;
     }
 
+    /**
+     * Helper function to calculate the total score of an assessment.
+     *
+     * @param assessmentJson    the assessments as JsonObject
+     * @return the total score
+     */
     public Double calculateTotalScore(JsonObject assessmentJson) {
         Double totalScore = 0.0;
         JsonArray assessments = assessmentJson.get("assessments").getAsJsonArray();

@@ -234,16 +234,31 @@ public class ModelingExerciseResource {
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
-    @GetMapping("/modeling-editor/{id}")
+    /**
+     * Returns the data needed for the modeling editor, which includes the participation, modelingSubmission with model if existing
+     * and the assessments if the submission was already submitted.
+     *
+     * @param participationId the participationId for which to find the data for the modeling editor
+     * @return the ResponseEntity with json as body
+     */
+    @GetMapping("/modeling-editor/{participationId}")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(readOnly = true)
     @Timed
-    public ResponseEntity<JsonNode> getDataForModelingEditor(@PathVariable Long id) {
-        Participation participation = participationService.findOne(id);
+    public ResponseEntity<JsonNode> getDataForModelingEditor(@PathVariable Long participationId) {
+        Participation participation = participationService.findOne(participationId);
         if (participation == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
         }
-        ModelingExercise modelingExercise = (ModelingExercise) participation.getExercise();
+        ModelingExercise modelingExercise;
+        if (participation.getExercise() instanceof ModelingExercise) {
+            modelingExercise = (ModelingExercise) participation.getExercise();
+            if (modelingExercise == null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseEmpty", "The exercise belonging to the participation is null.")).body(null);
+            }
+        } else {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
+        }
 
         if (!courseService.userHasStudentPermissions(modelingExercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
@@ -259,6 +274,7 @@ public class ModelingExerciseResource {
         if (participation.getResults().size() > 0) {
             Set<Result> resultSet = participation.getResults();
             List<Result> sortedResults = resultSet.stream().collect(Collectors.toList());
+            // sort results by completion date
             Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
             Result result = sortedResults.get(0);
             ModelingSubmission modelingSubmission;
@@ -275,7 +291,9 @@ public class ModelingExerciseResource {
             }
             data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
             if (modelingSubmission.isSubmitted() && result.isRated()) {
+                // find assessments if modelingSubmission is submitted and result is rated
                 if (jsonAssessmentRepository.exists(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), true)) {
+                    // the modelingSubmission was graded manually
                     JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), true);
                     try {
                         data.set("assessments", objectMapper.readTree(assessmentJson.get("assessments").toString()));
@@ -283,6 +301,7 @@ public class ModelingExerciseResource {
 
                     }
                 } else if (jsonAssessmentRepository.exists(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), false)) {
+                    // the modelingSubmission was graded automatically
                     JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), false);
                     try {
                         data.set("assessments", objectMapper.readTree(assessmentJson.get("assessments").toString()));
@@ -295,12 +314,23 @@ public class ModelingExerciseResource {
         return ResponseEntity.ok(data);
     }
 
+    /**
+     * Returns the data needed for the assessment editor, which includes the modelingExercise, result, modelingSubmission
+     * and the assessments if the submission was already submitted.
+     *
+     * @param exerciseId the participationId for which to find the data for the modeling editor
+     * @param submissionId the participationId for which to find the data for the modeling editor
+     * @return the ResponseEntity with json as body
+     */
     @GetMapping("/assessment-editor/{exerciseId}/{submissionId}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     @Timed
     public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
+        if (modelingExercise == null) {
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+        }
 
         Course course = modelingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();

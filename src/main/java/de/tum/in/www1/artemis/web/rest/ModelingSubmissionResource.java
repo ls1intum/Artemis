@@ -145,7 +145,7 @@ public class ModelingSubmissionResource {
 
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
         if (modelingExercise == null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("submission", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
 
         // fetch course from database to make sure client didn't change groups

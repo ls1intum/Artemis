@@ -42,6 +42,8 @@ public class ModelingSubmissionService {
     /**
      * Saves the given submission and the corresponding model and creates the result if necessary.
      * Furthermore, the submission is added to the AutomaticSubmissionService if not submitted yet.
+     * Is used for creating and updating modeling submissions.
+     * Rolls back if inserting fails - occurs for concurrent createModelingSubmission() calls.
      *
      * @param modelingSubmission the submission to submit
      * @param modelingExercise the exercise to submit in
@@ -61,6 +63,7 @@ public class ModelingSubmissionService {
                     dbModelingSubmission.setModel(model.toString());
                     Optional<Result> dbResult = resultRepository.findDistinctBySubmissionId(dbModelingSubmission.getId());
                     if (dbResult.isPresent()) {
+                        // return the result found for the submitted submission incl. the model
                         Result result2 = dbResult.get();
                         result2.setSubmission(dbModelingSubmission);
                         return result2;
@@ -80,6 +83,8 @@ public class ModelingSubmissionService {
                 resultRepository.insertIfNonExisting(participation.getId());
                 Optional<Result> newResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), false);
                 if (newResult.isPresent()) {
+                    // the insert of the new result was successful
+                    // initialize the attributes of the result
                     result = initializeResult(participation, newResult.get());
                 } else {
                     result = initializeResult(participation, null);
@@ -88,6 +93,7 @@ public class ModelingSubmissionService {
                 throw new ConflictException("Conflict exception", "Tried to call createModelingSubmission() more than once for the same participation");
             }
         } else {
+            // an unrated result was found for the participation
             result = optionalResult.get();
         }
 
@@ -118,10 +124,24 @@ public class ModelingSubmissionService {
         return result;
     }
 
+    /**
+     * Adds a model to compass service to include it in the automatic grading process.
+     *
+     * @param modelingSubmission    the submission which contains the model
+     * @param modelingExercise      the exercise the model belongs to
+     */
     public void submit(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise) {
         this.compassService.addModel(modelingExercise.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
     }
 
+    /**
+     * Find the model for given exerciseId, studentId and model id, which is the same as submission id.
+     *
+     * @param exerciseId    the exercise id for which to find the model
+     * @param studentId     the student id for which to find the model
+     * @param id            the model id
+     * @return the model JsonObject if found otherwise null
+     */
     public JsonObject getModel(long exerciseId, long studentId, long id) {
         if (jsonModelRepository.exists(exerciseId, studentId, id)) {
             return jsonModelRepository.readModel(exerciseId, studentId, id);
@@ -129,6 +149,13 @@ public class ModelingSubmissionService {
         return null;
     }
 
+    /**
+     * Initialize the attributes rated, successful and completionDate for a result or create a new one.
+     *
+     * @param participation     the participation the result should belong to
+     * @param result            null if new result otherwise the result for which to set the initial attributes
+     * @return the result with initialized attributes
+     */
     private Result initializeResult(Participation participation, Result result) {
         if (result == null) {
             result = new Result().participation(participation);
@@ -139,6 +166,12 @@ public class ModelingSubmissionService {
         return result;
     }
 
+    /**
+     * Find the modelingSubmission by a given participation.
+     *
+     * @param participation    the participation for which to find the modelingSubmission
+     * @return the modelingSubmission if found otherwise null
+     */
     public ModelingSubmission findByParticipation(Participation participation) {
         ModelingSubmission modelingSubmission;
         Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
