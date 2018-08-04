@@ -58,6 +58,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @param participationId   the participation id for which the result should be inserted
      */
     @Modifying
-    @Query(value = "insert into Result (participation_id, rated) select :participationId, 0 from Result r where (r.participation_id = :participationId and r.rated = 0) having count(*) = 0", nativeQuery = true)
+    @Query(value = "insert into result (participation_id, rated) select :participationId, 0 from result where (participation_id = :participationId and rated = 0) having count(*) = 0", nativeQuery = true)
     void insertIfNonExisting(@Param("participationId") Long participationId);
 }
