@@ -133,7 +133,7 @@ public class ModelingAssessmentResource {
     public ResponseEntity<String> getAssessmentBySubmissionId(@PathVariable Long participationId, @PathVariable Long submissionId) {
         Participation participation = participationRepository.findOne(participationId);
 
-        if (!courseService.userHasStudentPermissions(participation.getExercise().getCourse())) {
+        if (!courseService.userHasStudentPermissions(participation.getExercise().getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

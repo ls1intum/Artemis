@@ -1,4 +1,5 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, HostListener } from '@angular/core';
+import { Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Participation, ParticipationService } from '../entities/participation';
@@ -59,7 +60,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         private route: ActivatedRoute,
         private modelingEditorService: ModelingEditorService,
         private modalService: NgbModal,
-        private translateService: TranslateService
+        private translateService: TranslateService,
+        private router: Router
     ) {
         this.isSaving = false;
         this.autoSaveTimer = 0;
@@ -92,6 +94,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                                 this.initializeAssessmentInfo();
                             });
                         }
+                    }
+                }, error => {
+                    if (error.status == 403) {
+                        this.router.navigate(['accessdenied']);
                     }
                 });
             }

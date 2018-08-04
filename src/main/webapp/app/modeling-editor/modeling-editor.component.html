@@ -98,7 +98,7 @@
             <div class="assessments">
                 <div class="assessments__container">
                     <div class="assessments__canvas">
-                        <ng-container *ngIf="assessments && positions">
+                        <ng-container *ngIf="result?.rated && assessments && positions">
                             <div *ngFor="let assessment of assessments"
                                  [style.top.px]="positions[assessment.id].y"
                                  [style.left.px]="positions[assessment.id].x">

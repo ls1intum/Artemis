@@ -245,7 +245,7 @@ public class ModelingExerciseResource {
         }
         ModelingExercise modelingExercise = (ModelingExercise) participation.getExercise();
 
-        if (!courseService.userHasStudentPermissions(modelingExercise.getCourse())) {
+        if (!courseService.userHasStudentPermissions(modelingExercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
