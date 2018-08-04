@@ -149,7 +149,7 @@ public class GitlabService implements VersionControlService {
                 entity,
                 Map.class);
         } catch (HttpClientErrorException e) {
-            if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
+            if (e.getStatusCode().equals(HttpStatus.BAD_REQUEST)) {
                 log.info("Repository already exists. Going to recover repository information...");
                 Map<String, String> result = new HashMap<>();
                 result.put("name", projectName);
@@ -234,6 +234,14 @@ public class GitlabService implements VersionControlService {
                 HttpMethod.POST,
                 entity,
                 Map.class);
+        } catch(HttpClientErrorException e) {
+            if (e.getStatusCode().equals(HttpStatus.CONFLICT)) {
+                //TODO: Maybe check if the user has at least the access_level that would be given to him
+                log.info("User already had permission. Assuming he has the correct permission.");
+                return;
+            }
+            log.error("Could not give write permission", e);
+            throw new GitlabException("Error while giving repository permissions");
         } catch (Exception e) {
             log.error("Could not give write permission", e);
             throw new GitlabException("Error while giving repository permissions");
