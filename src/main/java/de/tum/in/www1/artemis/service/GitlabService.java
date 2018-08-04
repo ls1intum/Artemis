@@ -234,7 +234,7 @@ public class GitlabService implements VersionControlService {
     private void giveWritePermission(URL repositoryUrl, String username) throws GitlabException {
         URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", getURLEncodedIdentifier(repositoryUrl), "/members");
         Map<String, Object> body = new HashMap<>();
-        body.put("user_id", getUserId(username));
+        body.put("user_id", getUserId(username, true));
         body.put("access_level", 30); // TODO: make this configurable? Access Level 30 equals Developer
 
         HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
@@ -298,41 +298,28 @@ public class GitlabService implements VersionControlService {
      *
      * @param username       The Gitlab username to check
      * @return true if it exists
-     * @throws GitlabException
+     * @throws GitlabException if the user could not be requested
      */
     private Boolean userExists(String username) throws GitlabException {
-        HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
-        HttpEntity<?> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
-        ResponseEntity<List> response;
-        try {
-            response = restTemplate.exchange(
-                GITLAB_SERVER_URL + API_PATH + "users?username=" + username, // TODO: this seems to be undocumented, might break
-                HttpMethod.GET,
-                entity,
-                List.class);
-        } catch (HttpClientErrorException e) {
-            log.error("Could not check if Gitlab user  " + username + " exists.", e);
-            throw new GitlabException("Could not check if Gitlab user exists");
-        }
-        return !response.getBody().isEmpty(); // The API returns an array of matching users, therefor we can check the size of the List
+        return getUserId(username, false) == -1;
     }
 
     /**
      * Get the user id of the given user.
      *
      * @param username       The username
-     * @return The user id of the given user
-     * @throws GitlabException if the user id could not be requested.
+     * @param expectExistence Whether the user is expected to be existing.
+     * @return The user id of the given user, or -1 if no user exists and expectMissingUser is false
+     * @throws GitlabException if the user id could not be requested OR the user does not exist but is expected to be existing.
      */
-    private Integer getUserId(String username) throws GitlabException {
+    private Integer getUserId(String username, boolean expectExistence) throws GitlabException {
         HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<List> response;
         try {
             response = restTemplate.exchange(
-                GITLAB_SERVER_URL + API_PATH + "users?username=" + username,
+                GITLAB_SERVER_URL + API_PATH + "users?username=" + username, //TODO: This seems to be undocumented, might break?
                 HttpMethod.GET,
                 entity,
                 List.class);
@@ -343,6 +330,9 @@ public class GitlabService implements VersionControlService {
 
         if (response != null && response.getStatusCode().equals(HttpStatus.OK)) {
             if (response.getBody().size() == 0) {
+                if (!expectExistence) { // User is not expected to be existing (this is for the userExists-method)
+                    return -1; // User is not existing -> return -1
+                }
                 log.error("Error while getting user id of user {}: no user found", username);
                 throw new GitlabException("Error while getting user id: No user found");
             }
@@ -350,7 +340,7 @@ public class GitlabService implements VersionControlService {
             LinkedHashMap<String, Object> user = (LinkedHashMap<String, Object>) response.getBody().get(0);
             return (Integer) user.get("id");
         }
-        return -1;
+        return null;
     }
 
     /**
@@ -386,7 +376,7 @@ public class GitlabService implements VersionControlService {
         if (response != null && response.getStatusCode().equals(HttpStatus.OK)) {
             return (int) response.getBody().get("id");
         }
-        return -1;
+        return null;
     }
 
     private URL buildCloneUrl(String namespace, String projectName, String username) {
