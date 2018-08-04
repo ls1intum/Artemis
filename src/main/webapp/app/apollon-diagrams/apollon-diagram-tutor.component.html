@@ -75,7 +75,7 @@
                         <div class="card-body">
                             <div class="form-group">
                                 <label>Score</label>
-                                <input type="number" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()">
+                                <input type="number" step="0.5" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()">
                             </div>
                             <div class="form-group row">
                                 <label class="col-auto">Feedback</label>
