@@ -60,4 +60,16 @@ public final class HeaderUtil {
 
         return acceptHeaders;
     }
+
+    public static HttpHeaders createPrivateTokenAuthorization(String privateToken) {
+        HttpHeaders acceptHeaders = new HttpHeaders() {
+            {
+                set(com.google.common.net.HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON.toString());
+                set(com.google.common.net.HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON.toString());
+            }
+        };
+        acceptHeaders.set("Private-Token", privateToken);
+
+        return acceptHeaders;
+    }
 }

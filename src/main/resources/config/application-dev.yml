@@ -106,6 +106,10 @@ artemis:
     url: https://repobruegge.in.tum.de
     user: <username>
     password: <password>
+  gitlab:
+    url: https://gitlabbruegge.in.tum.de
+    user: <username>
+    private-token: <private-token>
   bamboo:
     url: https://bamboobruegge.in.tum.de
     bitbucket-application-link-id: <application-link-id>
