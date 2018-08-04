@@ -96,7 +96,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         }
                     }
                 }, error => {
-                    if (error.status == 403) {
+                    if (error.status === 403) {
                         this.router.navigate(['accessdenied']);
                     }
                 });
@@ -187,6 +187,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.isSaving = false;
                 if (this.submission.submitted) {
                     this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
+                    this.initializeApollonEditor(JSON.parse(this.submission.model));
                     this.isActive = false;
                 } else {
                     this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
