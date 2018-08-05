@@ -70,6 +70,9 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      */
     ngAfterViewInit(): void {
         this.editor.setTheme('clouds');
+        this.editor.getEditor().setOptions({
+            animatedScroll: true
+        });
     }
 
     /**
@@ -136,8 +139,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
             /**
              * Assign the obtained file content to the editor and set focus to the editor
              */
-            console.log('Received file object from get', fileObj);
             this.editorText = fileObj.fileContent;
+            this.editor.getEditor().resize();
             this.editor._editor.focus();
         }, err => {
             console.log('There was an error while getting file: ' + this.fileName);
@@ -151,8 +154,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      * @param fileName: name of currently selected file
      */
     saveFile(fileName: string) {
-        console.log('Saving ' + this.fileName);
-
         if (this.onSaveStatusChange) {
             this.onSaveStatusChange({
                 isSaved: false,
@@ -160,16 +161,12 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
             });
         }
 
-        console.log('Current fileSessions', this.editorFileSessions);
-        console.log('Calling repositoryFileService.update with new code: ');
-        console.log(this.editorFileSessions[fileName].code);
         this.repositoryFileService.update(this.participation.id,
             fileName,
             this.editorFileSessions[fileName].code)
             .debounceTime(3000)
             .distinctUntilChanged()
             .subscribe(() => {
-                console.log('saved file: ' + this.fileName);
                 this.editorFileSessions[fileName].unsavedChanges = false;
                 this.updateSaveStatusLabel();
         }, err => {
@@ -189,9 +186,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      * @param code
      */
     onFileTextChanged(code) {
-        console.log('new code', code);
         if (this.editorFileSessions[this.fileName] !== code && this.editorText !== '') {
-            console.log('onFileChanged with file name: ' + this.fileName);
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
 
