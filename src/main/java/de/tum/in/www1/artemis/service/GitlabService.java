@@ -83,6 +83,12 @@ public class GitlabService implements VersionControlService {
     }
 
     @Override
+    public void addWebHook(URL repositoryUrl, String notificationUrl) {
+        // TODO: catch existing webhook
+        createWebHook(repositoryUrl, notificationUrl);
+    }
+
+    @Override
     public void deleteRepository(URL repositoryUrl) {
         deleteRepositoryImpl(repositoryUrl);
     }
@@ -124,7 +130,7 @@ public class GitlabService implements VersionControlService {
     /**
      * This returns the URL encoded Identifier (consisting of the namespace and the projectname.
      *
-     * @param repositoryUrl The repsitoryUrl
+     * @param repositoryUrl  The repsitoryUrl
      * @return The already encoded Idenfifier
      */
     private String getURLEncodedIdentifier(URL repositoryUrl) {
@@ -258,6 +264,35 @@ public class GitlabService implements VersionControlService {
         } catch (Exception e) {
             log.error("Could not give write permission", e);
             throw new GitlabException("Error while giving repository permissions");
+        }
+    }
+
+    private void createWebHook(URL repositoryUrl, String notificationUrl) {
+        log.debug("Creating WebHook for Repository {} and URL {}", getURLEncodedIdentifier(repositoryUrl), notificationUrl);
+        HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
+
+        URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", getURLEncodedIdentifier(repositoryUrl), "/hooks");
+        Map<String, Object> body = new HashMap<>();
+        body.put("url", notificationUrl);
+        body.put("push_events", true); // Inform about pushes
+        //TODO: We might want to add a token to ensure the notification is valid
+
+
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                baseUri,
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch(HttpClientErrorException e) {
+            log.error("Could not create WebHook (HTTP Error)", e);
+            throw new GitlabException("Error while creating WebHook (HTTP Error)");
+        } catch (Exception e) {
+            log.error("Could not create WebHook {} ({})", getURLEncodedIdentifier(repositoryUrl), notificationUrl, e);
+            throw new GitlabException("Error while creating WebHook");
         }
     }
 

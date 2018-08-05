@@ -16,6 +16,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,12 @@ public class BitbucketService implements VersionControlService {
         }
 
         giveWritePermission(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), username);
+    }
+
+    @Override
+    public void addWebHook(URL repositoryUrl, String notificationUrl) {
+        // TODO: catch existing webhook
+        createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl);
     }
 
     @Override
@@ -287,6 +294,34 @@ public class BitbucketService implements VersionControlService {
         } catch (Exception e) {
             log.error("Could not give write permission", e);
             throw new BitbucketException("Error while giving repository permissions");
+        }
+    }
+
+    private void createWebHook(String projectKey, String repositorySlug, String notificationUrl) {
+        log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("name", "ArTEMiS WebHook");
+        body.put("url", notificationUrl);
+        body.put("events", new ArrayList<>());
+        ((List) body.get("events")).add("repo:refs_changed"); // Inform on push
+        // TODO: We might want to add a token to ensure the notification is valid
+
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+
+        try {
+            restTemplate.exchange(
+                baseUrl,
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            log.error("Could not add create WebHook for {}-{} ({})", projectKey, repositorySlug, notificationUrl, e);
+            throw new BitbucketException("Error while creating WebHook");
         }
     }
 
