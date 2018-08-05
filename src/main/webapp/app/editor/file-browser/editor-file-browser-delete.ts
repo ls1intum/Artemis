@@ -21,23 +21,19 @@ export class EditorFileBrowserDeleteComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = false;
-        console.log('fileNameToDelete: ' + this.fileNameToDelete);
     }
 
     deleteFile() {
         this.isLoading = true;
         // Make sure we have a filename
         if (this.fileNameToDelete) {
-
-            // TODO: check if we need to add prefix
-            const extendedNewFileName = this.fileNameToDelete;
-            this.repositoryFileService.delete(this.participation.id, extendedNewFileName).subscribe( res => {
-                console.log('Successfully deleted file: ' + extendedNewFileName, res);
+            this.repositoryFileService.delete(this.participation.id, this.fileNameToDelete).subscribe( res => {
+                console.log('Successfully deleted file: ' + this.fileNameToDelete, res);
                 this.closeModal();
                 this.parent.getRepositoryFiles();
-                this.parent.onDeletedFile({file: extendedNewFileName});
+                this.parent.onDeletedFile({file: this.fileNameToDelete});
             }, err => {
-                console.log('Error deleting file: ' + extendedNewFileName, err);
+                console.log('Error deleting file: ' + this.fileNameToDelete, err);
             });
         }
         this.isLoading = false;

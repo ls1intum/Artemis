@@ -28,18 +28,16 @@ export class EditorFileBrowserCreateComponent implements OnInit {
         this.isLoading = true;
         // Make sure we have a filename
         if (this.newFileName) {
-            // TODO: check if we need to add prefix
-            const extendedNewFileName = this.newFileName;
-            this.repositoryFileService.create(this.participation.id, extendedNewFileName).subscribe( res => {
+            this.repositoryFileService.create(this.participation.id, this.newFileName).subscribe( res => {
                 this.isLoading = false;
-                console.log('Successfully created file: ' + extendedNewFileName, res);
+                console.log('Successfully created file: ' + this.newFileName, res);
                 this.closeModal();
                 // TODO: maybe emit onFileCreated and let parent handle the rest? folder?
                 this.parent.getRepositoryFiles();
                 // TODO: select newly created file
-                this.parent.onCreatedFile({file: extendedNewFileName});
+                this.parent.onCreatedFile({file: this.newFileName});
             }, err => {
-                console.log('Error while creating file: ' + extendedNewFileName, err);
+                console.log('Error while creating file: ' + this.newFileName, err);
             });
         }
         this.isLoading = false;
