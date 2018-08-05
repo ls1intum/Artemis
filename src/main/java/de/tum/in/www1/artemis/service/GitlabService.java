@@ -130,8 +130,8 @@ public class GitlabService implements VersionControlService {
     /**
      * This returns the URL encoded Identifier (consisting of the namespace and the projectname.
      *
-     * @param repositoryUrl  The repsitoryUrl
-     * @return The already encoded Idenfifier
+     * @param repositoryUrl  The repositoryUrl
+     * @return The already encoded identifier
      */
     private String getURLEncodedIdentifier(URL repositoryUrl) {
         return getNamespaceFromUrl(repositoryUrl) + "%2F" + getProjectNameFromUrl(repositoryUrl);
@@ -144,7 +144,7 @@ public class GitlabService implements VersionControlService {
      * @param baseProjectName    The project name of the base repository.
      * @param username           The user for whom the repository is being forked.
      * @return The name of the forked repository
-     * @throws GitlabException If the creation of the repository failed
+     * @throws GitlabException if the creation of the repository failed
      */
     private Map<String, String> createRepository(String namespace, String baseProjectName, String username) throws GitlabException {
         /*
@@ -201,9 +201,9 @@ public class GitlabService implements VersionControlService {
      * @param password     The wanted passowrd in clear text
      * @param emailAddress The eMail address for the user
      * @param displayName  The display name (full name)
-     * @throws GitlabException
+     * @throws GitlabException if the user could not be created
      */
-    public void createUser(String username, String password, String emailAddress, String displayName) throws GitlabException {
+    private void createUser(String username, String password, String emailAddress, String displayName) throws GitlabException {
         String baseUrl = GITLAB_SERVER_URL + API_PATH + "users";
         Map<String, Object> body = new HashMap<>();
         body.put("email", emailAddress);
@@ -235,7 +235,7 @@ public class GitlabService implements VersionControlService {
      *
      * @param repositoryUrl  The repository's URL.
      * @param username       The user whom to give write permissions.
-     * @throws GitlabException
+     * @throws GitlabException if the permission could not be granted
      */
     private void giveWritePermission(URL repositoryUrl, String username) throws GitlabException {
         URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", getURLEncodedIdentifier(repositoryUrl), "/members");
@@ -375,7 +375,8 @@ public class GitlabService implements VersionControlService {
             LinkedHashMap<String, Object> user = (LinkedHashMap<String, Object>) response.getBody().get(0);
             return (Integer) user.get("id");
         }
-        return null;
+        log.error("Error while getting user id of user {}: Invalid response", username);
+        throw new GitlabException("Error while getting user id: Invalid response");
     }
 
     /**
@@ -391,7 +392,7 @@ public class GitlabService implements VersionControlService {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response;
         try {
-            /**
+            /*
              * In Gitlab, a namespace can either be an user or a group. As all participations of a specified exercise
              * should be in the same namespace, only a group-namespace is applicable.
              */
@@ -401,9 +402,6 @@ public class GitlabService implements VersionControlService {
                 HttpMethod.GET,
                 entity,
                 Map.class);
-        } catch (HttpClientErrorException e) {
-                log.error("Error while getting namespace id of namespace " + namespace);
-                throw new GitlabException("Error while getting namespace id", e);
         } catch (Exception e) {
             log.error("Error while getting namespace id of namespace " + namespace);
             throw new GitlabException("Error while getting namespace id", e);
