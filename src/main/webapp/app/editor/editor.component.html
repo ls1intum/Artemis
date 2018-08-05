@@ -25,10 +25,7 @@
 
     <div class="editor-main">
         <div class="editor-sidebar-left">
-            <!-- TODO: replace resizable directive -->
-            <!-- TODO: https://github.com/mattlewis92/angular-resizable-element -->
-            <!-- TODO: resizable r-directions="['right']" r-width="250"-->
-            <div class="card" id="cardFiles">
+            <div id="cardFiles" class="card resizable-filebrowser" [ngStyle]="{'width.px':400}">
                 <div class="card-header bg-primary text-white" (click)="toggleCollapse($event, false)">
                     <span class="pull-right "><i class="fa fa-chevron-left"></i></span>
                     <h3 class="card-title">
@@ -54,6 +51,8 @@
                         <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
                     </span>
                 </div>
+                <!-- Required for resizing; don't remove empty span -->
+                <div class="rg-right"><span></span></div>
             </div>
         </div>
 

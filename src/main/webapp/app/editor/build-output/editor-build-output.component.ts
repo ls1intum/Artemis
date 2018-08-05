@@ -13,8 +13,8 @@ import {RepositoryService} from '../../entities/repository/repository.service';
 import {EditorComponent} from '../editor.component';
 import {JhiWebsocketService} from '../../shared';
 import {Result, ResultService, ParticipationResultService} from '../../entities/result';
-import { ResizeEvent, ResizableDirective } from 'angular-resizable-element';
 import * as $ from 'jquery';
+import * as interact from 'interactjs';
 
 @Component({
     selector: 'jhi-editor-build-output',
@@ -28,7 +28,7 @@ import * as $ from 'jquery';
     ]
 })
 
-export class EditorBuildOutputComponent implements OnInit, OnDestroy, OnChanges {
+export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
 
     buildLogs = [];
 
@@ -48,6 +48,25 @@ export class EditorBuildOutputComponent implements OnInit, OnDestroy, OnChanges 
      * Used to assign parameters which are used by the component
      */
     ngOnInit(): void {}
+
+    ngAfterViewInit(): void {
+        interact('.resizable-buildoutput')
+            .resizable({
+                // Enable resize from top edge; triggered by class rg-top
+                edges: { left: false, right: false, bottom: false, top: '.rg-top' },
+                // Set min and max height
+                restrictSize: {
+                    min: { height: 150 },
+                    max: { height: 500 }
+                },
+                inertia: true,
+            }).on('resizemove', function(event) {
+                const target = event.target;
+                // Update element size
+                target.style.width  = event.rect.width + 'px';
+                target.style.height = event.rect.height + 'px';
+        });
+    }
 
     /**
      * @function ngOnChanges

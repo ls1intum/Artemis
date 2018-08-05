@@ -1,13 +1,14 @@
 import { CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
-import {Component, OnChanges, OnDestroy, OnInit, SimpleChanges} from '@angular/core';
+import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Participation, ParticipationService } from '../entities/participation';
 import { RepositoryService, RepositoryFileService } from '../entities/repository/repository.service';
-import {Result} from '../entities/result';
+import { Result } from '../entities/result';
 import { HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
+import * as interact from 'interactjs';
 
 @Component({
     selector: 'jhi-editor',
@@ -24,7 +25,7 @@ import * as $ from 'jquery';
  * @desc This component acts as a wrapper for the upgraded editor component (directive).
  * The dependencies are passed along to the directive, from there to the legacy component.
  */
-export class EditorComponent implements OnInit, OnChanges, OnDestroy {
+export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
 
     /** Dependencies as defined by the Editor component */
     participation: Participation;
@@ -78,6 +79,25 @@ export class EditorComponent implements OnInit, OnChanges, OnDestroy {
 
         /** Assign repository */
         this.repository = this.repositoryService;
+    }
+
+    ngAfterViewInit(): void {
+        interact('.resizable-filebrowser')
+            .resizable({
+                // Enable resize from right edge; triggered by class rg-right
+                edges: { left: false, right: '.rg-right', bottom: false, top: false },
+                // Set min and max width
+                restrictSize: {
+                    min: { width: 250 },
+                    max: { width: 700 }
+                },
+                inertia: true,
+            }).on('resizemove', function(event) {
+            const target = event.target;
+            // Update element size
+            target.style.width  = event.rect.width + 'px';
+            target.style.height = event.rect.height + 'px';
+        });
     }
 
     ngOnChanges(changes: SimpleChanges) {
