@@ -18,6 +18,7 @@ import {JhiAlertService} from 'ng-jhipster';
 import {JhiWebsocketService} from '../../shared';
 import {EditorComponent} from '../editor.component';
 import 'brace/theme/clouds';
+declare let ace: any;
 
 @Component({
     selector: 'jhi-editor-ace',
@@ -36,12 +37,12 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     /**
      * Ace Editor Options
      */
-    editorText = ''; // possible two way binding
+    editorText = '';
     editorFileSessions: object = {};
-    editorMode = 'java'; // string or object
+    editorMode = 'java'; // String or mode object
     editorOptions;
     editorReadOnly = false;
-    editorAutoUpdate = true; // change content when [text] change
+    editorAutoUpdate = true; // change content when editor text changes
     editorDurationBeforeCallback = 3000; // wait 3s before callback 'textChanged' sends new value
 
     @Input() participation: Participation;
@@ -129,16 +130,17 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         this.repositoryFileService.get(this.participation.id, fileName).subscribe(fileObj => {
 
             if (!this.editorFileSessions[fileName]) {
-                // TODO: check how to automatically set editor (brace) mode
-                // var ModeList = ace.require("ace/ext/modelist");
-                // var mode = ModeList.getModeForPath(file).mode;
-                console.log('Loaded file ' + fileName);
                 this.editorFileSessions[fileName] = {};
                 this.editorFileSessions[fileName].code = fileObj.fileContent;
             }
             /**
-             * Assign the obtained file content to the editor and set focus to the editor
+             * Assign the obtained file content to the editor and set the ace mode
+             * Additionally, we resize the editor window and set focus to it
              */
+            // This fetches a list of all supported editor modes and matches it afterwards against the file extension
+            const aceModeList = ace.require('ace/ext/modelist');
+            const aceMode = aceModeList.getModeForPath(fileName);
+            this.editor.setMode(aceMode);
             this.editorText = fileObj.fileContent;
             this.editor.getEditor().resize();
             this.editor._editor.focus();
