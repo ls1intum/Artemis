@@ -18,7 +18,7 @@ import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import {Feedback} from '../../entities/feedback';
 import * as $ from 'jquery';
 import * as Remarkable from 'Remarkable';
-import * as interact from "interactjs";
+import * as interact from 'interactjs';
 
 @Component({
     selector: 'jhi-editor-instructions',
@@ -71,7 +71,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
      * used to handle any additional initialization tasks
      */
     ngAfterViewInit(): void {
-        this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 500 / 2;
+        this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
         interact('.resizable-instructions')
             .resizable({
                 // Enable resize from left edge; triggered by class rg-left
