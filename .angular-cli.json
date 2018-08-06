@@ -21,8 +21,7 @@
         "mobile": false,
         "styles": [
             "content/scss/vendor.scss",
-            "content/scss/global.scss",
-            "content/scss/editor.scss"
+            "content/scss/global.scss"
         ],
         "scripts": []
     }],
