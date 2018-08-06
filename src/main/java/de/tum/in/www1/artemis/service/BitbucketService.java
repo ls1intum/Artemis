@@ -107,16 +107,24 @@ public class BitbucketService implements VersionControlService {
 
     private String getProjectKeyFromUrl(URL repositoryUrl) {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        return repositoryUrl.getFile().split("/")[2];
+        String[] urlParts = repositoryUrl.getFile().split("/");
+        if (urlParts.length > 2) {
+            return urlParts[2];
+        }
+        return "";
     }
 
     private String getRepositorySlugFromUrl(URL repositoryUrl) {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String repositorySlug = repositoryUrl.getFile().split("/")[3];
-        if (repositorySlug.endsWith(".git")) {
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
+        String[] urlParts = repositoryUrl.getFile().split("/");
+        if (urlParts.length > 3) {
+            String repositorySlug = urlParts[3];
+            if (repositorySlug.endsWith(".git")) {
+                repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
+            }
+            return repositorySlug;
         }
-        return repositorySlug;
+        return "";
     }
 
     /**
