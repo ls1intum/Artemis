@@ -49,17 +49,18 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.results = this.participation.results;
 
             this.init();
-            // make sure result and participation are connected
+            // Make sure result and participation are connected
             if (this.result) {
                 this.result.participation = this.participation;
             }
 
+            // Initial refresh call
+            this.refresh(false);
+
             if (exercise && exercise.type === 'programming-exercise') {
                 this.principal.identity().then(account => { // only subscribe for the currently logged in user
                     const now = new Date();
-                    if (account.id === this.participation.student.id && (exercise.dueDate == null ||
-                        new Date(Date.parse(exercise.dueDate)) > now)) {
-
+                    if (account.id === this.participation.student.id && (exercise.dueDate == null || new Date(Date.parse(exercise.dueDate)) > now)) {
                         this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannel);
                         this.jhiWebsocketService.receive(this.websocketChannel).subscribe(() => {
@@ -98,7 +99,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      *
      * @param forceLoad {boolean} force loading the result if the status is not QUEUED or BUILDING
      */
-    refresh(forceLoad) {
+    refresh(forceLoad: boolean) {
 
         // TODO: Use WebSocket for participation status in place of GET 'api/participations/{vm.participationId}/status'
 
