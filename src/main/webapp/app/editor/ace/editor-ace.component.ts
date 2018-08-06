@@ -137,11 +137,11 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
              * Assign the obtained file content to the editor and set the ace mode
              * Additionally, we resize the editor window and set focus to it
              */
+            this.editorText = fileObj.fileContent;
             // This fetches a list of all supported editor modes and matches it afterwards against the file extension
             const aceModeList = ace.require('ace/ext/modelist');
             const aceMode = aceModeList.getModeForPath(fileName);
             this.editor.setMode(aceMode);
-            this.editorText = fileObj.fileContent;
             this.editor.getEditor().resize();
             this.editor._editor.focus();
         }, err => {
