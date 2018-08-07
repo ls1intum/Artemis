@@ -69,7 +69,7 @@ public class QuizExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
-        if (!courseService.userHasTAPermissions(course)) {
+        if (!courseService.userHasAtLeastTAPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -110,7 +110,7 @@ public class QuizExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
-        if (!courseService.userHasTAPermissions(course)) {
+        if (!courseService.userHasAtLeastTAPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -278,7 +278,7 @@ public class QuizExerciseResource {
 
         // check permissions
         Course course = quizExercise.getCourse();
-        if (!courseService.userHasTAPermissions(course)) {
+        if (!courseService.userHasAtLeastTAPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -369,7 +369,7 @@ public class QuizExerciseResource {
         }
 
         Course course = quizExercise.getCourse();
-        if (!courseService.userHasTAPermissions(course)) {
+        if (!courseService.userHasAtLeastTAPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -415,7 +415,7 @@ public class QuizExerciseResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this quiz exercise does not exist")).body(null);
         }
-        if (!courseService.userHasInstructorPermissions(course)) {
+        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
