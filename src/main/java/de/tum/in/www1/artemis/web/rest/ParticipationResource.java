@@ -283,6 +283,14 @@ public class ParticipationResource {
             if(!courseService.userHasAtLeastTAPermissions(course)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
             }
+        } else if (!courseService.userHasTAPermissions(course)) {
+            // Check if build plan URL is published, if user is owner of participation and is not TA or higher
+            if (participation.getExercise() instanceof ProgrammingExercise) {
+                ProgrammingExercise pExercise = (ProgrammingExercise) participation.getExercise();
+                if (!pExercise.isPublishBuildPlanUrl()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+                }
+            }
         }
 
         URL url = continuousIntegrationService.get().getBuildPlanWebUrl(participation);
