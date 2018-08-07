@@ -371,7 +371,7 @@ public class GitlabService implements VersionControlService {
                 throw new GitlabException("Error while getting user id: No user found");
             }
             // TODO: maybe parse this into an extra object to avoid casts?
-            HashMap<String, Object> user = (HashMap<String, Object>) response.getBody().get(0);
+            Map<String, Object> user = (Map<String, Object>) response.getBody().get(0);
             return (Integer) user.get("id");
         }
         log.error("Error while getting user id of user {}: Invalid response", username);
