@@ -14,7 +14,8 @@ public interface VersionControlService {
     public void configureRepository(URL repositoryUrl, String username);
 
     /**
-     * This creates a Webhook on the Version Control System that notifies ArTEMiS about pushes to the repository.
+     * This creates a WebHook on the Version Control System that notifies ArTEMiS about pushes to the repository.
+     * Multiple calls won't affect the result as the implementation must ensure that there is only one WebHook per URL.
      *
      * @param repositoryUrl   The repository to create the hook on
      * @param notificationUrl The URL that should be notified when a push occurred. This includes all arguments.

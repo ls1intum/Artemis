@@ -91,8 +91,9 @@ public class BitbucketService implements VersionControlService {
 
     @Override
     public void addWebHook(URL repositoryUrl, String notificationUrl) {
-        // TODO: catch existing webhook
-        createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl);
+        if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl)) {
+            createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl);
+        }
     }
 
     @Override
@@ -295,6 +296,42 @@ public class BitbucketService implements VersionControlService {
             log.error("Could not give write permission", e);
             throw new BitbucketException("Error while giving repository permissions");
         }
+    }
+
+    private boolean webHookExists(String projectKey, String repositorySlug, String notificationUrl) throws BitbucketException {
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
+
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<Map> response;
+        try {
+            response = restTemplate.exchange(
+                baseUrl,
+                HttpMethod.GET,
+                entity,
+                Map.class);
+        } catch (Exception e) {
+            log.error("Error while checking existing WebHooks", e);
+            throw new BitbucketException("Error while checking existing WebHooks", e);
+        }
+        // TODO: BitBucket uses a pagination API to split up the responses, so we have to check all pages
+
+        if ((Integer) response.getBody().get("size") == 0) {
+            log.debug("No WebHook exists for {}-{}", projectKey, repositorySlug);
+            return false;
+        }
+
+        List<Map<String, Object>> webHooks = (List<Map<String, Object>>) response.getBody().get("values");
+        for (Map<String, Object> webHook: webHooks) {
+            if (webHook.get("url").equals(notificationUrl)) {
+                log.debug("WebHook exists for {}-{}", projectKey, repositorySlug);
+                return true;
+            }
+        }
+
+        log.debug("No WebHook exists for {}-{}", projectKey, repositorySlug);
+        return false;
     }
 
     private void createWebHook(String projectKey, String repositorySlug, String notificationUrl) {

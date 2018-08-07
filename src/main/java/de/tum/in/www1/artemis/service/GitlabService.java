@@ -83,8 +83,9 @@ public class GitlabService implements VersionControlService {
 
     @Override
     public void addWebHook(URL repositoryUrl, String notificationUrl) {
-        // TODO: catch existing webhook
-        createWebHook(repositoryUrl, notificationUrl);
+        if (!webHookExists(repositoryUrl, notificationUrl)) {
+            createWebHook(repositoryUrl, notificationUrl);
+        }
     }
 
     @Override
@@ -266,6 +267,45 @@ public class GitlabService implements VersionControlService {
         }
     }
 
+    private boolean webHookExists(URL repositoryUrl, String notificationUrl) {
+        String urlEncodedIdentifier = getURLEncodedIdentifier(repositoryUrl);
+        URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", urlEncodedIdentifier, "/hooks");
+        HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<List> response;
+        try {
+            response = restTemplate.exchange(
+                baseUri,
+                HttpMethod.GET,
+                entity,
+                List.class);
+        } catch (Exception e) {
+            log.error("Error while checking if WebHook exists for  " + urlEncodedIdentifier);
+            throw new GitlabException("Error while checking if WebHook exists", e);
+        }
+
+        if (response != null && response.getStatusCode().equals(HttpStatus.OK)) {
+            if (response.getBody().size() == 0) {
+                log.debug("WebHook does not exist yet for project {}", urlEncodedIdentifier);
+                return false; // Project does not have any WebHooks
+            }
+
+            // Check all WebHooks for same URL
+            for (Map<String, Object> webHook : (List<Map<String, Object>>) response.getBody()) {
+                if (webHook.get("url").equals(notificationUrl)) {
+                    log.debug("WebHook exists for project {}", urlEncodedIdentifier);
+                    return true; // We found a WebHook with the same URL
+                }
+            }
+            log.debug("WebHook does not exist yet for project {}", urlEncodedIdentifier);
+            return false;
+        }
+        log.error("Error while checking if WebHook exists for {}: Invalid response", urlEncodedIdentifier);
+        throw new GitlabException("Error while checking if WebHook exists: Invalid response");
+
+    }
+
     private void createWebHook(URL repositoryUrl, String notificationUrl) {
         log.debug("Creating WebHook for Repository {} and URL {}", getURLEncodedIdentifier(repositoryUrl), notificationUrl);
         HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
@@ -335,7 +375,7 @@ public class GitlabService implements VersionControlService {
      * @throws GitlabException if the user could not be requested
      */
     private Boolean userExists(String username) throws GitlabException {
-        return getUserId(username, false) == -1;
+        return getUserId(username, false) != -1;
     }
 
     /**
