@@ -18,7 +18,6 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -372,7 +371,7 @@ public class GitlabService implements VersionControlService {
                 throw new GitlabException("Error while getting user id: No user found");
             }
             // TODO: maybe parse this into an extra object to avoid casts?
-            LinkedHashMap<String, Object> user = (LinkedHashMap<String, Object>) response.getBody().get(0);
+            HashMap<String, Object> user = (HashMap<String, Object>) response.getBody().get(0);
             return (Integer) user.get("id");
         }
         log.error("Error while getting user id of user {}: Invalid response", username);
