@@ -17,7 +17,7 @@ import {
     CourseService
 } from './';
 import { CourseResultService, CourseScoresService } from './course.service';
-import  { CourseScoreCalculationService } from './courseScoreCalculation.service';
+import { CourseScoreCalculationService } from './courseScoreCalculation.service';
 
 const ENTITY_STATES = [
     ...courseRoute,
