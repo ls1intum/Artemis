@@ -211,7 +211,7 @@ class QuizExerciseDetailController {
     }
 
     /**
-     * Populates quiz exercises for the selected course
+     * Populates list of quiz exercises for the selected course
      */
     onCourseSelect() {
         this.allExistingQuestions = [];
@@ -256,6 +256,9 @@ class QuizExerciseDetailController {
     //     }
     // }
 
+    /**
+     * Applies filter on questions shown in add existing questions view.
+    */
     applyFilter() {
         this.existingQuestions = [];
         for (const question of this.allExistingQuestions) {
@@ -433,7 +436,7 @@ class QuizExerciseDetailController {
     }
 
     /**
-     * Import the quiz from a json file
+     * Imports a json quiz file and adds questions to current quiz exercise.
      */
     async importQuiz() {
         if (this.importFile === null || this.importFile === undefined) {
@@ -454,6 +457,12 @@ class QuizExerciseDetailController {
         fileReader.readAsText(this.importFile);
     }
 
+    /**
+     * Adds given questions to current quiz exercise.
+     * Ids are removed from new questions so that new id is assigned upon saving the quiz exercise.
+     * Images are duplicated for drag and drop questions.
+     * @param questions list of questions
+     */
     async addQuestions(questions: any) {
         for (const question of questions) {
             delete question.questionStatistic;

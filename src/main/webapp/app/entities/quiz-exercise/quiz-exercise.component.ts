@@ -33,7 +33,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
 
     /**
-     * Exports quiz in json format
+     * Exports given quiz questions into json file
      * @param quizQuestions Quiz questions we want to export
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
@@ -239,7 +239,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Exports quiz in json format
+     * Exports questions for the given quiz exercise in json file
      * @param quizExerciseId The quiz exercise id we want to export
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */

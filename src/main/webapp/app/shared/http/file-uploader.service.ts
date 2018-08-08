@@ -15,6 +15,10 @@ export class FileUploaderService {
         return this.http.post<FileUploadResponse>('/api/fileUpload', formData).toPromise();
     }
 
+    /**
+     * Duplicates file in the backend.
+     * @param filePath Path of the file which needs to be duplicated
+     */
     async duplicateFile(filePath: string): Promise<FileUploadResponse> {
         const file = await this.http.get(filePath, { responseType: 'blob' }).toPromise();
         const tempFilename = 'temp' + filePath.split('/').pop().split('#')[0].split('?')[0];
