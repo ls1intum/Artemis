@@ -21,9 +21,9 @@
             "maxScore": "Max Score",
             "participations": "Participations",
             "course": "Course",
-            "type": "TODO: Find German word for Type",
-            "mcqType": "TODO: Find German word for Multiple Choice Question",
-            "dndType": "TODO: Find German word for Drag and Drop Question",
+            "type": "Typ",
+            "mcqType": "Multiple Choice Question",
+            "dndType": "Drag and Drop Question",
             "welcome": "<strong>Welcome to ArTEMiS!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
             "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
             "startError": "<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong>"

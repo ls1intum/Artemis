@@ -5,7 +5,7 @@
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
                 "createOrEditLabel": "Quiz erstellen oder bearbeiten",
-                "exportLabel": "TODO: Write German for Export Quiz Exercises"
+                "exportLabel": "Quizübungen exportieren"
             },
             "created": "Quiz erstellt mit ID {{ param }}",
             "updated": "Quiz aktualisiert mit ID {{ param }}",
@@ -26,9 +26,9 @@
                 "title": "Quiz für {{ param }} erstellen"
             },
             "filter": {
-                "mcq": "TODO: Add German for Multiple-Choice Question",
-                "dnd": "TODO: Add German for Drag-And-Drop Question",
-                "applyFilter": "TODO: Add German for Apply Filter"
+                "mcq": "Multiple-Choice Question",
+                "dnd": "Drag-And-Drop Question",
+                "applyFilter": "Filter anwenden"
             },
             "description": "Beschreibung",
             "explanation": "Erklärung",
@@ -48,10 +48,10 @@
             "questions": "Fragen",
             "multipleChoiceQuestion": "Multiple-Choice Frage hinzufügen",
             "dragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
-            "addExistingQuestions": "TODO: Add German word for Add Existing Questions",
-            "selectCourse": "TODO: Add German word for Select a Course",
-            "selectQuizExercise": "TODO: Add German word for Select a Quiz Exercise",
-            "addSelectedQuestions": "TODO: Add German word for Add Selected Questions",
+            "addExistingQuestions": "Vorhandene Fragen hinzufügen",
+            "selectCourse": "Wählen Sie einen Kurs",
+            "selectQuizExercise": "Wählen Sie eine Quiz Übung aus",
+            "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
             "startTime": "Startzeit",

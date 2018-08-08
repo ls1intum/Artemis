@@ -113,16 +113,16 @@
             }
         },
         "field": {
-            "id" : "ID"
+            "id": "ID"
         },
         "ribbon": {
-            "dev":"Development"
+            "dev": "Development"
         },
         "item-count": "Ergebnis {{first}} - {{second}} von {{total}} Elemente."
     },
     "entity": {
         "action": {
-            "add": "TODO: Add German word for Add",
+            "add": "Hinzufügen",
             "addblob": "Blob hinzufügen",
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
@@ -139,8 +139,8 @@
             "submit": "Absenden",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
-            "import": "TODO: Write proper German word for Import here,",
-            "export": "TODO: Write proper German word for Export here,"
+            "import": "Einfuhr",
+            "export": "Ausfuhr"
         },
         "detail": {
             "field": "Feld",
