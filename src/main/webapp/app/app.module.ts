@@ -97,8 +97,6 @@ declare var angular: any;
     entryComponents: [
         /** @desc Angular app main component **/
         JhiMainComponent,
-        /** @desc Upgraded editor component**/
-        EditorComponent,
         /** @desc Upgraded QuizExerciseDetails component **/
         QuizExerciseDetailComponent
     ],

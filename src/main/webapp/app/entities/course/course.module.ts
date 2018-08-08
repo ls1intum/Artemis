@@ -36,7 +36,7 @@ const ENTITY_STATES = [
         CourseDeleteDialogComponent,
         CoursePopupComponent,
         CourseDeletePopupComponent,
-        CourseScoreCalculationComponent,
+        CourseScoreCalculationComponent
     ],
     entryComponents: [
         CourseComponent,
@@ -44,7 +44,7 @@ const ENTITY_STATES = [
         CoursePopupComponent,
         CourseDeleteDialogComponent,
         CourseDeletePopupComponent,
-        CourseScoreCalculationComponent,
+        CourseScoreCalculationComponent
     ],
     providers: [
         CourseService,
@@ -52,7 +52,7 @@ const ENTITY_STATES = [
         CourseParticipationService,
         CourseResultService,
         CourseScoresService,
-        CourseScoreCalculationService,
+        CourseScoreCalculationService
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
