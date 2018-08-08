@@ -94,6 +94,7 @@ class QuizExerciseDetailController {
     allExistingQuestions = [];
     existingQuestions = [];
     importFile = null;
+    searchQueryText = '';
     dndFilterEnabled = true;
     mcqFilterEnabled = true;
 
@@ -262,11 +263,14 @@ class QuizExerciseDetailController {
     applyFilter() {
         this.existingQuestions = [];
         for (const question of this.allExistingQuestions) {
-            if (this.mcqFilterEnabled === true && question.type === 'multiple-choice') {
-                this.existingQuestions.push(question);
-            }
-            if (this.dndFilterEnabled === true && question.type === 'drag-and-drop') {
-                this.existingQuestions.push(question);
+            if (!this.searchQueryText || this.searchQueryText === ''
+                || question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
+                if (this.mcqFilterEnabled === true && question.type === 'multiple-choice') {
+                    this.existingQuestions.push(question);
+                }
+                if (this.dndFilterEnabled === true && question.type === 'drag-and-drop') {
+                    this.existingQuestions.push(question);
+                }
             }
         }
     }

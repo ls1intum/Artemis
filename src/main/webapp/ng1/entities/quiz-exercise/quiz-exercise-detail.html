@@ -121,13 +121,16 @@
                     <tbody>
                     <tr>
                         <td width="30%"><span data-translate="arTeMiSApp.quizExercise.selectCourse"></span></td>
-                        <td colspan="2" width="70%">
+                        <td colspan="3" width="70%">
                             <select ng-model="vm.selectedCourse" ng-change="vm.onCourseSelect()" style="min-width:100%;">
                                 <option ng-repeat="course in vm.courses" value="{{course}}">{{course.title}}</option>
                             </select>
                         </td>
                     </tr>
                     <tr ng-if="vm.allExistingQuestions.length !== 0">
+                        <td>
+                            <input class="form-control" ng-model="vm.searchQueryText" placeholder="Search Query" />
+                        </td>
                         <td class="checkbox">
                             <label>
                                 <input type="checkbox" ng-model="vm.dndFilterEnabled" />
