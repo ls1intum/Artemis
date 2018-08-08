@@ -8,6 +8,7 @@ import { QuizExerciseService } from './quiz-exercise.service';
 import { Principal } from '../../shared';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
+import { Course, CourseService } from '../course';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -26,11 +27,13 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     };
 
     quizExercises: QuizExercise[];
+    course: Course;
     predicate: string;
     reverse: boolean;
     courseId: number;
 
     constructor(
+        private courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
@@ -79,6 +82,9 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
+        this.courseService.find(this.courseId).subscribe(res => {
+            this.course = res.body;
+        });
     }
 
     private onError(error) {

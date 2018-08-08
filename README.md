@@ -1,13 +1,13 @@
 # ArTEMiS: AuTomated assEssment Management System 
-This application was generated using JHipster 4.14.4, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.4](http://www.jhipster.tech/documentation-archive/v4.14.4).
+This application was generated using JHipster 4.14.5, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.5](http://www.jhipster.tech/documentation-archive/v4.14.5).
 
-**Curent version:** 2.0.1
+**Curent version:** 2.1.0
 
 ## Main features
 ArTEMiS has the following main features:
 1. **Programming exercises** with version control and automatic assessment with test cases and continuous integration
-2. **Quiz exercises** with multiple choice questions and drag and drop questions (beta)
-3. **Modeling exercises** with semi-automatic assessment using machine learning concepts (coming soon)
+2. **Quiz exercises** with multiple choice questions and drag and drop questions 
+3. **Modeling exercises** with semi-automatic assessment using machine learning concepts (beta)
 
 All these exercises are supposed to be run either live in-class with instant feedback or as homework. Students can submit their solutions multiple times within the due date and use the (semi-)automatically provided feedback to improve their solution.
 
@@ -23,7 +23,7 @@ While ArTEMiS includes generic adapters to these three external systems with a d
 2. **CIS:** Atlassian Bamboo Server
 3. **UMS:** Atlassian JIRA Server (more specifically Atlassian Crowd on the JIRA Server)
 
-## Exercise Workflow
+## Programming Exercise Workflow
 
 Conducting a programming exercise consists of 7 steps distributed among instructor, ArTEMiS and students:
 
@@ -50,39 +50,22 @@ This allows the students to immediately recognize which tasks are already fulfil
 
 ## Development Setup
 
-This project uses Spring Boot with Java 8 on the application server and Angular 5 with TypeScript on the client.
-
-Before you can build this project, you must install and configure the following dependencies on your machine:
-
-1. [Node.js](https://nodejs.org): We use Node to run a development web server and build the project.
-Depending on your system, you can install Node either from source or as a pre-packaged bundle.
-2. [Yarn](https://yarnpkg.com): We use Yarn to manage Node dependencies.
-Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
-
-After installing Node, you should be able to run the following command to install development tools.
-You will only need to run this command when dependencies change in [package.json](package.json).
-
-```
-yarn install
-```
-
-To compile TypeScript code to JavaScript code and start the hot module replacement feature in Webpack, use the following command, see [Working with Angular]()https://www.jhipster.tech/development/#working-with-angular)
-
-```
-yarn start
-```
-
-[Bower](https://bower.io) is used to manage CSS and JavaScript dependencies used in this application (in the hybrid mode with Angular 1.5.8). You can upgrade dependencies by
-specifying a newer version in [bower.json](bower.json). You can also run `bower update` and `bower install` to manage dependencies.
-Add the `-h` flag on any command to see how you can use it. For example, `bower update -h`.
-
-For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
-
-ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. Java [Spring Boot](http://projects.spring.io/spring-boot) development on the application server and Javascript ([Angular 5](https://angular.io)) development on the application client in the browser. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
+ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 8 and TypeScript development on the application client in the browser using [Angular 5](https://angular.io) and Webpack. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
+Before you can build ArTEMiS, you must install and configure the following dependencies/tools on your machine:
 
-To start ArTEMiS from the development environment, first import the project and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
+1. [Java 8 JDK](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html): Java is the main development language for the server application of ArTEMiS.
+2. [MySQL Database Server 5.7.x](https://dev.mysql.com/downloads/mysql): ArTEMiS uses Hibernate to store entities in a MySQL database. Download and install the MySQL Community Server (5.7.x) and configure the 'root' user with an empty password. (In case you want to use a different password, make sure to change the value in application-dev.yml and in liquibase.gradle). The required ArTEMiS scheme will be created / updated automatically at startup time of the server application.
+3. [Node.js 9.x](https://nodejs.org): We use Node (>=6.9.0 && <=9.11.1) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
+4. [Yarn 1.7.x](https://yarnpkg.com): We use Yarn to manage Node dependencies.
+Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
+5. [Bower 1.8.x](https://bower.io): We use Bower to manage CSS and JavaScript dependencies used in the Angular 1 application (in the hybrid mode which is deprecated and will be removed soon). You can install Bower with the command `npm install -g bower`. You can download all dependencies by
+running `bower install`. You only need to invoked this command once.
+
+### Server Setup
+
+To start the ArTEMiS application server from the development environment, first import the project into IntelliJ and then make sure to install the Spring Boot plugins to run the main class de.tum.in.www1.artemis.ArTEMiSApp. Before the application runs, you have to configure the file application-dev.yml in the folder src/main/resources/config/ and add the following details:
 
 ```
 artemis:
@@ -113,31 +96,48 @@ artemis:
     name: ArTEMiS
     email: <email>
 ```
-Change the entries with ```<...>``` with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances (see Docker setup below). 
-
-In addition, you have to install MySQL, setup a root user without password. The required ArTEMiS scheme will be created / updated automatically at startup of the server application.
+Change the entries with ```<...>``` with proper values, e.g. your TUM Online account to connect to the given instances of JIRA, Bitbucket and Bamboo. Alternatively, you can connect to your local JIRA, Bitbucket and Bamboo instances using Docker. 
 
 The ArTEMiS server should startup by running the main class ```de.tum.in.www1.artemis.ArTEMiSApp``` using Spring Boot.
 
-To access the ArTEMiS client in your browser, you have to install node, npm and yarn (see above) and execute the following commands in the terminal / command line in the ArTEMiS root folder:
+One typical problem in the development setup is that an exception occurs during the database initialization. ArTEMiS uses [Liquibase](https://www.liquibase.org) to automatically upgrade the database scheme after changes to the data model. This ensures that the changes can also be applied to the production server. In some development environments, it can be the case that the liquibase migration from an empty database scheme to the current version of the database scheme fails, e.g. due to the fact that the asynchronous migration is too slow. In these cases, it can help to manually import an existing database scheme using e.g. MySQL Workbench or Sequel Pro into the `ArTEMiS` database scheme in your MySQL server. You can find a recent scheme in the `data` folder in this git repository. If you then start the application server, liquibase will recognize that all migration steps have already been executed. In case you encounter errors with liquibase checksum values, run the following command in your terminal / command line:
+
+```
+java -jar liquibase-core-3.5.3.jar --url=jdbc:mysql://localhost:3306/ArTEMiS --username=root --password='' --classpath=mysql-connector-java-5.1.43.jar  clearCheckSums
+```
+You can download the required jar files here:
+
+* [liquibase-core-3.5.3.jar](http://central.maven.org/maven2/org/liquibase/liquibase-core/3.5.3/liquibase-core-3.5.3.jar)
+* [mysql-connector-java-5.1.43.jar](http://central.maven.org/maven2/mysql/mysql-connector-java/5.1.43/mysql-connector-java-5.1.43.jar)
+
+
+**Please note:** ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
+
+    --spring.profiles.active=dev,bamboo,bitbucket,jira 
+
+### Client Setup
+
+After installing Node, you should be able to run the following command to install development tools. You will only need to run this command when dependencies change in [package.json](package.json).
 
 ```
 yarn install
+```
+To install the Angular 1 JavaScript dependencies for the hybrid mode, you have to execute the following command once:
+
+```
 bower install
+```
+
+To start the client application in the browser, use the following command:
+
+```
 yarn start
 ```
 
-Please note, that `bower install` is only necessary for the hybrid mode (with Angular 1 --> ng1) and will hopefully be removed soon.
-`yarn install` is only necessary when dependencies to node modules change. `yarn start` compiles the TypeScript client code and starts the client with automatic code replacement.
-This means, whenever you change a TypeScript file and save, the client is automatically reloaded with the new code. 
-After that you should be able to access http://127.0.0.1:9000/ and login with your TUM Online account (if you use our JIRA instance).
+This compiles TypeScript code to JavaScript code, starts the hot module replacement feature in Webpack (i.e. whenever you change a TypeScript file and save, the client is automatically reloaded with the new code) and will start the client application in your browser on `http://localhost:9000`. If you have activated the JIRA profile (see above in Server Setup) and if you have configured `application-dev.yml` correctly, then you should be able to login with your TUM Online account.
 
-    
-## Profiles
+For more information, review [Working with Angular](https://www.jhipster.tech/development/#working-with-angular). For further instructions on how to develop with JHipster, have a look at [Using JHipster in development](http://www.jhipster.tech/development).
 
-ArTEMiS uses Spring profiles to segregate parts of the application configuration and make it only available in certain environments. For development purposes, the following program arguments can be used to enable the `dev` profile and the profiles for JIRA, Bitbucket and Bamboo:
-
-    --spring.profiles.active=dev,bamboo,bitbucket,jira 
 
 ## Building for production
 

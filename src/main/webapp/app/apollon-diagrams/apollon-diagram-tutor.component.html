@@ -9,12 +9,21 @@
         </div>
         <div class="col text-right">
             <span *ngIf="result && result.participation"><jhi-result [participation]="result.participation"></jhi-result></span>
-            <span *ngIf="result?.assessmentType === 'AUTOMATIC' || !result?.rated">
-                <button class="btn btn-primary" (click)="saveAssessment()" [disabled]="!assessments || !assessmentsAreValid">Save Assessment</button>
-                <button class="btn btn-success" (click)="submit()" [disabled]="!assessments || !assessmentsAreValid">Submit Assessment</button>
-            </span>
+            <button class="btn btn-primary" (click)="saveAssessment()"
+                    [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                    [hidden]="result && result.rated">Save Assessment</button>
+            <button class="btn btn-success" (click)="submit()"
+                    [disabled]="!assessments || !assessmentsAreValid || (result?.assessor && result.assessor.id !== accountId && !isAuthorized)"
+                    [hidden]="result && result.rated">Submit Assessment</button>
+            <button class="btn btn-danger" (click)="submit()"
+                    [disabled]="!assessments || !assessmentsAreValid"
+                    [hidden]="!result || !result.rated">Override Assessment</button>
         </div>
     </div>
+
+    <h2>
+        <span *ngIf="busy" style="color:grey"><span class="fa fa-spinner fa-spin"></span>&nbsp;<span>Please wait while finding the next submission!</span></span>
+    </h2>
 
     <div class="row" *ngIf="modelingExercise">
         <div class="col">
@@ -23,12 +32,20 @@
                 <strong>Description:</strong> {{ modelingExercise.description }}
             </p>
         </div>
-        <div class="col text-right" *ngIf="result?.assessmentType === 'AUTOMATIC' || !result?.rated"><h5><strong>Score:</strong> {{ totalScore }}/{{ modelingExercise.maxScore }}</h5></div>
+        <div class="col text-right">
+            <span><h5><strong>Score:</strong> {{ totalScore }}/{{ modelingExercise.maxScore }}</h5></span>
+            <span *ngIf="result && result.assessor" style="color:red"><h6>Reviewer: {{result.assessor.firstName + (isAuthorized ? '' : ' - submission locked')}}</h6></span>
+        </div>
     </div>
 
-    <div><button type="submit" (click)="previousState()" class="btn btn-info">
-        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
-    </button></div><br>
+    <div>
+        <button type="submit" (click)="previousState()" class="btn btn-info">
+            <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back">Back</span>
+        </button>
+        <button *ngIf="(result?.rated && !done) || (result?.assessor && result.assessor.id !== accountId && !result?.rated)" [disabled]="busy" class="btn btn-success" (click)="assessNextOptimal(0)">
+            <i class="fa fa-folder-open fa-fw"></i>&nbsp;Assess next submission
+        </button>
+    </div><br>
 
     <div class="row">
         <div class="col-8 col-xl-9">
@@ -50,10 +67,7 @@
         </div>
         <div class="col-4 col-xl-3">
             <div *ngIf="invalidError !== ''" class="alert alert-danger" role="alert">{{invalidError}}</div>
-            <div *ngIf="(!selectedEntities && !selectedRelationships) || (selectedEntities?.length === 0 && selectedRelationships?.length === 0)">Select an element to <ng-container [ngSwitch]="result?.assessmentType === 'MANUAL' && result?.rated">
-                <span *ngSwitchCase="false">grade the element</span>
-                <span *ngSwitchCase="true">show the score of the element</span>
-            </ng-container>.</div>
+            <div *ngIf="(!selectedEntities && !selectedRelationships) || (selectedEntities?.length === 0 && selectedRelationships?.length === 0)">Select an element to grade the element.</div>
             <ng-container *ngIf="assessments">
                 <div *ngFor="let assessment of assessments" [hidden]="!isSelected(assessment.id, assessment.type)">
                     <div class="card">
@@ -61,11 +75,11 @@
                         <div class="card-body">
                             <div class="form-group">
                                 <label>Score</label>
-                                <input type="number" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()" [disabled]="result?.assessmentType === 'MANUAL' && result?.rated">
+                                <input type="number" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()">
                             </div>
                             <div class="form-group">
                                 <label>Comment</label>
-                                <input type="text" [(ngModel)]="assessment.comment" [disabled]="result?.assessmentType === 'MANUAL' && result?.rated">
+                                <input type="text" [(ngModel)]="assessment.comment">
                             </div>
                         </div>
                     </div>

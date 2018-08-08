@@ -2,6 +2,10 @@
     <div class="col-md-8 offset-md-2 text-center">
         <h3>{{quizExercise.title}}</h3>
 
+        <button *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_ADMIN', 'ROLE_INSTRUCTOR']" class="btn btn-primary btn-sm float-right"
+            (click)="recalculate()">
+            <i class="fa fa-refresh fa-fw"></i>&nbsp;Recalculate Statistics
+        </button>
 
         <div class="text-center">
             <p class="text-left" style="font-size: large"><span jhiTranslate="showStatistic.quizPointStatistic.maxScore"></span><span>{{maxScore}}</span></p>

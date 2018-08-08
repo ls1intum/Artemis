@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module external.linked.project.id="ArTEMiS:gatling" external.linked.project.path="$MODULE_DIR$/../.." external.root.project.path="$MODULE_DIR$/../.." external.system.id="GRADLE" external.system.module.group="de.tum.in.www1.artemis" external.system.module.type="sourceSet" external.system.module.version="2.1.0" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8">
+    <output url="file://$MODULE_DIR$/../../out/gatling/classes" />
+    <exclude-output />
+    <content url="file://$MODULE_DIR$/../../src/gatling" />
+    <content url="file://$MODULE_DIR$/../../src/test/gatling">
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling/conf" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling/user-files/data" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/../../src/test/gatling/user-files/simulations" type="java-resource" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="ArTEMiS_main" />
+    <orderEntry type="module" module-name="ArTEMiS_test" production-on-test="" />
+    <orderEntry type="library" name="Gradle: io.gatling.highcharts:gatling-charts-highcharts:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-app:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-charts:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-recorder:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-http:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-jms:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-jdbc:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-redis:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-metrics:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-core:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: org.scala-lang.modules:scala-swing_2.11:1.0.2" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:gatling-commons:2.2.5" level="project" />
+    <orderEntry type="library" name="Gradle: com.typesafe.akka:akka-slf4j_2.11:2.4.12" level="project" />
+    <orderEntry type="library" name="Gradle: net.debasishg:redisclient_2.11:3.2" level="project" />
+    <orderEntry type="library" name="Gradle: com.typesafe.akka:akka-actor_2.11:2.4.12" level="project" />
+    <orderEntry type="library" name="Gradle: me.chrons:boopickle_2.11:1.2.4" level="project" />
+    <orderEntry type="library" name="Gradle: org.scala-lang.modules:scala-java8-compat_2.11:0.8.0-RC7" level="project" />
+    <orderEntry type="library" name="Gradle: io.gatling:jsonpath_2.11:0.6.8" level="project" />
+    <orderEntry type="library" name="Gradle: org.scala-lang.modules:scala-parser-combinators_2.11:1.0.4" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.scopt:scopt_2.11:3.5.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.scala-lang.modules:scala-xml_2.11:1.0.2" level="project" />
+    <orderEntry type="library" name="Gradle: com.dongxiguo:fastring_2.11:0.2.4" level="project" />
+    <orderEntry type="library" name="Gradle: com.softwaremill.quicklens:quicklens_2.11:1.4.8" level="project" />
+    <orderEntry type="library" name="Gradle: com.typesafe.scala-logging:scala-logging_2.11:3.5.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.scala-lang:scala-reflect:2.11.8" level="project" />
+    <orderEntry type="library" name="Gradle: org.scala-lang:scala-library:2.11.8" level="project" />
+    <orderEntry type="library" name="Gradle: com.tdunning:t-digest:3.1" level="project" />
+    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.8.11" level="project" />
+    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-databind:2.8.11.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.bouncycastle:bcpkix-jdk15on:1.56" level="project" />
+    <orderEntry type="library" name="Gradle: org.asynchttpclient:async-http-client:2.0.29" level="project" />
+    <orderEntry type="library" name="Gradle: io.netty:netty-codec-http:4.0.44.Final" level="project" />
+    <orderEntry type="library" name="Gradle: com.github.ben-manes.caffeine:caffeine:2.3.5" level="project" />
+    <orderEntry type="library" name="Gradle: io.advantageous.boon:boon-json:0.6.6" level="project" />
+    <orderEntry type="library" name="Gradle: net.sf.saxon:Saxon-HE:9.7.0-10" level="project" />
+    <orderEntry type="library" name="Gradle: org.jodd:jodd-lagarto:3.8.0" level="project" />
+    <orderEntry type="library" name="Gradle: io.netty:netty-transport-native-epoll:linux-x86_64:4.0.44.Final" level="project" />
+    <orderEntry type="library" name="Gradle: org.apache.geronimo.specs:geronimo-jms_1.1_spec:1.1.1" level="project" />
+    <orderEntry type="library" name="Gradle: org.hdrhistogram:HdrHistogram:2.1.9" level="project" />
+    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-annotations:2.8.0" level="project" />
+    <orderEntry type="library" name="Gradle: com.fasterxml.jackson.core:jackson-core:2.8.11" level="project" />
+    <orderEntry type="library" name="Gradle: org.bouncycastle:bcprov-jdk15on:1.56" level="project" />
+    <orderEntry type="library" name="Gradle: com.typesafe.netty:netty-reactive-streams:1.0.8" level="project" />
+    <orderEntry type="library" name="Gradle: io.netty:netty-handler:4.0.44.Final" level="project" />
+    <orderEntry type="library" name="Gradle: org.asynchttpclient:netty-resolver-dns:2.0.29" level="project" />
+    <orderEntry type="library" name="Gradle: org.asynchttpclient:netty-codec-dns:2.0.29" level="project" />
+    <orderEntry type="library" name="Gradle: io.netty:netty-codec:4.0.44.Final" level="project" />
+    <orderEntry type="library" name="Gradle: com.typesafe:config:1.3.1" level="project" />
+    <orderEntry type="library" name="Gradle: org.asynchttpclient:async-http-client-netty-utils:2.0.29" level="project" />
+    <orderEntry type="library" name="Gradle: ch.qos.logback:logback-classic:1.1.11" level="project" />
+    <orderEntry type="library" name="Gradle: io.advantageous.boon:boon-reflekt:0.6.6" level="project" />
+    <orderEntry type="library" name="Gradle: org.asynchttpclient:netty-resolver:2.0.29" level="project" />
+    <orderEntry type="library" name="Gradle: org.slf4j:slf4j-api:1.7.25" level="project" />
+    <orderEntry type="library" name="Gradle: org.jodd:jodd-core:3.8.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.jodd:jodd-log:3.8.0" level="project" />
+    <orderEntry type="library" name="Gradle: org.reactivestreams:reactive-streams:1.0.2" level="project" />
+    <orderEntry type="library" name="Gradle: org.javassist:javassist:3.21.0-GA" level="project" />
+    <orderEntry type="library" name="Gradle: io.netty:netty-transport:4.0.44.Final" level="project" />
+    <orderEntry type="library" name="Gradle: io.netty:netty-buffer:4.0.44.Final" level="project" />
+    <orderEntry type="library" name="Gradle: io.netty:netty-common:4.0.44.Final" level="project" />
+    <orderEntry type="library" name="Gradle: commons-pool:commons-pool:1.6" level="project" />
+    <orderEntry type="library" name="Gradle: ch.qos.logback:logback-core:1.1.11" level="project" />
+    <orderEntry type="library" name="Gradle: org.springframework.boot:spring-boot-configuration-processor:1.5.14.RELEASE" level="project" />
+  </component>
+</module>

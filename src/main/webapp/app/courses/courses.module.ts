@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 
 import {ArTEMiSSharedModule, SafeHtmlPipe} from '../shared';
 import { coursesRoute } from './courses.route';
-import { CourseComponent, CourseExerciseService, CourseService } from '../entities/course';
+import { CourseComponent, CourseExerciseService, CourseService, CourseScoreCalculationService  } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { CoursesComponent } from './courses.component';
 import { ResultDetailComponent, ResultComponent } from './results/result.component';
@@ -46,7 +46,8 @@ const ENTITY_STATES = [
         RepositoryService,
         ResultService,
         CourseExerciseService,
-        ParticipationService
+        ParticipationService,
+        CourseScoreCalculationService
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

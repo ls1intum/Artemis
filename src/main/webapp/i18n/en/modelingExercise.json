@@ -4,7 +4,7 @@
         "modelingExercise" : {
             "home": {
                 "title": "Modeling Exercises",
-                "createLabel": "Create a new Modeling Exercise",
+                "createLabel": "Create Modeling Exercise",
                 "createOrEditLabel": "Create or edit a Modeling Exercise"
             },
             "created": "A new Modeling Exercise is created with identifier {{ param }}",

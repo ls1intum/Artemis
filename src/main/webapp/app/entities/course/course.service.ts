@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, PipeTransform } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
@@ -52,6 +52,7 @@ export class CourseService {
     delete(id: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
+
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Course = this.convertItemFromServer(res.body);

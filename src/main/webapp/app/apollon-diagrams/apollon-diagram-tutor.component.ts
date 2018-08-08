@@ -2,12 +2,13 @@ import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChi
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import ApollonEditor from '@ls1intum/apollon';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
 import { ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
+import { Principal } from '../shared';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -31,21 +32,34 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     invalidError = '';
     totalScore = 0;
     positions: {};
+    busy: boolean;
+    done: boolean;
+    timeout: any;
+    accountId: number;
+    isAuthorized: boolean;
 
     constructor(
         private jhiAlertService: JhiAlertService,
         private modalService: NgbModal,
+        private router: Router,
         private route: ActivatedRoute,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingExerciseService: ModelingExerciseService,
         private resultService: ResultService,
-        private modelingAssessmentService: ModelingAssessmentService
+        private modelingAssessmentService: ModelingAssessmentService,
+        private principal: Principal
     ) {
         this.assessments = [];
         this.assessmentsAreValid = false;
+        this.done = true;
     }
 
     ngOnInit() {
+        // Used to check if the assessor is the current user
+        this.principal.identity().then(account => {
+            this.accountId = account.id;
+        });
+        this.isAuthorized = this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR']);
         this.route.params.subscribe(params => {
             const id = Number(params['submissionId']);
             const exerciseId = Number(params['exerciseId']);
@@ -64,6 +78,9 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 }
                 data.result.participation.results = [data.result];
                 this.result = data.result;
+                if ((this.result.assessor == null || this.result.assessor.id === this.accountId) && !this.result.rated) {
+                    this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
+                }
                 if (nextOptimal) {
                     this.modelingAssessmentService.getPartialAssessment(exerciseId, id).subscribe(assessments => {
                         this.assessments = assessments.body;
@@ -82,6 +99,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     ngOnDestroy() {
+        clearTimeout(this.timeout);
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -185,12 +203,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             res.body.participation.results = [res.body];
             this.result = res.body;
             this.jhiAlertService.success('arTeMiSApp.apollonDiagram.assessment.submitSuccessful');
-            const completionDate = +new Date(this.result.completionDate);
-            const now = +new Date();
-            // check if result is older than 30 seconds
-            if (now - completionDate > 30000) {
-                this.jhiAlertService.info('arTeMiSApp.apollonDiagram.assessment.resultDismissed');
-            }
+            this.done = false;
         });
     }
 
@@ -209,16 +222,15 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
         this.totalScore = totalScore;
 
-        if (totalScore < 0) {
+        /*if (totalScore < 0) {
             this.assessmentsAreValid = false;
-            this.invalidError = 'The total score (' + totalScore + ') is negative!';
-        } else if (totalScore > maxScore) {
+            this.invalidError = 'The total score (' + totalScore + ') is negative!';*/
+        // We want tutors to be able to give more than maxScore - this also helps compass coming up with a more accurate result
+        /*} else if (totalScore > maxScore) {
             this.assessmentsAreValid = false;
-            this.invalidError = 'The total score (' + totalScore + ') is greater than the max score (' + maxScore + ')!';
-        } else {
-            this.assessmentsAreValid = true;
-            this.invalidError = '';
-        }
+            this.invalidError = 'The total score (' + totalScore + ') is greater than the max score (' + maxScore + ')!';*/
+        this.assessmentsAreValid = true;
+        this.invalidError = '';
     }
 
     setAssessmentsNames() {
@@ -268,6 +280,28 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.apollonEditor.getState());
     }
 
+    assessNextOptimal(attempts) {
+        if (attempts > 4) {
+            this.busy = false;
+            this.done = true;
+            this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
+            return;
+        }
+        this.busy = true;
+        this.timeout = setTimeout(() => {
+            this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
+                const nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
+                if (nextOptimalSubmissionIds.length === 0) {
+                    this.assessNextOptimal(attempts + 1);
+                } else {
+                    // We have to fake path change to make angular reload the component
+                    const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
+                    this.router.navigateByUrl(`/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`);
+                }
+            });
+        }, attempts === 0 ? 0 : 500 + (attempts - 1) * 1000);
+    }
+
     numberToArray(n: number, startFrom: number): number[] {
         n = (n > 5) ? 5 : n;
         n = (n < -5) ? -5 : n;
@@ -275,6 +309,6 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     previousState() {
-        window.history.back();
+        this.router.navigate(['course', this.modelingExercise.course.id, 'exercise', this.modelingExercise.id, 'assessment']);
     }
 }
