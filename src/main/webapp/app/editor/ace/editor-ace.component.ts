@@ -17,7 +17,7 @@ import {WindowRef} from '../../shared/websocket/window.service';
 import {JhiAlertService} from 'ng-jhipster';
 import {JhiWebsocketService} from '../../shared';
 import {EditorComponent} from '../editor.component';
-import 'brace/theme/clouds';
+import 'brace/theme/eclipse';
 declare let ace: any;
 
 @Component({
@@ -70,7 +70,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      * used to handle any additional initialization tasks
      */
     ngAfterViewInit(): void {
-        this.editor.setTheme('clouds');
+        this.editor.setTheme('eclipse');
         this.editor.getEditor().setOptions({
             animatedScroll: true
         });
@@ -101,6 +101,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
         // TODO: check filter function
         const sessionKeys = Object.keys(this.editorFileSessions);
+        console.log('updateSaveStatusLabel', this.editorFileSessions, sessionKeys);
         const unsavedFiles = sessionKeys.filter(session =>
             this.editorFileSessions[session].unsavedChanges === true).length;
 
