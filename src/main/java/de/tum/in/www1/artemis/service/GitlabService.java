@@ -109,15 +109,31 @@ public class GitlabService implements VersionControlService {
         return GITLAB_SERVER_URL;
     }
 
-    private String getNamespaceFromUrl(URL repositoryUrl) {
+    /**
+     * Gets the namespace from the given URL
+     *
+     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @return The namespace
+     * @throws GitlabException if the URL is invalid and no namespace could be extracted
+     */
+    private String getNamespaceFromUrl(URL repositoryUrl) throws GitlabException {
         // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git -> EIST2016RME
         String[] urlParts = repositoryUrl.getFile().split("/");
         if (urlParts.length > 1) {
             return urlParts[1];
         }
-        return "";
+
+        log.error("No namespace could be found for repository {}", repositoryUrl);
+        throw new GitlabException("No namespace could be found");
     }
 
+    /**
+     * Gets the project name from the given URL
+     *
+     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @return The project name
+     * @throws GitlabException if the URL is invalid and no project name could be extracted
+     */
     private String getProjectNameFromUrl(URL repositoryUrl) {
         // https://ga42xab@gitlabbruegge.in.tum.de/EIST2016RME/RMEXERCISE-ga42xab.git -> RMEXERCISE-ga42xab
         String[] urlParts = repositoryUrl.getFile().split("/");
@@ -128,7 +144,9 @@ public class GitlabService implements VersionControlService {
             }
             return repositoryName;
         }
-        return "";
+
+        log.error("No project name could be found for repository {}", repositoryUrl);
+        throw new GitlabException("No project name could be found");
     }
 
     /**
@@ -359,7 +377,12 @@ public class GitlabService implements VersionControlService {
 
     @Override
     public Boolean repositoryUrlIsValid(URL repositoryUrl) {
-        String projectIdentifier = getURLEncodedIdentifier(repositoryUrl);
+        String projectIdentifier;
+        try {
+            projectIdentifier = getURLEncodedIdentifier(repositoryUrl);
+        } catch (GitlabException e) {
+            return false;
+        }
         HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
