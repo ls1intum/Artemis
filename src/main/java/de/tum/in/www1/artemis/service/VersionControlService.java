@@ -19,8 +19,9 @@ public interface VersionControlService {
      *
      * @param repositoryUrl   The repository to create the hook on
      * @param notificationUrl The URL that should be notified when a push occurred. This includes all arguments.
+     * @param webHookName     The name of the WebHook that should be added as additional information (if applicable)
      */
-    public void addWebHook(URL repositoryUrl, String notificationUrl);
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
 
     public void deleteRepository(URL repositoryUrl);
 
@@ -33,4 +34,11 @@ public interface VersionControlService {
      * @return
      */
     public Boolean repositoryUrlIsValid(URL repositoryUrl);
+
+    /**
+     * Whether an WebHook should be created, that informs the CI-server about a push
+     *
+     * @return whether the WebHook should be created
+     */
+    public Boolean isCreateCIWebHook();
 }

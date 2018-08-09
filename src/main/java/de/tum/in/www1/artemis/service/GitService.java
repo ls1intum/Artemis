@@ -31,11 +31,11 @@ public class GitService {
 
     private final Logger log = LoggerFactory.getLogger(GitService.class);
 
-    @Value("${artemis.bitbucket.user}")
+    @Value("${artemis.version-control.user}")
     private String GIT_USER;
 
-    @Value("${artemis.bitbucket.password}")
-    private String GIT_PASSWORD;
+    @Value("${artemis.version-control.secret}")
+    private String GIT_PASSWORD; // TODO: check if this also works for a private-token
 
     @Value("${artemis.repo-clone-path}")
     private String REPO_CLONE_PATH;

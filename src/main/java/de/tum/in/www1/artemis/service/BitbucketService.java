@@ -27,14 +27,17 @@ public class BitbucketService implements VersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
 
-    @Value("${artemis.bitbucket.url}")
+    @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER_URL;
 
-    @Value("${artemis.bitbucket.user}")
+    @Value("${artemis.version-control.user}")
     private String BITBUCKET_USER;
 
-    @Value("${artemis.bitbucket.password}")
+    @Value("${artemis.version-control.secret}")
     private String BITBUCKET_PASSWORD;
+
+    @Value("${artemis.version-control.create-ci-webhook}")
+    private boolean CREATE_CI_WEBHOOK = false;
 
     @Value("${artemis.lti.user-prefix}")
     private String USER_PREFIX = "";
@@ -90,9 +93,9 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl) {
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
         if (!webHookExists(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl)) {
-            createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl);
+            createWebHook(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl), notificationUrl, webHookName);
         }
     }
 
@@ -334,13 +337,13 @@ public class BitbucketService implements VersionControlService {
         return false;
     }
 
-    private void createWebHook(String projectKey, String repositorySlug, String notificationUrl) {
+    private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {
         log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
 
         Map<String, Object> body = new HashMap<>();
-        body.put("name", "ArTEMiS WebHook");
+        body.put("name", webHookName);
         body.put("url", notificationUrl);
         body.put("events", new ArrayList<>());
         ((List) body.get("events")).add("repo:refs_changed"); // Inform on push
@@ -399,6 +402,11 @@ public class BitbucketService implements VersionControlService {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public Boolean isCreateCIWebHook() {
+        return CREATE_CI_WEBHOOK;
     }
 
     private URL buildCloneUrl(String projectKey, String repositorySlug, String username) {

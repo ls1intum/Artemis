@@ -44,13 +44,13 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
-    @Value("${artemis.bitbucket.url}")
+    @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER_URL;
 
-    @Value("${artemis.bitbucket.user}")
+    @Value("${artemis.version-control.user}")
     private String BITBUCKET_USER;
 
-    @Value("${artemis.bitbucket.password}")
+    @Value("${artemis.version-control.secret}")
     private String BITBUCKET_PASSWORD;
 
     @Value("${artemis.bamboo.url}")
@@ -65,7 +65,7 @@ public class BambooService implements ContinuousIntegrationService {
     @Value("${artemis.bamboo.password}")
     private String BAMBOO_PASSWORD;
 
-    @Value("${artemis.bitbucket.url}")
+    @Value("${artemis.version-control.url}")
     private URL BITBUCKET_SERVER;
 
     @Value("${artemis.result-retrieval-delay}")

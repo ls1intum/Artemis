@@ -27,14 +27,17 @@ public class GitlabService implements VersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(GitlabService.class);
 
-    @Value("${artemis.gitlab.url}")
+    @Value("${artemis.version-control.url}")
     private URL GITLAB_SERVER_URL;
 
-    @Value("${artemis.gitlab.user}")
+    @Value("${artemis.version-contro.user}")
     private String GITLAB_USER;
 
-    @Value("${artemis.gitlab.private-token}")
+    @Value("${artemis.version-contro.secret}")
     private String GITLAB_PRIVATE_TOKEN;
+
+    @Value("${artemis.version-control.create-ci-webhook}")
+    private boolean CREATE_CI_WEBHOOK = false;
 
     @Value("${artemis.lti.user-prefix}")
     private String USER_PREFIX = "";
@@ -69,7 +72,7 @@ public class GitlabService implements VersionControlService {
             if (!userExists(username)) {
                 log.debug("Gitlab user {} does not exist yet", username);
                 String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName); 
+                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
             } else {
                 log.debug("Gitlab user {} already exists", username);
@@ -80,7 +83,8 @@ public class GitlabService implements VersionControlService {
     }
 
     @Override
-    public void addWebHook(URL repositoryUrl, String notificationUrl) {
+    public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName) {
+        // Gitlab does not support webhooks with names, therefor we don't use the 'webHookName'-value
         if (!webHookExists(repositoryUrl, notificationUrl)) {
             createWebHook(repositoryUrl, notificationUrl);
         }
@@ -363,6 +367,11 @@ public class GitlabService implements VersionControlService {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public Boolean isCreateCIWebHook() {
+        return CREATE_CI_WEBHOOK;
     }
 
     /**

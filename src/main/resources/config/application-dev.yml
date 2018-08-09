@@ -102,14 +102,11 @@ artemis:
     user: <username>
     password: <password>
     admin-group-name: <group>
-  bitbucket:
+  version-control:
     url: https://repobruegge.in.tum.de
     user: <username>
-    password: <password>
-  gitlab:
-    url: https://gitlabbruegge.in.tum.de
-    user: <username>
-    private-token: <private-token>
+    secret: <secret>
+    create-ci-webhook: false
   bamboo:
     url: https://bamboobruegge.in.tum.de
     bitbucket-application-link-id: <application-link-id>
