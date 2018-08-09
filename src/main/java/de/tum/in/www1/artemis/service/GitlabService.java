@@ -467,7 +467,6 @@ public class GitlabService implements VersionControlService {
              * In Gitlab, a namespace can either be an user or a group. As all participations of a specified exercise
              * should be in the same namespace, only a group-namespace is applicable.
              */
-            // TODO: check whether we have to support user-namespaces too
             response = restTemplate.exchange(
                 GITLAB_SERVER_URL + API_PATH + "groups/" + namespace,
                 HttpMethod.GET,
