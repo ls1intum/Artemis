@@ -69,9 +69,7 @@ public class GitlabService implements VersionControlService {
             if (!userExists(username)) {
                 log.debug("Gitlab user {} does not exist yet", username);
                 String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
-                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
-
-                // addUserToGroups(username, user.getGroups()); // TODO: check if we need this
+                createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName); 
 
             } else {
                 log.debug("Gitlab user {} already exists", username);
