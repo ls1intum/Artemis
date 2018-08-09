@@ -44,6 +44,8 @@ public class GitlabService implements VersionControlService {
 
     private final String API_PATH = "/api/v4/";
 
+    private final int USER_NOT_FOUND = -1; // Should be negative to avoid collision with existing user id
+
     private final UserService userService;
 
     public GitlabService(UserService userService) {
@@ -382,7 +384,7 @@ public class GitlabService implements VersionControlService {
      * @throws GitlabException if the user could not be requested
      */
     private Boolean userExists(String username) throws GitlabException {
-        return getUserId(username, false) != -1;
+        return getUserId(username, false) != USER_NOT_FOUND;
     }
 
     /**
@@ -390,7 +392,7 @@ public class GitlabService implements VersionControlService {
      *
      * @param username       The username
      * @param expectExistence Whether the user is expected to be existing.
-     * @return The user id of the given user, or -1 if no user exists and expectMissingUser is false
+     * @return The user id of the given user, or USER_NOT_FOUND if no user exists and expectMissingUser is false
      * @throws GitlabException if the user id could not be requested OR the user does not exist but is expected to be existing.
      */
     private Integer getUserId(String username, boolean expectExistence) throws GitlabException {
@@ -412,12 +414,12 @@ public class GitlabService implements VersionControlService {
         if (response != null && response.getStatusCode().equals(HttpStatus.OK)) {
             if (response.getBody().size() == 0) {
                 if (!expectExistence) { // User is not expected to be existing (this is for the userExists-method)
-                    return -1; // User is not existing -> return -1
+                    return USER_NOT_FOUND; // User is not existing -> return USER_NOT_FOUND
                 }
                 log.error("Error while getting user id of user {}: no user found", username);
                 throw new GitlabException("Error while getting user id: No user found");
             }
-            // TODO: maybe parse this into an extra object to avoid casts?
+
             Map<String, Object> user = (Map<String, Object>) response.getBody().get(0);
             return (Integer) user.get("id");
         }
