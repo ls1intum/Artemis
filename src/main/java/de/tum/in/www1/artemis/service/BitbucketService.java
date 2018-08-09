@@ -105,15 +105,31 @@ public class BitbucketService implements VersionControlService {
         return BITBUCKET_SERVER_URL;
     }
 
-    private String getProjectKeyFromUrl(URL repositoryUrl) {
+    /**
+     * Gets the project key from the given URL
+     *
+     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @return The project key
+     * @throws BitbucketException if the URL is invalid and no project key could be extracted
+     */
+    private String getProjectKeyFromUrl(URL repositoryUrl) throws BitbucketException {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
         if (urlParts.length > 2) {
             return urlParts[2];
         }
-        return "";
+
+        log.error("No project key could be found for repository {}", repositoryUrl);
+        throw new BitbucketException("No project key could be found");
     }
 
+    /**
+     * Gets the repository slug from the given URL
+     *
+     * @param repositoryUrl The complete repository-url (including protocol, host and the complete path)
+     * @return The repository slug
+     * @throws BitbucketException if the URL is invalid and no repository slug could be extracted
+     */
     private String getRepositorySlugFromUrl(URL repositoryUrl) {
         // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
         String[] urlParts = repositoryUrl.getFile().split("/");
@@ -124,7 +140,9 @@ public class BitbucketService implements VersionControlService {
             }
             return repositorySlug;
         }
-        return "";
+
+        log.error("No repository slug could be found for repository {}", repositoryUrl);
+        throw new BitbucketException("No repository slug could be found");
     }
 
     /**
@@ -324,8 +342,16 @@ public class BitbucketService implements VersionControlService {
      */
     @Override
     public Boolean repositoryUrlIsValid(URL repositoryUrl) {
-        String projectKey = getProjectKeyFromUrl(repositoryUrl);
-        String repositorySlug = getRepositorySlugFromUrl(repositoryUrl);
+        String projectKey;
+        String repositorySlug;
+        try {
+            projectKey = getProjectKeyFromUrl(repositoryUrl);
+            repositorySlug = getRepositorySlugFromUrl(repositoryUrl);
+        } catch (BitbucketException e) {
+            // Either the project Key or the repository slug could not be extracted, therefor this can't be a valid URL
+            return false;
+        }
+
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         HttpEntity<?> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
