@@ -40,7 +40,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      */
     static exportQuiz(quizQuestions: Question[], exportAll: boolean) {
         // Make list of questions which we need to export,
-        const questions = [];
+        const questions: Question[] = [];
         for (const question of quizQuestions) {
             if (exportAll === true || question.exportQuiz === true) {
                 delete question.questionStatistic;

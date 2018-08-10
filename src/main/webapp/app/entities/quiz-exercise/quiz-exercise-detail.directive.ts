@@ -90,16 +90,16 @@ class QuizExerciseDetailController {
         key: true,
         label: 'Active'
     }];
-    showExistingQuestions = false;
-    courses = [];
-    selectedCourse;
-    quizExercises = [];
-    allExistingQuestions = [];
-    existingQuestions = [];
-    importFile = null;
-    searchQueryText = '';
-    dndFilterEnabled = true;
-    mcqFilterEnabled = true;
+    showExistingQuestions: boolean = false;
+    courses: Course[] = [];
+    selectedCourse: string;
+    quizExercises: QuizExercise[] = [];
+    allExistingQuestions: Question[] = [];
+    existingQuestions: Question[] = [];
+    importFile: Blob = null;
+    searchQueryText: string = '';
+    dndFilterEnabled: boolean = true;
+    mcqFilterEnabled: boolean = true;
 
     init() {
         if (this.quizExercise) {
@@ -223,7 +223,7 @@ class QuizExerciseDetailController {
         if (this.selectedCourse === null) {
             return;
         }
-        const course = JSON.parse(this.selectedCourse);
+        const course = JSON.parse(this.selectedCourse) as Course;
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
         this.repository.findForCourse(course.id)
             .subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
@@ -269,7 +269,7 @@ class QuizExerciseDetailController {
      * Adds selected quizzes to current quiz exercise
      */
     addExistingQuestions() {
-        const questions = [];
+        const questions: Question[] = [];
         for (const question of this.existingQuestions) {
             if (question.exportQuiz) {
                 questions.push(question);
@@ -440,7 +440,7 @@ class QuizExerciseDetailController {
         fileReader.onload = () => {
             try {
                 // Read the file and get list of questions from the file,
-                const questions = JSON.parse(fileReader.result);
+                const questions = JSON.parse(fileReader.result) as Question[];
                 this.addQuestions(questions);
                 // Clearing html elements,
                 this.importFile = null;
