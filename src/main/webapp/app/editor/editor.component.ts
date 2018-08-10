@@ -89,7 +89,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                 // Set min and max width
                 restrictSize: {
                     min: { width: 250 },
-                    max: { width: 700 }
+                    max: { width: 800 }
                 },
                 inertia: true,
             }).on('resizemove', function(event) {
