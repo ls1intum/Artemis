@@ -31,7 +31,7 @@
             <button class="btn btn-primary btn-sm" (click)="exportResults()">
                 <i class="fa fa-download fa-fw"></i>&nbsp;Export Results
             </button>
-            <button *ngIf="exercise.type !== 'quiz'"
+            <button *ngIf="exercise.type === 'programming-exercise'" 
                     class="btn btn-primary btn-sm"
                     [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/exportRepos'} }]"
                     replaceUrl="true"

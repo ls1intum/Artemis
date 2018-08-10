@@ -17,7 +17,7 @@
         "exportRepos": {
             "warning": "Confirm Export",
             "title": "Download Repos",
-            "question": "Enter all logins (e.g ga87fix) of students you want to download the repository from"
+            "question": "Enter all logins seperated by ',' (e.g ga87fix,ga63dut)  of students you want to download the repository from"
         }
     }
 }

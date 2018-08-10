@@ -236,13 +236,13 @@ public class ExerciseService {
     /**
      * Get participations of coding exercises of a requested list of students packed together in one zip file.
      *
-     * @param id the id of the exercise entity
+     * @param exerciseId the id of the exercise entity
      * @param studentIds TUM Student-Login ID of requested students
      * @return a zip file containing all requested participations
      */
     @Transactional(readOnly = true)
-    public java.io.File exportParticipations(Long id, List<String> studentIds) {
-        Exercise exercise = findOneLoadParticipations(id);
+    public java.io.File exportParticipations(Long exerciseId, List<String> studentIds) {
+        Exercise exercise = findOneLoadParticipations(exerciseId);
         List<Path> zippedRepoFiles = new ArrayList<>();
         Path zipFilePath = null;
         if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
@@ -288,12 +288,12 @@ public class ExerciseService {
                 }
             }
             else {
-                log.debug("The zip file could not be created. Ignoring the request to export repositories", id);
+                log.debug("The zip file could not be created. Ignoring the request to export repositories", exerciseId);
                 return null;
             }
         }
         else {
-            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", id);
+            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
             return null;
         }
         return new java.io.File(zipFilePath.toString());

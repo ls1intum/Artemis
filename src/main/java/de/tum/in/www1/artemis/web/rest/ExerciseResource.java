@@ -329,17 +329,18 @@ public class ExerciseResource {
             .body(resource);
     }
     /**
-    * GET  /exercises/:id/participations/:studentIds : sends all submissions from studentlist as zip
+    * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
         *
-        * @param id the id of the exercise to get the repos from
+        * @param exerciseId the id of the exercise to get the repos from
         * @param studentIds the studentIds seperated via semicolon to get their submissions
      * @return ResponseEntity with status
      */
-    @GetMapping(value = "/exercises/{id}/participations/{studentIds}")
+    @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
     @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
-    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long id, @PathVariable String studentIds) throws IOException {
-        Exercise exercise = exerciseService.findOne(id);
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
+        studentIds = studentIds.replaceAll(" ","");
+        Exercise exercise = exerciseService.findOne(exerciseId);
         Course course = exercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
@@ -349,10 +350,10 @@ public class ExerciseResource {
         }
         List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
         if(studentList.isEmpty() || studentList == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed","")).build();
         }
 
-        File zipFile = exerciseService.exportParticipations(id,studentList);
+        File zipFile = exerciseService.exportParticipations(exerciseId,studentList);
         if (zipFile == null) {
             return ResponseEntity.noContent()
                 .headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created", ""))
