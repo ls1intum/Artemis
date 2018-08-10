@@ -9,6 +9,7 @@ import { Principal } from '../../shared';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
 import { Course, CourseService } from '../course';
+import { Question } from '../question';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -37,7 +38,8 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      * @param quizQuestions Quiz questions we want to export
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
-    static exportQuiz(quizQuestions: any, exportAll: boolean) {
+    static exportQuiz(quizQuestions: Question[], exportAll: boolean) {
+        // Make list of questions which we need to export,
         const questions = [];
         for (const question of quizQuestions) {
             if (exportAll === true || question.exportQuiz === true) {
@@ -48,16 +50,28 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         if (questions.length === 0) {
             return;
         }
+        // Make blob from the list of questions and download the file,
         const quizJson = JSON.stringify(questions);
         const blob = new Blob([quizJson], { type: 'application/json' });
+        this.downloadFile(blob);
+    }
+
+    /**
+     * Make a file of given blob and allows user to download it from the browser.
+     * @param blob data to be written in file.
+     */
+    static downloadFile(blob: Blob) {
+        // Different browsers require different code to download file,
         if (window.navigator.msSaveOrOpenBlob) { // IE & Edge
             window.navigator.msSaveBlob(blob, 'quiz.json');
         } else { // Chrome & FF
+            // Create a url and attach file to it,
             const url = window.URL.createObjectURL(blob);
             const anchor = document.createElement('a');
             anchor.href = url;
             anchor.download = 'quiz.json';
             document.body.appendChild(anchor); // For FF
+            // Click the url so that browser shows save file dialog,
             anchor.click();
             document.body.removeChild(anchor);
         }

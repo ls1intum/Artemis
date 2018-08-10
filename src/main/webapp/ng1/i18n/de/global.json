@@ -139,8 +139,8 @@
             "submit": "Absenden",
             "re-evaluate": "Überarbeiten",
             "close": "Schließen",
-            "import": "Einfuhr",
-            "export": "Ausfuhr"
+            "import": "Import",
+            "export": "Export"
         },
         "detail": {
             "field": "Feld",
