@@ -11,6 +11,9 @@ import { TranslateService } from '@ngx-translate/core';
 import 'angular';
 import * as moment from 'moment';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { Question } from '../question';
+import { MultipleChoiceQuestion } from '../multiple-choice-question/multiple-choice-question.model';
+import { DragAndDropQuestion } from '../drag-and-drop-question/drag-and-drop-question.model';
 
 /** This Angular directive will act as an interface to the 'upgraded' AngularJS component
  *  The upgrade is realized as given Angular tutorial:
@@ -201,6 +204,7 @@ class QuizExerciseDetailController {
             this.quizExercise = this.entity;
         }
 
+        // If courses are not populated, then populate list of courses,
         if (this.courses.length === 0) {
             this.courseRepository.query().subscribe(
                 (res: HttpResponse<Course[]>) => {
@@ -220,6 +224,7 @@ class QuizExerciseDetailController {
             return;
         }
         const course = JSON.parse(this.selectedCourse);
+        // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
         this.repository.findForCourse(course.id)
             .subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
                 if (quizExercisesResponse.body) {
@@ -240,28 +245,13 @@ class QuizExerciseDetailController {
             });
     }
 
-    // /**
-    //  * Populates quizzes for selected quiz exercise
-    //  */
-    // onQuizExerciseSelect() {
-    //     if (this.selectedQuizExercise !== null) {
-    //         this.existingQuestions = [];
-    //         const quizExercise = JSON.parse(this.selectedQuizExercise);
-    //         this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-    //             const quizExercise = response.body;
-    //             for (const question of quizExercise.questions) {
-    //                 question.exportQuiz = true;
-    //                 this.existingQuestions.push(question);
-    //             }
-    //         });
-    //     }
-    // }
-
     /**
      * Applies filter on questions shown in add existing questions view.
     */
     applyFilter() {
         this.existingQuestions = [];
+        // Depending on the filter selected by user, filter out questions.
+        // allExistingQuestions contains list of all questions. We don't change it. We populate existingQuestions list depending on the filter options,
         for (const question of this.allExistingQuestions) {
             if (!this.searchQueryText || this.searchQueryText === ''
                 || question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
@@ -449,8 +439,10 @@ class QuizExerciseDetailController {
         const fileReader = new FileReader();
         fileReader.onload = () => {
             try {
+                // Read the file and get list of questions from the file,
                 const questions = JSON.parse(fileReader.result);
                 this.addQuestions(questions);
+                // Clearing html elements,
                 this.importFile = null;
                 const control = document.getElementById('importFileInput') as HTMLInputElement;
                 control.value = null;
@@ -467,26 +459,32 @@ class QuizExerciseDetailController {
      * Images are duplicated for drag and drop questions.
      * @param questions list of questions
      */
-    async addQuestions(questions: any) {
+    async addQuestions(questions: Question[]) {
+        // To make sure all questions are duplicated (new resources are created), we need to remove some fields from the input questions,
+        // This contains removing all ids, duplicating images in case of dnd questions,
         for (const question of questions) {
             delete question.questionStatistic;
             delete question.id;
             if (question.type === 'multiple-choice') {
-                for (const answerOption of question.answerOptions) {
+                let mcq = question as MultipleChoiceQuestion;
+                for (const answerOption of mcq.answerOptions) {
                     delete answerOption.id;
                 }
                 this.quizExercise.questions = this.quizExercise.questions.concat([question]);
             } else if (question.type === 'drag-and-drop') {
-                // Duplicate image on server,
-                let fileUploadResponse = await this.fileUploaderService.duplicateFile(question.backgroundFilePath);
-                question.backgroundFilePath = fileUploadResponse.path;
+                var dnd = question as DragAndDropQuestion;
+                // Get image from the old question and duplicate it on the backend and then save new image to the question,
+                let fileUploadResponse = await this.fileUploaderService.duplicateFile(dnd.backgroundFilePath);
+                dnd.backgroundFilePath = fileUploadResponse.path;
 
-                // Renaming id property with tempID property,
-                for (const dropLocation of question.dropLocations) {
+                // For DropLocations, DragItems and CorrectMappings we need to provide tempID,
+                // This tempID is used for keep tracking of mappings by backend. Backend removes tempID and generated a new id,
+                for (const dropLocation of dnd.dropLocations) {
                     dropLocation.tempID = dropLocation.id;
                     delete dropLocation.id;
                 }
-                for (const dragItem of question.dragItems) {
+                for (const dragItem of dnd.dragItems) {
+                    // Duplicating image on backend. This is only valid for image drag items. For text drag items, pictureFilePath is null,
                     if (dragItem.pictureFilePath !== null) {
                         fileUploadResponse = await this.fileUploaderService.duplicateFile(dragItem.pictureFilePath);
                         dragItem.pictureFilePath = fileUploadResponse.path;
@@ -494,12 +492,14 @@ class QuizExerciseDetailController {
                     dragItem.tempID = dragItem.id;
                     delete dragItem.id;
                 }
-                for (const correctMapping of question.correctMappings) {
+                for (const correctMapping of dnd.correctMappings) {
+                    // Following fields are not required for dnd question. They will be generated by the backend,
                     delete correctMapping.id;
                     delete correctMapping.dragItemIndex;
                     delete correctMapping.dropLocationIndex;
                     delete correctMapping.invalid;
 
+                    // Duplicating image on backend. This is only valid for image drag items. For text drag items, pictureFilePath is null,
                     if (correctMapping.dragItem.pictureFilePath !== null) {
                         fileUploadResponse = await this.fileUploaderService.duplicateFile(correctMapping.dragItem.pictureFilePath);
                         correctMapping.dragItem.pictureFilePath = fileUploadResponse.path;

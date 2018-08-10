@@ -52,6 +52,7 @@ export class QuizExerciseExportComponent implements OnInit {
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
+        // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
         this.quizExerciseService.findForCourse(courseId).subscribe(
             (res: HttpResponse<QuizExercise[]>) => {
                 const quizExercises = res.body;
