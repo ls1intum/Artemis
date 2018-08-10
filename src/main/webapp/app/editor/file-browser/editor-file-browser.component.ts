@@ -1,16 +1,16 @@
-import {ResultService} from '../../entities/result';
-import {RepositoryFileService, RepositoryService} from '../../entities/repository/repository.service';
-import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
-import {NgbActiveModal, NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {ExerciseParticipationService, Participation, ParticipationService} from '../../entities/participation';
-import {WindowRef} from '../../shared/websocket/window.service';
-import {JhiAlertService} from 'ng-jhipster';
-import {CourseExerciseService} from '../../entities/course';
-import {JhiWebsocketService} from '../../shared';
-import {EditorComponent} from '../editor.component';
-import { TreeModel, TreeModelSettings, Ng2TreeSettings } from 'ng2-tree';
-import {EditorFileBrowserCreateComponent} from './editor-file-browser-create';
-import {EditorFileBrowserDeleteComponent} from './editor-file-browser-delete';
+import { ResultService } from '../../entities/result';
+import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
+import { NgbActiveModal, NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import { ExerciseParticipationService, Participation, ParticipationService } from '../../entities/participation';
+import { WindowRef } from '../../shared/websocket/window.service';
+import { JhiAlertService } from 'ng-jhipster';
+import { CourseExerciseService } from '../../entities/course';
+import { JhiWebsocketService } from '../../shared';
+import { EditorComponent } from '../editor.component';
+import { EditorFileBrowserCreateComponent } from './editor-file-browser-create';
+import { EditorFileBrowserDeleteComponent } from './editor-file-browser-delete';
+import { TreeviewComponent, TreeviewItem, TreeviewConfig, TreeviewHelper } from 'ngx-treeview';
 
 @Component({
     selector: 'jhi-editor-file-browser',
@@ -31,13 +31,6 @@ import {EditorFileBrowserDeleteComponent} from './editor-file-browser-delete';
 
 export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges {
 
-    public fileTree: TreeModel;
-    public fileTreeSettings: Ng2TreeSettings = {
-        rootIsVisible: false,
-        showCheckboxes: false,
-        enableCheckboxes: false
-    };
-
     @Input() participation: Participation;
     @Input() repositoryFiles;
     @Input() fileName: string;
@@ -45,24 +38,44 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
     @Output() deletedFile = new EventEmitter<object>();
     @Output() selectedFile = new EventEmitter<object>();
 
+    @ViewChild('treeview') treeview: TreeviewComponent;
+
+    folder: string;
+    filesTreeViewItem: TreeviewItem[];
+    treeviewConfig: TreeviewConfig;
+
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
                 private repositoryFileService: RepositoryFileService,
                 public modalService: NgbModal,
-                public activeModal: NgbActiveModal) {
-    }
+                public activeModal: NgbActiveModal) {}
 
     /**
      * @function ngOnInit
-     * @desc Framework function which is executed when the component is instantiated.
-     * Used to assign parameters which are used by the component
+     * @desc Creates the basic configuration for the TreeView (ngx-treeview)
      */
     ngOnInit(): void {
+        this.treeviewConfig = TreeviewConfig.create({
+            hasAllCheckBox: false,
+            hasFilter: false,
+            hasCollapseExpand: false,
+            decoupleChildFromParent: false,
+            maxHeight: 1200
+        });
     }
 
     ngOnChanges(changes: SimpleChanges): void {
+        /**
+         * Initialize treeview
+         */
         if (this.participation) {
             this.getRepositoryFiles();
+        }
+        /**
+         * Update the treeview when files have been added or removed
+         */
+        if (this.repositoryFiles) {
+            this.setupTreeview(this.repositoryFiles);
         }
     }
 
@@ -77,38 +90,33 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
     }
 
     /**
-     * Callback function for when a node in the file tree view has been selected
-     * @param $event: Corresponding event object, holds the node name and parent informations
+     * @function handleNodeSelected
+     * @desc Callback function for when a node in the file tree view has been selected
+     * @param item: Corresponding event object, holds the selected TreeViewItem
      */
-    handleNodeSelected($event) {
+    handleNodeSelected(item: TreeviewItem) {
+        if (item && item.value !== this.fileName) {
+            item.checked = true;
+            // If we had selected a file prior to this, we "uncheck" it
+            if (this.fileName) {
+                const priorFileSelection = TreeviewHelper.findItemInList(this.filesTreeViewItem, this.fileName);
+                priorFileSelection.checked = false;
+            }
 
-        const parentNodeValue = $event.node.parent.node.value;
-        /**
-         * If the selected file is not in the root directory, we need to prepend its name with its parent node name
-         * Otherwise we just emit the node name (value)
-         */
-        if (parentNodeValue != null && parentNodeValue !== 'root') {
+            // Inform parent editor component about the file selection change
             this.selectedFile.emit({
-                fileName: parentNodeValue + '/' + $event.node.value
-            });
-        } else {
-            this.selectedFile.emit({
-                fileName: $event.node.value
+               fileName: item.value
             });
         }
     }
 
-    initializeTreeViewer(fileTree): void {
-        this.fileTree = {
-            value: 'root',
-            settings: this.getTreeViewSettings(),
-            children: fileTree
-        };
-    }
-
+    /**
+     * @function getRepositoryFiles
+     * @desc Checks if the repository files have been requested already
+     * Also initiates the building of a filetree for the filetree viewer
+     */
     getRepositoryFiles() {
         if (!this.repositoryFiles) {
-            console.log('calling getRepositoryFiles() from editor-file-browser!');
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(this.parent.participation.id).subscribe(files => {
                 this.repositoryFiles = files;
@@ -122,47 +130,38 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         }
     }
 
+    /**
+     * @function setupTreeView
+     * @desc Processes the file array, compresses it and then transforms it to a TreeViewItem
+     * @param files: Provided repository files by parent editor component
+     */
     setupTreeview(files) {
-        console.log('Setting up the treeview with files: ');
-        console.log(files);
         let tree = this.buildTree(files);
-        console.log('Tree after build!', tree);
         tree = this.compressTree(tree);
-        console.log('Tree after compress!', tree);
-        this.initializeTreeViewer(tree);
+        this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
     }
 
-    getTreeViewSettings(): TreeModelSettings {
-
-        /**
-         expandIcon: 'fa fa-folder',
-         emptyIcon: 'fa fa-file',
-         collapseIcon: 'fa fa-folder-open',
-         *
-         */
-
-        return {
-            'static': false,
-            'isCollapsedOnInit': false,
-            'cssClasses': {
-                'expanded': 'fa fa-folder-open',
-                'collapsed': 'fa fa-folder',
-                'leaf': 'fa',
-                'empty': 'fa fa-folder disabled'
-            },
-            'templates': {
-                'leaf': '<i class="fa fa-file-o"></i>'
-            }
-        };
+    /**
+     * @function transformTreeToTreeViewItem
+     * @desc Converts a parsed filetree to a TreeViewItem[] which will then be used by the Treeviewer (ngx-treeview)
+     * @param tree: Filetree obtained by parsing the repository file list
+     */
+    transformTreeToTreeViewItem(tree): TreeviewItem[] {
+        const treeViewItem = [];
+        for (const node of tree) {
+            treeViewItem.push(new TreeviewItem(node));
+        }
+        return treeViewItem;
     }
 
+    /**
+     * @function buildTree
+     * @desc Parses the provided list of repository files
+     * @param files {array of strings} Filepath strings to process
+     * @param tree {array of objects} Current tree structure
+     * @param folder {string} Folder name
+     */
     buildTree(files, tree?, folder?) {
-        /**
-         * Extract exerciseName for further processing by reading from the participation
-         */
-        const repoUrlSplit = this.participation.repositoryUrl.split('/');
-        const exerciseName = repoUrlSplit[repoUrlSplit.length - 1].slice(0, -4);
-
         /**
          * Initialize tree if empty
          */
@@ -170,52 +169,61 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
             tree = [];
         }
 
+        /**
+         * Loop through our file array
+         */
         for (let file of files) {
-
-            let fileSplit = file.split('\\');
-            fileSplit = fileSplit.slice(fileSplit.indexOf(exerciseName) + 1);
-            file = fileSplit.join('/');
-
-            let node = tree.find(function(element) {
-                return element.value === fileSplit[0];
-            });
-
+            // Remove leading and trailing spaces
+            file = file.replace(/^\/|\/$/g, '');
+            // Split file path by slashes
+            const fileSplit = file.split('/');
+            // Check if the first path part is already in our current tree
+            let node = tree.find( element => element.text === fileSplit[0]);
+            // Path part doesn't exist => add it to tree
             if (node == null) {
                 node = {
-                    value: fileSplit[0]
+                    text: fileSplit[0]
                 };
                 tree.push(node);
             }
 
+            // Remove first path part from our file path
             fileSplit.shift();
 
             if (fileSplit.length > 0) {
-                // directory node
-                node.selectable = false;
-                node.children = this.buildTree([fileSplit.join('/')], node.children, folder ? folder + '/' + node.value : node.value);
-                node.folder = node.value;
+                // Directory node
+                node.checked = false;
+                // Recursive function call to process children
+                node.children = this.buildTree([fileSplit.join('/')], node.children, folder ? folder + '/' + node.text : node.text);
+                node.folder = node.text;
+                node.value = node.folder;
             } else {
-                // file node
+                // File node
                 node.folder = folder;
                 node.file = (folder ? folder  + '/' : '' ) + node.text;
+                node.value = node.file;
+                node.checked = false;
 
+                // Currently processed node selected?
                 if (node.file === this.fileName) {
                     folder = node.folder;
-                    node.state = {
-                        selected: true
-                    };
+                    node.checked = true;
                 }
             }
         }
         return tree;
     }
 
-    // Compress tree to not contain nodes with only one directory child node
+    /**
+     * @function compressTree
+     * @desc Compresses the tree obtained by buildTree() to not contain nodes with only one directory child node
+     * @param tree {array of objects} Tree structure
+     */
     compressTree(tree) {
-
         for (const node of tree) {
             if (node.children && node.children.length === 1 && node.children[0].children) {
-                node.value = node.value + ' / ' + node.children[0].value;
+                node.text = node.text + ' / ' + node.children[0].text;
+                node.value = node.text;
                 node.children = this.compressTree(node.children[0].children);
                 if (node.children[0].children) {
                     return this.compressTree(tree);

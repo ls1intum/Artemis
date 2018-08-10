@@ -232,6 +232,10 @@
   version "1.6.45"
   resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.45.tgz#5b0b91a51d717f6fc816d59e1234d5292f33f7b9"
 
+"@types/interact.js@^1.0.22":
+  version "1.0.22"
+  resolved "https://registry.yarnpkg.com/@types/interact.js/-/interact.js-1.0.22.tgz#7293c73fa4716f81c7dd628912f43280111501dc"
+
 "@types/jasmine@2.8.7":
   version "2.8.7"
   resolved "https://registry.yarnpkg.com/@types/jasmine/-/jasmine-2.8.7.tgz#3fe583928ae0a22cdd34cedf930eeffeda2602fd"
@@ -514,10 +518,6 @@ angular-fittext@2.1.1:
   resolved "https://registry.yarnpkg.com/angular-fittext/-/angular-fittext-2.1.1.tgz#533ed6abe2bc6d3d45bae6775f3db41ef1baed08"
   dependencies:
     tslib "^1.9.0"
-
-angular-resizable-element@2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/angular-resizable-element/-/angular-resizable-element-2.0.0.tgz#10a437cce317e459e07c3189519ef395e6b86130"
 
 angular-router-loader@0.8.5:
   version "0.8.5"
@@ -4553,6 +4553,10 @@ insight@0.8.4:
     tough-cookie "^2.0.0"
     uuid "^3.0.0"
 
+interactjs@^1.3.4:
+  version "1.3.4"
+  resolved "https://registry.yarnpkg.com/interactjs/-/interactjs-1.3.4.tgz#9d5aa886f8fa03ea2f6c711e688792e3d3bde1ff"
+
 internal-ip@1.2.0:
   version "1.2.0"
   resolved "https://registry.yarnpkg.com/internal-ip/-/internal-ip-1.2.0.tgz#ae9fbf93b984878785d50a8de1b356956058cf5c"
@@ -6251,10 +6255,6 @@ ng2-dnd@^5.0.2:
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/ng2-dnd/-/ng2-dnd-5.0.2.tgz#862278ac7dedfa14f5783bbf34014d5d73dfefb4"
 
-ng2-tree@^2.0.0-rc.11:
-  version "2.0.0-rc.11"
-  resolved "https://registry.yarnpkg.com/ng2-tree/-/ng2-tree-2.0.0-rc.11.tgz#0fed58bd204646326d0cbcc0c84e3b0622d52cf8"
-
 ngx-cookie@4.0.2:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/ngx-cookie/-/ngx-cookie-4.0.2.tgz#dc0044826cc3482b723fa70ecc6cd12af057d862"
@@ -6266,6 +6266,10 @@ ngx-infinite-scroll@0.8.4:
   resolved "https://registry.yarnpkg.com/ngx-infinite-scroll/-/ngx-infinite-scroll-0.8.4.tgz#0162b406f63b05412b4d47e3201b371e4f2f96d8"
   dependencies:
     opencollective "^1.0.3"
+
+ngx-treeview@^6.0.0:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/ngx-treeview/-/ngx-treeview-6.0.0.tgz#f35f8fa7dbff8f92ec8c01881ddb901014c0c45e"
 
 ngx-webstorage@2.0.1:
   version "2.0.1"
