@@ -1,3 +1,7 @@
+/* ==========================================================================
+Online Editor Styles
+========================================================================== */
+
 body.editor {
     height: 100%;
 }
@@ -61,7 +65,6 @@ body {
     font-size: 14px;
 }
 
-
 .editor-wrapper > .editor-main > .editor-sidebar-right {
     overflow: initial;
 }
@@ -71,7 +74,6 @@ body {
     height: inherit;
     padding-bottom: 100px;
 }
-
 
 .editor-wrapper > .editor-main > .editor-sidebar-left .card:not(.collapsed) {
     max-width: 400px;
@@ -97,8 +99,6 @@ body {
     margin-top: 5px;
 }
 
-
-
 .editor-wrapper > .editor-main > .editor-center {
     flex: 1 1 auto;
 }
@@ -116,7 +116,6 @@ body {
     vertical-align: baseline;
 }
 
-
 .card-header {
     outline: none;
     .card-title {
@@ -126,7 +125,6 @@ body {
 .card-header[role="button"] {
     cursor: pointer;
 }
-
 
 .card.collapsed .card-body,
 .card.collapsed .card-second-header,
@@ -151,13 +149,10 @@ body.editor .navbar-brand span {
     white-space: nowrap;
 }
 
-
-
 .ace_editor {
     height: 100%;
     margin-bottom: 0 !important;
 }
-
 
 .buildoutput {
     font-family: Menlo,Monaco,"Courier New",monospace;
@@ -175,13 +170,11 @@ body.editor .navbar-brand span {
     clear: left;
 }
 
-
 .buildoutput dd {
     margin-left: 140px;
     margin-bottom: 0;
     color: #003366;
 }
-
 
 .editor .instructions {
     overflow-x: hidden;
@@ -203,17 +196,128 @@ body.editor .navbar-brand span {
     }
 }
 
-
 .editor code {
     color: inherit;
     background-color: transparent;
 }
 
-/** copied form angular-resizeable bower component **/
+/* ==========================================================================
+File browser styles
+========================================================================== */
 
-.resizable{position:relative}.resizable.no-transition{transition:none!important}.rg-bottom,.rg-left,.rg-right,.rg-top{display:block;width:14px;height:14px;line-height:14px;position:absolute;z-index:1;-moz-user-select:-moz-none;-ms-user-select:none;-webkit-user-select:none;user-select:none;background:0 0}.rg-bottom span,.rg-left span,.rg-right span,.rg-top span{position:absolute;box-sizing:border-box;display:block;border:1px solid #ccc}.rg-left span,.rg-right span{border-width:0 1px;top:50%;margin:-10px 0 0 3.5px;height:20px;width:7px}.rg-bottom span,.rg-top span{border-width:1px 0;left:50%;margin:3.5px 0 0 -10px;width:20px;height:7px}.rg-top{cursor:row-resize;width:100%;top:0;left:0;margin-top:-14px}.rg-right{cursor:col-resize;height:100%;right:0;top:0;margin-right:-14px}.rg-bottom{cursor:row-resize;width:100%;bottom:0;left:0;margin-bottom:-14px}.rg-left{cursor:col-resize;height:100%;left:0;top:0;margin-left:-14px}
+.treeview-container {
 
-/** stepwizard **/
+    overflow-y: hidden !important;
+
+    .treeview-item {
+        cursor: pointer;
+
+        .list-group-item {
+            padding: .75rem 1.25rem;
+            margin-bottom: -1px;
+            border: none;
+        }
+
+        .list-group-item:hover {
+            background-color: #F5F5F5;
+        }
+    }
+
+}
+
+/* ==========================================================================
+Angular-resizable styles
+Required for resize-element-handler
+========================================================================== */
+
+.resizable {
+    position: relative
+}
+
+.resizable.no-transition {
+    transition: none!important
+}
+
+.rg-bottom,
+.rg-left,
+.rg-right,
+.rg-top {
+    display: block;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    position: absolute;
+    z-index: 1;
+    -moz-user-select: -moz-none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    background: 0 0
+}
+
+.rg-bottom span,
+.rg-left span,
+.rg-right span,
+.rg-top span {
+    position: absolute;
+    box-sizing: border-box;
+    display: block;
+    border: 1px solid #ccc
+}
+
+.rg-left span,
+.rg-right span {
+    border-width: 0 1px;
+    top: 50%;
+    margin: -10px 0 0 3.5px;
+    height: 20px;
+    width: 7px
+}
+
+.rg-bottom span,
+.rg-top span {
+    border-width: 1px 0;
+    left: 50%;
+    margin: 3.5px 0 0 -10px;
+    width: 20px;
+    height: 7px
+}
+
+.rg-top {
+    cursor: row-resize;
+    width: 100%;
+    top: 0;
+    left: 0;
+    margin-top: -14px
+}
+
+.rg-right {
+    cursor: col-resize;
+    height: 100%;
+    right: 0;
+    top: 0;
+    margin-right: -14px
+}
+
+.rg-bottom {
+    cursor: row-resize;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    margin-bottom: -14px
+}
+
+.rg-left {
+    cursor: col-resize;
+    height: 100%;
+    left: 0;
+    top: 0;
+    margin-left: -14px
+}
+
+/* ==========================================================================
+Stepwizard styles (editor instructions)
+========================================================================== */
 
 .card-second-header {
     padding: 10px 15px;
@@ -262,9 +366,6 @@ body.editor .navbar-brand span {
     cursor: default;
 }
 
-
-
-
 .stepwizard-row:before {
     top: 14px;
     bottom: 0;
@@ -296,7 +397,9 @@ body.editor .navbar-brand span {
     }
 }
 
-/** Bootstrap 3.3.7 fix **/
+/* ==========================================================================
+Bootstrap 3.3.7 fix
+========================================================================== */
 
 .modal-open {
     .fade.in {
@@ -317,205 +420,4 @@ body.editor .navbar-brand span {
     .bootstrap-modal-fix {
         display: block;
     }
-}
-
-/** Copied from ng2-tree style.css **/
-.node-menu {
-    position: relative;
-    width: 150px;
-}
-
-.node-menu .node-menu-content {
-    width: 100%;
-    padding: 5px;
-    position: absolute;
-    border: 1px solid #bdbdbd;
-    border-radius: 5%;
-    box-shadow: 0 0 5px #bdbdbd;
-    background-color: #eee;
-    color: #212121;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    z-index: 999;
-}
-
-.node-menu .node-menu-content li.node-menu-item {
-    list-style: none;
-    padding: 3px;
-}
-
-.node-menu .node-menu-content .node-menu-item:hover {
-    border-radius: 5%;
-    opacity: unset;
-    cursor: pointer;
-    background-color: #bdbdbd;
-    transition: background-color 0.2s ease-out;
-}
-
-.node-menu .node-menu-content .node-menu-item .node-menu-item-icon {
-    display: inline-block;
-    width: 16px;
-}
-
-.node-menu .node-menu-content .node-menu-item .node-menu-item-icon.new-tag:before {
-    content: '\25CF';
-}
-.node-menu .node-menu-content .node-menu-item .node-menu-item-icon.new-folder:before {
-    content: '\25B6';
-}
-
-.node-menu .node-menu-content .node-menu-item .node-menu-item-icon.rename:before {
-    content: '\270E';
-}
-
-.node-menu .node-menu-content .node-menu-item .node-menu-item-icon.remove:before {
-    content: '\2716';
-}
-
-.node-menu .node-menu-content .node-menu-item .node-menu-item-value {
-    margin-left: 5px;
-}
-
-tree-internal ul {
-    padding: 3px 0 3px 25px;
-}
-
-tree-internal li {
-    padding: 0;
-    margin: 0;
-    list-style: none;
-}
-
-tree-internal .over-drop-target {
-    border: 4px solid #757575;
-    transition: padding 0.2s ease-out;
-    padding: 5px;
-    border-radius: 5%;
-}
-
-tree-internal .tree {
-    box-sizing: border-box;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-}
-
-tree-internal .tree li {
-    list-style: none;
-    cursor: default;
-}
-
-tree-internal .tree li div {
-    display: inline-block;
-    box-sizing: border-box;
-}
-
-tree-internal .tree .node-value {
-    display: inline-block;
-    color: #212121;
-}
-
-tree-internal .tree .node-value:after {
-    display: block;
-    padding-top: -3px;
-    width: 0;
-    height: 2px;
-    background-color: #212121;
-    content: '';
-    transition: width 0.3s;
-}
-
-tree-internal .tree .node-value:hover:after {
-    width: 100%;
-}
-
-tree-internal .tree .node-left-menu {
-    display: inline-block;
-    height: 100%;
-    width: auto;
-}
-
-tree-internal .tree .node-left-menu span:before {
-    content: '\2026';
-    color: #757575;
-}
-
-tree-internal .tree .node-selected:after {
-    width: 100%;
-}
-
-tree-internal .tree .folding {
-    width: 25px;
-    display: inline-block;
-    line-height: 1px;
-    padding: 0 5px;
-    font-weight: bold;
-}
-
-tree-internal .tree .folding.node-collapsed {
-    cursor: pointer;
-}
-
-tree-internal .tree .folding.node-collapsed:before {
-    content: '\25B6';
-    color: #757575;
-}
-
-tree-internal .tree .folding.node-expanded {
-    cursor: pointer;
-}
-
-tree-internal .tree .folding.node-expanded:before {
-    content: '\25BC';
-    color: #757575;
-}
-
-tree-internal .tree .folding.node-empty {
-    color: #212121;
-    text-align: center;
-    font-size: 0.89em;
-}
-
-tree-internal .tree .folding.node-empty:before {
-    content: '\25B6';
-    color: #757575;
-}
-
-tree-internal .tree .folding.node-leaf {
-    color: #212121;
-    text-align: center;
-    font-size: 0.89em;
-}
-
-tree-internal .tree .folding.node-leaf:before {
-    content: '\25CF';
-    color: #757575;
-}
-
-tree-internal ul.rootless {
-    padding: 0;
-}
-
-tree-internal div.rootless {
-    display: none !important;
-}
-
-tree-internal .loading-children:after {
-    content: ' loading ...';
-    color: #6a1b9a;
-    font-style: italic;
-    font-size: 0.9em;
-    animation-name: loading-children;
-    animation-duration: 2s;
-    animation-timing-function: ease-in-out;
-    animation-iteration-count: infinite;
-}
-
-@keyframes loading-children {
-    0%    { color: #f3e5f5; }
-    12.5% { color: #e1bee7; }
-    25%   { color: #ce93d8; }
-    37.5% { color: #ba68c8; }
-    50%   { color: #ab47bc; }
-    62.5% { color: #9c27b0; }
-    75%   { color: #8e24aa; }
-    87.5% { color: #7b1fa2; }
-    100%  { color: #6a1b9a; }
 }
