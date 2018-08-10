@@ -17,7 +17,7 @@ import {WindowRef} from '../../shared/websocket/window.service';
 import {JhiAlertService} from 'ng-jhipster';
 import {JhiWebsocketService} from '../../shared';
 import {EditorComponent} from '../editor.component';
-import 'brace/theme/eclipse';
+import 'brace/theme/dreamweaver';
 declare let ace: any;
 
 @Component({
@@ -70,7 +70,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
      * used to handle any additional initialization tasks
      */
     ngAfterViewInit(): void {
-        this.editor.setTheme('eclipse');
+        this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
             animatedScroll: true
         });
