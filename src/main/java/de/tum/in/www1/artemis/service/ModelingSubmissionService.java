@@ -66,8 +66,9 @@ public class ModelingSubmissionService {
             jsonModelRepository.writeModel(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), modelingSubmission.getModel());
         }
 
-        modelingSubmissionRepository.save(modelingSubmission);
         result.setSubmission(modelingSubmission);
+        modelingSubmission.setResult(result);
+        modelingSubmissionRepository.save(modelingSubmission);
         resultRepository.save(result);
 
         if (modelingSubmission.isSubmitted()) {

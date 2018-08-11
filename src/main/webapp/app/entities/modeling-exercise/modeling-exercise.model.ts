@@ -1,6 +1,13 @@
 import { Exercise } from '../exercise';
 import { Course } from '../course';
 
+export const enum DiagramType {
+    'CLASS',
+    'ACTIVITY',
+    'USE_CASE',
+    'COMMUNICATION'
+}
+
 export class ModelingExercise extends Exercise {
     constructor(
         public id?: number,
@@ -9,6 +16,7 @@ export class ModelingExercise extends Exercise {
         public releaseDate?: any,
         public dueDate?: any,
         public maxScore?: number,
+        public diagramType?: DiagramType,
         public course?: Course,
         public description?: string,
     ) {

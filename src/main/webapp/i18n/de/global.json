@@ -42,6 +42,8 @@
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
                 "apollonDiagram": "Apollon-Diagramm",
+                "programmingSubmission": "Programming Submission",
+                "dragAndDropMapping": "Drag And Drop Mapping",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {

@@ -22,6 +22,7 @@
                 <th jhiSortBy="releaseDate"><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span>&nbsp;<span class="fa fa-sort"></span></th>
                 <th jhiSortBy="dueDate"><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span>&nbsp;<span class="fa fa-sort"></span></th>
                 <th jhiSortBy="maxScore"><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span>&nbsp;<span class="fa fa-sort"></span></th>
+                <th><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span></th>
                 <th></th>
             </tr>
             </thead>
@@ -32,6 +33,7 @@
                 <td>{{modelingExercise.releaseDate | date:'medium'}}</td>
                 <td>{{modelingExercise.dueDate | date:'medium'}}</td>
                 <td>{{modelingExercise.maxScore}}</td>
+                <td jhiTranslate="{{'arTeMiSApp.DiagramType.' + modelingExercise.diagramType}}">{{modelingExercise.diagramType}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
