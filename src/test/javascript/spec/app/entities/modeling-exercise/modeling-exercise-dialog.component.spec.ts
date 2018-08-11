@@ -5,7 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArTeMiSTestModule } from '../../../test.module';
 import { ModelingExerciseDialogComponent } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise-dialog.component';
 import { ModelingExerciseService } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.service';
 import { ModelingExercise } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.model';
@@ -21,7 +21,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArTeMiSTestModule],
                 declarations: [ModelingExerciseDialogComponent],
                 providers: [
                     ModelingExerciseService

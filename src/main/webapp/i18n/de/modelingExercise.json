@@ -15,7 +15,8 @@
             },
             "detail": {
                 "title": "Modeling Exercise"
-            }
+            },
+            "diagramType": "Diagram Type"
         }
     }
 }

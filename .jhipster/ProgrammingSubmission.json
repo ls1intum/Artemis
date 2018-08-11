@@ -1,0 +1,16 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "commitHash",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20180811194842",
+    "entityTableName": "programming_submission",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

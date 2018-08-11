@@ -58,7 +58,8 @@ public class Result implements Serializable {
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
-    @OneToOne(cascade=CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval=true)
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
     private Submission submission;

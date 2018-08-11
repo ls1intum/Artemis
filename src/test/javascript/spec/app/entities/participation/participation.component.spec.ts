@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArTeMiSTestModule } from '../../../test.module';
 import { ParticipationComponent } from '../../../../../../main/webapp/app/entities/participation/participation.component';
 import { ParticipationService } from '../../../../../../main/webapp/app/entities/participation/participation.service';
 import { Participation } from '../../../../../../main/webapp/app/entities/participation/participation.model';
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArTeMiSTestModule],
                 declarations: [ParticipationComponent],
                 providers: [
                     ParticipationService
