@@ -8,6 +8,13 @@
                 Create new Quiz
             </span>
         </button>
+        <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
+        <button *ngIf="courseId" class="btn btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['export']">
+            <span class="fa fa-plus"></span>
+            <span  jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
+                Export Quiz Exercises
+            </span>
+        </button>
         <button *ngIf="courseId" class="btn btn-primary float-right" [routerLink]="['/apollon-diagrams']">
             <span class="fa fa-plus"></span>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createModelDragAndDrop">
@@ -92,6 +99,11 @@
                                 class="btn btn-success btn-sm">
                             <span class="fa fa-signal"></span>
                             <span class="hidden-sm-down" jhiTranslate="global.menu.entities.statistic"></span>
+                        </button>
+                        <button type="submit"
+                                (click)="exportQuizById(quizExercise.id, true)"
+                                class="btn btn-primary btn-sm">
+                            <span class="hidden-sm-down" jhiTranslate="entity.action.export"></span>
                         </button>
                         <button type="submit"
                                 [hidden]="quizIsOver(quizExercise) && userIsInstructor()"

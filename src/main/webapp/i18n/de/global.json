@@ -114,16 +114,17 @@
             }
         },
         "field": {
-            "id" : "ID"
+            "id": "ID"
         },
         "ribbon": {
-            "dev":"Development",
+            "dev": "Development",
             "test": "Test Server"
         },
         "item-count": "Ergebnis {{first}} - {{second}} von {{total}} Elemente."
     },
     "entity": {
         "action": {
+            "add": "Hinzufügen",
             "addblob": "Blob hinzufügen",
             "addimage": "Bild hinzufügen",
             "back": "Zurück",
@@ -139,7 +140,9 @@
             "archive": "Archivieren",
             "submit": "Absenden",
             "re-evaluate": "Überarbeiten",
-            "close": "Schließen"
+            "close": "Schließen",
+            "import": "Import",
+            "export": "Export"
         },
         "detail": {
             "field": "Feld",

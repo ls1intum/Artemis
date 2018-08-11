@@ -1,7 +1,6 @@
-
 {
     "arTeMiSApp": {
-        "exercise" : {
+        "exercise": {
             "home": {
                 "title": "Exercises",
                 "createLabel": "Create a new Exercise",
@@ -22,11 +21,14 @@
             "maxScore": "Max Score",
             "participations": "Participations",
             "course": "Course",
+            "type": "Type",
+            "mcqType": "Multiple Choice Question",
+            "dndType": "Drag and Drop Question",
             "welcome": "<strong>Welcome to ArTEMiS!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
             "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
             "startError": "<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong>"
         },
-        "exerciseLtiConfiguration" : {
+        "exerciseLtiConfiguration": {
             "lti": "LTI",
             "configurationForExercise": "LTI configuration for exercise {{ title }}"
         }

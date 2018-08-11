@@ -7,6 +7,7 @@ import { DragAndDropQuestion } from '../drag-and-drop-question';
 export class DragAndDropMapping implements BaseEntity {
     constructor(
         public id?: number,
+        public tempID?: number,
         public dragItemIndex?: number,
         public dropLocationIndex?: number,
         public invalid?: boolean,
