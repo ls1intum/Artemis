@@ -233,19 +233,4 @@ public class ProgrammingExerciseResource {
         exerciseService.delete(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
-
-    /**
-     * POST  /programming-exercises/commit/:planKey : Notify the application about a new commit to the repository associated with the planKey
-     * This API is invoked by the VCS Server at the push of a new commit
-     *
-     * @param planKey the plan key of the plan which is associated with the repository that is notifying about a new commit
-     * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
-     */
-    @PostMapping(value = "/programming-exercises/commit/{planKey}")
-    @Transactional
-    public ResponseEntity<?> notifyResult(@PathVariable("planKey") String planKey) {
-        log.debug("REST request to inform about new commit : {}", planKey);
-
-        return ResponseEntity.status(HttpStatus.OK).build();
-    }
 }
