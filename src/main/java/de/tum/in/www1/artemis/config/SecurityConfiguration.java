@@ -100,7 +100,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         web.ignoring()
             .antMatchers(HttpMethod.POST, "/api/results/*-*");
         web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/programmingSubmissions/commit/*-*");
+            .antMatchers(HttpMethod.POST, "/api/programmingSubmissions/*-*");
     }
 
     @Override

@@ -28,15 +28,15 @@ public class ProgrammingSubmissionResource {
     }
 
     /**
-     * POST  /programmingSubmissions/commit/:planKey : Notify the application about a new commit to the repository associated with the planKey
+     * POST  /programmingSubmissions/:submissionId : Notify the application about a new push to the VCS for the submission with Id submissionId
      * This API is invoked by the VCS Server at the push of a new commit
      *
-     * @param planKey the plan key of the plan which is associated with the repository that is notifying about a new commit
+     * @param submissionId the submissionId of the submission the repository is linked to
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
-    @PostMapping(value = "/programmingSubmissions/commit/{planKey}")
-    public ResponseEntity<?> notifyCommit(@PathVariable("planKey") String planKey) {
-        log.debug("REST request to inform about new commit : {}", planKey);
+    @PostMapping(value = "/programmingSubmissions/{submissionId}")
+    public ResponseEntity<?> notifyPush(@PathVariable("submissionId") String submissionId) {
+        log.debug("REST request to inform about new commit : {}", submissionId);
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
