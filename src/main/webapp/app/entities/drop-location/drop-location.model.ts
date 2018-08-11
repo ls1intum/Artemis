@@ -4,6 +4,7 @@ import { DragAndDropQuestion } from '../drag-and-drop-question';
 export class DropLocation implements BaseEntity {
     constructor(
         public id?: number,
+        public tempID?: number,
         public posX?: number,
         public posY?: number,
         public width?: number,

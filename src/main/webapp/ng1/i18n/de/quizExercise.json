@@ -1,11 +1,11 @@
-
 {
     "arTeMiSApp": {
         "quizExercise": {
             "home": {
                 "title": "Quiz",
                 "createLabel": "Quiz erstellen",
-                "createOrEditLabel": "Quiz erstellen oder bearbeiten"
+                "createOrEditLabel": "Quiz erstellen oder bearbeiten",
+                "exportLabel": "Quizübungen exportieren"
             },
             "created": "Quiz erstellt mit ID {{ param }}",
             "updated": "Quiz aktualisiert mit ID {{ param }}",
@@ -25,6 +25,11 @@
             "new": {
                 "title": "Quiz für {{ param }} erstellen"
             },
+            "filter": {
+                "mcq": "Multiple-Choice Question",
+                "dnd": "Drag-And-Drop Question",
+                "applyFilter": "Filter anwenden"
+            },
             "description": "Beschreibung",
             "explanation": "Erklärung",
             "randomizeQuestionOrder": "Fragen in zufälliger Reihenfolge anzeigen",
@@ -43,6 +48,10 @@
             "questions": "Fragen",
             "multipleChoiceQuestion": "Multiple-Choice Frage hinzufügen",
             "dragAndDropQuestion": "Drag-And-Drop Frage hinzufügen",
+            "addExistingQuestions": "Vorhandene Fragen hinzufügen",
+            "selectCourse": "Wählen Sie einen Kurs",
+            "selectQuizExercise": "Wählen Sie eine Quiz Übung aus",
+            "addSelectedQuestions": "Ausgewählte Fragen hinzufügen",
             "status": "Status",
             "quizPointStatistic": "Quiz-Punkte-Statistik",
             "startTime": "Startzeit",
@@ -91,7 +100,7 @@
                     "no_changes": "Keine Änderungen, welche die bestehenden Ergebnisse beeinflussen",
                     "statistic": "Die bestehende Statistiken müssen neu berechnet werden!",
                     "results": "Die bestehenden Ergebnisse müssen neu berechnet werden!",
-                    "resulttext":{
+                    "resulttext": {
                         "answer_deleted": "Die Antwortmöglichkeit wird aus allen Ergebnissen entfernt",
                         "answer_invalid": "Alle Teilnehmer erhalten die Punkte für die ungültige Antwort",
                         "question_deleted": "Die Frage wird aus allen Ergebnissen entfernt",
@@ -102,7 +111,7 @@
                     "succesfully_confirm": "Änderungen erfolgreich übernommen!"
                 }
             },
-            "invalidReasons" : {
+            "invalidReasons": {
                 "quizTitle": "Quiz: Der Titel fehlt.",
                 "quizDuration": "Quiz: Die Dauer fehlt oder ist ungültig.",
                 "noQuestion": "Quiz: Das Quiz hat keine Fragen.",
