@@ -4,7 +4,7 @@
         "modelingExercise" : {
             "home": {
                 "title": "Modeling Exercises",
-                "createLabel": "Create Modeling Exercise",
+                "createLabel": "Create a new Modeling Exercise",
                 "createOrEditLabel": "Create or edit a Modeling Exercise"
             },
             "created": "A new Modeling Exercise is created with identifier {{ param }}",
@@ -15,7 +15,8 @@
             },
             "detail": {
                 "title": "Modeling Exercise"
-            }
+            },
+            "diagramType": "Diagram Type"
         }
     }
 }

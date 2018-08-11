@@ -58,6 +58,11 @@ export class ExerciseService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}/participations`, { observe: 'response'});
     }
 
+    exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {
+      return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, { observe: 'response', responseType: 'blob'});
+
+    }
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Exercise = this.convertItemFromServer(res.body);
         return res.clone({body});

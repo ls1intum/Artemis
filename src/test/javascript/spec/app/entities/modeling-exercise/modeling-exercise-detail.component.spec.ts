@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 
-import { ArTEMiSTestModule } from '../../../test.module';
+import { ArTeMiSTestModule } from '../../../test.module';
 import { ModelingExerciseDetailComponent } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise-detail.component';
 import { ModelingExerciseService } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.service';
 import { ModelingExercise } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.model';
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTEMiSTestModule],
+                imports: [ArTeMiSTestModule],
                 declarations: [ModelingExerciseDetailComponent],
                 providers: [
                     ModelingExerciseService

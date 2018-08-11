@@ -68,7 +68,7 @@ class ModelingExerciseGatlingTest extends Simulation {
             .exec(http("Create new modelingExercise")
             .post("/api/modeling-exercises")
             .headers(headers_http_authenticated)
-            .body(StringBody("""{"id":null}""")).asJSON
+            .body(StringBody("""{"id":null, "diagramType":null}""")).asJSON
             .check(status.is(201))
             .check(headerRegex("Location", "(.*)").saveAs("new_modelingExercise_url"))).exitHereIfFailed
             .pause(10)

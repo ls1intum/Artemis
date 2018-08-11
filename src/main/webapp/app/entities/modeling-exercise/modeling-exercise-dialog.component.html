@@ -37,6 +37,15 @@
                    [(ngModel)]="modelingExercise.maxScore" />
         </div>
         <div class="form-group">
+            <label class="form-control-label" jhiTranslate="arTeMiSApp.modelingExercise.diagramType" for="field_diagramType">Diagram Type</label>
+            <select class="form-control" name="diagramType" [(ngModel)]="modelingExercise.diagramType" id="field_diagramType" >
+                <option value="CLASS">{{'arTeMiSApp.DiagramType.CLASS' | translate}}</option>
+                <option value="ACTIVITY">{{'arTeMiSApp.DiagramType.ACTIVITY' | translate}}</option>
+                <option value="USE_CASE">{{'arTeMiSApp.DiagramType.USE_CASE' | translate}}</option>
+                <option value="COMMUNICATION">{{'arTeMiSApp.DiagramType.COMMUNICATION' | translate}}</option>
+            </select>
+        </div>
+        <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.course" for="field_course">Course</label>
             <select class="form-control" id="field_course" name="course" [(ngModel)]="modelingExercise.course" >
                 <option [ngValue]="null"></option>

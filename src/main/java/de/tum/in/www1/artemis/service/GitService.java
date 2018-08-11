@@ -285,4 +285,19 @@ public class GitService {
         path = path.replaceAll("^scm/", "");
         return path;
     }
+
+
+    /**
+     * Checks if repo was already checked out and is present on disk
+     *
+     * @param repoUrl URL of the remote repository.
+     * @return True if repo exists on disk
+     */
+    public boolean repositoryAlreadyExists(URL repoUrl) {
+        Path localPath = new java.io.File(REPO_CLONE_PATH + folderNameForRepositoryUrl(repoUrl)).toPath();
+        if (Files.exists(localPath)) {
+            return true;
+        }
+        return false;
+    }
 }

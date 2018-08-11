@@ -1,12 +1,12 @@
-
 {
     "arTeMiSApp": {
-        "quizExercise" : {
+        "quizExercise": {
             "home": {
                 "title": "Quiz Exercises",
                 "createLabel": "Create Quiz",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz",
-                "createOrEditLabel": "Create or edit a Quiz Exercise"
+                "createOrEditLabel": "Create or edit a Quiz Exercise",
+                "exportLabel": "Export Quiz Exercises"
             },
             "created": "A new Quiz Exercise is created with identifier {{ param }}",
             "updated": "A Quiz Exercise is updated with identifier {{ param }}",
@@ -26,6 +26,17 @@
             "new": {
                 "title": "New Quiz Exercise for {{ param }}"
             },
+            "export": {
+                "title": "All quiz questions for course {{ param }}",
+                "export": "Export",
+                "questionTitle": "Question Title",
+                "quizExerciseTitle": "Quiz Exercise Title"
+            },
+            "filter": {
+                "mcq": "Multiple-Choice Question",
+                "dnd": "Drag-And-Drop Question",
+                "applyFilter": "Apply Filter"
+            },
             "description": "Description",
             "explanation": "Explanation",
             "randomizeQuestionOrder": "Present Questions in Random Order",
@@ -44,6 +55,10 @@
             "questions": "Questions",
             "multipleChoiceQuestion": "Multiple-Choice Question",
             "dragAndDropQuestion": "Drag-And-Drop Question",
+            "addExistingQuestions": "Add Existing Questions",
+            "addSelectedQuestions": "Add Selected Questions",
+            "selectCourse": "Select a Course",
+            "selectQuizExercise": "Select a Quiz Exercise",
             "status": "Status",
             "startTime": "Start Time",
             "quizPointStatistic": "Quiz Point Statistic",
@@ -96,7 +111,7 @@
                     "no_changes": "No changes, which affect the existing results",
                     "statistic": "The existing statistics must be recalculated!",
                     "results": "The existing results must be recalculated!",
-                    "resulttext":{
+                    "resulttext": {
                         "element_deleted": "The question-element will be removed from all results",
                         "element_invalid": "All participants receive the points for the invalid question-element",
                         "answer_deleted": "The answer option will be removed from all results",
@@ -109,7 +124,7 @@
                     "succesfully_confirm": "Changes successfully adopted!"
                 }
             },
-            "invalidReasons" : {
+            "invalidReasons": {
                 "quizTitle": "Quiz: The title is missing.",
                 "quizDuration": "Quiz: The duration is missing or invalid.",
                 "noQuestion": "Quiz: The quiz has no question.",

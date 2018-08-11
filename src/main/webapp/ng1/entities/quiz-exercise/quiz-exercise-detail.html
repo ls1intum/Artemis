@@ -111,6 +111,92 @@
             <button class="btn btn-light" ng-click="vm.addDragAndDropQuestion()"
                     data-translate="arTeMiSApp.quizExercise.dragAndDropQuestion"
             >d&d</button>
+            <button class="btn btn-light" ng-click="vm.showHideExistingQuestions()"
+                    data-translate="arTeMiSApp.quizExercise.addExistingQuestions"
+            >eq</button>
+        </div>
+        <div class="form-group" ng-if="vm.showExistingQuestions">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <tbody>
+                    <tr>
+                        <td width="30%"><span data-translate="arTeMiSApp.quizExercise.selectCourse"></span></td>
+                        <td colspan="3" width="70%">
+                            <select ng-model="vm.selectedCourse" ng-change="vm.onCourseSelect()" style="min-width:100%;">
+                                <option ng-repeat="course in vm.courses" value="{{course}}">{{course.title}}</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr ng-if="vm.allExistingQuestions.length !== 0">
+                        <td>
+                            <input class="form-control" ng-model="vm.searchQueryText" placeholder="Search Query" />
+                        </td>
+                        <td class="checkbox">
+                            <label>
+                                <input type="checkbox" ng-model="vm.dndFilterEnabled" />
+                                <span data-translate="arTeMiSApp.quizExercise.filter.dnd" class="colon-suffix" ></span>
+                            </label>
+                        </td>
+                        <td class="checkbox">
+                            <label>
+                                <input type="checkbox" ng-model="vm.mcqFilterEnabled" />
+                                <span data-translate="arTeMiSApp.quizExercise.filter.mcq" class="colon-suffix" ></span>
+                            </label>
+                        </td>
+                        <td align="right">
+                            <button class="btn btn-light" ng-click="vm.applyFilter()" data-translate="arTeMiSApp.quizExercise.filter.applyFilter" >eq</button>
+                        </td>
+                    </tr>
+                    <!--<tr>-->
+                        <!--<td><span data-translate="arTeMiSApp.quizExercise.selectQuizExercise"></span></td>-->
+                        <!--<td>-->
+                            <!--<select ng-model="vm.selectedQuizExercise" ng-change="vm.onQuizExerciseSelect()" ng-if="vm.selectedCourse">-->
+                                <!--<option ng-repeat="quizExercise in vm.quizExercises" value="{{quizExercise}}">{{quizExercise.title}}</option>-->
+                            <!--</select>-->
+                        <!--</td>-->
+                    <!--</tr>-->
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-responsive" ng-if="vm.existingQuestions.length !== 0">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th width="50%">
+                            <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Question Title</span>
+                        </th>
+                        <th width="25%">
+                            <span jhiTranslate="arTeMiSApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
+                        </th>
+                        <th width="20%">
+                            <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
+                        </th>
+                        <th width="5%">
+                            <span jhiTranslate="entity.action.add">Add</span>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr ng-repeat="question in vm.existingQuestions">
+                        <td width="50%">{{question.title}}</td>
+                        <td width="25%">{{question.exercise.title}}</td>
+                        <td width="20%">{{question.type}}</td>
+                        <td width="5%" class="checkbox">
+                            <input type="checkbox" ng-Model="question.exportQuiz"/>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-light" ng-click="vm.addExistingQuestions()"
+                    ng-if="vm.existingQuestions.length !== 0"
+                    data-translate="arTeMiSApp.quizExercise.addSelectedQuestions"
+            ></button>
+        </div>
+        <div class="form-group">
+            <input id="importFileInput" type="file" accept=".json" file-model="vm.importFile" placeholder="Upload file..." />
+            <button class="btn btn-light" ng-click="vm.importQuiz()" data-translate="entity.action.import" ng-class="{disabled: !vm.importFile}"
+            >import</button>
         </div>
     </div>
     <div class="edit-quiz-footer">
