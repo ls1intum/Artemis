@@ -53,6 +53,18 @@
                         return data;
                     }
                 },
+                'exportRepos': {
+                    method: 'GET',
+                    url: resourceUrl + '/participations/:studentIds',
+                    responseType: 'blob',
+                    transformResponse: function(data, headersGetter) {
+                        var headers = headersGetter()
+                        if (data && headers['filename']) {
+                            FileSaver.saveAs(data, headers['filename'])
+                        }
+                        return data;
+                    }
+                },
             });
         }
 

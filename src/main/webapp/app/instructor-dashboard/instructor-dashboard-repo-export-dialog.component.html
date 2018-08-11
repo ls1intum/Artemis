@@ -1,0 +1,24 @@
+<form name="exportForm" role="form" (ngSubmit)="exportRepos(exercise.id)" #exportForm="ngForm">
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="entity.exportRepos.title">Confirm export operation</h4>
+        <button type="button" class="close" data-dismiss="modal"
+                (click)="clear()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+        <p jhiTranslate="instructorDashboard.exportRepos.question"
+           translateValues="{exerciseTitle: '{{exercise.title}}', courseTitle: '{{exercise.course.title}}'}">Confirm export
+        </p>
+        <textarea name="studentIds" class="export-textarea" [(ngModel)]="studentIdList" required></textarea>
+        <p>(This action can take several minutes depending on number and size of repositories.)</p>
+    </div>
+
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="clear()">
+            <span class="glyphicon glyphicon-ban-circle"></span>&nbsp;<span data-translate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" [disabled]="!studentIdList && !exportInProgress" class="btn btn-default">
+            <span class="glyphicon glyphicon-download-alt"></span>&nbsp;<span data-translate="entity.action.exportRepos">Export</span>
+        </button>
+    </div>
+</form>

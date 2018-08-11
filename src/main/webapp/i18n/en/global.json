@@ -128,6 +128,7 @@
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "exportRepos": "Download Repositories",
             "delete": "Delete",
             "edit": "Edit",
             "open": "Open",
@@ -153,6 +154,9 @@
         },
         "archive": {
             "title": "Confirm archive operation"
+        },
+        "exportRepos": {
+            "title": "Confirm download of repos"
         },
         "validation": {
             "required": "This field is required.",
