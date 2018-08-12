@@ -10,6 +10,7 @@ import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExercisePopupService } from './modeling-exercise-popup.service';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { Course, CourseService } from '../course';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -19,6 +20,10 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     modelingExercise: ModelingExercise;
     isSaving: boolean;
+    releaseDate: Date;
+    dueDate: Date;
+    releaseClockToggled: boolean;
+    dueClockToggled: boolean;
 
     courses: Course[];
 
@@ -35,15 +40,32 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
         this.courseService.query()
             .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
+        this.releaseDate = new Date(this.modelingExercise.releaseDate || undefined);
+        this.dueDate = new Date(this.modelingExercise.dueDate || undefined);
+        this.releaseClockToggled = false;
+        this.dueClockToggled = false;
     }
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    toggleClock(input: string) {
+      switch ( input ) {
+        case 'releaseDate':
+          this.releaseClockToggled = !this.releaseClockToggled;
+          break;
+        case 'dueDate':
+          this.dueClockToggled = !this.dueClockToggled;
+          break;
+      }
+    }
+
     save() {
         this.isSaving = true;
         this.modelingExercise.type = 'modeling-exercise';
+        this.modelingExercise.releaseDate = moment(this.releaseDate).format();
+        this.modelingExercise.dueDate = moment(this.dueDate).format();
         if (this.modelingExercise.id !== undefined) {
             this.subscribeToSaveResponse(
                 this.modelingExerciseService.update(this.modelingExercise));

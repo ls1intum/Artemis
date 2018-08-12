@@ -1,5 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import {
@@ -15,7 +16,7 @@ import {
     ModelingExerciseService
 } from './';
 import { CourseModelingExerciseService } from '../course/course.service';
-import { SortByModule } from '../../components/pipes';
+import { SortByModule, DatePipeModule } from '../../components/pipes';
 
 const ENTITY_STATES = [
     ...modelingExerciseRoute,
@@ -26,7 +27,10 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule
+        SortByModule,
+        DatePipeModule,
+        OwlDateTimeModule,
+        OwlNativeDateTimeModule
     ],
     declarations: [
         ModelingExerciseComponent,
