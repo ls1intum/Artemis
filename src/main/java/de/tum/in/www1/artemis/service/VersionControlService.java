@@ -14,7 +14,7 @@ public interface VersionControlService {
     public void configureRepository(URL repositoryUrl, String username);
 
     /**
-     * This creates a WebHook on the Version Control System that notifies ArTEMiS about pushes to the repository.
+     * This creates a WebHook on the Version Control System that notifies the given URL about pushes to the repository.
      * Multiple calls won't affect the result as the implementation must ensure that there is only one WebHook per URL.
      *
      * @param repositoryUrl   The repository to create the hook on
@@ -41,4 +41,12 @@ public interface VersionControlService {
      * @return whether the WebHook should be created
      */
     public Boolean isCreateCIWebHook();
+
+    /**
+     * Get the last commit hash that is included in the given requestBody that notifies about a push.
+     *
+     * @param requestBody The request Body received from the VCS.
+     * @return the last commit hash that is included in the given requestBody
+     */
+    public String getLastCommitHash(Object requestBody);
 }

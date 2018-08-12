@@ -186,6 +186,8 @@ public class BitbucketService implements VersionControlService {
                 Map<String, String> result = new HashMap<>();
                 result.put("slug", forkName);
                 result.put("cloneUrl", buildCloneUrl(baseProjectKey, forkName, username).toString());
+                // Delete existing WebHooks (partipation ID might have changed)
+                deleteExistingWebHooks(baseProjectKey, forkName);
                 return result;
             } else {
                 throw e;
@@ -327,7 +329,15 @@ public class BitbucketService implements VersionControlService {
         }
     }
 
-    private boolean webHookExists(String projectKey, String repositorySlug, String notificationUrl) throws BitbucketException {
+    /**
+     * Get all existing WebHooks for a specific repository.
+     *
+     * @param projectKey     The project key of the repository's project.
+     * @param repositorySlug The repository's slug.
+     * @return A map of all ids of the WebHooks to the URL they notify.
+     * @throws BitbucketException if the request to get the WebHooks failed
+     */
+    private Map<Integer, String> getExistingWebHooks(String projectKey, String repositorySlug) throws BitbucketException {
         HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
         String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
 
@@ -341,26 +351,27 @@ public class BitbucketService implements VersionControlService {
                 entity,
                 Map.class);
         } catch (Exception e) {
-            log.error("Error while checking existing WebHooks", e);
-            throw new BitbucketException("Error while checking existing WebHooks", e);
-        }
-        // TODO: BitBucket uses a pagination API to split up the responses, so we have to check all pages
-
-        if ((Integer) response.getBody().get("size") == 0) {
-            log.debug("No WebHook exists for {}-{}", projectKey, repositorySlug);
-            return false;
+            log.error("Error while getting existing WebHooks", e);
+            throw new BitbucketException("Error while getting existing WebHooks", e);
         }
 
-        List<Map<String, Object>> webHooks = (List<Map<String, Object>>) response.getBody().get("values");
-        for (Map<String, Object> webHook: webHooks) {
-            if (webHook.get("url").equals(notificationUrl)) {
-                log.debug("WebHook exists for {}-{}", projectKey, repositorySlug);
-                return true;
+        Map<Integer, String> webHooks = new HashMap<>();
+
+        if (response != null && response.getStatusCode().equals(HttpStatus.OK)) {
+            // TODO: BitBucket uses a pagination API to split up the responses, so we have to check all pages
+            List<Map<String, Object>> rawWebHooks = (List<Map<String, Object>>) response.getBody().get("values");
+            for (Map<String, Object> rawWebHook: rawWebHooks) {
+                webHooks.put((Integer) rawWebHook.get("id"), (String) rawWebHook.get("url"));
             }
+            return webHooks;
         }
+        log.error("Error while getting existing WebHooks for {}-{}: Invalid response", projectKey, repositorySlug);
+        throw new BitbucketException("Error while getting existing WebHooks: Invalid response");
+    }
 
-        log.debug("No WebHook exists for {}-{}", projectKey, repositorySlug);
-        return false;
+    private boolean webHookExists(String projectKey, String repositorySlug, String notificationUrl) {
+        Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
+        return webHooks.values().contains(notificationUrl);
     }
 
     private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {
@@ -388,6 +399,26 @@ public class BitbucketService implements VersionControlService {
         } catch (HttpClientErrorException e) {
             log.error("Could not add create WebHook for {}-{} ({})", projectKey, repositorySlug, notificationUrl, e);
             throw new BitbucketException("Error while creating WebHook");
+        }
+    }
+
+    private void deleteWebHook(String projectKey, String repositorySlug, Integer webHookId) {
+        String baseUrl = BITBUCKET_SERVER_URL + "/rest/api/1.0/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks/" + webHookId;
+        log.info("Delete WebHook {} on project {}-{}", webHookId, projectKey, repositorySlug);
+        HttpHeaders headers = HeaderUtil.createAuthorization(BITBUCKET_USER, BITBUCKET_PASSWORD);
+        HttpEntity<?> entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(baseUrl, HttpMethod.DELETE, entity, Map.class);
+        } catch (Exception e) {
+            log.error("Could not delete WebHook", e);
+        }
+    }
+
+    private void deleteExistingWebHooks(String projectKey, String repositorySlug) {
+        Map<Integer, String> webHooks = getExistingWebHooks(projectKey, repositorySlug);
+        for (Integer webHookId : webHooks.keySet()) {
+            deleteWebHook(projectKey, repositorySlug, webHookId);
         }
     }
 
@@ -441,6 +472,20 @@ public class BitbucketService implements VersionControlService {
     @Override
     public Boolean isCreateCIWebHook() {
         return CREATE_CI_WEBHOOK;
+    }
+
+    @Override
+    public String getLastCommitHash(Object requestBody) {
+        // https://confluence.atlassian.com/bitbucket/event-payloads-740262817.html
+        Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
+        Map<String, Object> push = (Map<String, Object>) requestBodyMap.get("push");
+        List<Object> changes = (List<Object>) push.get("changes");
+        Map<String, Object> lastChange = (Map<String, Object>) changes.get(0);
+        List<Object> commits = (List<Object>) lastChange.get("commits");
+        Map<String, Object> lastCommit = (Map<String, Object>) commits.get(0);
+        String hash = (String) lastCommit.get("hash");
+
+        return hash;
     }
 
     private URL buildCloneUrl(String projectKey, String repositorySlug, String username) {
