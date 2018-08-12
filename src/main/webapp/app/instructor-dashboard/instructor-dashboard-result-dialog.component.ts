@@ -7,6 +7,7 @@ import { Result, ResultService } from '../entities/result';
 import { Participation } from '../entities/participation';
 import { Feedback, FeedbackType } from '../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-instructor-dashboard-result-dialog',
@@ -18,6 +19,8 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     result: Result;
     feedbacks: Feedback[] = [];
     isSaving = false;
+    completionDateToggled = false;
+    completionDate: Date;
 
     constructor(
         private resultService: ResultService,
@@ -29,6 +32,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     ngOnInit() {
         if (this.result.completionDate) {
             this.result.completionDate = this.datePipe.transform(this.result.completionDate, 'yyyy-MM-ddTHH:mm:ss');
+            this.completionDate = new Date(this.result.completionDate || undefined);
         }
         if (this.participation) {
             this.result.participation = this.participation;
@@ -41,9 +45,15 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
+    toggleClock() {
+      this.completionDateToggled = !this.completionDateToggled;
+    }
+
     save() {
         this.result.feedbacks = this.feedbacks;
         this.isSaving = true;
+        this.result.completionDate = moment(this.releaseDate).format();
+
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }

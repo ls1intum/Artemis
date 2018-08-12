@@ -15,7 +15,8 @@ import { InstructorDashboardExportReposComponent, InstructorDashboardExportRepos
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
 import { JhiResultDetailComponent } from '../courses';
 import { InstructorDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './instructor-dashboard-result-dialog.component';
-import { SortByModule } from '../components/pipes/sort-by.module';
+import { SortByModule, DatePipeModule } from '../components/pipes';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
 
 const ENTITY_STATES = [
     {
@@ -77,6 +78,9 @@ const ENTITY_STATES = [
         NgbModule,
         ArTEMiSCoursesModule,
         SortByModule,
+        OwlDateTimeModule,
+        OwlNativeDateTimeModule,
+        DatePipeModule
     ],
     declarations: [
         InstructorDashboardComponent,
@@ -105,7 +109,7 @@ const ENTITY_STATES = [
         InstructorDashboardExportReposPopupComponent,
     ],
     providers: [
-        InstructorDashboardPopupService
+        InstructorDashboardPopupService,
     ]
 })
 export class ArTEMiSInstructorDashboardModule {}
