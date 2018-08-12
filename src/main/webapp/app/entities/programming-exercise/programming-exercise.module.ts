@@ -1,5 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
+import { BrowserModule } from '@angular/platform-browser';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import {
@@ -12,10 +14,10 @@ import {
     programmingExercisePopupRoute,
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
-    ProgrammingExerciseService
+    ProgrammingExerciseService,
 } from './';
 import { CourseProgrammingExerciseService } from '../course/course.service';
-import { SortByModule } from '../../components/pipes';
+import { SortByModule, DatePipeModule } from '../../components/pipes';
 
 const ENTITY_STATES = [
     ...programmingExerciseRoute,
@@ -26,7 +28,10 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule
+        SortByModule,
+        OwlDateTimeModule,
+        OwlNativeDateTimeModule,
+        DatePipeModule
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -34,7 +39,7 @@ const ENTITY_STATES = [
         ProgrammingExerciseDialogComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseDeletePopupComponent
+        ProgrammingExerciseDeletePopupComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
