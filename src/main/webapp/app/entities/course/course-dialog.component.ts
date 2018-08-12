@@ -36,7 +36,6 @@ export class CourseDialogComponent implements OnInit {
         this.isSaving = false;
         this.startDate = new Date(this.course.startDate || undefined);
         this.endDate = new Date(this.course.endDate || undefined);
-        console.log(this.course);
     }
 
     clear() {
