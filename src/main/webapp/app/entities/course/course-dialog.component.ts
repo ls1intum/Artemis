@@ -10,6 +10,8 @@ import { Course } from './course.model';
 import { CoursePopupService } from './course-popup.service';
 import { CourseService } from './course.service';
 
+import * as moment from 'moment';
+
 @Component({
     selector: 'jhi-course-dialog',
     templateUrl: './course-dialog.component.html'
@@ -18,6 +20,10 @@ export class CourseDialogComponent implements OnInit {
 
     course: Course;
     isSaving: boolean;
+    startDate: Date;
+    endDate: Date;
+    endClockToggled = false;
+    startClockToggled = false;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -28,14 +34,32 @@ export class CourseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
+        this.startDate = new Date(this.course.startDate || undefined);
+        this.endDate = new Date(this.course.endDate || undefined);
+        console.log(this.course);
     }
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
+    toggleClock(input: string) {
+      switch ( input ) {
+        case 'startDate':
+          this.startClockToggled = !this.startClockToggled;
+          break;
+        case 'endDate':
+          this.endClockToggled = !this.endClockToggled;
+          break;
+      }
+    }
+
     save() {
         this.isSaving = true;
+
+        this.course.startDate = moment(this.startDate).format();
+        this.course.endDate = moment(this.endDate).format();
+
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(
                 this.courseService.update(this.course));
