@@ -36,6 +36,18 @@
     "@ngtools/json-schema" "^1.1.0"
     rxjs "^5.5.6"
 
+"@angular/animations@5.2.11":
+  version "5.2.11"
+  resolved "https://registry.yarnpkg.com/@angular/animations/-/animations-5.2.11.tgz#2bd3fe9e72916ca28de9bfaaddf0cb936565a0b8"
+  dependencies:
+    tslib "^1.7.1"
+
+"@angular/cdk@^5.2.0":
+  version "5.2.5"
+  resolved "https://registry.yarnpkg.com/@angular/cdk/-/cdk-5.2.5.tgz#cae2b12e1990a692dd267a73fdb1d49db37f9604"
+  dependencies:
+    tslib "^1.7.1"
+
 "@angular/cli@1.7.4":
   version "1.7.4"
   resolved "https://registry.yarnpkg.com/@angular/cli/-/cli-1.7.4.tgz#b6c31b5fc6f8ea07e55b1b01a26422f5358a4ea6"
@@ -228,9 +240,9 @@
     semver "^5.3.0"
     semver-intersect "^1.1.2"
 
-"@types/angular@^1.6.45":
-  version "1.6.45"
-  resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.45.tgz#5b0b91a51d717f6fc816d59e1234d5292f33f7b9"
+"@types/angular@^1.6.49":
+  version "1.6.49"
+  resolved "https://registry.yarnpkg.com/@types/angular/-/angular-1.6.49.tgz#8a5dd666100155d27cda9801f961360eb24b8d96"
 
 "@types/jasmine@2.8.7":
   version "2.8.7"
@@ -517,24 +529,24 @@ angular-router-loader@0.8.5:
   dependencies:
     loader-utils "^1.0.2"
 
-angular-translate-interpolation-messageformat@^2.17.0:
-  version "2.17.0"
-  resolved "https://registry.yarnpkg.com/angular-translate-interpolation-messageformat/-/angular-translate-interpolation-messageformat-2.17.0.tgz#49ba512946c9b7bf5c8fd88bca527556420abe31"
+angular-translate-interpolation-messageformat@^2.18.1:
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/angular-translate-interpolation-messageformat/-/angular-translate-interpolation-messageformat-2.18.1.tgz#16c52ae0c61c240f0f24164a0521943cf8ba408e"
   dependencies:
-    angular-translate "~2.17.0"
+    angular-translate "~2.18.1"
     messageformat "~1.0.2"
 
-angular-translate@~2.17.0:
-  version "2.17.0"
-  resolved "https://registry.yarnpkg.com/angular-translate/-/angular-translate-2.17.0.tgz#0871e50bec65eb30f6fbe6d83e4bee6bc5fcb474"
+angular-translate@~2.18.1:
+  version "2.18.1"
+  resolved "https://registry.yarnpkg.com/angular-translate/-/angular-translate-2.18.1.tgz#b29ed0d2f9bac44075e7aad3284166c59e150791"
   dependencies:
-    angular ">=1.2.26 <=1.6"
+    angular ">=1.2.26 <=1.7"
 
-angular2-moment@^1.7.1:
-  version "1.7.1"
-  resolved "https://registry.yarnpkg.com/angular2-moment/-/angular2-moment-1.7.1.tgz#bab14d21d35322bacab8ee7548b36dd587abf7d1"
+angular2-moment@^1.9.0:
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/angular2-moment/-/angular2-moment-1.9.0.tgz#d198a4d9bc825f61de19106ac7ea07a78569f5a1"
   dependencies:
-    moment "^2.16.0"
+    moment "^2.19.3"
 
 angular2-template-loader@0.6.2:
   version "0.6.2"
@@ -546,9 +558,9 @@ angular@1.5.8:
   version "1.5.8"
   resolved "https://registry.yarnpkg.com/angular/-/angular-1.5.8.tgz#925a5392b8c212d09572dc446db7e01264e094cb"
 
-"angular@>=1.2.26 <=1.6":
-  version "1.6.9"
-  resolved "https://registry.yarnpkg.com/angular/-/angular-1.6.9.tgz#bc812932e18909038412d594a5990f4bb66c0619"
+"angular@>=1.2.26 <=1.7":
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/angular/-/angular-1.7.3.tgz#0f25a661d079fc84d5ccc877a2ef9d7178575ddb"
 
 ansi-escapes@^1.1.0:
   version "1.4.0"
@@ -6070,11 +6082,7 @@ moment@^2.10.2:
   version "2.21.0"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.21.0.tgz#2a114b51d2a6ec9e6d83cf803f838a878d8a023a"
 
-moment@^2.16.0:
-  version "2.20.1"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.20.1.tgz#d6eb1a46cbcc14a2b2f9434112c1ff8907f313fd"
-
-moment@^2.22.1:
+moment@^2.19.3, moment@^2.22.1, moment@^2.22.2:
   version "2.22.2"
   resolved "https://registry.yarnpkg.com/moment/-/moment-2.22.2.tgz#3c257f9839fc0e93ff53149632239eb90783ff66"
 
@@ -6208,6 +6216,12 @@ ng-jhipster@0.5.3:
   dependencies:
     "@ngx-translate/core" "^8.0.0"
     "@ngx-translate/http-loader" "^2.0.0"
+
+ng-pick-datetime@^5.2.6:
+  version "5.2.6"
+  resolved "https://registry.yarnpkg.com/ng-pick-datetime/-/ng-pick-datetime-5.2.6.tgz#a51f3443eefd5944ae41c556d81fad0c141a412b"
+  dependencies:
+    "@angular/cdk" "^5.2.0"
 
 ng2-charts@^1.6.0:
   version "1.6.0"
@@ -6948,9 +6962,9 @@ pluralize@7.0.0:
   version "7.0.0"
   resolved "https://registry.yarnpkg.com/pluralize/-/pluralize-7.0.0.tgz#298b89df8b93b0221dbf421ad2b1b1ea23fc6777"
 
-popper.js@^1.14.3:
-  version "1.14.3"
-  resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.14.3.tgz#1438f98d046acf7b4d78cd502bf418ac64d4f095"
+popper.js@^1.14.4:
+  version "1.14.4"
+  resolved "https://registry.yarnpkg.com/popper.js/-/popper.js-1.14.4.tgz#8eec1d8ff02a5a3a152dd43414a15c7b79fd69b6"
 
 portfinder@^1.0.9, portfinder@~1.0.12:
   version "1.0.13"
