@@ -57,15 +57,15 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     getResults(courseId: number) {
-        this.courseResultService.findAll(courseId).subscribe(res => {
+        this.courseResultService.findAll(courseId).subscribe(res => { //this call gets all information to the results in the exercises
             this.results = res;
             this.groupResults();
         });
 
-        this.courseParticipationService.findAll(courseId).subscribe(res => {
+        this.courseParticipationService.findAll(courseId).subscribe(res => { //this call gets all information to the participation in the exercises
             this.participations = res;
             this.groupResults();
-            //TODO: get rid of this call because all participations are probably stored in this.results anyway, so rather get them from there
+            //TODO: get rid of this call because all participations are probably stored in this.results anyway, so rather get them from there (DONE)
             //participations is necessary as in results not all students are stored
         });
 
@@ -98,7 +98,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 };
             }
             //todo fde: double check if this is correctly calculated
-            rows[participation.student.id].participated++;
+           rows[participation.student.id].participated++;
 
             const exercise = participation.exercise;
 
@@ -108,7 +108,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
 
                 switch (exercise.type) {
-                    case "quiz":
+                    case 'quiz':
                         maximalZuErreichendePunkteQ += exercise.maxScore;
 
                         this.allQuizExercises[exercise.id] = {
@@ -119,7 +119,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
                         break;
 
-                    case "programming-exercise":
+                    case 'programming-exercise':
                         maximalZuErreichendePunkteP += exercise.maxScore;
 
                         this.allProgrammingExercises[exercise.id] = {
@@ -129,7 +129,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                         this.titleProgrammingString += exercise.title + ',';
 
                         break;
-                    case "modelling-exercise":
+                    case 'modelling-exercise':
                         maximalZuErreichendePunkteM += exercise.maxScore;
 
                         this.allModellingExercises[exercise.id] = {
@@ -148,10 +148,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         // Successful Participations as the total amount and a relative value to all Exercises
 
         //TODO: If these values are not needed right away, move this functionality to the place where we check these conditions anyway
+        //if we are removing the table anyhow we do not need this functionality
         for (const result of this.results) {
 
             if (result.successful) {
-                if (result.participation.exercise.type === "quiz") {
+                if (result.participation.exercise.type === 'quiz') {
                     if (result.rated === true) {
                         rows[result.participation.student.id].successful++;
                     }
@@ -159,6 +160,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 else {
                     //TODO: also take into account that the last result before the due date has to be taken for programming exercise (see code below)
                     //TODO: also take into account that the last submission has to be taken for modelling exercises (see code below)
+                    //also not needed if we remove functionality
                     rows[result.participation.student.id].successful++;
                 }
             }
@@ -201,7 +203,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         const studentsProgrammingScores = {};
         const studentsModellingScores = {};
 
-        for (const result of this.results) {
+
+        for (const result of this.results) { //populating buckets of scores
 
 
             const student = result.participation.student;
@@ -249,11 +252,14 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             }
 
 
+
+
+
             let resultCompletionDate = new Date(result.completionDate);
             let dueDate = new Date(exercise.dueDate);
 
             switch (exercise.type) {
-                case "quiz":
+                case 'quiz':
                     if (result.rated === true) {   //There should only be 1 rated result
 
                         studentsQuizScores[student.id].scoreListQ[exercise.id] = {
@@ -265,7 +271,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     }
                     break;
 
-                case "programming-exercise":
+                case 'programming-exercise':
                     if (resultCompletionDate.getTime() <= dueDate.getTime()) {
 
                         const existingScore = studentsProgrammingScores[student.id].scoreListP[exercise.id];
@@ -280,7 +286,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     }
                     break;
 
-                case "modelling-exercise":
+                case 'modelling-exercise':
                     // we can also have results (due to the manual assessment) that appear after the completion date
                     // if (completionDate.getTime() <= dueDate.getTime()) {
 
@@ -340,31 +346,31 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
 
         for (const studentsQuizScore of this.typeQuizExercise) {
-            let stringQ = '';
-            let qStringEveryScore = {};
+            let quizScoreString = '';
+            let quizEveryScore = {};
 
 
-            for (const quizzes in this.allQuizExercises) {
+            for (const quiz in this.allQuizExercises) {
                 let bool = true;
-                let exId = this.allQuizExercises[quizzes].exId;
-
+                let exerciseIdentifierQuiz = this.allQuizExercises[quiz].exId;
+                //refactoring done changed 4 instances of exID to something more readable
                 for (const scoresQ in studentsQuizScore.scoreListQ) {
                     let exID = studentsQuizScore.scoreListQ[scoresQ].exID;
-                    if (exId == exID) {
+                    if (exerciseIdentifierQuiz == exID) {
                         bool = false;
-                        stringQ += studentsQuizScore.scoreListQ[scoresQ].absoluteScore + ',';
-                        qStringEveryScore = {
-                            'exID': exID, 'exTitle': this.allQuizExercises[quizzes].title,
+                        quizScoreString += studentsQuizScore.scoreListQ[scoresQ].absoluteScore + ',';
+                        quizEveryScore = {
+                            'exID': exID, 'exTitle': this.allQuizExercises[quiz].title,
                             'absoluteScore': studentsQuizScore.scoreListQ[scoresQ].absoluteScore
                         };
                     }
                 }
                 if (bool) {
-                    qStringEveryScore = {
-                        'exID': exId, 'exTitle': this.allQuizExercises[quizzes].title,
+                    quizEveryScore = {
+                        'exID': exerciseIdentifierQuiz, 'exTitle': this.allQuizExercises[quiz].title,
                         'absoluteScore': 0
                     };
-                    stringQ += '0,';
+                    quizScoreString += '0,';
                 }
             }
 
@@ -387,8 +393,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 };
             }
             finalScores[studentsQuizScore.id].QuizTotalScore = studentsQuizScore.totalScore;
-            finalScores[studentsQuizScore.id].QuizEveryScore = qStringEveryScore;
-            finalScores[studentsQuizScore.id].QuizScoreString = stringQ;
+            finalScores[studentsQuizScore.id].QuizEveryScore = quizEveryScore;
+            finalScores[studentsQuizScore.id].QuizScoreString = quizScoreString;
         }
 
         for (const studentsModellingScore of this.typeModellingExercise) {
@@ -412,8 +418,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 };
             }
 
-            let stringM = '';
-            let mStringEveryScore = {};
+            let modellingScoreString = '';
+            let modellingEveryScore = {};
 
             for (const modellings in this.allModellingExercises) {
                 let bool = true;
@@ -423,26 +429,26 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     let exID = studentsModellingScore.scoreListM[scores].exID;
                     if (exId == exID) {
                         bool = false;
-                        stringM += studentsModellingScore.scoreListM[scores].absoluteScore + ',';
-                        mStringEveryScore = {
+                        modellingScoreString += studentsModellingScore.scoreListM[scores].absoluteScore + ',';
+                        modellingEveryScore = {
                             'exID': exID, 'exTitle': this.allModellingExercises[modellings].title,
                             'absoluteScore': studentsModellingScore.scoreListM[scores].absoluteScore
                         };
                     }
                 }
                 if (bool) {
-                    mStringEveryScore = {
+                    modellingEveryScore = {
                         'exID': exId, 'exTitle': this.allModellingExercises[modellings].title,
                         'absoluteScore': 0
                     };
-                    stringM += '0,';
+                    modellingScoreString += '0,';
                 }
             }
 
 
             finalScores[studentsModellingScore.id].ModellingTotalScore = studentsModellingScore.totalScore;
-            finalScores[studentsModellingScore.id].ModellEveryScore = mStringEveryScore;
-            finalScores[studentsModellingScore.id].ModellingScoreString = stringM;
+            finalScores[studentsModellingScore.id].ModellEveryScore = modellingEveryScore;
+            finalScores[studentsModellingScore.id].ModellingScoreString = modellingScoreString;
 
 
         }
@@ -469,8 +475,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                 };
             }
 
-            let stringP = '';
-            let pStringEveryScore = {};
+            let programmingScoreString = '';
+            let programmingEveryScore = {};
 
             for (const programmings in this.allProgrammingExercises) {
                 let bool = true;
@@ -480,25 +486,25 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
                     let exID = studentsProgrammingScore.scoreListP[scores].exID;
                     if (exId == exID) {
                         bool = false;
-                        stringP += studentsProgrammingScore.scoreListP[scores].absoluteScore + ',';
-                        pStringEveryScore = {
+                        programmingScoreString += studentsProgrammingScore.scoreListP[scores].absoluteScore + ',';
+                        programmingEveryScore = {
                             'exID': exID, 'exTitle': this.allProgrammingExercises[programmings].title,
                             'absoluteScore': studentsProgrammingScore.scoreListP[scores].absoluteScore
                         };
                     }
                 }
                 if (bool) {
-                    pStringEveryScore = {
+                    programmingEveryScore = {
                         'exID': exId, 'exTitle': this.allProgrammingExercises[programmings].title,
                         'absoluteScore': 0
                     };
-                    stringP += '0,';
+                    programmingScoreString += '0,';
                 }
             }
 
             finalScores[studentsProgrammingScore.id].ProgrammingTotalScore = studentsProgrammingScore.totalScore;
-            finalScores[studentsProgrammingScore.id].ProgrammingEveryScore = pStringEveryScore;
-            finalScores[studentsProgrammingScore.id].ProgrammingScoreString = stringP;
+            finalScores[studentsProgrammingScore.id].ProgrammingEveryScore = programmingEveryScore;
+            finalScores[studentsProgrammingScore.id].ProgrammingScoreString = programmingScoreString;
 
         }
 
@@ -568,7 +574,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         this.exportReady = true;
     }
 
-    exportResults() { //method for exporting the csv with the needed data 
+    exportResults() { //method for exporting the csv with the needed data
 
         this.getAllScoresForAllCourseParticipants();
 
@@ -590,7 +596,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
 
                 if (index === 0) {
-                    rows.push('data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,' + this.titleQuizString + 'ProgrammingTotalScore,' + this.titleProgrammingString + 'ModellingTotalScore,' + this.titleModellingString + 'OverallScore');
+                    const info= 'data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,'; //shortening line length and complexity
+                    rows.push(info + this.titleQuizString + 'ProgrammingTotalScore,' + this.titleProgrammingString + 'ModellingTotalScore,' + this.titleModellingString + 'OverallScore');
                     rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quiz + ',' + quizString + '' + programming + ',' + programmingString + '' + modelling + ',' + modellingString + '' + score);
                 } else {
                     rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quiz + ',' + quizString + '' + programming + ',' + programmingString + '' + modelling + ',' + modellingString + '' + score);
