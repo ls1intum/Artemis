@@ -201,6 +201,8 @@ public class Result implements Serializable {
         return rated != null ? rated : false;
     }
 
+    public Boolean isRated2(){return rated;}
+
     public Result rated(Boolean rated) {
         this.rated = rated;
         return this;

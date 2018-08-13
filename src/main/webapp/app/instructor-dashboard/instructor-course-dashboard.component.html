@@ -14,7 +14,6 @@
                     <span jhiTranslate="userManagement.login">Login</span> <span class="fa fa-sort"></span>
                 </th>
 
-
                 <th jhiSortBy="participated">
                     <span jhiTranslate="instructorDashboard.participated">Participated in exercises </span>(%) <span class="fa fa-sort"></span>
                 </th>
@@ -39,8 +38,6 @@
                     <span jhiTranslate="instructorDashboard.overallScore">Overall Score</span> <span class="fa fa-sort"></span>
                 </th>
 
-
-
             </tr>
             </thead>
             <tbody>
@@ -53,7 +50,6 @@
                 <td>{{ row.ProgrammingTotalScore }} ({{ row.successfullyCompletedProgrammingInPercent | number: '0.0-0'}}%)</td>
                 <td>{{ row.modelingTotalScore }} ({{ row.successfullyCompletedModelingInPercent | number: '0.0-0'}}%)</td>
                 <td>{{ row.OverallScore | number: '0.0-0'}}</td>
-
             </tr>
             </tbody>
         </table>
