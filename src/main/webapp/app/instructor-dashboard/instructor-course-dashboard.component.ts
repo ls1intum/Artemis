@@ -26,6 +26,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     numberOfExercises = 0;
     rows = [];
     results = [];
+    results2 = [];
     participations = [];    //[Participation]
     typeQuizExercise = []; //refactored to a more legible name
     typeProgrammingExercise = [];
@@ -64,7 +65,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             this.results = res;
             this.groupResults();
         });
-
+        this.courseResultService.findAllResults(courseId).subscribe(res => { //this call gets all information to the results in the exercises
+            this.results2 = res;
+            this.groupResults();
+        });
         this.courseParticipationService.findAll(courseId).subscribe(res => { //this call gets all information to the participation in the exercises
             this.participations = res;
             this.groupResults();
@@ -593,6 +597,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
         }
 
+
+
         //gets all students that were not caught in results
         for (const participation of this.participations) {
 
@@ -723,6 +729,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             link.setAttribute('download', 'course_' + this.course.title + '-scores.csv');
             document.body.appendChild(link); // Required for FF
             link.click();
+            console.log(this.results);
+
+            console.log(this.results2);
         }
     }
 

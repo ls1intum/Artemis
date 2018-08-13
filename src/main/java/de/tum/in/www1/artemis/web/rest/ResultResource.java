@@ -341,8 +341,32 @@ public class ResultResource {
         return ResponseEntity.ok().body(results);
     }
 
+    /** experimental
+     * GET  /courses/:courseId/results : get the successful results for a course, ordered ascending by build completion date.
+     *
+     * @param courseId the id of the course for which to retrieve the results
+     * @return the ResponseEntity with status 200 (OK) and the list of results in body
+     */
+    @GetMapping(value = "/courses/{courseId}/results2")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<List<Result>> getResultsForCourse2(@PathVariable Long courseId) {
+        log.debug("REST request to get Results for Course : {}", courseId);
+        Course course = courseService.findOne(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<Result> results2 = resultRepository.findFilteredResultsForCourse(courseId);
+        for (int i= 0; i<results2.size();i++){
+        }
+        return ResponseEntity.ok().body(results2);
+    }
 
-    //TODO: create your own call and filter out results for quiz exercises with rated = 0
+
+    //TODO: create your own call and filter out results for quiz exercises with rated = 0 (Comment: if we filter out exercises by result.rated we end up with 0 results, since all are rated false)
     //TODO: try to only store one result for programming exercise per student
 
 
