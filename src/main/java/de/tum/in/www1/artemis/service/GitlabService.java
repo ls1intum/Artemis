@@ -438,12 +438,17 @@ public class GitlabService implements VersionControlService {
     }
 
     @Override
-    public String getLastCommitHash(Object requestBody) {
+    public String getLastCommitHash(Object requestBody) throws GitlabException {
         // https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#push-events
-        Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
-        String hash = (String) requestBodyMap.get("after");
+        try {
+            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
+            String hash = (String) requestBodyMap.get("after");
 
-        return hash;
+            return hash;
+        } catch (Exception e) {
+            log.error("Error when getting hash of last commit");
+            throw new GitlabException("Could not get hash of last commit", e);
+        }
     }
 
     /**

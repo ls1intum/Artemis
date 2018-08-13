@@ -47,6 +47,7 @@ public interface VersionControlService {
      *
      * @param requestBody The request Body received from the VCS.
      * @return the last commit hash that is included in the given requestBody
+     * @throws Exception if the Body could not be parsed
      */
-    public String getLastCommitHash(Object requestBody);
+    public String getLastCommitHash(Object requestBody) throws Exception;
 }

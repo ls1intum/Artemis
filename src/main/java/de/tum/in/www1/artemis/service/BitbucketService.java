@@ -475,17 +475,22 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public String getLastCommitHash(Object requestBody) {
+    public String getLastCommitHash(Object requestBody) throws BitbucketException {
         // https://confluence.atlassian.com/bitbucket/event-payloads-740262817.html
-        Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
-        Map<String, Object> push = (Map<String, Object>) requestBodyMap.get("push");
-        List<Object> changes = (List<Object>) push.get("changes");
-        Map<String, Object> lastChange = (Map<String, Object>) changes.get(0);
-        List<Object> commits = (List<Object>) lastChange.get("commits");
-        Map<String, Object> lastCommit = (Map<String, Object>) commits.get(0);
-        String hash = (String) lastCommit.get("hash");
+        try {
+            Map<String, Object> requestBodyMap = (Map<String, Object>) requestBody;
+            Map<String, Object> push = (Map<String, Object>) requestBodyMap.get("push");
+            List<Object> changes = (List<Object>) push.get("changes");
+            Map<String, Object> lastChange = (Map<String, Object>) changes.get(0);
+            List<Object> commits = (List<Object>) lastChange.get("commits");
+            Map<String, Object> lastCommit = (Map<String, Object>) commits.get(0);
+            String hash = (String) lastCommit.get("hash");
 
-        return hash;
+            return hash;
+        } catch (Exception e) {
+            log.error("Error when getting hash of last commit");
+            throw new BitbucketException("Could not get hash of last commit", e);
+        }
     }
 
     private URL buildCloneUrl(String projectKey, String repositorySlug, String username) {
