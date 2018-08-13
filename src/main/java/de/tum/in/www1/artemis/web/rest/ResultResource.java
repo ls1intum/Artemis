@@ -359,12 +359,21 @@ public class ResultResource {
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        List<Result> results2 = resultRepository.findFilteredResultsForCourse(courseId);
+        List<Result> resultsOriginal = resultRepository.findFilteredResultsForCourse(courseId);
+        List<Result> results2 = null;
+        String orange = null ;
+        for (Result resultInstance:resultsOriginal){
+            /*if (resultInstance.isRated2()!=false && resultInstance!=null){
+                 orange += resultInstance.toString();
+
+            }*/
+            orange += resultInstance.toString();
+        }
         return ResponseEntity.ok().body(results2);
     }
 
 
-    //TODO: create your own call and filter out results for quiz exercises with rated = 0 (Comment: if we filter out exercises by result.rated we end up with 0 results, since all are rated false)
+    //TODO: create your own call and filter out results for quiz exercises with rated = 0 (Comment: the result object list keeps getting org.hibernate.LazyInitializationExceptions)
     //TODO: try to only store one result for programming exercise per student
 
 
