@@ -4,6 +4,9 @@
         "participated": "Teilgenommen an Übungen",
         "completed": "Erfolgreich abgeschlossen",
         "completedExercises": "Erfolgreich abgeschlossene Übungen",
+        "totalScoreQuizzes": "Gesamtwert Quizaufgaben",
+        "totalScoreProgramming": "Gesamtwert Programmieraufgaben",
+        "totalScoreModeling": "Gesamtwert Modellierungsaufgaben",
         "overallScore": "Gesamtwert",
         "students": "Studenten",
         "cleanup": {

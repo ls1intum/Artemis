@@ -1,8 +1,8 @@
 <div *ngIf="course">
-    <h2>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{rows.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
+    <h2>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{finalScores.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
 <jhi-alert></jhi-alert>
     <button class="btn btn-primary btn-sm"  (click)="exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results as CSV</button>
-    <div class="table-responsive" *ngIf="rows">
+    <div class="table-responsive" *ngIf="finalScores">
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse"  [callback]="callback">
@@ -16,19 +16,23 @@
 
 
                 <th jhiSortBy="participated">
-                    <span jhiTranslate="instructorDashboard.participated">Participated in exercises</span> <span class="fa fa-sort"></span>
-                </th>
-
-                <th jhiSortBy="participationInPercent">
-                    <span jhiTranslate="instructorDashboard.participated">Participated in exercises %</span> <span class="fa fa-sort"></span>
+                    <span jhiTranslate="instructorDashboard.participated">Participated in exercises </span>(%) <span class="fa fa-sort"></span>
                 </th>
 
                 <th jhiSortBy="successful">
-                    <span jhiTranslate="instructorDashboard.completedExercises">Successfully completed exercises</span> <span class="fa fa-sort"></span>
+                    <span jhiTranslate="instructorDashboard.completedExercises">Successfully completed exercises </span>(%) <span class="fa fa-sort"></span>
                 </th>
 
-                <th jhiSortBy="successfullyCompletedInPercent">
-                    <span jhiTranslate="instructorDashboard.completed">Successfully completed %</span> <span class="fa fa-sort"></span>
+                <th jhiSortBy="totalScoreQuizzes">
+                    <span jhiTranslate="instructorDashboard.totalScoreQuizzes">Total Score Quizzes </span>(%)<span class="fa fa-sort"></span>
+                </th>
+
+                <th jhiSortBy="totalScoreProgramming">
+                    <span jhiTranslate="instructorDashboard.totalScoreProgramming">Total Score Programming </span>(%) <span class="fa fa-sort"></span>
+                </th>
+
+                <th jhiSortBy="totalScoreModeling">
+                    <span jhiTranslate="instructorDashboard.totalScoreModeling">Total Score Modeling </span>(%) <span class="fa fa-sort"></span>
                 </th>
 
                 <th jhiSortBy="overallScore">
@@ -40,13 +44,14 @@
             </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let row of rows | sortBy: predicate: reverse">
+            <tr *ngFor="let row of finalScores | sortBy: predicate: reverse">
                 <td>{{ row.firstName }} {{ row.lastName }}</td>
                 <td>{{ row.login }}</td>
                 <td>{{ row.participatedTotal }} ({{ row.participationTotalInPercent | number: '0.0-0'}}%)</td>
-                <td>({{ row.participationTotalInPercent | number: '0.0-0'}}%)</td>
-                <td>{{ row.successfulTotal }}</td>
-                <td>{{ row.successfullyCompletedTotalInPercent | number: '0.0-0'}}%</td>
+                <td>{{ row.successfulTotal }} ({{ row.successfullyCompletedTotalInPercent | number: '0.0-0'}}%)</td>
+                <td>{{ row.QuizTotalScore }} ({{ row.successfullyCompletedQuizzesInPercent | number: '0.0-0'}}%)</td>
+                <td>{{ row.ProgrammingTotalScore }} ({{ row.successfullyCompletedProgrammingInPercent | number: '0.0-0'}}%)</td>
+                <td>{{ row.modelingTotalScore }} ({{ row.successfullyCompletedModelingInPercent | number: '0.0-0'}}%)</td>
                 <td>{{ row.OverallScore | number: '0.0-0'}}</td>
 
             </tr>

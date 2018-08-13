@@ -4,6 +4,9 @@
         "participated": "Participated in exercises",
         "completed": "Successfully completed",
         "completedExercises": "Successfully completed exercises",
+        "totalScoreQuizzes": "Total Score Quizzes",
+        "totalScoreProgramming": "Total Score Programming",
+        "totalScoreModeling": "Total Score Modeling",
         "overallScore": "Overall score",
         "students": "Students",
         "cleanup": {

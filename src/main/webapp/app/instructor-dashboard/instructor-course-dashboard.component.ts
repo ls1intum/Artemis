@@ -24,7 +24,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     numberOfExercises = 0;
-    rows = [];
     results = [];
     results2 = [];
     participations = [];    //[Participation]
@@ -689,7 +688,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         }
 
         this.finalScores = Object.keys(finalScores).map(key => finalScores[key]);
-        this.rows = this.finalScores;
         this.exportReady = true;
     }
 
