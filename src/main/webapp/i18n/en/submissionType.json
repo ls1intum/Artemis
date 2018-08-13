@@ -1,0 +1,9 @@
+{
+    "arTeMiSApp": {
+        "SubmissionType" : {
+            "null": "",
+            "MANUAL": "MANUAL",
+            "TIMEOUT": "TIMEOUT"
+        }
+    }
+}

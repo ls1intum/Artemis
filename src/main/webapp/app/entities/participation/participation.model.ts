@@ -1,6 +1,7 @@
 import { BaseEntity, User } from './../../shared';
 import { Exercise } from '../exercise';
 import { Result } from '../result';
+import { Submission } from '../submission';
 
 export const enum ParticipationState {
     'UNINITIALIZED',
@@ -20,6 +21,7 @@ export class Participation implements BaseEntity {
         public initializationState?: ParticipationState,
         public initializationDate?: any,
         public results?: Result[],
+        public submissions?: Submission[],
         public student?: User,
         public exercise?: Exercise,
     ) {

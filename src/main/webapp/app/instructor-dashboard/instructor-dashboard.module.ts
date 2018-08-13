@@ -11,6 +11,7 @@ import { ArTEMiSCoursesModule } from '../courses/courses.module';
 import { ResultComponent } from '../courses/results/result.component';
 import { InstructorDashboardArchiveDialogComponent, InstructorDashboardArchivePopupComponent } from './instructor-dashboard-archive-dialog.component';
 import { InstructorDashboardCleanupDialogComponent, InstructorDashboardCleanupPopupComponent } from './instructor-dashboard-cleanup-dialog.component';
+import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent} from './instructor-dashboard-repo-export-dialog.component';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
 import { ResultDetailComponent } from '../courses';
 import { InstructorDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './instructor-dashboard-result-dialog.component';
@@ -55,6 +56,16 @@ const ENTITY_STATES = [
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup'
+    },
+    {
+      path: 'exercise/:id/exportRepos',
+      component: InstructorDashboardExportReposPopupComponent,
+      data: {
+        authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+        pageTitle: 'instructorDashboard.title'
+      },
+      canActivate: [UserRouteAccessService],
+      outlet: 'popup'
     }
 ];
 
@@ -65,7 +76,7 @@ const ENTITY_STATES = [
         RouterModule.forChild(ENTITY_STATES),
         NgbModule,
         ArTEMiSCoursesModule,
-        SortByModule
+        SortByModule,
     ],
     declarations: [
         InstructorDashboardComponent,
@@ -74,7 +85,9 @@ const ENTITY_STATES = [
         InstructorDashboardCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
         InstructorDashboardResultDialogComponent,
-        InstructorDashboardResultPopupComponent
+        InstructorDashboardResultPopupComponent,
+        InstructorDashboardExportReposComponent,
+        InstructorDashboardExportReposPopupComponent,
     ],
     entryComponents: [
         HomeComponent,
@@ -87,7 +100,9 @@ const ENTITY_STATES = [
         InstructorDashboardCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
         InstructorDashboardResultDialogComponent,
-        InstructorDashboardResultPopupComponent
+        InstructorDashboardResultPopupComponent,
+        InstructorDashboardExportReposComponent,
+        InstructorDashboardExportReposPopupComponent,
     ],
     providers: [
         InstructorDashboardPopupService

@@ -41,6 +41,7 @@ import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.m
 import { QuizReEvaluateWrapper } from './quiz/re-evaluate/quiz-re-evaluate.directive';
 import { QuizReEvaluateComponent } from './quiz/re-evaluate/quiz-re-evaluate.component';
 import { Principal } from './shared';
+import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 
 declare var angular: any;
@@ -55,7 +56,7 @@ declare var angular: any;
          */
         UpgradeModule,
         ArTEMiSAppRoutingModule,
-        Ng2Webstorage.forRoot({ prefix: 'jhi', separator: '-'}),
+        Ng2Webstorage.forRoot({ prefix: 'jhi', separator: '-' }),
         /**
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
@@ -87,7 +88,8 @@ declare var angular: any;
         QuizExerciseDetailWrapper,
         QuizExerciseDetailComponent,
         QuizReEvaluateWrapper,
-        QuizReEvaluateComponent
+        QuizReEvaluateComponent,
+        QuizExerciseExportComponent
     ],
     /**
      * @description Entry components:
@@ -109,27 +111,27 @@ declare var angular: any;
         JhiWebsocketService,
         Principal,
         PendingChangesGuard,
-    /**
-     * @description Providing $scope:
-     *  Angular 2+ is using this instead of $scope.
-     *  Usage of $scope/$rootScope is discouraged for upgraded/hybrid setups in general.
-     *  But there are cases where an upgraded service/components needs access to it.
-     *  Therefore, we inject it in the app module to make it available.
-     **/
-    {
-        provide: '$scope',
-        useExisting: '$rootScope'
-    },
-    /**
-     * @description Interceptor declarations:
-     * Interceptors are located at 'blocks/interceptor/.
-     * All of them implement the HttpInterceptor interface.
-     * They can be used to modify API calls or trigger additional function calls.
-     * Most interceptors will transform the outgoing request before passing it to
-     * the next interceptor in the chain, by calling next.handle(transformedReq).
-     * Documentation: https://angular.io/api/common/http/HttpInterceptor
-     */
-    {
+        /**
+         * @description Providing $scope:
+         *  Angular 2+ is using this instead of $scope.
+         *  Usage of $scope/$rootScope is discouraged for upgraded/hybrid setups in general.
+         *  But there are cases where an upgraded service/components needs access to it.
+         *  Therefore, we inject it in the app module to make it available.
+         **/
+        {
+            provide: '$scope',
+            useExisting: '$rootScope'
+        },
+        /**
+         * @description Interceptor declarations:
+         * Interceptors are located at 'blocks/interceptor/.
+         * All of them implement the HttpInterceptor interface.
+         * They can be used to modify API calls or trigger additional function calls.
+         * Most interceptors will transform the outgoing request before passing it to
+         * the next interceptor in the chain, by calling next.handle(transformedReq).
+         * Documentation: https://angular.io/api/common/http/HttpInterceptor
+         */
+        {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
             multi: true,
@@ -183,6 +185,6 @@ declare var angular: any;
         ng1TranslateService,
         ng1TranslatePartialLoaderService
     ],
-    bootstrap: [ JhiMainComponent ]
+    bootstrap: [JhiMainComponent]
 })
-export class ArTEMiSAppModule {}
+export class ArTEMiSAppModule { }

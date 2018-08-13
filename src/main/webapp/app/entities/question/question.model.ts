@@ -21,9 +21,11 @@ export class Question implements BaseEntity {
         public invalid?: boolean,
         public questionStatistic?: QuestionStatistic,
         public exercise?: Exercise,
+        public exportQuiz?: boolean,
         public type?: string,
     ) {
         this.randomizeOrder = false;
         this.invalid = false;
+        this.exportQuiz = false;
     }
 }

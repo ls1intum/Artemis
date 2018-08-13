@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -321,6 +322,45 @@ public class ExerciseResource {
         }
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         log.info("Archive repositories was successful for Exercise : {}", id);
+        return ResponseEntity.ok()
+            .contentLength(zipFile.length())
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header("filename", zipFile.getName())
+            .body(resource);
+    }
+    /**
+    * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+        *
+        * @param exerciseId the id of the exercise to get the repos from
+        * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * @return ResponseEntity with status
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
+        studentIds = studentIds.replaceAll(" ","");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        Course course = exercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
+        if(studentList.isEmpty() || studentList == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed","")).build();
+        }
+
+        File zipFile = exerciseService.exportParticipations(exerciseId,studentList);
+        if (zipFile == null) {
+            return ResponseEntity.noContent()
+                .headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created", ""))
+                .build();
+        }
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
         return ResponseEntity.ok()
             .contentLength(zipFile.length())
             .contentType(MediaType.APPLICATION_OCTET_STREAM)

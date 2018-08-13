@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { UserRouteAccessService } from '../../shared';
 import { QuizExerciseComponent } from './quiz-exercise.component';
 import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
+import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
 import { QuizExerciseDeletePopupComponent } from './quiz-exercise-delete-dialog.component';
 import { QuizReEvaluateComponent } from '../../quiz/re-evaluate/quiz-re-evaluate.component';
 
@@ -50,6 +51,14 @@ export const quizExerciseRoute: Routes = [
     }, {
         path: 'course/:courseId/quiz-exercise/new',
         component: QuizExerciseDetailComponent,
+        data: {
+            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            pageTitle: 'arTeMiSApp.quizExercise.home.title'
+        },
+        canActivate: [UserRouteAccessService]
+    }, {
+        path: 'course/:courseId/quiz-exercise/export',
+        component: QuizExerciseExportComponent,
         data: {
             authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
