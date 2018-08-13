@@ -4,6 +4,7 @@ import { ArTEMiSSharedModule } from '../shared';
 import { editorRoute } from './editor.route';
 import { JhiAlertService } from 'ng-jhipster';
 import { EditorComponent } from './editor.component';
+import { EditorService } from './editor.service';
 import { RepositoryService } from '../entities/repository';
 import { ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
@@ -59,7 +60,8 @@ const ENTITY_STATES = [
         JhiAlertService,
         RepositoryService,
         ResultService,
-        ParticipationService
+        ParticipationService,
+        EditorService
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
