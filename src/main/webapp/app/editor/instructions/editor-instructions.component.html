@@ -11,7 +11,7 @@
         <div class="stepwizard">
             <div class="stepwizard-row">
                 <div *ngFor="let step of steps" class="stepwizard-step" >
-                    <div data-toggle="tooltip" data-placement="bottom" title="{{step.title}}" class="btn btn-light btn-circle">
+                    <div data-toggle="tooltip" data-placement="bottom" (click)="showDetailsForTests(latestResult, 'test')" title="{{step.title}}" class="btn btn-light btn-circle">
                         <i class="fa fa-lg fa-check text-success"   *ngIf="step.done"></i>
                         <i class="fa fa-lg fa-times text-danger"    *ngIf="!step.done"></i>
                     </div>
@@ -20,7 +20,8 @@
         </div>
     </div>
 
-    <div class="card-body instructions"></div>
+    <!-- Rendered markdown will be inserted in this div -->
+    <div class="card-body instructions" [innerHtml]="readMeFileRendered | safeHtml"></div>
 
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>

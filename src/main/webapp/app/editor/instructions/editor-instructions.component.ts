@@ -1,24 +1,27 @@
-import {Participation} from '../../entities/participation';
-import {JhiAlertService} from 'ng-jhipster';
+import { Participation } from '../../entities/participation';
+import { JhiAlertService } from 'ng-jhipster';
 import {
     AfterViewInit,
     Component,
     Input,
     OnChanges, OnDestroy,
     OnInit,
-    SimpleChanges
+    SimpleChanges,
+    ElementRef,
+    Renderer2
 } from '@angular/core';
-import {WindowRef} from '../../shared/websocket/window.service';
-import {RepositoryFileService, RepositoryService} from '../../entities/repository/repository.service';
-import {EditorComponent} from '../editor.component';
-import {JhiWebsocketService} from '../../shared';
-import {Result, ResultService, ParticipationResultService} from '../../entities/result';
-import {ResultDetailComponent} from '../../courses/results/result.component';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {Feedback} from '../../entities/feedback';
-import * as $ from 'jquery';
-import * as Remarkable from 'Remarkable';
+import { WindowRef } from '../../shared/websocket/window.service';
+import { RepositoryFileService, RepositoryService} from '../../entities/repository/repository.service';
+import { EditorComponent } from '../editor.component';
+import { EditorService } from '../editor.service';
+import { JhiWebsocketService } from '../../shared';
+import { Result, ResultService, ParticipationResultService } from '../../entities/result';
+import { Feedback } from '../../entities/feedback';
+import { ResultDetailComponent } from '../../courses/results/result.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as interact from 'interactjs';
+import * as Remarkable from 'remarkable';
+import {HttpParams} from '@angular/common/http';
 
 @Component({
     selector: 'jhi-editor-instructions',
@@ -28,31 +31,35 @@ import * as interact from 'interactjs';
         WindowRef,
         RepositoryService,
         ResultService,
-        ParticipationResultService
+        ParticipationResultService,
+        EditorService
     ]
 })
 
 export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
 
-    isLoading = true;
-    steps = [];
+    isLoading = false;
     loadedDetails = false;
     initialInstructionsWidth: number;
+    markDown: Remarkable;
     readMeFileContent: string;
-    readMeFileRendered;
+    readMeFileRendered: string;
     resultDetails: Feedback[];
-    markDown;
+    steps = [];
 
     @Input() participation: Participation;
     @Input() latestResult: Result;
 
     constructor(private parent: EditorComponent,
                 private $window: WindowRef,
-                private modalService: NgbModal,
                 private jhiWebsocketService: JhiWebsocketService,
                 private repositoryService: RepositoryService,
                 private repositoryFileService: RepositoryFileService,
-                private resultService: ResultService) {
+                private resultService: ResultService,
+                private editorService: EditorService,
+                private modalService: NgbModal,
+                private elRef: ElementRef,
+                private renderer: Renderer2) {
     }
 
     /**
@@ -105,14 +112,6 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         }
     }
 
-    setupMarkDown() {
-        this.markDown = new Remarkable();
-        this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser, {});
-        this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser, {});
-        this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
-        this.markDown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
-    }
-
     loadReadme() {
         this.repositoryFileService.get(this.participation.id, 'README.md').subscribe( fileObj => {
            this.readMeFileContent = fileObj.fileContent;
@@ -138,28 +137,59 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         });
     }
 
-    renderReadme(readmeFileContent?: string) {
+    /**
+     * @function setupMarkDown
+     * @desc Initializes the Remarkable object and registers our custom parsing and rendering rules
+     */
+    setupMarkDown() {
+        this.markDown = new Remarkable();
+        // TODO: check if bind required
+        this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
+        this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
+        this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
+        this.markDown.renderer.rules['plantUml'] = this.remarkablePlantUmlRenderer.bind(this);
+    }
+
+    /**
+     * @function renderReadme
+     * @desc Prepares and starts the rendering process of the README.md file
+     */
+    renderReadme() {
         this.isLoading = true;
+        // Reset steps array
         this.steps = [];
-        // TODO: https://angular.io/guide/dynamic-component-loader
-        // TODO: vm.readmeRendered = $compile(vm.md.render(vm.readme))($scope);
-        console.log('renderReadme!');
+        // Render README.md file via Remarkable
         this.readMeFileRendered = this.markDown.render(this.readMeFileContent);
-
-        $('.instructions').html(this.readMeFileRendered);
-
         this.isLoading = false;
 
-        if ($('.editor-sidebar-right .panel').height() > $('.editor-sidebar-right').height()) {
-            // Safari bug workaround
-            $('.editor-sidebar-right .panel').height($('.editor-sidebar-right').height() - 2);
-        }
+        // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
+        const testStatusDOMElements = this.elRef.nativeElement.querySelectorAll('.test-status');
+        testStatusDOMElements.forEach( element => {
+            this.renderer.listen(element, 'click', event => {
+                // Extract the data attribute for tests and open the details popup with it
+                const tests = event.target.parentElement.getAttribute('data-tests');
+                this.showDetailsForTests(this.latestResult, tests);
+            });
+        });
+
+        // if ($('.editor-sidebar-right .panel').height() > $('.editor-sidebar-right').height()) {
+        //     // Safari bug workaround
+        //     $('.editor-sidebar-right .panel').height($('.editor-sidebar-right').height() - 2);
+        // }
 
         if (!this.loadedDetails) {
             this.loadResultsDetails();
         }
     }
 
+    /**
+     * @function remarkablePlantUmlParser
+     * @desc Parser rule for Remarkable custom token PlantUml
+     * @param state
+     * @param startLine
+     * @param endLine
+     * @param silent
+     */
     remarkablePlantUmlParser = function(state, startLine, endLine, silent) {
         const shift = state.tShift[startLine];
         const max = state.eMarks[startLine];
@@ -202,6 +232,12 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         return true;
     };
 
+    /**
+     * @function remarkablePlantUmlRenderer
+     * @desc Renderer rule for Remarkable custom token PlantUml
+     * @param tokens
+     * @param id
+     */
     remarkablePlantUmlRenderer(tokens, id) {
         let plantUml = tokens[id].content;
 
@@ -214,9 +250,29 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
             return status['done'] ? 'green' : 'red';
         });
 
-        return "<img http-src='/api/plantuml/png?plantuml=" + encodeURIComponent(plantUml) + " '/>";
+        console.log('remarkablePlantUmlRenderer', plantUml);
+        console.log('encodeUriComponent', encodeURIComponent(plantUml));
+
+        const test = new HttpParams().set('plantUml', plantUml);
+        console.log('HttpParams', test);
+        console.log(test.get('plantUml'));
+
+        this.editorService.getPlantUmlImage(plantUml).subscribe( res => {
+            console.log('getPlantUmlImage', res);
+            const plantUmlSrcAttribute = res;
+            console.log('plantUmlSrcAttribute', plantUmlSrcAttribute);
+            return "<img src='data:image/jpeg;base64," + plantUmlSrcAttribute + " '/>";
+        }, err => {
+            console.log('Error getting plantUmlImage', err);
+        });
     }
 
+    /**
+     * @function remarkableTestsStatusParser
+     * @desc Parser rule for Remarkable custom token TestStatus
+     * @param state
+     * @param silent
+     */
     remarkableTestsStatusParser(state, silent: boolean) {
 
         const regex = /^✅\[([^\]]*)\]\s*\(([^)]+)\)/;
@@ -243,6 +299,14 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         return true;
     }
 
+    /**
+     * @function remarkableTestsStatusRenderer
+     * @desc Renderer rule for Remarkable custom token TestStatus
+     * @param tokens
+     * @param id
+     * @param options
+     * @param env
+     */
     remarkableTestsStatusRenderer(tokens, id: number, options, env) {
         const tests = tokens[0].tests;
         const status = this.statusForTests(tests);
@@ -256,7 +320,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         text += '</strong>: ';
         text += status['done'] ?
             ' <span class="text-success">' + status['label'] + '</span>' :
-            '<a (click)="showDetailsForTests(latestResult,\'' + tests.toString() + '\')"><span class="text-danger">' + status['label'] + '</span></a>';
+            '<a data-tests="' + tests.toString() + '\'" class="test-status"><span class="text-danger">' + status['label'] + '</span></a>';
         text += '<br />';
 
         this.steps.push({
@@ -267,6 +331,11 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         return text;
     }
 
+    /**
+     * @function statusForTests
+     * @desc Callback function for renderers to set the appropiate test status
+     * @param tests
+     */
     statusForTests(tests): object {
         let done = false;
         let label = 'No results';
@@ -308,7 +377,13 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         };
     }
 
-    showDetailsForTests(result, tests) {
+    /**
+     * @function showDetailsForTests
+     * @desc Opens the ResultDetailComponent as popup; displays test results
+     * @param result {Result} Result object, mostly latestResult
+     * @param tests {string} Identifies the testcase
+     */
+    showDetailsForTests(result: Result, tests: string) {
         if (!result) {
             return;
         }
@@ -319,7 +394,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
 
     /**
      * @function toggleEditorCollapse
-     * @descCalls the parent (editorComponent) toggleCollapse method
+     * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param $event
      * @param {boolean} horizontal
      */
