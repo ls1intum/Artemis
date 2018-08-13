@@ -1,17 +1,20 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from '../app.constants';
-import { HttpClient } from '@angular/common/http';
+import {HttpClient, HttpParameterCodec} from '@angular/common/http';
 import {HttpParams, HttpResponse} from '@angular/common/http';
 
 @Injectable()
 export class EditorService {
 
     private resourceUrl =  SERVER_API_URL + 'api/plantuml';
+    private encoder: HttpParameterCodec;
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) {
+        this.encoder = new HttpUrlCustomEncoder();
+    }
 
     getPlantUmlImage(plantUml: string) {
-        return this.http.get(`${this.resourceUrl}/png`, { params: new HttpParams().set('plantUml', plantUml), responseType: 'arraybuffer'})
+        return this.http.get(`${this.resourceUrl}/png`, { params: new HttpParams({encoder: this.encoder}).set('plantUml', plantUml), responseType: 'arraybuffer'})
             .map(res => this.convertPlantUmlResponseToBase64(res));
     }
 
@@ -36,4 +39,18 @@ export class EditorService {
 
         return b64;
     }
+}
+
+/**
+ * @class HttpUrlCustomEncoder
+ * @desc Custom HttpParamEncoder implementation which defaults to using encodeURIComponent to encode params
+ */
+export class HttpUrlCustomEncoder implements HttpParameterCodec {
+    encodeKey(k: string): string { return encodeURIComponent(k); }
+
+    encodeValue(v: string): string { return encodeURIComponent(v); }
+
+    decodeKey(k: string): string { return decodeURIComponent(k); }
+
+    decodeValue(v: string) { return decodeURIComponent(v); }
 }
