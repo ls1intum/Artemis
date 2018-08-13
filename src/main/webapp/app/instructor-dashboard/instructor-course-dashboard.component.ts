@@ -25,7 +25,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     reverse: any;
     numberOfExercises = 0;
     results = [];
-    results2 = [];
+    ratedResultsArrayList = [];
     participations = [];    // [Participation]
     typeQuizExercise = []; // refactored to a more legible name
     typeProgrammingExercise = [];
@@ -64,10 +64,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             this.results = res;
             this.groupResults();
         });
-        this.courseResultService.findAllResults(courseId).subscribe(res => { // this call gets all information to the results in the exercises
-            this.results2 = res;
+     /*     //TODO: Add this feature when the "results" format consistently contains the "rated" property
+            this.courseResultService.findAllResults(courseId).subscribe(res => { // this call gets all information to the results in the exercises
+            this.ratedResultsArrayList = res;
             this.groupResults();
-        });
+        });*/
         this.courseParticipationService.findAll(courseId).subscribe(res => { // this call gets all information to the participation in the exercises
             this.participations = res;
             this.groupResults();
@@ -76,6 +77,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         });
     }
     groupResults() {
+        this.results
 
         if (!this.results || !this.participations || this.participations.length === 0 || this.results.length === 0) {
             return;
@@ -146,7 +148,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         }
         // Successful Participations as the total amount and a relative value to all Exercises
 
-        // TODO: If these values are not needed right away, move this functionality to the place where we check these conditions anyway
+        // TODO: If these values are not needed right away, move this functionality to the place where we check these conditions anyway (MOVED)
         // if we are removing the table anyhow we do not need this functionality
         /* for (const result of this.results) {
 
@@ -691,7 +693,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             link.click();
             console.log(this.results);
 
-            console.log(this.results2);
+            console.log(this.ratedResultsArrayList);
         }
     }
 
