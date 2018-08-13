@@ -360,8 +360,6 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         List<Result> results2 = resultRepository.findFilteredResultsForCourse(courseId);
-        for (int i= 0; i<results2.size();i++){
-        }
         return ResponseEntity.ok().body(results2);
     }
 
