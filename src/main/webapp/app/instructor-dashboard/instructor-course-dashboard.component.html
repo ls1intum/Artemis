@@ -43,11 +43,11 @@
             <tr *ngFor="let row of rows | sortBy: predicate: reverse">
                 <td>{{ row.firstName }} {{ row.lastName }}</td>
                 <td>{{ row.login }}</td>
-                <td>{{ row.participated }}</td>
-                <td>{{ row.participationInPercent | number: '0.0-0'}}%</td>
-                <td>{{ row.successful }}</td>
-                <td>{{ row.successfullyCompletedInPercent | number: '0.0-0'}}%</td>
-                <td>{{ row.overallScore | number: '0.0-0'}}</td>
+                <td>{{ row.participatedTotal }} ({{ row.participationTotalInPercent | number: '0.0-0'}}%)</td>
+                <td>({{ row.participationTotalInPercent | number: '0.0-0'}}%)</td>
+                <td>{{ row.successfulTotal }}</td>
+                <td>{{ row.successfullyCompletedTotalInPercent | number: '0.0-0'}}%</td>
+                <td>{{ row.OverallScore | number: '0.0-0'}}</td>
 
             </tr>
             </tbody>
