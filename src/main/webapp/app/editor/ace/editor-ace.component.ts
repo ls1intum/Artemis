@@ -4,7 +4,6 @@ import {
     EventEmitter,
     Input,
     OnChanges,
-    OnDestroy,
     OnInit,
     AfterViewInit,
     Output,
@@ -31,7 +30,7 @@ declare let ace: any;
     ]
 })
 
-export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('editor') editor;
 
     /**
@@ -52,13 +51,11 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
                 private repositoryFileService: RepositoryFileService,
-                public modalService: NgbModal) {
-    }
+                public modalService: NgbModal) {}
 
     /**
      * @function ngOnInit
-     * @desc Framework function which is executed when the component is instantiated.
-     * Used to assign parameters which are used by the component
+     * @desc Initially sets the labels for file save status
      */
     ngOnInit(): void {
         this.updateSaveStatusLabel();
@@ -66,8 +63,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
     /**
      * @function ngAfterViewInit
-     * @desc Framework lifecycle hook that is called after Angular has fully initialized a component's view;
-     * used to handle any additional initialization tasks
+     * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
         this.editor.setTheme('dreamweaver');
@@ -78,7 +74,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
 
     /**
      * @function ngOnChanges
-     * @desc Framework lifecycle hook that is called when any data-bound property of a directive changes
+     * @desc New participation => update the file save status labels
+     *       New fileName      => load the file from the repository and open it in the editor
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -87,7 +84,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         }
         if (changes.fileName && this.fileName) {
             console.log('FILE CHANGED, loading file: ' + this.fileName);
-            // current file has changed
+            // Current file has changed
             this.loadFile(this.fileName);
         }
     }
@@ -97,8 +94,11 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
         this.saveStatusChange.emit(statusChange);
     }
 
+    /**
+     * @function updateSaveStatusLabel
+     * @desc Sets the labels under the ngx-treeview (files) according to the status of the files
+     */
     updateSaveStatusLabel() {
-
         // TODO: check filter function
         const sessionKeys = Object.keys(this.editorFileSessions);
         console.log('updateSaveStatusLabel', this.editorFileSessions, sessionKeys);
@@ -185,8 +185,9 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
     }
 
     /**
-     * Callback function for text changes in the Ace Editor
-     * @param code
+     * @function onFileTextChanged
+     * @desc Callback function for text changes in the Ace Editor
+     * @param code {string} Current editor code
      */
     onFileTextChanged(code) {
         if (this.editorFileSessions[this.fileName] !== code && this.editorText !== '') {
@@ -197,12 +198,4 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnDestroy, OnC
             this.updateSaveStatusLabel();
         }
     }
-
-    /**
-     * @function ngOnDestroy
-     * @desc Framework function which is executed when the component is destroyed.
-     * Used for component cleanup, close open sockets, connections, subscriptions...
-     */
-    ngOnDestroy(): void {}
-
 }

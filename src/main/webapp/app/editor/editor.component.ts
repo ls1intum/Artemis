@@ -81,6 +81,10 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
         this.repository = this.repositoryService;
     }
 
+    /**
+     * @function ngAfterViewInit
+     * @desc Used to enable resizing for the instructions component
+     */
     ngAfterViewInit(): void {
         interact('.resizable-filebrowser')
             .resizable({
@@ -100,16 +104,31 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
         });
     }
 
+    /**
+     * @function ngOnChanges
+     * @desc Checks if the repository has uncommitted changes
+     * @param changes
+     */
     ngOnChanges(changes: SimpleChanges) {
+        // TODO: limit this to changes.participation?
         this.checkIfRepositoryIsClean();
     }
 
+    /**
+     * @function checkIfRepositoryIsClean
+     * @desc Calls the repository service to see if the repository has uncommitted changes
+     */
     checkIfRepositoryIsClean(): void {
         this.repository.isClean(this.participation.id).subscribe(res => {
             this.isCommitted = res.isClean;
         });
     }
 
+    /**
+     * @function updateSaveStatusLabel
+     * @desc Callback function for a save status changes of files
+     * @param $event Event object which contains information regarding the ocurred event
+     */
     updateSaveStatusLabel($event) {
         console.log('updateSaveStatusLabel called');
         this.isSaved = $event.isSaved;
@@ -119,18 +138,33 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
         this.saveStatusLabel = $event.saveStatusLabel;
     }
 
+    /**
+     * @function updateLatestResult
+     * @desc Callback function for when a new result is received from the result component
+     * @param $event Event object which contains information regarding the ocurred event
+     */
     updateLatestResult($event) {
         console.log('updateLatestResult called; received new result');
         this.isBuilding = false;
         this.latestResult = $event.newResult;
     }
 
+    /**
+     * @function updateSelectedFile
+     * @desc Callback function for when a new file is selected within the file-browser component
+     * @param $event Event object which contains information regarding the ocurred event
+     */
     updateSelectedFile($event) {
         console.log('RECEIVED EVENT WITH NEW FILENAME: ' + $event.fileName);
         console.log(this.repositoryFiles);
         this.file = $event.fileName;
     }
 
+    /**
+     * @function updateRepositoryCommitStatus
+     * @desc Callback function for when a file was created or deleted; updates the current repository files
+     * @param $event Event object which contains information regarding the ocurred event
+     */
     updateRepositoryCommitStatus($event) {
         console.log('updateRepositoryCommitStatus called');
         console.log($event);
@@ -143,7 +177,12 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
         });
     }
 
-    /** Collapse parts of the editor (file browser, build output...) */
+    /**
+     * @function toggleCollapse
+     * @desc Collapse parts of the editor (file browser, build output...)
+     * @param $event
+     * @param horizontal
+     */
     toggleCollapse($event: any, horizontal: boolean) {
 
         const target = $event.toElement || $event.relatedTarget || $event.target;
@@ -160,6 +199,11 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
         }
     }
 
+    /**
+     * @function commit
+     * @desc Commits the current repository filess
+     * @param $event
+     */
     commit($event) {
 
         console.log('calling commit() from editor');

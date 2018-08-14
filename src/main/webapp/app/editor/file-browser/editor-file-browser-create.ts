@@ -20,10 +20,18 @@ export class EditorFileBrowserCreateComponent implements OnInit {
     constructor(public activeModal: NgbActiveModal,
                 private repositoryFileService: RepositoryFileService) {}
 
+    /**
+     * @function ngOnInit
+     * @desc Initializes variables
+     */
     ngOnInit(): void {
         this.isLoading = false;
     }
 
+    /**
+     * @function createFile
+     * @desc Reads the provided fileName and folder and creates a new file in the repository
+     */
     createFile() {
         this.isLoading = true;
         // Make sure we have a filename
@@ -42,6 +50,10 @@ export class EditorFileBrowserCreateComponent implements OnInit {
         this.isLoading = false;
     }
 
+    /**
+     * @function closeModal
+     * @desc Dismisses the currently active modal (popup)
+     */
     closeModal() {
         this.activeModal.dismiss('cancel');
     }

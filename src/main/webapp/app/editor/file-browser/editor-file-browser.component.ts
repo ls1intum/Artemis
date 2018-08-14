@@ -1,6 +1,6 @@
 import { ResultService } from '../../entities/result';
 import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
 import { NgbActiveModal, NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseParticipationService, Participation, ParticipationService } from '../../entities/participation';
 import { WindowRef } from '../../shared/websocket/window.service';
@@ -29,7 +29,7 @@ import { TreeviewComponent, TreeviewItem, TreeviewConfig, TreeviewHelper } from 
     ]
 })
 
-export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges {
+export class EditorFileBrowserComponent implements OnInit, OnChanges {
 
     @Input() participation: Participation;
     @Input() repositoryFiles;
@@ -64,6 +64,11 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         });
     }
 
+    /**
+     * @function ngOnInit
+     * @desc Tracks changes to the provided participation and repositoryFiles
+     * @param changes
+     */
     ngOnChanges(changes: SimpleChanges): void {
         /**
          * Initialize treeview
@@ -79,11 +84,21 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         }
     }
 
+    /**
+     * @function onCreatedFile
+     * @desc Emmiter function for when a new file was created; notifies the parent component
+     * @param statusChange
+     */
     onCreatedFile(statusChange: object) {
         console.log('EMITTING onCreatedFile');
         this.createdFile.emit(statusChange);
     }
 
+    /**
+     * @function onDeletedFile
+     * @desc Emmiter function for when a file was deleted; notifies the parent component
+     * @param statusChange
+     */
     onDeletedFile(statusChange: object) {
         console.log('EMITTING onDeletedFile');
         this.deletedFile.emit(statusChange);
@@ -235,12 +250,20 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
         return tree;
     }
 
+    /**
+     * @function openCreateFileModal
+     * @desc Opens a popup to create a new repository file
+     */
     openCreateFileModal() {
         const modalRef = this.modalService.open(EditorFileBrowserCreateComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.participation = this.participation;
         modalRef.componentInstance.parent = this;
     }
 
+    /**
+     * @function openDeleteFileModal
+     * @desc Opens a popup to delete the selected repository file
+     */
     openDeleteFileModal() {
         /**
          * We only open the modal if the user has a file selected
@@ -252,12 +275,4 @@ export class EditorFileBrowserComponent implements OnInit, OnDestroy, OnChanges 
             modalRef.componentInstance.fileNameToDelete = this.fileName;
         }
     }
-
-    /**
-     * @function ngOnDestroy
-     * @desc Framework function which is executed when the component is destroyed.
-     * Used for component cleanup, close open sockets, connections, subscriptions...
-     */
-    ngOnDestroy(): void {}
-
 }

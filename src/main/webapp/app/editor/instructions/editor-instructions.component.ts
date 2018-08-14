@@ -4,7 +4,7 @@ import {
     AfterViewInit,
     Component,
     Input,
-    OnChanges, OnDestroy,
+    OnChanges,
     OnInit,
     SimpleChanges,
     ElementRef,
@@ -36,7 +36,7 @@ import {HttpParams} from '@angular/common/http';
     ]
 })
 
-export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnChanges {
 
     isLoading = false;
     loadedDetails = false;
@@ -59,23 +59,20 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
                 private editorService: EditorService,
                 private modalService: NgbModal,
                 private elRef: ElementRef,
-                private renderer: Renderer2) {
-    }
+                private renderer: Renderer2) {}
 
     /**
      * @function ngOnInit
-     * @desc Framework function which is executed when the component is instantiated.
-     * Used to assign parameters which are used by the component
+     * @desc Initializes the Remarkable object and loads the repository README.md file
      */
     ngOnInit(): void {
-        this.loadReadme();
         this.setupMarkDown();
+        this.loadReadme();
     }
 
     /**
      * @function ngAfterViewInit
-     * @desc Framework lifecycle hook that is called after Angular has fully initialized a component's view;
-     * used to handle any additional initialization tasks
+     * @desc Used to enable resizing for the instructions component
      */
     ngAfterViewInit(): void {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
@@ -98,13 +95,14 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
 
     /**
      * @function ngOnChanges
-     * @desc Framework lifecycle hook that is called when any data-bound property of a directive changes
+     * @desc New participation received => initialize new Remarkable object and load new README.md file
+     *       New latestResult received => load details for result
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.participation && this.participation) {
-            this.loadReadme();
             this.setupMarkDown();
+            this.loadReadme();
         }
         if (changes.latestResult && changes.latestResult.currentValue && !this.isLoading) {
             // New result available
@@ -112,6 +110,10 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         }
     }
 
+    /**
+     * @function loadReadme
+     * @desc Gets the README.md file from our repository and starts the rendering process
+     */
     loadReadme() {
         this.repositoryFileService.get(this.participation.id, 'README.md').subscribe( fileObj => {
            this.readMeFileContent = fileObj.fileContent;
@@ -121,6 +123,10 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
         });
     }
 
+    /**
+     * @function loadResultDetails
+     * @desc Fetches details for the result (if we received one) => Input latestResult
+     */
     loadResultsDetails() {
         if (!this.latestResult) {
             return;
@@ -171,11 +177,6 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
                 this.showDetailsForTests(this.latestResult, tests);
             });
         });
-
-        // if ($('.editor-sidebar-right .panel').height() > $('.editor-sidebar-right').height()) {
-        //     // Safari bug workaround
-        //     $('.editor-sidebar-right .panel').height($('.editor-sidebar-right').height() - 2);
-        // }
 
         if (!this.loadedDetails) {
             this.loadResultsDetails();
@@ -401,11 +402,4 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnDes
     toggleEditorCollapse($event: any, horizontal: boolean) {
         this.parent.toggleCollapse($event, horizontal);
     }
-
-    /**
-     * @function ngOnDestroy
-     * @desc Framework function which is executed when the component is destroyed.
-     * Used for component cleanup, close open sockets, connections, subscriptions...
-     */
-    ngOnDestroy(): void {}
 }

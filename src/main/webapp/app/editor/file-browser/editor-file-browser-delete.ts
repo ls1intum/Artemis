@@ -19,10 +19,18 @@ export class EditorFileBrowserDeleteComponent implements OnInit {
     constructor(public activeModal: NgbActiveModal,
                 private repositoryFileService: RepositoryFileService) {}
 
+    /**
+     * @function ngOnInit
+     * @desc Initializes variables
+     */
     ngOnInit(): void {
         this.isLoading = false;
     }
 
+    /**
+     * @function deleteFile
+     * @desc Reads the provided fileName and deletes the matching file in the repository
+     */
     deleteFile() {
         this.isLoading = true;
         // Make sure we have a filename
@@ -39,6 +47,10 @@ export class EditorFileBrowserDeleteComponent implements OnInit {
         this.isLoading = false;
     }
 
+    /**
+     * @function closeModal
+     * @desc Dismisses the currently active modal (popup)
+     */
     closeModal() {
         this.activeModal.dismiss('cancel');
     }

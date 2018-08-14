@@ -4,8 +4,7 @@ import {
     AfterViewInit,
     Component,
     Input,
-    OnChanges, OnDestroy,
-    OnInit,
+    OnChanges,
     SimpleChanges
 } from '@angular/core';
 import {WindowRef} from '../../shared/websocket/window.service';
@@ -28,7 +27,7 @@ import * as interact from 'interactjs';
     ]
 })
 
-export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
     buildLogs = [];
 
@@ -39,16 +38,12 @@ export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDest
                 private jhiWebsocketService: JhiWebsocketService,
                 private repositoryService: RepositoryService,
                 private resultService: ResultService,
-                private participationResultService: ParticipationResultService) {
-    }
+                private participationResultService: ParticipationResultService) {}
 
     /**
-     * @function ngOnInit
-     * @desc Framework function which is executed when the component is instantiated.
-     * Used to assign parameters which are used by the component
+     * @function ngAfterViewInit
+     * @desc Used to enable resizing for the instructions component
      */
-    ngOnInit(): void {}
-
     ngAfterViewInit(): void {
         interact('.resizable-buildoutput')
             .resizable({
@@ -70,7 +65,7 @@ export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDest
 
     /**
      * @function ngOnChanges
-     * @desc Framework lifecycle hook that is called when any data-bound property of a directive changes
+     * @desc Queries for participation results
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -91,10 +86,15 @@ export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDest
         }
     }
 
+    /**
+     * @function getBuildLogs
+     * @desc Gets the buildlogs for the current participation
+     */
     getBuildLogs() {
         this.repositoryService.buildlogs(this.participation.id).subscribe( buildLogs => {
             // TODO: check if buildLogs.log actually exists
             this.buildLogs = buildLogs;
+            // TODO: can this be done without Jquery?
             $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
         });
     }
@@ -113,19 +113,11 @@ export class EditorBuildOutputComponent implements OnInit, AfterViewInit, OnDest
 
     /**
      * @function toggleEditorCollapse
-     * @descCalls the parent (editorComponent) toggleCollapse method
+     * @desc Calls the parent (editorComponent) toggleCollapse method
      * @param $event
      * @param {boolean} horizontal
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
         this.parent.toggleCollapse($event, horizontal);
     }
-
-    /**
-     * @function ngOnDestroy
-     * @desc Framework function which is executed when the component is destroyed.
-     * Used for component cleanup, close open sockets, connections, subscriptions...
-     */
-    ngOnDestroy(): void {}
-
 }
