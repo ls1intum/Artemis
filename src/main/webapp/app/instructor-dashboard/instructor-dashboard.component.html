@@ -31,6 +31,14 @@
             <button class="btn btn-primary btn-sm" (click)="exportResults()">
                 <i class="fa fa-download fa-fw"></i>&nbsp;Export Results
             </button>
+            <button *ngIf="exercise.type === 'programming-exercise'" 
+                    class="btn btn-primary btn-sm"
+                    [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/exportRepos'} }]"
+                    replaceUrl="true"
+                    queryParamsHandling="merge"
+                    >
+              <i class="fa fa-download fa-fw"></i>&nbsp;<span data-translate="artemisApp.instructorDashboard.exportRepos.title">Export Repos</span>
+            </button>
             <button class="btn btn-primary btn-sm" (click)="refresh()">
                 <i class="fa fa-refresh fa-fw"></i>&nbsp;Refresh
             </button>

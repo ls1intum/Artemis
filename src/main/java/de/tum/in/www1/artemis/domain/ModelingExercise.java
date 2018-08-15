@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
 import java.util.Objects;
+
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 
 /**
  * A ModelingExercise.
@@ -20,6 +20,10 @@ public class ModelingExercise extends Exercise implements Serializable {
     @Column(name = "description")
     private String description;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "diagram_type")
+    private DiagramType diagramType;
+
     // jhipster-needle-entity-add-field - Jhipster will add fields here, do not remove
 
     public String getDescription() {
@@ -33,6 +37,19 @@ public class ModelingExercise extends Exercise implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public DiagramType getDiagramType() {
+        return diagramType;
+    }
+
+    public ModelingExercise diagramType(DiagramType diagramType) {
+        this.diagramType = diagramType;
+        return this;
+    }
+
+    public void setDiagramType(DiagramType diagramType) {
+        this.diagramType = diagramType;
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
@@ -63,6 +80,7 @@ public class ModelingExercise extends Exercise implements Serializable {
             "id=" + getId() +
             ", description='" + getDescription() + "'" +
             ", maxScore='" + getMaxScore() + "'" +
+            ", diagramType='" + getDiagramType() + "'" +
             "}";
     }
 }

@@ -66,7 +66,7 @@ public class CourseService {
      * @param course the course to check permissions for
      * @return true, if the user has the required permissions, false otherwise
      */
-    public boolean userHasStudentPermissions(Course course) {
+    public boolean userHasAtLeastStudentPermissions(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isStudentInCourse(course, user) ||
             authCheckService.isTeachingAssistantInCourse(course, user) ||
@@ -80,7 +80,7 @@ public class CourseService {
      * @param course the course to check permissions for
      * @return true, if the user has the required permissions, false otherwise
      */
-    public boolean userHasTAPermissions(Course course) {
+    public boolean userHasAtLeastTAPermissions(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isTeachingAssistantInCourse(course, user) ||
             authCheckService.isInstructorInCourse(course, user) ||
@@ -93,7 +93,7 @@ public class CourseService {
      * @param course the course to check permissions for
      * @return true, if the user has the required permissions, false otherwise
      */
-    public boolean userHasInstructorPermissions(Course course) {
+    public boolean userHasAtLeastInstructorPermissions(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isInstructorInCourse(course, user) ||
             authCheckService.isAdmin();

@@ -34,32 +34,39 @@ entity DropLocationCounter(dropLocationCounter){    //extends StatisticCounter
 }
 
 entity Course (course) {
-  title String,
-  studentGroupName String,
-  teachingAssistantGroupName String,
-  instructorGroupName String,
-  startDate ZonedDateTime,
-  endDate ZonedDateTime,
-  onlineCourse Boolean
+    title String,
+    studentGroupName String,
+    teachingAssistantGroupName String,
+    instructorGroupName String,
+    startDate ZonedDateTime,
+    endDate ZonedDateTime,
+    onlineCourse Boolean
 }
 
 entity Exercise (exercise) {        //abstract
-  title String,
-  releaseDate ZonedDateTime,
-  dueDate ZonedDateTime,
-  maxScore Double
+    title String,
+    releaseDate ZonedDateTime,
+    dueDate ZonedDateTime,
+    maxScore Double
 }
 
 entity ProgrammingExercise {        //extends Exercise
-  baseRepositoryUrl String,
-  baseBuildPlanId String,
-  publishBuildPlanUrl Boolean,
-  allowOnlineEditor Boolean
+    baseRepositoryUrl String,
+    baseBuildPlanId String,
+    publishBuildPlanUrl Boolean,
+    allowOnlineEditor Boolean
 }
 
 entity ModelingExercise {           //extends Exercise
+    diagramType DiagramType,
 }
 
+enum DiagramType {
+	CLASS,
+    ACTIVITY,
+    USE_CASE,
+    COMMUNICATION
+}
 
 entity QuizExercise {               //extends Exercise
     description String,
@@ -73,8 +80,8 @@ entity QuizExercise {               //extends Exercise
 }
 
 entity LtiOutcomeUrl (lti_outcome_url) {
-  url String,
-  sourcedId String
+    url String,
+    sourcedId String
 }
 
 entity SubmittedAnswer {            //abstract
@@ -133,25 +140,25 @@ entity DragItem {
 }
 
 entity Participation (participation) {
-  repositoryUrl String,
-  buildPlanId String,
-  initializationState ParticipationState,
-  initializationDate ZonedDateTime
+    repositoryUrl String,
+    buildPlanId String,
+    initializationState ParticipationState,
+    initializationDate ZonedDateTime
 }
 
 entity LtiUserId (lti_user_id) {
-  ltiUserId String
+    ltiUserId String
 }
 
 entity Result (result) {
-  resultString String,
-  completionDate ZonedDateTime,
-  successful Boolean,
-  buildArtifact Boolean,
-  score Long,
-  rated Boolean,
-  hasFeedback Boolean,
-  assessmentType AssessmentType
+    resultString String,
+    completionDate ZonedDateTime,
+    successful Boolean,
+    buildArtifact Boolean,
+    score Long,
+    rated Boolean,
+    hasFeedback Boolean,
+    assessmentType AssessmentType
 }
 
 enum AssessmentType {
@@ -173,12 +180,12 @@ enum FeedbackType {
 }
 
 enum ParticipationState {
-   UNINITIALIZED,
-   REPO_COPIED,
-   REPO_CONFIGURED,
-   BUILD_PLAN_COPIED,
-   BUILD_PLAN_CONFIGURED,
-   INITIALIZED
+    UNINITIALIZED,
+    REPO_COPIED,
+    REPO_CONFIGURED,
+    BUILD_PLAN_COPIED,
+    BUILD_PLAN_CONFIGURED,
+    INITIALIZED
 }
 
 enum SubmissionType {
@@ -186,8 +193,9 @@ enum SubmissionType {
     TIMEOUT
 }
 
-entity Submission {  //abstract
+entity Submission {                 //abstract
 	submitted Boolean
+	submissionDate ZonedDateTime,
     type SubmissionType
 }
 
@@ -197,6 +205,10 @@ entity ModelingSubmission {         //extends Submission
 
 entity QuizSubmission {             //extends Submission
     scoreInPoints Double
+}
+
+entity ProgrammingSubmission {             //extends Submission
+    commitHash String
 }
 
 
@@ -216,20 +228,21 @@ entity ApollonDiagram {
 }
 
 relationship OneToMany {
-  QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
-  MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
-  DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
-  Course{exercises} to Exercise{course(title)},
-  Exercise{participations} to Participation{exercise(title)},
-  Participation{results} to Result{participation},
-  Result{feedbacks} to Feedback{result},
-  QuizExercise{questions} to Question{exercise},
-  MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
-  DragAndDropQuestion{dropLocations} to DropLocation{question},
-  DragAndDropQuestion{dragItems} to DragItem{question},
-  QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
-  DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
-  DragAndDropQuestion{correctMappings} to DragAndDropMapping{question}
+    QuizPointStatistic{PointCounters} to PointCounter{quizPointStatistic},
+    MultipleChoiceQuestionStatistic{AnswerCounters} to AnswerCounter{MultipleChoiceQuestionStatistic},
+    DragAndDropQuestionStatistic{DropLocationCounters} to DropLocationCounter{DragAndDropQuestionStatistic},
+    Course{exercises} to Exercise{course(title)},
+    Exercise{participations} to Participation{exercise(title)},
+    Participation{results} to Result{participation},
+    Participation{submissions} to Submission{participation},
+    Result{feedbacks} to Feedback{result},
+    QuizExercise{questions} to Question{exercise},
+    MultipleChoiceQuestion{answerOptions} to AnswerOption{question},
+    DragAndDropQuestion{dropLocations} to DropLocation{question},
+    DragAndDropQuestion{dragItems} to DragItem{question},
+    QuizSubmission{submittedAnswers} to SubmittedAnswer{submission},
+    DragAndDropSubmittedAnswer{mappings} to DragAndDropMapping{submittedAnswer},
+    DragAndDropQuestion{correctMappings} to DragAndDropMapping{question}
 }
 
 relationship OneToOne {
@@ -237,18 +250,18 @@ relationship OneToOne {
     Question{questionStatistic} to QuestionStatistic{question},
     AnswerCounter{answer} to AnswerOption,
     DropLocationCounter{dropLocation} to DropLocation,
-    Result{submission} to Submission,
+    Submission{result} to Result{submission},
     LtiUserId{user} to User,
     Result{assessor} to User
 }
 
 relationship ManyToOne {
-  Participation{student(login)} to User,
-  LtiOutcomeUrl{user} to User,
-  LtiOutcomeUrl{exercise} to Exercise,
-  SubmittedAnswer{question} to Question
-  DragAndDropMapping{dragItem} to DragItem,
-  DragAndDropMapping{dropLocation} to DropLocation
+    Participation{student(login)} to User,
+    LtiOutcomeUrl{user} to User,
+    LtiOutcomeUrl{exercise} to Exercise,
+    SubmittedAnswer{question} to Question
+    DragAndDropMapping{dragItem} to DragItem,
+    DragAndDropMapping{dropLocation} to DropLocation
 }
 
 relationship ManyToMany {

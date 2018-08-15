@@ -15,7 +15,12 @@
             },
             "detail": {
                 "title": "Submission"
-            }
+            },
+            "submitted": "Submitted",
+            "submissionDate": "Submission Date",
+            "type": "Type",
+            "result": "Result",
+            "participation": "Participation"
         }
     }
 }

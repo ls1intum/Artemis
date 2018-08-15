@@ -10,6 +10,7 @@ import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-que
 import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
 import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
 import { TranslateService } from '@ngx-translate/core';
+import { FileUploaderService } from '../../shared/http/file-uploader.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -17,9 +18,11 @@ import { TranslateService } from '@ngx-translate/core';
             [course]="course"
             [quizExercise]="quizExercise"
             [repository]="repository"
+            [courseRepository]="courseRepository"
             [dragAndDropQuestionUtil]="dragAndDropQuestionUtil"
             [router]="router"
-            [translateService]="translateService">
+            [translateService]="translateService"
+            [fileUploaderService]="fileUploaderService">
     </quiz-exercise-detail></div>`,
     providers: [DragAndDropQuestionUtil]
 })
@@ -29,21 +32,25 @@ export class QuizExerciseDetailComponent implements OnInit, OnDestroy {
     quizExercise: QuizExercise;
     paramSub: Subscription;
     repository: QuizExerciseService;
+    courseRepository: CourseService;
     dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     router: Router;
     translateService: TranslateService;
+    fileUploaderService: FileUploaderService;
 
     constructor(private route: ActivatedRoute,
-                private courseService: CourseService,
-                private quizExerciseService: QuizExerciseService,
-                dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-                router: Router,
-                translateService: TranslateService,
-                @Inject(NG1TRANSLATE_SERVICE) private $translate: any,
-                @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any) {
+        private courseService: CourseService,
+        private quizExerciseService: QuizExerciseService,
+        dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        router: Router,
+        translateService: TranslateService,
+        fileUploaderService: FileUploaderService,
+        @Inject(NG1TRANSLATE_SERVICE) private $translate: any,
+        @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any) {
         this.dragAndDropQuestionUtil = dragAndDropQuestionUtil;
         this.router = router;
         this.translateService = translateService;
+        this.fileUploaderService = fileUploaderService;
     }
 
     ngOnInit() {
@@ -59,7 +66,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnDestroy {
             }
         });
         this.repository = this.quizExerciseService;
-
+        this.courseRepository = this.courseService;
         this.$translatePartialLoader.addPart('quizExercise');
         this.$translatePartialLoader.addPart('global');
         this.$translate.refresh();

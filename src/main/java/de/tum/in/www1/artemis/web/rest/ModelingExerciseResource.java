@@ -269,6 +269,8 @@ public class ModelingExerciseResource {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }
+        //NOTE: avoid infinite recursion by setting submissions to null
+        participation.setSubmissions(null);
         ObjectNode data = objectMapper.createObjectNode();
         data.set("participation", objectMapper.valueToTree(participation));
         if (participation.getResults().size() > 0) {
@@ -289,6 +291,10 @@ public class ModelingExerciseResource {
             if (model != null) {
                 modelingSubmission.setModel(model.toString());
             }
+
+            //NOTE: avoid infinite recursion by setting result to null
+            modelingSubmission.setResult(null);
+
             data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
             if (modelingSubmission.isSubmitted() && result.isRated()) {
                 // find assessments if modelingSubmission is submitted and result is rated

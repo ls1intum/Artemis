@@ -58,6 +58,13 @@ public class Participation implements Serializable {
     @JsonView(QuizView.Before.class)
     private Set<Result> results = new HashSet<>();
 
+
+    @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
+    @JsonIgnoreProperties("participation")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<Submission> submissions = new HashSet<>();
+
+
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private User student;
@@ -168,6 +175,33 @@ public class Participation implements Serializable {
     public void setResults(Set<Result> results) {
         this.results = results;
     }
+
+
+    public Set<Submission> getSubmissions() {
+        return submissions;
+    }
+
+    public Participation submissions(Set<Submission> submissions) {
+        this.submissions = submissions;
+        return this;
+    }
+
+    public Participation addSubmissions(Submission submission) {
+        this.submissions.add(submission);
+        submission.setParticipation(this);
+        return this;
+    }
+
+    public Participation removeSubmissions(Submission submission) {
+        this.submissions.remove(submission);
+        submission.setParticipation(null);
+        return this;
+    }
+
+    public void setSubmissions(Set<Submission> submissions) {
+        this.submissions = submissions;
+    }
+
 
     public User getStudent() {
         return student;

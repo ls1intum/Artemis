@@ -100,7 +100,7 @@ public class ModelingSubmissionResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
         }
-        if (!courseService.userHasStudentPermissions(course)) {
+        if (!courseService.userHasAtLeastStudentPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -154,7 +154,7 @@ public class ModelingSubmissionResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
         }
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!courseService.userHasStudentPermissions(course)) {
+        if (!courseService.userHasAtLeastStudentPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

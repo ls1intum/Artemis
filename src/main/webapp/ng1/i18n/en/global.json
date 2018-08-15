@@ -122,6 +122,7 @@
     },
     "entity": {
         "action": {
+            "add": "Add",
             "addblob": "Add blob",
             "addimage": "Add image",
             "back": "Back",
@@ -137,7 +138,9 @@
             "submit": "Submit",
             "reset" : "Reset",
             "re-evaluate": "Re-evaluate",
-            "close": "Close"
+            "close": "Close",
+            "import": "Import",
+            "export": "Export"
         },
         "detail": {
             "field": "Field",
