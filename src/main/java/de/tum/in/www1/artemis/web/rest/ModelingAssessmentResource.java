@@ -143,7 +143,7 @@ public class ModelingAssessmentResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "participationNotFound", "No participation was found for the given ID.")).body(null);
         }
 
-        if (!courseService.userHasStudentPermissions(participation.getExercise().getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
+        if (!courseService.userHasAtLeastStudentPermissions(participation.getExercise().getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

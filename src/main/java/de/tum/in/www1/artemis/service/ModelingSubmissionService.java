@@ -64,9 +64,9 @@ public class ModelingSubmissionService {
                     Optional<Result> dbResult = resultRepository.findDistinctBySubmissionId(dbModelingSubmission.getId());
                     if (dbResult.isPresent()) {
                         // return the result found for the submitted submission incl. the model
-                        Result result2 = dbResult.get();
-                        result2.setSubmission(dbModelingSubmission);
-                        return result2;
+                        Result resultForAutoSubmittedSubmission = dbResult.get();
+                        resultForAutoSubmittedSubmission.setSubmission(dbModelingSubmission);
+                        return resultForAutoSubmittedSubmission;
                     }
                 } catch (Exception e) {
                     log.error("Exception while retrieving the model for submission {}:\n{}", dbModelingSubmission.getId(), e.getMessage());
@@ -105,9 +105,10 @@ public class ModelingSubmissionService {
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
-        modelingSubmissionRepository.save(modelingSubmission);
 
         result.setSubmission(modelingSubmission);
+        modelingSubmission.setResult(result);
+        modelingSubmissionRepository.save(modelingSubmission);
         resultRepository.save(result);
 
         if (modelingSubmission.getModel() != null && !modelingSubmission.getModel().isEmpty()) {

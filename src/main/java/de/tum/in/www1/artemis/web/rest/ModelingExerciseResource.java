@@ -260,7 +260,7 @@ public class ModelingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
         }
 
-        if (!courseService.userHasStudentPermissions(modelingExercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
+        if (!courseService.userHasAtLeastStudentPermissions(modelingExercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
