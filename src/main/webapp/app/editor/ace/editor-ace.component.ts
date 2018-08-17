@@ -71,7 +71,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         this.editor.getEditor().setOptions({
             animatedScroll: true
         });
-        const editorTextChanged$ = Rx.Observable.fromEvent(this.editor, 'textChanged');
+        const editorTextChanged$ = Rx.Observable.fromEvent(this.editor.nativeElement, 'textChanged');
         editorTextChanged$.subscribe(e => console.log('editorTextChanged$', e));
     }
 
