@@ -322,7 +322,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         text += '</strong>: ';
         text += status['done'] ?
             ' <span class="text-success">' + status['label'] + '</span>' :
-            '<a data-tests="' + tests.toString() + '\'" class="test-status"><span class="text-danger">' + status['label'] + '</span></a>';
+            '<a data-tests="' + tests.toString() + '" class="test-status"><span class="text-danger">' + status['label'] + '</span></a>';
         text += '<br />';
 
         this.steps.push({
