@@ -148,7 +148,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             console.log('received results', results);
             this.init();
             this.newResult.emit({
-                newResult: results[0]
+                newResult: this.results[0]
             });
         });
     }
