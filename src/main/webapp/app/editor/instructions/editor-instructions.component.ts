@@ -104,7 +104,13 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             this.setupMarkDown();
             this.loadReadme();
         }
+
+        if (changes.latestResult) {
+            console.log('Editor instructions -> latestResult changed', changes.latestResult);
+        }
+
         if (changes.latestResult && changes.latestResult.currentValue && !this.isLoading) {
+            console.log('changes.latestResult inside if', changes.latestResult);
             // New result available
             this.loadResultsDetails();
         }
