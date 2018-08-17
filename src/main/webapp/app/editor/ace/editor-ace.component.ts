@@ -1,4 +1,3 @@
-import {RepositoryFileService} from '../../entities/repository/repository.service';
 import {
     Component,
     EventEmitter,
@@ -10,13 +9,15 @@ import {
     SimpleChanges,
     ViewChild
 } from '@angular/core';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {Participation} from '../../entities/participation';
-import {WindowRef} from '../../shared/websocket/window.service';
-import {JhiAlertService} from 'ng-jhipster';
-import {JhiWebsocketService} from '../../shared';
-import {EditorComponent} from '../editor.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Participation } from '../../entities/participation';
+import { RepositoryFileService } from '../../entities/repository/repository.service';
+import { WindowRef } from '../../shared/websocket/window.service';
+import { JhiAlertService } from 'ng-jhipster';
+import { JhiWebsocketService } from '../../shared';
+import { EditorComponent } from '../editor.component';
 import 'brace/theme/dreamweaver';
+import * as Rx from 'rxjs/Rx';
 declare let ace: any;
 
 @Component({
@@ -70,6 +71,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         this.editor.getEditor().setOptions({
             animatedScroll: true
         });
+        const editorTextChanged$ = Rx.Observable.fromEvent(this.editor, 'textChanged');
+        editorTextChanged$.subscribe(e => console.log('editorTextChanged$', e));
     }
 
     /**
