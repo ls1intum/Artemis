@@ -27,9 +27,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     results = [];
     ratedResultsArrayList = [];
     participations = [];    // [Participation]
-    typeQuizExercise = []; // refactored to a more legible name
-    typeProgrammingExercise = [];
-    typeModelingExercise = [];
+    typeQuizExercise : {firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListQ: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}> , scoreListQString: string, participated: number, successful: number }[] = []; // refactored to a more legible name
+    typeProgrammingExercise: {firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListP: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>, scoreListPString: string, participated: number, successful: number, exerciseNotCounted: boolean }[] = [];
+    typeModelingExercise : {firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListM: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>, scoreListMString: string, participated: number, successful: number, exerciseNotCounted: boolean }[] = [];
     allQuizExercises = [];
     allProgrammingExercises = [];
     allModelingExercises = [];
@@ -191,7 +191,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         if (!this.results || !this.participations || this.participations.length === 0 || this.results.length === 0) {
             return;
         }
-        let studentsQuizScores: {firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListQ: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}> , scoreListQString: string, participated: number, successful: number }[] = [];
+        let studentsQuizScores : {firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListQ: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}> , scoreListQString: string, participated: number, successful: number }[] = [];
         let studentsProgrammingScores : {firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListP: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>, scoreListPString: string, participated: number, successful: number, exerciseNotCounted: boolean }[] = [];
         let studentsModelingScores : {firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListM: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>, scoreListMString: string, participated: number, successful: number, exerciseNotCounted: boolean }[] = [];
 
@@ -364,32 +364,30 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             }
         }
 
-        // TODO MARKER: I got until here (Jakob)
-
         this.typeQuizExercise = studentsQuizScores;
         this.typeProgrammingExercise = studentsProgrammingScores;
         this.typeModelingExercise = studentsModelingScores;
 
         for (const studentsQuizScore of this.typeQuizExercise) {
-            let totalScore = 0;
+            let totalScore : number = 0;
             for (const quizzes in studentsQuizScore.scoreListQ) {
-                totalScore += studentsQuizScore.scoreListQ[quizzes].absoluteScore;
+                totalScore += +studentsQuizScore.scoreListQ[quizzes].absoluteScore; // TODO test if the "unary plus" in front of studentsQuizScore is achieving the goal (should fix an Addition with Number problem)
             }
             studentsQuizScore.totalScore = totalScore;
         }
 
         for (const studentsModelingScore of this.typeModelingExercise) {
-            let totalScore = 0;
+            let totalScore : number = 0;
             for (const modelings in studentsModelingScore.scoreListM) {
-                totalScore += studentsModelingScore.scoreListM[modelings].absoluteScore;
+                totalScore += +studentsModelingScore.scoreListM[modelings].absoluteScore; // TODO test if the "unary plus" in front of studentsModelingScore is achieving the goal
             }
             studentsModelingScore.totalScore = totalScore;
         }
 
         for (const studentsProgrammingScore of this.typeProgrammingExercise) {
-            let totalScore = 0;
+            let totalScore : number = 0;
             for (const programmings in studentsProgrammingScore.scoreListP) {
-                totalScore += studentsProgrammingScore.scoreListP[programmings].absoluteScore;
+                totalScore += +studentsProgrammingScore.scoreListP[programmings].absoluteScore; // TODO test if the "unary plus" in front of studentsProgrammingScore is achieving the goal
             }
             studentsProgrammingScore.totalScore = totalScore;
         }
