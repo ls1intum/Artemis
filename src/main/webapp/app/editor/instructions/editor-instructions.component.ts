@@ -71,6 +71,8 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     ngOnInit(): void {
         this.setupMarkDown();
         this.loadReadme();
+        // Initialize array for listener remove functions
+        this.listenerRemoveFunctions = [];
     }
 
     /**
