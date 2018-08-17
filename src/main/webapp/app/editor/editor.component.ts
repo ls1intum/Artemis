@@ -144,9 +144,10 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param $event Event object which contains information regarding the ocurred event
      */
     updateLatestResult($event) {
-        console.log('updateLatestResult called; received new result');
+        console.log('updateLatestResult called; received new result', $event);
         this.isBuilding = false;
         this.latestResult = $event.newResult;
+        console.log('assigned latestResult', this.latestResult);
     }
 
     /**
