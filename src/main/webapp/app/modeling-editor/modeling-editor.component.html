@@ -26,7 +26,7 @@
                     [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
                     [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
             <button class="btn btn-info" (click)="retry()"
-                    *ngIf="isActive && result?.rated && !retryStarted"><span class="fa fa-refresh"></span> Retry</button>
+                    *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><span class="fa fa-refresh"></span> Retry</button>
         </div>
     </div><br>
 

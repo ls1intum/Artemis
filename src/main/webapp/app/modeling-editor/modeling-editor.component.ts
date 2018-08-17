@@ -298,7 +298,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
     // function to check whether there are pending changes
     canDeactivate(): Observable<boolean> | boolean {
-        if ((!this.submission && JSON.stringify(this.apollonEditor.getState()) !== '') ||
+        if ((!this.submission && this.apollonEditor.getState().entities.allIds.length > 0 && JSON.stringify(this.apollonEditor.getState()) !== '') ||
             (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))) {
             return false;
         }
