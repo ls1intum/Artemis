@@ -17,7 +17,7 @@ import { EditorService } from '../editor.service';
 import { JhiWebsocketService } from '../../shared';
 import { Result, ResultService, ParticipationResultService } from '../../entities/result';
 import { Feedback } from '../../entities/feedback';
-import { ResultDetailComponent } from '../../courses/results/result.component';
+import { EditorInstructionsResultDetailComponent } from './editor-instructions-result-detail';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import * as interact from 'interactjs';
 import * as Remarkable from 'remarkable';
@@ -389,7 +389,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         if (!result) {
             return;
         }
-        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(EditorInstructionsResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
         modalRef.componentInstance.tests = tests;
     }
