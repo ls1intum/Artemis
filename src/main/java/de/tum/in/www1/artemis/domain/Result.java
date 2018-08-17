@@ -62,6 +62,7 @@ public class Result implements Serializable {
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
+    @JsonIgnoreProperties("result")
     private Submission submission;
 
     //TODO: we might want to store it as a list (see quizzes)
