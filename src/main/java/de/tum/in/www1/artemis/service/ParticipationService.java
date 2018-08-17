@@ -83,8 +83,8 @@ public class ParticipationService {
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
         if (!Optional.ofNullable(participation).isPresent() ||
-            (!(exercise instanceof QuizExercise || exercise instanceof ModelingExercise) && participation.getInitializationState() == ParticipationState.FINISHED)) {
-            // create a new participation only if it was finished before (not for quiz exercise)
+            (exercise instanceof ProgrammingExercise && participation.getInitializationState() == ParticipationState.FINISHED)) {
+            // create a new participation only if it was finished before (only for programming exercises)
             participation = new Participation();
             participation.setExercise(exercise);
 
@@ -436,7 +436,7 @@ public class ParticipationService {
      */
     public Result findLatestResult(Participation participation) {
         Set<Result> results = participation.getResults();
-        if (results.size() == 0) {
+        if (results == null || results.size() == 0) {
             return null;
         }
         List<Result> sortedResults = results.stream().collect(Collectors.toList());
@@ -453,7 +453,7 @@ public class ParticipationService {
      */
     public Submission findLatestSubmission(Participation participation) {
         Set<Submission> submissions = participation.getSubmissions();
-        if (submissions.size() == 0) {
+        if (submissions == null || submissions.size() == 0) {
             return null;
         }
         List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());

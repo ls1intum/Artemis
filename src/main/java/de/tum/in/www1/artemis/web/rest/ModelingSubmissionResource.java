@@ -114,6 +114,7 @@ public class ModelingSubmissionResource {
             Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
 
             participation.addResult(result);
+            participation.addSubmissions(modelingSubmission);
             participationService.save(participation);
 
             return ResponseEntity.ok(result);
@@ -260,7 +261,7 @@ public class ModelingSubmissionResource {
     @Timed
     public ResponseEntity<ModelingSubmission> getModelingSubmissionByParticipation(@PathVariable Long participationId) {
         Participation participation = participationService.findOne(participationId);
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findByParticipation(participation);
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findLatestModelingSubmissionByParticipation(participation);
         if (Optional.ofNullable(modelingSubmission).isPresent()) {
             JsonObject model = modelingSubmissionService.getModel(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId());
             if (model != null) {

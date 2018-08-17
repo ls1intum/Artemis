@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -199,21 +198,15 @@ public class AutomaticSubmissionService {
                 }
 
                 if (submission instanceof ModelingSubmission) {
-                    // manually trigger submit for modelingSubmission to update compass
+                    // manually trigger notifyCompass for modelingSubmission to update compass
                     ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
-                    Exercise exercise = participation.getExercise();
-                    if (modelingSubmission.getModel() == "") {
-                        try {
-                            JsonObject model = modelingSubmissionService.getModel(exercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
-                            modelingSubmission.setModel(model.toString());
-                        } catch (Exception e) {
-                            log.error("Exception while retrieving the model for submission {}:\n{}", submission.getId(), e.getMessage());
-                            return false;
-                        }
-                    }
-                    if (exercise instanceof ModelingExercise) {
+                    if (modelingSubmission.getParticipation() == null) {
+                        modelingSubmission.setParticipation(participation);
                         modelingSubmissionRepository.save(modelingSubmission);
-                        modelingSubmissionService.submit(modelingSubmission, (ModelingExercise) exercise);
+                    }
+                    Exercise exercise = participation.getExercise();
+                    if (exercise instanceof ModelingExercise) {
+                        modelingSubmissionService.notifyCompass(modelingSubmission, (ModelingExercise) exercise);
                     } else {
                         log.error("The exercise {} belonging the modeling submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());
                         return false;

@@ -3,11 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -55,6 +53,7 @@ public class ModelingExerciseResource {
     private final JsonAssessmentRepository jsonAssessmentRepository;
     private final ModelingExerciseService modelingExerciseService;
     private final CompassService compassService;
+    private final ModelingAssessmentService modelingAssessmentService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository,
                                     UserService userService,
@@ -66,7 +65,8 @@ public class ModelingExerciseResource {
                                     MappingJackson2HttpMessageConverter springMvcJacksonConverter,
                                     JsonAssessmentRepository jsonAssessmentRepository,
                                     ModelingExerciseService modelingExerciseService,
-                                    CompassService compassService) {
+                                    CompassService compassService,
+                                    ModelingAssessmentService modelingAssessmentService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.modelingExerciseService = modelingExerciseService;
         this.userService = userService;
@@ -78,6 +78,7 @@ public class ModelingExerciseResource {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.compassService = compassService;
+        this.modelingAssessmentService = modelingAssessmentService;
     }
 
     /**
@@ -271,51 +272,34 @@ public class ModelingExerciseResource {
         }
         //NOTE: avoid infinite recursion by setting submissions to null
         participation.setSubmissions(null);
+
         ObjectNode data = objectMapper.createObjectNode();
         data.set("participation", objectMapper.valueToTree(participation));
-        if (participation.getResults().size() > 0) {
-            Set<Result> resultSet = participation.getResults();
-            List<Result> sortedResults = resultSet.stream().collect(Collectors.toList());
-            // sort results by completion date
-            Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-            Result result = sortedResults.get(0);
-            ModelingSubmission modelingSubmission;
-            if (result.getSubmission() instanceof HibernateProxy) {
-                modelingSubmission = (ModelingSubmission) Hibernate.unproxy(result.getSubmission());
-            } else if (result.getSubmission() instanceof ModelingSubmission) {
-                modelingSubmission = (ModelingSubmission) result.getSubmission();
-            } else {
-                modelingSubmission = modelingSubmissionService.findByParticipation(participation);
-            }
-            JsonObject model = modelingSubmissionService.getModel(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId());
-            if (model != null) {
-                modelingSubmission.setModel(model.toString());
-            }
 
-            //NOTE: avoid infinite recursion by setting result to null
-            modelingSubmission.setResult(null);
-
-            data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
-            if (modelingSubmission.isSubmitted() && result.isRated()) {
+        ModelingSubmission modelingSubmission = modelingSubmissionService.findLatestModelingSubmissionByParticipation(participation);
+        if (modelingSubmission != null) {
+            // set reference to participation if null
+            if (modelingSubmission.getParticipation() == null) {
+                modelingSubmission.setParticipation(participation);
+            }
+            modelingSubmission = modelingSubmissionService.getAndSetModel(modelingSubmission);
+            Result result = modelingSubmission.getResult();
+            if (modelingSubmission.isSubmitted() && result != null && result.isRated()) {
                 // find assessments if modelingSubmission is submitted and result is rated
-                if (jsonAssessmentRepository.exists(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), true)) {
-                    // the modelingSubmission was graded manually
-                    JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), true);
+                String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId());
+                if (assessment != null && assessment != "") {
                     try {
-                        data.set("assessments", objectMapper.readTree(assessmentJson.get("assessments").toString()));
+                        data.set("assessments", objectMapper.readTree(assessment));
                     } catch (IOException e) {
-
-                    }
-                } else if (jsonAssessmentRepository.exists(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), false)) {
-                    // the modelingSubmission was graded automatically
-                    JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), false);
-                    try {
-                        data.set("assessments", objectMapper.readTree(assessmentJson.get("assessments").toString()));
-                    } catch (IOException e) {
-
+                        log.error("Error while reading assessment JSON: {}", e.getMessage());
                     }
                 }
             }
+            //NOTE: avoid infinite recursion by setting result and participation to null
+            modelingSubmission.setResult(null);
+            modelingSubmission.setParticipation(null);
+
+            data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
         }
         return ResponseEntity.ok(data);
     }
@@ -355,7 +339,7 @@ public class ModelingExerciseResource {
             } else if (relevantResult.getSubmission() instanceof ModelingSubmission) {
                 modelingSubmission = (ModelingSubmission) relevantResult.getSubmission();
             } else {
-                modelingSubmission = modelingSubmissionService.findByParticipation(relevantResult.getParticipation());
+                modelingSubmission = modelingSubmissionService.findLatestModelingSubmissionByParticipation(relevantResult.getParticipation());
             }
             if (relevantResult.getAssessor() == null) {
                 compassService.removeModelWaitingForAssessment(exerciseId, submissionId);
@@ -375,19 +359,12 @@ public class ModelingExerciseResource {
             data.set("result", objectMapper.valueToTree(relevantResult));
             data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
             if (modelingSubmission.isSubmitted()) {
-                if (jsonAssessmentRepository.exists(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), modelingSubmission.getId(), true)) {
-                    JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), modelingSubmission.getId(), true);
+                String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), modelingSubmission.getId());
+                if (assessment != null && assessment != "") {
                     try {
-                        data.set("assessments", objectMapper.readTree(assessmentJson.get("assessments").toString()));
+                        data.set("assessments", objectMapper.readTree(assessment));
                     } catch (IOException e) {
-
-                    }
-                } else if (jsonAssessmentRepository.exists(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), modelingSubmission.getId(), false)) {
-                    JsonObject assessmentJson = jsonAssessmentRepository.readAssessment(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), modelingSubmission.getId(), false);
-                    try {
-                        data.set("assessments", objectMapper.readTree(assessmentJson.get("assessments").toString()));
-                    } catch (IOException e) {
-
+                        log.error("Error while reading assessment JSON: {}", e.getMessage());
                     }
                 }
             }
