@@ -5,7 +5,7 @@
      [readOnly]="editorReadOnly"
      [autoUpdateContent]="editorAutoUpdate"
      [durationBeforeCallback]="editorDurationBeforeCallback"
-     (textChanged)="onFileTextChanged($event)"
+     (textChanged)="onFileTextChanged($event).debounceTime(3000)"
      class="panel panel-default"
      style="display: block; width:100%; min-height: 500px; overflow: auto;"
      [hidden]="!fileName">

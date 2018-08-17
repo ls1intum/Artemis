@@ -194,7 +194,10 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
 
-            this.saveFile(this.fileName);
+            // Delay saving file by 2 seconds
+            setTimeout(() => {
+                this.saveFile(this.fileName);
+            }, 2000);
             this.updateSaveStatusLabel();
         }
     }
