@@ -83,7 +83,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             this.updateSaveStatusLabel();
         }
         if (changes.fileName && this.fileName) {
-            console.log('FILE CHANGED, loading file: ' + this.fileName);
             // Current file has changed
             this.loadFile(this.fileName);
         }
@@ -104,6 +103,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         console.log('updateSaveStatusLabel', this.editorFileSessions, sessionKeys);
         const unsavedFiles = sessionKeys.filter(session =>
             this.editorFileSessions[session].unsavedChanges === true).length;
+
+        console.log('unsavedFiles', unsavedFiles);
 
         if (unsavedFiles > 0) {
             if (this.onSaveStatusChange) {
@@ -146,8 +147,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             this.editor.getEditor().resize();
             this.editor._editor.focus();
         }, err => {
-            console.log('There was an error while getting file: ' + this.fileName);
-            console.log(err);
+            console.log('There was an error while getting file', this.fileName, err);
         });
     }
 
@@ -179,8 +179,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
                     saveStatusLabel: '<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>'
                 });
             }
-            console.log('There was an error while saving file: ' + this.fileName);
-            console.log(err);
+            console.log('There was an error while saving file', this.fileName, err);
         });
     }
 
@@ -190,6 +189,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @param code {string} Current editor code
      */
     onFileTextChanged(code) {
+        console.log('onFileTextChanged', this.editorFileSessions, this.editorText, this.fileName);
         if (this.editorFileSessions[this.fileName] !== code && this.editorText !== '') {
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
