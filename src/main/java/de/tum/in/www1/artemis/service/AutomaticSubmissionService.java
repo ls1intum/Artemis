@@ -18,11 +18,17 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
+/*
+ * This service handles automatic submission after exercises ended. Currently it is only used for modeling exercises.
+ * It manages a hashmap with submissions, which stores not submitted submissions. It checks periodically, whether
+ * the exercise the submission belongs to has ended yet and submits it automatically if that's the case.
+ */
 @Service
 public class AutomaticSubmissionService {
 
     private static final Logger log = LoggerFactory.getLogger(AutomaticSubmissionService.class);
 
+    // Map<exerciseId, Map<username, submission>
     private static Map<Long, Map<String, Submission>> submissionHashMap = new ConcurrentHashMap<>();
 
     private static ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
@@ -72,7 +78,7 @@ public class AutomaticSubmissionService {
     /**
      * add a submission to the submissionHashMap
      *
-     * @param exerciseId     the exerciseId of the quiz the submission belongs to (first Key)
+     * @param exerciseId     the exerciseId of the exercise the submission belongs to (first Key)
      * @param username       the username of the user, who submitted the submission (second Key)
      * @param submission the submission, which should be added (Value)
      */
@@ -96,13 +102,13 @@ public class AutomaticSubmissionService {
             for (long exerciseId : submissionHashMap.keySet()) {
 
                 Exercise exercise = exerciseService.findOne(exerciseId);
-                // check if quiz has been deleted
+                // check if exercise has been deleted
                 if (exercise == null) {
                     submissionHashMap.remove(exerciseId);
                     continue;
                 }
 
-                // if exercise has ended, all submissions will be processed => we can remove the inner HashMap for this quiz
+                // if exercise has ended, all submissions will be processed => we can remove the inner HashMap for this exercise
                 // if exercise hasn't ended, some submissions (those that are not submitted) will stay in HashMap => keep inner HashMap
                 Map<String, Submission> submissions;
                 if (exercise.isEnded()) {
@@ -135,7 +141,7 @@ public class AutomaticSubmissionService {
 
         for (String username : userSubmissionMap.keySet()) {
             try {
-                // first case: the user submitted the quizSubmission
+                // first case: the user submitted the submission
                 if (userSubmissionMap.get(username).isSubmitted()) {
                     Submission submission = userSubmissionMap.remove(username);
                     log.debug("user submitted model {}", submission.getId());
@@ -148,7 +154,7 @@ public class AutomaticSubmissionService {
                     if (updateParticipation(submission)) {
                         counter++;
                     }
-                    // second case: the quiz has ended
+                    // second case: the exercise has ended
                 } else if (exercise.isEnded()) {
                     Submission submission = userSubmissionMap.remove(username);
                     log.debug("exercise ended for submission {}", submission.getId());
@@ -173,6 +179,7 @@ public class AutomaticSubmissionService {
     /**
      * Updates the participation for a given submission.
      * The participation is set to FINISHED.
+     * Currently only handles modeling submissions.
      *
      * @param submission    the submission for which the participation should be updated for
      * @return whether updating the participation for the submission was successful or not
@@ -208,10 +215,16 @@ public class AutomaticSubmissionService {
                         modelingSubmissionRepository.save(modelingSubmission);
                         modelingSubmissionService.submit(modelingSubmission, (ModelingExercise) exercise);
                     } else {
-                        log.error("The exercise {} belonging to submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());
+                        log.error("The exercise {} belonging the modeling submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());
                         return false;
                     }
                 }
+
+                /* TODO: add support for other submission types, e.g.
+                 * if (submission instanceof TextSubmission) {
+                 *
+                 * }
+                 */
 
                 return true;
             } else {
