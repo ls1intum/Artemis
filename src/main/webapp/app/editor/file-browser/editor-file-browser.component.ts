@@ -135,7 +135,6 @@ export class EditorFileBrowserComponent implements OnInit, OnChanges {
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(this.parent.participation.id).subscribe(files => {
                 this.repositoryFiles = files;
-                console.log(this.repositoryFiles);
                 this.setupTreeview(this.repositoryFiles);
             }, err => {
                 console.log('There was an error while getting files: ' + err.body.msg);

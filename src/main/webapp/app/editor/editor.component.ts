@@ -63,14 +63,12 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
             /** Query the participationService for the participationId given by the params */
             this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
                 this.participation = response.body;
-                console.log('Received a participation!');
-                console.log(this.participation);
+                console.log('Received a participation!', this.participation);
                 this.checkIfRepositoryIsClean();
             });
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(files => {
-                console.log('Received repository files!');
-                console.log(files);
+                console.log('Received repository files!', files);
                 this.repositoryFiles = files;
             }, err => {
                 console.log('There was an error while getting files: ' + err.body.msg);
@@ -144,10 +142,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param $event Event object which contains information regarding the ocurred event
      */
     updateLatestResult($event) {
-        console.log('updateLatestResult called; received new result', $event);
         this.isBuilding = false;
         this.latestResult = $event.newResult;
-        console.log('assigned latestResult', this.latestResult);
     }
 
     /**
@@ -156,8 +152,6 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param $event Event object which contains information regarding the ocurred event
      */
     updateSelectedFile($event) {
-        console.log('RECEIVED EVENT WITH NEW FILENAME: ' + $event.fileName);
-        console.log(this.repositoryFiles);
         this.file = $event.fileName;
     }
 
@@ -167,8 +161,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param $event Event object which contains information regarding the ocurred event
      */
     updateRepositoryCommitStatus($event) {
-        console.log('updateRepositoryCommitStatus called');
-        console.log($event);
+        console.log('updateRepositoryCommitStatus called', $event);
         this.isSaved = false;
         /** Query the repositoryFileService for updated files in the repository */
         this.repositoryFileService.query(this.participation.id).subscribe(files => {
@@ -207,8 +200,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      */
     commit($event) {
 
-        console.log('calling commit() from editor');
-        console.log($event);
+        console.log('calling commit() from editor', $event);
 
         const target = $event.toElement || $event.relatedTarget || $event.target;
 

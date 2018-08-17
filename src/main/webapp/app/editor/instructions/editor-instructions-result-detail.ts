@@ -12,7 +12,7 @@ export class EditorInstructionsResultDetailComponent implements OnInit {
     @Input() result: Result;
     @Input() tests;
     loading: boolean;
-    filterTests;
+    filterTests: string;
     details: Feedback[];
     buildLogs;
 
@@ -23,10 +23,13 @@ export class EditorInstructionsResultDetailComponent implements OnInit {
         this.loading = true;
         // TODO: check if the split is required
         this.filterTests = this.tests.split(',');
+        console.log('EditorInstructionsResultDetails => filterTests', this.filterTests);
         this.resultService.details(this.result.id).subscribe(res => {
+            console.log('resultService.details', res);
             this.details = res.body.filter(
                 detail => this.filterTests.indexOf(detail.text) !== -1
             );
+            console.log('this.details', this.details);
             this.loading = false;
         });
         this.loading = false;
