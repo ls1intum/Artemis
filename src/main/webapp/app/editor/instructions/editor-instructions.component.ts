@@ -6,6 +6,7 @@ import {
     Input,
     OnChanges,
     OnInit,
+    OnDestroy,
     SimpleChanges,
     ElementRef,
     Renderer2
@@ -36,7 +37,7 @@ import {HttpParams} from '@angular/common/http';
     ]
 })
 
-export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnChanges {
+export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
 
     isLoading = false;
     loadedDetails = false;
@@ -46,6 +47,8 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     readMeFileRendered: string;
     resultDetails: Feedback[];
     steps = [];
+    // Can be used to remove the click listeners for result details
+    listenerRemoveFunctions: Function[];
 
     @Input() participation: Participation;
     @Input() latestResult: Result;
@@ -169,19 +172,38 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         this.readMeFileRendered = this.markDown.render(this.readMeFileContent);
         this.isLoading = false;
 
+        // Detach test status click listeners if already initialized
+        if (this.listenerRemoveFunctions) {
+            this.removeTestStatusClickListeners();
+        }
+
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
         const testStatusDOMElements = this.elRef.nativeElement.querySelectorAll('.test-status');
         testStatusDOMElements.forEach( element => {
-            this.renderer.listen(element, 'click', event => {
+            const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
                 // Extract the data attribute for tests and open the details popup with it
                 const tests = event.target.parentElement.getAttribute('data-tests');
                 this.showDetailsForTests(this.latestResult, tests);
             });
+            this.listenerRemoveFunctions.push(listenerRemoveFunction);
         });
 
         if (!this.loadedDetails) {
             this.loadResultsDetails();
         }
+    }
+
+    /**
+     * @function removeTestStatusClickListeners
+     * @desc Detaches all click listeners for test status links
+     */
+    removeTestStatusClickListeners() {
+        for (const listenerRemoveFunction of this.listenerRemoveFunctions) {
+            // Call each removal function to detach the click listener from DOM
+            listenerRemoveFunction();
+        }
+        // Set function array to empty
+        this.listenerRemoveFunctions = [];
     }
 
     /**
@@ -402,5 +424,13 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      */
     toggleEditorCollapse($event: any, horizontal: boolean) {
         this.parent.toggleCollapse($event, horizontal);
+    }
+
+    /**
+     * @function ngOnDestroy
+     * @desc Removes all click listener when destroying the component to avoid performance issues
+     */
+    ngOnDestroy(): void {
+        this.removeTestStatusClickListeners();
     }
 }
