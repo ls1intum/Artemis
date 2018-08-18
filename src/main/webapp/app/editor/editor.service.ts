@@ -14,7 +14,7 @@ export class EditorService {
     }
 
     getPlantUmlImage(plantUml: string) {
-        return this.http.get(`${this.resourceUrl}/png`, { params: new HttpParams({encoder: this.encoder}).set('plantUml', plantUml), responseType: 'arraybuffer'})
+        return this.http.get(`${this.resourceUrl}/png`, { params: new HttpParams({encoder: this.encoder}).set('plantuml', plantUml), responseType: 'arraybuffer'})
             .map(res => res);
     }
 
