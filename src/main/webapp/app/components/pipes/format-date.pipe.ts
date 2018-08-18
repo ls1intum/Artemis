@@ -12,6 +12,5 @@ export class DatePipe implements PipeTransform {
      } else {
         return 'YYYY-MM-dd,HH:mm:ss';
      }
-     // yyyy-MM-ddTHH:mm:ss
    }
 }
