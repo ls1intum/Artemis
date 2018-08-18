@@ -279,10 +279,12 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         this.editorService.getPlantUmlImage(plantUml).subscribe( plantUmlSrcAttribute => {
             console.log('plantUmlSrcAttribute', plantUmlSrcAttribute);
             console.log('img tag for plantUml', "<img src='data:image/jpeg;base64," + plantUmlSrcAttribute + " '/>");
-            return "<img src='data:image/jpeg;base64," + plantUmlSrcAttribute + " '/>";
+            return "<img src='data:image/jpeg;base64," + "test123" + " '/>";
         }, err => {
             console.log('Error getting plantUmlImage', err);
         });
+
+        return "<img src='data:image/jpeg;base64," + "test456" + " '/>";
     }
 
     /**
