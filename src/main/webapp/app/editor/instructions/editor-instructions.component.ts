@@ -275,9 +275,10 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             const status = that.statusForTests(tests);
             return status['done'] ? 'green' : 'red';
         });
-        
+
         this.editorService.getPlantUmlImage(plantUml).subscribe( plantUmlSrcAttribute => {
             console.log('plantUmlSrcAttribute', plantUmlSrcAttribute);
+            console.log('img tag for plantUml', "<img src='data:image/jpeg;base64," + plantUmlSrcAttribute + " '/>");
             return "<img src='data:image/jpeg;base64," + plantUmlSrcAttribute + " '/>";
         }, err => {
             console.log('Error getting plantUmlImage', err);

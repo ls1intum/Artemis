@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from '../app.constants';
-import {HttpClient, HttpParameterCodec} from '@angular/common/http';
-import {HttpParams, HttpResponse} from '@angular/common/http';
+import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
 
 @Injectable()
 export class EditorService {
@@ -29,6 +28,8 @@ export class EditorService {
         // TODO: check if this works
         // response => Buffer.from(response.data, 'binary').toString('base64')
 
+        console.log('convertPlantUmlResponseToBase64', res);
+
         const arr = new Uint8Array(res.data);
         const chunk = 5000;
         let raw = '';
@@ -39,8 +40,9 @@ export class EditorService {
             raw += String.fromCharCode.apply(null, subArray);
         }
 
-        const b64 = btoa(raw);
-        return b64;
+        console.log(arr, raw, btoa(raw));
+
+        return btoa(raw);
     }
 }
 
