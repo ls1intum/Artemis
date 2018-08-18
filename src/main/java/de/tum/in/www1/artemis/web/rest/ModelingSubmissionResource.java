@@ -73,6 +73,7 @@ public class ModelingSubmissionResource {
 
     /**
      * POST  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Create a new modelingSubmission.
+     * This is called when a student saves his model the first time after starting the exercise or starting a retry.
      *
      * @param courseId       only included for API consistency, not actually used
      * @param exerciseId     the id of the exercise for which to init a participation
@@ -119,12 +120,16 @@ public class ModelingSubmissionResource {
 
             return ResponseEntity.ok(result);
         } catch (Exception e) {
+            // return 409 conflict error
+            // if this occurs, then it means that the createModelingSubmission function was called multiple times for the same participation id
             return ResponseEntity.status(409).build();
         }
     }
 
     /**
      * PUT  /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Updates an existing modelingSubmission.
+     * This function is called by the modeling editor for saving and submitting modeling submissions.
+     * The submit specific handling occurs in the ModelingSubmissionService.save() function.
      *
      * @param courseId       only included for API consistency, not actually used
      * @param exerciseId     the id of the exercise for which to init a participation

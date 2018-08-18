@@ -45,6 +45,7 @@ public class ModelingSubmissionService {
      * Saves the given submission and the corresponding model and creates the result if necessary.
      * Furthermore, the submission is added to the AutomaticSubmissionService if not submitted yet.
      * Is used for creating and updating modeling submissions.
+     * If it is used for a submit action, Compass is notified about the new model.
      * Rolls back if inserting fails - occurs for concurrent createModelingSubmission() calls.
      *
      * @param modelingSubmission the submission to notifyCompass
@@ -173,7 +174,7 @@ public class ModelingSubmissionService {
 
     /**
      * Find the latest modeling submission by a given participation. First, it tries to retrieve the modeling submission
-     * from the participation's submissions.
+     * from the participation's submissions. Then it looks for the submission through the participation's results.
      *
      * @param participation    the participation for which to find the modelingSubmission
      * @return the modelingSubmission if found otherwise null
