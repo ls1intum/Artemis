@@ -115,7 +115,10 @@ export class EditorFileBrowserComponent implements OnInit, OnChanges {
             // If we had selected a file prior to this, we "uncheck" it
             if (this.fileName) {
                 const priorFileSelection = TreeviewHelper.findItemInList(this.filesTreeViewItem, this.fileName);
-                priorFileSelection.checked = false;
+                // Avoid issues after file deletion
+                if (priorFileSelection) {
+                    priorFileSelection.checked = false;
+                }
             }
 
             // Inform parent editor component about the file selection change
