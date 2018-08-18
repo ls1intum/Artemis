@@ -98,13 +98,9 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @desc Sets the labels under the ngx-treeview (files) according to the status of the files
      */
     updateSaveStatusLabel() {
-        // TODO: check filter function
         const sessionKeys = Object.keys(this.editorFileSessions);
-        console.log('updateSaveStatusLabel', this.editorFileSessions, sessionKeys);
         const unsavedFiles = sessionKeys.filter(session =>
             this.editorFileSessions[session].unsavedChanges === true).length;
-
-        console.log('unsavedFiles', unsavedFiles);
 
         if (unsavedFiles > 0) {
             if (this.onSaveStatusChange) {

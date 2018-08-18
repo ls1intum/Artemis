@@ -275,6 +275,10 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             return status['done'] ? 'green' : 'red';
         });
 
+        /**
+         * Explanation: This call fetches the plantUml png as base64 string; the function returns and inserts an empty img tag with a placeholder
+         * When the promise is fulfilled, the src-attribute of the img element is being set with the returned value
+         */
         this.editorService.getPlantUmlImage(plantUml).subscribe( plantUmlSrcAttribute => {
             // Assign plantUmlSrcAttribute as src attribute to our img element
             document.getElementById('plantUml' + id).setAttribute('src', 'data:image/jpeg;base64,' + plantUmlSrcAttribute);
