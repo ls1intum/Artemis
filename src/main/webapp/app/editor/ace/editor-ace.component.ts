@@ -17,7 +17,6 @@ import { JhiAlertService } from 'ng-jhipster';
 import { JhiWebsocketService } from '../../shared';
 import { EditorComponent } from '../editor.component';
 import 'brace/theme/dreamweaver';
-import * as Rx from 'rxjs/Rx';
 declare let ace: any;
 
 @Component({
@@ -71,8 +70,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         this.editor.getEditor().setOptions({
             animatedScroll: true
         });
-        const editorTextChanged$ = Rx.Observable.fromEvent(this.editor.nativeElement, 'textChanged');
-        editorTextChanged$.subscribe(e => console.log('editorTextChanged$', e));
     }
 
     /**
@@ -200,7 +197,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             // Delay saving file by 2 seconds
             setTimeout(() => {
                 this.saveFile(this.fileName);
-            }, 2000);
+            }, 2500);
             this.updateSaveStatusLabel();
         }
     }
