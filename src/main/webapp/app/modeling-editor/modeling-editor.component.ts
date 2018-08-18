@@ -32,20 +32,32 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     result: Result;
 
     apollonEditor: ApollonEditor | null = null;
-    selectedEntities: any[];
-    selectedRelationships: any[];
+    selectedEntities: string[];
+    selectedRelationships: string[];
 
-    submission: any = {};
-    submissionState;
+    submission: ModelingSubmission;
+
+    /**
+     * JSON with the following keys: editor, entities, interactiveElements, relationships
+     * format is given by Apollon
+     */
+    submissionState: JSON;
+
     assessments: ModelingAssessment[];
     assessmentsNames;
     totalScore: number;
-    positions: {};
+
+    /**
+     * an Array of model element IDs as keys with {x: <xOffset>, y: <yOffset>} as values
+     * is used for positioning the assessment symbols
+     */
+    positions: any[];
+
     diagramState = null;
     isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
-    autoSaveInterval: NodeJS.Timer;
+    autoSaveInterval: number;
     autoSaveTimer: number;
 
     constructor(
@@ -151,7 +163,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 mode: 'MODELING_ONLY'
             });
             this.updateSubmissionModel();
-            this.autoSaveInterval = setInterval(() => {
+            this.autoSaveInterval = window.setInterval(() => {
                 this.autoSaveTimer++;
                 if (this.submission && this.submission.submitted) {
                     clearInterval(this.autoSaveInterval);
