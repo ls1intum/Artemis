@@ -39,6 +39,7 @@
     "ngx-infinite-scroll": "0.8.4",
     "ngx-treeview": "6.0.0",
     "ngx-webstorage": "2.0.1",
+    "ngx-cacheable": "1.0.6",
     "popper.js": "^1.14.3",
     "reflect-metadata": "0.1.12",
     "remarkable": "^1.7.1",
