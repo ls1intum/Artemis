@@ -1,16 +1,25 @@
 import { Injectable } from '@angular/core';
 import { SERVER_API_URL } from '../app.constants';
 import { HttpClient, HttpParameterCodec, HttpParams } from '@angular/common/http';
-import { Cacheable } from 'ngx-cacheable';
+import { Cacheable, ICacheConfig } from 'ngx-cacheable';
 
 @Injectable()
 export class EditorService {
 
     private resourceUrl =  SERVER_API_URL + 'api/plantuml';
     private encoder: HttpParameterCodec;
+    private cacheableConfig: ICacheConfig;
 
     constructor(private http: HttpClient) {
         this.encoder = new HttpUrlCustomEncoder();
+        /**
+         * Cacheable configuration
+         */
+        this.cacheableConfig = {
+          maxCacheCount: 3,
+          maxAge: 3000,
+          slidingExpiration: true
+        };
     }
 
     /**
@@ -18,14 +27,7 @@ export class EditorService {
      * @param plantUml definition obtained by parsing the README markdown file
      * @desc Requests the plantuml png file as arraybuffer and converts it to base64
      */
-    @Cacheable({
-        /**
-         * Cacheable configuration
-         */
-        maxCacheCount: 3,
-        maxAge: 3000,
-        slidingExpiration: true
-    })
+    @Cacheable(this.cacheableConfig)
     getPlantUmlImage(plantUml: string) {
         return this.http.get(`${this.resourceUrl}/png`, { params: new HttpParams({encoder: this.encoder}).set('plantuml', plantUml), responseType: 'arraybuffer'})
             .map(res => this.convertPlantUmlResponseToBase64(res));
