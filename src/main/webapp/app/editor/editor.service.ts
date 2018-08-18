@@ -29,8 +29,9 @@ export class EditorService {
         // response => Buffer.from(response.data, 'binary').toString('base64')
 
         console.log('convertPlantUmlResponseToBase64', res);
+        console.log('Buffer.from() method', Buffer.from(res, 'binary').toString('base64'));
 
-        const arr = new Uint8Array(res.data);
+        const arr = new Uint8Array(res);
         const chunk = 5000;
         let raw = '';
         let i, j, subArray;
