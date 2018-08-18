@@ -52,7 +52,7 @@ export class RepositoryFileService {
     }
 
     create(participationId: number, fileName: string): Observable<any> {
-        return this.http.post<any>(`${this.resourceUrl}/${participationId}/file`, {},
+        return this.http.post<any>(`${this.resourceUrl}/${participationId}/file`, '',
             { params: new HttpParams().set('file', fileName)});
     }
 
