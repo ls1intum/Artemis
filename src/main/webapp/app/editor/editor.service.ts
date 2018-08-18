@@ -13,14 +13,18 @@ export class EditorService {
         this.encoder = new HttpUrlCustomEncoder();
     }
 
+    /**
+     * @function getPlantUmlImage
+     * @param plantUml definition obtained by parsing the README markdown file
+     * @desc Requests the plantuml png file as arraybuffer and converts it to base64
+     */
     getPlantUmlImage(plantUml: string) {
         return this.http.get(`${this.resourceUrl}/png`, { params: new HttpParams({encoder: this.encoder}).set('plantuml', plantUml), responseType: 'arraybuffer'})
-            .map(res => res);
+            .map(res => this.convertPlantUmlResponseToBase64(res));
     }
 
     private convertPlantUmlResponseToBase64(res) {
         // TODO: cache result => https://nrempel.com/guides/angular-httpclient-httpinterceptor-cache-requests/
-        console.log('convertPlantUmlResponseToBase64', res);
 
         // TODO: check if this works
         // response => Buffer.from(response.data, 'binary').toString('base64')
@@ -36,7 +40,6 @@ export class EditorService {
         }
 
         const b64 = btoa(raw);
-
         return b64;
     }
 }
