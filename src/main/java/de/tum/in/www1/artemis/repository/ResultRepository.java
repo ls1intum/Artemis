@@ -31,11 +31,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("select r from Result r where r.participation.exercise.course.id = :courseId order by r.completionDate asc")
     List<Result> findAllResultsForCourse(@Param("courseId") Long courseId);
-
-//experimental
-    @Query("select r from Result r where r.participation.exercise.course.id = :courseId order by r.completionDate desc")
-    List<Result> findFilteredResultsForCourse(@Param("courseId") Long courseId);
-
+    
     /*
      * Custom query that counts the number of results for each participation of a particular exercise
      * @param exerciseId id of exercise for which the number of results in participations is aggregated

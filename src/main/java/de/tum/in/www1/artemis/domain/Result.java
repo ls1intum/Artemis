@@ -96,7 +96,6 @@ public class Result implements Serializable {
         return submissionCount;
     }
 
-    public String getQuestionType(){return getParticipation().getExercise().getTitle();}
 
     public void setSubmissionCount(Long submissionCount) {
         this.submissionCount = submissionCount;

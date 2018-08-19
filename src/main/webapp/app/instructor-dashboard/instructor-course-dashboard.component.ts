@@ -64,11 +64,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             this.results = res;
             this.groupResults();
         });
-     /*     //TODO: Add this feature when the "results" format consistently contains the "rated" property
-            this.courseResultService.findAllResults(courseId).subscribe(res => { // this call gets all information to the results in the exercises
-            this.ratedResultsArrayList = res;
-            this.groupResults();
-        });*/
+
         this.courseParticipationService.findAll(courseId).subscribe(res => { // this call gets all information to the participation in the exercises
             this.participations = res;
             this.groupResults();

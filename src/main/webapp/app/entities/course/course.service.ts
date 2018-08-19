@@ -284,10 +284,6 @@ export class CourseResultService {
     findAll(courseId: number): Observable<any> {
         return this.http.get(`${this.resourceUrl}/${courseId}/results`);
     }
-    findAllResults(courseId: number): Observable<any> {
-        return this.http.get(`${this.resourceUrl}/${courseId}/results2`);
-    }
-
     private convertResultFromServer(participation: Result): Result {
         const entity: Result = Object.assign({}, participation);
         return entity;

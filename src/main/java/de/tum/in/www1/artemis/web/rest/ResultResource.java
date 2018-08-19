@@ -341,42 +341,7 @@ public class ResultResource {
         return ResponseEntity.ok().body(results);
     }
 
-    /** experimental this filters the resultCall to only send "rated" results to the frontend
-     * at the moment this is not IDEAL due to many legacy results being rated "null" in the object. this is bound to change in the future though
-     * GET  /courses/:courseId/results : get the successful results for a course, ordered ascending by build completion date.
-     *
-     * @param courseId the id of the course for which to retrieve the results
-     * @return the ResponseEntity with status 200 (OK) and the list of results in body
-     */
-    @GetMapping(value = "/courses/{courseId}/results2")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<List<Result>> getResultsForCourse2(@PathVariable Long courseId) {
-        log.debug("REST request to get Results for Course : {}", courseId);
-        Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
 
-        List<Result> resultsOriginal = resultRepository.findFilteredResultsForCourse(courseId);
-        List<Result> ratedResultsArrayList = new ArrayList<>() ;
-        for (Result resultInstance:resultsOriginal){
-            String title = resultInstance.getParticipation().getExercise().getTitle().toLowerCase();
-            if(title.contains("quiz")){
-             if (resultInstance.isRated()) {
-                try {
-                    ratedResultsArrayList.add(resultInstance);
-                } catch (Exception IndexOutOfBoundsException) {
-                    System.out.println("Error in adding the Object to the ArrayList");
-                    }
-                }
-            }
-        }
-        return ResponseEntity.ok().body(ratedResultsArrayList);
-    }
 
 
     //TODO: create your own call and filter out results for quiz exercises with rated = 0
