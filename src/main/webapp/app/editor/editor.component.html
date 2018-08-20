@@ -42,8 +42,9 @@
                                          (deletedFile)="updateRepositoryCommitStatus($event)">
                 </jhi-editor-file-browser>
 
-                <div class="card-footer" [innerHtml]="saveStatusLabel | safeHtml"></div>
                 <div class="card-footer">
+                    <span [innerHtml]="saveStatusLabel | safeHtml"></span>
+                    <hr/>
                     <span *ngIf="isCommitted">
                         <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
                     </span>
@@ -51,6 +52,7 @@
                         <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
                     </span>
                 </div>
+
                 <!-- Required for resizing; don't remove empty span -->
                 <div class="rg-right"><span></span></div>
             </div>

@@ -51,7 +51,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
                 edges: { left: false, right: false, bottom: false, top: '.rg-top' },
                 // Set min and max height
                 restrictSize: {
-                    min: { height: 150 },
+                    min: { height: 50 },
                     max: { height: 500 }
                 },
                 inertia: true,

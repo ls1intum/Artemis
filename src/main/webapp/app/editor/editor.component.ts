@@ -90,7 +90,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                 edges: { left: false, right: '.rg-right', bottom: false, top: false },
                 // Set min and max width
                 restrictSize: {
-                    min: { width: 250 },
+                    min: { width: 50 },
                     max: { width: 800 }
                 },
                 inertia: true,

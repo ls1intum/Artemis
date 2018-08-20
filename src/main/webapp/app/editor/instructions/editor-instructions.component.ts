@@ -174,7 +174,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         this.isLoading = false;
 
         // Detach test status click listeners if already initialized
-        if (this.listenerRemoveFunctions) {
+        if (this.listenerRemoveFunctions && this.listenerRemoveFunctions.length) {
             this.removeTestStatusClickListeners();
         }
 

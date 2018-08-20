@@ -144,6 +144,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             ratedOnly: this.participation.exercise.type === 'quiz'
         }).subscribe(results => {
             this.results = results.body;
+            console.log('result.component => refreshResult() called', this.results);
             this.init();
             this.newResult.emit({
                 newResult: this.results[0]
