@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Service;
 
@@ -44,17 +45,20 @@ public class AutomaticSubmissionService {
     private final ResultRepository resultRepository;
     private final ModelingSubmissionService modelingSubmissionService;
     private final ModelingSubmissionRepository modelingSubmissionRepository;
+    private final SimpMessageSendingOperations messagingTemplate;
 
     public AutomaticSubmissionService(ExerciseService exerciseService,
                                       ParticipationRepository participationRepository,
                                       ResultRepository resultRepository,
                                       ModelingSubmissionService modelingSubmissionService,
-                                      ModelingSubmissionRepository modelingSubmissionRepository) {
+                                      ModelingSubmissionRepository modelingSubmissionRepository,
+                                      SimpMessageSendingOperations messagingTemplate) {
         this.exerciseService = exerciseService;
         this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
         this.modelingSubmissionService = modelingSubmissionService;
         this.modelingSubmissionRepository = modelingSubmissionRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -164,6 +168,7 @@ public class AutomaticSubmissionService {
                     // Update Participation and save to Database (DB Write)
                     // Remove processed Submissions from SubmissionHashMap
                     if (updateParticipation(submission)) {
+                        messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + submission.getId(), submission);
                         counter++;
                     }
                 }
@@ -202,8 +207,8 @@ public class AutomaticSubmissionService {
                     ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
                     if (modelingSubmission.getParticipation() == null) {
                         modelingSubmission.setParticipation(participation);
-                        modelingSubmissionRepository.save(modelingSubmission);
                     }
+                    modelingSubmissionRepository.save(modelingSubmission);
                     Exercise exercise = participation.getExercise();
                     if (exercise instanceof ModelingExercise) {
                         modelingSubmissionService.notifyCompass(modelingSubmission, (ModelingExercise) exercise);

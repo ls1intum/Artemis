@@ -17,6 +17,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from '../shared';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
+import { JhiWebsocketService } from '../shared';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -60,7 +61,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     autoSaveInterval: number;
     autoSaveTimer: number;
 
+    websocketChannel: string;
+
     constructor(
+        private jhiWebsocketService: JhiWebsocketService,
         private apollonDiagramService: ApollonDiagramService,
         private participationService: ParticipationService,
         private modelingExerciseService: ModelingExerciseService,
@@ -91,6 +95,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.modelingExercise = this.participation.exercise;
                     this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
                     this.submission = data.modelingSubmission;
+                    if (this.submission && this.submission.id) {
+                        this.subscribeToWebsocket();
+                    }
                     if (this.submission && this.submission.model) {
                         this.initializeApollonEditor(JSON.parse(this.submission.model));
                     } else {
@@ -115,6 +122,24 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             }
         });
         window.scroll(0, 0);
+    }
+
+    subscribeToWebsocket() {
+        if (!this.submission && !this.submission.id) {
+            return;
+        }
+        this.websocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
+        this.jhiWebsocketService.subscribe(this.websocketChannel);
+        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(submission => {
+            if (submission.submitted) {
+                this.submission = submission;
+                this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
+                if (this.submission.model) {
+                    this.initializeApollonEditor(JSON.parse(this.submission.model));
+                }
+                this.isActive = false;
+            }
+        });
     }
 
     initializeApollonEditor(initialState) {
@@ -197,13 +222,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.updateSubmissionModel();
                 }
                 this.isSaving = false;
-                if (this.submission.submitted) {
-                    this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
-                    this.initializeApollonEditor(JSON.parse(this.submission.model));
-                    this.isActive = false;
-                } else {
-                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-                }
+                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
             });
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(sub => {
@@ -260,6 +279,10 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             this.apollonEditor.destroy();
         }
         clearInterval(this.autoSaveInterval);
+
+        if (this.websocketChannel) {
+            this.jhiWebsocketService.unsubscribe(this.websocketChannel);
+        }
     }
 
     updateSubmissionModel() {

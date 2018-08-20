@@ -6,7 +6,7 @@
             "submitSuccessfulWithAssessment": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst dein Diagramm nun nicht mehr bearbeiten. Dein Feedback wird unten angezeigt.",
             "submitDeadlineMissed": "Dein Diagramm wurde erfolgreich abgesendet! Du kannst dein Diagramm nun nicht mehr bearbeiten. Bitte warte auf dein Feedback. Da du die Deadline verpasst hast wird deine Bewertung nicht gezählt.",
             "empty": "Ein leeres Diagramm kann nicht abgegeben werden.",
-            "autoSubmit": "Deine letzte Speicherung wurde verworfen, da die Übung bereits zu Ende war. Du kannst dein Diagramm nun nicht mehr bearbeiten."
+            "autoSubmit": "Die Übung ist zu Ende. Du kannst dein Diagramm nun nicht mehr bearbeiten."
         }
     }
 }
