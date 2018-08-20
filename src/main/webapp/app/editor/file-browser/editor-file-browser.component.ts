@@ -32,7 +32,7 @@ import { TreeviewComponent, TreeviewItem, TreeviewConfig, TreeviewHelper } from 
 export class EditorFileBrowserComponent implements OnInit, OnChanges {
 
     @Input() participation: Participation;
-    @Input() repositoryFiles;
+    @Input() repositoryFiles: string[];
     @Input() fileName: string;
     @Output() createdFile = new EventEmitter<object>();
     @Output() deletedFile = new EventEmitter<object>();

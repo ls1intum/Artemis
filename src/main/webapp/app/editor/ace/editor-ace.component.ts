@@ -39,7 +39,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     editorText = '';
     editorFileSessions: object = {};
     editorMode = 'java'; // String or mode object
-    editorOptions;
     editorReadOnly = false;
     editorAutoUpdate = true; // change content when editor text changes
     editorDurationBeforeCallback = 3000; // wait 3s before callback 'textChanged' sends new value

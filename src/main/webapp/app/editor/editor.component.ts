@@ -30,7 +30,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     /** Dependencies as defined by the Editor component */
     participation: Participation;
     repository: RepositoryService;
-    file: any;
+    file: string;
     paramSub: Subscription;
     repositoryFiles: string[];
     latestResult: Result;
