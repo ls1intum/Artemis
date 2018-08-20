@@ -159,6 +159,7 @@ public class CompassService {
 
     private void assessAutomatically(long modelId, long exerciseId) {
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
+        // TODO DB logic update: generate result if none can be found
         Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(null);
         // unrated result exists
         if (result != null) {

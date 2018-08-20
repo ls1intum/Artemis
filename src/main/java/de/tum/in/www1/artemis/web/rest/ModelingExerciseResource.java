@@ -331,6 +331,7 @@ public class ModelingExerciseResource {
         }
 
         Optional<Result> result = resultRepository.findDistinctBySubmissionId(submissionId);
+        // TODO DB logic update: generate new result for submission if not found to save assessor for lock
         if (result.isPresent()) {
             Result relevantResult = result.get();
             ModelingSubmission modelingSubmission;

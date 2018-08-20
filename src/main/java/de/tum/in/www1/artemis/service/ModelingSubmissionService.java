@@ -55,28 +55,7 @@ public class ModelingSubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public Result save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
-        User user = participation.getStudent();
-        if (modelingSubmission.getId() != null) {
-            // check if the the submission was already submitted due to automatic submission
-            // and return the corresponding result if that's true
-            ModelingSubmission dbModelingSubmission = modelingSubmissionRepository.findOne(modelingSubmission.getId());
-            if (dbModelingSubmission.isSubmitted()) {
-                try {
-                    JsonObject model = getModel(participation.getExercise().getId(), user.getId(), dbModelingSubmission.getId());
-                    dbModelingSubmission.setModel(model.toString());
-                    Optional<Result> dbResult = resultRepository.findDistinctBySubmissionId(dbModelingSubmission.getId());
-                    if (dbResult.isPresent()) {
-                        // return the result found for the submitted submission incl. the model
-                        Result resultForAutoSubmittedSubmission = dbResult.get();
-                        resultForAutoSubmittedSubmission.setSubmission(dbModelingSubmission);
-                        return resultForAutoSubmittedSubmission;
-                    }
-                } catch (Exception e) {
-                    log.error("Exception while retrieving the model for submission {}:\n{}", dbModelingSubmission.getId(), e.getMessage());
-                }
-            }
-        }
-
+        // TODO DB logic update: remove generating result because we do not need the result as a bridge between participation and submission anymore
         Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), false);
         Result result;
         if (!optionalResult.isPresent()) {
@@ -115,11 +94,13 @@ public class ModelingSubmissionService {
         modelingSubmissionRepository.save(modelingSubmission);
         resultRepository.save(result);
 
+        User user = participation.getStudent();
         if (modelingSubmission.getModel() != null && !modelingSubmission.getModel().isEmpty()) {
             jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
         }
 
         if (modelingSubmission.isSubmitted()) {
+            // TODO DB logic update: check if compass could automatically calculate an assessment
             notifyCompass(modelingSubmission, modelingExercise);
         } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet

@@ -214,6 +214,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
+        // TODO DB logic update: after updating ModelingSubmissionResource.java, the client logic has to be updated, too
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
                 this.result = res.body;
@@ -247,6 +248,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             return;
         }
         this.submission.submitted = true;
+        // TODO DB logic update: after updating ModelingSubmissionResource.java, the client logic has to be updated, too
         this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
             this.result = res.body;
             this.submission = this.result.submission;

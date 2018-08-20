@@ -112,6 +112,7 @@ public class ModelingSubmissionResource {
 
         // update and save submission
         try {
+            // TODO DB logic update: remove generating result because we do not need the result as a bridge between participation and submission anymore
             Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
 
             participation.addResult(result);
@@ -166,6 +167,7 @@ public class ModelingSubmissionResource {
 
         Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
 
+        // TODO DB logic update: remove generating result for save actions because we do not need the result as a bridge between participation and submission anymore
         Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
         if (modelingSubmission != result.getSubmission()) {
             modelingSubmission = (ModelingSubmission) result.getSubmission();
