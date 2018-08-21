@@ -186,7 +186,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @param code {string} Current editor code
      */
     onFileTextChanged(code) {
-        console.log('onFileTextChanged', this.editorFileSessions, this.editorText, this.fileName);
         if (this.editorFileSessions[this.fileName] !== code && this.editorText !== '') {
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
