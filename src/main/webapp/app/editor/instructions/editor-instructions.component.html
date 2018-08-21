@@ -1,4 +1,4 @@
-<div id="cardInstructions" class="card resizable-instructions" [hidden]="readMeFileRendered == null" [ngStyle]="{'width.vw':40}">
+<div id="cardInstructions" class="card resizable-instructions" [hidden]="readMeFileRenderedContent == null" [ngStyle]="{'width.vw':40}">
     <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
         <span class="pull-right "><i class="fa fa-chevron-right"></i></span>
         <h3 class="card-title">
@@ -21,7 +21,7 @@
     </div>
 
     <!-- Rendered markdown will be inserted in this div -->
-    <div class="card-body instructions" [innerHtml]="readMeFileRendered | safeHtml"></div>
+    <div class="card-body instructions" [innerHtml]="readMeFileRenderedContent | safeHtml"></div>
 
     <!-- Required for resizing; don't remove empty span -->
     <div class="rg-left"><span></span></div>

@@ -1,8 +1,9 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
-import {RepositoryFileService} from '../../entities/repository';
-import {Participation} from '../../entities/participation';
-import {EditorFileBrowserComponent} from './editor-file-browser.component';
+import { Component, Input, OnInit } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { RepositoryFileService } from '../../entities/repository';
+import { Participation } from '../../entities/participation';
+import { EditorFileBrowserComponent } from './editor-file-browser.component';
+import { TranslateService } from '@ngx-translate/core';
 
 // Modal -> Create new repository file
 @Component({
@@ -16,9 +17,12 @@ export class EditorFileBrowserCreateComponent implements OnInit {
     isLoading: boolean;
     newFileFolder: string;
     newFileName: string;
+    // Placeholder string for form field 'folder'
+    folderPlaceholder: string;
 
     constructor(public activeModal: NgbActiveModal,
-                private repositoryFileService: RepositoryFileService) {}
+                private repositoryFileService: RepositoryFileService,
+                private translateService: TranslateService) {}
 
     /**
      * @function ngOnInit
@@ -26,6 +30,7 @@ export class EditorFileBrowserCreateComponent implements OnInit {
      */
     ngOnInit(): void {
         this.isLoading = false;
+        this.folderPlaceholder = this.translateService.instant('arTeMiSApp.editor.fileBrowser.folderPlaceholder');
     }
 
     /**
@@ -39,10 +44,8 @@ export class EditorFileBrowserCreateComponent implements OnInit {
             const absoluteFilePath = (this.newFileFolder ? this.newFileFolder + '/' : '') + this.newFileName;
             this.repositoryFileService.create(this.participation.id, absoluteFilePath).subscribe( res => {
                 this.isLoading = false;
-                console.log('Successfully created file: ' + absoluteFilePath, res);
                 this.closeModal();
-                // TODO: select newly created file
-                this.parent.onCreatedFile({file: this.newFileName});
+                this.parent.onCreatedFile({file: absoluteFilePath, mode: 'create'});
             }, err => {
                 console.log('Error while creating file: ' + this.newFileName, err);
             });

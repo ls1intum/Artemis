@@ -43,6 +43,7 @@ export class EditorFileBrowserComponent implements OnInit, OnChanges {
     folder: string;
     filesTreeViewItem: TreeviewItem[];
     treeviewConfig: TreeviewConfig;
+    treeviewMaxHeight: 1200;
 
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
@@ -60,7 +61,8 @@ export class EditorFileBrowserComponent implements OnInit, OnChanges {
             hasFilter: false,
             hasCollapseExpand: false,
             decoupleChildFromParent: false,
-            maxHeight: 1200
+            // Make sure the treeview div has enough height to expand
+            maxHeight: this.treeviewMaxHeight
         });
     }
 
@@ -90,7 +92,6 @@ export class EditorFileBrowserComponent implements OnInit, OnChanges {
      * @param statusChange
      */
     onCreatedFile(statusChange: object) {
-        console.log('EMITTING onCreatedFile');
         this.createdFile.emit(statusChange);
     }
 
@@ -100,7 +101,6 @@ export class EditorFileBrowserComponent implements OnInit, OnChanges {
      * @param statusChange
      */
     onDeletedFile(statusChange: object) {
-        console.log('EMITTING onDeletedFile');
         this.deletedFile.emit(statusChange);
     }
 

@@ -41,6 +41,10 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     isBuilding = false;
     isCommitted: boolean;
 
+    /** Resizable sizing contants **/
+    resizableMinWidth = 50;
+    resizableMaxWidth = 800;
+
     /**
      * @constructor EditorComponent
      * @param {ActivatedRoute} route
@@ -55,20 +59,17 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
 
     /**
      * @function ngOnInit
-     * @desc Framework function which is executed when the component is instantiated.
-     * Used to assign parameters which are used by the component
+     * @desc Fetches the participation and the repository files for the provided participationId in params
      */
     ngOnInit(): void {
         this.paramSub = this.route.params.subscribe(params => {
             /** Query the participationService for the participationId given by the params */
             this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
                 this.participation = response.body;
-                console.log('Received a participation!', this.participation);
                 this.checkIfRepositoryIsClean();
             });
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(files => {
-                console.log('Received repository files!', files);
                 this.repositoryFiles = files;
             }, err => {
                 console.log('There was an error while getting files: ' + err.body.msg);
@@ -81,7 +82,9 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
 
     /**
      * @function ngAfterViewInit
-     * @desc Used to enable resizing for the instructions component
+     * @desc After the view was initialized, we create an interact.js resizable object,
+     *       designate the edges which can be used to resize the target element and set min and max values.
+     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
         interact('.resizable-filebrowser')
@@ -90,8 +93,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                 edges: { left: false, right: '.rg-right', bottom: false, top: false },
                 // Set min and max width
                 restrictSize: {
-                    min: { width: 50 },
-                    max: { width: 800 }
+                    min: { width: this.resizableMinWidth },
+                    max: { width: this.resizableMaxWidth }
                 },
                 inertia: true,
             }).on('resizemove', function(event) {
@@ -108,7 +111,6 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param changes
      */
     ngOnChanges(changes: SimpleChanges) {
-        // TODO: limit this to changes.participation?
         this.checkIfRepositoryIsClean();
     }
 
@@ -125,10 +127,9 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     /**
      * @function updateSaveStatusLabel
      * @desc Callback function for a save status changes of files
-     * @param $event Event object which contains information regarding the ocurred event
+     * @param $event Event object which contains information regarding the save status of files
      */
     updateSaveStatusLabel($event) {
-        console.log('updateSaveStatusLabel called');
         this.isSaved = $event.isSaved;
         if (!this.isSaved) {
             this.isCommitted = false;
@@ -139,7 +140,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     /**
      * @function updateLatestResult
      * @desc Callback function for when a new result is received from the result component
-     * @param $event Event object which contains information regarding the ocurred event
+     * @param $event Event object which contains the newly received result
      */
     updateLatestResult($event) {
         this.isBuilding = false;
@@ -149,7 +150,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     /**
      * @function updateSelectedFile
      * @desc Callback function for when a new file is selected within the file-browser component
-     * @param $event Event object which contains information regarding the ocurred event
+     * @param $event Event object which contains the new file name
      */
     updateSelectedFile($event) {
         this.file = $event.fileName;
@@ -158,14 +159,17 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     /**
      * @function updateRepositoryCommitStatus
      * @desc Callback function for when a file was created or deleted; updates the current repository files
-     * @param $event Event object which contains information regarding the ocurred event
      */
     updateRepositoryCommitStatus($event) {
-        console.log('updateRepositoryCommitStatus called', $event);
         this.isSaved = false;
+        this.isCommitted = false;
         /** Query the repositoryFileService for updated files in the repository */
         this.repositoryFileService.query(this.participation.id).subscribe(files => {
             this.repositoryFiles = files;
+            // Select newly created file
+            if ($event.mode === 'create') {
+                this.file = $event.file;
+            }
         }, err => {
             console.log('There was an error while getting files: ' + err.body.msg);
         });
@@ -177,12 +181,9 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param $event
      * @param horizontal
      */
-    toggleCollapse($event: any, horizontal: boolean) {
-
+    toggleCollapse($event, horizontal: boolean) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
-
         target.blur();
-
         const $card = $(target).closest('.card');
 
         if ($card.hasClass('collapsed')) {
@@ -199,20 +200,15 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param $event
      */
     commit($event) {
-
-        console.log('calling commit() from editor', $event);
-
         const target = $event.toElement || $event.relatedTarget || $event.target;
-
         target.blur();
         this.isBuilding = true;
         this.repository.commit(this.participation.id).subscribe(
             res => {
                 this.isCommitted = true;
-                console.log('Successfully committed');
             },
             err => {
-                console.log('Error occured');
+                console.log('Error during commit ocurred!', err);
             });
     }
 

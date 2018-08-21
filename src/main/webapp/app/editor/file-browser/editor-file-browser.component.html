@@ -14,8 +14,7 @@
     <li *ngIf="item.children"
         (click)="onCollapseExpand()"
         class="list-group-item"
-        [style.background-color]="item.checked ? '#428bca' : ''"
-        [style.color]="item.checked ? '#FFFFFF' : ''"
+        [class.node-selected]="item.checked"
     >
         <i aria-hidden="true" class="fa fa-fw" [class.fa-folder]="item.collapsed" [class.fa-folder-open]="!item.collapsed"></i>
         <span>{{ item.text }}</span>
@@ -23,8 +22,7 @@
     <li *ngIf="!item.children"
         (click)="handleNodeSelected(item)"
         class="list-group-item"
-        [style.background-color]="item.checked ? '#428bca' : ''"
-        [style.color]="item.checked ? '#FFFFFF' : ''"
+        [class.node-selected]="item.checked"
     >
         <i aria-hidden="true" class="fa fa-file fa-fw"></i>
         <span>{{ item.text }}</span>

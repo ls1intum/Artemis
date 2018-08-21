@@ -33,15 +33,17 @@ declare let ace: any;
 export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('editor') editor;
 
-    /**
-     * Ace Editor Options
-     */
+    /** Ace Editor Options **/
     editorText = '';
     editorFileSessions: object = {};
     editorMode = 'java'; // String or mode object
     editorReadOnly = false;
     editorAutoUpdate = true; // change content when editor text changes
     editorDurationBeforeCallback = 3000; // wait 3s before callback 'textChanged' sends new value
+
+    /** Callback timing variables **/
+    updateFilesDebounceTime = 3000;
+    saveFileDelayTime = 2500;
 
     @Input() participation: Participation;
     @Input() fileName: string;
@@ -148,7 +150,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
 
     /**
      * @function saveFile
-     * @desc Saved the currently selected file; is being called when the file is changed (onFileChanged)
+     * @desc Saves the currently selected file; is being called when the file is changed (onFileChanged)
      * @param fileName: name of currently selected file
      */
     saveFile(fileName: string) {
@@ -162,7 +164,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         this.repositoryFileService.update(this.participation.id,
             fileName,
             this.editorFileSessions[fileName].code)
-            .debounceTime(3000)
+            .debounceTime(this.updateFilesDebounceTime)
             .distinctUntilChanged()
             .subscribe(() => {
                 this.editorFileSessions[fileName].unsavedChanges = false;
@@ -189,10 +191,10 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
 
-            // Delay saving file by 2 seconds
+            // Delay file save
             setTimeout(() => {
                 this.saveFile(this.fileName);
-            }, 2500);
+            }, this.saveFileDelayTime);
             this.updateSaveStatusLabel();
         }
     }

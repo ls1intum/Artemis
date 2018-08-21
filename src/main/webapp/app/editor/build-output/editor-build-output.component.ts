@@ -31,6 +31,10 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
     buildLogs = [];
 
+    /** Resizable sizing contants **/
+    resizableMinHeight = 50;
+    resizableMaxHeight = 500;
+
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
 
@@ -42,7 +46,9 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
     /**
      * @function ngAfterViewInit
-     * @desc Used to enable resizing for the instructions component
+     * @desc After the view was initialized, we create an interact.js resizable object,
+     *       designate the edges which can be used to resize the target element and set min and max values.
+     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
         interact('.resizable-buildoutput')
@@ -51,8 +57,8 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
                 edges: { left: false, right: false, bottom: false, top: '.rg-top' },
                 // Set min and max height
                 restrictSize: {
-                    min: { height: 50 },
-                    max: { height: 500 }
+                    min: { height: this.resizableMinHeight },
+                    max: { height: this.resizableMaxHeight }
                 },
                 inertia: true,
             }).on('resizemove', function(event) {
@@ -65,7 +71,10 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
     /**
      * @function ngOnChanges
-     * @desc Queries for participation results
+     * @desc We need to update the participation results under certain conditions:
+     *       - Participation changed
+     *          OR
+     *       - Repository status was 'building' and is now done
      * @param {SimpleChanges} changes
      */
     ngOnChanges(changes: SimpleChanges): void {
@@ -92,9 +101,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
      */
     getBuildLogs() {
         this.repositoryService.buildlogs(this.participation.id).subscribe( buildLogs => {
-            // TODO: check if buildLogs.log actually exists
             this.buildLogs = buildLogs;
-            // TODO: can this be done without Jquery?
             $('.buildoutput').scrollTop($('.buildoutput')[0].scrollHeight);
         });
     }

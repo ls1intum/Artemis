@@ -9,6 +9,13 @@ export class EditorService {
     private resourceUrl =  SERVER_API_URL + 'api/plantuml';
     private encoder: HttpParameterCodec;
 
+    /**
+     * Cacheable configuration
+     */
+    cacheableMaxCacheCount = 3;
+    cacheableMaxAge = 3000;
+    cacheableSlidingExpiration = true;
+
     constructor(private http: HttpClient) {
         this.encoder = new HttpUrlCustomEncoder();
     }
@@ -19,12 +26,9 @@ export class EditorService {
      * @desc Requests the plantuml png file as arraybuffer and converts it to base64
      */
     @Cacheable({
-        /**
-         * Cacheable configuration
-         */
-        maxCacheCount: 3,
-        maxAge: 3000,
-        slidingExpiration: true
+        maxCacheCount: this.cacheableMaxCacheCount,
+        maxAge: this.cacheableMaxAge,
+        slidingExpiration: this.cacheableSlidingExpiration
     })
     getPlantUmlImage(plantUml: string) {
         return this.http.get(`${this.resourceUrl}/png`, { params: new HttpParams({encoder: this.encoder}).set('plantuml', plantUml), responseType: 'arraybuffer'})

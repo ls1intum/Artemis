@@ -1,5 +1,6 @@
 import { Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
+import { TranslateService } from '@ngx-translate/core';
 import {
     AfterViewInit,
     Component,
@@ -39,11 +40,11 @@ import * as Remarkable from 'remarkable';
 export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
 
     isLoading = false;
-    loadedDetails = false;
+    haveDetailsBeenLoaded = false;
     initialInstructionsWidth: number;
     markDown: Remarkable;
-    readMeFileContent: string;
-    readMeFileRendered: string;
+    readMeFileRawContent: string;
+    readMeFileRenderedContent: string;
     resultDetails: Feedback[];
     steps = [];
     // Can be used to remove the click listeners for result details
@@ -55,6 +56,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     constructor(private parent: EditorComponent,
                 private $window: WindowRef,
                 private jhiWebsocketService: JhiWebsocketService,
+                private translateService: TranslateService,
                 private repositoryService: RepositoryService,
                 private repositoryFileService: RepositoryFileService,
                 private resultService: ResultService,
@@ -76,7 +78,9 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
 
     /**
      * @function ngAfterViewInit
-     * @desc Used to enable resizing for the instructions component
+     * @desc After the view was initialized, we create an interact.js resizable object,
+     *       designate the edges which can be used to resize the target element and set min and max values.
+     *       The 'resizemove' callback function processes the event values and sets new width and height values for the element.
      */
     ngAfterViewInit(): void {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
@@ -121,7 +125,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      */
     loadReadme() {
         this.repositoryFileService.get(this.participation.id, 'README.md').subscribe( fileObj => {
-           this.readMeFileContent = fileObj.fileContent;
+           this.readMeFileRawContent = fileObj.fileContent;
            this.renderReadme();
         }, err => {
             console.log('Error while getting README.md file!', err);
@@ -140,7 +144,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
 
         this.resultService.details(this.latestResult.id).subscribe( resultDetails => {
             this.resultDetails = resultDetails.body;
-            this.loadedDetails = true;
+            this.haveDetailsBeenLoaded = true;
             this.renderReadme();
             this.isLoading = false;
         }, err => {
@@ -154,7 +158,6 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      */
     setupMarkDown() {
         this.markDown = new Remarkable();
-        // TODO: check if bind required
         this.markDown.inline.ruler.before('text', 'testsStatus', this.remarkableTestsStatusParser.bind(this), {});
         this.markDown.block.ruler.before('paragraph', 'plantUml', this.remarkablePlantUmlParser.bind(this), {});
         this.markDown.renderer.rules['testsStatus'] = this.remarkableTestsStatusRenderer.bind(this);
@@ -170,7 +173,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         // Reset steps array
         this.steps = [];
         // Render README.md file via Remarkable
-        this.readMeFileRendered = this.markDown.render(this.readMeFileContent);
+        this.readMeFileRenderedContent = this.markDown.render(this.readMeFileRawContent);
         this.isLoading = false;
 
         // Detach test status click listeners if already initialized
@@ -189,7 +192,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             this.listenerRemoveFunctions.push(listenerRemoveFunction);
         });
 
-        if (!this.loadedDetails) {
+        if (!this.haveDetailsBeenLoaded) {
             this.loadResultsDetails();
         }
     }
@@ -224,12 +227,12 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         if (shift > 3 || pos + 2 >= max) { return false; }
         if (state.src.charCodeAt(pos) !== 0x40/* @ */) { return false; }
 
-        const ch = state.src.charCodeAt(pos + 1);
+        const char = state.src.charCodeAt(pos + 1);
 
         // e or s
-        if (ch === 0x73) {
+        if (char === 0x73) {
             // Probably start or end of tag
-            if (ch === 0x73/* \ */) {
+            if (char === 0x73/* \ */) {
                 // opening tag
                 const match = state.src.slice(pos, max).match(/^@startuml/);
                 if (!match) { return false; }
@@ -268,6 +271,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
 
         plantUml = plantUml.replace('@startuml', '@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nskinparam classAttributeIconSize 0\nhide empty members\n');
 
+        // Provide this reference inside replace callback function
         const that = this;
         plantUml = plantUml.replace(/testsColor\(([^)]+)\)/g, function(match, capture) {
             const tests = capture.split(',');
@@ -359,8 +363,9 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @param tests
      */
     statusForTests(tests): object {
+        const translationBasePath = 'arTeMiSApp.editor.testStatusLabels.';
         let done = false;
-        let label = 'No results';
+        let label = this.translateService.instant('arTeMiSApp.editor.testStatusLabels.noResult');
         const totalTests = tests.length;
 
         if (this.resultDetails && this.resultDetails.length > 0) {
@@ -376,21 +381,21 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
             done = (this.latestResult && this.latestResult.successful) || failedTests === 0;
             if (totalTests === 1) {
                 if (done) {
-                    label = 'Test passing';
+                    label = this.translateService.instant(translationBasePath + 'testPassing');
                 } else {
-                    label = 'Test failing';
+                    label = this.translateService.instant(translationBasePath + 'testFailing');
                 }
             } else {
                 if (done) {
-                    label = totalTests + ' tests passing';
+                    label = this.translateService.instant(translationBasePath + 'totalTestsPassing', {totalTests});
                 } else {
-                    label = failedTests + ' of ' + totalTests + ' tests failing';
+                    label = this.translateService.instant(translationBasePath + 'totalTestsFailing', {totalTests, failedTests});
                 }
             }
 
         } else if (this.latestResult && this.latestResult.successful) {
             done = true;
-            label = 'Test passing';
+            label = this.translateService.instant(translationBasePath + 'testPassing');
         }
 
         return {

@@ -1,18 +1,18 @@
 <form #createForm="ngForm" name="createForm" (ngSubmit)="createFile()">
     <div class="modal-header">
-        <h4 class="modal-title">Create new file</h4>
+        <h4 class="modal-title" jhiTranslate="arTeMiSApp.editor.fileBrowser.createTitle">Create new file</h4>
         <button type="button" class="close" data-dismiss="modal" (click)="closeModal()">&times;</button>
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
 
         <div class="form-group">
-            <label for="folder" class="col-form-label">Folder</label>
-            <input type="text" id="folder" name="folder" class="form-control" placeholder="leave empty for root folder"
+            <label for="folder" class="col-form-label" jhiTranslate="arTeMiSApp.editor.fileBrowser.folder">Folder</label>
+            <input type="text" id="folder" name="folder" class="form-control" [placeholder]="folderPlaceholder"
                    value="" [(ngModel)]="newFileFolder"  />
         </div>
         <div class="form-group">
-            <label for="filename" class="col-form-label">Filename (including extension)</label>
+            <label for="filename" class="col-form-label" jhiTranslate="arTeMiSApp.editor.fileBrowser.filename">Filename (including extension)</label>
             <input type="text" id="filename" name="filename" class="form-control"
                    value="" [(ngModel)]="newFileName" required  />
         </div>
@@ -22,7 +22,7 @@
             <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
         <button type="submit" class="btn btn-primary" [disabled]="!createForm.valid">
-            <span class="fa fa-plus"></span>&nbsp;<span>Create file</span>
+            <span class="fa fa-plus"></span>&nbsp;<span jhiTranslate="arTeMiSApp.editor.fileBrowser.create">Create file</span>
         </button>
     </div>
 </form>

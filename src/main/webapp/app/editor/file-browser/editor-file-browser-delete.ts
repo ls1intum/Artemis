@@ -36,10 +36,9 @@ export class EditorFileBrowserDeleteComponent implements OnInit {
         // Make sure we have a filename
         if (this.fileNameToDelete) {
             this.repositoryFileService.delete(this.participation.id, this.fileNameToDelete).subscribe( res => {
-                console.log('Successfully deleted file: ' + this.fileNameToDelete, res);
                 this.closeModal();
                 this.parent.getRepositoryFiles();
-                this.parent.onDeletedFile({file: this.fileNameToDelete});
+                this.parent.onDeletedFile({file: this.fileNameToDelete, mode: 'delete'});
             }, err => {
                 console.log('Error deleting file: ' + this.fileNameToDelete, err);
             });
