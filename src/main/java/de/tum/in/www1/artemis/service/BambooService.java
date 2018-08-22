@@ -44,29 +44,14 @@ public class BambooService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
-    @Value("${artemis.version-control.url}")
-    private URL BITBUCKET_SERVER_URL;
-
-    @Value("${artemis.version-control.user}")
-    private String BITBUCKET_USER;
-
-    @Value("${artemis.version-control.secret}")
-    private String BITBUCKET_PASSWORD;
-
     @Value("${artemis.bamboo.url}")
     private URL BAMBOO_SERVER_URL;
-
-    @Value("${artemis.bamboo.bitbucket-application-link-id}")
-    private String BITBUCKET_APPLICATION_LINK_ID;
 
     @Value("${artemis.bamboo.user}")
     private String BAMBOO_USER;
 
     @Value("${artemis.bamboo.password}")
     private String BAMBOO_PASSWORD;
-
-    @Value("${artemis.version-control.url}")
-    private URL BITBUCKET_SERVER;
 
     @Value("${artemis.result-retrieval-delay}")
     private int RESULT_RETRIEVAL_DELAY = 10000;
@@ -77,26 +62,17 @@ public class BambooService implements ContinuousIntegrationService {
     private final ResultRepository resultRepository;
     private final FeedbackRepository feedbackRepository;
     private final ParticipationRepository participationRepository;
+    private final VersionControlService versionControlService;
+    private final ContinuousIntegrationUpdateService continuousIntegrationUpdateService;
 
-    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository) {
+    public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository,
+                         VersionControlService versionControlService, ContinuousIntegrationUpdateService continuousIntegrationUpdateService) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
         this.participationRepository = participationRepository;
-    }
-
-    public BitbucketClient getBitbucketClient() {
-        final BitbucketClient bitbucketClient = new BitbucketClient();
-        //setup the Bamboo Client to use the correct username and password
-
-        String[] args = new String[]{
-            "-s", BITBUCKET_SERVER_URL.toString(),
-            "--user", BITBUCKET_USER,
-            "--password", BITBUCKET_PASSWORD,
-        };
-
-        bitbucketClient.doWork(args); //only invoke this to set server address, username and password so that the following action will work
-        return bitbucketClient;
+        this.versionControlService = versionControlService;
+        this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
     }
 
     private BambooClient getBambooClient() {
@@ -134,8 +110,8 @@ public class BambooService implements ContinuousIntegrationService {
             getProjectKeyFromBuildPlanId(buildPlanId),
             getPlanKeyFromBuildPlanId(buildPlanId),
             REPO_REFERRAL_NAME,
-            getProjectKeyFromUrl(repositoryUrl),
-            getRepositorySlugFromUrl(repositoryUrl)
+            versionControlService.getTopLevelIdentifier(repositoryUrl),
+            versionControlService.getLowerLevelIdentifier(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
     }
@@ -232,46 +208,8 @@ public class BambooService implements ContinuousIntegrationService {
         }
     }
 
-    /**
-     * Updates the configured repository for a given plan to the given Bitbucket Server repository.
-     *
-     * @param bambooProject        The key of the Bamboo plan's project, e.g. 'EIST16W1'.
-     * @param bambooPlan           The plan key, which is usually the name, e.g. 'ga56hur'.
-     * @param bambooRepositoryName The name of the configured repository in the Bamboo plan.
-     * @param bitbucketProject     The key for the Bitbucket Server (formerly Stash) project to which we want to update the plan.
-     * @param bitbucketRepository  The name/slug for the Bitbucket Server (formerly Stash) repository to which we want to update the plan.
-     */
-    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String bitbucketProject, String bitbucketRepository) throws BambooException {
-
-        try {
-            //get the repositoryId to find the correct value for field2 below
-            final BitbucketClient bitbucketClient = getBitbucketClient();
-            RemoteRepository remoteRepository = bitbucketClient.getRepositoryHelper().getRemoteRepository(bitbucketProject, bitbucketRepository, true);
-
-            final BambooClient bambooClient = new BambooClient();
-            String[] args = new String[]{
-                "--field1", "repository.stash.projectKey", "--value1", bitbucketProject,
-                "--field2", "repository.stash.repositoryId", "--value2", remoteRepository.getId().toString(),
-                "--field3", "repository.stash.repositorySlug", "--value3", bitbucketRepository,
-                "--field4", "repository.stash.repositoryUrl", "--value4", buildSshRepositoryUrl(bitbucketProject, bitbucketRepository), // e.g. "ssh://git@repobruegge.in.tum.de:7999/madm/helloworld.git"
-                "--field5", "repository.stash.server", "--value5", BITBUCKET_APPLICATION_LINK_ID,
-                "--field6", "repository.stash.branch", "--value6", "master",
-                "-s", BAMBOO_SERVER_URL.toString(),
-                "--user", BAMBOO_USER,
-                "--password", BAMBOO_PASSWORD,
-//            "--targetServer", "https://repobruegge.in.tum.de"     //in the future, we might be able to use this and save many other arguments above, then we could also get rid of BITBUCKET_APPLICATION_LINK_ID
-            };
-            //workaround to pass additional fields
-            bambooClient.doWork(args);
-
-            log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-            String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, null, bambooProject + "-" + bambooPlan, "BITBUCKET_SERVER", null, false, true, true);
-            log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful." + message);
-            return message;
-        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-            log.error(e.getMessage(), e);
-            throw new BambooException("Something went wrong while updating the plan repository", e);
-        }
+    public String updatePlanRepository(String bambooProject, String bambooPlan, String bambooRepositoryName, String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier) throws BambooException {
+        return continuousIntegrationUpdateService.updatePlanRepository(bambooProject, bambooPlan, bambooRepositoryName, vcsTopLevelIdentifier, vcsLowerLevelIdentifier);
     }
 
     /**
@@ -670,12 +608,6 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
 
-    private String buildSshRepositoryUrl(String project, String slug) {
-        final int sshPort = 7999;
-
-        return "ssh://git@" + BITBUCKET_SERVER.getHost() + ":" + sshPort + "/" + project.toLowerCase() + "/" + slug.toLowerCase() + ".git";
-    }
-
     private String getProjectKeyFromBuildPlanId(String buildPlanId) {
         return buildPlanId.split("-")[0];
     }
@@ -684,22 +616,7 @@ public class BambooService implements ContinuousIntegrationService {
         return buildPlanId.split("-")[1];
     }
 
-    private String getProjectKeyFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        return repositoryUrl.getFile().split("/")[2].toUpperCase();
-    }
-
-
     private String cleanPlanKey(String name) {
         return name.toUpperCase().replaceAll("[^A-Z0-9]", "");
-    }
-
-    private String getRepositorySlugFromUrl(URL repositoryUrl) {
-        // https://ga42xab@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git
-        String repositorySlug = repositoryUrl.getFile().split("/")[3];
-        if (repositorySlug.endsWith(".git")) {
-            repositorySlug = repositorySlug.substring(0, repositorySlug.length() - 4);
-        }
-        return repositorySlug;
     }
 }

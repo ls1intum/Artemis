@@ -23,6 +23,18 @@ public interface VersionControlService {
      */
     public void addWebHook(URL repositoryUrl, String notificationUrl, String webHookName);
 
+    /**
+     * Add a Bamboo-Service on the VCS-Server
+     *
+     * @param vcsTopLevelIdentifier   The project key/namespace
+     * @param vcsLowerLevelIdentifier The repository slug/project name
+     * @param bambooUrl               The base URL of the Bamboo-Server
+     * @param buildKey                The buildKey (including Project and Build Plan)
+     * @param bambooUsername          The Bamboo Username
+     * @param bambooPassword          The Bamboo Password
+     */
+    public void addBambooService(String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword);
+
     public void deleteRepository(URL repositoryUrl);
 
     public URL getRepositoryWebUrl(Participation participation);
@@ -50,4 +62,21 @@ public interface VersionControlService {
      * @throws Exception if the Body could not be parsed
      */
     public String getLastCommitHash(Object requestBody) throws Exception;
+
+    /**
+     * Get the top level identifier of a repository (project/namespace)
+     *
+     * @param repositoryUrl The repository url
+     * @return the top level identifier
+     */
+    public String getTopLevelIdentifier(URL repositoryUrl);
+
+    /**
+     * Get the lower level identifier of a repository (repository/project)
+     *
+     * @param repositoryUrl The repository url
+     * @return the lower level identifier
+     */
+    public String getLowerLevelIdentifier(URL repositoryUrl);
+
 }

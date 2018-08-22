@@ -100,6 +100,11 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
+    public void addBambooService(String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword) {
+        // NOT NEEDED
+    }
+
+    @Override
     public void deleteRepository(URL repositoryUrl) {
         deleteRepositoryImpl(getProjectKeyFromUrl(repositoryUrl), getRepositorySlugFromUrl(repositoryUrl));
     }
@@ -491,6 +496,16 @@ public class BitbucketService implements VersionControlService {
             log.error("Error when getting hash of last commit");
             throw new BitbucketException("Could not get hash of last commit", e);
         }
+    }
+
+    @Override
+    public String getTopLevelIdentifier(URL repositoryUrl) {
+        return getProjectKeyFromUrl(repositoryUrl);
+    }
+
+    @Override
+    public String getLowerLevelIdentifier(URL repositoryUrl) {
+        return getRepositorySlugFromUrl(repositoryUrl);
     }
 
     private URL buildCloneUrl(String projectKey, String repositorySlug, String username) {

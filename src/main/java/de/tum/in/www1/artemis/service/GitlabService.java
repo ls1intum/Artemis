@@ -94,6 +94,11 @@ public class GitlabService implements VersionControlService {
     }
 
     @Override
+    public void addBambooService(String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword) {
+        createBambooService(vcsTopLevelIdentifier, vcsLowerLevelIdentifier, bambooUrl, buildKey, bambooUsername, bambooPassword);
+    }
+
+    @Override
     public void deleteRepository(URL repositoryUrl) {
         deleteRepositoryImpl(repositoryUrl);
     }
@@ -108,6 +113,35 @@ public class GitlabService implements VersionControlService {
             log.error("Couldn't construct repository web URL");
         }
         return GITLAB_SERVER_URL;
+    }
+
+    public void createBambooService(String namespace, String project, String bambooUrl, String buildKey, String bambooUsername, String bambooPassword) {
+        log.debug("Creating Bamboo-Service for Repository {}", getURLEncodedIdentifier(namespace, project));
+        HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
+
+        URI baseUri = buildUri(GITLAB_SERVER_URL + API_PATH + "projects/", getURLEncodedIdentifier(namespace, project), "/services/bamboo");
+        Map<String, Object> body = new HashMap<>();
+        body.put("bamboo_url", bambooUrl);
+        body.put("build_key", buildKey);
+        body.put("username", bambooUsername);
+        body.put("password", bambooPassword);
+
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+        RestTemplate restTemplate = new RestTemplate();
+        try {
+            restTemplate.exchange(
+                baseUri,
+                HttpMethod.PUT,
+                entity,
+                Map.class);
+        } catch(HttpClientErrorException e) {
+            log.error("Could not create Bamboo Service (HTTP Error)", e);
+            throw new GitlabException("Error while creating Bamboo Service (HTTP Error)");
+        } catch (Exception e) {
+            log.error("Could not create Bamboo Service {}", getURLEncodedIdentifier(namespace, project), e);
+            throw new GitlabException("Error while creating Bamboo Service");
+        }
     }
 
     /**
@@ -449,6 +483,16 @@ public class GitlabService implements VersionControlService {
             log.error("Error when getting hash of last commit");
             throw new GitlabException("Could not get hash of last commit", e);
         }
+    }
+
+    @Override
+    public String getTopLevelIdentifier(URL repositoryUrl) {
+        return getNamespaceFromUrl(repositoryUrl);
+    }
+
+    @Override
+    public String getLowerLevelIdentifier(URL repositoryUrl) {
+        return getProjectNameFromUrl(repositoryUrl);
     }
 
     /**
