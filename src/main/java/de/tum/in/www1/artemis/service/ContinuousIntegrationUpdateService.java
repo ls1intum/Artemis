@@ -20,9 +20,17 @@ public interface ContinuousIntegrationUpdateService {
      *
      * @param topLevelIdentifier      The top level identifier of the plan (project/view), e.g. 'EIST16W1'.
      * @param lowerLevelIdentifier    The lower level identifier of the plan, which is usually the name, e.g. 'ga56hur'.
-     * @param bambooRepositoryName    The name of the configured repository in the CI plan.
+     * @param cIrepositoryName        The name of the configured repository in the CI plan.
      * @param vcsTopLevelIdentifier   The top level identifier of the repository.
      * @param vcsLowerLevelIdentifier The lower level identifier of the repository.
      */
-    public String updatePlanRepository(String topLevelIdentifier, String lowerLevelIdentifier, String bambooRepositoryName, String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier);
+    public String updatePlanRepository(String topLevelIdentifier, String lowerLevelIdentifier, String cIrepositoryName, String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier);
+
+    /**
+     * Triggers an initial build (if needed)
+     *
+     * @param topLevelIdentifier      The top level identifier of the plan (project/view), e.g. 'EIST16W1'.
+     * @param lowerLevelIdentifier    The lower level identifier of the plan, which is usually the name, e.g. 'ga56hur'.
+     */
+    public void triggerInitialBuild(String topLevelIdentifier, String lowerLevelIdentifier);
 }

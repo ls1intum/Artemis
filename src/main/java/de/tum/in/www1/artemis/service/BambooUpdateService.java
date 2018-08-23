@@ -108,6 +108,11 @@ public class BambooUpdateService {
             }
         }
 
+        @Override
+        public void triggerInitialBuild(String topLevelIdentifier, String lowerLevelIdentifier) {
+            // NOT NEEDED
+        }
+
         private String buildSshRepositoryUrl(String project, String slug) {
             final int sshPort = 7999;
 
@@ -169,6 +174,14 @@ public class BambooUpdateService {
             }
         }
 
+        /**
+         * Add a web trigger to Bamboo because Gitlab can not notify Bamboo about the push otherwise.
+         * To support all possible Gitlab installations, every ip (0.0.0.0/0) is allowed to trigger the update-and-build process.
+         * 
+         * @param bambooProject        The bamboo project key
+         * @param bambooPlan           The bamboo plan key
+         * @param bambooRepositoryName The repository for which the trigger should be activated
+         */
         private void addWebTrigger(String bambooProject, String bambooPlan, String bambooRepositoryName) {
             try {
                 final BambooClient bambooClient = new BambooClient();
@@ -179,9 +192,38 @@ public class BambooUpdateService {
                 };
 
                 bambooClient.doWork(args);
+
+                // TODO: check if we need to remove existing triggers
+                // We can not check if the trigger exists due to a missing JSoup library, so we just try to remove it (we can not do this either...)
+                // log.info("Removing existing trigger for plan " + bambooProject + "-" + bambooPlan);
+                // String message = bambooClient.getTriggerHelper().removeTrigger(bambooProject + "-" + bambooPlan, null, null, null, "ArTEMiS WebTrigger", true);
+                // log.info("Removing existing trigger for plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
+
                 log.info("Activating trigger for plan " + bambooProject + "-" + bambooPlan);
                 String message = bambooClient.getTriggerHelper().addTrigger(bambooProject + "-" + bambooPlan, "ArTEMiS WebTrigger", "remote", null, null, bambooRepositoryName, null, "0.0.0.0/0", false);
                 log.info("Activating trigger for plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
+
+            } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+                log.error(e.getMessage(), e);
+                throw new BambooException("Something went wrong while updating the plan repository", e);
+            }
+        }
+
+        // Trigger the first build because Gitlab can not for some reason..
+        @Override
+        public void triggerInitialBuild(String bambooProject, String bambooPlan) {
+            try {
+                final BambooClient bambooClient = new BambooClient();
+                String[] args = new String[]{
+                    "-s", BAMBOO_SERVER_URL.toString(),
+                    "--user", BAMBOO_USER,
+                    "--password", BAMBOO_PASSWORD,
+                };
+
+                bambooClient.doWork(args);
+                log.info("Triggering initial build for plan " + bambooProject + "-" + bambooPlan);
+                String message = bambooClient.getBuildHelper().queueBuild(bambooProject + "-" + bambooPlan, null, null, false, -1, null, true, null);
+                log.info("Triggering initial build for plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
 
             } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
                 log.error(e.getMessage(), e);

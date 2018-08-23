@@ -114,6 +114,7 @@ public class BambooService implements ContinuousIntegrationService {
             versionControlService.getLowerLevelIdentifier(repositoryUrl)
         );
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+        // continuousIntegrationUpdateService.triggerInitialBuild(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
     }
 
     @Override
