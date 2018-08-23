@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,9 @@ import static de.tum.in.www1.artemis.domain.enumeration.ParticipationState.INITI
 public class ParticipationService {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationService.class);
+
+    @Value("${server.url}")
+    private String ARTEMIS_BASE_URL;
 
     private final ParticipationRepository participationRepository;
     private final ExerciseRepository exerciseRepository;
@@ -232,6 +236,7 @@ public class ParticipationService {
     private Participation configureRepository(Participation participation, ProgrammingExercise exercise) {
         if (!participation.getInitializationState().hasCompletedState(ParticipationState.REPO_CONFIGURED)) {
             versionControlService.get().configureRepository(participation.getRepositoryUrlAsUrl(), participation.getStudent().getLogin());
+            versionControlService.get().addWebHook(participation.getRepositoryUrlAsUrl(), ARTEMIS_BASE_URL + "/api/programmingSubmissions/" + participation.getId(), "ArTEMiS WebHook");
             participation.setInitializationState(ParticipationState.REPO_CONFIGURED);
             return save(participation);
         } else {
