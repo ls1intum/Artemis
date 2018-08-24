@@ -5,7 +5,7 @@
 <span *ngIf="!result || (!result.score && result.score !== 0)">
     <span class="text-muted"><i class="fa fa-circle-o fa-lg"></i>&nbsp;No results</span>
     <!-- <span class="text-primary"  *ngIf="queued"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Build is queued</span> -->
-     <span class="text-primary"  *ngIf="building"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Building...</span>
+     <span class="text-primary"  *ngIf="isBuilding"><i class="fa fa-circle-o-notch fa-lg fa-spin"></i>&nbsp;Building...</span>
 </span>
 <ng-container *ngIf="result && (result.score || result.score === 0)">
     <span [ngClass]="textColorClass">

@@ -1,11 +1,10 @@
-import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
-import {Participation, ParticipationService} from '../participation/index';
-import { ParticipationResultService, Result, ResultService } from './index';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Participation, ParticipationService } from '../participation/index';
+import { ParticipationResultService, Result, ResultDetailComponent } from '.';
 import { JhiWebsocketService, Principal } from '../../shared/index';
 import { RepositoryService } from '../repository/repository.service';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { Feedback } from '../feedback/index';
 
 @Component({
     selector: 'jhi-result',
@@ -23,7 +22,7 @@ import { Feedback } from '../feedback/index';
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
-    @Input() building: boolean;
+    @Input() isBuilding: boolean;
     @Output() newResult = new EventEmitter<object>();
 
     results: Result[];
@@ -228,37 +227,5 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             return 'fa-check-circle-o';
         }
         return 'fa-times-circle-o';
-    }
-}
-
-// Modal -> Result details view
-@Component({
-    selector: 'jhi-result-detail',
-    templateUrl: './result-detail.html'
-})
-export class ResultDetailComponent implements OnInit {
-    @Input() result: Result;
-    loading: boolean;
-    details: Feedback[];
-    buildLogs;
-
-    constructor(public activeModal: NgbActiveModal,
-                private resultService: ResultService,
-                private repositoryService: RepositoryService) {}
-
-    ngOnInit(): void {
-        this.loading = true;
-        this.resultService.details(this.result.id).subscribe(res => {
-            this.details = res.body;
-            if (!this.details || this.details.length === 0) {
-                this.repositoryService.buildlogs(this.result.participation.id).subscribe(repoResult => {
-                   this.buildLogs = repoResult;
-                   this.loading = false;
-                });
-            } else {
-                this.loading = false;
-            }
-        });
-        this.loading = false;
     }
 }
