@@ -20,7 +20,7 @@ import { EditorFileBrowserCreateComponent } from './file-browser/editor-file-bro
 import { EditorFileBrowserDeleteComponent } from './file-browser/editor-file-browser-delete';
 import { EditorInstructionsComponent } from './instructions/editor-instructions.component';
 import { EditorInstructionsResultDetailComponent } from './instructions/editor-instructions-result-detail';
-import { ArTEMiSCoursesModule, ResultComponent } from '../courses';
+import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 const ENTITY_STATES = [
     ...editorRoute
 ];
@@ -29,7 +29,7 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         AceEditorModule,
-        ArTEMiSCoursesModule,
+        ArTEMiSResultModule,
         MomentModule,
         TreeviewModule.forRoot(),
         RouterModule.forChild(ENTITY_STATES)

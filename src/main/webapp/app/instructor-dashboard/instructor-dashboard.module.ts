@@ -7,13 +7,11 @@ import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
 import { InstructorDashboardComponent } from './instructor-dashboard.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArTEMiSCoursesModule } from '../courses/courses.module';
-import { ResultComponent } from '../courses/results/result.component';
+import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
 import { InstructorDashboardArchiveDialogComponent, InstructorDashboardArchivePopupComponent } from './instructor-dashboard-archive-dialog.component';
 import { InstructorDashboardCleanupDialogComponent, InstructorDashboardCleanupPopupComponent } from './instructor-dashboard-cleanup-dialog.component';
 import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent} from './instructor-dashboard-repo-export-dialog.component';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
-import { ResultDetailComponent } from '../courses';
 import { InstructorDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './instructor-dashboard-result-dialog.component';
 import { SortByModule } from '../components/pipes/sort-by.module';
 
@@ -75,7 +73,7 @@ const ENTITY_STATES = [
         MomentModule,
         RouterModule.forChild(ENTITY_STATES),
         NgbModule,
-        ArTEMiSCoursesModule,
+        ArTEMiSResultModule,
         SortByModule,
     ],
     declarations: [

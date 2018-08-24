@@ -9,7 +9,7 @@ import { DifferencePipe } from 'angular2-moment';
 import { ParticipationService } from '../entities/participation/participation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
-import { ResultDetailComponent } from '../courses/results/result.component';
+import { ResultDetailComponent } from '../entities/result/result.component';
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 

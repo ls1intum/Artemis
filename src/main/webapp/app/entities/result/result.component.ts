@@ -1,11 +1,11 @@
 import {Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges} from '@angular/core';
-import {Participation, ParticipationService} from '../../entities/participation';
-import { ParticipationResultService, Result, ResultService } from '../../entities/result';
-import { JhiWebsocketService, Principal } from '../../shared';
-import { RepositoryService } from '../../entities/repository/repository.service';
+import {Participation, ParticipationService} from '../participation/index';
+import { ParticipationResultService, Result, ResultService } from './index';
+import { JhiWebsocketService, Principal } from '../../shared/index';
+import { RepositoryService } from '../repository/repository.service';
 import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { Feedback } from '../../entities/feedback';
+import { Feedback } from '../feedback/index';
 
 @Component({
     selector: 'jhi-result',

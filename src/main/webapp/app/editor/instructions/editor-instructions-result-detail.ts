@@ -6,7 +6,7 @@ import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
 // Modal -> Result details view
 @Component({
     selector: 'jhi-editor-instructions-result-detail',
-    templateUrl: '../../courses/results/result-detail.html'
+    templateUrl: '../../entities/result/result-detail.html'
 })
 export class EditorInstructionsResultDetailComponent implements OnInit {
     @Input() result: Result;
