@@ -69,7 +69,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     ngAfterViewInit(): void {
         this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
-            animatedScroll: true
+            animatedScroll: true,
+            enableBasicAutocompletion: true
         });
     }
 
@@ -120,21 +121,24 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @param fileName: Name of the file to be opened in the editor
      */
     loadFile(fileName: string) {
+
+        // This fetches a list of all supported editor modes and matches it afterwards against the file extension
+        const aceModeList = ace.require('ace/ext/modelist');
+        const aceMode = aceModeList.getModeForPath(fileName);
+
         /** Query the repositoryFileService for the specified file in the repository */
         this.repositoryFileService.get(this.participation.id, fileName).subscribe(fileObj => {
 
             if (!this.editorFileSessions[fileName]) {
                 this.editorFileSessions[fileName] = {};
                 this.editorFileSessions[fileName].code = fileObj.fileContent;
+                this.editorFileSessions[fileName].fileName = fileName;
             }
             /**
              * Assign the obtained file content to the editor and set the ace mode
              * Additionally, we resize the editor window and set focus to it
              */
             this.editorText = fileObj.fileContent;
-            // This fetches a list of all supported editor modes and matches it afterwards against the file extension
-            const aceModeList = ace.require('ace/ext/modelist');
-            const aceMode = aceModeList.getModeForPath(fileName);
             this.editor.setMode(aceMode);
             this.editor.getEditor().resize();
             this.editor._editor.focus();
@@ -182,11 +186,12 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @param code {string} Current editor code
      */
     onFileTextChanged(code) {
-        if (this.editorFileSessions[this.fileName] !== code && this.editorText !== '') {
+        /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
+        if (this.editorFileSessions[this.fileName].code !== code) {
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
-
             this.updateSaveStatusLabel();
+            // Trigger file save
             this.saveFile(this.fileName);
         }
     }
