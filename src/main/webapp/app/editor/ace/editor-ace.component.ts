@@ -90,7 +90,6 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     }
 
     onSaveStatusChange(statusChange: object) {
-        console.log('EMITTING STATUS CHANGE');
         this.saveStatusChange.emit(statusChange);
     }
 
@@ -104,19 +103,15 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             this.editorFileSessions[session].unsavedChanges === true).length;
 
         if (unsavedFiles > 0) {
-            if (this.onSaveStatusChange) {
-                this.onSaveStatusChange({
-                    isSaved: false,
-                    saveStatusLabel: '<i class="fa fa-circle-o-notch fa-spin text-info"></i> <span class="text-info">Unsaved changes in ' + unsavedFiles + ' files.</span>'
-                });
-            }
+            this.onSaveStatusChange({
+                isSaved: false,
+                saveStatusLabel: '<i class="fa fa-circle-o-notch fa-spin text-info"></i> <span class="text-info">Unsaved changes in ' + unsavedFiles + ' files.</span>'
+            });
         } else {
-            if (this.onSaveStatusChange) {
-                this.onSaveStatusChange({
-                    isSaved: true,
-                    saveStatusLabel: '<i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>'
-                });
-            }
+            this.onSaveStatusChange({
+                isSaved: true,
+                saveStatusLabel: '<i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes saved.</span>'
+            });
         }
     }
 
@@ -154,30 +149,31 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @param fileName: name of currently selected file
      */
     saveFile(fileName: string) {
-        if (this.onSaveStatusChange) {
+        // Delay file save
+        setTimeout(() => {
             this.onSaveStatusChange({
                 isSaved: false,
                 saveStatusLabel: ' <i class="fa fa-circle-o-notch fa-spin text-info"></i><span class="text-info"> Saving file.</span>'
             });
-        }
 
-        this.repositoryFileService.update(this.participation.id,
-            fileName,
-            this.editorFileSessions[fileName].code)
-            .debounceTime(this.updateFilesDebounceTime)
-            .distinctUntilChanged()
-            .subscribe(() => {
-                this.editorFileSessions[fileName].unsavedChanges = false;
-                this.updateSaveStatusLabel();
-        }, err => {
-            if (this.onSaveStatusChange) {
-                this.onSaveStatusChange( {
-                    isSaved: false,
-                    saveStatusLabel: '<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>'
+            this.repositoryFileService.update(this.participation.id,
+                fileName,
+                this.editorFileSessions[fileName].code)
+                .debounceTime(this.updateFilesDebounceTime)
+                .distinctUntilChanged()
+                .subscribe(() => {
+                    this.editorFileSessions[fileName].unsavedChanges = false;
+                    this.updateSaveStatusLabel();
+                }, err => {
+                    if (this.onSaveStatusChange) {
+                        this.onSaveStatusChange({
+                            isSaved: false,
+                            saveStatusLabel: '<i class="fa fa-times-circle text-danger"></i> <span class="text-danger"> Failed to save file.</span>'
+                        });
+                    }
+                    console.log('There was an error while saving file', this.fileName, err);
                 });
-            }
-            console.log('There was an error while saving file', this.fileName, err);
-        });
+        }, this.saveFileDelayTime);
     }
 
     /**
@@ -190,11 +186,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
 
-            // Delay file save
-            setTimeout(() => {
-                this.saveFile(this.fileName);
-            }, this.saveFileDelayTime);
             this.updateSaveStatusLabel();
+            this.saveFile(this.fileName);
         }
     }
 }
