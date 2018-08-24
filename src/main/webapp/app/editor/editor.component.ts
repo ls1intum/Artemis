@@ -44,8 +44,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     isBuilding = false;
     isCommitted: boolean;
 
-    /** Resizable sizing contants **/
-    resizableMinWidth = 50;
+    /** Resizable sizing constants **/
+    resizableMinWidth = 100;
     resizableMaxWidth = 800;
 
     /**

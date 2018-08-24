@@ -69,8 +69,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     ngAfterViewInit(): void {
         this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
-            animatedScroll: true,
-            enableBasicAutocompletion: true
+            animatedScroll: true
         });
     }
 

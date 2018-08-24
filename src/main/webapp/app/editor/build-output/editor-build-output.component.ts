@@ -31,8 +31,8 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
     buildLogs = [];
 
-    /** Resizable sizing contants **/
-    resizableMinHeight = 50;
+    /** Resizable sizing constants **/
+    resizableMinHeight = 100;
     resizableMaxHeight = 500;
 
     @Input() participation: Participation;

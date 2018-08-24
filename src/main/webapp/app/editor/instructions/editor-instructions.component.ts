@@ -41,12 +41,16 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
 
     isLoading = false;
     haveDetailsBeenLoaded = false;
-    initialInstructionsWidth: number;
     markDown: Remarkable;
     readMeFileRawContent: string;
     readMeFileRenderedContent: string;
     resultDetails: Feedback[];
     steps = [];
+
+    /** Resizable sizing constants **/
+    initialInstructionsWidth: number;
+    minInstructionsWidth: number;
+
     // Can be used to remove the click listeners for result details
     listenerRemoveFunctions: Function[];
 
@@ -84,12 +88,14 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      */
     ngAfterViewInit(): void {
         this.initialInstructionsWidth = this.$window.nativeWindow.screen.width - 300 / 2;
+        this.minInstructionsWidth = 300;
         interact('.resizable-instructions')
             .resizable({
                 // Enable resize from left edge; triggered by class rg-left
                 edges: { left: '.rg-left', right: false, bottom: false, top: false },
                 // Set maximum width
                 restrictSize: {
+                    min: { width: this.minInstructionsWidth },
                     max: { width: this.initialInstructionsWidth }
                 },
                 inertia: true,
