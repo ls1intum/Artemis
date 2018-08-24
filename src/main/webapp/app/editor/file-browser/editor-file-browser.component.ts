@@ -1,6 +1,6 @@
 import { ResultService } from '../../entities/result';
 import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild} from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild} from '@angular/core';
 import { NgbActiveModal, NgbModal} from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseParticipationService, Participation, ParticipationService } from '../../entities/participation';
 import { WindowRef } from '../../shared/websocket/window.service';
@@ -29,7 +29,7 @@ import { TreeviewComponent, TreeviewItem, TreeviewConfig, TreeviewHelper } from 
     ]
 })
 
-export class EditorFileBrowserComponent implements OnInit, OnChanges {
+export class EditorFileBrowserComponent implements OnChanges {
 
     @Input() participation: Participation;
     @Input() repositoryFiles: string[];
@@ -42,29 +42,22 @@ export class EditorFileBrowserComponent implements OnInit, OnChanges {
 
     folder: string;
     filesTreeViewItem: TreeviewItem[];
-    treeviewConfig: TreeviewConfig;
-    treeviewMaxHeight: 1200;
+
+    /** Provide basic configuration for the TreeView (ngx-treeview) **/
+    treeviewConfig = TreeviewConfig.create({
+        hasAllCheckBox: false,
+        hasFilter: false,
+        hasCollapseExpand: false,
+        decoupleChildFromParent: false,
+        // Make sure the treeview div has enough height to expand
+        maxHeight: 380
+    });
 
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
                 private repositoryFileService: RepositoryFileService,
                 public modalService: NgbModal,
                 public activeModal: NgbActiveModal) {}
-
-    /**
-     * @function ngOnInit
-     * @desc Creates the basic configuration for the TreeView (ngx-treeview)
-     */
-    ngOnInit(): void {
-        this.treeviewConfig = TreeviewConfig.create({
-            hasAllCheckBox: false,
-            hasFilter: false,
-            hasCollapseExpand: false,
-            decoupleChildFromParent: false,
-            // Make sure the treeview div has enough height to expand
-            maxHeight: this.treeviewMaxHeight
-        });
-    }
 
     /**
      * @function ngOnInit

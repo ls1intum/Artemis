@@ -24,7 +24,6 @@ body {
     max-height: calc(100vh - 100px);
     .navbar {
         border-bottom: 1px solid #ccc;
-        margin-bottom: 20px;
     }
 }
 .editor-wrapper > * {
@@ -201,13 +200,18 @@ body.editor .navbar-brand span {
     background-color: transparent;
 }
 
+.editor-center .card > .card-body {
+    height: inherit;
+    padding-bottom: 100%;
+}
+
 /* ==========================================================================
 File browser styles
 ========================================================================== */
 
 .treeview-container {
 
-    overflow-y: hidden !important;
+    overflow-y: scroll;
 
     .treeview-item {
         cursor: pointer;
@@ -228,6 +232,10 @@ File browser styles
 .node-selected {
     color: #FFFFFF;
     background-color: #428bca !important;
+}
+
+.resizable-filebrowser > .card-body {
+    padding: 1.25rem 0 1.25rem 0;
 }
 
 /* ==========================================================================

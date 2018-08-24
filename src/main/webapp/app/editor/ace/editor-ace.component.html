@@ -1,15 +1,28 @@
-<ace-editor #editor
-     [(text)]="editorText"
-     [mode]="editorMode"
-     [readOnly]="editorReadOnly"
-     [autoUpdateContent]="editorAutoUpdate"
-     [durationBeforeCallback]="editorDurationBeforeCallback"
-     (textChanged)="onFileTextChanged($event)"
-     class="panel panel-default"
-     style="display: block; width:100%; min-height: 500px; overflow: auto;"
-     [hidden]="!fileName">
-</ace-editor>
+<div class="card">
 
-<p class="text-center lead text-muted" [hidden]="fileName" style="padding-top: 50px">
-    Select a file to get started!
-</p>
+    <div class="card-header bg-primary text-white">
+        <h3 class="card-title">
+            <i class="fa fa-file"></i>
+            <span> &nbsp;{{fileName}}</span>
+        </h3>
+    </div>
+
+    <div class="card-body">
+        <ace-editor #editor
+                    [(text)]="editorText"
+                    [mode]="editorMode"
+                    [readOnly]="editorReadOnly"
+                    [autoUpdateContent]="editorAutoUpdate"
+                    [durationBeforeCallback]="editorDurationBeforeCallback"
+                    (textChanged)="onFileTextChanged($event)"
+                    class="panel panel-default"
+                    style="display: block; width:100%; min-height: 500px; overflow: auto;"
+                    [hidden]="!fileName">
+        </ace-editor>
+
+        <p class="text-center lead text-muted" [hidden]="fileName" style="padding-top: 50px">
+            Select a file to get started!
+        </p>
+    </div>
+
+</div>
