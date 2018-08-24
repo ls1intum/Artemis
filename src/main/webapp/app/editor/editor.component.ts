@@ -36,6 +36,9 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
     latestResult: Result;
     saveStatusLabel: string;
 
+    /** Enable initial refresh call for result component **/
+    doInitialRefresh = true;
+
     /** File Status Booleans **/
     isSaved = true;
     isBuilding = false;

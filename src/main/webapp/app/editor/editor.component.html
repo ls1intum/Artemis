@@ -10,8 +10,10 @@
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown pointer">
                     <jhi-result [participation]="participation"
-                            [hidden]="isBuilding"
-                            (newResult)="updateLatestResult($event)">
+                                [isBuilding]="isBuilding"
+                                [doInitialRefresh]="doInitialRefresh"
+                                (newResult)="updateLatestResult($event)"
+                                [hidden]="isBuilding">
                     </jhi-result>
                     <button type="button" class="btn btn-primary navbar-btn" [disabled]="!isSaved || isBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
                         <span *ngIf="isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>

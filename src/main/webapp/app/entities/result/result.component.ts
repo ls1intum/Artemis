@@ -23,6 +23,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
+    @Input() doInitialRefresh: boolean;
     @Output() newResult = new EventEmitter<object>();
 
     results: Result[];
@@ -55,8 +56,10 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 this.result.participation = this.participation;
             }
 
-            // Initial refresh call
-            this.refresh(false);
+            /** Initial refresh call; will only be called if input 'doInitialRefresh' is provided **/
+            if (this.doInitialRefresh) {
+                this.refresh(false);
+            }
 
             if (exercise && exercise.type === 'programming-exercise') {
                 this.principal.identity().then(account => { // only subscribe for the currently logged in user
