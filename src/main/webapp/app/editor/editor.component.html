@@ -35,20 +35,13 @@
                     </h3>
                 </div>
 
-                <div class="card-second-header">
-                    <a class="btn btn-small" (click)="openCreateFileModal()"><i class="fa fa-plus"></i> </a>
-                    <a class="btn btn-small" (click)="openDeleteFileModal()"><i class="fa fa-trash"></i> </a>
-                </div>
-
-                <div class="card-body">
-                    <jhi-editor-file-browser [participation]="participation"
-                                             [fileName]="file"
-                                             [repositoryFiles]="repositoryFiles"
-                                             (selectedFile)="updateSelectedFile($event)"
-                                             (createdFile)="updateRepositoryCommitStatus($event)"
-                                             (deletedFile)="updateRepositoryCommitStatus($event)">
-                    </jhi-editor-file-browser>
-                </div>
+                <jhi-editor-file-browser [participation]="participation"
+                                         [fileName]="file"
+                                         [repositoryFiles]="repositoryFiles"
+                                         (selectedFile)="updateSelectedFile($event)"
+                                         (createdFile)="updateRepositoryCommitStatus($event)"
+                                         (deletedFile)="updateRepositoryCommitStatus($event)">
+                </jhi-editor-file-browser>
 
                 <div class="card-footer text-nowrap">
                     <span [innerHtml]="saveStatusLabel | safeHtml"></span>

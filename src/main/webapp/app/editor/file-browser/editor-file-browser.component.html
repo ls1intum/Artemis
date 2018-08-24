@@ -1,7 +1,15 @@
-<ngx-treeview #treeview [config]="treeviewConfig"
-              [items]="filesTreeViewItem"
-              [itemTemplate]="itemTemplate">
-</ngx-treeview>
+<div class="card-second-header">
+    <a class="btn btn-small" (click)="openCreateFileModal()"><i class="fa fa-plus"></i> </a>
+    <a class="btn btn-small" (click)="openDeleteFileModal()"><i class="fa fa-trash"></i> </a>
+</div>
+
+<div class="card-body">
+    <ngx-treeview #treeview [config]="treeviewConfig"
+                  [items]="filesTreeViewItem"
+                  [itemTemplate]="itemTemplate">
+    </ngx-treeview>
+</div>
+
 
 <ng-template #itemTemplate let-item="item" let-onCollapseExpand="onCollapseExpand" let-onCheckedChange="onCheckedChange">
     <li *ngIf="item.children"
