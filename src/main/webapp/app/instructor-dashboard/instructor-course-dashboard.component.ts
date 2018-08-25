@@ -36,10 +36,17 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     titleQuizString = '';
     titleProgrammingString = '';
     titleModelingString = '';
-    maxScoresForQuizzes = 0;
-    maxScoresForModeling = 0;
-    maxScoresForProgramming = 0;
+    maxScoreForQuizzes = 0;
+    maxScoreForModeling = 0;
+    maxScoreForProgramming = 0;
     finalScores = [];
+
+
+    exerciseArrayQ: Array<Exercise> = []; //Todo: this will replace and renamed to allQuizExercises
+    exerciseArrayP: Array<Exercise> = []; //Todo: this will replace and renamed to allProgrammingExercises
+    exerciseArrayM: Array<Exercise> = []; //Todo: this will replace and renamed to allModelingExercises
+
+
     exportReady = false;
 
     constructor(private route: ActivatedRoute,
@@ -72,116 +79,37 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
             // participations is necessary as in results not all students are stored
         });
     }
+
     groupResults() {
-        this.results
+        this.results  //FDE: why was this added here?
 
         if (!this.results || !this.participations || this.participations.length === 0 || this.results.length === 0) {
             return;
         }
 
-        // const rows = {};
-        const exercisesSeen = {};
+        let exercisesSeen: Array<Exercise> = [];
 
         for (const participation of this.participations) {
 
-            /*if (!rows[participation.student.id]) {
-                rows[participation.student.id] = {
-                    'firstName': participation.student.firstName,
-                    'lastName': participation.student.lastName,
-                    'login': participation.student.login,
-                    'participated': 0,
-                    'participationInPercent': 0,
-                    'successful': 0,
-                    'successfullyCompletedInPercent': 0,
-                    'overallScore': 0,
-                };
-            }
-            // todo fde: double check if this is correctly calculated
-           rows[participation.student.id].participated++;
-            */
-            const exercise = participation.exercise;
+            const ex = participation.exercise; //@Stephan, passt das hier so mit ex und exercise, oder ex weglassen?
+            var exercise = new Exercise(ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
 
-            if (!exercisesSeen[exercise.id]) {
-                exercisesSeen[exercise.id] = true;
+            if (!exercisesSeen.some(score => score['id'] === exercise.id )) {
+                exercisesSeen.push(exercise);
                 this.numberOfExercises++;
 
-                switch (exercise.type) {
-                    case 'quiz':
-                        this.maxScoresForQuizzes += exercise.maxScore;
-
-                        this.allQuizExercises[exercise.id] = {
-                            'exId': exercise.id,
-                            'exTitle': exercise.title
-                        };
-                        this.titleQuizString += exercise.title + ',';
-
-                        break;
-
-                    case 'programming-exercise':
-                        this.maxScoresForProgramming += exercise.maxScore;
-
-                        this.allProgrammingExercises[exercise.id] = {
-                            'exId': exercise.id,
-                            'exTitle': exercise.title
-                        };
-                        this.titleProgrammingString += exercise.title + ',';
-
-                        break;
-                    case 'modeling-exercise':
-                        this.maxScoresForModeling += exercise.maxScore;
-
-                        this.allModelingExercises[exercise.id] = {
-                            'exId': exercise.id,
-                            'exTitle': exercise.title
-                        };
-                        this.titleModelingString += exercise.title + ',';
-                        break;
-
-                    default:
-                }
+                this.getTitlesMaxScoresAndAllQuizModelingProgrammingExercises(exercise);
 
             }
         }
-        // Successful Participations as the total amount and a relative value to all Exercises
 
-        // TODO: If these values are not needed right away, move this functionality to the place where we check these conditions anyway (MOVED)
-        // if we are removing the table anyhow we do not need this functionality
-        /* for (const result of this.results) {
+        console.log('length of Q: '+this.exerciseArrayQ.length+' maxScores: '+this.maxScoreForQuizzes);
+        console.log('length of M: '+this.exerciseArrayM.length+' maxScores: '+this.maxScoreForModeling);
+        console.log('length of P '+this.exerciseArrayP.length+' maxScores: '+this.maxScoreForProgramming);
 
-             if (result.successful) {
-                 if (result.participation.exercise.type === 'quiz') {
-                     if (result.rated === true) {
-                         rows[result.participation.student.id].successful++;
-                     }
-                 }
-                 else {
-                     // TODO: also take into account that the last result before the due date has to be taken for programming exercise (see code below)
-                     // TODO: also take into account that the last submission has to be taken for modeling exercises (see code below)
-                     // also not needed if we remove functionality
-                     rows[result.participation.student.id].successful++;
-                 }
-             }
-         }
-
-         for (const studentId in rows) {
-             rows[studentId].successfullyCompletedInPercent = (rows[studentId].successful / this.numberOfExercises) * 100;
-         }
-
-         // Relative amount of participation in all exercises
-         // Since 1 user can have multiple participations studentSeen makes sure each student is only calculated once
-         const studentSeen = {};
-         for (const participation of this.participations) {
-             if (!studentSeen[participation.student.id]) {
-                 studentSeen[participation.student.id] = true;
-                 rows[participation.student.id].participationInPercent = (rows[participation.student.id].participated / this.numberOfExercises) * 100;
-             }
-         }
-
-         // why the hell are we doing this???
-         this.rows = Object.keys(rows).map(key => rows[key]);
- */
         this.getAllScoresForAllCourseParticipants();
     }
+
     getAllScoresForAllCourseParticipants() {
 
         if (!this.results || !this.participations || this.participations.length === 0 || this.results.length === 0) {
@@ -751,6 +679,52 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         const roundedTempNumber = Math.round(tempNumber);
         return roundedTempNumber / factor;
     }
+
+
+
+    getTitlesMaxScoresAndAllQuizModelingProgrammingExercises(exercise: Exercise) {
+        switch (exercise.type) {
+            case 'quiz':
+                this.maxScoreForQuizzes += exercise.maxScore;
+                this.exerciseArrayQ.push(exercise);
+                this.titleQuizString += exercise.title + ',';
+                break;
+
+            case 'programming-exercise':
+                this.maxScoreForProgramming += exercise.maxScore;
+                this.exerciseArrayP.push(exercise);
+                this.titleProgrammingString += exercise.title + ',';
+                break;
+
+            case 'modeling-exercise':
+                this.maxScoreForModeling += exercise.maxScore;
+                this.exerciseArrayM.push(exercise);
+                this.titleModelingString += exercise.title + ',';
+                break;
+
+            default:
+        }
+    }
+
     callback() {
     }
+}
+
+class Exercise {
+    id: number;
+    title: string;
+    maxScore: number;
+    type: string;
+    dueDate: Date;
+
+    constructor(exerciseID: number, exerciseTitle: string, exerciseMaxScore: number,
+                exerciseType: string, exerciseDueDate: Date){
+        this.id = exerciseID;
+        this.title = exerciseTitle;
+        this.maxScore = exerciseMaxScore;
+        this.type = exerciseType;
+        this.dueDate = exerciseDueDate;
+    }
+
+
 }
