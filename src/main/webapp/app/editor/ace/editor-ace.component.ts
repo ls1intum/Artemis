@@ -102,6 +102,9 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         const unsavedFiles = sessionKeys.filter(session =>
             this.editorFileSessions[session].unsavedChanges === true).length;
 
+        console.log('sessionKeys', sessionKeys);
+        console.log('unsavedFiles', unsavedFiles);
+
         if (unsavedFiles > 0) {
             this.onSaveStatusChange({
                 isSaved: false,
@@ -123,7 +126,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
 
         // This fetches a list of all supported editor modes and matches it afterwards against the file extension
         const aceModeList = ace.require('ace/ext/modelist');
-        const aceMode = aceModeList.getModeForPath(fileName);
+        const fileNameSplit = fileName.split('/');
+        const aceMode = aceModeList.getModeForPath(fileNameSplit[fileNameSplit.length - 1]);
 
         /** Query the repositoryFileService for the specified file in the repository */
         this.repositoryFileService.get(this.participation.id, fileName).subscribe(fileObj => {
