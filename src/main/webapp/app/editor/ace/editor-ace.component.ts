@@ -39,7 +39,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     editorMode = 'java'; // String or mode object
     editorReadOnly = false;
     editorAutoUpdate = true; // change content when editor text changes
-    editorDurationBeforeCallback = 3000; // wait 3s before callback 'textChanged' sends new value
+    editorDurationBeforeCallback = 1000; // wait 1s before callback 'textChanged' sends new value
 
     /** Callback timing variables **/
     updateFilesDebounceTime = 3000;
@@ -191,11 +191,13 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     onFileTextChanged(code) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.editorFileSessions[this.fileName].code !== code) {
+            // Assign received code to our session
             this.editorFileSessions[this.fileName].code = code;
             this.editorFileSessions[this.fileName].unsavedChanges = true;
-            this.updateSaveStatusLabel();
+
             // Trigger file save
             this.saveFile(this.fileName);
+            this.updateSaveStatusLabel();
         }
     }
 }
