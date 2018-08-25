@@ -42,6 +42,8 @@
                 "answerCounter": "Answer Counter",
                 "dropLocationCounter": "Drop Location Counter",
                 "apollonDiagram": "Apollon Diagram",
+                "programmingSubmission": "Programming Submission",
+                "dragAndDropMapping": "Drag And Drop Mapping",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {
@@ -124,10 +126,12 @@
     },
     "entity": {
         "action": {
+            "add": "Add",
             "addblob": "Add blob",
             "addimage": "Add image",
             "back": "Back",
             "cancel": "Cancel",
+            "exportRepos": "Download Repositories",
             "delete": "Delete",
             "edit": "Edit",
             "open": "Open",
@@ -139,7 +143,9 @@
             "submit": "Submit",
             "reset" : "Reset",
             "re-evaluate": "Re-evaluate",
-            "close": "Close"
+            "close": "Close",
+            "import": "Import",
+            "export": "Export"
         },
         "detail": {
             "field": "Field",
@@ -153,6 +159,9 @@
         },
         "archive": {
             "title": "Confirm archive operation"
+        },
+        "exportRepos": {
+            "title": "Confirm download of repos"
         },
         "validation": {
             "required": "This field is required.",

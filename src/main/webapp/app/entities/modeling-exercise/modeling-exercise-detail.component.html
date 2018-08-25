@@ -20,6 +20,10 @@
         <dd>
             <span>{{modelingExercise.maxScore}}</span>
         </dd>
+        <dt><span jhiTranslate="arTeMiSApp.modelingExercise.diagramType">Diagram Type</span></dt>
+        <dd>
+            <span jhiTranslate="{{'arTeMiSApp.DiagramType.' + modelingExercise.diagramType}}">{{modelingExercise.diagramType}}</span>
+        </dd>
         <dt><span jhiTranslate="arTeMiSApp.exercise.course">Course</span></dt>
         <dd>
             <div *ngIf="modelingExercise.course">

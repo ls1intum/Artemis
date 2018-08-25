@@ -1,0 +1,26 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="krusche (generated)" id="1534020375488-1">
+        <addColumn tableName="submission">
+            <column name="commit_hash" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1534020375488-2">
+        <addColumn tableName="exercise">
+            <column name="diagram_type" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1534020375488-3">
+        <addColumn tableName="submission">
+            <column name="participation_id" type="bigint"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1534020375488-4">
+        <addColumn tableName="submission">
+            <column name="submission_date" type="datetime"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1534020375488-5">
+        <addForeignKeyConstraint baseColumnNames="participation_id" baseTableName="submission" constraintName="FKeap67y7pxd6ffvwbs6d6sfhmq" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="participation"/>
+    </changeSet>
+</databaseChangeLog>

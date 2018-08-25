@@ -247,7 +247,7 @@ public class ModelingExerciseResource {
         }
         ModelingExercise modelingExercise = (ModelingExercise) participation.getExercise();
 
-        if (!courseService.userHasStudentPermissions(modelingExercise.getCourse())) {
+        if (!courseService.userHasAtLeastStudentPermissions(modelingExercise.getCourse())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -256,6 +256,8 @@ public class ModelingExerciseResource {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }
+        //NOTE: avoid infinite recursion by setting submissions to null
+        participation.setSubmissions(null);
         ObjectNode data = objectMapper.createObjectNode();
         data.set("participation", objectMapper.valueToTree(participation));
         if (participation.getResults().size() > 0) {
@@ -272,6 +274,10 @@ public class ModelingExerciseResource {
             if (model != null) {
                 modelingSubmission.setModel(model.toString());
             }
+
+            //NOTE: avoid infinite recursion by setting result to null
+            modelingSubmission.setResult(null);
+
             data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
             if (modelingSubmission.isSubmitted() && result.isRated()) {
                 if (jsonAssessmentRepository.exists(modelingExercise.getId(), participation.getStudent().getId(), modelingSubmission.getId(), true)) {

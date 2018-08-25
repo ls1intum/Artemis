@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -41,19 +42,45 @@ public abstract class Submission implements Serializable {
     @JsonView(QuizView.Before.class)
     private SubmissionType type;
 
-    @Transient
-    // variable name must be different from Getter name,
-    // so that Jackson ignores the @Transient annotation,
-    // but Hibernate still respects it
-    private ZonedDateTime submissionDateTransient;
+    @ManyToOne
+    private Participation participation;
+
+    @OneToOne(mappedBy = "submission", cascade=CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval=true)
+    @JsonIgnoreProperties("submission")
+    @JoinColumn(unique = true)
+    private Result result;
+
+    @Column(name = "submission_date")
+    private ZonedDateTime submissionDate;
 
     @JsonView(QuizView.Before.class)
     public ZonedDateTime getSubmissionDate() {
-        return submissionDateTransient;
+        return submissionDate;
+    }
+
+    public Result getResult() {
+        return result;
+    }
+
+    public void setResult(Result result) {
+        this.result = result;
+    }
+
+    public Participation getParticipation() {
+        return participation;
+    }
+
+    public void setParticipation(Participation participation) {
+        this.participation = participation;
+    }
+
+    public Submission submissionDate(ZonedDateTime submissionDate) {
+        this.submissionDate = submissionDate;
+        return this;
     }
 
     public void setSubmissionDate(ZonedDateTime submissionDate) {
-        submissionDateTransient = submissionDate;
+        this.submissionDate = submissionDate;
     }
 
     public Long getId() {
@@ -118,4 +145,5 @@ public abstract class Submission implements Serializable {
             ", type='" + getType() + "'" +
             "}";
     }
+
 }

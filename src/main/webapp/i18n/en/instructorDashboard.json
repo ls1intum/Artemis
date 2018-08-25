@@ -16,6 +16,11 @@
         "archive": {
             "title": "Archive",
             "question": "Are you sure you want to archive ALL student repositories for the programming exercise {{ exerciseTitle }} in the course {{courseTitle}}?"
+        },
+        "exportRepos": {
+            "warning": "Confirm Export",
+            "title": "Download Repos",
+            "question": "Enter all logins seperated by ',' (e.g ga87fix,ga63dut)  of students you want to download the repository from"
         }
     }
 }

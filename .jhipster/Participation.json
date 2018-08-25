@@ -8,6 +8,12 @@
             "otherEntityRelationshipName": "participation"
         },
         {
+            "relationshipType": "one-to-many",
+            "relationshipName": "submissions",
+            "otherEntityName": "submission",
+            "otherEntityRelationshipName": "participation"
+        },
+        {
             "relationshipType": "many-to-one",
             "relationshipName": "student",
             "otherEntityName": "user",
