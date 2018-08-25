@@ -232,7 +232,7 @@ public class BambooUpdateService {
         }
 
         private String buildHttpRepositoryUrl(String namespace, String project) {
-            return GITLAB_SERVER_URL.getProtocol() + "://" + GITLAB_SERVER_URL.getAuthority() + GITLAB_SERVER_URL.getPath() + "/" + namespace + "/" + project;
+            return GITLAB_SERVER_URL.getProtocol() + "://" + GITLAB_SERVER_URL.getAuthority() + GITLAB_SERVER_URL.getPath() + "/" + namespace + "/" + project + ".git";
         }
     }
 }
