@@ -183,9 +183,12 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         this.readMeFileRenderedContent = this.markDown.render(this.readMeFileRawContent);
         this.isLoading = false;
 
-        // Detach test status click listeners if already initialized
+        // Detach test status click listeners if already initialized; if not, set it empty
         if (this.listenerRemoveFunctions && this.listenerRemoveFunctions.length) {
             this.removeTestStatusClickListeners();
+        } else {
+            // Making sure the array is initialized and empty
+            this.listenerRemoveFunctions = [];
         }
 
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually

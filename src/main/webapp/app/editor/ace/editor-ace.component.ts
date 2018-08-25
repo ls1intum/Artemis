@@ -39,7 +39,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     editorMode = 'java'; // String or mode object
     editorReadOnly = false;
     editorAutoUpdate = true; // change content when editor text changes
-    editorDurationBeforeCallback = 1000; // wait 1s before callback 'textChanged' sends new value
+    editorDurationBeforeCallback = 800; // wait 0,8s before callback 'textChanged' sends new value
 
     /** Callback timing variables **/
     updateFilesDebounceTime = 3000;
@@ -101,10 +101,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
         const sessionKeys = Object.keys(this.editorFileSessions);
         const unsavedFiles = sessionKeys.filter(session =>
             this.editorFileSessions[session].unsavedChanges === true).length;
-
-        console.log('sessionKeys', sessionKeys);
-        console.log('unsavedFiles', unsavedFiles);
-
+        
         if (unsavedFiles > 0) {
             this.onSaveStatusChange({
                 isSaved: false,
