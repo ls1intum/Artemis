@@ -99,9 +99,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      */
     updateSaveStatusLabel() {
         const sessionKeys = Object.keys(this.editorFileSessions);
-        const unsavedFiles = sessionKeys.filter(session =>
-            this.editorFileSessions[session].unsavedChanges === true).length;
-        
+        const unsavedFiles = sessionKeys.filter(session => this.editorFileSessions[session].unsavedChanges === true).length;
         if (unsavedFiles > 0) {
             this.onSaveStatusChange({
                 isSaved: false,
