@@ -147,6 +147,8 @@ export class ModelingAssessmentService {
     }
 
     getElementPositions(assessments, state) {
+        const SYMBOL_HEIGHT = 31;
+        const SYMBOL_WIDTH = 65;
         const positions = [];
         for (const assessment of assessments) {
             const elemPosition = {x: 0, y: 0};
@@ -194,24 +196,50 @@ export class ModelingAssessmentService {
             } else if (assessment.type === 'relationship') {
                 if (state.relationships.byId[assessment.id]) {
                     const relationship = state.relationships.byId[assessment.id];
+                    const kind = relationship.kind;
                     const sourceEntity = state.entities.byId[relationship.source.entityId];
                     const destEntity = state.entities.byId[relationship.target.entityId];
-                    const leftElem = (sourceEntity.position.x < destEntity.position.x) ? sourceEntity : destEntity;
-                    const rightElem = (sourceEntity.position.x > destEntity.position.x) ? sourceEntity : destEntity;
-                    const rightEdge = (rightElem === sourceEntity) ? relationship.source.edge : relationship.target.edge;
-                    elemPosition.x = rightElem.position.x;
-                    elemPosition.y = rightElem.position.y;
-                    if (rightEdge === 'TOP') {
-                        elemPosition.x += rightElem.size.width / 2;
-                        elemPosition.y -= 31;
-                    } else if (rightEdge === 'BOTTOM') {
-                        elemPosition.x += rightElem.size.width / 2;
-                        elemPosition.y += rightElem.size.height;
-                    } else if (rightEdge === 'LEFT') {
-                        elemPosition.y += rightElem.size.height / 2;
-                    } else if (rightEdge === 'RIGHT') {
-                        elemPosition.x += rightElem.size.width + 65;
-                        elemPosition.y += rightElem.size.height / 2;
+                    if (kind === 'BIDIRECTIONAL') {
+                        const leftElem = (sourceEntity.position.x < destEntity.position.x) ? sourceEntity : destEntity;
+                        const rightElem = (sourceEntity.position.x > destEntity.position.x) ? sourceEntity : destEntity;
+                        const rightEdge = (rightElem === sourceEntity) ? relationship.source.edge : relationship.target.edge;
+                        elemPosition.x = rightElem.position.x;
+                        elemPosition.y = rightElem.position.y;
+                        if (rightEdge === 'TOP') {
+                            elemPosition.x += rightElem.size.width / 2;
+                            elemPosition.y -= SYMBOL_HEIGHT;
+                        } else if (rightEdge === 'BOTTOM') {
+                            elemPosition.x += rightElem.size.width / 2;
+                            elemPosition.y += rightElem.size.height;
+                        } else if (rightEdge === 'LEFT') {
+                            elemPosition.y += rightElem.size.height / 2;
+                        } else if (rightEdge === 'RIGHT') {
+                            elemPosition.x += rightElem.size.width + SYMBOL_WIDTH;
+                            elemPosition.y += rightElem.size.height / 2;
+                        }
+                    } else {
+                        elemPosition.x = sourceEntity.position.x;
+                        elemPosition.y = sourceEntity.position.y;
+                        const sourceEdge = relationship.source.edge;
+                        switch (sourceEdge) {
+                            case 'TOP':
+                                elemPosition.x += sourceEntity.size.width / 2;
+                                elemPosition.y -= SYMBOL_HEIGHT;
+                                break;
+                            case 'BOTTOM':
+                                elemPosition.x += sourceEntity.size.width / 2;
+                                elemPosition.y += sourceEntity.size.height;
+                                break;
+                            case 'LEFT':
+                                elemPosition.y += sourceEntity.size.height / 2;
+                                break;
+                            case 'RIGHT':
+                                elemPosition.x += sourceEntity.size.width + SYMBOL_WIDTH;
+                                elemPosition.y += sourceEntity.size.height / 2;
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }
