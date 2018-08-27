@@ -485,8 +485,6 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Performs a request to the Bamboo REST API to retrieve details on the failed tests of the latest build.
-     * <p>
-     * TODO: This currently just gets the failed tests of the default job!
      *
      * @param planKey the key of the plan for which to retrieve the details
      * @return
@@ -497,7 +495,7 @@ public class BambooService implements ContinuousIntegrationService {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
-            // https://bamboobruegge.in.tum.de/rest/api/latest/result/EIST16W1-TESTEXERCISEAPP-JOB1/latest.json?expand=testResults.failedTests.testResult.errors
+            // e.g. https://bamboobruegge.in.tum.de/rest/api/latest/result/EIST16W1-TESTEXERCISEAPP-JOB1/latest.json?expand=testResults.failedTests.testResult.errors
             response = restTemplate.exchange(
                 BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors",
                 HttpMethod.GET,

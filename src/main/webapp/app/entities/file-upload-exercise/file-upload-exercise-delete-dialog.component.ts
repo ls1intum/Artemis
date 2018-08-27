@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -28,7 +28,7 @@ export class FileUploadExerciseDeleteDialogComponent {
     }
 
     confirmDelete(id: number) {
-        this.fileUploadExerciseService.delete(id).subscribe((response) => {
+        this.fileUploadExerciseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'fileUploadExerciseListModification',
                 content: 'Deleted an fileUploadExercise'
@@ -52,7 +52,7 @@ export class FileUploadExerciseDeletePopupComponent implements OnInit, OnDestroy
     ) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
+        this.routeSub = this.route.params.subscribe(params => {
             this.fileUploadExercisePopupService
                 .open(FileUploadExerciseDeleteDialogComponent as Component, params['id']);
         });

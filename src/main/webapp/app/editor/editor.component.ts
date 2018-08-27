@@ -4,7 +4,7 @@ import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Participation, ParticipationService } from '../entities/participation';
-import { RepositoryService, RepositoryFileService } from '../entities/repository/repository.service';
+import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { HttpResponse } from '@angular/common/http';
 import { NG1WEBSOCKET_SERVICE } from '../shared/websocket/ng1-websocket.service';
 

@@ -43,7 +43,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.modelingExercise.type = 'modeling-exercise';
         if (this.modelingExercise.id !== undefined) {
             this.subscribeToSaveResponse(
                 this.modelingExerciseService.update(this.modelingExercise));

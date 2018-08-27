@@ -1,4 +1,4 @@
-import { UserRouteAccessService, PendingChangesGuard } from '../shared';
+import { PendingChangesGuard, UserRouteAccessService } from '../shared';
 import { Routes } from '@angular/router';
 import { ModelingEditorComponent } from './modeling-editor.component';
 

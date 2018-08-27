@@ -11,9 +11,10 @@ import { TranslateService } from '@ngx-translate/core';
 import 'angular';
 import * as moment from 'moment';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
-import { Question } from '../question';
-import { MultipleChoiceQuestion } from '../multiple-choice-question/multiple-choice-question.model';
-import { DragAndDropQuestion } from '../drag-and-drop-question/drag-and-drop-question.model';
+import { Question, QuestionType, ScoringType } from '../question';
+import { MultipleChoiceQuestion } from '../multiple-choice-question';
+import { DragAndDropQuestion } from '../drag-and-drop-question';
+import { AnswerOption } from '../answer-option';
 
 /** This Angular directive will act as an interface to the 'upgraded' AngularJS component
  *  The upgrade is realized as given Angular tutorial:
@@ -55,12 +56,12 @@ declare const angular: any;
 class QuizExerciseDetailController {
     static $inject = ['Course', 'QuizExercise'];
 
-    entity;
+    entity: QuizExercise;
     savedEntity;
-    quizExercise;
+    quizExercise: QuizExercise;
     repository;
     courseRepository;
-    course;
+    course: Course;
     router;
     translateService;
     fileUploaderService;
@@ -90,31 +91,30 @@ class QuizExerciseDetailController {
         key: true,
         label: 'Active'
     }];
-    showExistingQuestions: boolean = false;
+    showExistingQuestions = false;
     courses: Course[] = [];
     selectedCourse: string;
     quizExercises: QuizExercise[] = [];
     allExistingQuestions: Question[] = [];
     existingQuestions: Question[] = [];
     importFile: Blob = null;
-    searchQueryText: string = '';
-    dndFilterEnabled: boolean = true;
-    mcqFilterEnabled: boolean = true;
+    searchQueryText = '';
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
 
     init() {
         if (this.quizExercise) {
             this.entity = this.quizExercise;
         } else {
-            this.entity = {
-                title: '',
-                duration: 600,
-                isVisibleBeforeStart: false,
-                isOpenForPractice: false,
-                isPlannedToStart: false,
-                releaseDate: new Date((new Date()).toISOString().substring(0, 16)),
-                randomizeQuestionOrder: true,
-                questions: []
-            };
+            this.entity = new QuizExercise();
+            this.entity.title = '';
+            this.entity.duration = 600;
+            this.entity.isVisibleBeforeStart = false;
+            this.entity.isOpenForPractice = false;
+            this.entity.isPlannedToStart = false;
+            this.entity.releaseDate = new Date((new Date()).toISOString().substring(0, 16));
+            this.entity.randomizeQuestionOrder = true;
+            this.entity.questions = [];
             this.quizExercise = this.entity;
         }
         this.prepareEntity(this.entity);
@@ -156,24 +156,24 @@ class QuizExerciseDetailController {
         if (typeof this.quizExercise === 'undefined') {
             this.quizExercise = this.entity;
         }
-        this.quizExercise.questions = this.quizExercise.questions.concat([{
-            title: '',
-            text: 'Enter your question text here',
-            scoringType: 'ALL_OR_NOTHING',
-            randomizeOrder: true,
-            score: 1,
-            type: 'multiple-choice',
-            answerOptions: [
-                {
-                    isCorrect: true,
-                    text: 'Enter a correct answer option here'
-                },
-                {
-                    isCorrect: false,
-                    text: 'Enter an incorrect answer option here'
-                }
-            ]
-        }]);
+
+        const mcQuestion = new MultipleChoiceQuestion();
+        mcQuestion.title = '';
+        mcQuestion.text = 'Enter your question text here';
+        mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING;                    // explicit default value for multiple questions
+        mcQuestion.randomizeOrder = true;
+        mcQuestion.score = 1;
+
+        const correctSampleAnswerOption = new AnswerOption();
+        correctSampleAnswerOption.isCorrect = true;
+        correctSampleAnswerOption.text = 'Enter a correct answer option here';
+
+        const incorrectSampleAnswerOption = new AnswerOption();
+        incorrectSampleAnswerOption.isCorrect = false;
+        incorrectSampleAnswerOption.text = 'Enter an incorrect answer option here';
+
+        mcQuestion.answerOptions = [correctSampleAnswerOption, incorrectSampleAnswerOption];
+        this.quizExercise.questions.push(mcQuestion);
     }
 
     /**
@@ -183,17 +183,17 @@ class QuizExerciseDetailController {
         if (typeof this.quizExercise === 'undefined') {
             this.quizExercise = this.entity;
         }
-        this.quizExercise.questions = this.quizExercise.questions.concat([{
-            title: '',
-            text: 'Enter your question text here',
-            scoringType: 'ALL_OR_NOTHING',
-            randomizeOrder: true,
-            score: 1,
-            type: 'drag-and-drop',
-            dropLocations: [],
-            dragItems: [],
-            correctMappings: []
-        }]);
+
+        const dndQuestion = new DragAndDropQuestion();
+        dndQuestion.title = '';
+        dndQuestion.text = 'Enter your question text here';
+        dndQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS;     // explicit default value for drag and drop questions
+        dndQuestion.randomizeOrder = true;
+        dndQuestion.score = 1;
+        dndQuestion.dropLocations = [];
+        dndQuestion.dragItems = [];
+        dndQuestion.correctMappings = [];
+        this.quizExercise.questions.push(dndQuestion);
     }
 
     /**
@@ -255,10 +255,10 @@ class QuizExerciseDetailController {
         for (const question of this.allExistingQuestions) {
             if (!this.searchQueryText || this.searchQueryText === ''
                 || question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
-                if (this.mcqFilterEnabled === true && question.type === 'multiple-choice') {
+                if (this.mcqFilterEnabled === true && question.type === QuestionType.MULTIPLE_CHOICE) {
                     this.existingQuestions.push(question);
                 }
-                if (this.dndFilterEnabled === true && question.type === 'drag-and-drop') {
+                if (this.dndFilterEnabled === true && question.type === QuestionType.DRAG_AND_DROP) {
                     this.existingQuestions.push(question);
                 }
             }
@@ -328,17 +328,19 @@ class QuizExerciseDetailController {
         const isGenerallyValid = this.quizExercise.title && this.quizExercise.title !== '' &&
             this.quizExercise.duration && this.quizExercise.questions && this.quizExercise.questions.length;
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
-            switch (question.type) {
-                case 'multiple-choice':
-                    return question.title && question.title !== '' && question.answerOptions.some(function(answerOption) {
-                        return answerOption.isCorrect;
-                    });
-                case 'drag-and-drop':
-                    return question.title && question.title !== '' && question.correctMappings &&
-                        question.correctMappings.length > 0 && this.dragAndDropQuestionUtil.solve(question).length &&
-                        this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question);
-                default:
-                    return question.title && question.title !== '';
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+                return question.title && question.title !== '' && mcQuestion.answerOptions.some(function(answerOption) {
+                    return answerOption.isCorrect;
+                });
+            } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                const dndQuestion = question as DragAndDropQuestion;
+                return question.title && question.title !== '' && dndQuestion.correctMappings &&
+                    dndQuestion.correctMappings.length > 0 && this.dragAndDropQuestionUtil.solve(question).length &&
+                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question);
+            } else {
+                console.log('Unknown question type: ' + question);
+                return question.title && question.title !== '';
             }
         }, this);
 
@@ -380,8 +382,9 @@ class QuizExerciseDetailController {
                     translateValues: { index: index + 1 }
                 });
             }
-            if (question.type === 'multiple-choice') {
-                if (!question.answerOptions.some(function(answerOption) {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+                if (!mcQuestion.answerOptions.some(function(answerOption) {
                     return answerOption.isCorrect;
                 })) {
                     reasons.push({
@@ -390,8 +393,9 @@ class QuizExerciseDetailController {
                     });
                 }
             }
-            if (question.type === 'drag-and-drop') {
-                if (!question.correctMappings || question.correctMappings.length === 0) {
+            if (question.type === QuestionType.DRAG_AND_DROP) {
+                const dndQuestion = question as DragAndDropQuestion;
+                if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 }
@@ -465,25 +469,25 @@ class QuizExerciseDetailController {
         for (const question of questions) {
             delete question.questionStatistic;
             delete question.id;
-            if (question.type === 'multiple-choice') {
-                let mcq = question as MultipleChoiceQuestion;
-                for (const answerOption of mcq.answerOptions) {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+                for (const answerOption of mcQuestion.answerOptions) {
                     delete answerOption.id;
                 }
                 this.quizExercise.questions = this.quizExercise.questions.concat([question]);
-            } else if (question.type === 'drag-and-drop') {
-                var dnd = question as DragAndDropQuestion;
+            } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                const dndQuestion = question as DragAndDropQuestion;
                 // Get image from the old question and duplicate it on the backend and then save new image to the question,
-                let fileUploadResponse = await this.fileUploaderService.duplicateFile(dnd.backgroundFilePath);
-                dnd.backgroundFilePath = fileUploadResponse.path;
+                let fileUploadResponse = await this.fileUploaderService.duplicateFile(dndQuestion.backgroundFilePath);
+                dndQuestion.backgroundFilePath = fileUploadResponse.path;
 
                 // For DropLocations, DragItems and CorrectMappings we need to provide tempID,
                 // This tempID is used for keep tracking of mappings by backend. Backend removes tempID and generated a new id,
-                for (const dropLocation of dnd.dropLocations) {
+                for (const dropLocation of dndQuestion.dropLocations) {
                     dropLocation.tempID = dropLocation.id;
                     delete dropLocation.id;
                 }
-                for (const dragItem of dnd.dragItems) {
+                for (const dragItem of dndQuestion.dragItems) {
                     // Duplicating image on backend. This is only valid for image drag items. For text drag items, pictureFilePath is null,
                     if (dragItem.pictureFilePath !== null) {
                         fileUploadResponse = await this.fileUploaderService.duplicateFile(dragItem.pictureFilePath);
@@ -492,7 +496,7 @@ class QuizExerciseDetailController {
                     dragItem.tempID = dragItem.id;
                     delete dragItem.id;
                 }
-                for (const correctMapping of dnd.correctMappings) {
+                for (const correctMapping of dndQuestion.correctMappings) {
                     // Following fields are not required for dnd question. They will be generated by the backend,
                     delete correctMapping.id;
                     delete correctMapping.dragItemIndex;
@@ -522,7 +526,6 @@ class QuizExerciseDetailController {
         if (this.hasSavedQuizStarted() || !this.pendingChanges() || !this.validQuiz()) {
             return;
         }
-        this.quizExercise.type = 'quiz-exercise';
         this.isSaving = true;
         if (this.quizExercise.id !== undefined) {
             this.repository.update(this.quizExercise)
@@ -571,7 +574,6 @@ class QuizExerciseDetailController {
      * Prepares the date and time model
      */
     prepareDateTime() {
-        // TODO
         this.dateTime = this.quizExercise.releaseDate;
     }
 
@@ -579,7 +581,6 @@ class QuizExerciseDetailController {
      * Reach to changes of time inputs by updating model and ui
      */
     onDateTimeChange() {
-        // TODO
         this.quizExercise.releaseDate = this.dateTime;
     }
 

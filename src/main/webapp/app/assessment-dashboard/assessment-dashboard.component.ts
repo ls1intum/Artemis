@@ -2,7 +2,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Exercise, ExerciseService } from '../entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from '../entities/exercise';
 import { Course, CourseService } from '../entities/course';
 import { ExerciseResultService } from '../entities/result/result.service';
 import { DifferencePipe } from 'angular2-moment';
@@ -22,6 +22,11 @@ import { Principal } from '../shared';
 })
 
 export class AssessmentDashboardComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
 
     course: Course;
     exercise: Exercise;

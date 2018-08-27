@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
@@ -25,7 +25,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
+        this.subscription = this.route.params.subscribe(params => {
             this.load(params['id']);
         });
         this.registerChangeInTextExercises();
@@ -49,7 +49,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInTextExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'textExerciseListModification',
-            (response) => this.load(this.textExercise.id)
+            response => this.load(this.textExercise.id)
         );
     }
 }

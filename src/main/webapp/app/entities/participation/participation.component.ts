@@ -6,7 +6,7 @@ import { Participation } from './participation.model';
 import { ExerciseParticipationService, ParticipationService } from './participation.service';
 import { Principal } from '../../shared';
 import { ActivatedRoute } from '@angular/router';
-import { Exercise, ExerciseService } from '../exercise';
+import { Exercise, ExerciseService, ExerciseType } from '../exercise';
 
 @Component({
     selector: 'jhi-participation',
@@ -14,6 +14,12 @@ import { Exercise, ExerciseService } from '../exercise';
     providers: [ExerciseParticipationService]
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
+
     participations: Participation[];
     eventSubscriber: Subscription;
     paramSub: Subscription;

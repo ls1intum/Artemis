@@ -1,9 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 
 import { ArTEMiSSharedModule } from '../../shared';
-import {
-    ResultService
-} from './';
+import { ResultService } from './';
 import { ExerciseResultService } from './result.service';
 
 @NgModule({

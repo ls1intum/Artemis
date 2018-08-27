@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, Output, Pipe, PipeTransform, SimpleChanges } from '@angular/core';
-import {Participation, ParticipationService} from '../../entities/participation';
+import { Component, Input, OnChanges, OnDestroy, OnInit, Pipe, PipeTransform, SimpleChanges } from '@angular/core';
+import { Participation, ParticipationService } from '../../entities/participation';
 import { ParticipationResultService, Result, ResultService } from '../../entities/result';
 import { JhiWebsocketService, Principal } from '../../shared';
 import { RepositoryService } from '../../entities/repository/repository.service';
@@ -7,6 +7,7 @@ import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DomSanitizer } from '@angular/platform-browser';
 import { HttpClient } from '@angular/common/http';
 import { Feedback } from '../../entities/feedback';
+import { ExerciseType } from '../../entities/exercise';
 
 @Pipe({name: 'safeHtml'})
 export class SafeHtmlPipe implements PipeTransform {
@@ -31,16 +32,19 @@ export class SafeHtmlPipe implements PipeTransform {
  */
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
+
     @Input() participation: Participation;
 
-    results: Result[];
     result: Result;
     websocketChannel: string;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string;
     resultString: string;
-    exerciseType: string;
 
     constructor(private jhiWebsocketService: JhiWebsocketService,
                 private participationResultService: ParticipationResultService,
@@ -53,8 +57,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         if (this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
-            this.exerciseType = exercise.type;
-            this.results = this.participation.results;
+            this.result = this.participation.results[0];
 
             this.init();
             // make sure result and participation are connected
@@ -62,16 +65,25 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 this.result.participation = this.participation;
             }
 
-            if (exercise && exercise.type === 'programming-exercise') {
+            if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
                 this.principal.identity().then(account => { // only subscribe for the currently logged in user
                     const now = new Date();
                     if (account.id === this.participation.student.id && (exercise.dueDate == null ||
                         new Date(Date.parse(exercise.dueDate)) > now)) {
 
+                        // subscribe for new results (e.g. when a programming exercise was automatically tested)
                         this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannel);
-                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(() => {
-                            this.refresh(true);
+                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(newResult => {
+                            this.result = newResult;
+                            this.init();
+                        });
+
+                        // subscribe for new submissions (e.g. when code was pushed and is currently built)
+                        this.websocketChannel = `/topic/participation/${this.participation.id}/newSubmission`;
+                        this.jhiWebsocketService.subscribe(this.websocketChannel);
+                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(newSubmission => {
+                            // TODO handle this case properly, e.g. by animating a progress bar in the result view
                         });
                     }
                 });
@@ -80,8 +92,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     init() {
-        if (this.results && this.results[0] && (this.results[0].score || this.results[0].score === 0)) {
-            this.result = this.results[0];
+        if (this.result && (this.result.score || this.result.score === 0)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
@@ -101,37 +112,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
     }
 
-    /**
-     * refresh the participation and load the result if necessary
-     *
-     * @param forceLoad {boolean} force loading the result if the status is not QUEUED or BUILDING
-     */
-    refresh(forceLoad) {
-
-        // TODO: Use WebSocket for participation status update when a programming submission is created (i.e. the webhook was invoked on ArTEMiS)
-
-        this.refreshResult();
-    }
-
-    refreshResult() {
-        // TODO remove '!vm.participation.results' and think about removing forceLoad as well
-        // load results from server
-        this.participationResultService.query(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
-            showAllResults: false,
-            ratedOnly: this.participation.exercise.type === 'quiz'
-        }).subscribe(results => {
-            this.results = results.body;
-            this.init();
-            /*if (this.onNewResult) {
-                this.onNewResult({
-                    $event: {
-                        newResult: results[0]
-                    }
-                });
-            }*/
-        });
-    }
-
     buildResultString() {
         if (this.result.resultString === 'No tests found') {
             return 'Build failed';
@@ -140,23 +120,18 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     getHasFeedback() {
-        if (this.results[0].resultString === 'No tests found') {
+        if (this.result.resultString === 'No tests found') {
             return true;
         }
-        if (this.results[0].hasFeedback === null) {
+        if (this.result.hasFeedback === null) {
             return false;
         }
-        return this.results[0].hasFeedback;
-    }
-
-    hasResults() {
-        return !!this.results && this.results.length > 0 && this.result.score;
+        return this.result.hasFeedback;
     }
 
     showDetails(result: Result) {
         const modalRef = this.modalService.open(JhiResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
-        // TODO: why is result.participation null?
     }
 
     downloadBuildResult(participationId: number) {

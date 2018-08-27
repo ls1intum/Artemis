@@ -43,12 +43,6 @@ export class InstructorDashboardPopupService {
                         resolve(this.ngbModalRef);
                     });
                 }
-            } else {
-                // setTimeout used as a workaround for getting ExpressionChangedAfterItHasBeenCheckedError
-                setTimeout(() => {
-                    this.ngbModalRef = this.exerciseModalRef(component, new Exercise());
-                    resolve(this.ngbModalRef);
-                }, 0);
             }
         });
     }

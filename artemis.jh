@@ -223,7 +223,7 @@ entity Submission {                 //abstract
 
 entity ModelingSubmission {         //extends Submission
 	model String,                   //transient --> stored in the file system
-	explanationText String
+	explanationText String          //LONGTEXT --> clob
 }
 
 entity QuizSubmission {             //extends Submission

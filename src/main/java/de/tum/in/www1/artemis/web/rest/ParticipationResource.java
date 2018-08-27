@@ -340,23 +340,23 @@ public class ParticipationResource {
         if (!courseService.userHasAtLeastStudentPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        MappingJacksonValue result;
+        MappingJacksonValue response;
         if (exercise instanceof QuizExercise) {
-            result = participationForQuizExercise((QuizExercise) exercise, principal.getName());
+            response = participationForQuizExercise((QuizExercise) exercise, principal.getName());
         } else if (exercise instanceof ModelingExercise) {
             Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
             if (participation != null) {
                 participation.getResults().size(); // eagerly load the association
             }
-            result = participation == null ? null : new MappingJacksonValue(participation);
+            response = participation == null ? null : new MappingJacksonValue(participation);
         } else {
             Participation participation = participationService.findOneByExerciseIdAndStudentLogin(exerciseId, principal.getName());
-            result = participation == null ? null : new MappingJacksonValue(participation);
+            response = participation == null ? null : new MappingJacksonValue(participation);
         }
-        if (result == null) {
+        if (response == null) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         } else {
-            return new ResponseEntity<>(result, HttpStatus.OK);
+            return new ResponseEntity<>(response, HttpStatus.OK);
         }
     }
 
@@ -381,6 +381,13 @@ public class ParticipationResource {
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseService.findOneWithQuestions(quizExercise.getId());
             Participation participation = participationService.getParticipationForQuiz(quizExercise, username);
+            //avoid problems due to bidirectional associations between submission and result during serialization
+            for (Result result : participation.getResults()) {
+                if (result.getSubmission() != null) {
+                    result.getSubmission().setResult(null);
+                    result.getSubmission().setParticipation(null);
+                }
+            }
             return new MappingJacksonValue(participation);
         }
     }

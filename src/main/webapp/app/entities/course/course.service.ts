@@ -1,4 +1,4 @@
-import { Injectable, PipeTransform } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
@@ -53,7 +53,6 @@ export class CourseService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
-
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Course = this.convertItemFromServer(res.body);
         return res.clone({body});
@@ -73,10 +72,8 @@ export class CourseService {
      */
     private convertItemFromServer(course: Course): Course {
         const copy: Course = Object.assign({}, course);
-        copy.startDate = this.dateUtils
-            .convertDateTimeFromServer(course.startDate);
-        copy.endDate = this.dateUtils
-            .convertDateTimeFromServer(course.endDate);
+        copy.startDate = this.dateUtils.convertDateTimeFromServer(course.startDate);
+        copy.endDate = this.dateUtils.convertDateTimeFromServer(course.endDate);
         return copy;
     }
 
@@ -85,9 +82,7 @@ export class CourseService {
      */
     private convert(course: Course): Course {
         const copy: Course = Object.assign({}, course);
-
         copy.startDate = this.dateUtils.toDate(course.startDate);
-
         copy.endDate = this.dateUtils.toDate(course.endDate);
         return copy;
     }
@@ -173,17 +168,6 @@ export class CourseExerciseService {
         const entity: Course = Object.assign({}, course);
         return entity;
     }
-
-    /**
-     * Convert a Exercise to a JSON which can be sent to the server.
-     */
-    private convert(exercise: Exercise): Exercise {
-        const copy: Exercise = Object.assign({}, exercise);
-
-        copy.releaseDate = this.dateUtils.toDate(exercise.releaseDate);
-        copy.dueDate = this.dateUtils.toDate(exercise.dueDate);
-        return copy;
-    }
 }
 
 // TODO: move into its own file
@@ -210,12 +194,18 @@ export class CourseProgrammingExerciseService {
     start(courseId: number, exerciseId: number): Observable<Participation> {
         return this.http.post(`${this.resourceUrl}/${courseId}/programming-exercises/${exerciseId}/participations`, {}).map((res: HttpResponse<Participation>) => {
             if (res.body) {
-                const exercise = res.body.exercise;
-                exercise['participation'] = res.body;
-                return exercise;
+                // make sure the bidirectional association is available
+                const participation = res.body;
+                participation.exercise.participations.push(participation);
+                return participation;
             }
-            return this.convertItemFromServer(res.body);
+            return this.convertParticipationFromServer(res.body);
         });
+    }
+
+    private convertParticipationFromServer(participation: Participation): Participation {
+        const entity: Participation = Object.assign({}, participation);
+        return entity;
     }
 
     private convertResponse(res: HttpResponse<ProgrammingExercise>): HttpResponse<ProgrammingExercise> {
@@ -237,16 +227,7 @@ export class CourseProgrammingExerciseService {
      */
     private convertItemFromServer(programmingExercise: ProgrammingExercise): ProgrammingExercise {
         const entity: ProgrammingExercise = Object.assign(new ProgrammingExercise(), programmingExercise);
-        // TODO: convert date?
         return entity;
-    }
-
-    /**
-     * Convert a ProgrammingExercise to a JSON which can be sent to the server.
-     */
-    private convert(programmingExercise: ProgrammingExercise): ProgrammingExercise {
-        const copy: ProgrammingExercise = Object.assign({}, programmingExercise);
-        return copy;
     }
 }
 
@@ -330,15 +311,22 @@ export class CourseModelingExerciseService {
             .map((res: HttpResponse<ModelingExercise[]>) => this.convertArrayResponse(res));
     }
 
+    // TODO: all this code is duplicated, move them into a common class
     start(courseId: number, exerciseId: number): Observable<Participation> {
         return this.http.post(`${this.resourceUrl}/${courseId}/modeling-exercises/${exerciseId}/participations`, {}).map((res: HttpResponse<Participation>) => {
             if (res.body) {
-                const exercise = res.body.exercise;
-                exercise['participation'] = res.body;
-                return exercise;
+                // make sure the bidirectional association is available
+                const participation = res.body;
+                participation.exercise.participations.push(participation);
+                return participation;
             }
-            return this.convertItemFromServer(res.body);
+            return this.convertParticipationFromServer(res.body);
         });
+    }
+
+    private convertParticipationFromServer(participation: Participation): Participation {
+        const entity: Participation = Object.assign({}, participation);
+        return entity;
     }
 
     private convertArrayResponse(res: HttpResponse<ModelingExercise[]>): HttpResponse<ModelingExercise[]> {
@@ -355,7 +343,6 @@ export class CourseModelingExerciseService {
      */
     private convertItemFromServer(modelingExercise: ModelingExercise): ModelingExercise {
         const entity: ModelingExercise = Object.assign(new ModelingExercise(), modelingExercise);
-        // TODO: convert date?
         return entity;
     }
 }

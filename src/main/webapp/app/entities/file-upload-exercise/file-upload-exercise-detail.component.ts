@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
@@ -25,7 +25,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
+        this.subscription = this.route.params.subscribe(params => {
             this.load(params['id']);
         });
         this.registerChangeInFileUploadExercises();
@@ -49,7 +49,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInFileUploadExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'fileUploadExerciseListModification',
-            (response) => this.load(this.fileUploadExercise.id)
+            response => this.load(this.fileUploadExercise.id)
         );
     }
 }

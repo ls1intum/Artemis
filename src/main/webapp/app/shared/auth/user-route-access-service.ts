@@ -1,11 +1,11 @@
-import {Inject, Injectable} from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 
 import { Principal } from '../';
 import { LoginModalService } from '../login/login-modal.service';
 import { StateStorageService } from './state-storage.service';
-import {LocalStorageService} from 'ngx-webstorage';
-import {NG1AUTH_SERVICE} from '../../shared/auth/ng1-auth-wrapper.service';
+import { LocalStorageService } from 'ngx-webstorage';
+import { NG1AUTH_SERVICE } from '../../shared/auth/ng1-auth-wrapper.service';
 
 @Injectable()
 export class UserRouteAccessService implements CanActivate {

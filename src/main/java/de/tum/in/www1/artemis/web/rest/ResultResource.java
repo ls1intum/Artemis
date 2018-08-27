@@ -148,7 +148,7 @@ public class ResultResource {
                     }
                 }
             }
-            //TODO: we should also get build dates after the due date, but mark the result accordingly
+            //TODO: we should also get build dates after the due date, but mark the result as unrated
             if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
                 resultService.onResultNotified(participation);
                 return ResponseEntity.ok().build();

@@ -14,17 +14,18 @@ export const enum ParticipationState {
 }
 
 export class Participation implements BaseEntity {
-    constructor(
-        public id?: number,
-        public repositoryUrl?: string,
-        public buildPlanId?: string,
-        public initializationState?: ParticipationState,
-        public initializationDate?: any,
-        public presentationScore?: number,
-        public results?: Result[],
-        public submissions?: Submission[],
-        public student?: User,
-        public exercise?: Exercise,
-    ) {
+    public id: number;
+
+    public repositoryUrl: string;
+    public buildPlanId: string;
+    public initializationState: ParticipationState;
+    public initializationDate: any;
+    public presentationScore: number;
+    public results: Result[];
+    public submissions: Submission[];
+    public student: User;
+    public exercise: Exercise;
+
+    constructor() {
     }
 }
