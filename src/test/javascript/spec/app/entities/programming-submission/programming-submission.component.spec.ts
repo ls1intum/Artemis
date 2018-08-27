@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArTEMiSTestModule } from '../../../test.module';
 import { ProgrammingSubmissionComponent } from '../../../../../../main/webapp/app/entities/programming-submission/programming-submission.component';
 import { ProgrammingSubmissionService } from '../../../../../../main/webapp/app/entities/programming-submission/programming-submission.service';
 import { ProgrammingSubmission } from '../../../../../../main/webapp/app/entities/programming-submission/programming-submission.model';
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [ProgrammingSubmissionComponent],
                 providers: [
                     ProgrammingSubmissionService

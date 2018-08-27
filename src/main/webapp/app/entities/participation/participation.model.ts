@@ -20,6 +20,7 @@ export class Participation implements BaseEntity {
         public buildPlanId?: string,
         public initializationState?: ParticipationState,
         public initializationDate?: any,
+        public presentationScore?: number,
         public results?: Result[],
         public submissions?: Submission[],
         public student?: User,

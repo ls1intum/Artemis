@@ -7,18 +7,22 @@
                 "createOrEditLabel": "Create or edit a Exercise"
             },
             "created": "A new Exercise is created with identifier {{ param }}",
-            "updated": "A Exercise is updated with identifier {{ param }}",
-            "deleted": "A Exercise is deleted with identifier {{ param }}",
+            "updated": "An Exercise is updated with identifier {{ param }}",
+            "deleted": "An Exercise is deleted with identifier {{ param }}",
             "delete": {
                 "question": "Are you sure you want to delete Exercise {{ id }}?"
             },
             "detail": {
                 "title": "Exercise"
             },
+            "problemStatement": "Problem Statement",
+            "gradingInstructions": "Grading Instructions",
             "title": "Title",
             "releaseDate": "Release Date",
             "dueDate": "Due Date",
             "maxScore": "Max Score",
+            "difficulty": "Difficulty",
+            "categories": "Categories",
             "participations": "Participations",
             "course": "Course",
             "type": "Type",

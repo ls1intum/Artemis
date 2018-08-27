@@ -3,14 +3,6 @@
     "relationships": [
         {
             "relationshipType": "one-to-one",
-            "relationshipName": "submission",
-            "otherEntityName": "submission",
-            "otherEntityField": "id",
-            "ownerSide": true,
-            "otherEntityRelationshipName": "result"
-        },
-        {
-            "relationshipType": "one-to-one",
             "relationshipName": "assessor",
             "otherEntityName": "user",
             "otherEntityField": "id",
@@ -21,6 +13,13 @@
             "relationshipType": "one-to-many",
             "relationshipName": "feedbacks",
             "otherEntityName": "feedback",
+            "otherEntityRelationshipName": "result"
+        },
+        {
+            "relationshipType": "one-to-one",
+            "relationshipName": "submission",
+            "otherEntityName": "submission",
+            "ownerSide": false,
             "otherEntityRelationshipName": "result"
         },
         {

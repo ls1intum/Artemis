@@ -6,6 +6,14 @@
             "fieldName": "diagramType",
             "fieldType": "DiagramType",
             "fieldValues": "CLASS,ACTIVITY,USE_CASE,COMMUNICATION"
+        },
+        {
+            "fieldName": "sampleSolutionModel",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "sampleSolutionExplanation",
+            "fieldType": "String"
         }
     ],
     "changelogDate": "20171130173539",

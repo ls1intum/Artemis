@@ -5,6 +5,10 @@
         {
             "fieldName": "model",
             "fieldType": "String"
+        },
+        {
+            "fieldName": "explanationText",
+            "fieldType": "String"
         }
     ],
     "changelogDate": "20171130173555",

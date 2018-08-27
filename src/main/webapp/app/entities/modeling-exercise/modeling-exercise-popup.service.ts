@@ -46,7 +46,7 @@ export class ModelingExercisePopupService {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
                             this.ngbModalRef = this.modelingExerciseModalRef(component,
-                                new ModelingExercise(undefined, undefined, undefined, undefined, undefined, undefined, undefined, res.body));
+                                new ModelingExercise(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, res.body));
                             resolve(this.ngbModalRef);
                         });
                     } else {
