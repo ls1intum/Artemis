@@ -27,29 +27,17 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     results = [];
     ratedResultsArrayList = [];
     participations = [];    // [Participation]
-    typeQuizExercise : Array<{firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListQ: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}> , scoreListQString: string, participated: number, successful: number }> = []; // refactored to a more legible name
-    typeProgrammingExercise: Array<{firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListP: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>, scoreListPString: string, participated: number, successful: number, exerciseNotCounted: boolean }> = [];
-    typeModelingExercise : Array<{firstName: string, lastName: string, id: string, login: string, email: string, exType: string, totalScore: number, scoreListM: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>, scoreListMString: string, participated: number, successful: number, exerciseNotCounted: boolean }> = [];
-    allQuizExercises = [];
-    allProgrammingExercises = [];
-    allModelingExercises = [];
     titleQuizString = '';
     titleProgrammingString = '';
     titleModelingString = '';
     maxScoreForQuizzes = 0;
     maxScoreForModeling = 0;
     maxScoreForProgramming = 0;
-    finalScores: Array<{firstName: string, lastName: string, id: string, login: string, email: string, modelingTotalScore: number, modelingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>, modelingScoreString: string, ProgrammingTotalScore: number, ProgrammingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>, ProgrammingScoreString: string, QuizTotalScore: number, QuizEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>, QuizScoreString: string, OverallScore: number, participatedQuizzes: number, participationQuizzesInPercent: number, successfulQuizzes: number, successfullyCompletedQuizzesInPercent: number, participatedProgramming: number, participationProgrammingInPercent: number, successfulProgramming: number, successfullyCompletedProgrammingInPercent: number, participatedModeling: number, participationModelingInPercent: number, successfulModeling: number, successfullyCompletedModelingInPercent: number, successfulTotal: number, successfullyCompletedTotalInPercent: number, participatedTotal: number, participationTotalInPercent: number}> = [];
-
-
-
-    exerciseArrayQ: Array<Exercise> = []; //Todo: this will replace and renamed to allQuizExercises
-    exerciseArrayP: Array<Exercise> = []; //Todo: this will replace and renamed to allProgrammingExercises
-    exerciseArrayM: Array<Exercise> = []; //Todo: this will replace and renamed to allModelingExercises
-
-    studentArray: Array<Student> = []; //Todo: this will replace the three buckets
-
-
+    finalScores: Array<Student> = [];
+    allQuizExercises: Array<Exercise> = [];
+    allProgrammingExercises: Array<Exercise> = [];
+    allModelingExercises: Array<Exercise> = [];
+    studentArray: Array<Student> = [];
     exportReady = false;
 
     constructor(private route: ActivatedRoute,
@@ -104,9 +92,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             }
         }
 
-        console.log('length of Q: '+this.exerciseArrayQ.length+' maxScores: '+this.maxScoreForQuizzes); //TODO: remove
-        console.log('length of M: '+this.exerciseArrayM.length+' maxScores: '+this.maxScoreForModeling); //TODO: remove as well
-        console.log('length of P '+this.exerciseArrayP.length+' maxScores: '+this.maxScoreForProgramming); //TODO: check if needed and remove
+        console.log('length of Q: '+this.allQuizExercises.length+' maxScores: '+this.maxScoreForQuizzes); //TODO: remove
+        console.log('length of M: '+this.allModelingExercises.length+' maxScores: '+this.maxScoreForModeling); //TODO: remove as well
+        console.log('length of P '+this.allProgrammingExercises.length+' maxScores: '+this.maxScoreForProgramming); //TODO: check if needed and remove
 
         this.getAllScoresForAllCourseParticipants();
 
@@ -128,9 +116,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             const stud = result.participation.student;
             const ex = result.participation.exercise;
 
-            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, 0, 0,0,[], '', [],
-                '', [], '',
-                0, 0, true);
+            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, 0, 0,0,[], [],'', [],
+                [],'', [], [],'',
+                0, 0,0,0,0, 0,0,0,
+                0,0,0,0,0,0,0,0,
+                true,0);
 
             let exercise : Exercise = new Exercise (ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
 
@@ -148,54 +138,17 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     }
 
     mergeScoresForExerciseCategories() { //This method groups exercises into categories
-        let finalScores : Array<{firstName: string, lastName: string, id: string, login: string, email: string, modelingTotalScore: number, modelingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>, modelingScoreString: string, ProgrammingTotalScore: number, ProgrammingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>, ProgrammingScoreString: string, QuizTotalScore: number, QuizEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>, QuizScoreString: string, OverallScore: number, participatedQuizzes: number, participationQuizzesInPercent: number, successfulQuizzes: number, successfullyCompletedQuizzesInPercent: number, participatedProgramming: number, participationProgrammingInPercent: number, successfulProgramming: number, successfullyCompletedProgrammingInPercent: number, participatedModeling: number, participationModelingInPercent: number, successfulModeling: number, successfullyCompletedModelingInPercent: number, successfulTotal: number, successfullyCompletedTotalInPercent: number, participatedTotal: number, participationTotalInPercent: number}> = [];
 
-        this.typeQuizExercise.forEach((studentsQuizScore) => {
-
-            if (!finalScores.some(student => student['id'] === studentsQuizScore.id)) { //if not existing create following
-                finalScores.push({
-                    'firstName': studentsQuizScore.firstName,
-                    'lastName': studentsQuizScore.lastName,
-                    'id': studentsQuizScore.id,
-                    'login': studentsQuizScore.login,
-                    'email': studentsQuizScore.email,
-                    'QuizTotalScore': 0,
-                    'QuizEveryScore': [],
-                    'QuizScoreString': '',
-                    'ProgrammingTotalScore': 0,
-                    'ProgrammingEveryScore': [],
-                    'ProgrammingScoreString': '',
-                    'modelingTotalScore': 0,
-                    'modelingEveryScore': [],
-                    'modelingScoreString': '',
-                    'OverallScore': 0,
-                    'participatedQuizzes': 0,
-                    'participationQuizzesInPercent': 0,
-                    'successfulQuizzes': 0,
-                    'successfullyCompletedQuizzesInPercent': 0,
-                    'participatedProgramming': 0,
-                    'participationProgrammingInPercent': 0,
-                    'successfulProgramming': 0,
-                    'successfullyCompletedProgrammingInPercent': 0,
-                    'participatedModeling': 0,
-                    'participationModelingInPercent': 0,
-                    'successfulModeling': 0,
-                    'successfullyCompletedModelingInPercent': 0,
-                    'successfulTotal': 0,
-                    'successfullyCompletedTotalInPercent': 0,
-                    'participatedTotal': 0,
-                    'participationTotalInPercent': 0
-                });
-            }
+        this.studentArray.forEach((studentsQuizScore) => {
 
             let quizScoreString : string = ''; //initializing score string for csv export
             let quizEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = []; //array to save scores
             this.allQuizExercises.forEach((quiz) => {
                 let bool : Boolean = true;
                 const indexAllQuiz = this.allQuizExercises.findIndex( ex => ex.id === quiz.id) //TODO: semicolon is missing check if change in functionality
-                const exerciseIdentifierQuiz = this.allQuizExercises[indexAllQuiz].exId;
+                const exerciseIdentifierQuiz = this.allQuizExercises[indexAllQuiz].id;
                 // refactoring done changed 4 instances of exID to something more readable
-                studentsQuizScore.scoreListQ.forEach ((scoresQ) => {  // matching
+                studentsQuizScore.scoreListForQuizzes.forEach ((scoresQ) => {  // matching
                     if (exerciseIdentifierQuiz === scoresQ.exID) {
                         bool = false; //ensure to only enter the loop later once
                         quizScoreString += scoresQ.absoluteScore + ',';
@@ -214,51 +167,15 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 }
             });
 
-            let indexQuizFinalScores : number = this.finalScores.findIndex( student => student.id === studentsQuizScore.id);
-            finalScores[indexQuizFinalScores].QuizTotalScore = studentsQuizScore.totalScore;
-            finalScores[indexQuizFinalScores].QuizEveryScore = quizEveryScore;
-            finalScores[indexQuizFinalScores].QuizScoreString = quizScoreString;
-            finalScores[indexQuizFinalScores].participatedQuizzes = studentsQuizScore.participated;
-            finalScores[indexQuizFinalScores].successfulQuizzes = studentsQuizScore.successful;
+            let indexQuizFinalScores : number = this.studentArray.findIndex( student => student.id === studentsQuizScore.id);
+            this.studentArray[indexQuizFinalScores].totalScoreQuizzes = studentsQuizScore.totalScoreQuizzes;
+            this.studentArray[indexQuizFinalScores].everyScoreForQuizzes = quizEveryScore;
+            this.studentArray[indexQuizFinalScores].everyScoreStringForQuizzes = quizScoreString;
+           // this.studentArray[indexQuizFinalScores].participatedQuizzes = studentsQuizScore.participated; TODO: in switch case method
+           // this.studentArray[indexQuizFinalScores].successfulQuizzes = studentsQuizScore.successful; TODO: in switch case method
         });
 
-        this.typeModelingExercise.forEach( (studentsModelingScore) => {
-
-            if (!finalScores.some(student => student['id'] === studentsModelingScore.id)) {//if not existing create following
-                finalScores.push({
-                    'firstName': studentsModelingScore.firstName,
-                    'lastName': studentsModelingScore.lastName,
-                    'id': studentsModelingScore.id,
-                    'login': studentsModelingScore.login,
-                    'email': studentsModelingScore.email,
-                    'QuizTotalScore': 0,
-                    'QuizEveryScore': [],
-                    'QuizScoreString': '',
-                    'ProgrammingTotalScore': 0,
-                    'ProgrammingEveryScore': [],
-                    'ProgrammingScoreString': '',
-                    'modelingTotalScore': 0,
-                    'modelingEveryScore': [],
-                    'modelingScoreString': '',
-                    'OverallScore': 0,
-                    'participatedQuizzes': 0,
-                    'participationQuizzesInPercent': 0,
-                    'successfulQuizzes': 0,
-                    'successfullyCompletedQuizzesInPercent': 0,
-                    'participatedProgramming': 0,
-                    'participationProgrammingInPercent': 0,
-                    'successfulProgramming': 0,
-                    'successfullyCompletedProgrammingInPercent': 0,
-                    'participatedModeling': 0,
-                    'participationModelingInPercent': 0,
-                    'successfulModeling': 0,
-                    'successfullyCompletedModelingInPercent': 0,
-                    'successfulTotal': 0,
-                    'successfullyCompletedTotalInPercent': 0,
-                    'participatedTotal': 0,
-                    'participationTotalInPercent': 0
-                });
-            }
+        this.studentArray.forEach( (studentsModelingScore) => {
 
             let modelingScoreString : string = '';//initializing score string for csv export
             let modelingEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
@@ -266,8 +183,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             this.allModelingExercises.forEach( (modelings) => { //adding up our score strings for our export
                 let bool : Boolean = true;
                 const indexAllModeling = this.allModelingExercises.findIndex( ex => ex.id === modelings.id) //TODO semicolon missing check if functionality change
-                const exerciseIdentifierModeling = this.allModelingExercises[indexAllModeling].exId;
-                studentsModelingScore.scoreListM.forEach( (scoresM) => {
+                const exerciseIdentifierModeling = this.allModelingExercises[indexAllModeling].id;
+                studentsModelingScore.scoreListForModeling.forEach( (scoresM) => {
                     if (exerciseIdentifierModeling === scoresM.exID) {
                         bool = false;
                         modelingScoreString += scoresM.absoluteScore + ',';
@@ -286,51 +203,15 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 }
             });
             // adding temporary variables to our final scores array list
-            let indexModelingFinalScores : number = this.finalScores.findIndex( student => student.id === studentsModelingScore.id);
-            finalScores[indexModelingFinalScores].modelingTotalScore = studentsModelingScore.totalScore;
-            finalScores[indexModelingFinalScores].modelingEveryScore = modelingEveryScore;
-            finalScores[indexModelingFinalScores].modelingScoreString = modelingScoreString;
-            finalScores[indexModelingFinalScores].participatedModeling = studentsModelingScore.participated;
-            finalScores[indexModelingFinalScores].successfulModeling = studentsModelingScore.successful;
+            let indexModelingFinalScores : number = this.studentArray.findIndex( student => student.id === studentsModelingScore.id);
+            this.studentArray[indexModelingFinalScores].totalScoreModeling = studentsModelingScore.totalScoreModeling;
+            this.studentArray[indexModelingFinalScores].everyScoreForModeling = modelingEveryScore;
+            this.studentArray[indexModelingFinalScores].everyScoreStringForModeling = modelingScoreString;
+            //this.studentArray[indexModelingFinalScores].participatedModeling = studentsModelingScore.participated; todo: in switch case method
+            //this.studentArray[indexModelingFinalScores].successfulModeling = studentsModelingScore.successful; todo: in switch case method
         });
 
-        this.typeProgrammingExercise.forEach( (studentsProgrammingScore) => {
-
-            if (!finalScores.some(student => student['id'] === studentsProgrammingScore.id)) {//if not existing create following
-                finalScores.push({
-                    'firstName': studentsProgrammingScore.firstName,
-                    'lastName': studentsProgrammingScore.lastName,
-                    'id': studentsProgrammingScore.id,
-                    'login': studentsProgrammingScore.login,
-                    'email': studentsProgrammingScore.email,
-                    'QuizTotalScore': 0,
-                    'QuizEveryScore': [],
-                    'QuizScoreString': '',
-                    'ProgrammingTotalScore': 0,
-                    'ProgrammingEveryScore': [],
-                    'ProgrammingScoreString': '',
-                    'modelingTotalScore': 0,
-                    'modelingEveryScore': [],
-                    'modelingScoreString': '',
-                    'OverallScore': 0,
-                    'participatedQuizzes': 0,
-                    'participationQuizzesInPercent': 0,
-                    'successfulQuizzes': 0,
-                    'successfullyCompletedQuizzesInPercent': 0,
-                    'participatedProgramming': 0,
-                    'participationProgrammingInPercent': 0,
-                    'successfulProgramming': 0,
-                    'successfullyCompletedProgrammingInPercent': 0,
-                    'participatedModeling': 0,
-                    'participationModelingInPercent': 0,
-                    'successfulModeling': 0,
-                    'successfullyCompletedModelingInPercent': 0,
-                    'successfulTotal': 0,
-                    'successfullyCompletedTotalInPercent': 0,
-                    'participatedTotal': 0,
-                    'participationTotalInPercent': 0
-                });
-            }
+        this.studentArray.forEach( (studentsProgrammingScore) => {
 
             let programmingScoreString = '';//initializing score string for csv export
             let programmingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
@@ -338,9 +219,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             this.allProgrammingExercises.forEach((programmings) => {
                 let bool: Boolean = true;
                 const indexAllProgramming = this.allModelingExercises.findIndex( ex => ex.id === programmings.id) //TODO semicolon missing check if functionality change
-                const exerciseIdentifierProgramming = this.allModelingExercises[indexAllProgramming].exId;
+                const exerciseIdentifierProgramming = this.allProgrammingExercises[indexAllProgramming].id;
 
-                studentsProgrammingScore.scoreListP.forEach( (scoresP) => {
+                studentsProgrammingScore.scoreListForProgramming.forEach( (scoresP) => {
                     if (exerciseIdentifierProgramming === scoresP.exID) {
                         bool = false;
                         programmingScoreString += scoresP.absoluteScore + ',';
@@ -359,12 +240,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 }
             });
 
-            let indexProgrammingFinalScores : number = this.finalScores.findIndex( student => student.id === studentsProgrammingScore.id);
-            finalScores[indexProgrammingFinalScores].ProgrammingTotalScore = studentsProgrammingScore.totalScore;
-            finalScores[indexProgrammingFinalScores].ProgrammingEveryScore = programmingEveryScore;
-            finalScores[indexProgrammingFinalScores].ProgrammingScoreString = programmingScoreString;
-            finalScores[indexProgrammingFinalScores].participatedProgramming = studentsProgrammingScore.participated;
-            finalScores[indexProgrammingFinalScores].successfulProgramming = studentsProgrammingScore.successful;
+            let indexProgrammingFinalScores : number = this.studentArray.findIndex( student => student.id === studentsProgrammingScore.id);
+            this.studentArray[indexProgrammingFinalScores].totalScoreProgramming = studentsProgrammingScore.totalScoreProgramming;
+            this.studentArray[indexProgrammingFinalScores].everyScoreForProgramming = programmingEveryScore;
+            this.studentArray[indexProgrammingFinalScores].everyScoreStringForProgramming = programmingScoreString;
+            //this.studentArray[indexProgrammingFinalScores].participatedProgramming = studentsProgrammingScore.participated; todo: in switch case method
+            //this.studentArray[indexProgrammingFinalScores].successfulProgramming = studentsProgrammingScore.successful; todo: in switch case method
         });
 
         // gets all students that were not caught in results
@@ -377,9 +258,15 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             let modelingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>=[];
             let programmingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>=[];
 
-            const student = participation.student;
+            const stud = participation.student;
 
-            if (!finalScores.some(student => student['id'] === student.id)) {
+            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, 0, 0,0,[], [],'', [],
+                [],'', [], [],'',
+                0, 0,0,0,0, 0,0,0,
+                0,0,0,0,0,0,0,0,
+                true,0);
+
+            if (!this.studentArray.some(student => student['id'] === student.id)) {
 
                 /*   console.log('do we need participation score?');
                    console.log(student.firstName);
@@ -388,77 +275,49 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 this.allModelingExercises.forEach( (modelingExercise) => { // creating objects to store information about the given exercise
                     modelingString += '0,';
                     modelingEveryScore.push({
-                        'exID': modelingExercise.exID,
-                        'exTitle': modelingExercise.exTitle,
+                        'exID': modelingExercise.id,
+                        'exTitle': modelingExercise.title,
                         'absoluteScore': 0
                     });
                 });
                 this.allQuizExercises.forEach( (quizExercise) => {
                     quizString += '0,';
                     quizEveryScore.push({
-                        'exID': quizExercise.exID,
-                        'exTitle': quizExercise.exTitle,
+                        'exID': quizExercise.id,
+                        'exTitle': quizExercise.title,
                         'absoluteScore': 0
                     });
                 });
                 this.allProgrammingExercises.forEach( (programmingExercise) => {
                     programmingString += '0,';
                     programmingEveryScore.push({
-                        'exID': programmingExercise.exID,
-                        'exTitle': programmingExercise.exTitle,
+                        'exID': programmingExercise.id,
+                        'exTitle': programmingExercise.title,
                         'absoluteScore': 0
                     });
                 });
 
-                finalScores.push({ // creating an object for each student containing needed information
-                    'firstName': student.firstName,
-                    'lastName': student.lastName,
-                    'id': student.id,
-                    'login': student.login,
-                    'email': student.email,
-                    'QuizTotalScore': 0,
-                    'QuizEveryScore': quizEveryScore,
-                    'QuizScoreString': quizString,
-                    'ProgrammingTotalScore': 0,
-                    'ProgrammingEveryScore': programmingEveryScore,
-                    'ProgrammingScoreString': programmingString,
-                    'modelingTotalScore': 0,
-                    'modelingEveryScore': modelingEveryScore,
-                    'modelingScoreString': modelingString,
-                    'OverallScore': 0,
-                    'participatedQuizzes': 0,
-                    'participationQuizzesInPercent': 0,
-                    'successfulQuizzes': 0,
-                    'successfullyCompletedQuizzesInPercent': 0,
-                    'participatedProgramming': 0,
-                    'participationProgrammingInPercent': 0,
-                    'successfulProgramming': 0,
-                    'successfullyCompletedProgrammingInPercent': 0,
-                    'participatedModeling': 0,
-                    'participationModelingInPercent': 0,
-                    'successfulModeling': 0,
-                    'successfullyCompletedModelingInPercent': 0,
-                    'successfulTotal': 0,
-                    'successfullyCompletedTotalInPercent': 0,
-                    'participatedTotal': 0,
-                    'participationTotalInPercent': 0
-                });
+                student.everyScoreForQuizzes = quizEveryScore;
+                student.everyScoreForProgramming = programmingEveryScore;
+                student.everyScoreForModeling = modelingEveryScore;
+                student.everyScoreStringForQuizzes = quizString;
+                student.everyScoreStringForProgramming = programmingString;
+                student.everyScoreStringForModeling = modelingString;
+
+                this.studentArray.push(student);
+
             } else {
-                let indexOverallFinalScores : number = this.finalScores.findIndex( student => student.id === student.id);
-                finalScores[indexOverallFinalScores].OverallScore = finalScores[indexOverallFinalScores].QuizTotalScore
-                    + finalScores[indexOverallFinalScores].ProgrammingTotalScore + finalScores[indexOverallFinalScores].modelingTotalScore;
-                finalScores[indexOverallFinalScores].successfulTotal = finalScores[indexOverallFinalScores].successfulModeling
-                    + finalScores[indexOverallFinalScores].successfulProgramming + finalScores[indexOverallFinalScores].successfulQuizzes;
-                finalScores[indexOverallFinalScores].participatedTotal = finalScores[indexOverallFinalScores].participatedModeling
-                    + finalScores[indexOverallFinalScores].participatedProgramming + finalScores[indexOverallFinalScores].participatedQuizzes;
-            }
+                let indexOverallFinalScores : number = this.studentArray.findIndex( student => student.id === student.id);
+                this.studentArray[indexOverallFinalScores].overallScore = this.studentArray[indexOverallFinalScores].totalScoreQuizzes
+                    + this.studentArray[indexOverallFinalScores].totalScoreProgramming + this.studentArray[indexOverallFinalScores].totalScoreModeling;
+                }
         });
-        finalScores.forEach( (finalScore) => {
-            finalScore.successfullyCompletedTotalInPercent = (finalScore.successfulTotal / this.numberOfExercises) * 100;
-            finalScore.participationTotalInPercent = (finalScore.participatedTotal / this.numberOfExercises) * 100;
+        this.studentArray.forEach( (finalScore) => {
+            finalScore.successfullyCompletedInPercent = (finalScore.successful/ this.numberOfExercises) * 100;
+            finalScore.participationInPercent = (finalScore.participated / this.numberOfExercises) * 100;
         });
 
-        this.finalScores = finalScores;
+        this.finalScores = this.studentArray;
         this.exportReady = true;
     }
 
@@ -474,13 +333,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 const lastName = result.lastName.trim();
                 const studentId = result.login.trim();
                 const email = result.email.trim();
-                const quiz = result.QuizTotalScore;
-                const programming = result.ProgrammingTotalScore;
-                const modeling = result.modelingTotalScore;
-                const score = result.OverallScore;
-                const quizString = result.QuizScoreString;
-                const modelingString = result.modelingScoreString;
-                const programmingString = result.ProgrammingScoreString;
+                const quiz = result.totalScoreQuizzes;
+                const programming = result.totalScoreProgramming;
+                const modeling = result.totalScoreModeling;
+                const score = result.overallScore;
+                const quizString = result.everyScoreStringForQuizzes;
+                const modelingString = result.everyScoreStringForModeling;
+                const programmingString = result.everyScoreStringForProgramming;
                 if (index === 0) {
                     const info = 'data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,'; // shortening line length and complexity
                     rows.push(info + this.titleQuizString + 'ProgrammingTotalScore,' + this.titleProgrammingString + 'modelingTotalScore,' + this.titleModelingString + 'OverallScore');
@@ -523,19 +382,19 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         switch (exercise.type) {
             case 'quiz':
                 this.maxScoreForQuizzes += exercise.maxScore;
-                this.exerciseArrayQ.push(exercise);
+                this.allQuizExercises.push(exercise);
                 this.titleQuizString += exercise.title + ',';
                 break;
 
             case 'programming-exercise':
                 this.maxScoreForProgramming += exercise.maxScore;
-                this.exerciseArrayP.push(exercise);
+                this.allProgrammingExercises.push(exercise);
                 this.titleProgrammingString += exercise.title + ',';
                 break;
 
             case 'modeling-exercise':
                 this.maxScoreForModeling += exercise.maxScore;
-                this.exerciseArrayM.push(exercise);
+                this.allModelingExercises.push(exercise);
                 this.titleModelingString += exercise.title + ',';
                 break;
 
@@ -706,50 +565,130 @@ class Exercise { //creating a class for exercises
     }
 }
 
-class Student { //creating a class for students for better code quality 
+class Student { //creating a class for students for better code quality
     firstName: string;
     lastName: string;
     id: string;
     login: string;
     email: string;
+
     totalScoreQuizzes: number;
     totalScoreProgramming: number;
     totalScoreModeling: number;
-    scoreListForQuizzes: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
-    scoreListStringForQuizzes: string;
-    scoreListForProgramming: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
-    scoreListStringForProgramming: string;
-    scoreListForModeling: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
-    scoreListStringForModeling: string;
-    participated: number;
-    successful: number;
-    exerciseNotCounted: boolean;
 
-    constructor(firstName: string, lastName: string, id: string, login: string, email: string, totalScoreQuizzes: number,
-                totalScoreProgramming: number, totalScoreModeling: number,
+    scoreListForQuizzes: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
+    everyScoreForQuizzes: Array<{exID: number, exTitle: string, absoluteScore: number}>;
+    everyScoreStringForQuizzes: string;
+
+    scoreListForProgramming: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
+    everyScoreForProgramming: Array<{exID: number, exTitle: string, absoluteScore: number}>;
+    everyScoreStringForProgramming: string;
+
+    scoreListForModeling: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
+    everyScoreForModeling: Array<{exID: number, exTitle: string, absoluteScore: number}>;
+    everyScoreStringForModeling: string;
+
+    participated: number;
+    participatedQuizzes: number;
+    participatedProgramming: number;
+    participatedModeling: number;
+
+    participationInPercent: number;
+    participationQuizzesInPercent: number;
+    participationProgrammingInPercent: number;
+    participationModelingInPercent: number;
+
+
+    successful: number;
+    successfulQuizzes: number;
+    successfulProgramming: number;
+    successfulModeling: number;
+
+    successfullyCompletedInPercent: number;
+    successfullyCompletedQuizzesInPercent: number;
+    successfullyCompletedProgrammingInPercent: number;
+    successfullyCompletedModelingInPercent: number;
+
+    exerciseNotCounted: boolean;
+    overallScore: number;
+
+
+
+
+
+
+
+
+    constructor(firstName: string, lastName: string, id: string, login: string, email: string,
+                totalScoreQuizzes: number, totalScoreProgramming: number, totalScoreModeling: number,
+
                 scoreListForQuizzes: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>,
-                scoreListStringForQuizzes: string,
+                everyScoreForQuizzes: Array<{exID: number, exTitle: string, absoluteScore: number}>,
+                everyScoreStringForQuizzes: string,
+
                 scoreListForProgramming: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>,
-                scoreListStringForProgramming: string,
+                everyScoreForProgramming: Array<{exID: number, exTitle: string, absoluteScore: number}>,
+                everyScoreStringForProgramming: string,
+
                 scoreListForModeling: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>,
-                scoreListStringForModeling: string,
-                participated: number, successful: number, exerciseNotCounted: boolean) {
+                everyScoreForModeling: Array<{exID: number, exTitle: string, absoluteScore: number}>,
+                everyScoreStringForModeling: string,
+
+
+                participated: number, participatedQuizzes: number, participatedProgramming: number, participatedModeling: number,
+                participationInPercent: number, participationQuizzesInPercent: number, participationProgrammingInPercent: number,
+                participationModelingInPercent: number,
+
+                successful: number, successfulQuizzes:number, successfulProgramming: number, successfulModeling: number,
+                successfullyCompletedInPercent: number, successfullyCompletedQuizzesInPercent: number, successfullyCompletedProgrammingInPercent: number,
+                successfullyCompletedModelingInPercent: number,
+
+                exerciseNotCounted: boolean, overallScore: number)
+    {
+
         this.firstName = firstName;
         this.lastName = lastName;
         this.id = id;
         this.login = login;
         this.email = email;
+
         this.totalScoreQuizzes = totalScoreQuizzes;
         this.totalScoreProgramming = totalScoreProgramming;
         this.totalScoreModeling = totalScoreModeling;
+
         this.scoreListForQuizzes = scoreListForQuizzes;
-        this.scoreListStringForQuizzes = scoreListStringForQuizzes;
+        this.everyScoreForQuizzes = everyScoreForQuizzes;
+        this.everyScoreStringForQuizzes = everyScoreStringForQuizzes;
+
         this.scoreListForProgramming = scoreListForProgramming;
-        this.scoreListStringForProgramming = scoreListStringForProgramming;
+        this.everyScoreForProgramming = everyScoreForProgramming;
+        this.everyScoreStringForProgramming = everyScoreStringForProgramming;
+
         this.scoreListForModeling = scoreListForModeling;
-        this.scoreListStringForModeling = scoreListStringForModeling;
+        this.everyScoreForModeling = everyScoreForModeling;
+        this.everyScoreStringForModeling = everyScoreStringForModeling;
+
         this.participated = participated;
+        this.participatedQuizzes = participatedQuizzes;
+        this.participatedProgramming = participatedProgramming;
+        this.participatedModeling = participatedModeling;
+
+        this.participationInPercent = participationInPercent;
+        this.participationQuizzesInPercent = participationQuizzesInPercent;
+        this.participationProgrammingInPercent = participationProgrammingInPercent;
+        this.participationModelingInPercent = participationModelingInPercent;
+
         this.successful = successful;
+        this.successfulQuizzes = successfulQuizzes;
+        this.successfulProgramming = successfulProgramming;
+        this.successfulModeling = successfulModeling;
+
+        this.successfullyCompletedInPercent = successfullyCompletedInPercent;
+        this.successfullyCompletedQuizzesInPercent = successfullyCompletedQuizzesInPercent;
+        this.successfullyCompletedProgrammingInPercent = successfullyCompletedProgrammingInPercent;
+        this.successfullyCompletedModelingInPercent = successfullyCompletedModelingInPercent;
+
         this.exerciseNotCounted = exerciseNotCounted;
+        this.overallScore = overallScore;
     }
 }
