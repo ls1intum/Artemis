@@ -16,7 +16,11 @@ export class ProgrammingExercise extends Exercise {
         public course?: Course
     ) {
         super();
-        this.publishBuildPlanUrl = false;
-        this.allowOnlineEditor = false;
+        if (publishBuildPlanUrl == null) {
+            this.publishBuildPlanUrl = false;   //default value for null or undefined
+        }
+        if (!allowOnlineEditor == null) {
+            this.allowOnlineEditor = false;     //default value for null or undefined
+        }
     }
 }

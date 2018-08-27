@@ -32,13 +32,10 @@ export class SafeHtmlPipe implements PipeTransform {
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
     @Input() participation: Participation;
-    // @Output() onNewResult;
 
     results: Result[];
     result: Result;
     websocketChannel: string;
-    // queued: boolean;
-    // building: boolean;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string;
@@ -111,37 +108,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      */
     refresh(forceLoad) {
 
-        // TODO: Use WebSocket for participation status in place of GET 'api/participations/{vm.participationId}/status'
+        // TODO: Use WebSocket for participation status update when a programming submission is created (i.e. the webhook was invoked on ArTEMiS)
 
-        // for now we just ignore participation status, as this is very costly for server performance
         this.refreshResult();
-
-        /*this.http.get(`api/participations/${this.participation.id}/status`).finally(function(){
-            if (!this.queued && !this.building) {
-                if (this.participationResultService) {
-                    this.participationResultService.query(
-                        this.participation.exercises.course.id,
-                        this.participation.exercise.id,
-                        this.participation.id,
-                        {showAllResults: false})
-                        .subscribe((res: HttpResponse<Result[]>) => {
-                                const results = res.body;
-                                this.results = results;
-                                //TODO handle this case
-                                // if (results.onNewResults) {
-                                //     results.onNewResult({ $event: {
-                                //         newResult: results[0]
-                                //     }});
-                                // }
-                            },
-                            (res: HttpResponse<Result[]>) => this.onError(res.body)
-                        );
-                }
-            }
-        }).subscribe((response: string) => {
-            this.queued = (response === 'QUEUED');
-            this.building = (response === 'BUILDING');
-        });*/
     }
 
     refreshResult() {

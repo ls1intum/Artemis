@@ -252,6 +252,12 @@ public class ResultResource {
 
             }
         }
+        //remove unnecessary elements in the json response
+        results.forEach(result -> {
+            result.getParticipation().setExercise(null);
+            result.getParticipation().setResults(null);
+            result.getParticipation().setSubmissions(null);
+        });
         return ResponseEntity.ok().body(results);
     }
 
@@ -316,6 +322,13 @@ public class ResultResource {
             });
         }
 
+        //remove unnecessary elements in the json response
+        results.forEach(result -> {
+            result.getParticipation().setExercise(null);
+            result.getParticipation().setResults(null);
+            result.getParticipation().setSubmissions(null);
+        });
+
         return ResponseEntity.ok().body(results);
     }
 
@@ -338,6 +351,14 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+
+        //remove unnecessary elements in the json response
+        results.forEach(result -> {
+            result.getParticipation().setExercise(null);
+            result.getParticipation().setResults(null);
+            result.getParticipation().setSubmissions(null);
+        });
+
         return ResponseEntity.ok().body(results);
     }
 
