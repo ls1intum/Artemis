@@ -88,15 +88,20 @@ public class ModelingSubmissionService {
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
+        modelingSubmission.setResult(result);
 
         result.setSubmission(modelingSubmission);
-        modelingSubmission.setResult(result);
+        result.setParticipation(participation);
         modelingSubmissionRepository.save(modelingSubmission);
-        resultRepository.save(result);
+        result = resultRepository.save(result);
+
+        participation.addResult(result);
+        participationService.save(participation);
 
         User user = participation.getStudent();
-        if (modelingSubmission.getModel() != null && !modelingSubmission.getModel().isEmpty()) {
-            jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), modelingSubmission.getModel());
+        String model = modelingSubmission.getModel();
+        if (model != null && !model.isEmpty()) {
+            jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
         }
 
         if (modelingSubmission.isSubmitted()) {

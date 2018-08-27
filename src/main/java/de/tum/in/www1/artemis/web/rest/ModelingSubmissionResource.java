@@ -4,13 +4,13 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
-import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -107,20 +107,12 @@ public class ModelingSubmissionResource {
 
         Participation participation = participationService.init(modelingExercise, principal.getName());
 
-        modelingSubmission.setType(SubmissionType.MANUAL);
-        modelingSubmission.setSubmitted(false);
-
         // update and save submission
         try {
             // TODO DB logic update: remove generating result because we do not need the result as a bridge between participation and submission anymore
             Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
-
-            participation.addResult(result);
-            participation.addSubmissions(modelingSubmission);
-            participationService.save(participation);
-
             return ResponseEntity.ok(result);
-        } catch (Exception e) {
+        } catch (ConflictException e) {
             // return 409 conflict error
             // if this occurs, then it means that the createModelingSubmission function was called multiple times for the same participation id
             return ResponseEntity.status(409).build();
@@ -143,6 +135,7 @@ public class ModelingSubmissionResource {
      */
     @PutMapping("/courses/{courseId}/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Transactional
     @Timed
     public ResponseEntity<Result> updateModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) throws URISyntaxException {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission);
@@ -169,9 +162,6 @@ public class ModelingSubmissionResource {
 
         // TODO DB logic update: remove generating result for save actions because we do not need the result as a bridge between participation and submission anymore
         Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
-        if (modelingSubmission != result.getSubmission()) {
-            modelingSubmission = (ModelingSubmission) result.getSubmission();
-        }
 
         if (modelingSubmission.isSubmitted()) {
             participation.setInitializationState(ParticipationState.FINISHED);

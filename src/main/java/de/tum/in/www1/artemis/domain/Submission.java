@@ -46,7 +46,7 @@ public abstract class Submission implements Serializable {
     private Participation participation;
 
     @OneToOne(mappedBy = "submission", cascade=CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval=true)
-    @JsonIgnoreProperties("submission")
+    @JsonIgnoreProperties({"submission", "participation"})
     @JoinColumn(unique = true)
     private Result result;
 

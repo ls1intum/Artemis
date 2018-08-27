@@ -53,14 +53,14 @@ public class Participation implements Serializable {
 
 
     @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
-    @JsonIgnoreProperties("participation")
+    @JsonIgnoreProperties({"participation", "submission"})
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<Result> results = new HashSet<>();
 
 
     @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
-    @JsonIgnoreProperties("participation")
+    @JsonIgnoreProperties({"participation", "result"})
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
 

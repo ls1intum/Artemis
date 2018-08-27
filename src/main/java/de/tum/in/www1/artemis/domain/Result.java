@@ -59,10 +59,10 @@ public class Result implements Serializable {
     private Boolean hasFeedback;
 
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.MERGE)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
-    @JsonIgnoreProperties("result")
+    @JsonIgnoreProperties({"result", "participation"})
     private Submission submission;
 
     //TODO: we might want to store it as a list (see quizzes)

@@ -4,14 +4,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
@@ -24,15 +27,18 @@ public class ModelingAssessmentService {
     private final ResultRepository resultRepository;
     private final UserService userService;
     private final ModelingExerciseService modelingExerciseService;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
 
     public ModelingAssessmentService(JsonAssessmentRepository jsonAssessmentRepository,
                                      ResultRepository resultRepository,
                                      UserService userService,
-                                     ModelingExerciseService modelingExerciseService) {
+                                     ModelingExerciseService modelingExerciseService,
+                                     ModelingSubmissionRepository modelingSubmissionRepository) {
         this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.resultRepository = resultRepository;
         this.userService = userService;
         this.modelingExerciseService = modelingExerciseService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -71,6 +77,7 @@ public class ModelingAssessmentService {
      * @param rated                 if the result is rated or not (false if only save assessment, true if submit assessment)
      * @return the ResponseEntity with result as body
      */
+    @Transactional
     public Result updateManualResult(Long resultId, Long exerciseId, String modelingAssessment, Boolean rated) {
         Result result = resultRepository.findOne(resultId);
         result.setRated(rated);
@@ -82,6 +89,12 @@ public class ModelingAssessmentService {
 
         Long studentId = result.getParticipation().getStudent().getId();
         Long submissionId = result.getSubmission().getId();
+
+        if (result.getSubmission() instanceof ModelingSubmission && result.getSubmission().getResult() == null) {
+            ModelingSubmission modelingSubmission = (ModelingSubmission) result.getSubmission();
+            modelingSubmission.setResult(result);
+            modelingSubmissionRepository.save(modelingSubmission);
+        }
 
         ModelingExercise modelingExercise = modelingExerciseService.findOne(exerciseId);
 
