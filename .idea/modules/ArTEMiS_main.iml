@@ -26,8 +26,8 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$/../../build/generated/source/apt/main">
       <sourceFolder url="file://$MODULE_DIR$/../../build/generated/source/apt/main" isTestSource="false" generated="true" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/generated/source/apt/main" />
     </content>
-    <content url="file://$MODULE_DIR$/../../build/www" />
     <content url="file://$MODULE_DIR$/../../src/main">
       <sourceFolder url="file://$MODULE_DIR$/../../src/main/java" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/../../src/main/resources" type="java-resource" />
