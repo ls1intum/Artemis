@@ -1,10 +1,10 @@
-import { Exercise } from '../exercise';
+import { Exercise, ExerciseType } from '../exercise';
 
 export class TextExercise extends Exercise {
-    constructor(
-        public id?: number,
-        public sampleSolution?: string,
-    ) {
-        super();
+
+    public sampleSolution: string;
+
+    constructor() {
+        super(ExerciseType.TEXT);
     }
 }

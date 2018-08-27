@@ -8,16 +8,16 @@ import {
     CourseDeletePopupComponent,
     CourseDetailComponent,
     CourseDialogComponent,
-    CourseScoreCalculationComponent,
     CourseParticipationService,
     CoursePopupComponent,
     coursePopupRoute,
     CoursePopupService,
     courseRoute,
+    CourseScoreCalculationComponent,
     CourseService
 } from './';
 import { CourseResultService, CourseScoresService } from './course.service';
-import  { CourseScoreCalculationService } from './courseScoreCalculation.service';
+import { CourseScoreCalculationService } from './courseScoreCalculation.service';
 
 const ENTITY_STATES = [
     ...courseRoute,

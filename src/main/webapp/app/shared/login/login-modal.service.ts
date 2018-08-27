@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 import { JhiLoginModalComponent } from './login.component';
-import { NavbarComponent } from 'app/layouts/navbar/navbar.component';
 
 @Injectable()
 export class LoginModalService {

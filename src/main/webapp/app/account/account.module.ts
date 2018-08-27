@@ -3,14 +3,7 @@ import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../shared';
 
-import {
-    accountState,
-    ActivateComponent,
-    ActivateService,
-    Register,
-    RegisterComponent,
-    SettingsComponent
-} from './';
+import { accountState, ActivateComponent, ActivateService, Register, RegisterComponent, SettingsComponent } from './';
 
 @NgModule({
     imports: [

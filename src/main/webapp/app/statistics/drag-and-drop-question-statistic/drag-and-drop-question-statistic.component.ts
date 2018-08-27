@@ -9,8 +9,9 @@ import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.ser
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
 import { HttpClient } from '@angular/common/http';
-import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
-import { DragAndDropQuestionStatistic } from 'app/entities/drag-and-drop-question-statistic';
+import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
+import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
+import { QuestionType } from '../../entities/question';
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -18,6 +19,11 @@ import { DragAndDropQuestionStatistic } from 'app/entities/drag-and-drop-questio
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown]
 })
 export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;
     questionStatistic: DragAndDropQuestionStatistic;
@@ -231,14 +237,15 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        this.question = this.quizExercise.questions.filter( question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.questions.filter( question => this.questionIdParam === question.id)[0];
+        this.question = updatedQuestion as DragAndDropQuestion;
         // if the Anyone finds a way to the Website,
         // with an wrong combination of QuizId and QuestionId
         //      -> go back to Courses
         if (this.question === null) {
             this.router.navigateByUrl('courses');
         }
-        this.questionStatistic = this.question.questionStatistic;
+        this.questionStatistic = this.question.questionStatistic as DragAndDropQuestionStatistic;
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {

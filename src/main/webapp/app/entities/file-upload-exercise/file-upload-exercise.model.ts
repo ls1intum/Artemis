@@ -1,10 +1,10 @@
-import { Exercise } from '../exercise';
+import { Exercise, ExerciseType } from '../exercise';
 
 export class FileUploadExercise extends Exercise {
-    constructor(
-        public id?: number,
-        public filePattern?: string,
-    ) {
-        super();
+
+    public filePattern: string;
+
+    constructor() {
+        super(ExerciseType.FILE_UPLOAD);
     }
 }

@@ -6,12 +6,18 @@ import { TranslateService } from '@ngx-translate/core';
 
 import * as Chart from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
+import { QuestionType } from '../../entities/question';
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html'
 })
 export class QuizStatisticComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
     quizExercise: QuizExercise;
     private sub: any;
 
@@ -277,7 +283,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
             this.participants = this.quizExercise.quizPointStatistic.participantsRated;
             this.data = this.ratedData;
         } else {
-            // else: load the unrated data
+            // load the unrated data
             this.participants = this.quizExercise.quizPointStatistic.participantsUnrated;
             this.data = this.unratedData;
         }
@@ -320,17 +326,19 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
                 quizExerciseId: this.quizExercise.id
             }]);
         } else {
-            if (this.quizExercise.questions[0].type === 'multiple-choice') {
+            const nextQuestion = this.quizExercise.questions[0];
+            if (nextQuestion.type === QuestionType.MULTIPLE_CHOICE) {
                 this.router.navigate(['quiz/:quizId/multiple-choice-question-statistic/:questionId', {
                     quizId: this.quizExercise.id,
-                    questionId: this.quizExercise.questions[0].id
+                    questionId: nextQuestion.id
                 }]);
-            }
-            if (this.quizExercise.questions[0].type === 'drag-and-drop') {
+            } else if (nextQuestion.type === QuestionType.DRAG_AND_DROP) {
                 this.router.navigate(['quiz/:quizId/drag-and-drop-question-statistic/:questionId', {
                     quizId: this.quizExercise.id,
-                    questionId: this.quizExercise.questions[0].id
+                    questionId: nextQuestion.id
                 }]);
+            } else {
+                console.log('Question type not yet supported: ' + nextQuestion);
             }
         }
     }

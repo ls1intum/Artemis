@@ -28,10 +28,7 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
             courses => {
                 this.courses = courses;
                 this.selectedCourse = courses[0];
-            },
-            () => {
-                // TODO: handle error
-            }
+            }, () => { }
         );
     }
 

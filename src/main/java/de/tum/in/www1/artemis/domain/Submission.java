@@ -24,6 +24,7 @@ import java.util.Objects;
 )
 @DiscriminatorValue(value = "S")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+//TODO: do we need the same mechanism as in Exercise with JSON Subtypes?
 public abstract class Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;

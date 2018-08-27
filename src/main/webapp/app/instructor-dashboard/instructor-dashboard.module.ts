@@ -11,7 +11,7 @@ import { ArTEMiSCoursesModule } from '../courses/courses.module';
 import { ResultComponent } from '../courses/results/result.component';
 import { InstructorDashboardArchiveDialogComponent, InstructorDashboardArchivePopupComponent } from './instructor-dashboard-archive-dialog.component';
 import { InstructorDashboardCleanupDialogComponent, InstructorDashboardCleanupPopupComponent } from './instructor-dashboard-cleanup-dialog.component';
-import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent} from './instructor-dashboard-repo-export-dialog.component';
+import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent } from './instructor-dashboard-repo-export-dialog.component';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
 import { JhiResultDetailComponent } from '../courses';
 import { InstructorDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './instructor-dashboard-result-dialog.component';

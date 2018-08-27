@@ -3,19 +3,19 @@ import { Result } from '../result';
 import { Participation } from '../participation';
 
 export const enum SubmissionType {
-    'MANUAL',
-    'TIMEOUT'
+    MANUAL = 'MANUAL',
+    TIMEOUT = 'TIMEOUT'
 }
 
-export class Submission implements BaseEntity {
-    constructor(
-        public id?: number,
-        public submitted?: boolean,
-        public submissionDate?: any,
-        public type?: SubmissionType,
-        public result?: Result,
-        public participation?: Participation,
-    ) {
-        this.submitted = false;
+export abstract class Submission implements BaseEntity {
+
+    public id: number;
+    public submitted = false;   // default value
+    public submissionDate: any;
+    public type: SubmissionType;
+    public result: Result;
+    public participation: Participation;
+
+    constructor() {
     }
 }

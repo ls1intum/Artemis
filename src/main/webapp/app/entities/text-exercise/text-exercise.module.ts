@@ -1,18 +1,18 @@
-import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import {
-    TextExerciseService,
-    TextExercisePopupService,
     TextExerciseComponent,
+    TextExerciseDeleteDialogComponent,
+    TextExerciseDeletePopupComponent,
     TextExerciseDetailComponent,
     TextExerciseDialogComponent,
     TextExercisePopupComponent,
-    TextExerciseDeletePopupComponent,
-    TextExerciseDeleteDialogComponent,
-    textExerciseRoute,
     textExercisePopupRoute,
+    TextExercisePopupService,
+    textExerciseRoute,
+    TextExerciseService
 } from './';
 
 const ENTITY_STATES = [

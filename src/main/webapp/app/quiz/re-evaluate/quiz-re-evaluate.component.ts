@@ -1,12 +1,10 @@
-import {Component, Inject, OnDestroy, OnInit} from '@angular/core';
-import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { QuizExercise, QuizExercisePopupService, QuizExerciseService } from '../../entities/quiz-exercise';
 import { Subscription } from 'rxjs/Subscription';
-import {ActivatedRoute} from '@angular/router';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {NG1TRANSLATE_SERVICE} from '../../shared/language/ng1-translate.service';
-import {NG1TRANSLATEPARTIALLOADER_SERVICE} from '../../shared/language/ng1-translate-partial-loader.service';
-import {QuizExercisePopupService} from '../../entities/quiz-exercise';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
+import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',

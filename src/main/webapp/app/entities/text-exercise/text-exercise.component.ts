@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { TextExercise } from './text-exercise.model';
 import { TextExerciseService } from './text-exercise.service';
@@ -34,7 +34,7 @@ textExercises: TextExercise[];
     }
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInTextExercises();
@@ -48,7 +48,7 @@ textExercises: TextExercise[];
         return item.id;
     }
     registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', response => this.loadAll());
     }
 
     private onError(error) {

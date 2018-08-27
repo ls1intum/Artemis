@@ -4,14 +4,14 @@
     <div>
         <div class="button-toolbar pull-right">
             <span *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
-                <button *ngIf="exercise.type === 'programming-exercise'"
+                <button *ngIf="exercise.type === PROGRAMMING"
                         class="btn btn-danger btn-sm"
                         [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/archive'} }]"
                         replaceUrl="true"
                         queryParamsHandling="merge">
                     <i class="fa fa-archive" aria-hidden="true"></i>&nbsp;<span>Archive</span>
                 </button>
-                <button *ngIf="exercise.type === 'programming-exercise'"
+                <button *ngIf="exercise.type === PROGRAMMING"
                         class="btn btn-danger btn-sm"
                         [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/cleanup'} }]"
                         replaceUrl="true"
@@ -31,7 +31,7 @@
             <button class="btn btn-primary btn-sm" (click)="exportResults()">
                 <i class="fa fa-download fa-fw"></i>&nbsp;Export Results
             </button>
-            <button *ngIf="exercise.type === 'programming-exercise'" 
+            <button *ngIf="exercise.type === PROGRAMMING"
                     class="btn btn-primary btn-sm"
                     [routerLink]="['/', { outlets: { popup: 'exercise/'+ exercise.id + '/exportRepos'} }]"
                     replaceUrl="true"
@@ -82,7 +82,7 @@
                 <th jhiSortBy="duration">
                     <a class="th-link">Duration</a> <span class="fa fa-sort"></span>
                 </th>
-                <th *ngIf="exercise.type !== 'quiz'"></th>
+                <th *ngIf="exercise.type !== QUIZ"></th>
             </tr>
             </thead>
             <tbody>
@@ -98,11 +98,11 @@
                     <span *ngIf="result.score != null">{{result.score}}%</span>
                 </td>
                 <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate: exercise.releaseDate))}} minutes</td>
-                <td *ngIf="exercise.type !== 'quiz'">
-                    <button *ngIf="exercise.type == 'programming-exercise'" class="btn btn-outline-secondary btn-sm" (click)="goToRepository(result)"><i
+                <td *ngIf="exercise.type !== QUIZ">
+                    <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-outline-secondary btn-sm" (click)="goToRepository(result)"><i
                         class="fa fa-code-fork"></i>&nbsp;Repository
                     </button>
-                    <button *ngIf="exercise.type == 'programming-exercise'" class="btn btn-outline-secondary btn-sm" (click)="goToBuildPlan(result)">
+                    <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-outline-secondary btn-sm" (click)="goToBuildPlan(result)">
                         <i class="fa fa-file-code-o"></i>&nbsp;Build plan
                     </button>
 
@@ -110,7 +110,7 @@
                         <i class="fa fa-folder-open fa-fw"></i>&nbsp;Online editor
                     </button>
 
-                    <button *ngIf="exercise.type !== 'modeling-exercise'"
+                    <button *ngIf="exercise.type !== MODELING"
                             [routerLink]="['/', { outlets: { popup: 'participation/' + result.participation.id + '/result/new'} }]"
                             class="btn btn-outline-secondary btn-sm">
                         <i class="fa fa-asterisk"></i>&nbsp;New result

@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import {QuizExercise, QuizExerciseService, QuizReEvaluateService} from '../../entities/quiz-exercise';
-import {Router} from '@angular/router';
+import { QuizExercise, QuizExerciseService, QuizReEvaluateService } from '../../entities/quiz-exercise';
+import { Router } from '@angular/router';
+import { QuestionType } from '../../entities/question';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
@@ -93,11 +94,11 @@ export class QuizReEvaluateWarningComponent implements OnInit {
                 this.scoringChanged = true;
             }
             // check MultipleChoiceQuestions
-            if (question.type === 'multiple-choice') {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 this.checkMultipleChoiceQuestion(question, backUpQuestion);
             }
             // check DragAndDropQuestions
-            if (question.type === 'drag-and-drop') {
+            if (question.type === QuestionType.DRAG_AND_DROP) {
                 this.checkDragAndDropQuestion(question, backUpQuestion);
             }
         }

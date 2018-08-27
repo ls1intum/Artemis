@@ -105,7 +105,7 @@
             </div>
         </div>
         <div class="question" *ngFor="let question of quizExercise.questions; let i = index">
-            <div *ngIf="question.type === 'multiple-choice'">
+            <div *ngIf="question.type === MULTIPLE_CHOICE">
             <jhi-edit-multiple-choice-question
                 [question]="question"
                 [questionIndex]="i + 1"
@@ -113,7 +113,7 @@
                 [doUpdated]="onQuestionUpdated()"
             ></jhi-edit-multiple-choice-question>
             </div>
-            <div *ngIf="question.type === 'drag-and-drop'">
+            <div *ngIf="question.type === DRAG_AND_DROP">
             <jhi-edit-drag-and-drop-question
                 [question]="question"
                 [questionIndex]="i + 1"

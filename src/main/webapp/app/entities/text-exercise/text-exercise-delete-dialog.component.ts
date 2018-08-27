@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -28,7 +28,7 @@ export class TextExerciseDeleteDialogComponent {
     }
 
     confirmDelete(id: number) {
-        this.textExerciseService.delete(id).subscribe((response) => {
+        this.textExerciseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'textExerciseListModification',
                 content: 'Deleted an textExercise'
@@ -52,7 +52,7 @@ export class TextExerciseDeletePopupComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
+        this.routeSub = this.route.params.subscribe(params => {
             this.textExercisePopupService
                 .open(TextExerciseDeleteDialogComponent as Component, params['id']);
         });
