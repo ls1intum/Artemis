@@ -224,6 +224,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 }
                 this.isSaving = false;
                 this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+            }, e => {
+                this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                this.isSaving = false;
             });
         } else {
             this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(sub => {
@@ -233,7 +236,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
                 this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
             }, e => {
-                console.log(e);
+                this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                this.isSaving = false;
             });
         }
     }
@@ -247,32 +251,42 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
             return;
         }
-        this.submission.submitted = true;
-        // TODO DB logic update: after updating ModelingSubmissionResource.java, the client logic has to be updated, too
-        this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
-            this.result = res.body;
-            this.submission = this.result.submission;
-            // Compass has already calculated a result
-            if (this.result.assessmentType) {
-                const participation = this.participation;
-                participation.results = [this.result];
-                this.participation = Object.assign({}, participation);
-                this.modelingAssessmentService.find(this.participation.id, this.submission.id).subscribe(assessments => {
-                    this.assessments = assessments.body;
-                    this.initializeAssessmentInfo();
-                });
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
-            } else {
-                if (this.isActive) {
-                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+
+        let confirmSubmit = true;
+        if (this.calculateNumberOfModelElements() < 10) {
+            confirmSubmit = window.confirm('Are you sure you want to submit? You cannot edit your model anymore until you get an assessment!');
+        }
+
+        if (confirmSubmit) {
+            this.submission.submitted = true;
+            // TODO DB logic update: after updating ModelingSubmissionResource.java, the client logic has to be updated, too
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
+                this.result = res.body;
+                this.submission = this.result.submission;
+                // Compass has already calculated a result
+                if (this.result.assessmentType) {
+                    const participation = this.participation;
+                    participation.results = [this.result];
+                    this.participation = Object.assign({}, participation);
+                    this.modelingAssessmentService.find(this.participation.id, this.submission.id).subscribe(assessments => {
+                        this.assessments = assessments.body;
+                        this.initializeAssessmentInfo();
+                    });
+                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
                 } else {
-                    this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+                    if (this.isActive) {
+                        this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+                    } else {
+                        this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+                    }
                 }
-            }
-            this.retryStarted = false;
-        });
-        clearInterval(this.autoSaveInterval);
-        this.initializeApollonEditor(JSON.parse(this.submission.model));
+                this.retryStarted = false;
+                clearInterval(this.autoSaveInterval);
+                this.initializeApollonEditor(JSON.parse(this.submission.model));
+            }, err => {
+                this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+            });
+        }
     }
 
     ngOnDestroy() {
@@ -360,5 +374,17 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         } else {
             this.initializeApollonEditor({});
         }
+    }
+
+    calculateNumberOfModelElements(): number {
+        if (this.diagramState) {
+            let total = this.diagramState.entities.allIds.length + this.diagramState.relationships.allIds.length;
+            for (const elem of this.diagramState.entities.allIds) {
+                total += this.diagramState.entities.byId[elem].attributes.length;
+                total += this.diagramState.entities.byId[elem].methods.length;
+            }
+            return total;
+        }
+        return 0;
     }
 }
