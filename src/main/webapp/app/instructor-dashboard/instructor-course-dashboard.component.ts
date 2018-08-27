@@ -139,16 +139,23 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
     mergeScoresForExerciseCategories() { //This method groups exercises into categories
 
-        this.studentArray.forEach((studentsQuizScore) => {
+        this.studentArray.forEach((student) => {
 
             let quizScoreString : string = ''; //initializing score string for csv export
             let quizEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = []; //array to save scores
+            
+            let modelingScoreString : string = '';//initializing score string for csv export
+            let modelingEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
+
+            let programmingScoreString = '';//initializing score string for csv export
+            let programmingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
+
             this.allQuizExercises.forEach((quiz) => {
                 let bool : Boolean = true;
                 const indexAllQuiz = this.allQuizExercises.findIndex( ex => ex.id === quiz.id);
                 const exerciseIdentifierQuiz = this.allQuizExercises[indexAllQuiz].id;
                 // refactoring done changed 4 instances of exID to something more readable
-                studentsQuizScore.scoreListForQuizzes.forEach ((scoresQ) => {  // matching
+                student.scoreListForQuizzes.forEach ((scoresQ) => {  // matching
                     if (exerciseIdentifierQuiz === scoresQ.exID) {
                         bool = false; //ensure to only enter the loop later once
                         quizScoreString += scoresQ.absoluteScore + ',';
@@ -167,24 +174,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 }
             });
 
-            let indexQuizFinalScores : number = this.studentArray.findIndex( student => student.id === studentsQuizScore.id);
-            this.studentArray[indexQuizFinalScores].totalScoreQuizzes = studentsQuizScore.totalScoreQuizzes;
-            this.studentArray[indexQuizFinalScores].everyScoreForQuizzes = quizEveryScore;
-            this.studentArray[indexQuizFinalScores].everyScoreStringForQuizzes = quizScoreString;
-           // this.studentArray[indexQuizFinalScores].participatedQuizzes = studentsQuizScore.participated; TODO: in switch case method
-           // this.studentArray[indexQuizFinalScores].successfulQuizzes = studentsQuizScore.successful; TODO: in switch case method
-        });
-
-        this.studentArray.forEach( (studentsModelingScore) => {
-
-            let modelingScoreString : string = '';//initializing score string for csv export
-            let modelingEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
-
             this.allModelingExercises.forEach( (modelings) => { //adding up our score strings for our export
                 let bool : Boolean = true;
                 const indexAllModeling = this.allModelingExercises.findIndex( ex => ex.id === modelings.id);
                 const exerciseIdentifierModeling = this.allModelingExercises[indexAllModeling].id;
-                studentsModelingScore.scoreListForModeling.forEach( (scoresM) => {
+                student.scoreListForModeling.forEach( (scoresM) => {
                     if (exerciseIdentifierModeling === scoresM.exID) {
                         bool = false;
                         modelingScoreString += scoresM.absoluteScore + ',';
@@ -202,26 +196,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     modelingScoreString += '0,';
                 }
             });
-            // adding temporary variables to our final scores array list
-            let indexModelingFinalScores : number = this.studentArray.findIndex( student => student.id === studentsModelingScore.id);
-            this.studentArray[indexModelingFinalScores].totalScoreModeling = studentsModelingScore.totalScoreModeling;
-            this.studentArray[indexModelingFinalScores].everyScoreForModeling = modelingEveryScore;
-            this.studentArray[indexModelingFinalScores].everyScoreStringForModeling = modelingScoreString;
-            //this.studentArray[indexModelingFinalScores].participatedModeling = studentsModelingScore.participated; todo: in switch case method
-            //this.studentArray[indexModelingFinalScores].successfulModeling = studentsModelingScore.successful; todo: in switch case method
-        });
-
-        this.studentArray.forEach( (studentsProgrammingScore) => {
-
-            let programmingScoreString = '';//initializing score string for csv export
-            let programmingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
 
             this.allProgrammingExercises.forEach((programmings) => {
                 let bool: Boolean = true;
                 const indexAllProgramming = this.allProgrammingExercises.findIndex( ex => ex.id === programmings.id);
                 const exerciseIdentifierProgramming = this.allProgrammingExercises[indexAllProgramming].id;
 
-                studentsProgrammingScore.scoreListForProgramming.forEach( (scoresP) => {
+                student.scoreListForProgramming.forEach( (scoresP) => {
                     if (exerciseIdentifierProgramming === scoresP.exID) {
                         bool = false;
                         programmingScoreString += scoresP.absoluteScore + ',';
@@ -240,8 +221,23 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 }
             });
 
-            let indexProgrammingFinalScores : number = this.studentArray.findIndex( student => student.id === studentsProgrammingScore.id);
-            this.studentArray[indexProgrammingFinalScores].totalScoreProgramming = studentsProgrammingScore.totalScoreProgramming;
+            // adding temporary variables to our final scores array list
+            let indexFinalScores : number = this.studentArray.findIndex( st => st.id === student.id);
+            this.studentArray[indexFinalScores].totalScoreQuizzes = student.totalScoreQuizzes;
+            this.studentArray[indexFinalScores].everyScoreForQuizzes = quizEveryScore;
+            this.studentArray[indexFinalScores].everyScoreStringForQuizzes = quizScoreString;
+            // this.studentArray[indexQuizFinalScores].participatedQuizzes = studentsQuizScore.participated; TODO: in switch case method
+            // this.studentArray[indexQuizFinalScores].successfulQuizzes = studentsQuizScore.successful; TODO: in switch case method
+            
+            let indexModelingFinalScores : number = this.studentArray.findIndex( st => st.id === student.id);
+            this.studentArray[indexModelingFinalScores].totalScoreModeling = student.totalScoreModeling;
+            this.studentArray[indexModelingFinalScores].everyScoreForModeling = modelingEveryScore;
+            this.studentArray[indexModelingFinalScores].everyScoreStringForModeling = modelingScoreString;
+            //this.studentArray[indexModelingFinalScores].participatedModeling = studentsModelingScore.participated; todo: in switch case method
+            //this.studentArray[indexModelingFinalScores].successfulModeling = studentsModelingScore.successful; todo: in switch case method
+
+            let indexProgrammingFinalScores : number = this.studentArray.findIndex( st => st.id === student.id);
+            this.studentArray[indexProgrammingFinalScores].totalScoreProgramming = student.totalScoreProgramming;
             this.studentArray[indexProgrammingFinalScores].everyScoreForProgramming = programmingEveryScore;
             this.studentArray[indexProgrammingFinalScores].everyScoreStringForProgramming = programmingScoreString;
             //this.studentArray[indexProgrammingFinalScores].participatedProgramming = studentsProgrammingScore.participated; todo: in switch case method
@@ -312,6 +308,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     + this.studentArray[indexOverallFinalScores].totalScoreProgramming + this.studentArray[indexOverallFinalScores].totalScoreModeling;
                 }
         });
+
+        // going through the studentArray after all needed data is added to calculate the successfull and participation percentages
         this.studentArray.forEach( (finalScore) => {
             finalScore.successfullyCompletedInPercent = (finalScore.successful/ this.numberOfExercises) * 100;
             finalScore.participationInPercent = (finalScore.participated / this.numberOfExercises) * 100;
