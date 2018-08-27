@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArTEMiSTestModule } from '../../../test.module';
 import { ProgrammingSubmissionDeleteDialogComponent } from '../../../../../../main/webapp/app/entities/programming-submission/programming-submission-delete-dialog.component';
 import { ProgrammingSubmissionService } from '../../../../../../main/webapp/app/entities/programming-submission/programming-submission.service';
 
@@ -19,7 +19,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [ProgrammingSubmissionDeleteDialogComponent],
                 providers: [
                     ProgrammingSubmissionService

@@ -44,14 +44,33 @@ entity Course (course) {
 }
 
 entity Exercise (exercise) {        //abstract
+    problemStatement String,        //LONGTEXT --> lob
+    gradingInstructions String,     //LONGTEXT --> lob
     title String,
     releaseDate ZonedDateTime,
     dueDate ZonedDateTime,
-    maxScore Double
+    maxScore Double,
+    difficulty DifficultyLevel
+    categories String               //List<String>, similar to User --> groups
+}
+
+enum DifficultyLevel {
+	EASY,
+    MEDIUM,
+    HARD
+}
+
+entity TextExercise {               //extends Exercise
+    sampleSolution String           //LONGTEXT --> lob
+}
+
+entity FileUploadExercise {         //extends Exercise
+    filePattern String
 }
 
 entity ProgrammingExercise {        //extends Exercise
     baseRepositoryUrl String,
+    solutionRepositoryUrl String,
     baseBuildPlanId String,
     publishBuildPlanUrl Boolean,
     allowOnlineEditor Boolean
@@ -59,6 +78,8 @@ entity ProgrammingExercise {        //extends Exercise
 
 entity ModelingExercise {           //extends Exercise
     diagramType DiagramType,
+    sampleSolutionModel String,      //LONGTEXT --> lob
+    sampleSolutionExplanation String //LONGTEXT --> lob
 }
 
 enum DiagramType {
@@ -143,7 +164,8 @@ entity Participation (participation) {
     repositoryUrl String,
     buildPlanId String,
     initializationState ParticipationState,
-    initializationDate ZonedDateTime
+    initializationDate ZonedDateTime,
+    presentationScore Integer
 }
 
 entity LtiUserId (lti_user_id) {
@@ -200,15 +222,24 @@ entity Submission {                 //abstract
 }
 
 entity ModelingSubmission {         //extends Submission
-	model String
+	model String,                   //transient --> stored in the file system
+	explanationText String
 }
 
 entity QuizSubmission {             //extends Submission
     scoreInPoints Double
 }
 
-entity ProgrammingSubmission {             //extends Submission
+entity ProgrammingSubmission {      //extends Submission
     commitHash String
+}
+
+entity TextSubmission {             //extends Submission
+    text String                     //LONGTEXT --> clob
+}
+
+entity FileUploadSubmission {       //extends Submission
+    filePath String
 }
 
 
@@ -224,7 +255,7 @@ entity DragAndDropMapping {
 
 entity ApollonDiagram {
     title String
-    jsonRepresentation String
+    jsonRepresentation String       // LONGTEXT --> clob
 }
 
 relationship OneToMany {

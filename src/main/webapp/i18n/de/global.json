@@ -44,6 +44,10 @@
                 "apollonDiagram": "Apollon-Diagramm",
                 "programmingSubmission": "Programming Submission",
                 "dragAndDropMapping": "Drag And Drop Mapping",
+                "textExercise": "Text Exercise",
+                "fileUploadExercise": "File Upload Exercise",
+                "textSubmission": "Text Submission",
+                "fileUploadSubmission": "File Upload Submission",
                 "jhipster-needle-menu-add-entry": "JHipster will add additional entities here (do not translate!)"
             },
             "account": {

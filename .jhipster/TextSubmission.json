@@ -1,0 +1,16 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "text",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20180817185616",
+    "entityTableName": "text_submission",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

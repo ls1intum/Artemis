@@ -1,0 +1,22 @@
+
+{
+    "arTeMiSApp": {
+        "fileUploadExercise" : {
+            "home": {
+                "title": "File Upload Exercises",
+                "createLabel": "Create a new File Upload Exercise",
+                "createOrEditLabel": "Create or edit a File Upload Exercise"
+            },
+            "created": "A new File Upload Exercise is created with identifier {{ param }}",
+            "updated": "A File Upload Exercise is updated with identifier {{ param }}",
+            "deleted": "A File Upload Exercise is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete File Upload Exercise {{ id }}?"
+            },
+            "detail": {
+                "title": "File Upload Exercise"
+            },
+            "filePattern": "File Pattern"
+        }
+    }
+}

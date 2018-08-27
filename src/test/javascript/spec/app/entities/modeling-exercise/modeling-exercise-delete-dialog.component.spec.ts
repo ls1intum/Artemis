@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArTEMiSTestModule } from '../../../test.module';
 import { ModelingExerciseDeleteDialogComponent } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise-delete-dialog.component';
 import { ModelingExerciseService } from '../../../../../../main/webapp/app/entities/modeling-exercise/modeling-exercise.service';
 
@@ -19,7 +19,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [ModelingExerciseDeleteDialogComponent],
                 providers: [
                     ModelingExerciseService

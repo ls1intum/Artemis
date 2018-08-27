@@ -17,6 +17,8 @@ export class ModelingExercise extends Exercise {
         public dueDate?: any,
         public maxScore?: number,
         public diagramType?: DiagramType,
+        public sampleSolutionModel?: String,
+        public sampleSolutionExplanation?: String,
         public course?: Course,
         public description?: string,
     ) {
