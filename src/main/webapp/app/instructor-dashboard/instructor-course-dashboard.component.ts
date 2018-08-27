@@ -374,8 +374,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         return roundedTempNumber / factor;
     }
 
-
-
     getTitlesMaxScoresAndAllQuizModelingProgrammingExercises(exercise: Exercise) { // calculating max score and title
         switch (exercise.type) {
             case 'quiz':
@@ -520,26 +518,27 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
     getTotalScoresForQuizzesModelingProgrammingExercises() {
 
-        for (const student of /*this.typeQuizExercise*/ this.studentArray) {
+        // calculate the total scores for each student
+        this.studentArray.forEach ( (student) => {
             let totalScoreQuizzes : number = 0;
             let totalScoreProgramming : number = 0;
             let totalScoreModeling : number = 0;
 
-            for (const quizzes in student.scoreListForQuizzes) {
-                totalScoreQuizzes += +student.scoreListForQuizzes[quizzes].absoluteScore; // TODO test if the "unary plus" in front of studentsQuizScore is achieving the goal (should fix an Addition with Number problem)
-            }
+            student.scoreListForQuizzes.forEach( (quiz) => {
+                totalScoreQuizzes += +quiz.absoluteScore; // TODO test if the "unary plus" in front of studentsQuizScore is achieving the goal (should fix an Addition with Number problem)
+            });
             student.totalScoreQuizzes = totalScoreQuizzes;
 
-            for (const modelings in student.scoreListForModeling) {
-                totalScoreModeling += +student.scoreListForModeling[modelings].absoluteScore; // TODO test if the "unary plus" in front of studentsModelingScore is achieving the goal
-            }
+            student.scoreListForModeling.forEach( (modeling) => {
+                totalScoreModeling += +modeling.absoluteScore; // TODO test if the "unary plus" in front of studentsModelingScore is achieving the goal
+            });
             student.totalScoreModeling = totalScoreModeling;
 
-            for (const programmings in student.scoreListForProgramming) {
-                totalScoreProgramming += +student.scoreListForProgramming[programmings].absoluteScore; // TODO test if the "unary plus" in front of studentsProgrammingScore is achieving the goal
-            }
+            student.scoreListForProgramming.forEach( (programming) => {
+                totalScoreProgramming += +programming.absoluteScore; // TODO test if the "unary plus" in front of studentsProgrammingScore is achieving the goal
+            });
             student.totalScoreProgramming = totalScoreProgramming;
-        }
+        });
     }
 
     callback() {
