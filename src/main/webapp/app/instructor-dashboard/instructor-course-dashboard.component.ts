@@ -145,7 +145,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             let quizEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = []; //array to save scores
             this.allQuizExercises.forEach((quiz) => {
                 let bool : Boolean = true;
-                const indexAllQuiz = this.allQuizExercises.findIndex( ex => ex.id === quiz.id) //TODO: semicolon is missing check if change in functionality
+                const indexAllQuiz = this.allQuizExercises.findIndex( ex => ex.id === quiz.id);
                 const exerciseIdentifierQuiz = this.allQuizExercises[indexAllQuiz].id;
                 // refactoring done changed 4 instances of exID to something more readable
                 studentsQuizScore.scoreListForQuizzes.forEach ((scoresQ) => {  // matching
@@ -182,7 +182,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
             this.allModelingExercises.forEach( (modelings) => { //adding up our score strings for our export
                 let bool : Boolean = true;
-                const indexAllModeling = this.allModelingExercises.findIndex( ex => ex.id === modelings.id) //TODO semicolon missing check if functionality change
+                const indexAllModeling = this.allModelingExercises.findIndex( ex => ex.id === modelings.id);
                 const exerciseIdentifierModeling = this.allModelingExercises[indexAllModeling].id;
                 studentsModelingScore.scoreListForModeling.forEach( (scoresM) => {
                     if (exerciseIdentifierModeling === scoresM.exID) {
@@ -218,7 +218,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
             this.allProgrammingExercises.forEach((programmings) => {
                 let bool: Boolean = true;
-                const indexAllProgramming = this.allModelingExercises.findIndex( ex => ex.id === programmings.id) //TODO semicolon missing check if functionality change
+                const indexAllProgramming = this.allProgrammingExercises.findIndex( ex => ex.id === programmings.id);
                 const exerciseIdentifierProgramming = this.allProgrammingExercises[indexAllProgramming].id;
 
                 studentsProgrammingScore.scoreListForProgramming.forEach( (scoresP) => {
