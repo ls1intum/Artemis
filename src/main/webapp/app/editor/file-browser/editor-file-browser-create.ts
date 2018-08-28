@@ -32,9 +32,9 @@ export class EditorFileBrowserCreateComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = false;
         this.folderPlaceholder = this.translateService.instant('arTeMiSApp.editor.fileBrowser.folderPlaceholder');
-        /** Set folder if we received a value via input **/
+        /** Set folder if we received a value for it via input **/
         if (this.folder) {
-            this.newFileName = this.folder;
+            this.newFileFolder = this.folder;
         }
     }
 
