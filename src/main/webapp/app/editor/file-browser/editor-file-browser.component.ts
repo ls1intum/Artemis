@@ -103,10 +103,6 @@ export class EditorFileBrowserComponent implements OnChanges {
      * @param item: Corresponding event object, holds the selected TreeViewItem
      */
     handleNodeSelected(item: TreeviewItem) {
-        console.log('handleNodeSelected', item);
-        for (const treeviewItem of this.filesTreeViewItem) {
-            console.log('parent', TreeviewHelper.findParent(treeviewItem, item));
-        }
         if (item && item.value !== this.fileName) {
             item.checked = true;
             // If we had selected a file prior to this, we "uncheck" it
@@ -122,6 +118,14 @@ export class EditorFileBrowserComponent implements OnChanges {
             this.selectedFile.emit({
                fileName: item.value
             });
+        }
+        /** Search our parent with the TreeviewHelper and set the folder value accordingly **/
+        for (const treeviewItem of this.filesTreeViewItem) {
+            const parent = TreeviewHelper.findParent(treeviewItem, item);
+            // We found our parent => process the value and assign it
+            if (parent) {
+                this.folder = parent.text.split('/').map(str => str.trim()).join('/');
+            }
         }
     }
 
@@ -257,6 +261,9 @@ export class EditorFileBrowserComponent implements OnChanges {
         const modalRef = this.modalService.open(EditorFileBrowserCreateComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.participation = this.participation;
         modalRef.componentInstance.parent = this;
+        if (this.folder) {
+            modalRef.componentInstance.folder = this.folder;
+        }
     }
 
     /**
