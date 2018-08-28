@@ -103,6 +103,10 @@ export class EditorFileBrowserComponent implements OnChanges {
      * @param item: Corresponding event object, holds the selected TreeViewItem
      */
     handleNodeSelected(item: TreeviewItem) {
+        console.log('handleNodeSelected', item);
+        for (const treeviewItem of this.filesTreeViewItem) {
+            console.log('parent', TreeviewHelper.findParent(treeviewItem, item));
+        }
         if (item && item.value !== this.fileName) {
             item.checked = true;
             // If we had selected a file prior to this, we "uncheck" it
