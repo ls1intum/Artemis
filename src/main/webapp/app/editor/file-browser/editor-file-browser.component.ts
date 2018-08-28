@@ -119,7 +119,8 @@ export class EditorFileBrowserComponent implements OnChanges {
                fileName: item.value
             });
         }
-        /** Search our parent with the TreeviewHelper and set the folder value accordingly **/
+        /** Reset folder and search our parent with the TreeviewHelper and set the folder value accordingly **/
+        this.folder = null;
         for (const treeviewItem of this.filesTreeViewItem) {
             const parent = TreeviewHelper.findParent(treeviewItem, item);
             // We found our parent => process the value and assign it
