@@ -145,7 +145,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
             let quizScoreString : string = ''; // initializing score string for csv export
             let quizEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = []; // array to save scores
-            
+
             let modelingScoreString : string = '';// initializing score string for csv export
             let modelingEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
 
@@ -218,21 +218,21 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             });
 
             // adding temporary variables to our final scores array list
-            this.studentArray[indexStudent].totalScoreQuizzes = student.totalScoreQuizzes;
             this.studentArray[indexStudent].everyScoreForQuizzes = quizEveryScore;
             this.studentArray[indexStudent].everyScoreStringForQuizzes = quizScoreString;
-            
-            this.studentArray[indexStudent].totalScoreModeling = student.totalScoreModeling;
+
             this.studentArray[indexStudent].everyScoreForModeling = modelingEveryScore;
             this.studentArray[indexStudent].everyScoreStringForModeling = modelingScoreString;
-            
-            this.studentArray[indexStudent].totalScoreProgramming = student.totalScoreProgramming;
+
             this.studentArray[indexStudent].everyScoreForProgramming = programmingEveryScore;
             this.studentArray[indexStudent].everyScoreStringForProgramming = programmingScoreString;
 
             // calculate the successful and participation percentages
             this.studentArray[indexStudent].successfullyCompletedInPercent = (student.successful/ this.numberOfExercises) * 100;
             this.studentArray[indexStudent].participationInPercent = (student.participated / this.numberOfExercises) * 100;
+
+            this.studentArray[indexStudent].overallScore = +this.studentArray[indexStudent].totalScoreQuizzes
+                + +this.studentArray[indexStudent].totalScoreProgramming + +this.studentArray[indexStudent].totalScoreModeling;
         });
 
         // gets all students that were not caught in the results list
@@ -253,7 +253,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 0,0,0,0,0,0,0,0,
                 true,0);
 
-            // create a 0 entry if the student has no exercise results 
+            // create a 0 entry if the student has no exercise results
             if (!this.studentArray.some(student => student['id'] === student.id)) {
 
                 /*   console.log('do we need participation score?');
@@ -296,11 +296,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
                 this.studentArray.push(student);
 
-            } else {
-                let indexOverallFinalScores : number = this.studentArray.findIndex( student => student.id === student.id);
-                this.studentArray[indexOverallFinalScores].overallScore = this.studentArray[indexOverallFinalScores].totalScoreQuizzes
-                    + this.studentArray[indexOverallFinalScores].totalScoreProgramming + this.studentArray[indexOverallFinalScores].totalScoreModeling;
-                }
+            }
         });
 
         this.finalScores = this.studentArray;
@@ -308,8 +304,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     }
 
     exportResults() { // method for exporting the csv with the needed data
-
-        this.getAllScoresForAllCourseParticipants();
 
         if (this.exportReady && this.finalScores.length > 0) {
             const rows = [];
@@ -398,7 +392,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                         this.studentArray[index].successful++;
                         this.studentArray[index].successfulQuizzes++;
                     }
-            
+
                     this.studentArray[index].scoreListForQuizzes.push({
                         'resCompletionDate': resultCompletionDate,
                         'exID': exercise.id,

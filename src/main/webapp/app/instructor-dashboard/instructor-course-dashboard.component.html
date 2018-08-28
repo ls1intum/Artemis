@@ -46,9 +46,9 @@
                 <td>{{ row.login }}</td>
                 <td>{{ row.participated }} ({{ row.participationInPercent | number: '0.0-0'}}%)</td>
                 <td>{{ row.successful }} ({{ row.successfullyCompletedInPercent | number: '0.0-0'}}%)</td>
-                <td>{{ row.totalScoreQuizzes }} ({{ (row.totalScoreQuizzes/maxScoreForQuizzes) | number: '0.0-0'}}%)</td>
-                <td>{{ row.totalScoreProgramming }} ({{ row.totalScoreProgramming/maxScoreForProgramming | number: '0.0-0'}}%)</td>
-                <td>{{ row.totalScoreModeling }} ({{ (row.totalScoreModeling/maxScoreForModeling) | number: '0.0-0'}}%)</td>
+                <td>{{ row.totalScoreQuizzes }} ({{ (row.totalScoreQuizzes/maxScoreForQuizzes)*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.totalScoreProgramming }} ({{ (row.totalScoreProgramming/maxScoreForProgramming)*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.totalScoreModeling }} ({{ (row.totalScoreModeling/maxScoreForModeling)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.overallScore | number: '0.0-0'}}</td>
             </tr>
             </tbody>
