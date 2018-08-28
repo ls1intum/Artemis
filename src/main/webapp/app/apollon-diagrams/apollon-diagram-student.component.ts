@@ -63,7 +63,8 @@ export class ApollonDiagramStudentComponent implements OnInit, OnDestroy {
         // TODO: disable interactive mode
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             initialState,
-            mode: 'MODELING_ONLY'
+            mode: 'MODELING_ONLY',
+            diagramType: 'CLASS'
         });
     }
 
