@@ -7,9 +7,7 @@ import { JhiMainComponent } from '../layouts';
 import { AssessmentDashboardComponent } from './assessment-dashboard.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { SortByModule } from '../components/pipes/sort-by.module';
-import { JhiResultDetailComponent } from '../courses';
-import { ResultComponent } from '../courses/results/result.component';
-import { ArTEMiSCoursesModule } from '../courses/courses.module';
+import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
 
 const ENTITY_STATES = [
     {
@@ -29,7 +27,7 @@ const ENTITY_STATES = [
         RouterModule.forChild(ENTITY_STATES),
         NgbModule,
         SortByModule,
-        ArTEMiSCoursesModule
+        ArTEMiSResultModule
     ],
     declarations: [
         AssessmentDashboardComponent,
@@ -37,7 +35,7 @@ const ENTITY_STATES = [
     entryComponents: [
         HomeComponent,
         ResultComponent,
-        JhiResultDetailComponent,
+        ResultDetailComponent,
         AssessmentDashboardComponent,
         JhiMainComponent
     ]
