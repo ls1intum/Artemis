@@ -2,10 +2,10 @@ import { Exercise } from '../exercise';
 import { Course } from '../course';
 
 export const enum DiagramType {
-    'CLASS',
-    'ACTIVITY',
-    'USE_CASE',
-    'COMMUNICATION'
+    CLASS = 'CLASS',
+    ACTIVITY = 'ACTIVITY',
+    USE_CASE = 'USE_CASE',
+    COMMUNICATION = 'COMMUNICATION'
 }
 
 export class ModelingExercise extends Exercise {

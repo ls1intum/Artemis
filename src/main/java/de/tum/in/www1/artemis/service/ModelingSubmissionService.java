@@ -103,6 +103,9 @@ public class ModelingSubmissionService {
         if (model != null && !model.isEmpty()) {
             jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
         }
+        if (result.getSubmission() instanceof ModelingSubmission && ((ModelingSubmission) result.getSubmission()).getModel() == null) {
+            ((ModelingSubmission) result.getSubmission()).setModel(model);
+        }
 
         if (modelingSubmission.isSubmitted()) {
             // TODO DB logic update: check if compass could automatically calculate an assessment

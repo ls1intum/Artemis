@@ -135,8 +135,11 @@ export class ModelingAssessmentService {
                     case 'COMPOSITION':
                         relation = ' -◆ ';
                         break;
+                    case 'ACTIVITY_CONTROL_FLOW':
+                        relation = ' -> ';
+                        break;
                     default:
-                        relation = '/';
+                        relation = ' -- ';
                 }
                 assessmentsNames[assessment.id] = source + relation + target;
             } else {
@@ -156,6 +159,9 @@ export class ModelingAssessmentService {
                 if (state.entities.byId[assessment.id]) {
                     const entity = state.entities.byId[assessment.id];
                     elemPosition.x = entity.position.x + entity.size.width;
+                    if (entity.kind === 'ACTIVITY_CONTROL_INITIAL_NODE' || entity.kind === 'ACTIVITY_CONTROL_FINAL_NODE') {
+                        elemPosition.x = entity.position.x;
+                    }
                     elemPosition.y = entity.position.y;
                 }
             } else if (assessment.type === 'attribute') {

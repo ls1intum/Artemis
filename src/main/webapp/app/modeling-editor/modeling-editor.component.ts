@@ -5,7 +5,7 @@ import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-
 import { Participation, ParticipationService } from '../entities/participation';
 import { ActivatedRoute } from '@angular/router';
 import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import ApollonEditor from '@ls1intum/apollon';
+import ApollonEditor, { ApollonOptions } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from '../entities/result';
 import { ParticipationResultService } from '../entities/result/result.service';
@@ -18,6 +18,7 @@ import { ComponentCanDeactivate } from '../shared';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from '../shared';
+import { DiagramType } from '../entities/modeling-exercise';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -93,6 +94,13 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         this.result = this.participation.results[0];
                     }
                     this.modelingExercise = this.participation.exercise;
+                    /**
+                     * set diagramType to class diagram if exercise is use case or communication
+                     * because apollon does not support those yet
+                     */
+                    if (this.modelingExercise.diagramType === DiagramType.USE_CASE || this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
+                        this.modelingExercise.diagramType = DiagramType.CLASS;
+                    }
                     this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
                     this.submission = data.modelingSubmission;
                     if (this.submission && this.submission.id) {
@@ -150,7 +158,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (this.submission && this.submission.submitted) {
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 initialState,
-                mode: 'READ_ONLY'
+                mode: 'READ_ONLY',
+                diagramType: <ApollonOptions['diagramType']> this.modelingExercise.diagramType
             });
 
             const state = this.apollonEditor.getState();
@@ -185,7 +194,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         } else {
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 initialState,
-                mode: 'MODELING_ONLY'
+                mode: 'MODELING_ONLY',
+                diagramType: <ApollonOptions['diagramType']> this.modelingExercise.diagramType
             });
             this.updateSubmissionModel();
             this.autoSaveInterval = window.setInterval(() => {
@@ -285,6 +295,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.initializeApollonEditor(JSON.parse(this.submission.model));
             }, err => {
                 this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                this.submission.submitted = false;
             });
         }
     }
