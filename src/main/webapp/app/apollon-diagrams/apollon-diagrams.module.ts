@@ -9,7 +9,7 @@ import { ApollonQuizExerciseGenerationComponent } from './exercise-generation/ap
 import { ArTEMiSSharedModule } from '../shared';
 import { ApollonDiagramStudentComponent } from './apollon-diagram-student.component';
 import { ApollonDiagramTutorComponent } from './apollon-diagram-tutor.component';
-import { ArTEMiSCoursesModule, ResultComponent } from '../courses';
+import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 
 const ENTITY_STATES = [...apollonDiagramsRoutes];
 
@@ -17,7 +17,7 @@ const ENTITY_STATES = [...apollonDiagramsRoutes];
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArTEMiSCoursesModule
+        ArTEMiSResultModule
     ],
     declarations: [
         ApollonDiagramCreateFormComponent,

@@ -1,3 +1,84 @@
-<div>
-    <editor [participation]="participation" [repository]="repository" [file]="file" [repositoryFiles]="repositoryFiles"></editor>
+<div class="editor-wrapper">
+
+    <nav class="navbar navbar-light navbar-expand-md jh-navbar">
+        <div class="jh-logo-container float-left editor-top-left">
+            <a class="logo float-left" routerLink="/">
+                <span jhiTranslate="global.title" class="navbar-title">ArTEMiS:</span> <span>{{participation?.exercise.course.title}}</span>
+            </a>
+        </div>
+        <div class="navbar-collapse collapse editor-top-right">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown pointer">
+                    <jhi-result [participation]="participation"
+                                [isBuilding]="isBuilding"
+                                [doInitialRefresh]="doInitialRefresh"
+                                (newResult)="updateLatestResult($event)"
+                                [hidden]="isBuilding">
+                    </jhi-result>
+                    <button type="button" class="btn btn-primary navbar-btn" [disabled]="!isSaved || isBuilding" (click)="commit($event)" data-toggle="tooltip" data-placement="left" title="Stage, commit, push, build and test your changes.">
+                        <span *ngIf="isBuilding"><i class="fa fa-circle-o-notch fa-spin"></i> Building</span>
+                        <span *ngIf="!isBuilding"><i class="fa fa-play-circle-o"></i> Commit & Run Tests</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="editor-main">
+        <div class="editor-sidebar-left">
+            <div id="cardFiles" class="card resizable-filebrowser" [ngStyle]="{'width.px':400}">
+                <div class="card-header bg-primary text-white" (click)="toggleCollapse($event, false)">
+                    <span class="pull-right "><i class="fa fa-chevron-left"></i></span>
+                    <h3 class="card-title">
+                        <i class="fa fa-folder-open"></i>
+                        <span> &nbsp;{{participation?.exercise.title}}</span>
+                    </h3>
+                </div>
+
+                <jhi-editor-file-browser [participation]="participation"
+                                         [fileName]="file"
+                                         [repositoryFiles]="repositoryFiles"
+                                         (selectedFile)="updateSelectedFile($event)"
+                                         (createdFile)="updateRepositoryCommitStatus($event)"
+                                         (deletedFile)="updateRepositoryCommitStatus($event)">
+                </jhi-editor-file-browser>
+
+                <div class="card-footer text-nowrap">
+                    <span [innerHtml]="saveStatusLabel | safeHtml"></span>
+                    <hr/>
+                    <span *ngIf="isCommitted">
+                        <i class="fa fa-check-circle text-success"></i> <span class="text-success"> All changes committed.</span>
+                    </span>
+                    <span *ngIf="!isCommitted">
+                        <i class="fa fa-warning text-warning"></i> <span class="text-warning"> There are uncommitted changes.</span>
+                    </span>
+                </div>
+
+                <!-- Required for resizing; don't remove empty span -->
+                <div class="rg-right"><span></span></div>
+            </div>
+        </div>
+
+        <div class="editor-center">
+            <jhi-editor-ace [participation]="participation"
+                            [fileName]="file"
+                            (saveStatusChange)="updateSaveStatusLabel($event)">
+            </jhi-editor-ace>
+        </div>
+
+        <div class="editor-sidebar-right">
+            <jhi-editor-instructions *ngIf="repositoryFiles"
+                                     [participation]="participation"
+                                     [latestResult]="latestResult">
+            </jhi-editor-instructions>
+        </div>
+    </div>
+
+    <div class="editor-bottom">
+        <jhi-editor-build-output
+            [participation]="participation"
+            [isBuilding]="isBuilding">
+        </jhi-editor-build-output>
+    </div>
+
 </div>

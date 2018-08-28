@@ -8,7 +8,7 @@ import { ExerciseResultService } from '../entities/result/result.service';
 import { DifferencePipe } from 'angular2-moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
-import { JhiResultDetailComponent } from '../courses/results/result.component';
+import { ResultDetailComponent } from '../entities/result/result-detail.component';
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 import { Principal } from '../shared';
@@ -126,7 +126,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(JhiResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
     }
 
