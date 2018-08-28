@@ -74,10 +74,10 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @desc Initializes the Remarkable object and loads the repository README.md file
      */
     ngOnInit(): void {
-        this.setupMarkDown();
-        this.loadReadme();
         // Initialize array for listener remove functions
         this.listenerRemoveFunctions = [];
+        this.setupMarkDown();
+        this.loadReadme();
     }
 
     /**
@@ -115,6 +115,8 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      */
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.participation && this.participation) {
+            // Initialize array for listener remove functions
+            this.listenerRemoveFunctions = [];
             this.setupMarkDown();
             this.loadReadme();
         }
@@ -130,12 +132,15 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
      * @desc Gets the README.md file from our repository and starts the rendering process
      */
     loadReadme() {
-        this.repositoryFileService.get(this.participation.id, 'README.md').subscribe( fileObj => {
-           this.readMeFileRawContent = fileObj.fileContent;
-           this.renderReadme();
-        }, err => {
-            console.log('Error while getting README.md file!', err);
-        });
+        // Only do this if we already received a participation object from parent
+        if (this.participation) {
+            this.repositoryFileService.get(this.participation.id, 'README.md').subscribe( fileObj => {
+                this.readMeFileRawContent = fileObj.fileContent;
+                this.renderReadme();
+            }, err => {
+                console.log('Error while getting README.md file!', err);
+            });
+        }
     }
 
     /**
