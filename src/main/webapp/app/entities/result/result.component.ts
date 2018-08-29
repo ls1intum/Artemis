@@ -5,6 +5,7 @@ import { JhiWebsocketService, Principal } from '../../shared/index';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
+import { ExerciseType } from '../../entities/exercise';
 
 @Component({
     selector: 'jhi-result',
@@ -21,20 +22,22 @@ import { HttpClient } from '@angular/common/http';
  */
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
 
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
+
     @Input() participation: Participation;
     @Input() isBuilding: boolean;
     @Input() doInitialRefresh: boolean;
     @Output() newResult = new EventEmitter<object>();
 
-    results: Result[];
     result: Result;
     websocketChannel: string;
-    // queued: boolean;
     textColorClass: string;
     hasFeedback: boolean;
     resultIconClass: string;
     resultString: string;
-    exerciseType: string;
 
     constructor(private jhiWebsocketService: JhiWebsocketService,
                 private participationResultService: ParticipationResultService,
@@ -47,28 +50,40 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         if (this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
-            this.exerciseType = exercise.type;
-            this.results = this.participation.results;
 
-            this.init();
-            // Make sure result and participation are connected
-            if (this.result) {
+            if (this.participation.results && this.participation.results.length > 0) {
+                // Make sure result and participation are connected
+                this.result = this.participation.results[0];
                 this.result.participation = this.participation;
             }
 
-            /** Initial refresh call; will only be called if input 'doInitialRefresh' is provided **/
-            if (this.doInitialRefresh) {
-                this.refresh(false);
+            this.init();
+
+            // Initial refresh call will only be called if input 'doInitialRefresh' is provided (currently only
+            // set to true by the online editor
+            // TODO: can we avoid this case for the online editor and provide a valid participation with a result?
+            if (this.doInitialRefresh && !this.result) {
+                this.refreshResult();
             }
 
-            if (exercise && exercise.type === 'programming-exercise') {
+            if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
                 this.principal.identity().then(account => { // only subscribe for the currently logged in user
                     const now = new Date();
-                    if (account.id === this.participation.student.id && (exercise.dueDate == null || new Date(Date.parse(exercise.dueDate)) > now)) {
+                    if (account.id === this.participation.student.id && (exercise.dueDate == null ||
+                        new Date(Date.parse(exercise.dueDate)) > now)) {
+
+                        // subscribe for new results (e.g. when a programming exercise was automatically tested)
                         this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannel);
-                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(() => {
-                            this.refresh(true);
+                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(newResult => {
+                            this.handleNewResult(newResult);
+                        });
+
+                        // subscribe for new submissions (e.g. when code was pushed and is currently built)
+                        this.websocketChannel = `/topic/participation/${this.participation.id}/newSubmission`;
+                        this.jhiWebsocketService.subscribe(this.websocketChannel);
+                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(newSubmission => {
+                            // TODO handle this case properly, e.g. by animating a progress bar in the result view
                         });
                     }
                 });
@@ -76,9 +91,29 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
     }
 
+    handleNewResult(newResult: Result) {
+        this.result = newResult;
+        this.newResult.emit({
+            newResult
+        });
+        this.init();
+    }
+
+    /*
+     * fetch results from server, this method should only be invoked if there is no other possibility so that we avoid
+     * high server costs
+     */
+    refreshResult() {
+        this.participationResultService.query(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
+            showAllResults: false,
+            ratedOnly: this.participation.exercise.type === 'quiz'
+        }).subscribe(results => {
+            this.handleNewResult(results.body[0]);
+        });
+    }
+
     init() {
-        if (this.results && this.results[0] && (this.results[0].score || this.results[0].score === 0)) {
-            this.result = this.results[0];
+        if (this.result && (this.result.score || this.result.score === 0)) {
             this.textColorClass = this.getTextColorClass();
             this.hasFeedback = this.getHasFeedback();
             this.resultIconClass = this.getResultIconClass();
@@ -98,61 +133,6 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
         }
     }
 
-    /**
-     * refresh the participation and load the result if necessary
-     *
-     * @param forceLoad {boolean} force loading the result if the status is not QUEUED or BUILDING
-     */
-    refresh(forceLoad: boolean) {
-
-        // TODO: Use WebSocket for participation status in place of GET 'api/participations/{vm.participationId}/status'
-
-        // for now we just ignore participation status, as this is very costly for server performance
-        this.refreshResult();
-
-        /*this.http.get(`api/participations/${this.participation.id}/status`).finally(function(){
-            if (!this.queued && !this.building) {
-                if (this.participationResultService) {
-                    this.participationResultService.query(
-                        this.participation.exercises.course.id,
-                        this.participation.exercise.id,
-                        this.participation.id,
-                        {showAllResults: false})
-                        .subscribe((res: HttpResponse<Result[]>) => {
-                                const results = res.body;
-                                this.results = results;
-                                //TODO handle this case
-                                // if (results.onNewResults) {
-                                //     results.onNewResult({ $event: {
-                                //         newResult: results[0]
-                                //     }});
-                                // }
-                            },
-                            (res: HttpResponse<Result[]>) => this.onError(res.body)
-                        );
-                }
-            }
-        }).subscribe((response: string) => {
-            this.queued = (response === 'QUEUED');
-            this.building = (response === 'BUILDING');
-        });*/
-    }
-
-    refreshResult() {
-        // TODO remove '!vm.participation.results' and think about removing forceLoad as well
-        // load results from server
-        this.participationResultService.query(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
-            showAllResults: false,
-            ratedOnly: this.participation.exercise.type === 'quiz'
-        }).subscribe(results => {
-            this.results = results.body;
-            this.init();
-            this.newResult.emit({
-                newResult: this.results[0]
-            });
-        });
-    }
-
     buildResultString() {
         if (this.result.resultString === 'No tests found') {
             return 'Build failed';
@@ -161,23 +141,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     getHasFeedback() {
-        if (this.results[0].resultString === 'No tests found') {
+        if (this.result.resultString === 'No tests found') {
             return true;
-        }
-        if (this.results[0].hasFeedback === null) {
+        } else if (this.result.hasFeedback === null) {
             return false;
         }
-        return this.results[0].hasFeedback;
-    }
-
-    hasResults() {
-        return !!this.results && this.results.length > 0 && this.result.score;
+        return this.result.hasFeedback;
     }
 
     showDetails(result: Result) {
         const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
-        // TODO: why is result.participation null?
     }
 
     downloadBuildResult(participationId: number) {
