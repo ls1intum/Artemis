@@ -27,7 +27,7 @@ import java.util.Objects;
 @DiscriminatorValue(value = "S")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "submissionExerciseType")
 // Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ProgrammingSubmission.class, name = "programming"),
