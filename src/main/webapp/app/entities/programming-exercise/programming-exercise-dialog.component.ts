@@ -9,6 +9,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
+import { ExerciseType } from '../exercise';
 import { ProgrammingExercisePopupService } from './programming-exercise-popup.service';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { Course, CourseService } from '../course';
@@ -65,7 +66,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.programmingExercise.type = 'programming-exercise';
+        this.programmingExercise.type = ExerciseType.PROGRAMMING;
         this.programmingExercise.releaseDate = moment(this.releaseDate).format();
         this.programmingExercise.dueDate = moment(this.dueDate).format();
         if (this.programmingExercise.id !== undefined) {

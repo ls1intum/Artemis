@@ -5,6 +5,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
+import { ExerciseType } from '../exercise';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExercisePopupService } from './modeling-exercise-popup.service';
@@ -65,7 +66,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.modelingExercise.type = 'modeling-exercise';
+        this.modelingExercise.type = ExerciseType.MODELING;
         this.modelingExercise.releaseDate = moment(this.releaseDate).format();
         this.modelingExercise.dueDate = moment(this.dueDate).format();
         if (this.modelingExercise.id !== undefined) {
