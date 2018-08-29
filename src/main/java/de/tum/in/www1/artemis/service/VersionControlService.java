@@ -48,13 +48,6 @@ public interface VersionControlService {
     public Boolean repositoryUrlIsValid(URL repositoryUrl);
 
     /**
-     * Whether an WebHook should be created, that informs the CI-server about a push
-     *
-     * @return whether the WebHook should be created
-     */
-    public Boolean isCreateCIWebHook();
-
-    /**
      * Get the last commit hash that is included in the given requestBody that notifies about a push.
      *
      * @param requestBody The request Body received from the VCS.

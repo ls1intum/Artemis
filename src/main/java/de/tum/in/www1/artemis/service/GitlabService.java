@@ -37,9 +37,6 @@ public class GitlabService implements VersionControlService {
     @Value("${artemis.version-control.secret}")
     private String GITLAB_PRIVATE_TOKEN;
 
-    @Value("${artemis.version-control.create-ci-webhook}")
-    private boolean CREATE_CI_WEBHOOK = false;
-
     @Value("${artemis.lti.user-prefix}")
     private String USER_PREFIX = "";
 
@@ -467,11 +464,6 @@ public class GitlabService implements VersionControlService {
     }
 
     @Override
-    public Boolean isCreateCIWebHook() {
-        return CREATE_CI_WEBHOOK;
-    }
-
-    @Override
     public String getLastCommitHash(Object requestBody) throws GitlabException {
         // https://docs.gitlab.com/ee/user/project/integrations/webhooks.html#push-events
         try {
@@ -521,7 +513,7 @@ public class GitlabService implements VersionControlService {
         ResponseEntity<List> response;
         try {
             response = restTemplate.exchange(
-                GITLAB_SERVER_URL + API_PATH + "users?username=" + username, //TODO: This seems to be undocumented, might break?
+                GITLAB_SERVER_URL + API_PATH + "users?username=" + username,
                 HttpMethod.GET,
                 entity,
                 List.class);

@@ -107,7 +107,6 @@ artemis:
     url: https://repobruegge.in.tum.de
     user: <username>
     secret: <secret>
-    create-ci-webhook: false
   bamboo:
     url: https://bamboobruegge.in.tum.de
     bitbucket-application-link-id: <application-link-id>
