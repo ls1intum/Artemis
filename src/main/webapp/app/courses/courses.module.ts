@@ -6,7 +6,6 @@ import { coursesRoute } from './courses.route';
 import { CourseComponent, CourseExerciseService, CourseScoreCalculationService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { CoursesComponent } from './courses.component';
-import { JhiResultDetailComponent, ResultComponent, SafeHtmlPipe } from './results/result.component';
 import { ExerciseListComponent, ShowExercisePipe } from './exercises/exercise-list.component';
 import { RepositoryService } from '../entities/repository/repository.service';
 import { ResultService } from '../entities/result';
@@ -14,6 +13,7 @@ import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
+import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 
 const ENTITY_STATES = [
     ...coursesRoute
@@ -22,16 +22,14 @@ const ENTITY_STATES = [
 @NgModule({
     imports: [
         ArTEMiSSharedModule,
+        ArTEMiSResultModule,
         MomentModule,
         RouterModule.forChild(ENTITY_STATES)
     ],
     declarations: [
         CoursesComponent,
-        ResultComponent,
-        JhiResultDetailComponent,
         ExerciseListComponent,
-        ShowExercisePipe,
-        SafeHtmlPipe
+        ShowExercisePipe
     ],
     exports: [
         ResultComponent
@@ -39,7 +37,8 @@ const ENTITY_STATES = [
     entryComponents: [
         HomeComponent,
         CourseComponent,
-        JhiMainComponent
+        JhiMainComponent,
+        ResultComponent
     ],
     providers: [
         CourseService,

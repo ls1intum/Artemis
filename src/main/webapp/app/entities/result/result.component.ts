@@ -1,21 +1,11 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, Pipe, PipeTransform, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService } from '../../entities/participation';
-import { ParticipationResultService, Result, ResultService } from '../../entities/result';
-import { JhiWebsocketService, Principal } from '../../shared';
-import { RepositoryService } from '../../entities/repository/repository.service';
-import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { DomSanitizer } from '@angular/platform-browser';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Participation, ParticipationService } from '../participation/index';
+import { ParticipationResultService, Result, ResultDetailComponent } from '.';
+import { JhiWebsocketService, Principal } from '../../shared/index';
+import { RepositoryService } from '../repository/repository.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
-import { Feedback } from '../../entities/feedback';
 import { ExerciseType } from '../../entities/exercise';
-
-@Pipe({name: 'safeHtml'})
-export class SafeHtmlPipe implements PipeTransform {
-    constructor( private sanitizer: DomSanitizer ) { }
-    transform(value) {
-        return this.sanitizer.bypassSecurityTrustHtml(value);
-    }
-}
 
 @Component({
     selector: 'jhi-result',
@@ -38,6 +28,9 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
 
     @Input() participation: Participation;
+    @Input() isBuilding: boolean;
+    @Input() doInitialRefresh: boolean;
+    @Output() newResult = new EventEmitter<object>();
 
     result: Result;
     websocketChannel: string;
@@ -60,9 +53,14 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             this.result = this.participation.results[0];
 
             this.init();
-            // make sure result and participation are connected
+            // Make sure result and participation are connected
             if (this.result) {
                 this.result.participation = this.participation;
+            }
+
+            /** Initial refresh call; will only be called if input 'doInitialRefresh' is provided **/
+            if (this.doInitialRefresh) {
+                this.refreshResult();
             }
 
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
@@ -75,8 +73,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                         this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannel);
                         this.jhiWebsocketService.receive(this.websocketChannel).subscribe(newResult => {
-                            this.result = newResult;
-                            this.init();
+                            this.handleNewResult(newResult);
                         });
 
                         // subscribe for new submissions (e.g. when code was pushed and is currently built)
@@ -89,6 +86,27 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                 });
             }
         }
+    }
+
+    handleNewResult(newResult: Result) {
+        this.result = newResult;
+        this.newResult.emit({
+            newResult: newResult
+        });
+        this.init();
+    }
+
+    /*
+     * fetch results from server, this method should only be invoked if there is no other possibility so that we avoid
+     * high server costs
+     */
+    refreshResult() {
+        this.participationResultService.query(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
+            showAllResults: false,
+            ratedOnly: this.participation.exercise.type === 'quiz'
+        }).subscribe(results => {
+            this.handleNewResult(results.body[0]);
+        });
     }
 
     init() {
@@ -122,15 +140,14 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     getHasFeedback() {
         if (this.result.resultString === 'No tests found') {
             return true;
-        }
-        if (this.result.hasFeedback === null) {
+        } else if (this.result.hasFeedback === null) {
             return false;
         }
         return this.result.hasFeedback;
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(JhiResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
     }
 
@@ -184,37 +201,5 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             return 'fa-check-circle-o';
         }
         return 'fa-times-circle-o';
-    }
-}
-
-// Modal -> Result details view
-@Component({
-    selector: 'jhi-result-detail',
-    templateUrl: './result-detail.html'
-})
-export class JhiResultDetailComponent implements OnInit {
-    @Input() result: Result;
-    loading: boolean;
-    details: Feedback[];
-    buildLogs;
-
-    constructor(public activeModal: NgbActiveModal,
-                private resultService: ResultService,
-                private repositoryService: RepositoryService) {}
-
-    ngOnInit(): void {
-        this.loading = true;
-        this.resultService.details(this.result.id).subscribe(res => {
-            this.details = res.body;
-            if (!this.details || this.details.length === 0) {
-                this.repositoryService.buildlogs(this.result.participation.id).subscribe(repoResult => {
-                   this.buildLogs = repoResult;
-                   this.loading = false;
-                });
-            } else {
-                this.loading = false;
-            }
-        });
-        this.loading = false;
     }
 }
