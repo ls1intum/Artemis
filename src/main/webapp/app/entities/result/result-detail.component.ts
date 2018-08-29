@@ -21,7 +21,7 @@ export class ResultDetailComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        this.resultService.details(this.result.id).subscribe(res => {
+        this.resultService.getFeedbackDetailsForResult(this.result.id).subscribe(res => {
             this.feedbackList = res.body;
             if (!this.feedbackList || this.feedbackList.length === 0) {
                 // If we don't have received any feedback, we fetch the buid log outputs

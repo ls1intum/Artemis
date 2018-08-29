@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -264,7 +264,7 @@ public abstract class Exercise implements Serializable {
 
     /**
      * find a relevant participation for this exercise
-     * (relevancy depends on ParticipationState)
+     * (relevancy depends on InitializationState)
      *
      * @param participations the list of available participations
      * @return the found participation, or null, if none exist
@@ -273,12 +273,12 @@ public abstract class Exercise implements Serializable {
         Participation relevantParticipation = null;
         for (Participation participation : participations) {
             if (participation.getExercise().equals(this)) {
-                if (participation.getInitializationState() == ParticipationState.INITIALIZED) {
-                    // ParticipationState INITIALIZED is preferred
+                if (participation.getInitializationState() == InitializationState.INITIALIZED) {
+                    // InitializationState INITIALIZED is preferred
                     // => if we find one, we can return immediately
                     return participation;
-                } else if (participation.getInitializationState() == ParticipationState.INACTIVE) {
-                    // ParticipationState INACTIVE is also ok
+                } else if (participation.getInitializationState() == InitializationState.INACTIVE) {
+                    // InitializationState INACTIVE is also ok
                     // => if we can't find INITIALIZED, we return that one
                     relevantParticipation = participation;
                 } else if (participation.getExercise() instanceof ModelingExercise) {

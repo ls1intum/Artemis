@@ -5,6 +5,7 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { createRequestOption } from '../../shared';
+import { JhiDateUtils } from 'ng-jhipster';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 
@@ -13,7 +14,7 @@ export class FileUploadExerciseService {
 
     private resourceUrl =  SERVER_API_URL + 'api/file-upload-exercises';
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private dateUtils: JhiDateUtils) { }
 
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
         const copy = this.convert(fileUploadExercise);
@@ -61,6 +62,8 @@ export class FileUploadExerciseService {
      */
     private convertItemFromServer(fileUploadExercise: FileUploadExercise): FileUploadExercise {
         const copy: FileUploadExercise = Object.assign({}, fileUploadExercise);
+        copy.releaseDate = this.dateUtils.convertDateTimeFromServer(copy.releaseDate);
+        copy.dueDate = this.dateUtils.convertDateTimeFromServer(copy.dueDate);
         return copy;
     }
 
@@ -69,6 +72,8 @@ export class FileUploadExerciseService {
      */
     private convert(fileUploadExercise: FileUploadExercise): FileUploadExercise {
         const copy: FileUploadExercise = Object.assign({}, fileUploadExercise);
+        copy.releaseDate = this.dateUtils.toDate(fileUploadExercise.releaseDate);
+        copy.dueDate = this.dateUtils.toDate(fileUploadExercise.dueDate);
         return copy;
     }
 }

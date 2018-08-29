@@ -11,7 +11,7 @@
             "updated": "Programming Exercise aktualisiert mit ID {{ param }}",
             "deleted": "Programming Exercise gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Programming Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Programming Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Programming Exercise"

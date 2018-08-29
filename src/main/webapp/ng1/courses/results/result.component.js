@@ -57,8 +57,6 @@
          * @param forceLoad {boolean} force loading the result if the status is not QUEUED or BUILDING
          */
         function refresh(forceLoad) {
-            // TODO: Use WebSocket for participation status in place of GET 'api/participations/{vm.participationId}/status'
-
             // for now we just ignore participation status, as this is very costly for server performance
             refreshResult(forceLoad);
         }

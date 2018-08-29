@@ -357,7 +357,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/quiz-exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
@@ -368,7 +368,7 @@ public class QuizExerciseResource {
         }
 
         Course course = quizExercise.getCourse();
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

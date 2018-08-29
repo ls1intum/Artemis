@@ -112,6 +112,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
 
         // This fetches a list of all supported editor modes and matches it afterwards against the file extension
         const aceModeList = ace.require('ace/ext/modelist');
+        // TODO: handle the case that fileName is null or undefined
         const fileNameSplit = fileName.split('/');
         const aceMode = aceModeList.getModeForPath(fileNameSplit[fileNameSplit.length - 1]);
 
