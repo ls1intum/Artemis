@@ -1,23 +1,13 @@
 import { Participation } from '../../entities/participation';
 import { JhiAlertService } from 'ng-jhipster';
 import { TranslateService } from '@ngx-translate/core';
-import {
-    AfterViewInit,
-    Component,
-    Input,
-    OnChanges,
-    OnInit,
-    OnDestroy,
-    SimpleChanges,
-    ElementRef,
-    Renderer2
-} from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnChanges, OnDestroy, OnInit, Renderer2, SimpleChanges } from '@angular/core';
 import { WindowRef } from '../../shared/websocket/window.service';
-import { RepositoryFileService, RepositoryService} from '../../entities/repository/repository.service';
+import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
 import { EditorComponent } from '../editor.component';
 import { EditorService } from '../editor.service';
 import { JhiWebsocketService } from '../../shared';
-import { Result, ResultService, ParticipationResultService } from '../../entities/result';
+import { ParticipationResultService, Result, ResultService } from '../../entities/result';
 import { Feedback } from '../../entities/feedback';
 import { EditorInstructionsResultDetailComponent } from './editor-instructions-result-detail';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

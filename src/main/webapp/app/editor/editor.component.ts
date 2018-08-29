@@ -4,7 +4,7 @@ import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, SimpleChanges }
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Participation, ParticipationService } from '../entities/participation';
-import { RepositoryService, RepositoryFileService } from '../entities/repository/repository.service';
+import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { Result } from '../entities/result';
 import { HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';

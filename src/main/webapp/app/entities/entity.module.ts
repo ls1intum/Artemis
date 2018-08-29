@@ -9,6 +9,9 @@ import { ArTEMiSModelingExerciseModule } from './modeling-exercise/modeling-exer
 import { ArTEMiSQuizSubmissionModule } from './quiz-submission/quiz-submission.module';
 import { ArTEMiSModelingSubmissionModule } from './modeling-submission/modeling-submission.module';
 import { ArTEMiSResultModule } from './result/result.module';
+import { ArTEMiSTextExerciseModule } from './text-exercise/text-exercise.module';
+import { ArTEMiSFileUploadExerciseModule } from './file-upload-exercise/file-upload-exercise.module';
+
 /* jhipster-needle-add-entity-module-import - JHipster will add entity modules imports here */
 
 @NgModule({
@@ -21,7 +24,9 @@ import { ArTEMiSResultModule } from './result/result.module';
         ArTEMiSModelingExerciseModule,
         ArTEMiSQuizSubmissionModule,
         ArTEMiSModelingSubmissionModule,
-        ArTEMiSResultModule
+        ArTEMiSResultModule,
+        ArTEMiSTextExerciseModule,
+        ArTEMiSFileUploadExerciseModule,
         /* jhipster-needle-add-entity-module - JHipster will add entity modules here */
     ],
     declarations: [],

@@ -1,4 +1,4 @@
-import { Component, Inject, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
@@ -9,7 +9,7 @@ import { QuizExercise } from './quiz-exercise.model';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
-import { Question } from '../../entities/question';
+import { Question, QuestionType } from '../../entities/question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import * as moment from 'moment';
@@ -19,6 +19,12 @@ import * as moment from 'moment';
     template: './quiz-exercise-detail.component.html'
 })
 export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
+    /** Dependencies as defined by the upgraded component */
     course: Course;
     quizExercise: QuizExercise;
     paramSub: Subscription;

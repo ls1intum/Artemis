@@ -43,7 +43,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.programmingExercise.type = 'programming-exercise';
         if (this.programmingExercise.id !== undefined) {
             this.subscribeToSaveResponse(
                 this.programmingExerciseService.update(this.programmingExercise));

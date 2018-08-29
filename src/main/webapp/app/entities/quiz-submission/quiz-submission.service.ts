@@ -5,8 +5,10 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { QuizSubmission } from './quiz-submission.model';
 import { createRequestOption } from '../../shared';
+import { Result } from '../../entities/result';
 
 export type EntityResponseType = HttpResponse<QuizSubmission>;
+export type ResultResponseType = HttpResponse<Result>;
 
 @Injectable()
 export class QuizSubmissionService {
@@ -42,20 +44,20 @@ export class QuizSubmissionService {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
-    submitForPractice(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<EntityResponseType> {
+    submitForPractice(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.convert(quizSubmission);
-        return this.http.post<QuizSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/submissions/practice`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.post<Result>(`api/courses/${courseId}/exercises/${exerciseId}/submissions/practice`, copy, { observe: 'response' })
+            .map((res: ResultResponseType) => this.convertResponse(res));
     }
 
-    submitForPreview(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<EntityResponseType> {
+    submitForPreview(quizSubmission: QuizSubmission, courseId: number, exerciseId: number): Observable<ResultResponseType> {
         const copy = this.convert(quizSubmission);
-        return this.http.post<QuizSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/submissions/preview`, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.post<Result>(`api/courses/${courseId}/exercises/${exerciseId}/submissions/preview`, copy, { observe: 'response' })
+            .map((res: ResultResponseType) => this.convertResponse(res));
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: QuizSubmission = this.convertItemFromServer(res.body);
+    private convertResponse<T>(res: HttpResponse<T>): HttpResponse<T> {
+        const body: T = this.convertItemFromServer(res.body);
         return res.clone({body});
     }
 
@@ -71,8 +73,8 @@ export class QuizSubmissionService {
     /**
      * Convert a returned JSON object to QuizSubmission.
      */
-    private convertItemFromServer(quizSubmission: QuizSubmission): QuizSubmission {
-        const copy: QuizSubmission = Object.assign({}, quizSubmission);
+    private convertItemFromServer<T>(object: T): T {
+        const copy: T = Object.assign({}, object);
         return copy;
     }
 

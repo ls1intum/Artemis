@@ -94,14 +94,14 @@
         </div>
     </div>
     <hr/>
-    <div ng-if="!vm.question.dragItems || !vm.question.dragItems.length" class="instructions">
+    <div ng-if="!vm.question.imageDragItems || !vm.question.imageDragItems.length" class="instructions">
         <span data-translate="arTeMiSApp.dragAndDropQuestion.addDragItemsInstructions"></span>
     </div>
-    <div ng-if="vm.question.dragItems && vm.question.dragItems.length" class="instructions">
+    <div ng-if="vm.question.imageDragItems && vm.question.imageDragItems.length" class="instructions">
         <span data-translate="arTeMiSApp.dragAndDropQuestion.addMappingsInstructions"></span>
     </div>
-    <div class="drag-items" ng-if="vm.question.dragItems && vm.question.dragItems.length">
-        <div class="drag-item" ng-repeat="dragItem in vm.question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
+    <div class="drag-items" ng-if="vm.question.imageDragItems && vm.question.imageDragItems.length">
+        <div class="drag-item" ng-repeat="dragItem in vm.question.imageDragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
             <div ng-if="dragItem.pictureFilePath">
                 <img http-src="{{dragItem.pictureFilePath}}">
             </div>

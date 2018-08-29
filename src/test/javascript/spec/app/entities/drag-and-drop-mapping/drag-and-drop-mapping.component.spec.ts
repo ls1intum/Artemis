@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed, async } from '@angular/core/testing';
 import { Observable } from 'rxjs/Observable';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArTEMiSTestModule } from '../../../test.module';
 import { DragAndDropMappingComponent } from '../../../../../../main/webapp/app/entities/drag-and-drop-mapping/drag-and-drop-mapping.component';
 import { DragAndDropMappingService } from '../../../../../../main/webapp/app/entities/drag-and-drop-mapping/drag-and-drop-mapping.service';
 import { DragAndDropMapping } from '../../../../../../main/webapp/app/entities/drag-and-drop-mapping/drag-and-drop-mapping.model';
@@ -17,7 +17,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [DragAndDropMappingComponent],
                 providers: [
                     DragAndDropMappingService

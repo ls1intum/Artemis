@@ -5,7 +5,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="apollon_diagramPK"/>
             </column>
-            <column name="json_representation" type="clob"/>
+            <column name="json_representation" type="longtext"/>
         </createTable>
     </changeSet>
 </databaseChangeLog>

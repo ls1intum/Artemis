@@ -7,6 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import * as Chart from 'chart.js';
 import { QuizPointStatistic } from '../../entities/quiz-point-statistic';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
+import { QuestionType } from '../../entities/question';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -14,6 +15,11 @@ import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.ser
     providers: [QuizStatisticUtil]
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
     private sub: any;
@@ -282,7 +288,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             this.participants = this.quizPointStatistic.participantsRated;
             this.data = this.ratedData;
         } else {
-            // else: load the unrated data
+            // load the unrated data
             this.participants = this.quizPointStatistic.participantsUnrated;
             this.data = this.unratedData;
         }
@@ -347,17 +353,13 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     previousStatistic() {
         if (this.quizExercise.questions === null
             || this.quizExercise.questions.length === 0) {
-            this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/quiz-statistic`);
+            this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-statistic');
         } else {
-            if (this.quizExercise.questions[this.quizExercise.questions.length - 1].type
-                === 'multiple-choice') {
-                this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/multiple-choice-question-statistic/` +
-                    `${this.quizExercise.questions[this.quizExercise.questions.length - 1].id}`);
-            }
-            if (this.quizExercise.questions[this.quizExercise.questions.length - 1].type
-                === 'drag-and-drop') {
-                this.router.navigateByUrl(`/quiz/${this.quizExercise.id}/drag-and-drop-question-statistic/` +
-                    `${this.quizExercise.questions[this.quizExercise.questions.length - 1].id}`);
+            const previousQuestion = this.quizExercise.questions[this.quizExercise.questions.length - 1];
+            if (previousQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
+            } else if (previousQuestion.type === QuestionType.DRAG_AND_DROP) {
+                this.router.navigateByUrl('/quiz/' + this.quizExercise.id + 'drag-and-drop-question-statistic/' + previousQuestion.id);
             }
         }
     }

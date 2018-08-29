@@ -1,12 +1,12 @@
-import { Directive, DoCheck, ElementRef, Inject, Injector, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, Component } from '@angular/core';
+import { Component, Directive, DoCheck, ElementRef, Inject, Injector, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
 import { UpgradeComponent } from '@angular/upgrade/static';
 import { QuizExercise } from '../../entities/quiz-exercise/quiz-exercise.model';
 import 'angular';
 import * as moment from 'moment';
-import {NgbModal} from '@ng-bootstrap/ng-bootstrap';
-import {QuizReEvaluateWarningComponent} from './quiz-re-evaluate-warning.component';
-import {QuizExercisePopupService} from '../../entities/quiz-exercise';
-import {Router} from '@angular/router';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
+import { QuizExercisePopupService } from '../../entities/quiz-exercise';
+import { Router } from '@angular/router';
 
 /** This Angular directive will act as an interface to the 'upgraded' AngularJS component
  *  The upgrade is realized as given Angular tutorial:

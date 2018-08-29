@@ -44,8 +44,7 @@ public class ResultService {
         Result result = continuousIntegrationService.get().onBuildCompleted(participation);
         if (result != null) {
             // notify user via websocket
-            // TODO: send the result directly to the client to save 1 REST call and DB access
-            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", true);
+            messagingTemplate.convertAndSend("/topic/participation/" + participation.getId() + "/newResults", result);
             // handles new results and sends them to LTI consumers
             //TODO: can we avoid to invoke this code for non LTI students? (to improve performance)
 //            if (participation.isLti()) {

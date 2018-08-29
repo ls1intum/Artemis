@@ -8,12 +8,12 @@ import {
     CourseDeletePopupComponent,
     CourseDetailComponent,
     CourseDialogComponent,
-    CourseScoreCalculationComponent,
     CourseParticipationService,
     CoursePopupComponent,
     coursePopupRoute,
     CoursePopupService,
     courseRoute,
+    CourseScoreCalculationComponent,
     CourseService
 } from './';
 import { CourseResultService, CourseScoresService } from './course.service';

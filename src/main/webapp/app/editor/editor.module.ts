@@ -6,7 +6,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { EditorComponent } from './editor.component';
 import { EditorService } from './editor.service';
 import { RepositoryService } from '../entities/repository';
-import { ResultService } from '../entities/result';
+import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'angular2-moment';
@@ -20,7 +20,7 @@ import { EditorFileBrowserCreateComponent } from './file-browser/editor-file-bro
 import { EditorFileBrowserDeleteComponent } from './file-browser/editor-file-browser-delete';
 import { EditorInstructionsComponent } from './instructions/editor-instructions.component';
 import { EditorInstructionsResultDetailComponent } from './instructions/editor-instructions-result-detail';
-import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
+
 const ENTITY_STATES = [
     ...editorRoute
 ];

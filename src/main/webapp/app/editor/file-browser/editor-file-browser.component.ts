@@ -1,7 +1,7 @@
 import { ResultService } from '../../entities/result';
 import { RepositoryFileService, RepositoryService } from '../../entities/repository/repository.service';
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild} from '@angular/core';
-import { NgbActiveModal, NgbModal} from '@ng-bootstrap/ng-bootstrap';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
+import { NgbActiveModal, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseParticipationService, Participation, ParticipationService } from '../../entities/participation';
 import { WindowRef } from '../../shared/websocket/window.service';
 import { JhiAlertService } from 'ng-jhipster';
@@ -10,7 +10,7 @@ import { JhiWebsocketService } from '../../shared';
 import { EditorComponent } from '../editor.component';
 import { EditorFileBrowserCreateComponent } from './editor-file-browser-create';
 import { EditorFileBrowserDeleteComponent } from './editor-file-browser-delete';
-import { TreeviewComponent, TreeviewItem, TreeviewConfig, TreeviewHelper } from 'ngx-treeview';
+import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 
 @Component({
     selector: 'jhi-editor-file-browser',

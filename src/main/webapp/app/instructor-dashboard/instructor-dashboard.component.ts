@@ -1,8 +1,8 @@
-import {JhiAlertService, JhiEventManager} from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
-import { Exercise, ExerciseService } from '../entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from '../entities/exercise';
 import { Course, CourseService } from '../entities/course';
 import { ExerciseResultService } from '../entities/result/result.service';
 import { DifferencePipe } from 'angular2-moment';
@@ -23,12 +23,16 @@ import { HttpResponse } from '@angular/common/http';
 
 export class InstructorDashboardComponent implements OnInit, OnDestroy {
 
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
+
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
     predicate: any;
     reverse: any;
-    nextOptimalSubmissionIds = [];
     showAllResults: string;
     results: Result[];
     allResults: Result[];
@@ -70,9 +74,9 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     getResults() {
         this.exerciseResultService.query(this.exercise.course.id, this.exercise.id, {
             showAllResults: this.showAllResults,
-            ratedOnly: this.exercise.type === 'quiz',
-            withSubmissions: this.exercise.type === 'modeling-exercise',
-            withAssessors: this.exercise.type === 'modeling-exercise'
+            ratedOnly: this.exercise.type === ExerciseType.QUIZ,
+            withSubmissions: this.exercise.type === ExerciseType.MODELING,
+            withAssessors: this.exercise.type === ExerciseType.MODELING
         }).subscribe((res: HttpResponse<Result[]>) => {
             const tempResults: Result[] = res.body;
             tempResults.forEach(function(result: Result) {
@@ -154,13 +158,13 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
                 const score = result.score;
 
                 if (index === 0) {
-                    if (this.exercise.type === 'quiz') {
+                    if (this.exercise.type === ExerciseType.QUIZ) {
                         rows.push('data:text/csv;charset=utf-8,Name, Username, Score');
                     } else {
                         rows.push('data:text/csv;charset=utf-8,Name, Username, Score, Repo Link');
                     }
                 }
-                if (this.exercise.type === 'quiz') {
+                if (this.exercise.type === ExerciseType.QUIZ) {
                     rows.push(studentName + ', ' + studentId + ', ' + score);
                 } else {
                     const repoLink = result.participation.repositoryUrl;

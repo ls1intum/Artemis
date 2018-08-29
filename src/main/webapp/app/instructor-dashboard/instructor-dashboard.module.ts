@@ -10,7 +10,7 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
 import { InstructorDashboardArchiveDialogComponent, InstructorDashboardArchivePopupComponent } from './instructor-dashboard-archive-dialog.component';
 import { InstructorDashboardCleanupDialogComponent, InstructorDashboardCleanupPopupComponent } from './instructor-dashboard-cleanup-dialog.component';
-import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent} from './instructor-dashboard-repo-export-dialog.component';
+import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent } from './instructor-dashboard-repo-export-dialog.component';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
 import { InstructorDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './instructor-dashboard-result-dialog.component';
 import { SortByModule } from '../components/pipes/sort-by.module';

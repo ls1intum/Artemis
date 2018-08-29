@@ -1,21 +1,16 @@
 import { Course } from '../course';
-import { Exercise } from '../exercise';
+import { Exercise, ExerciseType } from '../exercise';
 
 export class ProgrammingExercise extends Exercise {
-    constructor(
-        public id?: number,
-        public title?: string,
-        public type?: string,
-        public releaseDate?: any,
-        public dueDate?: any,
-        public maxScore?: number,
-        public baseRepositoryUrl?: string,
-        public baseBuildPlanId?: string,
-        public publishBuildPlanUrl?: boolean,
-        public allowOnlineEditor?: boolean,
-        public course?: Course
-    ) {
-        super();
+
+    public baseRepositoryUrl: string;
+    public baseBuildPlanId: string;
+    public publishBuildPlanUrl = false;     //default value
+    public allowOnlineEditor = false;       //default value
+
+    constructor(course?: Course) {
+        super(ExerciseType.PROGRAMMING);
+        this.course = course;
         this.publishBuildPlanUrl = false;
         this.allowOnlineEditor = false;
     }

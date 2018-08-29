@@ -1,0 +1,16 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "filePath",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20180817185617",
+    "entityTableName": "file_upload_submission",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

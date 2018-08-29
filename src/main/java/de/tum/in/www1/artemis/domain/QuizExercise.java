@@ -17,11 +17,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
- * A QuizExercise.
+ * A QuizExercise contains multiple quiz questions, which can be either multiple choice or drag and drop.
+ * ArTEMiS supports live quizzes with a start and end time which are rated. Within this time, students can participate in the quiz
+ * and select their answers to the given questions. After the end time, the quiz is automatically evaluated
+ *
+ * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
 @Entity
 @DiscriminatorValue(value="Q")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class QuizExercise extends Exercise implements Serializable {
 
     public enum Status {
@@ -598,8 +601,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     @Override
     public Double getMaxScore() {
-        //TODO: this is just a temporary solution for legacy exercises, in the future we could run a script to enter these
-        //values into the database and assumee that maxScore is always set, then the method getMaxTotalScore() could be removed
+        //this is a temporary solution for legacy exercises where maxScore was not set
         Double score = super.getMaxScore();
         if (score != null) {
             return score;
