@@ -1,0 +1,171 @@
+<div class="edit-dnd-question" [hidden]="showPreview">
+    <div class="question-options">
+        <div class="form-group question-title">
+            <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
+        </div>
+        <div class="form-group">
+            <div class="delete-button" (click)="delete()">
+                <i class="fa fa-trash fa-2x"></i>
+            </div>
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
+            <select class="form-control" ng-options="option.key as option.label for option in vm.scoringTypeOptions" [(ngModel)]="question.scoringType" title="scoring type">
+                <option *ngFor="let option of scoringTypeOptions" [ngValue]="option.key">
+                    {{option.label}}
+                </option>
+            </select>
+        </div>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" [(ngModel)]="question.randomizeOrder"/>
+                    <span jhiTranslatee="arTeMiSApp.dragAndDropQuestion.randomizeOrder"></span>
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
+            <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
+        </div>
+    </div>
+    <div class="markupEditorArea">
+        <div class="toolbar">
+            <div class="btn-group">
+                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
+                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
+            </div>
+        </div>
+        <div class="question-content">
+            <div id="{{'question-content-editor-' + random}}" class="form-control"></div>
+        </div>
+    </div>
+    <hr/>
+    <div class="question-options">
+        <div class="form-group">
+            <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink"></span>
+            <!-- TODO: How to translate file-model -->
+            <input type="file" accept="image/*" file-model="vm.backgroundFile"/>
+            <button [disabled]="isUploadingBackgroundFile || !backgroundFile" class="btn btn-outline-secondary" (click)="uploadBackground()">
+                <span *ngIf="isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploading"></span>
+                <span *ngIf="isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.upload"></span>
+            </button>
+        </div>
+    </div>
+    <div class="instructions" *ngIf="!question.backgroundFilePath">
+        <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploadBackgroundInstructions"></span>
+    </div>
+    <div class="instructions" *ngIf="question.backgroundFilePath">
+        <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
+    </div>
+    <div class="background-area">
+        <!-- TODO: Replace http src call -->
+        <img http-src="{{vm.question.backgroundFilePath}}" alt="{{'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">
+        <div id="{{'click-layer-' + random}}" class="click-layer" (mousedown)="backgroundMouseDown()" ng-class="{disabled: !vm.question.backgroundFilePath}">
+            <div
+                class="drop-location"
+                ng-repeat="dropLocation in vm.question.dropLocations"
+                ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                (mousedown)="dropLocationMouseDown(dropLocation)"
+                ui-on-drop="vm.onDragDrop(dropLocation, $data)"
+                drag-enter-class="drop-allowed"
+                drag-hover-class="drop-hover"
+            >
+                <div class="dimensions">
+                    {{dropLocation.width}}x{{dropLocation.height}}
+                </div>
+                <div class="duplicate-button" title="Duplicate" (click)="duplicateDropLocation(dropLocation)">
+                    <i class="fa fa-copy fa-lg"></i>
+                </div>
+                <div class="delete-button" title="Delete" (click)="deleteDropLocation(dropLocation)">
+                    <i class="fa fa-trash fa-lg"></i>
+                </div>
+                <div class="resize top left" ng-mousedown="resizeMouseDown(dropLocation, 'top', 'left')"></div>
+                <div class="resize top center" ng-mousedown="resizeMouseDown(dropLocation, 'top', 'center')"></div>
+                <div class="resize top right" ng-mousedown="resizeMouseDown(dropLocation, 'top', 'right')"></div>
+                <div class="resize middle left" ng-mousedown="resizeMouseDown(dropLocation, 'middle', 'left')"></div>
+                <div class="resize middle right" ng-mousedown="resizeMouseDown(dropLocation, 'middle', 'right')"></div>
+                <div class="resize bottom left" ng-mousedown="resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
+                <div class="resize bottom center" ng-mousedown="resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
+                <div class="resize bottom right" ng-mousedown="resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
+                <div ng-class="'mapping-number mapping-color-' + (getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) % 8)" *ngIf="getMappingsForDropLocation(dropLocation).length">
+                    {{getMappingIndex(getMappingsForDropLocation(dropLocation)[0])}}
+                    <div class="unlink-mapping" (click)="deleteMappingsForDropLocation(dropLocation)">
+                        <i class="fa fa-chain-broken fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <hr/>
+    <div *ngIf="!question.dragItems || !question.dragItems.length" class="instructions">
+        <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addDragItemsInstructions"></span>
+    </div>
+    <div *ngIf="question.dragItems && question.dragItems.length" class="instructions">
+        <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addMappingsInstructions"></span>
+    </div>
+    <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
+        <div class="drag-item" *ngFor="dragItem of question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
+            <div *ngIf="dragItem.pictureFilePath">
+                <!-- TODO: Replace http src call -->
+                <img http-src="{{dragItem.pictureFilePath}}">
+            </div>
+            <div *ngIf="!dragItem.pictureFilePath">
+                <!-- TODO: check doUpdated call -->
+                <textarea [(ngModel)]="dragItem.text" (ngModelChange)="doUpdated()"></textarea>
+            </div>
+            <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)">
+                <i class="fa fa-trash fa-lg"></i>
+            </div>
+            <div class="drag-handle drag-handle-wrapper" title="Move">
+                <i class="fa fa-bars fa-lg drag-handle"></i>
+            </div>
+            <div class="mapping-numbers-wrapper">
+                <div *ngFor="mapping of getMappingsForDragItem(dragItem)" ng-class="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
+                    {{getMappingIndex(mapping)}}
+                    <div class="unlink-mapping" (click)="deleteMapping(mapping)">
+                        <i class="fa fa-chain-broken fa-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <button [disabled]="isUploadingDragItemFile || !dragItemFile" class="btn btn-outline-secondary" (click)="uploadDragItem()">
+                <i class="fa fa-plus"></i>
+                <span *ngIf="isUploadingDragItemFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploading"></span>
+                <span *ngIf="!isUploadingDragItemFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.addDragItemPicture"></span>
+            </button>
+            <!-- TODO: How to translate file-model -->
+            <input type="file" accept="image/*" file-model="vm.dragItemFile"/>
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <button class="btn btn-outline-secondary" (click)="addTextDragItem()">
+                <i class="fa fa-plus"></i>
+                <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addDragItemText"></span>
+            </button>
+        </div>
+    </div>
+    <hr/>
+    <div class="question-options">
+        <div class="form-group">
+            <div class="btn btn-outline-secondary" (click)="togglePreview()">
+                <i class="fa fa-eye"></i>
+                <span jhiTranslate="entity.action.preview"></span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="preview-dnd-question" *ngIf="showPreview">
+    <jhi-drag-and-drop-question [question]="question" [mappings]="[]" [question-index]="questionIndex"></jhi-drag-and-drop-question>
+    <hr/>
+    <div class="btn btn-outline-secondary" (click)="togglePreview()">
+        <i class="fa fa-pencil"></i>
+        <span jhiTranslate="entity.action.edit"></span>
+    </div>
+</div>

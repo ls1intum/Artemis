@@ -1,0 +1,66 @@
+<div class="edit-mc-question" [hidden]="showPreview">
+    <div class="question-options">
+        <div class="form-group question-title">
+            <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
+        </div>
+        <div class="form-group">
+            <div class="delete-button" (click)="deleteQuestion()">
+                <i class="fa fa-trash fa-2x"></i>
+            </div>
+        </div>
+    </div>
+    <div class="question-options">
+        <div class="form-group">
+            <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
+            <select class="form-control" ng-options="option.key as option.label for option in vm.scoringTypeOptions" [(ngModel)]="question.scoringType" title="scoring type">
+                <option *ngFor="let option of scoringTypeOptions" [ngValue]="option.key">
+                    {{option.label}}
+                </option>
+            </select>
+        </div>
+        <div class="form-group">
+            <div class="checkbox">
+                <label>
+                    <input type="checkbox" [(ngModel)]="question.randomizeOrder"/>
+                    <span jhiTranslate="arTeMiSApp.multipleChoiceQuestion.randomizeOrder"></span>
+                </label>
+            </div>
+        </div>
+        <div class="form-group">
+            <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
+            <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
+        </div>
+    </div>
+    <div class="markupEditorArea">
+        <div class="toolbar">
+            <div class="btn-group">
+                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption" (click)="addCorrectAnswerOption()"></div>
+                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption" (click)="addIncorrectAnswerOption()"></div>
+            </div> &nbsp;
+            <div class="btn-group">
+                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
+                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
+            </div>
+        </div>
+        <div class="question-content">
+            <div id="{{'question-content-editor-' + random}}" class="form-control"></div>
+        </div>
+        <div class="toolbar">
+            <div class="btn btn-outline-secondary" (click)="togglePreview()">
+                <i class="fa fa-eye"></i>
+                <span jhiTranslate="entity.action.preview"></span>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="preview-mc-question" *ngIf="showPreview">
+    <jhi-multiple-choice-question [question]="question"
+                                  [selectedAnswerOptions]="[]"
+                                  [questionIndex]="questionIndex">
+    </jhi-multiple-choice-question>
+    <hr/>
+    <div class="btn btn-outline-secondary" (click)="togglePreview()">
+        <i class="fa fa-pencil"></i>
+        <span jhiTranslate="entity.action.edit"></span>
+    </div>
+</div>

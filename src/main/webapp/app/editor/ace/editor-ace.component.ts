@@ -39,7 +39,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     editorMode = 'java'; // String or mode object
     editorReadOnly = false;
     editorAutoUpdate = true; // change content when editor text changes
-    editorDurationBeforeCallback = 800; // wait 0,8s before callback 'textChanged' sends new value
+    editorDurationBeforeCallback = 300; // wait 0,3s before callback 'textChanged' sends new value
 
     /** Callback timing variables **/
     updateFilesDebounceTime = 3000;
@@ -136,6 +136,11 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
              * Assign the obtained file content to the editor and set the ace mode
              * Additionally, we resize the editor window and set focus to it
              */
+
+            // Add session onChange function
+            // TODO: avoid initial on change call and we should be good
+            this.editor.getEditor().session.on('change', () => console.log('session change...'), this.editorFileSessions[fileName].unsavedChanges = true, this.updateSaveStatusLabel()).bind(this);
+
             this.editorText = fileObj.fileContent;
             this.editor.setMode(aceMode);
             this.editor.getEditor().resize();

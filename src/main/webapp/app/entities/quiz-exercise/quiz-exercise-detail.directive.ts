@@ -90,16 +90,16 @@ class QuizExerciseDetailController {
         key: true,
         label: 'Active'
     }];
-    showExistingQuestions: boolean = false;
+    showExistingQuestions = false;
     courses: Course[] = [];
     selectedCourse: string;
     quizExercises: QuizExercise[] = [];
     allExistingQuestions: Question[] = [];
     existingQuestions: Question[] = [];
     importFile: Blob = null;
-    searchQueryText: string = '';
-    dndFilterEnabled: boolean = true;
-    mcqFilterEnabled: boolean = true;
+    searchQueryText = '';
+    dndFilterEnabled = true;
+    mcqFilterEnabled = true;
 
     init() {
         if (this.quizExercise) {
@@ -466,13 +466,13 @@ class QuizExerciseDetailController {
             delete question.questionStatistic;
             delete question.id;
             if (question.type === 'multiple-choice') {
-                let mcq = question as MultipleChoiceQuestion;
+                const mcq = question as MultipleChoiceQuestion;
                 for (const answerOption of mcq.answerOptions) {
                     delete answerOption.id;
                 }
                 this.quizExercise.questions = this.quizExercise.questions.concat([question]);
             } else if (question.type === 'drag-and-drop') {
-                var dnd = question as DragAndDropQuestion;
+                const dnd = question as DragAndDropQuestion;
                 // Get image from the old question and duplicate it on the backend and then save new image to the question,
                 let fileUploadResponse = await this.fileUploaderService.duplicateFile(dnd.backgroundFilePath);
                 dnd.backgroundFilePath = fileUploadResponse.path;
