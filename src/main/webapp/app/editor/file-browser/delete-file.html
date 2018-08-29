@@ -1,0 +1,18 @@
+<form #deleteForm="ngForm" name="deleteForm" (ngSubmit)="deleteFile()">
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="arTeMiSApp.editor.fileBrowser.deleteTitle">Delete file</h4>
+        <button type="button" class="close" data-dismiss="modal" (click)="closeModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+        <jhi-alert-error></jhi-alert-error>
+            <p class="text-danger" [innerHtml]="'arTeMiSApp.editor.fileBrowser.deleteFileConfirm' | translate: {filename: fileNameToDelete}"></p>
+    </div>
+    <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" (click)="closeModal()">
+            <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" class="btn btn-danger" [disabled]="!deleteForm.valid">
+            <span class="fa fa-trash"></span>&nbsp;<span jhiTranslate="arTeMiSApp.editor.fileBrowser.delete">Delete file</span>
+        </button>
+    </div>
+</form>
