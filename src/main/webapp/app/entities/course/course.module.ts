@@ -8,7 +8,7 @@ import {
     CourseDeletePopupComponent,
     CourseDetailComponent,
     CourseDialogComponent,
-    CourseParticipationService,
+    CourseExerciseService,
     CoursePopupComponent,
     coursePopupRoute,
     CoursePopupService,
@@ -16,7 +16,6 @@ import {
     CourseScoreCalculationComponent,
     CourseService
 } from './';
-import { CourseResultService, CourseScoresService } from './course.service';
 import { CourseScoreCalculationService } from './courseScoreCalculation.service';
 
 const ENTITY_STATES = [
@@ -48,10 +47,8 @@ const ENTITY_STATES = [
     ],
     providers: [
         CourseService,
+        CourseExerciseService,
         CoursePopupService,
-        CourseParticipationService,
-        CourseResultService,
-        CourseScoresService,
         CourseScoreCalculationService
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

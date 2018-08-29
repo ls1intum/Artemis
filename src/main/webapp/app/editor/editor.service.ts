@@ -21,6 +21,9 @@ export class EditorService {
      * @function getPlantUmlImage
      * @param plantUml definition obtained by parsing the README markdown file
      * @desc Requests the plantuml png file as arraybuffer and converts it to base64
+     *
+     * TODO provide a rationale about the cache configuration
+     *
      */
     @Cacheable({
         /** Cacheable configuration **/

@@ -3,11 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -220,15 +218,14 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/modeling-exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ModelingExercise : {}", id);
         ModelingExercise modelingExercise = modelingExerciseRepository.findOne(id);
         Course course = modelingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
+        if (!authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

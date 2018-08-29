@@ -12,7 +12,7 @@
             "updated": "Quiz aktualisiert mit ID {{ param }}",
             "deleted": "Quiz gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Quiz {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Quiz {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "edit": {
                 "title": "Quiz für {{ param }} bearbeiten",

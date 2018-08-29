@@ -23,7 +23,7 @@ export class EditorInstructionsResultDetailComponent implements OnInit {
     ngOnInit(): void {
         this.isLoading = true;
         this.filterTests = this.tests.split(',');
-        this.resultService.details(this.result.id).subscribe(res => {
+        this.resultService.getFeedbackDetailsForResult(this.result.id).subscribe(res => {
             this.feedbackList = res.body.filter(
                 detail => this.filterTests.indexOf(detail.text) !== -1
             );

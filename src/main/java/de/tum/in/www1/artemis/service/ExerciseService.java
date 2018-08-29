@@ -1,9 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -201,7 +200,7 @@ public class ExerciseService {
                         }
                     }
 
-                    participation.setInitializationState(ParticipationState.INACTIVE);
+                    participation.setInitializationState(InitializationState.INACTIVE);
                     participation.setBuildPlanId(null);
                     participationService.save(participation);
                 }
@@ -216,7 +215,7 @@ public class ExerciseService {
                     //delete the repository on the VC Server
                     versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
                     participation.setRepositoryUrl(null);
-                    participation.setInitializationState(ParticipationState.FINISHED);
+                    participation.setInitializationState(InitializationState.FINISHED);
                     participationService.save(participation);
                 }
             });

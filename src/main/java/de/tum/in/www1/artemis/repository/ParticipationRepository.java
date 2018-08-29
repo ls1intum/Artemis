@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
 import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,9 +23,9 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
 
     Participation findOneByExerciseIdAndStudentLogin(Long exerciseId, String username);
 
-    Participation findOneByExerciseIdAndStudentLoginAndInitializationState(Long exerciseId, String username, ParticipationState state);
+    Participation findOneByExerciseIdAndStudentLoginAndInitializationState(Long exerciseId, String username, InitializationState state);
 
-    List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, ParticipationState state);
+    List<Participation> findByBuildPlanIdAndInitializationState(String buildPlanId, InitializationState state);
 
     @Query("select participation from Participation participation where participation.student.login = ?#{principal.username}")
     List<Participation> findByStudentIsCurrentUser();

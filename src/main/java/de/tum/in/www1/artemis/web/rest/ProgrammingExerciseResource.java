@@ -218,15 +218,14 @@ public class ProgrammingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/programming-exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
         Course course = programmingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
+        if (!authCheckService.isInstructorInCourse(course, user) &&
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

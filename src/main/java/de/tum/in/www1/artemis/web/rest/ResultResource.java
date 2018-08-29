@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -137,7 +137,7 @@ public class ResultResource {
         if (planKey.contains("base")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, ParticipationState.INITIALIZED);
+        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
         if (participations.size() > 0) {
             Participation participation = participations.get(0);
             if (participations.size() > 1) {
