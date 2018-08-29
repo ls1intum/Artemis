@@ -24,10 +24,10 @@ export class ApollonQuizExerciseGenerationComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.courseService.findAll().subscribe(
-            courses => {
-                this.courses = courses;
-                this.selectedCourse = courses[0];
+        this.courseService.query().subscribe(
+            response => {
+                this.courses = response.body;
+                this.selectedCourse = this.courses[0];
             }, () => { }
         );
     }

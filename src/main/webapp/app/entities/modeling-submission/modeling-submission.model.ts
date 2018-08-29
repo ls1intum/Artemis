@@ -1,4 +1,4 @@
-import { Submission } from '../submission';
+import { Submission, SubmissionExerciseType } from '../submission';
 
 export class ModelingSubmission extends Submission {
 
@@ -6,6 +6,6 @@ export class ModelingSubmission extends Submission {
     public explanationText: string;
 
     constructor() {
-        super();
+        super(SubmissionExerciseType.MODELING);
     }
 }

@@ -602,8 +602,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     @Override
     public Double getMaxScore() {
-        //TODO: this is just a temporary solution for legacy exercises, in the future we could run a script to enter these
-        //values into the database and assumee that maxScore is always set, then the method getMaxTotalScore() could be removed
+        //this is a temporary solution for legacy exercises where maxScore was not set
         Double score = super.getMaxScore();
         if (score != null) {
             return score;

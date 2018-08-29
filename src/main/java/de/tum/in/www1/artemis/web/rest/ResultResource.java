@@ -401,7 +401,7 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional
-    public ResponseEntity<Set<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
+    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
         log.debug("REST request to get Result : {}", id);
         Result result = resultRepository.findOne(id);
         if(result == null) {
@@ -419,9 +419,9 @@ public class ResultResource {
             }
         }
         try {
-            Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
-            return Optional.ofNullable(feedbacks)
-                .map(resultDetails -> new ResponseEntity<>(feedbacks, HttpStatus.OK))
+            List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result);
+            return Optional.ofNullable(feedbackItems)
+                .map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (Exception e) {
             log.error("REST request to get Result failed : {}", id, e);

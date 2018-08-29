@@ -1,4 +1,4 @@
-import { Submission } from '../submission';
+import { Submission, SubmissionExerciseType } from '../submission';
 import { SubmittedAnswer } from '../submitted-answer';
 
 export class QuizSubmission extends Submission {
@@ -10,6 +10,6 @@ export class QuizSubmission extends Submission {
     public adjustedSubmissionDate: Date;
 
     constructor() {
-        super();
+        super(SubmissionExerciseType.QUIZ);
     }
 }
