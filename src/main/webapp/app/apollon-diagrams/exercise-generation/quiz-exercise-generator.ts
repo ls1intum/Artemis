@@ -69,7 +69,7 @@ export async function generateDragAndDropQuizExercise(
     quizExercise.releaseDate = new Date();
     quizExercise.randomizeQuestionOrder = true;
     quizExercise.course = course;
-    quizExercise.questions = dragAndDropQuestion as any;
+    quizExercise.questions = [dragAndDropQuestion];
 
     // Create the quiz exercise
     await quizExerciseService.create(quizExercise).toPromise();
