@@ -1,7 +1,7 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {Result, ResultService} from '../../entities/result';
-import {Feedback} from '../../entities/feedback';
-import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input, OnInit } from '@angular/core';
+import { Result, ResultService } from '../../entities/result';
+import { Feedback } from '../../entities/feedback';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 
 // Modal -> Result details view
 @Component({

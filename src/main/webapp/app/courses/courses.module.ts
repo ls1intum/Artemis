@@ -8,12 +8,11 @@ import { JhiAlertService } from 'ng-jhipster';
 import { CoursesComponent } from './courses.component';
 import { ExerciseListComponent, ShowExercisePipe } from './exercises/exercise-list.component';
 import { RepositoryService } from '../entities/repository/repository.service';
-import { ResultService } from '../entities/result';
+import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
-import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 
 const ENTITY_STATES = [
     ...coursesRoute
