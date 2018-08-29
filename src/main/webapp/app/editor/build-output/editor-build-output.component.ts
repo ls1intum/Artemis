@@ -1,17 +1,11 @@
-import {Participation} from '../../entities/participation';
-import {JhiAlertService} from 'ng-jhipster';
-import {
-    AfterViewInit,
-    Component,
-    Input,
-    OnChanges,
-    SimpleChanges
-} from '@angular/core';
-import {WindowRef} from '../../shared/websocket/window.service';
-import {RepositoryService} from '../../entities/repository/repository.service';
-import {EditorComponent} from '../editor.component';
-import {JhiWebsocketService} from '../../shared';
-import {Result, ResultService, ParticipationResultService} from '../../entities/result';
+import { Participation } from '../../entities/participation';
+import { JhiAlertService } from 'ng-jhipster';
+import { AfterViewInit, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { WindowRef } from '../../shared/websocket/window.service';
+import { RepositoryService } from '../../entities/repository/repository.service';
+import { EditorComponent } from '../editor.component';
+import { JhiWebsocketService } from '../../shared';
+import { ParticipationResultService, Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
 

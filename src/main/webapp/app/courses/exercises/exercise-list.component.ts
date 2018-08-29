@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnDestroy, OnInit, Pipe, PipeTransform } from '@angular/core';
+import { Component, HostListener, Input, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService, CourseService } from '../../entities/course';
 import { Exercise, ExerciseType } from '../../entities/exercise';
 import { JhiWebsocketService, Principal } from '../../shared';

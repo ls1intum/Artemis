@@ -1,8 +1,8 @@
-import {Component, Input, OnInit} from '@angular/core';
-import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
-import {RepositoryFileService} from '../../entities/repository';
-import {Participation} from '../../entities/participation';
-import {EditorFileBrowserComponent} from './editor-file-browser.component';
+import { Component, Input, OnInit } from '@angular/core';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { RepositoryFileService } from '../../entities/repository';
+import { Participation } from '../../entities/participation';
+import { EditorFileBrowserComponent } from './editor-file-browser.component';
 
 // Modal -> Delete repository file
 @Component({

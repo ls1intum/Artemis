@@ -1,14 +1,4 @@
-import {
-    Component,
-    EventEmitter,
-    Input,
-    OnChanges,
-    OnInit,
-    AfterViewInit,
-    Output,
-    SimpleChanges,
-    ViewChild
-} from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from '../../entities/participation';
 import { RepositoryFileService } from '../../entities/repository/repository.service';
@@ -17,6 +7,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { JhiWebsocketService } from '../../shared';
 import { EditorComponent } from '../editor.component';
 import 'brace/theme/dreamweaver';
+
 declare let ace: any;
 
 @Component({

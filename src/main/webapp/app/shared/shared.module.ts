@@ -10,7 +10,9 @@ import {
     JhiLoginModalComponent,
     LoginModalService,
     LoginService,
-    Principal, SafeHtmlPipe, SafeUrlPipe,
+    Principal,
+    SafeHtmlPipe,
+    SafeUrlPipe,
     StateStorageService,
     UserService
 } from './';
