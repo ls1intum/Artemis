@@ -46,7 +46,7 @@
                             <span class="fa fa-remove"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
-                        <div *ngIf="exercise.type !== 'modeling-exercise'">
+                        <div *ngIf="exercise.type !== MODELING">
                             <button type="submit"
                                     [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new']} }]"
                                     class="btn btn-primary btn-sm">

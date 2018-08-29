@@ -248,8 +248,7 @@ public class QuizExerciseResource {
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents();
 
-        // filter out the statistic information if the statistic is not released
-        // TODO: check if statistic is released
+        // filter out the statistic information
         quizExercise.setQuizPointStatistic(null);
 
         log.debug("    filtered info after {} ms", System.currentTimeMillis() - start);

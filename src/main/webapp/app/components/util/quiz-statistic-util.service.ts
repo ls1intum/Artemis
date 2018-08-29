@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import * as moment from 'moment';
 import { Router } from '@angular/router';
-import { QuizExerciseService } from '../../entities/quiz-exercise';
-import { QuizExercise } from '../../entities/quiz-exercise';
-import { Question } from '../../entities/question';
+import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
+import { Question, QuestionType } from '../../entities/question';
 
 @Injectable()
 export class QuizStatisticUtil {
@@ -24,16 +23,14 @@ export class QuizStatisticUtil {
         });
         // go to quiz-Statistic if the position = 0
         if (index === 0) {
-            this.router.navigateByUrl(`/quiz/${quizExercise.id}/quiz-statistic`);
+            this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-statistic');
         } else {
             // go to previous Question-statistic
-            if (quizExercise.questions[index - 1].type === 'multiple-choice') {
-                this.router.navigateByUrl(`/quiz/${quizExercise.id}/multiple-choice-question-statistic/` +
-                    `${quizExercise.questions[index - 1].id}`);
-            }
-            if (quizExercise.questions[index - 1].type === 'drag-and-drop') {
-                this.router.navigateByUrl(`/quiz/${quizExercise.id}/drag-and-drop-question-statistic/` +
-                    `${quizExercise.questions[index - 1].id}`);
+            const previousQuestion = quizExercise.questions[index - 1];
+            if (previousQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/multiple-choice-question-statistic/' + previousQuestion.id);
+            } else if (previousQuestion.type === QuestionType.DRAG_AND_DROP) {
+                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/drag-and-drop-question-statistic/' + previousQuestion.id);
             }
         }
     }
@@ -52,16 +49,14 @@ export class QuizStatisticUtil {
         });
         // go to quiz-Statistic if the position = last position
         if (index === quizExercise.questions.length - 1) {
-            this.router.navigateByUrl(`/quiz/${quizExercise.id}/quiz-point-statistic`);
+            this.router.navigateByUrl('/quiz/' + quizExercise.id + '/quiz-point-statistic');
         } else {
             // go to next Question-statistic
-            if (quizExercise.questions[index + 1].type === 'multiple-choice') {
-                this.router.navigateByUrl(`/quiz/${quizExercise.id}/multiple-choice-question-statistic/` +
-                    `${quizExercise.questions[index + 1].id}`);
-            }
-            if (quizExercise.questions[index + 1].type === 'drag-and-drop') {
-                this.router.navigateByUrl(`/quiz/${quizExercise.id}/drag-and-drop-question-statistic/` +
-                    `${quizExercise.questions[index + 1].id}`);
+            const nextQuestion = quizExercise.questions[index + 1];
+            if (nextQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/multiple-choice-question-statistic/' + nextQuestion.id);
+            } else if (nextQuestion.type === QuestionType.DRAG_AND_DROP) {
+                this.router.navigateByUrl('/quiz/' + quizExercise.id + '/drag-and-drop-question-statistic/' + nextQuestion.id);
             }
         }
     }

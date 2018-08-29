@@ -7,7 +7,7 @@ import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
-import { ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
+import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
 import { Principal } from '../shared';
 import { DiagramType } from '../entities/modeling-exercise';
 
@@ -163,19 +163,19 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         if (this.assessments.length < cardinalityAllEntities) {
             const partialAssessment = this.assessments.length !== 0;
             for (const elem of editorState.entities.allIds) {
-                const assessment = new ModelingAssessment(elem, 'class', 0, '');
+                const assessment = new ModelingAssessment(elem, ModelElementType.CLASS, 0, '');
                 this.pushAssessmentIfNotExists(elem, assessment, partialAssessment);
                 for (const attribute of editorState.entities.byId[elem].attributes) {
-                    const attributeAssessment = new ModelingAssessment(attribute.id, 'attribute', 0, '');
+                    const attributeAssessment = new ModelingAssessment(attribute.id, ModelElementType.ATTRIBUTE, 0, '');
                     this.pushAssessmentIfNotExists(attribute.id, attributeAssessment, partialAssessment);
                 }
                 for (const method of editorState.entities.byId[elem].methods) {
-                    const methodAssessment = new ModelingAssessment(method.id, 'method', 0, '');
+                    const methodAssessment = new ModelingAssessment(method.id, ModelElementType.METHOD, 0, '');
                     this.pushAssessmentIfNotExists(method.id, methodAssessment, partialAssessment);
                 }
             }
             for (const elem of editorState.relationships.allIds) {
-                const assessment = new ModelingAssessment(elem, 'relationship', 0, '');
+                const assessment = new ModelingAssessment(elem, ModelElementType.RELATIONSHIP, 0, '');
                 this.pushAssessmentIfNotExists(elem, assessment, partialAssessment);
             }
         }
@@ -247,13 +247,13 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     }
 
     isSelected(id, type) {
-        if (type === 'relationship') {
+        if (type === ModelElementType.RELATIONSHIP) {
             if (!this.selectedRelationships) {
                 return false;
             } else if (this.selectedRelationships && this.selectedRelationships.indexOf(id) > -1) {
                 return true;
             }
-        } else if (type === 'class') {
+        } else if (type === ModelElementType.CLASS) {
             if (!this.selectedEntities) {
                 return false;
             } else if (this.selectedEntities && this.selectedEntities.indexOf(id) > -1) {
@@ -264,13 +264,13 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 const editorState = this.apollonEditor.getState();
                 if (this.selectedEntities) {
                     for (const entity of editorState.entities.allIds) {
-                        if (type === 'attribute') {
+                        if (type === ModelElementType.ATTRIBUTE) {
                             for (const attribute of editorState.entities.byId[entity].attributes) {
                                 if (attribute.id === id && this.selectedEntities.indexOf(entity) > -1) {
                                     return true;
                                 }
                             }
-                        } else if (type === 'method') {
+                        } else if (type === ModelElementType.METHOD) {
                             for (const method of editorState.entities.byId[entity].methods) {
                                 if (method.id === id && this.selectedEntities.indexOf(entity) > -1) {
                                     return true;
@@ -303,7 +303,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 if (nextOptimalSubmissionIds.length === 0) {
                     this.assessNextOptimal(attempts + 1);
                 } else {
-                    // We have to fake path change to make angular reload the component
+                    // TODO: Workaround We have to fake path change to make angular reload the component
                     const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
                     this.router.navigateByUrl(`/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`);
                 }

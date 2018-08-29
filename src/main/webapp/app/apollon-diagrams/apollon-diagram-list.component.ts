@@ -46,6 +46,6 @@ export class ApollonDiagramListComponent implements OnInit {
     openCreateDiagramDialog() {
         const modalRef = this.modalService.open(ApollonDiagramCreateFormComponent, { size: 'lg', backdrop: 'static' });
         const formComponentInstance = modalRef.componentInstance as ApollonDiagramCreateFormComponent;
-        formComponentInstance.apollonDiagram = { title: '' };
+        formComponentInstance.apollonDiagram = new ApollonDiagram();
     }
 }

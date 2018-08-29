@@ -3,12 +3,9 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
-import { ModelingAssessment } from './modeling-assessment.model';
+import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
 import { Result } from '../result';
-import {
-    ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT,
-    ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT
-} from '@ls1intum/apollon/dist/rendering/layouters/entity';
+import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT } from '@ls1intum/apollon/dist/rendering/layouters/entity';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -89,12 +86,12 @@ export class ModelingAssessmentService {
         return copy;
     }
 
-    getNamesForAssessments(assessments, model) {
+    getNamesForAssessments(assessments: ModelingAssessment[], model) {
         const assessmentsNames = [];
         for (const assessment of assessments) {
-            if (assessment.type === 'class') {
+            if (assessment.type === ModelElementType.CLASS) {
                 assessmentsNames[assessment.id] = model.entities.byId[assessment.id].name;
-            } else if (assessment.type === 'attribute') {
+            } else if (assessment.type === ModelElementType.ATTRIBUTE) {
                 for (const entityId of model.entities.allIds) {
                     for (const att of model.entities.byId[entityId].attributes) {
                         if (att.id === assessment.id) {
@@ -102,7 +99,7 @@ export class ModelingAssessmentService {
                         }
                     }
                 }
-            } else if (assessment.type === 'method') {
+            } else if (assessment.type === ModelElementType.METHOD) {
                 for (const entityId of model.entities.allIds) {
                     for (const method of model.entities.byId[entityId].methods) {
                         if (method.id === assessment.id) {
@@ -110,12 +107,13 @@ export class ModelingAssessmentService {
                         }
                     }
                 }
-            } else if (assessment.type === 'relationship') {
+            } else if (assessment.type === ModelElementType.RELATIONSHIP) {
                 const relationship = model.relationships.byId[assessment.id];
                 const source = model.entities.byId[relationship.source.entityId].name;
                 const target = model.entities.byId[relationship.target.entityId].name;
                 const kind = model.relationships.byId[assessment.id].kind;
                 let relation;
+                //TODO: use an enum here
                 switch (kind) {
                     case 'ASSOCIATION_BIDIRECTIONAL':
                         relation = ' <-> ';
@@ -155,7 +153,7 @@ export class ModelingAssessmentService {
         const positions = [];
         for (const assessment of assessments) {
             const elemPosition = {x: 0, y: 0};
-            if (assessment.type === 'class') {
+            if (assessment.type === ModelElementType.CLASS) {
                 if (state.entities.byId[assessment.id]) {
                     const entity = state.entities.byId[assessment.id];
                     elemPosition.x = entity.position.x + entity.size.width;
@@ -164,7 +162,7 @@ export class ModelingAssessmentService {
                     }
                     elemPosition.y = entity.position.y;
                 }
-            } else if (assessment.type === 'attribute') {
+            } else if (assessment.type === ModelElementType.ATTRIBUTE) {
                 for (const entityId of state.entities.allIds) {
                     const entity = state.entities.byId[entityId];
                     entity.attributes.forEach((attribute, index) => {
@@ -180,7 +178,7 @@ export class ModelingAssessmentService {
                         }
                     });
                 }
-            } else if (assessment.type === 'method') {
+            } else if (assessment.type === ModelElementType.METHOD) {
                 for (const entityId of state.entities.allIds) {
                     const entity = state.entities.byId[entityId];
                     entity.methods.forEach((method, index) => {
@@ -199,7 +197,7 @@ export class ModelingAssessmentService {
                         }
                     });
                 }
-            } else if (assessment.type === 'relationship') {
+            } else if (assessment.type === ModelElementType.RELATIONSHIP) {
                 if (state.relationships.byId[assessment.id]) {
                     const relationship = state.relationships.byId[assessment.id];
                     const kind = relationship.kind;

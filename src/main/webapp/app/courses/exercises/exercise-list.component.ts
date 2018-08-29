@@ -1,6 +1,6 @@
-import { Component, Input, OnDestroy, OnInit, Pipe, PipeTransform, HostListener } from '@angular/core';
+import { Component, HostListener, Input, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService, CourseService } from '../../entities/course';
-import { Exercise } from '../../entities/exercise';
+import { Exercise, ExerciseType } from '../../entities/exercise';
 import { JhiWebsocketService, Principal } from '../../shared';
 import { WindowRef } from '../../shared/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
@@ -13,10 +13,10 @@ import * as moment from 'moment';
 import { HttpClient } from '@angular/common/http';
 import { SERVER_API_URL } from '../../app.constants';
 
-@Pipe({ name: 'isNotOverdue' })
-export class IsNotOverduePipe implements PipeTransform {
-    transform(allExercises: Exercise[], showOverdueExercises: any) {
-        return allExercises.filter(exercise => (showOverdueExercises ||  exercise.type === 'quiz' || exercise.dueDate == null || Date.now() <= Date.parse(exercise.dueDate)));
+@Pipe({ name: 'showExercise' })
+export class ShowExercisePipe implements PipeTransform {
+    transform(allExercises: Exercise[], showInactiveExercises: boolean) {
+        return allExercises.filter(exercise => showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || Date.parse(exercise.dueDate) >= Date.now());
     }
 }
 
@@ -35,8 +35,14 @@ export class IsNotOverduePipe implements PipeTransform {
                 ]
 })
 
-export class ExerciseListComponent implements OnInit, OnDestroy {
-    _course;
+export class ExerciseListComponent implements OnInit {
+
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
+
+    _course: Course;
 
     @Input()
     get course(): Course {
@@ -48,7 +54,6 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             // exercises already included in data, no need to load them
             this.initExercises(course.exercises);
         } else {
-            // TODO: this path is broken - use HttpResponse body and fix initExercise call for this data
             this.courseExerciseService.query(course.id, {
                 courseId: course.id,
                 withLtiOutcomeUrlExisting: true
@@ -60,15 +65,17 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     @Input() filterByExerciseId;
 
     /*
-   The Angular team and many experienced Angular developers strongly recommend that you move filtering and sorting
-   logic into the component itself. [...] Any capabilities that you would have put in a pipe and shared across
-   the app can be written in a filtering/sorting service and injected into the component.
-    */
+     * IMPORTANT NOTICE:
+     * The Angular team and many experienced Angular developers strongly recommend that you move filtering and sorting
+     * logic into the component itself. [...] Any capabilities that you would have put in a pipe and shared across
+     * the app can be written in a filtering/sorting service and injected into the component.
+     */
+
     // exercises are sorted by dueDate
     exercises: Exercise[];
     now = Date.now();
-    numOfOverdueExercises = 0;
-    showOverdueExercises = false;
+    numOfInactiveExercises = 0;
+    showInactiveExercises = false;
     private repositoryPassword: string;
     lastPopoverRef: NgbPopover;
 
@@ -103,7 +110,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             exercises = exercises.filter(exercise => exercise.id === this.filterByExerciseId);
         }
 
-        this.numOfOverdueExercises = exercises.filter(exercise => !this.isNotOverdue(exercise)).length;
+        this.numOfInactiveExercises = exercises.filter(exercise => !this.showExercise(exercise)).length;
 
         for (const exercise of exercises) {
             if (exercise.participation) {
@@ -112,7 +119,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 this.exerciseParticipationService.find(this.course.id, exercise.id).subscribe(participation => {
                     exercise['participation'] = participation;
                     exercise.participationStatus = this.participationStatus(exercise);
-                    if (exercise.type === 'quiz') {
+                    if (exercise.type === ExerciseType.QUIZ) {
                         exercise.isActiveQuiz = this.isActiveQuiz(exercise);
                     }
                 });
@@ -121,19 +128,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             exercise.participationStatus = this.participationStatus(exercise);
 
             // if the User is a student: subscribe the release Websocket of every quizExercise
-            if (exercise.type === 'quiz') {
-                // TODO principal.hasAnyAuthority is a promise!
-                /*if (!this.principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                    const websocketChannel = '/topic/statistic/' + exercise.id + '/release';
-
-                    this.jhiWebsocketService.subscribe(websocketChannel);
-
-                    this.jhiWebsocketService.receive(websocketChannel).subscribe(payload => {
-                        // TODO: handle this case
-                        // exercise.quizPointStatistic.released = payload;
-                    });
-                }*/
-
+            if (exercise.type === ExerciseType.QUIZ) {
                 exercise.isActiveQuiz = this.isActiveQuiz(exercise);
 
                 exercise.isPracticeModeAvailable = exercise.isPlannedToStart &&
@@ -157,20 +152,8 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
             exercise.participationStatus === 'quiz-submitted';
     }
 
-    ngOnDestroy(): void {
-        // If the User is a student: unsubscribe the release Websocket of every quizExercise
-        // TODO principal.hasAnyAuthority is a promise!
-        /*const principal = this.principal;
-        const callback = exercise => {
-            if (exercise.type === 'quiz' && (!principal.hasAnyAuthority(['ROLE_ADMIN', 'ROLE_TA']))) {
-                this.jhiWebsocketService.unsubscribe(`/topic/statistic/${exercise.id}/release`);
-            }
-        };
-        this.exercises.forEach(callback);*/
-    }
-
-    isNotOverdue(exercise: Exercise) {
-        return this.showOverdueExercises || exercise.type === 'quiz' || exercise.dueDate == null || Date.now() <= Date.parse(exercise.dueDate);
+    showExercise(exercise: Exercise) {
+        return this.showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || Date.parse(exercise.dueDate) >= Date.now();
     }
 
     getRepositoryPassword() {
@@ -185,7 +168,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     start(exercise: Exercise) {
         exercise.loading = true;
 
-        if (exercise.type && exercise.type === 'quiz') {
+        if (exercise.type === ExerciseType.QUIZ) {
             // start the quiz
             return this.router.navigate(['/quiz', exercise.id]);
         }
@@ -196,7 +179,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                         exercise['participation'] = data.participation;
                         exercise.participationStatus = this.participationStatus(exercise);
                     }
-                    if (exercise.type === 'programming-exercise') {
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
                         this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
                     }
                 }, error => {
@@ -219,8 +202,8 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         return this.router.navigate(['/quiz', exercise.id, 'practice']);
     }
 
-    toggleShowOverdueExercises() {
-        this.showOverdueExercises = !this.showOverdueExercises;
+    toggleshowInactiveExercises() {
+        this.showInactiveExercises = !this.showInactiveExercises;
     }
 
     buildSourceTreeUrl(cloneUrl): string {
@@ -246,7 +229,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     participationStatus(exercise): string {
-        if (exercise.type && exercise.type === 'quiz') {
+        if (exercise.type === ExerciseType.QUIZ) {
             if ((!exercise.isPlannedToStart || moment(exercise.releaseDate).isAfter(moment())) && exercise.visibleToStudents) {
                 return 'quiz-not-started';
             } else if (Object.keys(exercise.participation).length === 0 &&
@@ -264,7 +247,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
                 }
                 return 'quiz-finished';
             }
-        } else if (exercise.type && exercise.type === 'modeling-exercise' && exercise.participation) {
+        } else if (exercise.type === ExerciseType.MODELING && exercise.participation) {
             if (exercise.participation.initializationState === 'INITIALIZED' || exercise.participation.initializationState === 'FINISHED') {
                 return 'modeling-exercise';
             }
@@ -281,6 +264,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     clickOutside(event) {
         // If there's a last element-reference AND the click-event target is outside this element
         if (this.lastPopoverRef && !(this.lastPopoverRef as any)._elementRef.nativeElement.contains(event.target) &&
+            !(this.lastPopoverRef as any)._windowRef != null &&
             !(this.lastPopoverRef as any)._windowRef.location.nativeElement.contains(event.target)) {
             this.lastPopoverRef.close();
             this.lastPopoverRef = null;

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 
-import {Result} from '../result/result.model';
-import {Course} from './course.model';
-import {Exercise} from '../exercise/exercise.model';
-import {Participation} from '../participation';
+import { Result } from '../result/result.model';
+import { Course } from './course.model';
+import { Exercise } from '../exercise/exercise.model';
+import { Participation } from '../participation';
 
 import { JhiDateUtils } from 'ng-jhipster';
 

@@ -1,0 +1,28 @@
+<div id="cardInstructions" class="card resizable-instructions" [hidden]="readMeFileRenderedContent == null" [ngStyle]="{'width.vw':40}">
+    <div class="card-header text-white bg-primary" (click)="toggleEditorCollapse($event, false)">
+        <span class="pull-right "><i class="fa fa-chevron-right"></i></span>
+        <h3 class="card-title">
+            <i class="fa fa-list-alt"></i>
+            <span> &nbsp; Instructions &nbsp; </span>
+        </h3>
+    </div>
+
+    <div class="card-second-header" [hidden]="steps.length === 0">
+        <div class="stepwizard">
+            <div class="stepwizard-row">
+                <div *ngFor="let step of steps" class="stepwizard-step" >
+                    <div data-toggle="tooltip" data-placement="bottom" title="{{step.title}}" class="btn btn-light btn-circle">
+                        <i class="fa fa-lg fa-check text-success"   *ngIf="step.done"></i>
+                        <i class="fa fa-lg fa-times text-danger"    *ngIf="!step.done"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rendered markdown will be inserted in this div -->
+    <div class="card-body instructions" [innerHtml]="readMeFileRenderedContent | safeHtml"></div>
+
+    <!-- Required for resizing; don't remove empty span -->
+    <div class="rg-left"><span></span></div>
+</div>

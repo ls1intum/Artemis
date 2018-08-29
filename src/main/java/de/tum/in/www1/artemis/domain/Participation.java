@@ -48,6 +48,9 @@ public class Participation implements Serializable {
     @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
+    @Column(name = "presentation_score")
+    private Integer presentationScore;
+
 //    @Column(name = "lti")
 //    private Boolean lti;  //TODO: use this in the future
 
@@ -136,6 +139,19 @@ public class Participation implements Serializable {
 
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
+    }
+
+    public Integer getPresentationScore() {
+        return presentationScore;
+    }
+
+    public Participation presentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
+        return this;
+    }
+
+    public void setPresentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
     }
 
 //    public Boolean isLti() {
@@ -271,6 +287,7 @@ public class Participation implements Serializable {
             ", buildPlanId='" + getBuildPlanId() + "'" +
             ", initializationState='" + getInitializationState() + "'" +
             ", initializationDate='" + getInitializationDate() + "'" +
+            ", presentationScore=" + getPresentationScore() +
             "}";
     }
 }

@@ -10,7 +10,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Result, ResultService } from '../entities/result';
 import { ParticipationResultService } from '../entities/result/result.service';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
+import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
 import * as $ from 'jquery';
 import { ModelingEditorService } from './modeling-editor.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -343,11 +343,11 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 
-    isSelected(id, type) {
+    isSelected(id: number, type: ModelElementType) {
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }
-        if (type !== 'relationship') {
+        if (type !== ModelElementType.RELATIONSHIP) {
             return this.selectedEntities.indexOf(id) > -1;
         } else {
             return this.selectedRelationships.indexOf(id) > -1;

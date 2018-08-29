@@ -11,6 +11,7 @@ import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.servic
 import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { QuestionType } from '../../entities/question';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -27,6 +28,11 @@ import { FileUploaderService } from '../../shared/http/file-uploader.service';
     providers: [DragAndDropQuestionUtil]
 })
 export class QuizExerciseDetailComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
     /** Dependencies as defined by the upgraded component */
     course: Course;
     quizExercise: QuizExercise;
