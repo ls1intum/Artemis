@@ -1,10 +1,10 @@
-import { Submission } from '../submission';
+import { Submission, SubmissionExerciseType } from '../submission';
 
 export class ProgrammingSubmission extends Submission {
 
     public commitHash: string;
 
     constructor() {
-        super();
+        super(SubmissionExerciseType.PROGRAMMING);
     }
 }

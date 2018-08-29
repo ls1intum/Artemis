@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -38,7 +39,7 @@ public class FeedbackService {
      * @return a set of feedback objects including test case names and error messages
      */
     @Transactional
-    public Set<Feedback> getFeedbackForBuildResult(Result result) {
+    public List<Feedback> getFeedbackForBuildResult(Result result) {
 
         // Please note: this is a migration for the old case when we did not store feedback in the database
         // Provide access to results with no feedback in the database

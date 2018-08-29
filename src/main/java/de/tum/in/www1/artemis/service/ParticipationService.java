@@ -99,7 +99,7 @@ public class ParticipationService {
         if (exercise instanceof ProgrammingExercise) {
 //            if (exercise.getCourse().isOnlineCourse()) {
 //                participation.setLti(true);
-//            } //TODO use in the future
+//            } //TODO use lti in the future
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(ParticipationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);

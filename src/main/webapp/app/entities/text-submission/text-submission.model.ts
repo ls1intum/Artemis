@@ -1,10 +1,10 @@
-import { Submission } from '../submission';
+import { Submission, SubmissionExerciseType } from '../submission';
 
 export class TextSubmission extends Submission {
 
     public text: string;
 
     constructor() {
-        super();
+        super(SubmissionExerciseType.TEXT);
     }
 }
