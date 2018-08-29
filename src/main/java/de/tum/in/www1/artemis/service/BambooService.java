@@ -163,10 +163,10 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Set<Feedback> getLatestBuildResultDetails(Result result) {
+    public List<Feedback> getLatestBuildResultDetails(Result result) {
         Map<String, Object> buildResultDetails = retrieveLatestBuildResultDetails(result.getParticipation().getBuildPlanId());
-        Set<Feedback> feedbacks = addFeedbackToResult(result, buildResultDetails);
-        return feedbacks;
+        List<Feedback> feedbackItems = addFeedbackToResult(result, buildResultDetails);
+        return feedbackItems;
     }
 
     @Override
@@ -363,14 +363,12 @@ public class BambooService implements ContinuousIntegrationService {
      * @param
      * @param buildResultDetails returned build result details from the rest API of bamboo
      *
-     * @return a Set of feedbacks stored in a result
+     * @return a list of feedbacks itemsstored in a result
      */
-    public Set<Feedback> addFeedbackToResult(Result result, Map<String, Object> buildResultDetails) {
+    public List<Feedback> addFeedbackToResult(Result result, Map<String, Object> buildResultDetails) {
         if(buildResultDetails == null) {
             return null;
         }
-
-        HashSet<Feedback> feedbacks = new HashSet<>();
 
         try {
             List<Map<String, Object>> details = (List<Map<String, Object>>)buildResultDetails.get("details");

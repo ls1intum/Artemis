@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.view.QuizView;
@@ -24,7 +26,16 @@ import java.util.Objects;
 )
 @DiscriminatorValue(value = "S")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-//TODO: do we need the same mechanism as in Exercise with JSON Subtypes?
+
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
+// Annotation necessary to distinguish between concrete implementations of Submission when deserializing from JSON
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = ProgrammingSubmission.class, name = "programming"),
+    @JsonSubTypes.Type(value = ModelingSubmission.class, name = "modeling"),
+    @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"),
+    @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
+    @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"),
+})
 public abstract class Submission implements Serializable {
 
     private static final long serialVersionUID = 1L;

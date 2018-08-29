@@ -1,10 +1,10 @@
-import { Submission } from '../submission';
+import { Submission, SubmissionExerciseType } from '../submission';
 
 export class FileUploadSubmission extends Submission {
 
     public filePath: string;
 
     constructor() {
-        super();
+        super(SubmissionExerciseType.FILE_UPLOAD);
     }
 }
