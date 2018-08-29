@@ -13,7 +13,7 @@ import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from './blocks/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from './blocks/interceptor/notification.interceptor';
-import { ArTEMiSSharedModule, JhiWebsocketService, UserRouteAccessService } from './shared';
+import { ArTEMiSSharedModule, JhiWebsocketService, Principal, UserRouteAccessService } from './shared';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
 import { ArTEMiSHomeModule } from './home/home.module';
 import { ArTEMiSAdminModule } from './admin/admin.module';
@@ -24,8 +24,7 @@ import { ArTEMiSInstructorCourseDashboardModule, ArTEMiSInstructorDashboardModul
 import { ArTEMiSAssessmentDashboardModule } from './assessment-dashboard';
 import { PaginationConfig } from './blocks/config/uib-pagination.config';
 import { DifferencePipe, MomentModule } from 'angular2-moment';
-import { EditorComponentWrapper } from './editor/editor.directive';
-import { EditorComponent } from './editor/editor.component';
+import { ArTEMiSEditorModule } from './editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
 import { ng1AuthServiceProvider } from './shared/auth/ng1-auth-wrapper.service';
@@ -41,7 +40,6 @@ import { ArTEMiSStatisticModule } from './statistics/statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizReEvaluateWrapper } from './quiz/re-evaluate/quiz-re-evaluate.directive';
 import { QuizReEvaluateComponent } from './quiz/re-evaluate/quiz-re-evaluate.component';
-import { Principal } from './shared';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 
@@ -71,6 +69,7 @@ declare var angular: any;
         ArTEMiSEntityModule,
         ArTEMiSApollonDiagramsModule,
         ArTEMiSCoursesModule,
+        ArTEMiSEditorModule,
         ArTEMiSQuizModule,
         ArTEMiSInstructorCourseDashboardModule,
         ArTEMiSInstructorDashboardModule,
@@ -86,15 +85,6 @@ declare var angular: any;
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
-        /**
-         * @description Upgraded component declarations:
-         * Each upgraded component from the legacy ng1 app will be upgraded as a directive and declared here.
-         * This directive can then either be used directly in a template in the ng5 app
-         * or (optionally) wrapped into a 'empty' component, which just contains the newly created directive.
-         * Makes handling and using the upgraded component (which is a ng5 directive) more intuitive.
-         */
-        EditorComponentWrapper,
-        EditorComponent,
         QuizExerciseDetailWrapper,
         QuizExerciseDetailComponent,
         QuizReEvaluateWrapper,
@@ -109,8 +99,6 @@ declare var angular: any;
     entryComponents: [
         /** @desc Angular app main component **/
         JhiMainComponent,
-        /** @desc Upgraded editor component**/
-        EditorComponent,
         /** @desc Upgraded QuizExerciseDetails component **/
         QuizExerciseDetailComponent
     ],

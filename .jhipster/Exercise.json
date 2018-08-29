@@ -16,6 +16,14 @@
     ],
     "fields": [
         {
+            "fieldName": "problemStatement",
+            "fieldType": "String"
+        },
+        {
+            "fieldName": "gradingInstructions",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "title",
             "fieldType": "String"
         },
@@ -30,6 +38,15 @@
         {
             "fieldName": "maxScore",
             "fieldType": "Double"
+        },
+        {
+            "fieldName": "difficulty",
+            "fieldType": "DifficultyLevel",
+            "fieldValues": "EASY,MEDIUM,HARD"
+        },
+        {
+            "fieldName": "categories",
+            "fieldType": "String"
         }
     ],
     "changelogDate": "20171130173537",

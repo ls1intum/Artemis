@@ -5,7 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArTEMiSTestModule } from '../../../test.module';
 import { ParticipationDialogComponent } from '../../../../../../main/webapp/app/entities/participation/participation-dialog.component';
 import { ParticipationService } from '../../../../../../main/webapp/app/entities/participation/participation.service';
 import { Participation } from '../../../../../../main/webapp/app/entities/participation/participation.model';
@@ -23,7 +23,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [ParticipationDialogComponent],
                 providers: [
                     UserService,

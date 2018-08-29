@@ -81,20 +81,6 @@ public class FeedbackResource {
             .body(result);
     }
 
-    //Deactivated because it would load all (thousands) feedback objects and completely overload the server
-    //TODO: activate this call again using the infinite scroll page mechanism
-//    /**
-//     * GET  /feedbacks : get all the feedbacks.
-//     *
-//     * @return the ResponseEntity with status 200 (OK) and the list of feedbacks in body
-//     */
-//    @GetMapping("/feedbacks")
-//    @Timed
-//    public List<Feedback> getAllFeedbacks() {
-//        log.debug("REST request to get all Feedbacks");
-//        return feedbackRepository.findAll();
-//    }
-
     /**
      * GET  /feedbacks/:id : get the "id" feedback.
      *

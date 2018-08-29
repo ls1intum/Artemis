@@ -1,0 +1,16 @@
+{
+    "fluentMethods": true,
+    "relationships": [],
+    "fields": [
+        {
+            "fieldName": "sampleSolution",
+            "fieldType": "String"
+        }
+    ],
+    "changelogDate": "20180817185554",
+    "entityTableName": "text_exercise",
+    "dto": "no",
+    "pagination": "no",
+    "service": "no",
+    "jpaMetamodelFiltering": false
+}

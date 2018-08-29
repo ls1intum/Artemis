@@ -61,34 +61,9 @@
 
             // for now we just ignore participation status, as this is very costly for server performance
             refreshResult(forceLoad);
-
-            // if (vm.isQuiz) {
-            //     // don't load status for quiz exercises
-            //     refreshResult(forceLoad);
-            //     return;
-            // } else if (!forceLoad && vm.participation.results && vm.participation.results.length > 0) {
-            //     var result = vm.participation.results[0];
-            //     if (result.successful) {
-            //         // don't load status on init for exercises with successful results
-            //         vm.results = vm.participation.results;
-            //         return;
-            //     }
-            // }
-            //
-            // $http.get('api/participations/' + vm.participation.id + '/status', {
-            //     ignoreLoadingBar: true
-            // }).then(function (response) {
-            //     vm.queued = response.data === 'QUEUED';
-            //     vm.building = response.data === 'BUILDING';
-            // }).finally(function () {
-            //     if (!vm.queued && !vm.building) {
-            //         refreshResult(forceLoad);
-            //     }
-            // });
         }
 
         function refreshResult(forceLoad) {
-            //TODO remove '!vm.participation.results' and think about removing forceLoad as well
             if (forceLoad || !vm.participation.results) {
                 // load results from server
                 vm.results = ParticipationResult.query({
@@ -199,8 +174,6 @@
                 }
             }
         }
-
-        //TODO think about a better color scheme
 
         /**
          * Get the css class for the result icon as a string

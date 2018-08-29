@@ -4,9 +4,13 @@ import { RouterModule } from '@angular/router';
 import { ArTEMiSSharedModule } from '../../shared';
 import {
     ExerciseComponent,
-    ExerciseLtiConfigurationDialogComponent, ExerciseLtiConfigurationPopupComponent, ExerciseLtiConfigurationService,
+    ExerciseLtiConfigurationDialogComponent,
+    ExerciseLtiConfigurationPopupComponent,
+    ExerciseLtiConfigurationService,
     exercisePopupRoute,
-    ExercisePopupService, ExerciseResetDialogComponent, ExerciseResetPopupComponent,
+    ExercisePopupService,
+    ExerciseResetDialogComponent,
+    ExerciseResetPopupComponent,
     exerciseRoute,
     ExerciseService
 } from './';

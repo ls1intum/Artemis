@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "editor": {
+            "testStatusLabels": {
+                "testStatusNoResult": "Keine Results",
+                "testStatusTestPassing": "Test bestanden",
+                "testStatusTestFailing": "Test fehlgeschlagen",
+                "totalTestsPassing": "{{totalTests}} Tests bestanden",
+                "totalTestsFailing": "{{failedTests}} von {{totalTests}} Tests fehlgeschlagen"
+            },
+            "fileBrowser": {
+                "createTitle": "Neue Datei erstellen",
+                "folder": "Ordner",
+                "folderPlaceholder": "für Wurzelverzeichnis leer lassen",
+                "filename": "Dateiname (mit Dateiendung)",
+                "create": "Datei erstellen",
+                "deleteTitle": "Datei löschen",
+                "deleteFileConfirm": "Sind Sie sicher, dass Sie die Datei <strong>{{filename}}</strong> löschen wollen?",
+                "delete": "Datei löschen"
+            }
+        }
+    }
+}

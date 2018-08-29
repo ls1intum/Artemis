@@ -23,7 +23,7 @@
 
     <div class="row" *ngIf="modelingExercise">
         <div class="col">
-            <p class="mb-3"><span><strong>Description:</strong></span> {{ modelingExercise.description }}</p>
+            <p class="mb-3"><span><strong>Problem Statement:</strong></span> {{ modelingExercise.problemStatement }}</p>
         </div>
         <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ modelingExercise.maxScore }}</strong></p></div>
     </div>

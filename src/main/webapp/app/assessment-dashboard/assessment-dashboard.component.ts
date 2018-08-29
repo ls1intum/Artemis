@@ -2,13 +2,13 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Exercise, ExerciseService } from '../entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from '../entities/exercise';
 import { Course, CourseService } from '../entities/course';
 import { ExerciseResultService } from '../entities/result/result.service';
 import { DifferencePipe } from 'angular2-moment';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
-import { JhiResultDetailComponent } from '../courses/results/result.component';
+import { ResultDetailComponent } from '../entities/result/result-detail.component';
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 import { Principal } from '../shared';
@@ -22,6 +22,11 @@ import { Principal } from '../shared';
 })
 
 export class AssessmentDashboardComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
 
     course: Course;
     exercise: Exercise;
@@ -126,7 +131,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(JhiResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
         modalRef.componentInstance.result = result;
     }
 

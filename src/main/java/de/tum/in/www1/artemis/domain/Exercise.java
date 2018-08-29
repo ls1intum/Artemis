@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonView;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
@@ -12,10 +13,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A Exercise.
@@ -30,13 +28,15 @@ import java.util.Set;
 @DiscriminatorValue(value = "E")
 // NOTE: Use strict cache to prevent lost updates when updating statistics in semaphore (see StatisticService.java)
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 // Annotation necessary to distinguish between concrete implementations of Exercise when deserializing from JSON
 @JsonSubTypes({
-    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming-exercise"),
-    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling-exercise"),
-    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz-exercise")
+    @JsonSubTypes.Type(value = ProgrammingExercise.class, name = "programming"),
+    @JsonSubTypes.Type(value = ModelingExercise.class, name = "modeling"),
+    @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"),
+    @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
+    @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"),
 })
 public abstract class Exercise implements Serializable {
 
@@ -61,6 +61,21 @@ public abstract class Exercise implements Serializable {
 
     @Column(name = "max_score")
     private Double maxScore;
+
+    @Column(name = "problem_statement")
+    @Lob
+    private String problemStatement;
+
+    @Column(name = "grading_instructions")
+    @Lob
+    private String gradingInstructions;
+
+    @ElementCollection
+    private List<String> categories = new ArrayList<>();
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "difficulty")
+    private DifficultyLevel difficulty;
 
     @OneToMany(mappedBy = "exercise")
     @JsonIgnore
@@ -133,6 +148,54 @@ public abstract class Exercise implements Serializable {
 
     public void setMaxScore(Double maxScore) {
         this.maxScore = maxScore;
+    }
+
+    public String getProblemStatement() {
+        return problemStatement;
+    }
+
+    public Exercise problemStatement(String problemStatement) {
+        this.problemStatement = problemStatement;
+        return this;
+    }
+
+    public void setProblemStatement(String problemStatement) {
+        this.problemStatement = problemStatement;
+    }
+
+    public String getGradingInstructions() {
+        return gradingInstructions;
+    }
+
+    public Exercise gradingInstructions(String gradingInstructions) {
+        this.gradingInstructions = gradingInstructions;
+        return this;
+    }
+
+    public void setGradingInstructions(String gradingInstructions) {
+        this.gradingInstructions = gradingInstructions;
+    }
+
+
+    public DifficultyLevel getDifficulty() {
+        return difficulty;
+    }
+
+    public Exercise difficulty(DifficultyLevel difficulty) {
+        this.difficulty = difficulty;
+        return this;
+    }
+
+    public void setDifficulty(DifficultyLevel difficulty) {
+        this.difficulty = difficulty;
+    }
+
+    public List<String> getCategories() {
+        return categories;
+    }
+
+    public void setCategories(List<String> categories) {
+        this.categories = categories;
     }
 
     public Set<Participation> getParticipations() {
@@ -264,14 +327,19 @@ public abstract class Exercise implements Serializable {
         return Objects.hashCode(getId());
     }
 
+
     @Override
     public String toString() {
         return "Exercise{" +
             "id=" + getId() +
+            ", problemStatement='" + getProblemStatement() + "'" +
+            ", gradingInstructions='" + getGradingInstructions() + "'" +
             ", title='" + getTitle() + "'" +
             ", releaseDate='" + getReleaseDate() + "'" +
             ", dueDate='" + getDueDate() + "'" +
             ", maxScore=" + getMaxScore() +
+            ", difficulty='" + getDifficulty() + "'" +
+            ", categories='" + getCategories() + "'" +
             "}";
     }
 }
