@@ -50,16 +50,19 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     ngOnInit(): void {
         if (this.participation && this.participation.id) {
             const exercise = this.participation.exercise;
-            this.result = this.participation.results[0];
 
-            this.init();
-            // Make sure result and participation are connected
-            if (this.result) {
+            if (this.participation.results && this.participation.results.length > 0) {
+                // Make sure result and participation are connected
+                this.result = this.participation.results[0];
                 this.result.participation = this.participation;
             }
 
-            /** Initial refresh call; will only be called if input 'doInitialRefresh' is provided **/
-            if (this.doInitialRefresh) {
+            this.init();
+
+            // Initial refresh call will only be called if input 'doInitialRefresh' is provided (currently only
+            // set to true by the online editor
+            // TODO: can we avoid this case for the online editor and provide a valid participation with a result?
+            if (this.doInitialRefresh && !this.result) {
                 this.refreshResult();
             }
 
