@@ -70,7 +70,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             });
 
             this.modelingAssessmentService.getDataForEditor(exerciseId, id).subscribe(data => {
-                this.modelingExercise = data.modelingExercise;
+                this.modelingExercise = data.modelingExercise as ModelingExercise;
                 /**
                  * set diagramType to class diagram if exercise is use case or communication
                  * because apollon does not support those yet
@@ -78,14 +78,14 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 if (this.modelingExercise.diagramType === DiagramType.USE_CASE || this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
                     this.modelingExercise.diagramType = DiagramType.CLASS;
                 }
-                this.submission = data.modelingSubmission;
+                this.submission = data.modelingSubmission as ModelingSubmission;
                 if (this.submission.model) {
                     this.initializeApollonEditor(JSON.parse(this.submission.model));
                 } else {
                     this.jhiAlertService.error(`No model could be found for this submission.`);
                 }
                 data.result.participation.results = [data.result];
-                this.result = data.result;
+                this.result = data.result as Result;
                 if ((this.result.assessor == null || this.result.assessor.id === this.accountId) && !this.result.rated) {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }

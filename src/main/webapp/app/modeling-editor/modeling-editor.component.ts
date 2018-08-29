@@ -34,8 +34,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     result: Result;
 
     apollonEditor: ApollonEditor | null = null;
-    selectedEntities: string[];
-    selectedRelationships: string[];
+    selectedEntities: number[];
+    selectedRelationships: number[];
 
     submission: ModelingSubmission;
 
@@ -93,17 +93,19 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                         this.participation.results.sort((a, b) => +new Date(b.completionDate) - +new Date(a.completionDate));
                         this.result = this.participation.results[0];
                     }
-                    this.modelingExercise = this.participation.exercise;
+                    this.modelingExercise = this.participation.exercise as ModelingExercise;
                     /**
-                     * set diagramType to class diagram if exercise is use case or communication
-                     * because apollon does not support those yet
+                     * set diagramType to class diagram if exercise is null, use case or communication
+                     * apollon does not support use case and communication yet
                      */
-                    if (this.modelingExercise.diagramType === DiagramType.USE_CASE || this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
+                    if (this.modelingExercise.diagramType === null ||
+                        this.modelingExercise.diagramType === DiagramType.USE_CASE ||
+                        this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
                         this.modelingExercise.diagramType = DiagramType.CLASS;
                     }
                     this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
                     this.submission = data.modelingSubmission;
-                    if (this.submission && this.submission.id) {
+                    if (this.submission && this.submission.id && !this.submission.submitted) {
                         this.subscribeToWebsocket();
                     }
                     if (this.submission && this.submission.model) {
@@ -220,15 +222,19 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             this.submission = new ModelingSubmission();
         }
         this.submission.submitted = false;
+        if (this.submission.participation) {
+            // set participation to null to avoid JsonMappingException
+            this.submission.participation = null;
+        }
         this.updateSubmissionModel();
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
         // TODO DB logic update: after updating ModelingSubmissionResource.java, the client logic has to be updated, too
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
-                this.result = res.body;
-                this.submission = this.result.submission;
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(response => {
+                this.submission = response.body;
+                this.result = this.submission.result;
                 if (!this.submission.model) {
                     this.updateSubmissionModel();
                 }
@@ -239,12 +245,13 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.isSaving = false;
             });
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(sub => {
-                this.result = sub.body;
-                this.submission = this.result.submission;
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(submission => {
+                this.submission = submission.body;
+                this.result = this.submission.result;
                 this.isSaving = false;
                 this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
                 this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
+                this.subscribeToWebsocket();
             }, e => {
                 this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
                 this.isSaving = false;
@@ -269,12 +276,16 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
         if (confirmSubmit) {
             this.submission.submitted = true;
+            if (this.submission.participation) {
+                // set participation to null to avoid JsonMappingException
+                this.submission.participation = null;
+            }
             // TODO DB logic update: after updating ModelingSubmissionResource.java, the client logic has to be updated, too
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
-                this.result = res.body;
-                this.submission = this.result.submission;
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(response => {
+                this.submission = response.body;
+                this.result = this.submission.result;
                 // Compass has already calculated a result
-                if (this.result.assessmentType) {
+                if (this.result && this.result.assessmentType) {
                     const participation = this.participation;
                     participation.results = [this.result];
                     this.participation = Object.assign({}, participation);
@@ -378,6 +389,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.retryStarted = true;
         this.submission.id = null;
         this.submission.submitted = false;
+        this.submission.result = null;
         this.assessments = [];
         clearInterval(this.autoSaveInterval);
         if (this.submission.model) {

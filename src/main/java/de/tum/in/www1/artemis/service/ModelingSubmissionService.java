@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.service;
 
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.JsonModelRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
@@ -26,17 +28,20 @@ public class ModelingSubmissionService {
     private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final ResultRepository resultRepository;
     private final JsonModelRepository jsonModelRepository;
+    private final JsonAssessmentRepository jsonAssessmentRepository;
     private final CompassService compassService;
     private final ParticipationService participationService;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository,
                                      ResultRepository resultRepository,
                                      JsonModelRepository jsonModelRepository,
+                                     JsonAssessmentRepository jsonAssessmentRepository,
                                      CompassService compassService,
                                      ParticipationService participationService) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.jsonModelRepository = jsonModelRepository;
+        this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.compassService = compassService;
         this.participationService = participationService;
     }
@@ -51,71 +56,31 @@ public class ModelingSubmissionService {
      * @param modelingSubmission the submission to notifyCompass
      * @param modelingExercise the exercise to notifyCompass in
      * @param participation the participation where the result should be saved
-     * @return the result entity
+     * @return the modelingSubmission entity
      */
     @Transactional(rollbackFor = Exception.class)
-    public Result save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
-        // TODO DB logic update: remove generating result because we do not need the result as a bridge between participation and submission anymore
-        Optional<Result> optionalResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), false);
-        Result result;
-        if (!optionalResult.isPresent()) {
-            // there is no unrated result for the participation
-            try {
-                // create new result
-                resultRepository.insertIfNonExisting(participation.getId());
-                Optional<Result> newResult = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), false);
-                if (newResult.isPresent()) {
-                    // the insert of the new result was successful
-                    // initialize the attributes of the result
-                    result = initializeResult(participation, newResult.get());
-                } else {
-                    result = initializeResult(participation, null);
-                }
-            } catch (Exception e) {
-                throw new ConflictException("Conflict exception", "Tried to call createModelingSubmission() more than once for the same participation");
-            }
-        } else {
-            // an unrated result was found for the participation
-            result = optionalResult.get();
-        }
-
-        if (result.getId() == null) {
-            // there is no existing result and new result could not be created
-            return null;
-        }
-
+    public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
-        modelingSubmission.setResult(result);
-
-        result.setSubmission(modelingSubmission);
-        result.setParticipation(participation);
-        modelingSubmissionRepository.save(modelingSubmission);
-        result = resultRepository.save(result);
-
-        participation.addResult(result);
-        participationService.save(participation);
+        modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
         User user = participation.getStudent();
         String model = modelingSubmission.getModel();
         if (model != null && !model.isEmpty()) {
             jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
         }
-        if (result.getSubmission() instanceof ModelingSubmission && ((ModelingSubmission) result.getSubmission()).getModel() == null) {
-            ((ModelingSubmission) result.getSubmission()).setModel(model);
-        }
 
         if (modelingSubmission.isSubmitted()) {
-            // TODO DB logic update: check if compass could automatically calculate an assessment
             notifyCompass(modelingSubmission, modelingExercise);
+            handleSubmission(modelingSubmission);
         } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet
             AutomaticSubmissionService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
         }
 
-        return result;
+        return modelingSubmission;
     }
 
     /**
@@ -142,23 +107,6 @@ public class ModelingSubmissionService {
             return jsonModelRepository.readModel(exerciseId, studentId, modelId);
         }
         return null;
-    }
-
-    /**
-     * Initialize the attributes rated, successful and completionDate for a result or create a new one.
-     *
-     * @param participation     the participation the result should belong to
-     * @param result            null if new result otherwise the result for which to set the initial attributes
-     * @return the result with initialized attributes
-     */
-    private Result initializeResult(Participation participation, Result result) {
-        if (result == null) {
-            result = new Result().participation(participation);
-        }
-        result.setRated(false);
-        result.setSuccessful(false);
-        result.setCompletionDate(ZonedDateTime.now());
-        return result;
     }
 
     /**
@@ -213,6 +161,28 @@ public class ModelingSubmissionService {
             } catch (Exception e) {
                 log.error("Exception while retrieving the model for modeling submission {}:\n{}", modelingSubmission.getId(), e.getMessage());
                 return null;
+            }
+        }
+        return modelingSubmission;
+    }
+
+    /**
+     * If student submits his model, set participation to finished and check if automatic assessment is available.
+     *
+     * @param modelingSubmission    the modeling submission, which contains the model and the submission status
+     * @return the modelingSubmission with the result if applicable
+     */
+    @Transactional
+    public ModelingSubmission handleSubmission(ModelingSubmission modelingSubmission) {
+        if (modelingSubmission.isSubmitted()) {
+            Participation participation = participationService.findOne(modelingSubmission.getParticipation().getId());
+            participation.setInitializationState(ParticipationState.FINISHED);
+            participationService.save(participation);
+
+            if (modelingSubmission.getResult() == null && jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false)) {
+                Result result = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId()).orElse(null);
+                modelingSubmission.setResult(result);
+                modelingSubmissionRepository.save(modelingSubmission);
             }
         }
         return modelingSubmission;

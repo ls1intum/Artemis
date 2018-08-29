@@ -85,7 +85,7 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     @Timed
-    public ResponseEntity<Result> createModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to save ModelingSubmission : {}", modelingSubmission);
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
@@ -108,15 +108,8 @@ public class ModelingSubmissionResource {
         Participation participation = participationService.init(modelingExercise, principal.getName());
 
         // update and save submission
-        try {
-            // TODO DB logic update: remove generating result because we do not need the result as a bridge between participation and submission anymore
-            Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
-            return ResponseEntity.ok(result);
-        } catch (ConflictException e) {
-            // return 409 conflict error
-            // if this occurs, then it means that the createModelingSubmission function was called multiple times for the same participation id
-            return ResponseEntity.status(409).build();
-        }
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        return ResponseEntity.ok(modelingSubmission);
     }
 
     /**
@@ -137,7 +130,7 @@ public class ModelingSubmissionResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Transactional
     @Timed
-    public ResponseEntity<Result> updateModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) throws URISyntaxException {
+    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable Long courseId, @PathVariable Long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission);
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(courseId, exerciseId, principal, modelingSubmission);
@@ -160,20 +153,9 @@ public class ModelingSubmissionResource {
 
         Participation participation = participationService.findOneByExerciseIdAndStudentLoginAnyState(exerciseId, principal.getName());
 
-        // TODO DB logic update: remove generating result for save actions because we do not need the result as a bridge between participation and submission anymore
-        Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
+        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
 
-        if (modelingSubmission.isSubmitted()) {
-            participation.setInitializationState(ParticipationState.FINISHED);
-            participationService.save(participation);
-        }
-
-        if (jsonAssessmentRepository.exists(exerciseId, user.getId(), modelingSubmission.getId(), false)) {
-            result = resultRepository.findOne(result.getId());
-            result.setSubmission(modelingSubmission);
-        }
-
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(modelingSubmission);
     }
 
     /**

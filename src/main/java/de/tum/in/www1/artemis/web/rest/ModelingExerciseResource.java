@@ -270,13 +270,13 @@ public class ModelingExerciseResource {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }
-        //NOTE: avoid infinite recursion by setting submissions to null
-        participation.setSubmissions(null);
 
         ObjectNode data = objectMapper.createObjectNode();
-        data.set("participation", objectMapper.valueToTree(participation));
 
         ModelingSubmission modelingSubmission = modelingSubmissionService.findLatestModelingSubmissionByParticipation(participation);
+        //NOTE: avoid infinite recursion by setting submissions to null
+        participation.setSubmissions(null);
+        data.set("participation", objectMapper.valueToTree(participation));
         if (modelingSubmission != null) {
             // set reference to participation if null
             if (modelingSubmission.getParticipation() == null) {

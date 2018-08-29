@@ -154,7 +154,8 @@ public class AutomaticSubmissionService {
 
                     // Update Participation and save to Database (DB Write)
                     // Remove processed Submissions from SubmissionHashMap
-                    if (updateParticipation(submission)) {
+                    submission = updateParticipation(submission);
+                    if (submission != null) {
                         counter++;
                     }
                     // second case: the exercise has ended
@@ -167,7 +168,8 @@ public class AutomaticSubmissionService {
 
                     // Update Participation and save to Database (DB Write)
                     // Remove processed Submissions from SubmissionHashMap
-                    if (updateParticipation(submission)) {
+                    submission = updateParticipation(submission);
+                    if (submission != null) {
                         messagingTemplate.convertAndSendToUser(username, "/topic/modelingSubmission/" + submission.getId(), submission);
                         counter++;
                     }
@@ -186,50 +188,37 @@ public class AutomaticSubmissionService {
      * Currently only handles modeling submissions.
      *
      * @param submission    the submission for which the participation should be updated for
-     * @return whether updating the participation for the submission was successful or not
+     * @return submission if updating participation successful, otherwise null
      */
-    private Boolean updateParticipation(Submission submission) {
+    private Submission updateParticipation(Submission submission) {
         if (submission != null) {
-            Optional<Result> optionalResult = resultRepository.findDistinctBySubmissionId(submission.getId());
-            if (optionalResult.isPresent()) {
-                Result result = optionalResult.get();
-                Participation participation = result.getParticipation();
-                if (participation != null) {
-                    participation.setInitializationState(ParticipationState.FINISHED);
-                    participationRepository.save(participation);
+            if (submission instanceof ModelingSubmission) {
+                // manually trigger notifyCompass for modelingSubmission to update compass
+                ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
+                modelingSubmissionRepository.save(modelingSubmission);
+                Participation participation = modelingSubmission.getParticipation();
+                if (participation == null) {
+                    log.error("The modeling submission {} has no participation.", modelingSubmission);
+                    return null;
+                }
+                Exercise exercise = participation.getExercise();
+                if (exercise instanceof ModelingExercise) {
+                    modelingSubmissionService.notifyCompass(modelingSubmission, (ModelingExercise) exercise);
+                    modelingSubmission = modelingSubmissionService.handleSubmission(modelingSubmission);
+                    return modelingSubmission;
                 } else {
-                    log.error("The result {} found for submission {} has no participation.", result.getId(), submission.getId());
-                    return false;
+                    log.error("The exercise {} belonging the modeling submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());
+                    return null;
                 }
-
-                if (submission instanceof ModelingSubmission) {
-                    // manually trigger notifyCompass for modelingSubmission to update compass
-                    ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
-                    if (modelingSubmission.getParticipation() == null) {
-                        modelingSubmission.setParticipation(participation);
-                    }
-                    modelingSubmissionRepository.save(modelingSubmission);
-                    Exercise exercise = participation.getExercise();
-                    if (exercise instanceof ModelingExercise) {
-                        modelingSubmissionService.notifyCompass(modelingSubmission, (ModelingExercise) exercise);
-                    } else {
-                        log.error("The exercise {} belonging the modeling submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());
-                        return false;
-                    }
-                }
-
-                /* TODO: add support for other submission types, e.g.
-                 * if (submission instanceof TextSubmission) {
-                 *
-                 * }
-                 */
-
-                return true;
-            } else {
-                log.error("No result could be found for submission {}.", submission.getId());
             }
+
+            /* TODO: add support for other submission types, e.g.
+             * if (submission instanceof TextSubmission) {
+             *
+             * }
+             */
         }
         log.error("Updating the participation for submission {} failed.", submission.getId());
-        return false;
+        return null;
     }
 }
