@@ -475,11 +475,6 @@ public class BitbucketService implements VersionControlService {
     }
 
     @Override
-    public Boolean isCreateCIWebHook() {
-        return CREATE_CI_WEBHOOK;
-    }
-
-    @Override
     public String getLastCommitHash(Object requestBody) throws BitbucketException {
         // https://confluence.atlassian.com/bitbucket/event-payloads-740262817.html
         try {

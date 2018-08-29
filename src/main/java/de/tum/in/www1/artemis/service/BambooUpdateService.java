@@ -147,11 +147,9 @@ public class BambooUpdateService {
                 final BambooClient bambooClient = new BambooClient();
                 String[] args = new String[]{
                     "--field1", "repository.git.repositoryUrl", "--value1", buildHttpRepositoryUrl(gitlabNamespace, gitlabProject),
-                    "--field2", "repository.git.username", "--value2", GITLAB_USER,
-                    "--field3", "repository.git.authenticationType", "--value3", "PASSWORD",
-                    "--field4", "temporary.git.password", "--value4", GITLAB_PRIVATE_TOKEN,
-                    "--field5", "temporary.git.password.change", "--value5", "true",
-                    "--field6", "repository.git.passwordCredentialsSource", "--value6", "CUSTOM",
+                    "--field2", "repository.git.authenticationType", "--value2", "PASSWORD",
+                    "--field3", "temporary.git.password.change", "--value3", "true",
+                    "--field4", "repository.git.passwordCredentialsSource", "--value4", "SHARED_CREDENTIALS",
                     "-s", BAMBOO_SERVER_URL.toString(),
                     "--user", BAMBOO_USER,
                     "--password", BAMBOO_PASSWORD,
@@ -160,10 +158,13 @@ public class BambooUpdateService {
                 bambooClient.doWork(args);
 
                 log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan);
-                String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, null, bambooProject + "-" + bambooPlan, "GIT", null, false, true, true);
+                // TODO: make the name of the shared secret configurable
+                String message = bambooClient.getRepositoryHelper().addOrUpdateRepository(bambooRepositoryName, null, null, bambooProject + "-" + bambooPlan, "GIT", "artemis-gitlab", false, true, true);
                 log.info("Update plan repository for build plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
 
-                addWebTrigger(bambooProject, bambooPlan, bambooRepositoryName); // Add Web Trigger to allow Gitlab to Trigger Build
+                if (!hasWebTrigger(bambooProject, bambooPlan)) {
+                    addWebTrigger(bambooProject, bambooPlan); // Add Web Trigger to allow Gitlab to Trigger Build
+                }
 
                 versionControlService.addBambooService(gitlabNamespace, gitlabProject, BAMBOO_SERVER_URL.toExternalForm(), bambooProject + "-" + bambooPlan, BAMBOO_USER, BAMBOO_PASSWORD);
 
@@ -175,14 +176,13 @@ public class BambooUpdateService {
         }
 
         /**
-         * Add a web trigger to Bamboo because Gitlab can not notify Bamboo about the push otherwise.
-         * To support all possible Gitlab installations, every ip (0.0.0.0/0) is allowed to trigger the update-and-build process.
-         * 
+         * Checks if an ArTEMiS-web trigger exists for the given plan.
+         *
          * @param bambooProject        The bamboo project key
          * @param bambooPlan           The bamboo plan key
-         * @param bambooRepositoryName The repository for which the trigger should be activated
+         * @return if a web trigger already exists
          */
-        private void addWebTrigger(String bambooProject, String bambooPlan, String bambooRepositoryName) {
+        private boolean hasWebTrigger(String bambooProject, String bambooPlan) {
             try {
                 final BambooClient bambooClient = new BambooClient();
                 String[] args = new String[]{
@@ -193,19 +193,49 @@ public class BambooUpdateService {
 
                 bambooClient.doWork(args);
 
-                // TODO: check if we need to remove existing triggers
-                // We can not check if the trigger exists due to a missing JSoup library, so we just try to remove it (we can not do this either...)
-                // log.info("Removing existing trigger for plan " + bambooProject + "-" + bambooPlan);
-                // String message = bambooClient.getTriggerHelper().removeTrigger(bambooProject + "-" + bambooPlan, null, null, null, "ArTEMiS WebTrigger", true);
-                // log.info("Removing existing trigger for plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
+                log.info("Checking existing trigger for plan " + bambooProject + "-" + bambooPlan);
+                String message = bambooClient.getTriggerHelper().getTriggerList(bambooProject + "-" + bambooPlan, null, null, Integer.MAX_VALUE, null);
+                log.info("Checking existing trigger for plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
+
+                // We cannot use internal methods as they are protected (maybe reflection might be used if necessary)
+                if (message.contains("ArTEMiS WebTrigger")) { // A web trigger already exists
+                    return true;
+                }
+
+                return false;
+
+            } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
+                log.error(e.getMessage(), e);
+                throw new BambooException("Something went wrong while checking the existance of the web trigger", e);
+            }
+        }
+
+
+        /**
+         * Add a web trigger to Bamboo because Gitlab can not notify Bamboo about the push otherwise.
+         * To support all possible Gitlab installations, every ip (0.0.0.0/0) is allowed to trigger the update-and-build process.
+         * 
+         * @param bambooProject        The bamboo project key
+         * @param bambooPlan           The bamboo plan key
+         */
+        private void addWebTrigger(String bambooProject, String bambooPlan) {
+            try {
+                final BambooClient bambooClient = new BambooClient();
+                String[] args = new String[]{
+                    "-s", BAMBOO_SERVER_URL.toString(),
+                    "--user", BAMBOO_USER,
+                    "--password", BAMBOO_PASSWORD,
+                };
+
+                bambooClient.doWork(args);
 
                 log.info("Activating trigger for plan " + bambooProject + "-" + bambooPlan);
-                String message = bambooClient.getTriggerHelper().addTrigger(bambooProject + "-" + bambooPlan, "ArTEMiS WebTrigger", "remote", null, null, bambooRepositoryName, null, "0.0.0.0/0", false);
+                String message = bambooClient.getTriggerHelper().addTrigger(bambooProject + "-" + bambooPlan, "ArTEMiS WebTrigger", "remote", null, null, "@all", null, "0.0.0.0/0", false);
                 log.info("Activating trigger for plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
 
             } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
                 log.error(e.getMessage(), e);
-                throw new BambooException("Something went wrong while updating the plan repository", e);
+                throw new BambooException("Something went wrong while adding the web trigger", e);
             }
         }
 
