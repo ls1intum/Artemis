@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from '../participation/index';
-import { ResultService, Result, ResultDetailComponent } from '.';
+import { Result, ResultDetailComponent, ResultService } from '.';
 import { JhiWebsocketService, Principal } from '../../shared/index';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';

@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
-import javax.persistence.*;
-
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
 import java.io.Serializable;
 import java.util.Objects;
 

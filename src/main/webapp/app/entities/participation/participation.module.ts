@@ -3,16 +3,7 @@ import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import { ArTEMiSAdminModule } from '../../admin/admin.module';
-import {
-    ParticipationComponent,
-    ParticipationDeleteDialogComponent,
-    ParticipationDeletePopupComponent,
-    ParticipationDetailComponent,
-    participationPopupRoute,
-    ParticipationPopupService,
-    participationRoute,
-    ParticipationService
-} from './';
+import { ParticipationComponent, ParticipationDeleteDialogComponent, ParticipationDeletePopupComponent, ParticipationDetailComponent, participationPopupRoute, ParticipationPopupService, participationRoute, ParticipationService } from './';
 import { SortByModule } from '../../components/pipes';
 
 const ENTITY_STATES = [
