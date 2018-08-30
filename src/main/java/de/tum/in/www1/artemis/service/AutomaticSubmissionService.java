@@ -1,11 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -14,7 +10,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 
@@ -41,23 +36,17 @@ public class AutomaticSubmissionService {
     private ScheduledFuture scheduledFuture;
 
     private final ExerciseService exerciseService;
-    private final ParticipationRepository participationRepository;
-    private final ResultRepository resultRepository;
+    private final ParticipationService participationService;
     private final ModelingSubmissionService modelingSubmissionService;
-    private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final SimpMessageSendingOperations messagingTemplate;
 
     public AutomaticSubmissionService(ExerciseService exerciseService,
-                                      ParticipationRepository participationRepository,
-                                      ResultRepository resultRepository,
+                                      ParticipationService participationService,
                                       ModelingSubmissionService modelingSubmissionService,
-                                      ModelingSubmissionRepository modelingSubmissionRepository,
                                       SimpMessageSendingOperations messagingTemplate) {
         this.exerciseService = exerciseService;
-        this.participationRepository = participationRepository;
-        this.resultRepository = resultRepository;
+        this.participationService = participationService;
         this.modelingSubmissionService = modelingSubmissionService;
-        this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -158,10 +147,19 @@ public class AutomaticSubmissionService {
                     if (submission != null) {
                         counter++;
                     }
-                    // second case: the exercise has ended
+                // second case: the exercise has ended
                 } else if (exercise.isEnded()) {
                     Submission submission = userSubmissionMap.remove(username);
                     log.debug("exercise ended for submission {}", submission.getId());
+                    Participation participation = submission.getParticipation();
+                    // retrieve submission from the submission's participation to solve lazy loading problem
+                    // without it, changes in the submission are not reflected in the participation's submissions
+                    for (Submission s : participation.getSubmissions()) {
+                        if (s.equals(submission)) {
+                            submission = s;
+                            break;
+                        }
+                    }
                     submission.setSubmitted(true);
                     submission.setType(SubmissionType.TIMEOUT);
                     submission.setSubmissionDate(ZonedDateTime.now());
@@ -195,7 +193,6 @@ public class AutomaticSubmissionService {
             if (submission instanceof ModelingSubmission) {
                 // manually trigger notifyCompass for modelingSubmission to update compass
                 ModelingSubmission modelingSubmission = (ModelingSubmission) submission;
-                modelingSubmissionRepository.save(modelingSubmission);
                 Participation participation = modelingSubmission.getParticipation();
                 if (participation == null) {
                     log.error("The modeling submission {} has no participation.", modelingSubmission);
@@ -204,7 +201,8 @@ public class AutomaticSubmissionService {
                 Exercise exercise = participation.getExercise();
                 if (exercise instanceof ModelingExercise) {
                     modelingSubmissionService.notifyCompass(modelingSubmission, (ModelingExercise) exercise);
-                    modelingSubmission = modelingSubmissionService.handleSubmission(modelingSubmission);
+                    modelingSubmissionService.handleSubmission(modelingSubmission);
+                    participationService.save(participation);
                     return modelingSubmission;
                 } else {
                     log.error("The exercise {} belonging the modeling submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());

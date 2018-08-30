@@ -56,7 +56,7 @@ public class Result implements Serializable {
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
     @JsonIgnoreProperties({"result", "participation"})

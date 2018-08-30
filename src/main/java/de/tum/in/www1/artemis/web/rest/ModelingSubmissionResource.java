@@ -3,14 +3,12 @@ package de.tum.in.www1.artemis.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -146,7 +144,6 @@ public class ModelingSubmissionResource {
         if (course == null) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(ENTITY_NAME, "courseNotFound", "The course belonging to this modeling exercise does not exist")).body(null);
         }
-        User user = userService.getUserWithGroupsAndAuthorities();
         if (!courseService.userHasAtLeastStudentPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

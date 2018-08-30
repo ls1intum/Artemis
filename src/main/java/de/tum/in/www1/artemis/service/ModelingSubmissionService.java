@@ -9,7 +9,6 @@ import de.tum.in.www1.artemis.repository.JsonModelRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import org.hibernate.Hibernate;
 import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 @Service
 @Transactional
@@ -64,13 +62,11 @@ public class ModelingSubmissionService {
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
-        modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+        String model = modelingSubmission.getModel();
+
+        participation.addSubmissions(modelingSubmission);
 
         User user = participation.getStudent();
-        String model = modelingSubmission.getModel();
-        if (model != null && !model.isEmpty()) {
-            jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
-        }
 
         if (modelingSubmission.isSubmitted()) {
             notifyCompass(modelingSubmission, modelingExercise);
@@ -78,6 +74,12 @@ public class ModelingSubmissionService {
         } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet
             AutomaticSubmissionService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
+        }
+        participation = participationService.save(participation);
+        modelingSubmission = findLatestModelingSubmissionByParticipation(participation);
+
+        if (model != null && !model.isEmpty()) {
+            jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
         }
 
         return modelingSubmission;
@@ -145,14 +147,13 @@ public class ModelingSubmissionService {
      * Checks whether the given modelingSubmission has a model or not and tries to read and set it.
      *
      * @param modelingSubmission    the modeling submission for which to get and set the model
-     * @return the modelingSubmission with the model or null if error occurred while getting model or participation is null
+     * @return the modelingSubmission with the model if the model could be read
      */
     public ModelingSubmission getAndSetModel(ModelingSubmission modelingSubmission) {
         if (modelingSubmission.getModel() == null || modelingSubmission.getModel() == "") {
             Participation participation = modelingSubmission.getParticipation();
             if (participation == null) {
                 log.error("The modeling submission {} does not have a participation.", modelingSubmission);
-                return null;
             }
             Exercise exercise = participation.getExercise();
             try {
@@ -160,7 +161,6 @@ public class ModelingSubmissionService {
                 modelingSubmission.setModel(model.toString());
             } catch (Exception e) {
                 log.error("Exception while retrieving the model for modeling submission {}:\n{}", modelingSubmission.getId(), e.getMessage());
-                return null;
             }
         }
         return modelingSubmission;
@@ -172,17 +172,14 @@ public class ModelingSubmissionService {
      * @param modelingSubmission    the modeling submission, which contains the model and the submission status
      * @return the modelingSubmission with the result if applicable
      */
-    @Transactional
     public ModelingSubmission handleSubmission(ModelingSubmission modelingSubmission) {
         if (modelingSubmission.isSubmitted()) {
-            Participation participation = participationService.findOne(modelingSubmission.getParticipation().getId());
+            Participation participation = modelingSubmission.getParticipation();
             participation.setInitializationState(ParticipationState.FINISHED);
-            participationService.save(participation);
 
             if (modelingSubmission.getResult() == null && jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false)) {
                 Result result = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId()).orElse(null);
                 modelingSubmission.setResult(result);
-                modelingSubmissionRepository.save(modelingSubmission);
             }
         }
         return modelingSubmission;

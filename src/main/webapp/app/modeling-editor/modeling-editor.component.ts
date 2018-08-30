@@ -230,7 +230,6 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.isSaving = true;
         this.autoSaveTimer = 0;
 
-        // TODO DB logic update: after updating ModelingSubmissionResource.java, the client logic has to be updated, too
         if (this.submission.id) {
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(response => {
                 this.submission = response.body;
@@ -280,7 +279,6 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 // set participation to null to avoid JsonMappingException
                 this.submission.participation = null;
             }
-            // TODO DB logic update: after updating ModelingSubmissionResource.java, the client logic has to be updated, too
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(response => {
                 this.submission = response.body;
                 this.result = this.submission.result;
@@ -304,6 +302,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                 this.retryStarted = false;
                 clearInterval(this.autoSaveInterval);
                 this.initializeApollonEditor(JSON.parse(this.submission.model));
+                if (this.websocketChannel) {
+                    this.jhiWebsocketService.unsubscribe(this.websocketChannel);
+                }
             }, err => {
                 this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
                 this.submission.submitted = false;
