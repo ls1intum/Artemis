@@ -34,7 +34,7 @@ public class ProgrammingExerciseService {
      */
     public void notifyChangedTestCases(ProgrammingExercise programmingExercise) {
         for (Participation participation : programmingExercise.getParticipations()) {
-            continuousIntegrationUpdateService.triggerBuild(participation.getBuildPlanId(), false);
+            continuousIntegrationUpdateService.triggerUpdate(participation.getBuildPlanId(), false);
         }
     }
 

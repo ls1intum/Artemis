@@ -20,29 +20,17 @@ public interface ContinuousIntegrationUpdateService {
      *
      * @param topLevelIdentifier      The top level identifier of the plan (project/view), e.g. 'EIST16W1'.
      * @param lowerLevelIdentifier    The lower level identifier of the plan, which is usually the name, e.g. 'ga56hur'.
-     * @param cIrepositoryName        The name of the configured repository in the CI plan.
+     * @param ciRepositoryName        The name of the configured repository in the CI plan.
      * @param vcsTopLevelIdentifier   The top level identifier of the repository.
      * @param vcsLowerLevelIdentifier The lower level identifier of the repository.
      */
-    public String updatePlanRepository(String topLevelIdentifier, String lowerLevelIdentifier, String cIrepositoryName, String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier);
-
-    /**
-     * Triggers an build (if needed)
-     *
-     * @param topLevelIdentifier      The top level identifier of the plan (project/view), e.g. 'EIST16W1'.
-     * @param lowerLevelIdentifier    The lower level identifier of the plan, which is usually the name, e.g. 'ga56hur'.
-     * @param initialBuild            Whether the build should be the initial build (might change if the build is actually triggered).
-     * Also see {@link #triggerBuild(String, boolean)}.
-     */
-    public void triggerBuild(String topLevelIdentifier, String lowerLevelIdentifier, boolean initialBuild);
+    public String updatePlanRepository(String topLevelIdentifier, String lowerLevelIdentifier, String ciRepositoryName, String vcsTopLevelIdentifier, String vcsLowerLevelIdentifier);
 
     /**
      * Triggers an build (if needed)
      *
      * @param buildPlanId             The build plan id.
      * @param initialBuild            Whether the build should be the initial build (might change if the build is actually triggered).
-     * Also see {@link #triggerBuild(String, String, boolean)}.
-
      */
-    public void triggerBuild(String buildPlanId, boolean initialBuild);
+    public void triggerUpdate(String buildPlanId, boolean initialBuild);
 }

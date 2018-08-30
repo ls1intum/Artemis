@@ -1,17 +1,21 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.swift.bamboo.cli.BambooClient;
 import org.swift.bitbucket.cli.BitbucketClient;
 import org.swift.bitbucket.cli.objects.RemoteRepository;
 import org.swift.common.cli.CliClient;
 
 import java.net.URL;
+import java.util.Map;
 
 @Profile("bamboo")
 @Service
@@ -109,12 +113,7 @@ public class BambooUpdateService {
         }
 
         @Override
-        public void triggerBuild(String topLevelIdentifier, String lowerLevelIdentifier, boolean initialBuild) {
-            triggerBuild(topLevelIdentifier + "-" + lowerLevelIdentifier, initialBuild);
-        }
-
-        @Override
-        public void triggerBuild(String buildPlanId, boolean initialBuild) {
+        public void triggerUpdate(String buildPlanId, boolean initialBuild) {
             // NOT NEEDED
         }
 
@@ -245,28 +244,25 @@ public class BambooUpdateService {
         }
 
         @Override
-        public void triggerBuild(String bambooProject, String bambooPlan, boolean initialBuild) {
-            triggerBuild(bambooProject+ "-" + bambooPlan, initialBuild);
-        }
-
-        @Override
-        public void triggerBuild(String buildPlanId, boolean initialBuild) {
+        public void triggerUpdate(String buildPlanId, boolean initialBuild) {
+            HttpHeaders headers = HeaderUtil.createAuthorization(BAMBOO_USER, BAMBOO_PASSWORD);
+            HttpEntity<?> entity = new HttpEntity<>(headers);
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<String> response = null;
             try {
-                final BambooClient bambooClient = new BambooClient();
-                String[] args = new String[]{
-                    "-s", BAMBOO_SERVER_URL.toString(),
-                    "--user", BAMBOO_USER,
-                    "--password", BAMBOO_PASSWORD,
-                };
+                response = restTemplate.exchange(
+                    BAMBOO_SERVER_URL + "/rest/triggers/latest/remote/changeDetection?planKey=" + buildPlanId.toUpperCase() + "&skipBranches=true",
+                    HttpMethod.POST ,
+                    entity,
+                    String.class);
+            } catch (Exception e) {
+                log.error("HttpError while triggering update", e);
+                throw new BambooException("HttpError while triggering update");
+            }
 
-                bambooClient.doWork(args);
-                log.info("Triggering build for plan " + buildPlanId);
-                String message = bambooClient.getBuildHelper().queueBuild(buildPlanId, null, null, false, -1, null, true, null);
-                log.info("Triggering build for plan " + buildPlanId + " was successful. " + message);
-
-            } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-                log.error(e.getMessage(), e);
-                throw new BambooException("Something went wrong while updating the plan repository", e);
+            if (!response.getStatusCode().equals(HttpStatus.ACCEPTED)) {
+                log.error("Received unexpected status code for triggerUpdate: " + response.getStatusCode());
+                throw new BambooException("Received unexpected status code for triggerUpdate");
             }
         }
 
