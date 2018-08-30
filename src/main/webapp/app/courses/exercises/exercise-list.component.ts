@@ -71,7 +71,7 @@ export class ExerciseListComponent implements OnInit {
      * the app can be written in a filtering/sorting service and injected into the component.
      */
 
-    // exercises are sorted by dueDate
+    // Exercises are sorted by dueDate
     exercises: Exercise[];
     now = Date.now();
     numOfInactiveExercises = 0;
@@ -98,7 +98,7 @@ export class ExerciseListComponent implements OnInit {
 
     ngOnInit(): void {
         this.principal.identity().then(account => {
-            // only load password if current user login starts with 'edx'
+            // Only load password if current user login starts with 'edx'
             if (account && account.login && account.login.startsWith('edx')) {
                 this.getRepositoryPassword();
             }
@@ -113,11 +113,9 @@ export class ExerciseListComponent implements OnInit {
         this.numOfInactiveExercises = exercises.filter(exercise => !this.showExercise(exercise)).length;
 
         for (const exercise of exercises) {
-            if (exercise.participation) {
-                // no need to load it
-            } else {
+            if (!exercise.participation) {
                 this.exerciseParticipationService.find(this.course.id, exercise.id).subscribe(participation => {
-                    exercise['participation'] = participation;
+                    exercise.participation = participation;
                     exercise.participationStatus = this.participationStatus(exercise);
                     if (exercise.type === ExerciseType.QUIZ) {
                         exercise.isActiveQuiz = this.isActiveQuiz(exercise);
@@ -127,7 +125,7 @@ export class ExerciseListComponent implements OnInit {
 
             exercise.participationStatus = this.participationStatus(exercise);
 
-            // if the User is a student: subscribe the release Websocket of every quizExercise
+            // If the User is a student: subscribe the release Websocket of every quizExercise
             if (exercise.type === ExerciseType.QUIZ) {
                 exercise.isActiveQuiz = this.isActiveQuiz(exercise);
 
@@ -169,7 +167,7 @@ export class ExerciseListComponent implements OnInit {
         exercise.loading = true;
 
         if (exercise.type === ExerciseType.QUIZ) {
-            // start the quiz
+            // Start the quiz
             return this.router.navigate(['/quiz', exercise.id]);
         }
 
