@@ -103,7 +103,7 @@ public class ParticipationService {
         if (exercise instanceof ProgrammingExercise) {
 //            if (exercise.getCourse().isOnlineCourse()) {
 //                participation.setLti(true);
-//            } //TODO use in the future
+//            } //TODO use lti in the future
             ProgrammingExercise programmingExercise = (ProgrammingExercise) exercise;
             participation.setInitializationState(ParticipationState.UNINITIALIZED);
             participation = copyRepository(participation, programmingExercise);
@@ -145,15 +145,17 @@ public class ParticipationService {
                 // add exercise
                 participation.setExercise(quizExercise);
 
-                // add result
+                // add the appropriate result
                 Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
 
                 participation.setResults(new HashSet<>());
 
                 if (result != null) {
-                    Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
-                    result.setSubmission(submission);
                     participation.addResult(result);
+                    if (result.getSubmission() == null) {
+                        Submission submission = quizSubmissionService.findOne(result.getSubmission().getId());
+                        result.setSubmission(submission);
+                    }
                 }
 
                 return participation;
@@ -423,8 +425,6 @@ public class ParticipationService {
     @Transactional
     public void deleteAllByExerciseId(Long exerciseId, boolean deleteBuildPlan, boolean deleteRepository) {
         List<Participation> participationsToDelete = participationRepository.findByExerciseId(exerciseId);
-
-        //TODO: improve performance
 
         for (Participation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);

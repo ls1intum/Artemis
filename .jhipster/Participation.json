@@ -43,6 +43,10 @@
         {
             "fieldName": "initializationDate",
             "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "presentationScore",
+            "fieldType": "Integer"
         }
     ],
     "changelogDate": "20171130173550",

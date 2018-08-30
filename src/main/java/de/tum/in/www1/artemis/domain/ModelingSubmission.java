@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Transient;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -21,6 +19,10 @@ public class ModelingSubmission extends Submission implements Serializable {
     @JsonProperty
     private String model;
 
+    @Column(name = "explanation_text")
+    @Lob
+    private String explanationText;
+
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
 
     public String getModel() {
@@ -34,6 +36,19 @@ public class ModelingSubmission extends Submission implements Serializable {
 
     public void setModel(String model) {
         this.model = model;
+    }
+
+    public String getExplanationText() {
+        return explanationText;
+    }
+
+    public ModelingSubmission explanationText(String explanationText) {
+        this.explanationText = explanationText;
+        return this;
+    }
+
+    public void setExplanationText(String explanationText) {
+        this.explanationText = explanationText;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

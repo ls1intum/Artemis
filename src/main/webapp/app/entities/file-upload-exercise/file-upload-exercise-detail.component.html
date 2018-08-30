@@ -1,0 +1,26 @@
+
+<div *ngIf="fileUploadExercise">
+    <h2><span jhiTranslate="arTeMiSApp.fileUploadExercise.detail.title">File Upload Exercise</span> {{fileUploadExercise.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.fileUploadExercise.filePattern">File Pattern</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.filePattern}}</span>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'file-upload-exercise/'+ fileUploadExercise.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

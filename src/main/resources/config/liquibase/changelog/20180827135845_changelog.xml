@@ -1,0 +1,64 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="krusche (generated)" id="1535371142129-1">
+        <createTable tableName="exercise_categories">
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="categories" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-2">
+        <addColumn tableName="exercise">
+            <column name="difficulty" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-3">
+        <addColumn tableName="submission">
+            <column name="file_path" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-4">
+        <addColumn tableName="exercise">
+            <column name="file_pattern" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-5">
+        <addColumn tableName="exercise">
+            <column name="grading_instructions" type="longtext"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-6">
+        <addColumn tableName="participation">
+            <column name="presentation_score" type="integer"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-7">
+        <addColumn tableName="exercise">
+            <column name="problem_statement" type="longtext"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-8">
+        <addColumn tableName="exercise">
+            <column name="sample_solution" type="longtext"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-9">
+        <addColumn tableName="exercise">
+            <column name="sample_solution_explanation" type="longtext"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-10">
+        <addColumn tableName="exercise">
+            <column name="sample_solution_model" type="longtext"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-11">
+        <addColumn tableName="submission">
+            <column name="text" type="longtext"/>
+        </addColumn>
+    </changeSet>
+    <changeSet author="krusche (generated)" id="1535371142129-12">
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exercise_categories" constraintName="FKqdemq87pe28lexkg6kh73vueg" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
+    </changeSet>
+</databaseChangeLog>

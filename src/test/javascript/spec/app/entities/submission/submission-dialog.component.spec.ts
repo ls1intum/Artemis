@@ -5,7 +5,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable } from 'rxjs/Observable';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ArTeMiSTestModule } from '../../../test.module';
+import { ArTEMiSTestModule } from '../../../test.module';
 import { SubmissionDialogComponent } from '../../../../../../main/webapp/app/entities/submission/submission-dialog.component';
 import { SubmissionService } from '../../../../../../main/webapp/app/entities/submission/submission.service';
 import { Submission } from '../../../../../../main/webapp/app/entities/submission/submission.model';
@@ -23,7 +23,7 @@ describe('Component Tests', () => {
 
         beforeEach(async(() => {
             TestBed.configureTestingModule({
-                imports: [ArTeMiSTestModule],
+                imports: [ArTEMiSTestModule],
                 declarations: [SubmissionDialogComponent],
                 providers: [
                     ResultService,

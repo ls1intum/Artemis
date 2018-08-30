@@ -1,9 +1,7 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 
 import { ArTEMiSSharedModule } from '../../shared';
-import {
-    QuizSubmissionService
-} from './';
+import { QuizSubmissionService } from './';
 
 @NgModule({
     imports: [

@@ -628,7 +628,6 @@
          */
         function onSaveSuccess(response) {
             if (!response) {
-                // TODO: Include reason why saving failed
                 alert("Saving Answers failed.");
                 vm.unsavedChanges = true;
                 vm.isSubmitting = false;

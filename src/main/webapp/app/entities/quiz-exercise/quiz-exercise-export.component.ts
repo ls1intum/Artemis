@@ -11,7 +11,7 @@ import { QuizExercise } from './quiz-exercise.model';
 import { JhiAlertService } from 'ng-jhipster';
 import { Question } from '../question';
 import { QuizExerciseComponent } from './quiz-exercise.component';
-import { CourseService, Course } from '../course';
+import { Course, CourseService } from '../course';
 
 @Component({
     selector: 'jhi-quiz-exercise-export',

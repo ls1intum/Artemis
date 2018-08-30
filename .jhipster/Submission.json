@@ -5,7 +5,8 @@
             "relationshipType": "one-to-one",
             "relationshipName": "result",
             "otherEntityName": "result",
-            "ownerSide": false,
+            "otherEntityField": "id",
+            "ownerSide": true,
             "otherEntityRelationshipName": "submission"
         },
         {

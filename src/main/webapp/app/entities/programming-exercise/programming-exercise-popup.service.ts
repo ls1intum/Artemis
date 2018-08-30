@@ -45,9 +45,8 @@ export class ProgrammingExercisePopupService {
                 setTimeout(() => {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
-                            this.ngbModalRef = this.programmingExerciseModalRef(component,
-                                new ProgrammingExercise(undefined, undefined, undefined, undefined,
-                                    undefined, undefined, undefined, undefined, undefined, undefined, res.body));
+                            const course = res.body;
+                            this.ngbModalRef = this.programmingExerciseModalRef(component, new ProgrammingExercise(course));
                             resolve(this.ngbModalRef);
                         });
                     } else {

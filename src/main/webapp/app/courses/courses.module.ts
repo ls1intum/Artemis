@@ -3,13 +3,12 @@ import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../shared';
 import { coursesRoute } from './courses.route';
-import { CourseComponent, CourseExerciseService, CourseService, CourseScoreCalculationService  } from '../entities/course';
+import { CourseComponent, CourseExerciseService, CourseScoreCalculationService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { CoursesComponent } from './courses.component';
-import { JhiResultDetailComponent, ResultComponent, SafeHtmlPipe } from './results/result.component';
-import { ExerciseListComponent, IsNotOverduePipe } from './exercises/exercise-list.component';
+import { ExerciseListComponent, ShowExercisePipe } from './exercises/exercise-list.component';
 import { RepositoryService } from '../entities/repository/repository.service';
-import { ResultService } from '../entities/result';
+import { ArTEMiSResultModule, ResultComponent, ResultService } from '../entities/result';
 import { HomeComponent } from '../home';
 import { ParticipationService } from '../entities/participation';
 import { MomentModule } from 'angular2-moment';
@@ -22,16 +21,14 @@ const ENTITY_STATES = [
 @NgModule({
     imports: [
         ArTEMiSSharedModule,
+        ArTEMiSResultModule,
         MomentModule,
         RouterModule.forChild(ENTITY_STATES)
     ],
     declarations: [
         CoursesComponent,
-        ResultComponent,
-        JhiResultDetailComponent,
         ExerciseListComponent,
-        IsNotOverduePipe,
-        SafeHtmlPipe
+        ShowExercisePipe
     ],
     exports: [
         ResultComponent
@@ -39,7 +36,8 @@ const ENTITY_STATES = [
     entryComponents: [
         HomeComponent,
         CourseComponent,
-        JhiMainComponent
+        JhiMainComponent,
+        ResultComponent
     ],
     providers: [
         CourseService,

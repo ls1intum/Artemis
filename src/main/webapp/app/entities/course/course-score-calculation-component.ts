@@ -4,8 +4,8 @@ import { Subscription } from 'rxjs/Subscription';
 
 import { CourseService } from './course.service';
 import { CourseScoreCalculationService } from './courseScoreCalculation.service';
-import {Exercise} from 'app/entities/exercise';
-import {Course} from 'app/entities/course/course.model';
+import { Exercise, ExerciseType } from '../../entities/exercise';
+import { Course } from '../../entities/course/course.model';
 
 @Component({
     selector: 'jhi-course-score',
@@ -106,25 +106,25 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     }
 
     calculateAbsoluteScores(courseId: number) {
-        this.quizzesTotalScore = this.calculateScoreTypeForExerciseType(courseId, 'quiz', 'absoluteScore');
-        this.programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(courseId, 'programming-exercise', 'absoluteScore');
-        this.modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(courseId, 'modeling-exercise', 'absoluteScore');
+        this.quizzesTotalScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.QUIZ, 'absoluteScore');
+        this.programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.PROGRAMMING, 'absoluteScore');
+        this.modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.MODELING, 'absoluteScore');
 
         this.totalScore = this.calculateTotalScoreForTheCourse(courseId, 'absoluteScore');
     }
 
     calculateRelativeScores(courseId: number) {
-        this.quizzesTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, 'quiz', 'relativeScore');
-        this.programmingExerciseTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, 'programming-exercise', 'relativeScore');
-        this.modelingExerciseTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, 'modeling-exercise', 'relativeScore');
+        this.quizzesTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.QUIZ, 'relativeScore');
+        this.programmingExerciseTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.PROGRAMMING, 'relativeScore');
+        this.modelingExerciseTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.MODELING, 'relativeScore');
 
         this.totalRelativeScore = this.calculateTotalScoreForTheCourse(courseId, 'relativeScore');
     }
 
     calculateMaxScores(courseId: number) {
-        this.quizzesTotalMaxScore = this.calculateScoreTypeForExerciseType(courseId, 'quiz', 'maxScore');
-        this.programmingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(courseId, 'programming-exercise', 'maxScore');
-        this.modelingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(courseId, 'modeling-exercise', 'maxScore');
+        this.quizzesTotalMaxScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.QUIZ, 'maxScore');
+        this.programmingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.PROGRAMMING, 'maxScore');
+        this.modelingExerciseTotalMaxScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.MODELING, 'maxScore');
 
         this.totalMaxScore = this.calculateTotalScoreForTheCourse(courseId, 'maxScore');
     }
@@ -135,9 +135,9 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
         return this.courseCalculationService.calculateTotalScores(filteredExercises);
     }
 
-    calculateScoreTypeForExerciseType(courseId: number, exerciseType: string, scoreType: string): number {
+    calculateScoreTypeForExerciseType(courseId: number, exerciseType: ExerciseType, scoreType: string): number {
       if (exerciseType !== undefined && scoreType !== undefined ) {
-        const filterFunction = courseExercise => courseExercise.type === exerciseType;
+        const filterFunction = courseExercise => courseExercise.hasType(exerciseType);
         const scores = this.calculateScores(courseId, filterFunction);
         return scores.get(scoreType);
       } else {
