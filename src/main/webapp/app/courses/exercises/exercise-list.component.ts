@@ -1,4 +1,4 @@
-import { Component, HostListener, Input, OnInit, Pipe, PipeTransform } from '@angular/core';
+import { Component, HostListener, Input, OnInit, OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService, CourseService } from '../../entities/course';
 import { Exercise, ExerciseType } from '../../entities/exercise';
 import { JhiWebsocketService, Principal } from '../../shared';
@@ -7,11 +7,13 @@ import { RepositoryService } from '../../entities/repository/repository.service'
 import { ResultService } from '../../entities/result';
 import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
-import { Router } from '@angular/router';
+import { Router, NavigationStart } from '@angular/router';
 import { ExerciseParticipationService, Participation, ParticipationService } from '../../entities/participation';
-import * as moment from 'moment';
+import { ParticipationDataProvider } from '../../courses/exercises/participation-data-provider';
 import { HttpClient } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { SERVER_API_URL } from '../../app.constants';
+import * as moment from 'moment';
 
 @Pipe({ name: 'showExercise' })
 export class ShowExercisePipe implements PipeTransform {
@@ -35,7 +37,7 @@ export class ShowExercisePipe implements PipeTransform {
                 ]
 })
 
-export class ExerciseListComponent implements OnInit {
+export class ExerciseListComponent implements OnInit, OnDestroy {
 
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
@@ -43,6 +45,7 @@ export class ExerciseListComponent implements OnInit {
     readonly MODELING = ExerciseType.MODELING;
 
     _course: Course;
+    routerSubscription: Subscription;
 
     @Input()
     get course(): Course {
@@ -91,7 +94,8 @@ export class ExerciseListComponent implements OnInit {
                 private httpClient: HttpClient,
                 private courseService: CourseService,
                 public modalService: NgbModal,
-                private router: Router) {
+                private router: Router,
+                private participationDataProvider: ParticipationDataProvider) {
         // Initialize array to avoid undefined errors
         this.exercises = [];
     }
@@ -101,6 +105,19 @@ export class ExerciseListComponent implements OnInit {
             // Only load password if current user login starts with 'edx'
             if (account && account.login && account.login.startsWith('edx')) {
                 this.getRepositoryPassword();
+            }
+        });
+        // Listen to NavigationStart events; if we are routing to the online editor, we pass the participation (if we find one)
+        this.routerSubscription = this.router.events.filter(event => event instanceof NavigationStart).subscribe((event: NavigationStart) => {
+            if (event.url.startsWith('/editor')) {
+                // Extract participation id from event url and cast to number
+                const participationId = Number(event.url.split('/').slice(-1));
+                const filteredExercise = this.course.exercises.find( exercise => exercise['participation'].id === participationId );
+                const participation: Participation = filteredExercise['participation'];
+                // Just make sure we have indeed the correct participation
+                if (participation && participation.id === participationId) {
+                    this.participationDataProvider.participationStorage = participation;
+                }
             }
         });
     }
@@ -115,7 +132,7 @@ export class ExerciseListComponent implements OnInit {
         for (const exercise of exercises) {
             if (!exercise.participation) {
                 this.exerciseParticipationService.find(this.course.id, exercise.id).subscribe(participation => {
-                    exercise.participation = participation;
+                    exercise['participation'] = participation;
                     exercise.participationStatus = this.participationStatus(exercise);
                     if (exercise.type === ExerciseType.QUIZ) {
                         exercise.isActiveQuiz = this.isActiveQuiz(exercise);
@@ -276,5 +293,10 @@ export class ExerciseListComponent implements OnInit {
         }
         // Registering new popover ref
         this.lastPopoverRef = popReference;
+    }
+
+    ngOnDestroy(): void {
+        // Remove router event subscription
+        this.routerSubscription.unsubscribe();
     }
 }

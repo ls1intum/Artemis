@@ -4,6 +4,7 @@ import { AfterViewInit, Component, OnChanges, OnDestroy, OnInit, SimpleChanges }
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Participation, ParticipationService } from '../entities/participation';
+import { ParticipationDataProvider } from '../courses/exercises/participation-data-provider';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { Result } from '../entities/result';
 import { HttpResponse } from '@angular/common/http';
@@ -52,25 +53,38 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @constructor EditorComponent
      * @param {ActivatedRoute} route
      * @param {ParticipationService} participationService
+     * @param {ParticipationDataProvider} participationDataProvider
      * @param {RepositoryService} repositoryService
      * @param {RepositoryFileService} repositoryFileService
      */
     constructor(private route: ActivatedRoute,
                 private participationService: ParticipationService,
+                private participationDataProvider: ParticipationDataProvider,
                 private repositoryService: RepositoryService,
                 private repositoryFileService: RepositoryFileService) {}
 
     /**
      * @function ngOnInit
      * @desc Fetches the participation and the repository files for the provided participationId in params
+     * If we are able to find the participation with the id specified in the route params in our data storage,
+     * we use it in order to spare any additional REST calls
      */
     ngOnInit(): void {
+        /** Assign repository */
+        this.repository = this.repositoryService;
+
         this.paramSub = this.route.params.subscribe(params => {
-            /** Query the participationService for the participationId given by the params */
-            this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
-                this.participation = response.body;
+            // Cast params id to Number or strict comparison will lead to result false (due to differing types)
+            if (this.participationDataProvider.participationStorage && this.participationDataProvider.participationStorage.id === Number(params['participationId'])) {
+                this.participation = this.participationDataProvider.participationStorage;
                 this.checkIfRepositoryIsClean();
-            });
+            } else {
+                /** Query the participationService for the participationId given by the params */
+                this.participationService.find(params['participationId']).subscribe((response: HttpResponse<Participation>) => {
+                    this.participation = response.body;
+                    this.checkIfRepositoryIsClean();
+                });
+            }
             /** Query the repositoryFileService for files in the repository */
             this.repositoryFileService.query(params['participationId']).subscribe(files => {
                 this.repositoryFiles = files;
@@ -78,9 +92,6 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                 console.log('There was an error while getting files: ' + err.body.msg);
             });
         });
-
-        /** Assign repository */
-        this.repository = this.repositoryService;
     }
 
     /**

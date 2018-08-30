@@ -41,6 +41,7 @@ import { QuizReEvaluateWrapper } from './quiz/re-evaluate/quiz-re-evaluate.direc
 import { QuizReEvaluateComponent } from './quiz/re-evaluate/quiz-re-evaluate.component';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
+import { ParticipationDataProvider } from './courses/exercises/participation-data-provider';
 
 declare var angular: any;
 
@@ -108,6 +109,7 @@ declare var angular: any;
         DifferencePipe,
         JhiWebsocketService,
         Principal,
+        ParticipationDataProvider,
         PendingChangesGuard,
         /**
          * @description Providing $scope:
