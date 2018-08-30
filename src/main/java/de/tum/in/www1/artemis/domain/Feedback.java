@@ -6,6 +6,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -26,6 +27,7 @@ public class Feedback implements Serializable {
     @Column(name = "text")
     private String text;
 
+    @Size(max = 2000)   // this ensures that the detail_text can definitely be stored, even for long feedback
     @Column(name = "detail_text")
     private String detailText;
 
