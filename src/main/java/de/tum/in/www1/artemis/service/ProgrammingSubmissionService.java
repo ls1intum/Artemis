@@ -42,13 +42,12 @@ public class ProgrammingSubmissionService {
             String lastCommitHash = versionControlService.getLastCommitHash(requestBody);
             programmingSubmission.setCommitHash(lastCommitHash);
         } catch (Exception e) {
-            programmingSubmission.setCommitHash("INVALID-COMMIT-HASH"); // TODO: check if this is ok
+            log.warn("Commit hash could not be parsed for submission from participation " + participation);
         }
 
         programmingSubmission.setSubmitted(true);
-        programmingSubmission.setParticipation(participation);
         programmingSubmission.setSubmissionDate(ZonedDateTime.now());
-        programmingSubmission.setType(SubmissionType.MANUAL); // TODO: check if this is correct/needed
+        programmingSubmission.setType(SubmissionType.MANUAL);
 
         participation.addSubmissions(programmingSubmission);
 
