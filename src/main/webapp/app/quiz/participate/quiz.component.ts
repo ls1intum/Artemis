@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizSubmission, QuizSubmissionService } from '../../entities/quiz-submission';
-import { ParticipationService, Participation } from '../../entities/participation';
+import { ParticipationService } from '../../entities/participation';
 import { Result } from '../../entities/result';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';

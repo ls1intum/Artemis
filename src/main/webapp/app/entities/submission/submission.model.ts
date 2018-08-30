@@ -1,7 +1,6 @@
 import { BaseEntity } from './../../shared';
 import { Result } from '../result';
 import { Participation } from '../participation';
-import { ExerciseType } from 'app/entities/exercise';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
