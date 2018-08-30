@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import org.slf4j.Logger;
@@ -385,7 +385,7 @@ public class QuizScheduleService {
 
             // add result to participation
             participation.addResult(result);
-            participation.setInitializationState(ParticipationState.FINISHED);
+            participation.setInitializationState(InitializationState.FINISHED);
 
             //save participation with result and quizSubmission
             participationRepository.save(participation);

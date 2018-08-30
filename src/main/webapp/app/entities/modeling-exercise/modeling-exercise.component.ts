@@ -6,7 +6,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { ITEMS_PER_PAGE, Principal } from '../../shared';
-import { CourseModelingExerciseService } from '../course/course.service';
+import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService } from '../course';
 
@@ -28,7 +28,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
-        private courseModelingExerciseService: CourseModelingExerciseService,
+        private courseExerciseService: CourseExerciseService,
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
@@ -71,7 +71,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseModelingExerciseService.query(this.courseId, {
+        this.courseExerciseService.findAllModelingExercises(this.courseId, {
             page: this.page,
             size: this.itemsPerPage
         }).subscribe(

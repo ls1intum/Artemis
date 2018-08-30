@@ -25,7 +25,7 @@
                 <td><a routerLink="/participation/{{participation.id}}">{{participation.id}}</a></td>
                 <td>{{participation.repositoryUrl}}</td>
                 <td>{{participation.buildPlanId}}</td>
-                <td jhiTranslate="{{'arTeMiSApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
+                <td jhiTranslate="{{'arTeMiSApp.InitializationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
                 <td>
                     <a routerLink="/user-management/{{participation.student?.login}}">{{participation.student?.firstName}} {{participation.student?.lastName}}</a>

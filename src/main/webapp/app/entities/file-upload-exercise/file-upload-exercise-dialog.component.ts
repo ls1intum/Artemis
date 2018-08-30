@@ -4,11 +4,12 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
 import { Observable } from 'rxjs/Observable';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { JhiEventManager } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExercisePopupService } from './file-upload-exercise-popup.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
+import { Course, CourseService } from '../course';
 
 @Component({
     selector: 'jhi-file-upload-exercise-dialog',
@@ -19,15 +20,21 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     fileUploadExercise: FileUploadExercise;
     isSaving: boolean;
 
+    courses: Course[];
+
     constructor(
         public activeModal: NgbActiveModal,
+        private jhiAlertService: JhiAlertService,
         private fileUploadExerciseService: FileUploadExerciseService,
+        private courseService: CourseService,
         private eventManager: JhiEventManager
     ) {
     }
 
     ngOnInit() {
         this.isSaving = false;
+        this.courseService.query()
+            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
     }
 
     clear() {
@@ -59,6 +66,14 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     private onSaveError() {
         this.isSaving = false;
     }
+
+    private onError(error: any) {
+        this.jhiAlertService.error(error.message, null, null);
+    }
+
+    trackCourseById(index: number, item: Course) {
+        return item.id;
+    }
 }
 
 @Component({
@@ -80,8 +95,13 @@ export class FileUploadExercisePopupComponent implements OnInit, OnDestroy {
                 this.fileUploadExercisePopupService
                     .open(FileUploadExerciseDialogComponent as Component, params['id']);
             } else {
-                this.fileUploadExercisePopupService
-                    .open(FileUploadExerciseDialogComponent as Component);
+                if ( params['courseId'] ) {
+                    this.fileUploadExercisePopupService
+                        .open(FileUploadExerciseDialogComponent as Component, undefined, params['courseId']);
+                } else {
+                    this.fileUploadExercisePopupService
+                        .open(FileUploadExerciseDialogComponent as Component);
+                }
             }
         });
     }

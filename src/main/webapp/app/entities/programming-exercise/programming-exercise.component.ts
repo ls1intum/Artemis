@@ -1,12 +1,12 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
-import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
 import { ProgrammingExerciseService } from './programming-exercise.service';
-import { ITEMS_PER_PAGE, Principal } from '../../shared';
-import { Course, CourseProgrammingExerciseService, CourseService } from '../course';
+import { ITEMS_PER_PAGE } from '../../shared';
+import { Course, CourseExerciseService, CourseService } from '../course';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -24,16 +24,13 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     page: any;
     predicate: any;
     reverse: any;
-    totalItems: number;
 
     constructor(
         private programmingExerciseService: ProgrammingExerciseService,
-        private courseProgrammingExerciseService: CourseProgrammingExerciseService,
+        private courseExerciseService: CourseExerciseService,
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private parseLinks: JhiParseLinks,
-        private principal: Principal,
         private route: ActivatedRoute
     ) {
         this.programmingExercises = [];
@@ -78,7 +75,7 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseProgrammingExerciseService.query(this.courseId, {
+        this.courseExerciseService.findAllProgrammingExercises(this.courseId, {
             page: this.page,
             size: this.itemsPerPage
         }).subscribe(

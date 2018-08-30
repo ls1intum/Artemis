@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 import { Participation, ParticipationService } from '../participation/index';
-import { ParticipationResultService, Result, ResultDetailComponent } from '.';
+import { ResultService, Result, ResultDetailComponent } from '.';
 import { JhiWebsocketService, Principal } from '../../shared/index';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -11,7 +11,7 @@ import { ExerciseType } from '../../entities/exercise';
     selector: 'jhi-result',
     templateUrl: './result.component.html',
     providers: [
-        ParticipationResultService,
+        ResultService,
         RepositoryService
     ]
 })
@@ -40,7 +40,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     resultString: string;
 
     constructor(private jhiWebsocketService: JhiWebsocketService,
-                private participationResultService: ParticipationResultService,
+                private resultService: ResultService,
                 private participationService: ParticipationService,
                 private repositoryService: RepositoryService,
                 private principal: Principal,
@@ -94,17 +94,17 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     handleNewResult(newResult: Result) {
         this.result = newResult;
         this.newResult.emit({
-            newResult: newResult
+            newResult
         });
         this.init();
     }
 
     /*
-     * fetch results from server, this method should only be invoked if there is no other possibility so that we avoid
-     * high server costs
+     * fetch results from server, this method should only be invoked if there is no other possibility so that we avoid high server costs
+     * TODO: in any case we should ask the server for the latest 'rated' result
      */
     refreshResult() {
-        this.participationResultService.query(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
+        this.resultService.findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
             showAllResults: false,
             ratedOnly: this.participation.exercise.type === 'quiz'
         }).subscribe(results => {

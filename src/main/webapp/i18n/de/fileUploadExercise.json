@@ -11,7 +11,7 @@
             "updated": "File Upload Exercise aktualisiert mit ID {{ param }}",
             "deleted": "File Upload Exercise gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll File Upload Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll File Upload Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "File Upload Exercise"

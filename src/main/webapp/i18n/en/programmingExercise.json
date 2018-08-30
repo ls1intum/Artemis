@@ -11,7 +11,7 @@
             "updated": "A Programming Exercise is updated with identifier {{ param }}",
             "deleted": "A Programming Exercise is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Programming Exercise {{ id }}?"
+                "question": "Are you sure you want to delete Programming Exercise {{ title }}?"
             },
             "detail": {
                 "title": "Programming Exercise"

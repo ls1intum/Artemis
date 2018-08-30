@@ -36,8 +36,8 @@ export class RepositoryFileService {
 
     constructor(private http: HttpClient) { }
 
-    query(participationId: number): Observable<Array<any>> {
-        return this.http.get<any[]>(`${this.resourceUrl}/${participationId}/files`);
+    query(participationId: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.resourceUrl}/${participationId}/files`);
     }
 
     get(participationId: number, fileName: string): Observable<any> {

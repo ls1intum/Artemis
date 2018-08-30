@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { Participation } from './participation.model';
-import { ExerciseParticipationService, ParticipationService } from './participation.service';
+import { ParticipationService } from './participation.service';
 import { Principal } from '../../shared';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseService, ExerciseType } from '../exercise';
@@ -11,7 +11,6 @@ import { Exercise, ExerciseService, ExerciseType } from '../exercise';
 @Component({
     selector: 'jhi-participation',
     templateUrl: './participation.component.html',
-    providers: [ExerciseParticipationService]
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
 
@@ -33,7 +32,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal,
-        private exerciseParticipationService: ExerciseParticipationService,
         private exerciseService: ExerciseService
     ) {
         this.reverse = true;
@@ -42,7 +40,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     loadAll() {
         this.paramSub = this.route.params.subscribe(params => {
-            this.exerciseParticipationService.findByExercise(params['exerciseId']).subscribe(res => {
+            this.participationService.findAllParticipationsByExercise(params['exerciseId']).subscribe(res => {
                 this.participations = res;
             });
             this.exerciseService.find(params['exerciseId']).subscribe(res => {

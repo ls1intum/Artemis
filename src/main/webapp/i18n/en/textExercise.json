@@ -11,7 +11,7 @@
             "updated": "A Text Exercise is updated with identifier {{ param }}",
             "deleted": "A Text Exercise is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Text Exercise {{ id }}?"
+                "question": "Are you sure you want to delete Text Exercise {{ title }}?"
             },
             "detail": {
                 "title": "Text Exercise"

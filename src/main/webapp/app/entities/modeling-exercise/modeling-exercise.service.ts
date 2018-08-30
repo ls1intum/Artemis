@@ -62,10 +62,8 @@ export class ModelingExerciseService {
      */
     private convertItemFromServer(modelingExercise: ModelingExercise): ModelingExercise {
         const copy: ModelingExercise = Object.assign({}, modelingExercise);
-        copy.releaseDate = this.dateUtils
-            .convertDateTimeFromServer(copy.releaseDate);
-        copy.dueDate = this.dateUtils
-            .convertDateTimeFromServer(copy.dueDate);
+        copy.releaseDate = this.dateUtils.convertDateTimeFromServer(copy.releaseDate);
+        copy.dueDate = this.dateUtils.convertDateTimeFromServer(copy.dueDate);
         return copy;
     }
 

@@ -68,7 +68,7 @@ export const modelingExercisePopupRoute: Routes = [
         path: 'modeling-exercise/:id/delete',
         component: ModelingExerciseDeletePopupComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.modelingExercise.home.title'
         },
         canActivate: [UserRouteAccessService],
