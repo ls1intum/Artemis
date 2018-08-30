@@ -12,9 +12,8 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A Participation.
@@ -258,6 +257,40 @@ public class Participation implements Serializable {
         this.exercise = exercise;
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
+
+
+
+    /**
+     * Finds the latest result for the participation. Checks if the participation has any results. If there are no results,
+     * return null. Otherwise sort the results by completion date and return the first.
+     *
+     * @return the latest result or null
+     */
+    public Result findLatestResult() {
+        Set<Result> results = this.results;
+        if (results == null || results.size() == 0) {
+            return null;
+        }
+        List<Result> sortedResults = results.stream().collect(Collectors.toList());
+        Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+        return sortedResults.get(0);
+    }
+
+    /**
+     * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions,
+     * return null. Otherwise sort the submissions by submission date and return the first.
+     *
+     * @return the latest submission or null
+     */
+    public Submission findLatestSubmission() {
+        Set<Submission> submissions = this.submissions;
+        if (submissions == null || submissions.size() == 0) {
+            return null;
+        }
+        List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
+        Collections.sort(sortedSubmissions, (r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
+        return sortedSubmissions.get(0);
+    }
 
     @Override
     public boolean equals(Object o) {

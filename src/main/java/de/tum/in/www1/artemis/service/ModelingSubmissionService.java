@@ -118,7 +118,7 @@ public class ModelingSubmissionService {
      */
     public ModelingSubmission findLatestModelingSubmissionByParticipation(Participation participation) {
         ModelingSubmission modelingSubmission = null;
-        Submission submission = participationService.findLatestSubmission(participation);
+        Submission submission = participation.findLatestSubmission();
         if (submission != null && submission instanceof ModelingSubmission) {
             modelingSubmission = (ModelingSubmission) submission;
         }
@@ -129,7 +129,7 @@ public class ModelingSubmissionService {
          * do not have a reference to their participation and vice versa.
          */
         if (modelingSubmission == null) {
-            Result result = participationService.findLatestResult(participation);
+            Result result = participation.findLatestResult();
             if (result != null && result.getSubmission() != null) {
                 if (result.getSubmission() instanceof HibernateProxy) {
                     modelingSubmission = (ModelingSubmission) Hibernate.unproxy(result.getSubmission());

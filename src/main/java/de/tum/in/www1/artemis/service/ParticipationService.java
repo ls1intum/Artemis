@@ -17,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static de.tum.in.www1.artemis.domain.enumeration.ParticipationState.INITIALIZED;
 
@@ -425,39 +424,5 @@ public class ParticipationService {
         for (Participation participation : participationsToDelete) {
             delete(participation.getId(), deleteBuildPlan, deleteRepository);
         }
-    }
-
-    /**
-     * Finds the latest result for a given participation. Checks if the participation has any results. If there are no results,
-     * return null. Otherwise sort the results by completion date and return the first.
-     *
-     * @param participation     the participation to find the latest result for
-     * @return the latest result or null
-     */
-    public Result findLatestResult(Participation participation) {
-        Set<Result> results = participation.getResults();
-        if (results == null || results.size() == 0) {
-            return null;
-        }
-        List<Result> sortedResults = results.stream().collect(Collectors.toList());
-        Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
-        return sortedResults.get(0);
-    }
-
-    /**
-     * Finds the latest submission for a given participation. Checks if the participation has any submissions. If there are no submissions,
-     * return null. Otherwise sort the submissions by submission date and return the first.
-     *
-     * @param participation     the participation to find the latest submission for
-     * @return the latest submission or null
-     */
-    public Submission findLatestSubmission(Participation participation) {
-        Set<Submission> submissions = participation.getSubmissions();
-        if (submissions == null || submissions.size() == 0) {
-            return null;
-        }
-        List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
-        Collections.sort(sortedSubmissions, (r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
-        return sortedSubmissions.get(0);
     }
 }
