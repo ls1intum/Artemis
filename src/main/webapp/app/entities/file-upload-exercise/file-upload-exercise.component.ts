@@ -34,7 +34,7 @@ fileUploadExercises: FileUploadExercise[];
     }
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInFileUploadExercises();
@@ -48,7 +48,7 @@ fileUploadExercises: FileUploadExercise[];
         return item.id;
     }
     registerChangeInFileUploadExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', response => this.loadAll());
     }
 
     private onError(error) {

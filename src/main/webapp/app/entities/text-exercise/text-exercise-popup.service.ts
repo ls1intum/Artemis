@@ -45,10 +45,10 @@ export class TextExercisePopupService {
     textExerciseModalRef(component: Component, textExercise: TextExercise): NgbModalRef {
         const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static'});
         modalRef.componentInstance.textExercise = textExercise;
-        modalRef.result.then((result) => {
+        modalRef.result.then(result => {
             this.router.navigate([{ outlets: { popup: null }}], { replaceUrl: true, queryParamsHandling: 'merge' });
             this.ngbModalRef = null;
-        }, (reason) => {
+        }, reason => {
             this.router.navigate([{ outlets: { popup: null }}], { replaceUrl: true, queryParamsHandling: 'merge' });
             this.ngbModalRef = null;
         });

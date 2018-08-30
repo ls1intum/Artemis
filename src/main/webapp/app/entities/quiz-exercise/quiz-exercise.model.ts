@@ -19,8 +19,7 @@ export class QuizExercise extends Exercise {
     public isActiveQuiz = false;            // default value
     public isPracticeModeAvailable = true;  // default value
 
-
-    //helper attributes
+    // helper attributes
     public adjustedDueDate: Moment;
     public adjustedReleaseDate: Moment;
     public ended: boolean;

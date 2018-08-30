@@ -130,7 +130,8 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
 
             // Add session onChange function
             // TODO: avoid initial on change call and we should be good
-            this.editor.getEditor().session.on('change', () => console.log('session change...'), this.editorFileSessions[fileName].unsavedChanges = true, this.updateSaveStatusLabel()).bind(this);
+            this.editor.getEditor().session.on('change',
+                () => console.log('session change...'), this.editorFileSessions[fileName].unsavedChanges = true, this.updateSaveStatusLabel()).bind(this);
 
             this.editorText = fileObj.fileContent;
             this.editor.setMode(aceMode);

@@ -113,7 +113,7 @@ export class ModelingAssessmentService {
                 const target = model.entities.byId[relationship.target.entityId].name;
                 const kind = model.relationships.byId[assessment.id].kind;
                 let relation;
-                //TODO: use an enum here
+                // TODO: use an enum here
                 switch (kind) {
                     case 'ASSOCIATION_BIDIRECTIONAL':
                         relation = ' <-> ';

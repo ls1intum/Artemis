@@ -288,6 +288,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
     remarkablePlantUmlRenderer(tokens, id) {
         let plantUml = tokens[id].content;
 
+        // tslint:disable-next-line:max-line-length
         plantUml = plantUml.replace('@startuml', '@startuml\nskinparam shadowing false\nskinparam classBorderColor black\nskinparam classArrowColor black\nskinparam DefaultFontSize 14\nskinparam ClassFontStyle bold\nskinparam classAttributeIconSize 0\nhide empty members\n');
 
         // Provide this reference inside replace callback function
