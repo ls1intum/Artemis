@@ -109,7 +109,12 @@ public class BambooUpdateService {
         }
 
         @Override
-        public void triggerInitialBuild(String topLevelIdentifier, String lowerLevelIdentifier) {
+        public void triggerBuild(String topLevelIdentifier, String lowerLevelIdentifier, boolean initialBuild) {
+            triggerBuild(topLevelIdentifier + "-" + lowerLevelIdentifier, initialBuild);
+        }
+
+        @Override
+        public void triggerBuild(String buildPlanId, boolean initialBuild) {
             // NOT NEEDED
         }
 
@@ -239,9 +244,13 @@ public class BambooUpdateService {
             }
         }
 
-        // Trigger the first build because Gitlab can not for some reason..
         @Override
-        public void triggerInitialBuild(String bambooProject, String bambooPlan) {
+        public void triggerBuild(String bambooProject, String bambooPlan, boolean initialBuild) {
+            triggerBuild(bambooProject+ "-" + bambooPlan, initialBuild);
+        }
+
+        @Override
+        public void triggerBuild(String buildPlanId, boolean initialBuild) {
             try {
                 final BambooClient bambooClient = new BambooClient();
                 String[] args = new String[]{
@@ -251,9 +260,9 @@ public class BambooUpdateService {
                 };
 
                 bambooClient.doWork(args);
-                log.info("Triggering initial build for plan " + bambooProject + "-" + bambooPlan);
-                String message = bambooClient.getBuildHelper().queueBuild(bambooProject + "-" + bambooPlan, null, null, false, -1, null, true, null);
-                log.info("Triggering initial build for plan " + bambooProject + "-" + bambooPlan + " was successful. " + message);
+                log.info("Triggering build for plan " + buildPlanId);
+                String message = bambooClient.getBuildHelper().queueBuild(buildPlanId, null, null, false, -1, null, true, null);
+                log.info("Triggering build for plan " + buildPlanId + " was successful. " + message);
 
             } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
                 log.error(e.getMessage(), e);

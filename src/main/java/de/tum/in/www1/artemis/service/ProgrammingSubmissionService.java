@@ -16,7 +16,7 @@ import java.time.ZonedDateTime;
 @Transactional
 public class ProgrammingSubmissionService {
 
-    private final Logger log = LoggerFactory.getLogger(BitbucketService.class);
+    private final Logger log = LoggerFactory.getLogger(ProgrammingSubmissionService.class);
 
     private final ProgrammingSubmissionRepository programmingSubmissionRepository;
     private final ParticipationRepository participationRepository;

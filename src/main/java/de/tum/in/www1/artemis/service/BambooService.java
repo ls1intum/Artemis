@@ -116,7 +116,7 @@ public class BambooService implements ContinuousIntegrationService {
         enablePlan(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
         // TODO: check if this is producing too much load
         // We need to trigger an initial build in order for Gitlab to work correctly
-        continuousIntegrationUpdateService.triggerInitialBuild(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId));
+        continuousIntegrationUpdateService.triggerBuild(getProjectKeyFromBuildPlanId(buildPlanId), getPlanKeyFromBuildPlanId(buildPlanId), true);
     }
 
     @Override
