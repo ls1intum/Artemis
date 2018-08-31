@@ -46,8 +46,10 @@ export abstract class Exercise implements BaseEntity {
     public openForSubmission: boolean;
     public participationStatus: ParticipationStatus;
     public loading: boolean;
-    public isAtLeastTutor: boolean;
     public type: ExerciseType;
+
+    // helper attributes
+    public isAtLeastTutor: boolean;
 
     constructor(type: ExerciseType) {
         this.type = type;

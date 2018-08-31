@@ -13,6 +13,9 @@ export class Course implements BaseEntity {
     public onlineCourse = false;       // default value
     public exercises: Exercise[];
 
+    // helper attributes
+    public isAtLeastTutor: boolean;
+
     constructor() {
     }
 }

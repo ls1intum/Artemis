@@ -20,9 +20,9 @@
         <tr *ngFor="let exercise of exercises | showExercise:showInactiveExercises">
             <td>
                 <span>{{exercise.title}}</span>
-                <a class="text-primary" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']"><i class="fa fa-info-circle fa-fw"
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i class="fa fa-info-circle fa-fw"
                    routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/dashboard" routerLinkActive="active"></i></a>
-                <a class="text-primary" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_TA', 'ROLE_INSTRUCTOR']"><i *ngIf="exercise.type === MODELING"
+                <a class="text-primary" *ngIf="exercise.isAtLeastTutor"><i *ngIf="exercise.type === MODELING"
                    class="fa fa-graduation-cap fa-fw" routerLink="/course/{{exercise.course.id}}/exercise/{{exercise.id}}/assessment" routerLinkActive="active"></i></a>
 
                 <span class="badge badge-warning" *ngIf="!exercise.visibleToStudents" placement="right"
