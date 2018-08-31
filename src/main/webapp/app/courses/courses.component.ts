@@ -77,6 +77,4 @@ export class CoursesComponent implements OnInit {
             return 0;
         }
     }
-
-    // TODO migrate repository functionality from courses.controller
 }

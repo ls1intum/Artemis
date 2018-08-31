@@ -219,15 +219,14 @@ public class ModelingExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/modeling-exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ModelingExercise : {}", id);
         ModelingExercise modelingExercise = modelingExerciseRepository.findOne(id);
         Course course = modelingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
+        if (!authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }

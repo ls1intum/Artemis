@@ -41,7 +41,7 @@ export const coursePopupRoute: Routes = [
         path: 'course-new',
         component: CoursePopupComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService],
@@ -51,7 +51,7 @@ export const coursePopupRoute: Routes = [
         path: 'course/:id/edit',
         component: CoursePopupComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService],
@@ -61,7 +61,7 @@ export const coursePopupRoute: Routes = [
         path: 'course/:id/delete',
         component: CourseDeletePopupComponent,
         data: {
-            authorities: ['ROLE_USER'],
+            authorities: ['ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService],

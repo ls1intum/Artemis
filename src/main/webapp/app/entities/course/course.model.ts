@@ -10,7 +10,7 @@ export class Course implements BaseEntity {
     public instructorGroupName: string;
     public startDate: any;
     public endDate: any;
-    public onlineCourse = false;       //default value
+    public onlineCourse = false;       // default value
     public exercises: Exercise[];
 
     constructor() {

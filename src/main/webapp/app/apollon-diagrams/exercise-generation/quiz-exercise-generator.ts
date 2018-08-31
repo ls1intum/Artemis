@@ -1,17 +1,4 @@
-import {
-    computeBoundingBox,
-    EntityMember,
-    LayoutedDiagram,
-    LayoutedEntity,
-    LayoutedEntityMember,
-    LayoutedRelationship,
-    Rect,
-    renderDiagramToSVG,
-    renderEntityToSVG,
-    renderRelationshipToSVG,
-    Size,
-    State
-} from '@ls1intum/apollon';
+import { computeBoundingBox, EntityMember, LayoutedDiagram, LayoutedEntity, LayoutedEntityMember, LayoutedRelationship, Rect, renderDiagramToSVG, renderEntityToSVG, renderRelationshipToSVG, Size, State } from '@ls1intum/apollon';
 import { convertRenderedSVGToPNG } from './svg-renderer';
 import * as TempID from './temp-id';
 import { Course } from '../../entities/course';

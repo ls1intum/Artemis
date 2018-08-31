@@ -1,3 +1,4 @@
+
 {
     "rulesDirectory": [
         "node_modules/codelyzer"
@@ -21,7 +22,7 @@
         "label-position": true,
         "max-line-length": [
             true,
-            180
+            250
         ],
         "member-access": false,
         "member-ordering": [
@@ -99,7 +100,13 @@
         "import-spacing": true,
         "no-consecutive-blank-lines": [true],
         "object-literal-shorthand": true,
-        "space-before-function-paren": [true, "never"],
+        "space-before-function-paren": [true, {
+            "asyncArrow": "always",
+            "anonymous": "never",
+            "constructor": "never",
+            "method": "never",
+            "named": "never"
+        }],
 
         "directive-selector": [true, "attribute", "jhi", "camelCase"],
         "component-selector": [true, "element", "jhi", "kebab-case"],

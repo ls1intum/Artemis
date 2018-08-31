@@ -163,7 +163,7 @@ entity DragItem {
 entity Participation (participation) {
     repositoryUrl String,
     buildPlanId String,
-    initializationState ParticipationState,
+    initializationState InitializationState,
     initializationDate ZonedDateTime,
     presentationScore Integer
 }
@@ -201,7 +201,7 @@ enum FeedbackType {
     MANUAL
 }
 
-enum ParticipationState {
+enum InitializationState {
     UNINITIALIZED,
     REPO_COPIED,
     REPO_CONFIGURED,

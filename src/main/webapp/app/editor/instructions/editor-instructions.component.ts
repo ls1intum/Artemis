@@ -7,7 +7,7 @@ import { RepositoryFileService, RepositoryService } from '../../entities/reposit
 import { EditorComponent } from '../editor.component';
 import { EditorService } from '../editor.service';
 import { JhiWebsocketService } from '../../shared';
-import { ParticipationResultService, Result, ResultService } from '../../entities/result';
+import { Result, ResultService } from '../../entities/result';
 import { Feedback } from '../../entities/feedback';
 import { EditorInstructionsResultDetailComponent } from './editor-instructions-result-detail';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -22,7 +22,6 @@ import * as Remarkable from 'remarkable';
         WindowRef,
         RepositoryService,
         ResultService,
-        ParticipationResultService,
         EditorService
     ]
 })
@@ -56,7 +55,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
                 private resultService: ResultService,
                 private editorService: EditorService,
                 private modalService: NgbModal,
-                private elRef: ElementRef,
+                private elementRef: ElementRef,
                 private renderer: Renderer2) {}
 
     /**
@@ -143,7 +142,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         }
         this.isLoading = true;
 
-        this.resultService.details(this.latestResult.id).subscribe( resultDetails => {
+        this.resultService.getFeedbackDetailsForResult(this.latestResult.id).subscribe(resultDetails => {
             this.resultDetails = resultDetails.body;
             this.haveDetailsBeenLoaded = true;
             this.renderReadme();
@@ -187,7 +186,7 @@ export class EditorInstructionsComponent implements OnInit, AfterViewInit, OnCha
         }
 
         // Since our rendered markdown file gets inserted into the DOM after compile time, we need to register click events for test cases manually
-        const testStatusDOMElements = this.elRef.nativeElement.querySelectorAll('.test-status');
+        const testStatusDOMElements = this.elementRef.nativeElement.querySelectorAll('.test-status');
         testStatusDOMElements.forEach( element => {
             const listenerRemoveFunction = this.renderer.listen(element, 'click', event => {
                 // Extract the data attribute for tests and open the details popup with it

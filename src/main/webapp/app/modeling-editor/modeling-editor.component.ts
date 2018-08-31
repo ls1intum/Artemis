@@ -1,14 +1,13 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild, HostListener } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
-import { Participation, ParticipationService } from '../entities/participation';
+import { ModelingExercise } from '../entities/modeling-exercise';
+import { Participation } from '../entities/participation';
 import { ActivatedRoute } from '@angular/router';
 import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
 import ApollonEditor, { ApollonOptions } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
-import { Result, ResultService } from '../entities/result';
-import { ParticipationResultService } from '../entities/result/result.service';
+import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
 import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
 import * as $ from 'jquery';
@@ -23,7 +22,7 @@ import { DiagramType } from '../entities/modeling-exercise';
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
-    providers: [ParticipationResultService, ModelingAssessmentService, ApollonDiagramService]
+    providers: [ModelingAssessmentService, ApollonDiagramService]
 })
 export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     @ViewChild('editorContainer') editorContainer: ElementRef;
@@ -67,12 +66,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     constructor(
         private jhiWebsocketService: JhiWebsocketService,
         private apollonDiagramService: ApollonDiagramService,
-        private participationService: ParticipationService,
-        private modelingExerciseService: ModelingExerciseService,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
-        private participationResultService: ParticipationResultService,
-        private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
         private modelingEditorService: ModelingEditorService,

@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizSubmission, QuizSubmissionService } from '../../entities/quiz-submission';
-import { ExerciseParticipationService, Participation } from '../../entities/participation';
+import { ParticipationService } from '../../entities/participation';
 import { Result } from '../../entities/result';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
@@ -19,7 +19,7 @@ import { QuestionType } from '../../entities/question';
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz.component.html',
-    providers: [ExerciseParticipationService]
+    providers: [ParticipationService]
 })
 export class QuizComponent implements OnInit, OnDestroy {
 
@@ -81,7 +81,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     constructor(private jhiWebsocketService: JhiWebsocketService,
                 private quizExerciseService: QuizExerciseService,
-                private exerciseParticipationService: ExerciseParticipationService,
+                private participationService: ParticipationService,
                 private route: ActivatedRoute,
                 private jhiAlertService: JhiAlertService,
                 private quizSubmissionService: QuizSubmissionService) {}
@@ -175,8 +175,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.subscribeToWebsocketChannels();
 
         // load the quiz (and existing submission if quiz has started)
-        this.exerciseParticipationService.find(1, this.id).subscribe(
-            (participation: Participation) => {
+        this.participationService.findParticipation(1, this.id).subscribe(participation => {
                 this.applyParticipationFull(participation);
             },
             (res: HttpErrorResponse) => this.onError(res.message)
