@@ -3,6 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Course, CourseScoreCalculationService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
+import { Principal } from '../shared';
 
 @Component({
     selector: 'jhi-courses',
@@ -22,6 +23,7 @@ export class CoursesComponent implements OnInit {
     constructor(
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
+        private principal: Principal,
         private courseScoreCalculationService: CourseScoreCalculationService,
         private route: ActivatedRoute) {}
 
@@ -44,6 +46,9 @@ export class CoursesComponent implements OnInit {
         this.courseService.findAll().subscribe(
             (res: Course[]) => {
                 this.courses = res;
+                for (const course of this.courses) {
+                    course.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(course);
+                }
                 this.courseScoreCalculationService.setCourses(this.courses);
                 if (this.filterByCourseId) {
                     this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
