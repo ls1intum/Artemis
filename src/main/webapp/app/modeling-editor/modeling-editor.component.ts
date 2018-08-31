@@ -89,10 +89,6 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             if (params['participationId']) {
                 this.modelingEditorService.get(params['participationId']).subscribe(data => {
                     this.participation = data.participation;
-                    if (this.participation.results) {
-                        this.participation.results.sort((a, b) => +new Date(b.completionDate) - +new Date(a.completionDate));
-                        this.result = this.participation.results[0];
-                    }
                     this.modelingExercise = this.participation.exercise as ModelingExercise;
                     /**
                      * set diagramType to class diagram if exercise is null, use case or communication
@@ -107,6 +103,9 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     this.submission = data.modelingSubmission;
                     if (this.submission && this.submission.id && !this.submission.submitted) {
                         this.subscribeToWebsocket();
+                    }
+                    if (this.submission && this.submission.result) {
+                        this.result = this.submission.result;
                     }
                     if (this.submission && this.submission.model) {
                         this.initializeApollonEditor(JSON.parse(this.submission.model));
@@ -143,6 +142,12 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.jhiWebsocketService.receive(this.websocketChannel).subscribe(submission => {
             if (submission.submitted) {
                 this.submission = submission;
+                if (this.submission.result && this.submission.result.rated) {
+                    this.modelingAssessmentService.find(this.submission.participation.id, this.submission.id).subscribe(assessments => {
+                        this.assessments = assessments.body;
+                        this.initializeAssessmentInfo();
+                    });
+                }
                 this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
                 if (this.submission.model) {
                     this.initializeApollonEditor(JSON.parse(this.submission.model));
@@ -158,6 +163,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
 
         if (this.submission && this.submission.submitted) {
+            clearInterval(this.autoSaveInterval);
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 initialState,
                 mode: 'READ_ONLY',
@@ -222,10 +228,6 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             this.submission = new ModelingSubmission();
         }
         this.submission.submitted = false;
-        if (this.submission.participation) {
-            // set participation to null to avoid JsonMappingException
-            this.submission.participation = null;
-        }
         this.updateSubmissionModel();
         this.isSaving = true;
         this.autoSaveTimer = 0;
@@ -275,10 +277,6 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
         if (confirmSubmit) {
             this.submission.submitted = true;
-            if (this.submission.participation) {
-                // set participation to null to avoid JsonMappingException
-                this.submission.participation = null;
-            }
             this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(response => {
                 this.submission = response.body;
                 this.result = this.submission.result;

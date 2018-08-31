@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -61,9 +62,9 @@ public class Participation implements Serializable {
     private Set<Result> results = new HashSet<>();
 
 
-    @OneToMany(mappedBy = "participation", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE})
     @JsonIgnoreProperties({"participation", "result"})
-    @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Submission> submissions = new HashSet<>();
 
 
@@ -290,6 +291,16 @@ public class Participation implements Serializable {
         List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
         Collections.sort(sortedSubmissions, (r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
         return sortedSubmissions.get(0);
+    }
+
+    public ModelingSubmission findLatestModelingSubmission() {
+        Submission submission = findLatestSubmission();
+        submission = (Submission) Hibernate.unproxy(submission);
+        if (submission != null && submission instanceof ModelingSubmission) {
+            return (ModelingSubmission) submission;
+        } else {
+            return null;
+        }
     }
 
     @Override

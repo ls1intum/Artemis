@@ -225,25 +225,4 @@ public class ModelingSubmissionResource {
         }
         return ResponseUtil.wrapOrNotFound(Optional.ofNullable(modelingSubmission));
     }
-
-    /**
-     * GET  /modeling-submissions/:participationId : get the modelingSubmission for the participationId.
-     *
-     * @param participationId the id of the participation for which modelingSubmission is retrieved
-     * @return the ResponseEntity with status 200 (OK) and with body the modelingSubmission, or with status 404 (Not Found)
-     */
-    @GetMapping("/modeling-submissions/participation/{participationId}")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    public ResponseEntity<ModelingSubmission> getModelingSubmissionByParticipation(@PathVariable Long participationId) {
-        Participation participation = participationService.findOne(participationId);
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findLatestModelingSubmissionByParticipation(participation);
-        if (Optional.ofNullable(modelingSubmission).isPresent()) {
-            JsonObject model = modelingSubmissionService.getModel(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId());
-            if (model != null) {
-                modelingSubmission.setModel(model.toString());
-            }
-        }
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(modelingSubmission));
-    }
 }

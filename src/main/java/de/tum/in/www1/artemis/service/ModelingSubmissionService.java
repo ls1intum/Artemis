@@ -4,13 +4,8 @@ import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
-import de.tum.in.www1.artemis.repository.JsonModelRepository;
-import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
-import org.hibernate.Hibernate;
-import org.hibernate.proxy.HibernateProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -29,19 +24,22 @@ public class ModelingSubmissionService {
     private final JsonAssessmentRepository jsonAssessmentRepository;
     private final CompassService compassService;
     private final ParticipationService participationService;
+    private final ParticipationRepository participationRepository;
 
     public ModelingSubmissionService(ModelingSubmissionRepository modelingSubmissionRepository,
                                      ResultRepository resultRepository,
                                      JsonModelRepository jsonModelRepository,
                                      JsonAssessmentRepository jsonAssessmentRepository,
                                      CompassService compassService,
-                                     ParticipationService participationService) {
+                                     ParticipationService participationService,
+                                     ParticipationRepository participationRepository) {
         this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.resultRepository = resultRepository;
         this.jsonModelRepository = jsonModelRepository;
         this.jsonAssessmentRepository = jsonAssessmentRepository;
         this.compassService = compassService;
         this.participationService = participationService;
+        this.participationRepository = participationRepository;
     }
 
     /**
@@ -58,11 +56,12 @@ public class ModelingSubmissionService {
      */
     @Transactional(rollbackFor = Exception.class)
     public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, Participation participation) {
+        String model = modelingSubmission.getModel();
         // update submission properties
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         modelingSubmission.setParticipation(participation);
-        String model = modelingSubmission.getModel();
+        modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
         participation.addSubmissions(modelingSubmission);
 
@@ -70,13 +69,16 @@ public class ModelingSubmissionService {
 
         if (modelingSubmission.isSubmitted()) {
             notifyCompass(modelingSubmission, modelingExercise);
-            handleSubmission(modelingSubmission);
+            checkAutomaticResult(modelingSubmission);
+            participation.setInitializationState(ParticipationState.FINISHED);
         } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet
             AutomaticSubmissionService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
         }
-        participation = participationService.save(participation);
-        modelingSubmission = findLatestModelingSubmissionByParticipation(participation);
+        Participation savedParticipation = participationRepository.save(participation);
+        if (modelingSubmission.getId() == null) {
+            modelingSubmission = savedParticipation.findLatestModelingSubmission();
+        }
 
         if (model != null && !model.isEmpty()) {
             jsonModelRepository.writeModel(modelingExercise.getId(), user.getId(), modelingSubmission.getId(), model);
@@ -112,38 +114,6 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * Find the latest modeling submission by a given participation. First, it tries to retrieve the modeling submission
-     * from the participation's submissions. Then it looks for the submission through the participation's results.
-     *
-     * @param participation    the participation for which to find the modelingSubmission
-     * @return the modelingSubmission if found otherwise null
-     */
-    public ModelingSubmission findLatestModelingSubmissionByParticipation(Participation participation) {
-        ModelingSubmission modelingSubmission = null;
-        Submission submission = participation.findLatestSubmission();
-        if (submission != null && submission instanceof ModelingSubmission) {
-            modelingSubmission = (ModelingSubmission) submission;
-        }
-
-        /**
-         * This is needed as a backup to find the modeling submission through the participation's results
-         * because in the past submissions weren't saved to the participation. Therefore some submissions
-         * do not have a reference to their participation and vice versa.
-         */
-        if (modelingSubmission == null) {
-            Result result = participation.findLatestResult();
-            if (result != null && result.getSubmission() != null) {
-                if (result.getSubmission() instanceof HibernateProxy) {
-                    modelingSubmission = (ModelingSubmission) Hibernate.unproxy(result.getSubmission());
-                } else if (result.getSubmission() instanceof ModelingSubmission) {
-                    modelingSubmission = (ModelingSubmission) result.getSubmission();
-                }
-            }
-        }
-        return modelingSubmission;
-    }
-
-    /**
      * Checks whether the given modelingSubmission has a model or not and tries to read and set it.
      *
      * @param modelingSubmission    the modeling submission for which to get and set the model
@@ -167,20 +137,21 @@ public class ModelingSubmissionService {
     }
 
     /**
-     * If student submits his model, set participation to finished and check if automatic assessment is available.
+     * Check if automatic assessment is available and set the result if found.
      *
      * @param modelingSubmission    the modeling submission, which contains the model and the submission status
      * @return the modelingSubmission with the result if applicable
      */
-    public ModelingSubmission handleSubmission(ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.isSubmitted()) {
-            Participation participation = modelingSubmission.getParticipation();
-            participation.setInitializationState(ParticipationState.FINISHED);
-
-            if (modelingSubmission.getResult() == null && jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false)) {
-                Result result = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId()).orElse(null);
-                modelingSubmission.setResult(result);
-            }
+    public ModelingSubmission checkAutomaticResult(ModelingSubmission modelingSubmission) {
+        Participation participation = modelingSubmission.getParticipation();
+        if (modelingSubmission.getResult() == null && jsonAssessmentRepository.exists(participation.getExercise().getId(), participation.getStudent().getId(), modelingSubmission.getId(), false)) {
+            Result result = resultRepository.findDistinctBySubmissionId(modelingSubmission.getId()).orElse(null);
+            modelingSubmission.setResult(result);
+        } else {
+            // create empty result if submission couldn't be assessed automatically
+            // the result is needed for manual assessment
+            Result result = new Result().submission(modelingSubmission).participation(participation);
+            modelingSubmission.setResult(result);
         }
         return modelingSubmission;
     }

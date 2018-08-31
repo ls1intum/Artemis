@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -38,15 +40,18 @@ public class AutomaticSubmissionService {
     private final ExerciseService exerciseService;
     private final ParticipationService participationService;
     private final ModelingSubmissionService modelingSubmissionService;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
     private final SimpMessageSendingOperations messagingTemplate;
 
     public AutomaticSubmissionService(ExerciseService exerciseService,
                                       ParticipationService participationService,
                                       ModelingSubmissionService modelingSubmissionService,
+                                      ModelingSubmissionRepository modelingSubmissionRepository,
                                       SimpMessageSendingOperations messagingTemplate) {
         this.exerciseService = exerciseService;
         this.participationService = participationService;
         this.modelingSubmissionService = modelingSubmissionService;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
         this.messagingTemplate = messagingTemplate;
     }
 
@@ -200,9 +205,18 @@ public class AutomaticSubmissionService {
                 }
                 Exercise exercise = participation.getExercise();
                 if (exercise instanceof ModelingExercise) {
+                    // notify compass about new submission
                     modelingSubmissionService.notifyCompass(modelingSubmission, (ModelingExercise) exercise);
-                    modelingSubmissionService.handleSubmission(modelingSubmission);
+                    // check if compass could assess automatically
+                    modelingSubmissionService.checkAutomaticResult(modelingSubmission);
+                    String model = modelingSubmission.getModel();
+                    // persist modeling submission in DB
+                    modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
+                    modelingSubmission.setModel(model);
+                    // set participation state to finished and persist it
+                    participation.setInitializationState(ParticipationState.FINISHED);
                     participationService.save(participation);
+                    // return modeling submission with model and result
                     return modelingSubmission;
                 } else {
                     log.error("The exercise {} belonging the modeling submission {} is not a ModelingExercise.", exercise.getId(), submission.getId());

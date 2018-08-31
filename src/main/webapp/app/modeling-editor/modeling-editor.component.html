@@ -112,8 +112,8 @@
         </div>
         <div class="col-3" *ngIf="submission?.submitted">
             <h4>Assessment</h4>
-            <p *ngIf="!assessments">There is no assessment available yet.</p>
-            <ng-container *ngIf="assessments">
+            <p *ngIf="!assessments || assessments?.length === 0">There is no assessment available yet.</p>
+            <ng-container *ngIf="assessments?.length > 0">
                 <p>Select entities and/or associations in the editor to filter the assessment.</p>
                 <table class="table">
                     <thead class="thead-light">

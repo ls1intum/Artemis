@@ -273,8 +273,8 @@ public class ModelingExerciseResource {
 
         ObjectNode data = objectMapper.createObjectNode();
 
-        ModelingSubmission modelingSubmission = modelingSubmissionService.findLatestModelingSubmissionByParticipation(participation);
-        //NOTE: avoid infinite recursion by setting submissions to null
+        ModelingSubmission modelingSubmission = participation.findLatestModelingSubmission();
+        // NOTE: avoid infinite recursion by setting submissions to null
         participation.setSubmissions(null);
         data.set("participation", objectMapper.valueToTree(participation));
         if (modelingSubmission != null) {
@@ -295,9 +295,6 @@ public class ModelingExerciseResource {
                     }
                 }
             }
-            //NOTE: avoid infinite recursion by setting result and participation to null
-            modelingSubmission.setResult(null);
-            modelingSubmission.setParticipation(null);
 
             data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
         }
@@ -340,7 +337,7 @@ public class ModelingExerciseResource {
             } else if (relevantResult.getSubmission() instanceof ModelingSubmission) {
                 modelingSubmission = (ModelingSubmission) relevantResult.getSubmission();
             } else {
-                modelingSubmission = modelingSubmissionService.findLatestModelingSubmissionByParticipation(relevantResult.getParticipation());
+                modelingSubmission = relevantResult.getParticipation().findLatestModelingSubmission();
             }
             if (relevantResult.getAssessor() == null) {
                 compassService.removeModelWaitingForAssessment(exerciseId, submissionId);
