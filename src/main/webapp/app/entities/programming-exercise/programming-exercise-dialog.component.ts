@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-
 import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 
@@ -78,9 +77,9 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
-       result.subscribe((res: HttpResponse<ProgrammingExercise>) =>
-           this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
-   }
+        result.subscribe((res: HttpResponse<ProgrammingExercise>) =>
+            this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+    }
 
     private onSaveSuccess(result: ProgrammingExercise) {
         this.eventManager.broadcast({ name: 'programmingExerciseListModification', content: 'OK'});

@@ -107,7 +107,7 @@ const ENTITY_STATES = [
         InstructorDashboardExportReposPopupComponent,
     ],
     providers: [
-        InstructorDashboardPopupService,
+        InstructorDashboardPopupService
     ]
 })
 export class ArTEMiSInstructorDashboardModule {}

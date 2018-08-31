@@ -21,8 +21,8 @@ import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
 import { DatePipeModule } from '../../components/pipes';
 
 const ENTITY_STATES = [
-  ...courseRoute,
-  ...coursePopupRoute
+    ...courseRoute,
+    ...coursePopupRoute,
 ];
 
 @NgModule({
@@ -31,7 +31,7 @@ const ENTITY_STATES = [
         RouterModule.forChild(ENTITY_STATES),
         DatePipeModule,
         OwlDateTimeModule,
-        OwlNativeDateTimeModule
+        OwlNativeDateTimeModule,
     ],
     declarations: [
         CourseComponent,

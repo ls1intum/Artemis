@@ -18,7 +18,10 @@ import {
 } from './';
 import { SortByModule, DatePipeModule } from '../../components/pipes';
 
-const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
+const ENTITY_STATES = [
+    ...programmingExerciseRoute,
+    ...programmingExercisePopupRoute,
+];
 
 @NgModule({
     imports: [
@@ -42,9 +45,12 @@ const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupR
         ProgrammingExerciseDialogComponent,
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeleteDialogComponent,
-        ProgrammingExerciseDeletePopupComponent
+        ProgrammingExerciseDeletePopupComponent,
     ],
-    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService],
+    providers: [
+        ProgrammingExerciseService,
+        ProgrammingExercisePopupService,
+    ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSProgrammingExerciseModule {}

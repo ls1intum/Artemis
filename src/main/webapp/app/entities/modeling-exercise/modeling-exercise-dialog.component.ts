@@ -18,6 +18,7 @@ import * as moment from 'moment';
     templateUrl: './modeling-exercise-dialog.component.html'
 })
 export class ModelingExerciseDialogComponent implements OnInit {
+
     modelingExercise: ModelingExercise;
     isSaving: boolean;
     releaseDate: Date;
@@ -39,8 +40,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     ngOnInit() {
         this.isSaving = false;
         this.courseService.query()
-          .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; },
-            (res: HttpResponse<Course[]>) => this.onError(res.body));
+            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
         this.releaseDate = new Date(this.modelingExercise.releaseDate || undefined);
         this.dueDate = new Date(this.modelingExercise.dueDate || undefined);
         this.releaseClockToggled = false;
@@ -69,16 +69,16 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.modelingExercise.dueDate = moment(this.dueDate).format();
         if (this.modelingExercise.id !== undefined) {
             this.subscribeToSaveResponse(
-              this.modelingExerciseService.update(this.modelingExercise));
+                this.modelingExerciseService.update(this.modelingExercise));
         } else {
             this.subscribeToSaveResponse(
-              this.modelingExerciseService.create(this.modelingExercise));
+                this.modelingExerciseService.create(this.modelingExercise));
         }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
         result.subscribe((res: HttpResponse<ModelingExercise>) =>
-          this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
+            this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: ModelingExercise) {

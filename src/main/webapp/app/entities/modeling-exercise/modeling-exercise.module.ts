@@ -17,7 +17,10 @@ import {
 } from './';
 import { SortByModule, DatePipeModule } from '../../components/pipes';
 
-const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
+const ENTITY_STATES = [
+    ...modelingExerciseRoute,
+    ...modelingExercisePopupRoute,
+];
 
 @NgModule({
     imports: [
@@ -26,7 +29,7 @@ const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
         SortByModule,
         DatePipeModule,
         OwlDateTimeModule,
-        OwlNativeDateTimeModule
+        OwlNativeDateTimeModule,
     ],
     declarations: [
         ModelingExerciseComponent,
@@ -34,16 +37,19 @@ const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
         ModelingExerciseDialogComponent,
         ModelingExerciseDeleteDialogComponent,
         ModelingExercisePopupComponent,
-        ModelingExerciseDeletePopupComponent
+        ModelingExerciseDeletePopupComponent,
     ],
     entryComponents: [
         ModelingExerciseComponent,
         ModelingExerciseDialogComponent,
         ModelingExercisePopupComponent,
         ModelingExerciseDeleteDialogComponent,
-        ModelingExerciseDeletePopupComponent
+        ModelingExerciseDeletePopupComponent,
     ],
-    providers: [ModelingExerciseService, ModelingExercisePopupService],
+    providers: [
+        ModelingExerciseService,
+        ModelingExercisePopupService,
+    ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSModelingExerciseModule {}
