@@ -20,20 +20,16 @@
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.releaseDate" for="field_releaseDate">Release Date</label>
             <div class="d-flex" >
-              <label class="form-control">{{ releaseDate | formatDate}}
-                <i class="fa  fa-clock-o fa-fw clock" (click)="releaseClockToggled = !releaseClockToggled"></i>
-              </label>
+              <label class="form-control" (click)="releaseClockToggled = !releaseClockToggled">{{ modelingExercise.releaseDate | formatDate}} </label>
             </div>
-            <owl-date-time-inline *ngIf=releaseClockToggled startAt="{{releaseDate}}"[(ngModel)]="releaseDate" name="releaseDatePicker"></owl-date-time-inline>
+            <owl-date-time-inline *ngIf=releaseClockToggled startAt="{{modelingExercise.releaseDate}}"[(ngModel)]="modelingExercise.releaseDate" name="releaseDatePicker"></owl-date-time-inline>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.dueDate" for="field_dueDate">Due Date</label>
             <div class="d-flex" >
-              <label class="form-control">{{ dueDate | formatDate}}
-                <i class="fa  fa-clock-o fa-fw clock" (click)="dueClockToggled = !dueClockToggled"></i>
-              </label>
+              <label class="form-control" (click)="dueClockToggled = !dueClockToggled">{{ modelingExercise.dueDate | formatDate}}</label>
             </div>
-            <owl-date-time-inline *ngIf=dueClockToggled startAt="{{dueDate}}"[(ngModel)]="dueDate" name="dueDatePicker"></owl-date-time-inline>
+            <owl-date-time-inline *ngIf=dueClockToggled startAt="{{modelingExercise.dueDate}}"[(ngModel)]="modelingExercise.dueDate" name="dueDatePicker"></owl-date-time-inline>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>

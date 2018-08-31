@@ -20,7 +20,6 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     feedbacks: Feedback[] = [];
     isSaving = false;
     completionDateToggled = false;
-    completionDate: Date;
 
     constructor(
         private resultService: ResultService,
@@ -32,7 +31,6 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     ngOnInit() {
         if (this.result.completionDate) {
             this.result.completionDate = this.datePipe.transform(this.result.completionDate, 'yyyy-MM-ddTHH:mm:ss');
-            this.completionDate = new Date(this.result.completionDate || undefined);
         }
         if (this.participation) {
             this.result.participation = this.participation;
@@ -45,14 +43,9 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    toggleClock() {
-      this.completionDateToggled = !this.completionDateToggled;
-    }
-
     save() {
         this.result.feedbacks = this.feedbacks;
         this.isSaving = true;
-        this.result.completionDate = moment(this.completionDate).format();
 
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;

@@ -34,8 +34,6 @@ export class CourseDialogComponent implements OnInit {
 
     ngOnInit() {
         this.isSaving = false;
-        this.startDate = new Date(this.course.startDate || undefined);
-        this.endDate = new Date(this.course.endDate || undefined);
     }
 
     clear() {
@@ -44,9 +42,6 @@ export class CourseDialogComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-
-        this.course.startDate = moment(this.startDate).format();
-        this.course.endDate = moment(this.endDate).format();
 
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(

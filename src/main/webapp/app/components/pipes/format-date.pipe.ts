@@ -6,8 +6,11 @@ import * as moment from 'moment';
 })
 export class DatePipe implements PipeTransform {
    transform(date: any, args?: any): any {
-     if (date && !isNaN(date)) {
-       const d = new Date(date);
+     if (date == null || date === undefined) {
+       return 'YYYY-MM-dd,HH:mm:ss';
+     }
+     const d = new Date(date);
+     if (d && !isNaN(d)) {
        return moment(d).seconds(0).format('YYYY-MM-DD,HH:mm:ss');
      } else {
         return 'YYYY-MM-dd,HH:mm:ss';

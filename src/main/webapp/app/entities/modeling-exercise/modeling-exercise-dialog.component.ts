@@ -21,8 +21,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     modelingExercise: ModelingExercise;
     isSaving: boolean;
-    releaseDate: Date;
-    dueDate: Date;
     releaseClockToggled: boolean;
     dueClockToggled: boolean;
 
@@ -41,8 +39,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
         this.courseService.query()
             .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
-        this.releaseDate = new Date(this.modelingExercise.releaseDate || undefined);
-        this.dueDate = new Date(this.modelingExercise.dueDate || undefined);
         this.releaseClockToggled = false;
         this.dueClockToggled = false;
     }
@@ -53,9 +49,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.modelingExercise.type = ExerciseType.MODELING;
-        this.modelingExercise.releaseDate = moment(this.releaseDate).format();
-        this.modelingExercise.dueDate = moment(this.dueDate).format();
         if (this.modelingExercise.id !== undefined) {
             this.subscribeToSaveResponse(
                 this.modelingExerciseService.update(this.modelingExercise));
