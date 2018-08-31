@@ -11,7 +11,5 @@ export class ProgrammingExercise extends Exercise {
     constructor(course?: Course) {
         super(ExerciseType.PROGRAMMING);
         this.course = course;
-        this.publishBuildPlanUrl = false;
-        this.allowOnlineEditor = false;
     }
 }

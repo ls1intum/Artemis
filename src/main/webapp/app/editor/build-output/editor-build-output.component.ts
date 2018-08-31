@@ -5,7 +5,7 @@ import { WindowRef } from '../../shared/websocket/window.service';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { EditorComponent } from '../editor.component';
 import { JhiWebsocketService } from '../../shared';
-import { ParticipationResultService, Result, ResultService } from '../../entities/result';
+import { Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
 
@@ -17,7 +17,6 @@ import * as interact from 'interactjs';
         WindowRef,
         RepositoryService,
         ResultService,
-        ParticipationResultService
     ]
 })
 
@@ -35,8 +34,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
     constructor(private parent: EditorComponent,
                 private jhiWebsocketService: JhiWebsocketService,
                 private repositoryService: RepositoryService,
-                private resultService: ResultService,
-                private participationResultService: ParticipationResultService) {}
+                private resultService: ResultService) {}
 
     /**
      * @function ngAfterViewInit
@@ -70,15 +68,16 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
      *          OR
      *       - Repository status was 'building' and is now done
      * @param {SimpleChanges} changes
+     *
+     * TODO: avoid this call and rather use the websocket mechanism to retrieve the latest result
+     * TODO: in any case make sure to ask the server for the latest rated result if the call cannot be avoided
+     *
      */
     ngOnChanges(changes: SimpleChanges): void {
         if ((changes.participation && this.participation) ||
             (changes.isBuilding && changes.isBuilding.currentValue === false && this.participation)) {
             if (!this.participation.results) {
-                this.participationResultService.query(
-                    this.participation.exercise.course.id,
-                    this.participation.exercise.id,
-                    this.participation.id,
+                this.resultService.findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id,
                     {showAllResults: false, ratedOnly: this.participation.exercise.type === 'quiz'})
                     .subscribe( results => {
                        this.toggleBuildLogs(results.body);
@@ -102,7 +101,7 @@ export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
     toggleBuildLogs(results: Result[]) {
         if (results && results[0]) {
-            this.resultService.details(results[0].id).subscribe( details => {
+            this.resultService.getFeedbackDetailsForResult(results[0].id).subscribe(details => {
                 if (details.body.length === 0) {
                     this.getBuildLogs();
                 } else {

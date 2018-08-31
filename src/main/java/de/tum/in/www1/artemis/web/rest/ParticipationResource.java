@@ -171,20 +171,6 @@ public class ParticipationResource {
             .body(result);
     }
 
-    //Deactivated because it would load all (thousands) participations and completely overload the server
-//    /**
-//     * GET  /participations : get all the participations.
-//     *
-//     * @return the ResponseEntity with status 200 (OK) and the list of participations in body
-//     */
-//    @GetMapping("/participations")
-//    @PreAuthorize("hasAnyRole('TA', 'ADMIN')")
-//    @Timed
-//    public List<Participation> getAllParticipations() {
-//        log.debug("REST request to get all Participations");
-//        return participationService.findAll();
-//    }
-
     /**
      * GET  /exercise/:exerciseId/participations : get all the participations for an exercise
      *
@@ -320,7 +306,7 @@ public class ParticipationResource {
 
 
     /**
-     * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for the "id" exercise.
+     * GET  /courses/:courseId/exercises/:exerciseId/participation: get the user's participation for a specific exercise.
      *
      * @param courseId   only included for API consistency, not actually used
      * @param exerciseId the id of the exercise for which to retrieve the participation
@@ -399,19 +385,11 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 200 (OK) and with body the participation, or with status 404 (Not Found)
      */
     @GetMapping(value = "/participations/{id}/status")
-    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<?> getParticipationStatus(@PathVariable Long id) {
         Participation participation = participationService.findOne(id);
         // NOTE: Disable Authorization check for increased performance
         // (Unauthorized users being unable to see any participation's status is not a priority!)
-//        Course course = participation.getExercise().getCourse();
-//        if (!authCheckService.isOwnerOfParticipation(participation) &&
-//             !authCheckService.isTeachingAssistantInCourse(course) &&
-//             !authCheckService.isInstructorInCourse(course) &&
-//             !authCheckService.isAdmin()) {
-//            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-//        }
         if (participation.getExercise() instanceof QuizExercise) {
             QuizExercise.Status status = QuizExercise.statusForQuiz((QuizExercise) participation.getExercise());
             return new ResponseEntity<>(status, HttpStatus.OK);

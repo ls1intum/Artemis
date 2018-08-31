@@ -5,6 +5,7 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { TextExercise } from './text-exercise.model';
 import { createRequestOption } from '../../shared';
+import { JhiDateUtils } from 'ng-jhipster';
 
 export type EntityResponseType = HttpResponse<TextExercise>;
 
@@ -13,7 +14,7 @@ export class TextExerciseService {
 
     private resourceUrl =  SERVER_API_URL + 'api/text-exercises';
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient, private dateUtils: JhiDateUtils) { }
 
     create(textExercise: TextExercise): Observable<EntityResponseType> {
         const copy = this.convert(textExercise);
@@ -61,6 +62,8 @@ export class TextExerciseService {
      */
     private convertItemFromServer(textExercise: TextExercise): TextExercise {
         const copy: TextExercise = Object.assign({}, textExercise);
+        copy.releaseDate = this.dateUtils.convertDateTimeFromServer(copy.releaseDate);
+        copy.dueDate = this.dateUtils.convertDateTimeFromServer(copy.dueDate);
         return copy;
     }
 
@@ -69,6 +72,8 @@ export class TextExerciseService {
      */
     private convert(textExercise: TextExercise): TextExercise {
         const copy: TextExercise = Object.assign({}, textExercise);
+        copy.releaseDate = this.dateUtils.toDate(textExercise.releaseDate);
+        copy.dueDate = this.dateUtils.toDate(textExercise.dueDate);
         return copy;
     }
 }

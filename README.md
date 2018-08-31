@@ -1,7 +1,7 @@
 # ArTEMiS: AuTomated assEssment Management System 
 This application was generated using JHipster 4.14.5, you can find documentation and help at [http://www.jhipster.tech/documentation-archive/v4.14.5](http://www.jhipster.tech/documentation-archive/v4.14.5).
 
-**Curent version:** 2.1.0
+**Curent version:** 2.2.0
 
 ## Main features
 ArTEMiS has the following main features:
@@ -50,7 +50,7 @@ This allows the students to immediately recognize which tasks are already fulfil
 
 ## Development Setup
 
-ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 8 and TypeScript development on the application client in the browser using [Angular 5](https://angular.io) and Webpack. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
+ArTEMis is based on [JHipster](https://jhipster.github.io), i.e. [Spring Boot](http://projects.spring.io/spring-boot) development on the application server using Java 8 and TypeScript development on the application client in the browser using [Angular 6](https://angular.io) and Webpack. To get an overview of the used technology, have a look at [https://jhipster.github.io/tech-stack](https://jhipster.github.io/tech-stack) and other tutorials on the JHipster homepage.  
 
 You can find tutorials how to setup JHipster in an IDE ([IntelliJ](https://www.jetbrains.com/idea) is recommended, but it also runs in other IDEs as well) on [https://jhipster.github.io/configuring-ide](https://jhipster.github.io/configuring-ide).
 Before you can build ArTEMiS, you must install and configure the following dependencies/tools on your machine:
@@ -60,8 +60,7 @@ Before you can build ArTEMiS, you must install and configure the following depen
 3. [Node.js 9.x](https://nodejs.org): We use Node (>=6.9.0 && <=9.11.1) to run a development web server and build the project. Depending on your system, you can install Node either from source or as a pre-packaged bundle.
 4. [Yarn 1.7.x](https://yarnpkg.com): We use Yarn to manage Node dependencies.
 Depending on your system, you can install Yarn either from source or as a pre-packaged bundle.
-5. [Bower 1.8.x](https://bower.io): We use Bower to manage CSS and JavaScript dependencies used in the Angular 1 application (in the hybrid mode which is deprecated and will be removed soon). You can install Bower with the command `npm install -g bower`. You can download all dependencies by
-running `bower install`. You only need to invoked this command once.
+5. [Bower 1.8.x](https://bower.io): We use Bower to manage CSS and JavaScript dependencies used in the Angular 1 application (in the hybrid mode which is deprecated and will be removed soon). You can install Bower with the command `npm install -g bower`. You can download all dependencies by running `bower install`. You only need to invoked this command once. (**Note**: this is deprecated and will be removed soon)
 
 ### Server Setup
 
@@ -147,8 +146,7 @@ To optimize the ArTEMiS application for production, run:
 ./gradlew -Pprod clean bootRepackage
 ```
 
-This will concatenate and minify the client CSS and TypeScript / JavaScript files. It will also modify `index.html` so it references these new files.
-To ensure everything worked, run:
+This will concatenate and minify the client CSS and TypeScript / JavaScript files. It will also modify `index.html` so it references these new files. To ensure everything worked, run:
 
 ```
 java -jar build/libs/*.war

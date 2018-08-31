@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseService, ExerciseType } from '../entities/exercise';
 import { Course, CourseService } from '../entities/course';
-import { ExerciseResultService } from '../entities/result/result.service';
+import { ResultService } from '../entities/result/result.service';
 import { DifferencePipe } from 'angular2-moment';
 import { ParticipationService } from '../entities/participation/participation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -42,7 +42,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
                 private momentDiff: DifferencePipe,
                 private courseService: CourseService,
                 private exerciseService: ExerciseService,
-                private exerciseResultService: ExerciseResultService,
+                private resultService: ResultService,
                 private modelingAssessmentService: ModelingAssessmentService,
                 private participationService: ParticipationService,
                 private modalService: NgbModal,
@@ -72,7 +72,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     }
 
     getResults() {
-        this.exerciseResultService.query(this.exercise.course.id, this.exercise.id, {
+        this.resultService.getResultsForExercise(this.exercise.course.id, this.exercise.id, {
             showAllResults: this.showAllResults,
             ratedOnly: this.exercise.type === ExerciseType.QUIZ,
             withSubmissions: this.exercise.type === ExerciseType.MODELING,

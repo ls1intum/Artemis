@@ -11,7 +11,7 @@
             "updated": "Text Exercise aktualisiert mit ID {{ param }}",
             "deleted": "Text Exercise gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Text Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Text Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Text Exercise"

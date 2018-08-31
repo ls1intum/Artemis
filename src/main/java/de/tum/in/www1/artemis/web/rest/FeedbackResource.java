@@ -10,6 +10,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -102,6 +103,7 @@ public class FeedbackResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/feedbacks/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteFeedback(@PathVariable Long id) {
         log.debug("REST request to delete Feedback : {}", id);
