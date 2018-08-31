@@ -144,13 +144,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         this.studentArray.forEach((student, indexStudent) => {
 
             let quizScoreString : string = ''; // initializing score string for csv export
-            let quizEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = []; // array to save scores
-
+            let quizEveryScore : Array<Score> = []; // array to save scores
+            
             let modelingScoreString : string = '';// initializing score string for csv export
-            let modelingEveryScore : Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
+            let modelingEveryScore : Array<Score> = [];
 
             let programmingScoreString = '';// initializing score string for csv export
-            let programmingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}> = [];
+            let programmingEveryScore: Array<Score> = [];
 
             this.allQuizExercises.forEach((quiz) => {
                 let bool : Boolean = true;
@@ -159,17 +159,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     if (quiz.id === scoresQ.exID) {
                         bool = false; // ensure to only enter the loop later once
                         quizScoreString += scoresQ.absoluteScore + ',';
-                        quizEveryScore.push({
-                            'exID': scoresQ.exID, 'exTitle': scoresQ.exTitle,
-                            'absoluteScore': +scoresQ.absoluteScore
-                        });
+                        quizEveryScore.push( new Score( scoresQ.resCompletionDate, scoresQ.exID, scoresQ.exTitle, +scoresQ.absoluteScore));
                     }
                 });
                 if (bool) {
-                    quizEveryScore.push({
-                        'exID': quiz.id, 'exTitle': quiz.title,
-                        'absoluteScore': 0
-                    });
+                    quizEveryScore.push(new Score( null, quiz.id, quiz.title, 0));
                     quizScoreString += '0,';
                 }
             });
@@ -180,17 +174,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     if (modelings.id === scoresM.exID) {
                         bool = false;
                         modelingScoreString += scoresM.absoluteScore + ',';
-                        modelingEveryScore.push({
-                            'exID': scoresM.exID, 'exTitle': scoresM.exTitle,
-                            'absoluteScore': +scoresM.absoluteScore
-                        });
+                        modelingEveryScore.push(new Score( scoresM.resCompletionDate, scoresM.exID, scoresM.exTitle, +scoresM.absoluteScore));
                     }
                 });
                 if (bool) {
-                    modelingEveryScore.push({
-                        'exID': modelings.id, 'exTitle': modelings.title,
-                        'absoluteScore': 0
-                    });
+                    modelingEveryScore.push(new Score( null, modelings.id, modelings.title, 0));
                     modelingScoreString += '0,';
                 }
             });
@@ -202,37 +190,31 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     if (programmings.id === scoresP.exID) {
                         bool = false;
                         programmingScoreString += scoresP.absoluteScore + ',';
-                        programmingEveryScore.push({
-                            'exID': scoresP.exID, 'exTitle': scoresP.exTitle,
-                            'absoluteScore': +scoresP.absoluteScore
-                        });
+                        programmingEveryScore.push( new Score( scoresP.resCompletionDate, scoresP.exID, scoresP.exTitle, +scoresP.absoluteScore));
                     }
                 });
                 if (bool) {
-                    programmingEveryScore.push({
-                        'exID': programmings.id, 'exTitle': programmings.title,
-                        'absoluteScore': 0
-                    });
+                    programmingEveryScore.push(new Score( null, programmings.id, programmings.title, 0));
                     programmingScoreString += '0,';
                 }
             });
 
             // adding temporary variables to our final scores array list
+            this.studentArray[indexStudent].totalScoreQuizzes = student.totalScoreQuizzes;
             this.studentArray[indexStudent].everyScoreForQuizzes = quizEveryScore;
             this.studentArray[indexStudent].everyScoreStringForQuizzes = quizScoreString;
-
+            
+            this.studentArray[indexStudent].totalScoreModeling = student.totalScoreModeling;
             this.studentArray[indexStudent].everyScoreForModeling = modelingEveryScore;
             this.studentArray[indexStudent].everyScoreStringForModeling = modelingScoreString;
-
+            
+            this.studentArray[indexStudent].totalScoreProgramming = student.totalScoreProgramming;
             this.studentArray[indexStudent].everyScoreForProgramming = programmingEveryScore;
             this.studentArray[indexStudent].everyScoreStringForProgramming = programmingScoreString;
 
             // calculate the successful and participation percentages
             this.studentArray[indexStudent].successfullyCompletedInPercent = (student.successful/ this.numberOfExercises) * 100;
             this.studentArray[indexStudent].participationInPercent = (student.participated / this.numberOfExercises) * 100;
-
-            this.studentArray[indexStudent].overallScore = +this.studentArray[indexStudent].totalScoreQuizzes
-                + +this.studentArray[indexStudent].totalScoreProgramming + +this.studentArray[indexStudent].totalScoreModeling;
         });
 
         // gets all students that were not caught in the results list
@@ -241,9 +223,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             let modelingString = ''; // we define these strings to cover the calues needed in the export
             let quizString = '';
             let programmingString = '';
-            let quizEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>=[];
-            let modelingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>=[];
-            let programmingEveryScore: Array<{exID: number, exTitle: string, absoluteScore: number}>=[];
+            let quizEveryScore: Array<Score>=[];
+            let modelingEveryScore: Array<Score>=[];
+            let programmingEveryScore: Array<Score>=[];
 
             const stud = participation.student;
 
@@ -253,7 +235,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 0,0,0,0,0,0,0,0,
                 true,0);
 
-            // create a 0 entry if the student has no exercise results
+            // create a 0 points entry if the student has no exercise results 
             if (!this.studentArray.some(student => student['id'] === student.id)) {
 
                 /*   console.log('do we need participation score?');
@@ -262,27 +244,15 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
                 this.allModelingExercises.forEach( (modelingExercise) => { // creating objects to store information about the given exercise
                     modelingString += '0,';
-                    modelingEveryScore.push({
-                        'exID': modelingExercise.id,
-                        'exTitle': modelingExercise.title,
-                        'absoluteScore': 0
-                    });
+                    modelingEveryScore.push( new Score( null, modelingExercise.id, modelingExercise.title, 0));
                 });
                 this.allQuizExercises.forEach( (quizExercise) => {
                     quizString += '0,';
-                    quizEveryScore.push({
-                        'exID': quizExercise.id,
-                        'exTitle': quizExercise.title,
-                        'absoluteScore': 0
-                    });
+                    quizEveryScore.push(new Score( null, quizExercise.id, quizExercise.title, 0));
                 });
                 this.allProgrammingExercises.forEach( (programmingExercise) => {
                     programmingString += '0,';
-                    programmingEveryScore.push({
-                        'exID': programmingExercise.id,
-                        'exTitle': programmingExercise.title,
-                        'absoluteScore': 0
-                    });
+                    programmingEveryScore.push(new Score( null, programmingExercise.id, programmingExercise.title, 0));
                 });
 
                 student.everyScoreForQuizzes = quizEveryScore;
@@ -296,7 +266,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
                 this.studentArray.push(student);
 
-            }
+            } else {
+                let indexOverallFinalScores : number = this.studentArray.findIndex( student => student.id === student.id);
+                this.studentArray[indexOverallFinalScores].overallScore = this.studentArray[indexOverallFinalScores].totalScoreQuizzes
+                    + this.studentArray[indexOverallFinalScores].totalScoreProgramming + this.studentArray[indexOverallFinalScores].totalScoreModeling;
+                }
         });
 
         this.finalScores = this.studentArray;
@@ -304,6 +278,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     }
 
     exportResults() { // method for exporting the csv with the needed data
+
+        this.getAllScoresForAllCourseParticipants();
 
         if (this.exportReady && this.finalScores.length > 0) {
             const rows = [];
@@ -384,7 +360,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         switch (exercise.type) {
             case 'quiz':
                 if (result.rated === true) {   // There should only be 1 rated result
-
+                    
                     let index : number = this.studentArray.findIndex( score => score.id === student.id);
                     this.studentArray[index].participated++;
                     this.studentArray[index].participatedQuizzes++;
@@ -392,13 +368,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                         this.studentArray[index].successful++;
                         this.studentArray[index].successfulQuizzes++;
                     }
-
-                    this.studentArray[index].scoreListForQuizzes.push({
-                        'resCompletionDate': resultCompletionDate,
-                        'exID': exercise.id,
-                        'exTitle': exercise.title,
-                        'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
-                    });
+            
+                    this.studentArray[index].scoreListForQuizzes.push(new Score( resultCompletionDate, exercise.id, exercise.title, this.round((result.score * exercise.maxScore) / 100, 2)));
                 }
                 break;
 
@@ -407,8 +378,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     let indexStudent : number = this.studentArray.findIndex( score => score.id === student.id);
                     if(indexStudent >= 0) {
                         let indexExc: number = this.studentArray[indexStudent].scoreListForProgramming.findIndex(exc => exc.exID === exercise.id);
-                        if(indexExc >= 0) {
-
+                        if(indexExc >= 0) { //if the exercise exist in the array
+                            
                             let existingScore = this.studentArray[indexStudent].scoreListForProgramming[indexExc];
 
                             if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {    // we want to have the last result withing the due date (see above)
@@ -428,7 +399,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                                     'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
                                 };
                             }
-                        } else {
+                        } else { //if the exercise does not exist in the array yet
                             // TODO Check if rules are fitting to logic
                             if (this.studentArray[indexStudent].exerciseNotCounted) {
                                 this.studentArray[indexStudent].participated++;
@@ -439,12 +410,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                                 this.studentArray[indexStudent].successful++;
                                 this.studentArray[indexStudent].successfulProgramming++;
                             }
-                            this.studentArray[indexStudent].scoreListForProgramming.push({
-                                'resCompletionDate': resultCompletionDate,
-                                'exID': exercise.id,
-                                'exTitle': exercise.title,
-                                'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
-                            });
+                            this.studentArray[indexStudent].scoreListForProgramming.push( new Score( resultCompletionDate, exercise.id, exercise.title, (this.round((result.score * exercise.maxScore) / 100, 2))));
                         }
                     }
                 }
@@ -489,12 +455,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                             this.studentArray[indexStudent].successfulModeling++;
                         }
 
-                        this.studentArray[indexStudent].scoreListForModeling.push({
-                            'resCompletionDate': resultCompletionDate,
-                            'exID': exercise.id,
-                            'exTitle': exercise.title,
-                            'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
-                        });
+                        this.studentArray[indexStudent].scoreListForModeling.push(new Score(resultCompletionDate, exercise.id, exercise.title, (this.round((result.score * exercise.maxScore) / 100, 2))));
                     }
                 }
                 // }
@@ -554,6 +515,20 @@ class Exercise { // creating a class for exercises
     }
 }
 
+class Score {
+    resCompletionDate: Date;
+    exID: number; 
+    exTitle: string; 
+    absoluteScore: Number;
+
+    constructor(resultCompletionDate: Date, exerciseID: number, exerciseTitle: string, absolutScore: Number){
+        this.resCompletionDate = resultCompletionDate;
+        this.exID = exerciseID;
+        this.exTitle = exerciseTitle;
+        this.absoluteScore = absolutScore;
+    }
+}
+
 class Student { // creating a class for students for better code quality
     firstName: string;
     lastName: string;
@@ -565,16 +540,16 @@ class Student { // creating a class for students for better code quality
     totalScoreProgramming: number;
     totalScoreModeling: number;
 
-    scoreListForQuizzes: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
-    everyScoreForQuizzes: Array<{exID: number, exTitle: string, absoluteScore: number}>;
+    scoreListForQuizzes: Array<Score>;
+    everyScoreForQuizzes: Array<Score>;
     everyScoreStringForQuizzes: string;
 
-    scoreListForProgramming: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
-    everyScoreForProgramming: Array<{exID: number, exTitle: string, absoluteScore: number}>;
+    scoreListForProgramming: Array<Score>;
+    everyScoreForProgramming: Array<Score>;
     everyScoreStringForProgramming: string;
 
-    scoreListForModeling: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>;
-    everyScoreForModeling: Array<{exID: number, exTitle: string, absoluteScore: number}>;
+    scoreListForModeling: Array<Score>;
+    everyScoreForModeling: Array<Score>;
     everyScoreStringForModeling: string;
 
     participated: number;
@@ -604,16 +579,16 @@ class Student { // creating a class for students for better code quality
     constructor(firstName: string, lastName: string, id: string, login: string, email: string,
                 totalScoreQuizzes: number, totalScoreProgramming: number, totalScoreModeling: number,
 
-                scoreListForQuizzes: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>,
-                everyScoreForQuizzes: Array<{exID: number, exTitle: string, absoluteScore: number}>,
+                scoreListForQuizzes: Array<Score>,
+                everyScoreForQuizzes: Array<Score>,
                 everyScoreStringForQuizzes: string,
 
-                scoreListForProgramming: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>,
-                everyScoreForProgramming: Array<{exID: number, exTitle: string, absoluteScore: number}>,
+                scoreListForProgramming: Array<Score>,
+                everyScoreForProgramming: Array<Score>,
                 everyScoreStringForProgramming: string,
 
-                scoreListForModeling: Array<{resCompletionDate: Date, exID: number, exTitle: string, absoluteScore: Number}>,
-                everyScoreForModeling: Array<{exID: number, exTitle: string, absoluteScore: number}>,
+                scoreListForModeling: Array<Score>,
+                everyScoreForModeling: Array<Score>,
                 everyScoreStringForModeling: string,
 
 
