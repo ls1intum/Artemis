@@ -5,7 +5,7 @@
   "private": true,
   "license": "MIT",
   "cacheDirectories": [
-      "node_modules"
+    "node_modules"
   ],
   "dependencies": {
     "@angular/animations": "^6.1.6",

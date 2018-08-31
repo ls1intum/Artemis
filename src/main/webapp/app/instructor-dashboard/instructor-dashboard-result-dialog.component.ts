@@ -46,7 +46,6 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     save() {
         this.result.feedbacks = this.feedbacks;
         this.isSaving = true;
-
         for (let i = 0; i < this.result.feedbacks.length; i++) {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }

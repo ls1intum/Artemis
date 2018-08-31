@@ -20,8 +20,6 @@ export class CourseDialogComponent implements OnInit {
 
     course: Course;
     isSaving: boolean;
-    startDate: Date;
-    endDate: Date;
     endClockToggled = false;
     startClockToggled = false;
 
@@ -42,7 +40,6 @@ export class CourseDialogComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-
         if (this.course.id !== undefined) {
             this.subscribeToSaveResponse(
                 this.courseService.update(this.course));
