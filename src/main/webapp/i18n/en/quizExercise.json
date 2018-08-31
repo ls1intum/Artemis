@@ -55,6 +55,8 @@
             "questions": "Questions",
             "multipleChoiceQuestion": "Multiple-Choice Question",
             "dragAndDropQuestion": "Drag-And-Drop Question",
+            "addMultipleChoiceQuestion": "Add Multiple-Choice Question",
+            "addDragAndDropQuestion": "Add Drag-And-Drop Question",
             "addExistingQuestions": "Add Existing Questions",
             "addSelectedQuestions": "Add Selected Questions",
             "selectCourse": "Select a Course",

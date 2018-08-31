@@ -31,8 +31,6 @@ import { ng1JhiWebsocketService } from './shared/websocket/ng1-websocket.service
 // jhipster-needle-angular-add-module-import JHipster will add new module here
 import { ActiveMenuDirective, ErrorComponent, FooterComponent, JhiMainComponent, NavbarComponent, PageRibbonComponent, ProfileService } from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
-import { QuizExerciseDetailWrapper } from './entities/quiz-exercise/quiz-exercise-detail.directive';
-import { QuizExerciseDetailComponent } from './entities/quiz-exercise';
 import { ng1TranslateService } from './shared/language/ng1-translate.service';
 import { ng1TranslatePartialLoaderService } from './shared/language/ng1-translate-partial-loader.service';
 import { ArTEMiSStatisticModule } from './statistics/statistic.module';
@@ -83,8 +81,6 @@ declare var angular: any;
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
-        QuizExerciseDetailWrapper,
-        QuizExerciseDetailComponent,
         QuizReEvaluateWrapper,
         QuizReEvaluateComponent,
         QuizExerciseExportComponent
@@ -96,9 +92,7 @@ declare var angular: any;
      */
     entryComponents: [
         /** @desc Angular app main component **/
-        JhiMainComponent,
-        /** @desc Upgraded QuizExerciseDetails component **/
-        QuizExerciseDetailComponent
+        JhiMainComponent
     ],
     providers: [
         ProfileService,

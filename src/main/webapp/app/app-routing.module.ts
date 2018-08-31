@@ -23,31 +23,12 @@ const LAYOUT_ROUTES = [
     }
 ];
 
-export class CustomHandlingStrategy implements UrlHandlingStrategy {
-    /**
-     * @class CustomHandlingStrategy
-     * @implements UrlHandlingStrategy
-     * @desc Can be used to tell Angular whether to handle a given URL or not.
-     * Useful when in need to handle a dual-router setup. Currently, the Angular router handles
-     * every URL change, so this just return 'true'
-     */
-    shouldProcessUrl(url) {
-        console.log('shouldProcessUrl: ' + url);
-        return true;
-    }
-    extract(url) { return url; }
-    merge(url, whole) { return url; }
-}
-
 @NgModule({
     imports: [
         RouterModule.forRoot(LAYOUT_ROUTES, { useHash: true , enableTracing: DEBUG_INFO_ENABLED })
     ],
     exports: [
         RouterModule
-    ],
-    providers: [
-        { provide: UrlHandlingStrategy, useClass: CustomHandlingStrategy }
-    ],
+    ]
 })
 export class ArTEMiSAppRoutingModule {}

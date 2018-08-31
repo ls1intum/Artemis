@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, OnChanges, SimpleChanges } from '@angular/core';
 import { QuizExerciseService } from './quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs/Subscription';
+import { Subscription } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from '../course/course.model';
 import { CourseService } from '../course/course.service';
@@ -9,29 +9,31 @@ import { QuizExercise } from './quiz-exercise.model';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
-import { Question, QuestionType } from '../../entities/question';
+import { Question, QuestionType, ScoringType} from '../../entities/question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
+import { AnswerOption } from '../../entities/answer-option';
+import { Option, Duration } from './quiz-exercise-interfaces';
 import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
-    template: './quiz-exercise-detail.component.html'
+    templateUrl: './quiz-exercise-detail.component.html',
+    providers: [ DragAndDropQuestionUtil ]
 })
 export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy {
 
-    // make constants available to html for comparison
+    // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
 
-    /** Dependencies as defined by the upgraded component */
     course: Course;
     quizExercise: QuizExercise;
     paramSub: Subscription;
     repository: QuizExerciseService;
     courseRepository: CourseService;
 
-    entity = {};
+    entity: QuizExercise;
     savedEntity = {};
     dateTime;
 
@@ -47,34 +49,24 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     mcqFilterEnabled: boolean;
 
     /** Duration object **/
-    duration = {
-        minutes: 0,
-        seconds: 0
-    };
+    duration = new Duration(0, 0);
 
     /** Status constants **/
     isSaving = false;
     isTrue = true;
 
     /** Status Options **/
-    statusOptionsVisible = [{
-        key: false,
-        label: 'Hidden'
-    }, {
-        key: true,
-        label: 'Visible'
-    }];
-    statusOptionsPractice = [{
-        key: false,
-        label: 'Closed'
-    }, {
-        key: true,
-        label: 'Open for Practice'
-    }];
-    statusOptionsActive = [{
-        key: true,
-        label: 'Active'
-    }];
+    statusOptionsVisible: Option[] = [
+        new Option(false, 'Hidden'),
+        new Option(true, 'Visible')
+    ];
+    statusOptionsPractice: Option[] = [
+        new Option(false, 'Closed'),
+        new Option(true, 'Open for Practice')
+    ];
+    statusOptionsActive: Option[] = [
+        new Option(true, 'Active')
+    ];
 
     constructor(private route: ActivatedRoute,
         private courseService: CourseService,
@@ -97,9 +89,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.mcqFilterEnabled = true;
 
         this.paramSub = this.route.params.subscribe(params => {
+            console.log('params', params);
             /** Query the courseService for the participationId given by the params */
             this.courseService.find(params['courseId']).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body;
+                this.init();
             });
             if (params['id']) {
                 this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
@@ -109,39 +103,39 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         });
         this.repository = this.quizExerciseService;
         this.courseRepository = this.courseService;
-
-        // this.$translatePartialLoader.addPart('quizExercise');
-        // this.$translatePartialLoader.addPart('global');
-        // this.$translate.refresh();
     }
 
     init() {
         if (this.quizExercise) {
             this.entity = this.quizExercise;
         } else {
-            this.entity = {
-                title: '',
-                duration: 600,
-                isVisibleBeforeStart: false,
-                isOpenForPractice: false,
-                isPlannedToStart: false,
-                releaseDate: new Date((new Date()).toISOString().substring(0, 16)),
-                randomizeQuestionOrder: true,
-                questions: []
-            };
+            this.entity = new QuizExercise();
+            this.entity.title = '';
+            this.entity.duration = 600;
+            this.entity.isVisibleBeforeStart = false;
+            this.entity.isOpenForPractice = false;
+            this.entity.isPlannedToStart = false;
+            this.entity.releaseDate = new Date((new Date()).toISOString().substring(0, 16));
+            this.entity.randomizeQuestionOrder = true;
+            this.entity.questions = [];
             this.quizExercise = this.entity;
         }
         this.prepareEntity(this.entity);
         this.prepareDateTime();
-        this.savedEntity = this.entity['id'] ? Object.assign({}, this.entity) : {};
+        this.savedEntity = this.entity.id ? Object.assign({}, this.entity) : {};
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
+
         this.updateDuration();
+
+        console.log('quizExercise', this.quizExercise);
+        console.log(!!this.quizExercise);
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.course || changes.quizExercise) {
+        console.log('changes', changes);
+        if (changes.course) {
             this.init();
         }
     }
@@ -169,24 +163,24 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (typeof this.quizExercise === 'undefined') {
             this.quizExercise = this.entity;
         }
-        this.quizExercise.questions = this.quizExercise.questions.concat([{
-            title: '',
-            text: 'Enter your question text here',
-            scoringType: 'ALL_OR_NOTHING',
-            randomizeOrder: true,
-            score: 1,
-            type: 'multiple-choice',
-            answerOptions: [
-                {
-                    isCorrect: true,
-                    text: 'Enter a correct answer option here'
-                },
-                {
-                    isCorrect: false,
-                    text: 'Enter an incorrect answer option here'
-                }
-            ]
-        }]);
+
+        const mcQuestion = new MultipleChoiceQuestion();
+        mcQuestion.title = '';
+        mcQuestion.text = 'Enter your question text here';
+        mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING;                    // explicit default value for multiple questions
+        mcQuestion.randomizeOrder = true;
+        mcQuestion.score = 1;
+
+        const correctSampleAnswerOption = new AnswerOption();
+        correctSampleAnswerOption.isCorrect = true;
+        correctSampleAnswerOption.text = 'Enter a correct answer option here';
+
+        const incorrectSampleAnswerOption = new AnswerOption();
+        incorrectSampleAnswerOption.isCorrect = false;
+        incorrectSampleAnswerOption.text = 'Enter an incorrect answer option here';
+
+        mcQuestion.answerOptions = [correctSampleAnswerOption, incorrectSampleAnswerOption];
+        this.quizExercise.questions.push(mcQuestion);
     }
 
     /**
@@ -196,17 +190,17 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (typeof this.quizExercise === 'undefined') {
             this.quizExercise = this.entity;
         }
-        this.quizExercise.questions = this.quizExercise.questions.concat([{
-            title: '',
-            text: 'Enter your question text here',
-            scoringType: 'ALL_OR_NOTHING',
-            randomizeOrder: true,
-            score: 1,
-            type: 'drag-and-drop',
-            dropLocations: [],
-            dragItems: [],
-            correctMappings: []
-        }]);
+
+        const dndQuestion = new DragAndDropQuestion();
+        dndQuestion.title = '';
+        dndQuestion.text = 'Enter your question text here';
+        dndQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS;     // explicit default value for drag and drop questions
+        dndQuestion.randomizeOrder = true;
+        dndQuestion.score = 1;
+        dndQuestion.dropLocations = [];
+        dndQuestion.dragItems = [];
+        dndQuestion.correctMappings = [];
+        this.quizExercise.questions.push(dndQuestion);
     }
 
     /**
@@ -268,10 +262,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         for (const question of this.allExistingQuestions) {
             if (!this.searchQueryText || this.searchQueryText === ''
                 || question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
-                if (this.mcqFilterEnabled === true && question.type === 'multiple-choice') {
+                if (this.mcqFilterEnabled === true && question.type === QuestionType.MULTIPLE_CHOICE) {
                     this.existingQuestions.push(question);
                 }
-                if (this.dndFilterEnabled === true && question.type === 'drag-and-drop') {
+                if (this.dndFilterEnabled === true && question.type === QuestionType.DRAG_AND_DROP) {
                     this.existingQuestions.push(question);
                 }
             }
@@ -339,19 +333,17 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const isGenerallyValid = this.quizExercise.title && this.quizExercise.title !== '' &&
             this.quizExercise.duration && this.quizExercise.questions && this.quizExercise.questions.length;
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
-            switch (question.type) {
-                case 'multiple-choice':
-                    const mcQuestion = question as MultipleChoiceQuestion;
-                    return mcQuestion.title && mcQuestion.title !== '' && mcQuestion.answerOptions.some(function(answerOption) {
-                        return answerOption.isCorrect;
-                    });
-                case 'drag-and-drop':
-                    const dndQuestion = question as DragAndDropQuestion;
-                    return dndQuestion.title && dndQuestion.title !== '' && dndQuestion.correctMappings &&
-                        dndQuestion.correctMappings.length > 0 && this.dragAndDropQuestionUtil.solve(dndQuestion, []).length &&
-                        this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion);
-                default:
-                    return question.title && question.title !== '';
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+                return question.title && question.title !== '' && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
+            } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                const dndQuestion = question as DragAndDropQuestion;
+                return question.title && question.title !== '' && dndQuestion.correctMappings &&
+                    dndQuestion.correctMappings.length > 0 && this.dragAndDropQuestionUtil.solve(question).length &&
+                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question);
+            } else {
+                console.log('Unknown question type: ' + question);
+                return question.title && question.title !== '';
             }
         }, this);
 
@@ -393,18 +385,20 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     translateValues: { index: index + 1 }
                 });
             }
-            if (question.type === 'multiple-choice') {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)) {
+                if (!mcQuestion.answerOptions.some(function(answerOption) {
+                    return answerOption.isCorrect;
+                })) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 }
                     });
                 }
             }
-            if (question.type === 'drag-and-drop') {
+            if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
-                if (!dndQuestion.correctMappings as DragAndDropQuestion || dndQuestion.correctMappings.length === 0) {
+                if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 }
@@ -478,25 +472,25 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         for (const question of questions) {
             delete question.questionStatistic;
             delete question.id;
-            if (question.type === 'multiple-choice') {
-                const mcq = question as MultipleChoiceQuestion;
-                for (const answerOption of mcq.answerOptions) {
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+                for (const answerOption of mcQuestion.answerOptions) {
                     delete answerOption.id;
                 }
                 this.quizExercise.questions = this.quizExercise.questions.concat([question]);
-            } else if (question.type === 'drag-and-drop') {
-                const dnd = question as DragAndDropQuestion;
+            } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                const dndQuestion = question as DragAndDropQuestion;
                 // Get image from the old question and duplicate it on the backend and then save new image to the question,
-                let fileUploadResponse = await this.fileUploaderService.duplicateFile(dnd.backgroundFilePath);
-                dnd.backgroundFilePath = fileUploadResponse.path;
+                let fileUploadResponse = await this.fileUploaderService.duplicateFile(dndQuestion.backgroundFilePath);
+                dndQuestion.backgroundFilePath = fileUploadResponse.path;
 
                 // For DropLocations, DragItems and CorrectMappings we need to provide tempID,
                 // This tempID is used for keep tracking of mappings by backend. Backend removes tempID and generated a new id,
-                for (const dropLocation of dnd.dropLocations) {
+                for (const dropLocation of dndQuestion.dropLocations) {
                     dropLocation.tempID = dropLocation.id;
                     delete dropLocation.id;
                 }
-                for (const dragItem of dnd.dragItems) {
+                for (const dragItem of dndQuestion.dragItems) {
                     // Duplicating image on backend. This is only valid for image drag items. For text drag items, pictureFilePath is null,
                     if (dragItem.pictureFilePath !== null) {
                         fileUploadResponse = await this.fileUploaderService.duplicateFile(dragItem.pictureFilePath);
@@ -505,7 +499,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     dragItem.tempID = dragItem.id;
                     delete dragItem.id;
                 }
-                for (const correctMapping of dnd.correctMappings) {
+                for (const correctMapping of dndQuestion.correctMappings) {
                     // Following fields are not required for dnd question. They will be generated by the backend,
                     delete correctMapping.id;
                     delete correctMapping.dragItemIndex;
@@ -535,7 +529,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (this.hasSavedQuizStarted() || !this.pendingChanges() || !this.validQuiz()) {
             return;
         }
-        this.quizExercise.type = 'quiz-exercise';
         this.isSaving = true;
         if (this.quizExercise.id !== undefined) {
             this.repository.update(this.quizExercise)
@@ -584,7 +577,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Prepares the date and time model
      */
     prepareDateTime() {
-        // TODO
         this.dateTime = this.quizExercise.releaseDate;
     }
 
@@ -592,7 +584,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Reach to changes of time inputs by updating model and ui
      */
     onDateTimeChange() {
-        // TODO
         this.quizExercise.releaseDate = this.dateTime;
     }
 
