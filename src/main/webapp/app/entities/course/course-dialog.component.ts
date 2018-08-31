@@ -42,17 +42,6 @@ export class CourseDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    toggleClock(input: string) {
-      switch ( input ) {
-        case 'startDate':
-          this.startClockToggled = !this.startClockToggled;
-          break;
-        case 'endDate':
-          this.endClockToggled = !this.endClockToggled;
-          break;
-      }
-    }
-
     save() {
         this.isSaving = true;
 

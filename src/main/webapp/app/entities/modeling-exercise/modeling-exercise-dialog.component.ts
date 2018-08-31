@@ -51,17 +51,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    toggleClock(input: string) {
-        switch (input) {
-            case 'releaseDate':
-                this.releaseClockToggled = !this.releaseClockToggled;
-                break;
-            case 'dueDate':
-                this.dueClockToggled = !this.dueClockToggled;
-                break;
-        }
-    }
-
     save() {
         this.isSaving = true;
         this.modelingExercise.type = ExerciseType.MODELING;
