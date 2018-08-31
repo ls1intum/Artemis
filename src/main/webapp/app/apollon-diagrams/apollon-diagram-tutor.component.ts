@@ -72,10 +72,12 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             this.modelingAssessmentService.getDataForEditor(exerciseId, id).subscribe(data => {
                 this.modelingExercise = data.modelingExercise as ModelingExercise;
                 /**
-                 * set diagramType to class diagram if exercise is use case or communication
-                 * because apollon does not support those yet
+                 * set diagramType to class diagram if exercise is null, use case or communication
+                 * apollon does not support use case and communication yet
                  */
-                if (this.modelingExercise.diagramType === DiagramType.USE_CASE || this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
+                if (this.modelingExercise.diagramType === null ||
+                    this.modelingExercise.diagramType === DiagramType.USE_CASE ||
+                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
                     this.modelingExercise.diagramType = DiagramType.CLASS;
                 }
                 this.submission = data.modelingSubmission as ModelingSubmission;
