@@ -3,8 +3,7 @@ import { RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
 import { ArTEMiSSharedModule } from '../shared';
 import { modelingEditorRoute } from './modeling-editor.route';
-import { ResultComponent } from '../courses/results/result.component';
-import { ArTEMiSCoursesModule } from '../courses/courses.module';
+import { ArTEMiSResultModule, ResultComponent } from '../entities/result';
 import { ModelingEditorService } from './modeling-editor.service';
 
 const ENTITY_STATES = [
@@ -15,7 +14,7 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        ArTEMiSCoursesModule
+        ArTEMiSResultModule
     ],
     declarations: [
         ModelingEditorComponent

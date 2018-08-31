@@ -248,8 +248,7 @@ public class QuizExerciseResource {
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents();
 
-        // filter out the statistic information if the statistic is not released
-        // TODO: check if statistic is released
+        // filter out the statistic information
         quizExercise.setQuizPointStatistic(null);
 
         log.debug("    filtered info after {} ms", System.currentTimeMillis() - start);
@@ -358,7 +357,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/quiz-exercises/{id}")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long id) {
         log.debug("REST request to delete QuizExercise : {}", id);
@@ -369,7 +368,7 @@ public class QuizExerciseResource {
         }
 
         Course course = quizExercise.getCourse();
-        if (!courseService.userHasAtLeastTAPermissions(course)) {
+        if (!courseService.userHasAtLeastInstructorPermissions(course)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

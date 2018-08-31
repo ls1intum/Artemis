@@ -50,7 +50,7 @@ dependencyManagement {
 defaultTasks 'bootRun'
 
 group = 'de.tum.in.www1.artemis'
-version = '2.1.0'
+version = '2.2.0'
 description = 'AuTomated assEssment Management System for Interactive Learning'
 
 bootRepackage {
@@ -232,7 +232,7 @@ task cleanResources(type: Delete) {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.8'
+    gradleVersion = '4.10'
 }
 
 task stage(dependsOn: 'bootRepackage') {

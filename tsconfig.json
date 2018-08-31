@@ -23,7 +23,8 @@
             ],
             "app/*": ["src/main/webapp/app/*"]
         },
-        "importHelpers": true
+        "importHelpers": true,
+        "allowJs": true
     },
     "include": [
         "src/main/webapp/app"

@@ -7,8 +7,9 @@ import { TranslateService } from '@ngx-translate/core';
 import * as Chart from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
-import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
-import { MultipleChoiceQuestionStatistic } from 'app/entities/multiple-choice-question-statistic';
+import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
+import { MultipleChoiceQuestionStatistic } from '../../entities/multiple-choice-question-statistic';
+import { QuestionType } from '../../entities/question';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
@@ -16,6 +17,11 @@ import { MultipleChoiceQuestionStatistic } from 'app/entities/multiple-choice-qu
     providers: [QuizStatisticUtil, ArtemisMarkdown]
 })
 export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
     quizExercise: QuizExercise;
     questionStatistic: MultipleChoiceQuestionStatistic;
     question: MultipleChoiceQuestion;
@@ -232,14 +238,15 @@ console.log(chart);
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        this.question = this.quizExercise.questions.filter( question => question.id === this.questionIdParam)[0];
+        const updatedQuestion = this.quizExercise.questions.filter( question => this.questionIdParam === question.id)[0];
+        this.question = updatedQuestion as MultipleChoiceQuestion;
         // if the Anyone finds a way to the Website,
         // with an wrong combination of QuizId and QuestionId
         //      -> go back to Courses
         if (this.question === null) {
             this.router.navigateByUrl('courses');
         }
-        this.questionStatistic = this.question.questionStatistic;
+        this.questionStatistic = this.question.questionStatistic as MultipleChoiceQuestionStatistic;
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {

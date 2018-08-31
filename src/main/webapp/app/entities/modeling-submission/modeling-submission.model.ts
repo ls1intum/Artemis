@@ -1,11 +1,11 @@
-import { Submission } from '../submission';
+import { Submission, SubmissionExerciseType } from '../submission';
 
 export class ModelingSubmission extends Submission {
-    constructor(
-        public id?: number,
-        public model?: string,
-        public submitted?: boolean,
-    ) {
-        super();
+
+    public model: string;
+    public explanationText: string;
+
+    constructor() {
+        super(SubmissionExerciseType.MODELING);
     }
 }

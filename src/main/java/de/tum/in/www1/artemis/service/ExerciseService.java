@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -82,16 +82,10 @@ public class ExerciseService {
         log.debug("Request to get all Exercises");
         List<Exercise> result = exerciseRepository.findAll();
         User user = userService.getUserWithGroupsAndAuthorities();
-        Authority adminAuthority = new Authority();
-        adminAuthority.setName("ROLE_ADMIN");
         Stream<Exercise> userExercises = result.stream().filter(
-            exercise -> user.getGroups().contains(exercise.getCourse().getStudentGroupName())
-                || user.getGroups().contains(exercise.getCourse().getTeachingAssistantGroupName())
-                || user.getAuthorities().contains(adminAuthority)
-                || exercise.getCourse().getTitle().equals("Archive") // TODO: Maybe we want to externalize the configuration of the "Archive" course name
-        );
+            exercise -> authCheckService.isAllowedToSeeExercise(exercise, user));
         List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
-        return new PageImpl<>(filteredExercises, pageable, filteredExercises.size());
+        return new PageImpl<>(userExercises.collect(Collectors.toList()), pageable, filteredExercises.size());
     }
 
     @Transactional(readOnly = true)
@@ -206,7 +200,7 @@ public class ExerciseService {
                         }
                     }
 
-                    participation.setInitializationState(ParticipationState.INACTIVE);
+                    participation.setInitializationState(InitializationState.INACTIVE);
                     participation.setBuildPlanId(null);
                     participationService.save(participation);
                 }
@@ -221,7 +215,7 @@ public class ExerciseService {
                     //delete the repository on the VC Server
                     versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
                     participation.setRepositoryUrl(null);
-                    participation.setInitializationState(ParticipationState.FINISHED);
+                    participation.setInitializationState(InitializationState.FINISHED);
                     participationService.save(participation);
                 }
             });

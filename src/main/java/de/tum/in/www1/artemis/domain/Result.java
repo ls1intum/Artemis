@@ -12,9 +12,9 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * A Result.
@@ -58,18 +58,17 @@ public class Result implements Serializable {
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
-
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
     private Submission submission;
 
-    //TODO: we might want to store it as a list (see quizzes)
     @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)
+    @OrderColumn
     @JsonIgnoreProperties("result")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
-    private Set<Feedback> feedbacks = new HashSet<>();
+    private List<Feedback> feedbacks = new ArrayList<>();
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -225,11 +224,11 @@ public class Result implements Serializable {
         this.submission = submission;
     }
 
-    public Set<Feedback> getFeedbacks() {
+    public List<Feedback> getFeedbacks() {
         return feedbacks;
     }
 
-    public Result feedbacks(Set<Feedback> feedbacks) {
+    public Result feedbacks(List<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
         return this;
     }
@@ -246,7 +245,7 @@ public class Result implements Serializable {
         return this;
     }
 
-    public void setFeedbacks(Set<Feedback> feedbacks) {
+    public void setFeedbacks(List<Feedback> feedbacks) {
         this.feedbacks = feedbacks;
     }
 

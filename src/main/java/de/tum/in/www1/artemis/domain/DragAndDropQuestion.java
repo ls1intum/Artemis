@@ -218,7 +218,7 @@ public class DragAndDropQuestion extends Question implements Serializable {
         // check if at least one correct mapping exists
         return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
 
-        // TODO (?): Add checks for "is solvable" and "no misleading correct mapping"
+        // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
 
     /*

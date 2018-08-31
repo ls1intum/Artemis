@@ -123,7 +123,6 @@ export class QuizReEvaluateService {
      * Convert a QuizExercise to a JSON which can be sent to the server.
      */
     private convert(quizExercise: QuizExercise): QuizExercise {
-        quizExercise.type = 'quiz-exercise';
         const copy: QuizExercise = Object.assign({}, quizExercise);
         return copy;
     }

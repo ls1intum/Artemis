@@ -7,18 +7,25 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
-import { QuizSubmissionService } from '../../entities/quiz-submission';
-import { ExerciseParticipationService, Participation } from '../../entities/participation';
-import { Result } from 'app/entities/result';
-import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
-import { MultipleChoiceQuestion } from 'app/entities/multiple-choice-question';
+import { QuizSubmission, QuizSubmissionService } from '../../entities/quiz-submission';
+import { ParticipationService } from '../../entities/participation';
+import { Result } from '../../entities/result';
+import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
+import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
+import { MultipleChoiceSubmittedAnswer } from '../../entities/multiple-choice-submitted-answer';
+import { DragAndDropSubmittedAnswer } from '../../entities/drag-and-drop-submitted-answer';
+import { QuestionType } from '../../entities/question';
 
 @Component({
     selector: 'jhi-quiz',
     templateUrl: './quiz.component.html',
-    providers: [ExerciseParticipationService]
+    providers: [ParticipationService]
 })
 export class QuizComponent implements OnInit, OnDestroy {
+
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
 
     private subscription: Subscription;
     private subscriptionData: Subscription;
@@ -42,17 +49,17 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     sendWebsocket = null;
     showingResult = false;
-    userScore: any = '?';
+    userScore: number;
 
-    mode;
-    submission: any = {};
-    quizExercise;
-    totalScore;
+    mode: string;
+    submission = new QuizSubmission();
+    quizExercise: QuizExercise;
+    totalScore: number;
     selectedAnswerOptions = {};
-    dragAndDropMappings;
-    result;
+    dragAndDropMappings = {};
+    result: Result;
     questionScores = {};
-    id;
+    id: number;
     interval: any;
 
     /**
@@ -74,7 +81,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     constructor(private jhiWebsocketService: JhiWebsocketService,
                 private quizExerciseService: QuizExerciseService,
-                private exerciseParticipationService: ExerciseParticipationService,
+                private participationService: ParticipationService,
                 private route: ActivatedRoute,
                 private jhiAlertService: JhiAlertService,
                 private quizSubmissionService: QuizSubmissionService) {}
@@ -168,8 +175,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.subscribeToWebsocketChannels();
 
         // load the quiz (and existing submission if quiz has started)
-        this.exerciseParticipationService.find(1, this.id).subscribe(
-            (participation: Participation) => {
+        this.participationService.findParticipation(1, this.id).subscribe(participation => {
                 this.applyParticipationFull(participation);
             },
             (res: HttpErrorResponse) => this.onError(res.message)
@@ -224,7 +230,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      *
      * @param quizExercise {object} the quizExercise to start
      */
-    startQuizPreviewOrPractice(quizExercise) {
+    startQuizPreviewOrPractice(quizExercise: QuizExercise) {
         // init quiz
         this.quizExercise = quizExercise;
         this.initQuiz();
@@ -233,7 +239,7 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.randomizeOrder(this.quizExercise);
 
         // init empty submission
-        this.submission = {};
+        this.submission = new QuizSubmission();
 
         // adjust end date
         this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.duration, 'seconds');
@@ -252,8 +258,8 @@ export class QuizComponent implements OnInit, OnDestroy {
             // submission channel => react to new submissions
             this.jhiWebsocketService.subscribe('/user' + this.submissionChannel);
             this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe(
-                payload => {
-                    this.onSaveSuccess(payload);
+                submission => {
+                    this.onSaveSuccess(submission);
                 }, error => {}
             );
 
@@ -272,7 +278,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.receive(this.participationChannel).subscribe(
                 payload => {
                     if (this.waitingForQuizStart) {
-                        // only apply completely if quiz is hasn't started to prevent jumping ui during participation
+                        // only apply completely if quiz hasn't started to prevent jumping ui during participation
                         this.applyParticipationFull(payload);
                     } else {
                         // update quizExercise and results / submission
@@ -368,17 +374,14 @@ export class QuizComponent implements OnInit, OnDestroy {
 
         if (this.quizExercise.questions) {
             this.quizExercise.questions.forEach(question => {
-                switch (question.type) {
-                    case 'multiple-choice':
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions[question.id] = [];
-                        break;
-                    case 'drag-and-drop':
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings[question.id] = [];
-                        break;
-                    default:
-                        console.error('Unknown question type: ' + question.type);
+                if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.selectedAnswerOptions[question.id] = [];
+                } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.dragAndDropMappings[question.id] = [];
+                } else {
+                    console.error('Unknown question type: ' + question);
                 }
             }, this);
         }
@@ -403,17 +406,14 @@ export class QuizComponent implements OnInit, OnDestroy {
                 const submittedAnswer = this.submission.submittedAnswers.find(function(answer) {
                     return answer.question.id === question.id;
                 });
-                switch (question.type) {
-                    case 'multiple-choice':
-                        // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.selectedAnswerOptions[question.id] = submittedAnswer ? submittedAnswer.selectedOptions : [];
-                        break;
-                    case 'drag-and-drop':
-                        // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                        this.dragAndDropMappings[question.id] = submittedAnswer ? submittedAnswer.mappings : [];
-                        break;
-                    default:
-                        console.error('Unknown question type: ' + question.type);
+                if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                    // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.selectedAnswerOptions[question.id] = submittedAnswer ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions : [];
+                } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                    // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
+                    this.dragAndDropMappings[question.id] = submittedAnswer ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
+                } else {
+                    console.error('Unknown question type: ' + question);
                 }
             }, this);
         }
@@ -443,11 +443,10 @@ export class QuizComponent implements OnInit, OnDestroy {
                 return;
             }
             // generate the submittedAnswer object
-            this.submission.submittedAnswers.push({
-                question,
-                selectedOptions: this.selectedAnswerOptions[questionID],
-                type: question.type
-            });
+            const mcSubmittedAnswer = new MultipleChoiceSubmittedAnswer();
+            mcSubmittedAnswer.question = question;
+            mcSubmittedAnswer.selectedOptions = this.selectedAnswerOptions[questionID];
+            this.submission.submittedAnswers.push(mcSubmittedAnswer);
         }, this);
 
         // for drag-and-drop questions
@@ -461,11 +460,10 @@ export class QuizComponent implements OnInit, OnDestroy {
                 return;
             }
             // generate the submittedAnswer object
-            this.submission.submittedAnswers.push({
-                question,
-                mappings: this.dragAndDropMappings[questionID],
-                type: question.type
-            });
+            const dndSubmittedAnswer = new DragAndDropSubmittedAnswer();
+            dndSubmittedAnswer.question = question;
+            dndSubmittedAnswer.mappings = this.dragAndDropMappings[questionID];
+            this.submission.submittedAnswers.push(dndSubmittedAnswer);
         }, this);
     }
 
@@ -490,7 +488,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                 this.showResult(participation.results);
             }
         } else {
-            this.submission = {};
+            this.submission = new QuizSubmission();
         }
     }
 
@@ -543,6 +541,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         }
     }
 
+    /*
+     * This method only handles the update of the quiz after the quiz has ended
+     */
     applyParticipationAfterStart(participation) {
         if (participation.results.length &&
             participation.results[0].resultString &&
@@ -560,38 +561,42 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     /**
      * Transfer additional information (explanations, correct answers) from
-     * the given full quiz exercise to quizExercise
+     * the given full quiz exercise to quizExercise.
+     * This method is typically invoked after the quiz has ended and makes sure that the (random) order of the quiz
+     * questions and answer options for the particular user is respected
      *
      * @param fullQuizExercise {object} the quizExercise containing additional information
      */
-    transferInformationToQuizExercise(fullQuizExercise) {
+    transferInformationToQuizExercise(fullQuizExercise: QuizExercise) {
         this.quizExercise.questions.forEach(function(question) {
             // find updated question
             const fullQuestion = fullQuizExercise.questions.find(function(localQuestion) {
                 return question.id === localQuestion.id;
             });
             if (fullQuestion) {
-                question.explanation = fullQuestion.explanation;
+            question.explanation = fullQuestion.explanation;
 
-                switch (question.type) {
-                    case 'multiple-choice':
-                        question.answerOptions.forEach(function(answerOption) {
-                            // find updated answerOption
-                            const fullAnswerOption = fullQuestion.answerOptions.find(function(option) {
-                                return answerOption.id === option.id;
-                            });
-                            if (fullAnswerOption) {
-                                answerOption.explanation = fullAnswerOption.explanation;
-                                answerOption.isCorrect = fullAnswerOption.isCorrect;
-                            }
-                        });
-                        break;
-                    case 'drag-and-drop':
-                        question.correctMappings = fullQuestion.correctMappings;
-                        break;
-                }
+            if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                const mcQuestion = question as MultipleChoiceQuestion;
+
+                mcQuestion.answerOptions.forEach(function(answerOption) {
+                    // find updated answerOption
+                    const fullAnswerOption = mcQuestion.answerOptions.find(function(option) {
+                        return answerOption.id === option.id;
+                    });
+                    if (fullAnswerOption) {
+                        answerOption.explanation = fullAnswerOption.explanation;
+                        answerOption.isCorrect = fullAnswerOption.isCorrect;
+                    }
+                });
+            } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                const dndQuestion = fullQuestion as DragAndDropQuestion;
+                dndQuestion.correctMappings = dndQuestion.correctMappings;
+            } else {
+                console.log('Unknown question type ' + question);
             }
-        }, this);
+        }
+    }, this);
     }
 
     /**
@@ -635,13 +640,12 @@ export class QuizComponent implements OnInit, OnDestroy {
             // shuffle answerOptions / dragItems within questions
             quizExercise.questions.forEach(question => {
                 if (question.randomizeOrder) {
-                    switch (question.type) {
-                        case 'multiple-choice':
-                            this.shuffle((question as MultipleChoiceQuestion).answerOptions);
-                            break;
-                        case 'drag-and-drop':
-                            this.shuffle((question as DragAndDropQuestion).dragItems);
-                            break;
+                    if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                        this.shuffle((question as MultipleChoiceQuestion).answerOptions);
+                    } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                        this.shuffle((question as DragAndDropQuestion).dragItems);
+                    } else {
+                        console.log('Unknown question type: ' + question);
                     }
                 }
             }, this);
@@ -690,12 +694,12 @@ export class QuizComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Callback function for handling response after saving submission to server
-     * @param response The response data from the server
+     * Callback function for handling quiz submission after saving submission to server
+     * @param quizSubmission The quiz submission data from the server
      */
-    onSaveSuccess(response) {
-        if (!response) {
-            // TODO OLD: Include reason why saving failed
+    onSaveSuccess(quizSubmission: QuizSubmission) {
+        if (!quizSubmission) {
+            // TODO: Include reason why saving failed
             alert('Saving Answers failed.');
             this.unsavedChanges = true;
             this.isSubmitting = false;
@@ -707,18 +711,18 @@ export class QuizComponent implements OnInit, OnDestroy {
             }
             return;
         }
-        if (response.submitted) {
+        if (quizSubmission.submitted) {
             this.outstandingWebsocketResponses = 0;
             this.isSaving = false;
             this.unsavedChanges = false;
             this.isSubmitting = false;
-            this.submission = response;
+            this.submission = quizSubmission;
             this.updateSubmissionTime();
             this.applySubmission();
         } else if (this.outstandingWebsocketResponses === 0) {
             this.isSaving = false;
             this.unsavedChanges = false;
-            this.submission = response;
+            this.submission = quizSubmission;
             this.updateSubmissionTime();
             this.applySubmission();
         } else {
@@ -726,8 +730,8 @@ export class QuizComponent implements OnInit, OnDestroy {
             if (this.outstandingWebsocketResponses === 0) {
                 this.isSaving = false;
                 this.unsavedChanges = false;
-                if (response) {
-                    this.submission.submissionDate = response.submissionDate;
+                if (quizSubmission) {
+                    this.submission.submissionDate = quizSubmission.submissionDate;
                     this.updateSubmissionTime();
                 }
             }
@@ -744,20 +748,20 @@ export class QuizComponent implements OnInit, OnDestroy {
             case 'practice':
                 if (!this.submission.id) {
                     this.quizSubmissionService.submitForPractice(this.submission, 1, this.id).subscribe(
-                        (res: HttpResponse<Result>) => {
-                            this.onSubmitPracticeOrPreviewSuccess(res.body);
+                        (response: HttpResponse<Result>) => {
+                            this.onSubmitPracticeOrPreviewSuccess(response.body);
                         },
-                        (res: HttpErrorResponse) => this.onSubmitError(res.message)
+                        (response: HttpErrorResponse) => this.onSubmitError(response.message)
                     );
                 }
                 break;
             case 'preview':
                 if (!this.submission.id) {
                     this.quizSubmissionService.submitForPreview(this.submission, 1, this.id).subscribe(
-                        (res: HttpResponse<Result>) => {
-                            this.onSubmitPracticeOrPreviewSuccess(res.body);
+                        (response: HttpResponse<Result>) => {
+                            this.onSubmitPracticeOrPreviewSuccess(response.body);
                         },
-                        (res: HttpErrorResponse) => this.onSubmitError(res.message)
+                        (response: HttpErrorResponse) => this.onSubmitError(response.message)
                     );
                 }
                 break;
@@ -783,7 +787,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     onSubmitPracticeOrPreviewSuccess(result: Result) {
         this.isSubmitting = false;
-        this.submission = result.submission;
+        this.submission = result.submission as QuizSubmission;
         this.applySubmission();
         this.showResult([result]);
     }

@@ -26,7 +26,9 @@
             "exercises": "Exercises",
             "programmingExercises": "Programmieraufgaben",
             "quizExercises": "Quizaufgaben",
-            "modelingExercises": "Modellierungsaufgaben (Beta)"
+            "modelingExercises": "Modellierungsaufgaben (Beta)",
+            "textExercises": "Textaufgabe (Beta)",
+            "fileUploadExercises": "Datei Upload Aufgabe (Beta)"
         }
     }
 }

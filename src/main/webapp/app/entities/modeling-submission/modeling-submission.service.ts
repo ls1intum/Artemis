@@ -15,6 +15,8 @@ export class ModelingSubmissionService {
 
     private resourceUrl =  SERVER_API_URL + 'api/modeling-submissions';
 
+    // TODO: we need to make sure that the server either returns a modelingSubmission as defined below or that we change the return type of the below typescript functions
+
     constructor(private http: HttpClient) { }
 
     create(modelingSubmission: ModelingSubmission, courseId?: number, exerciseId?: number): Observable<EntityResponseType> {

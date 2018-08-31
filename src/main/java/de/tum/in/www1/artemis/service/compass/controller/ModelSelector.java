@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.compass.controller;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLModel;
-import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 
 import java.util.ArrayList;
 import java.util.Comparator;

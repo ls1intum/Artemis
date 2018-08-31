@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseService, CourseScoreCalculationService } from '../entities/course';
+import { Course, CourseScoreCalculationService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-courses',
@@ -16,7 +17,7 @@ export class CoursesComponent implements OnInit {
     courses: Course[];
     filterByCourseId: number;
     filterByExerciseId: number;
-    private sub: any;
+    private subscription: Subscription;
 
     constructor(
         private courseService: CourseService,
@@ -26,7 +27,7 @@ export class CoursesComponent implements OnInit {
 
     ngOnInit(): void {
         // (+) converts string 'id' to a number
-        this.sub = this.route.params.subscribe(params => {
+        this.subscription = this.route.params.subscribe(params => {
             this.filterByCourseId = +params['courseId'];
             this.filterByExerciseId = +params['exerciseId'];
             this.loadAll();
@@ -48,7 +49,7 @@ export class CoursesComponent implements OnInit {
                     this.courses = this.courses.filter(course => course.id === this.filterByCourseId);
                 }
             },
-            (res: Course[]) => this.onError(res)
+            (response: string) => this.onError(response)
         );
     }
 
@@ -76,6 +77,4 @@ export class CoursesComponent implements OnInit {
             return 0;
         }
     }
-
-    // TODO migrate repository functionality from courses.controller
 }

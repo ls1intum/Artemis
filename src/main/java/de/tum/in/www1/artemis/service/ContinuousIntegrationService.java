@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 
 import java.net.URL;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by muenchdo on 07/09/16.
@@ -72,7 +71,6 @@ public interface ContinuousIntegrationService {
      */
     public Boolean buildPlanIdIsValid(String buildPlanId);
 
-    //TODO: this should rather return a List instead of a Set
     /**
      * Get details about the latest build result.
      *
@@ -82,7 +80,7 @@ public interface ContinuousIntegrationService {
      * @param result the result for which to get details
      * @return List of automatic feedback by the continuous integration server. contains the test methods and their results:
      */
-    public Set<Feedback> getLatestBuildResultDetails(Result result);
+    public List<Feedback> getLatestBuildResultDetails(Result result);
 
     /**
      * Get the build logs of the latest CI build.

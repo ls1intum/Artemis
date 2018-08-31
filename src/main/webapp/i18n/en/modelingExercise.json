@@ -11,12 +11,14 @@
             "updated": "A Modeling Exercise is updated with identifier {{ param }}",
             "deleted": "A Modeling Exercise is deleted with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to delete Modeling Exercise {{ id }}?"
+                "question": "Are you sure you want to delete Modeling Exercise {{ title }}?"
             },
             "detail": {
                 "title": "Modeling Exercise"
             },
-            "diagramType": "Diagram Type"
+            "diagramType": "Diagram Type",
+            "sampleSolutionModel": "Sample Solution Model",
+            "sampleSolutionExplanation": "Sample Solution Explanation"
         }
     }
 }

@@ -4,7 +4,7 @@
         <span jhiTranslate="arTeMiSApp.programmingExercise.home.title">Programming Exercises</span>
         <button *ngIf="course" class="btn btn-primary float-right jh-create-entity create-programming-exercise" [routerLink]="['/', { outlets: { popup: ['course', course.id, 'programming-exercise-new'] } }]">
             <span class="fa fa-plus"></span>
-            <span  jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
+            <span jhiTranslate="arTeMiSApp.programmingExercise.home.createLabel">
             Create Programming Exercise
             </span>
         </button>

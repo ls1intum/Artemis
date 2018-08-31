@@ -17,11 +17,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
- * A QuizExercise.
+ * A QuizExercise contains multiple quiz questions, which can be either multiple choice or drag and drop.
+ * ArTEMiS supports live quizzes with a start and end time which are rated. Within this time, students can participate in the quiz
+ * and select their answers to the given questions. After the end time, the quiz is automatically evaluated
+ *
+ * Instructors can choose to open the quiz for practice so that students can participate arbitrarily often with an unrated result
  */
 @Entity
 @DiscriminatorValue(value="Q")
-//@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class QuizExercise extends Exercise implements Serializable {
 
     public enum Status {
@@ -39,14 +42,6 @@ public class QuizExercise extends Exercise implements Serializable {
     }
 
     private static final long serialVersionUID = 1L;
-
-    @Column(name = "description")
-    @JsonView(QuizView.Before.class)
-    private String description;
-
-    @Column(name = "explanation")
-    @JsonView(QuizView.After.class)
-    private String explanation;
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -87,32 +82,6 @@ public class QuizExercise extends Exercise implements Serializable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.During.class)
     private List<Question> questions = new ArrayList<>();
-
-    public String getDescription() {
-        return description;
-    }
-
-    public QuizExercise description(String description) {
-        this.description = description;
-        return this;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getExplanation() {
-        return explanation;
-    }
-
-    public QuizExercise explanation(String explanation) {
-        this.explanation = explanation;
-        return this;
-    }
-
-    public void setExplanation(String explanation) {
-        this.explanation = explanation;
-    }
 
     public Boolean isRandomizeQuestionOrder() {
         return randomizeQuestionOrder;
@@ -473,7 +442,7 @@ public class QuizExercise extends Exercise implements Serializable {
     public Participation findRelevantParticipation(List<Participation> participations) {
         for (Participation participation : participations) {
             if (participation.getExercise().equals(this)) {
-                // in quiz exercises we don't care about the ParticipationState
+                // in quiz exercises we don't care about the InitializationState
                 // => return the first participation we find
                 return participation;
             }
@@ -598,8 +567,7 @@ public class QuizExercise extends Exercise implements Serializable {
 
     @Override
     public Double getMaxScore() {
-        //TODO: this is just a temporary solution for legacy exercises, in the future we could run a script to enter these
-        //values into the database and assumee that maxScore is always set, then the method getMaxTotalScore() could be removed
+        //this is a temporary solution for legacy exercises where maxScore was not set
         Double score = super.getMaxScore();
         if (score != null) {
             return score;
@@ -635,8 +603,6 @@ public class QuizExercise extends Exercise implements Serializable {
         return "QuizExercise{" +
             "id=" + getId() +
             ", title='" + getTitle() + "'" +
-            ", description='" + getDescription() + "'" +
-            ", explanation='" + getExplanation() + "'" +
             ", randomizeQuestionOrder='" + isRandomizeQuestionOrder() + "'" +
             ", allowedNumberOfAttempts='" + getAllowedNumberOfAttempts() + "'" +
             ", isVisibleBeforeStart='" + isIsVisibleBeforeStart() + "'" +

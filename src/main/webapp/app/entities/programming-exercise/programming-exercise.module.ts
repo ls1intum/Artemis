@@ -14,7 +14,6 @@ import {
     programmingExerciseRoute,
     ProgrammingExerciseService
 } from './';
-import { CourseProgrammingExerciseService } from '../course/course.service';
 import { SortByModule } from '../../components/pipes';
 
 const ENTITY_STATES = [
@@ -46,7 +45,6 @@ const ENTITY_STATES = [
     providers: [
         ProgrammingExerciseService,
         ProgrammingExercisePopupService,
-        CourseProgrammingExerciseService,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

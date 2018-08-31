@@ -1,11 +1,12 @@
 import { SubmittedAnswer } from '../submitted-answer';
 import { DragAndDropMapping } from '../drag-and-drop-mapping';
+import { QuestionType } from '../question';
 
 export class DragAndDropSubmittedAnswer extends SubmittedAnswer {
-    constructor(
-        public id?: number,
-        public mappings?: DragAndDropMapping[],
-    ) {
-        super();
+
+    public mappings: DragAndDropMapping[];
+
+    constructor() {
+        super(QuestionType.DRAG_AND_DROP);
     }
 }

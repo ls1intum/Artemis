@@ -25,6 +25,7 @@ public class ApollonDiagram implements Serializable {
     private String title;
 
     @Column(name = "json_representation")
+    @Lob
     private String jsonRepresentation;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

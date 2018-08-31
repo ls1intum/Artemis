@@ -5,7 +5,6 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ProgrammingExercise } from './programming-exercise.model';
 import { createRequestOption } from '../../shared';
-import { Exercise } from '../exercise/exercise.model';
 import { JhiDateUtils } from 'ng-jhipster';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
@@ -74,7 +73,7 @@ export class ProgrammingExerciseService {
      * Convert a Exercise to a JSON which can be sent to the server.
      */
     private convert(programmingExercise: ProgrammingExercise): ProgrammingExercise {
-        const copy: Exercise = Object.assign({}, programmingExercise);
+        const copy: ProgrammingExercise = Object.assign({}, programmingExercise);
         copy.releaseDate = this.dateUtils.toDate(programmingExercise.releaseDate);
         copy.dueDate = this.dateUtils.toDate(programmingExercise.dueDate);
         return copy;

@@ -21,7 +21,7 @@ public class AuthorizationCheckService {
     public AuthorizationCheckService(UserService userService) {
         this.userService = userService;
         adminAuthority = new Authority();
-        adminAuthority.setName("ROLE_ADMIN");
+        adminAuthority.setName(AuthoritiesConstants.ADMIN);
     }
 
     /**

@@ -10,7 +10,6 @@ import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,7 +32,10 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -163,10 +165,10 @@ public class BambooService implements ContinuousIntegrationService {
     }
 
     @Override
-    public Set<Feedback> getLatestBuildResultDetails(Result result) {
+    public List<Feedback> getLatestBuildResultDetails(Result result) {
         Map<String, Object> buildResultDetails = retrieveLatestBuildResultDetails(result.getParticipation().getBuildPlanId());
-        Set<Feedback> feedbacks = addFeedbackToResult(result, buildResultDetails);
-        return feedbacks;
+        List<Feedback> feedbackItems = addFeedbackToResult(result, buildResultDetails);
+        return feedbackItems;
     }
 
     @Override
@@ -363,14 +365,12 @@ public class BambooService implements ContinuousIntegrationService {
      * @param
      * @param buildResultDetails returned build result details from the rest API of bamboo
      *
-     * @return a Set of feedbacks stored in a result
+     * @return a list of feedbacks itemsstored in a result
      */
-    public Set<Feedback> addFeedbackToResult(Result result, Map<String, Object> buildResultDetails) {
+    public List<Feedback> addFeedbackToResult(Result result, Map<String, Object> buildResultDetails) {
         if(buildResultDetails == null) {
             return null;
         }
-
-        HashSet<Feedback> feedbacks = new HashSet<>();
 
         try {
             List<Map<String, Object>> details = (List<Map<String, Object>>)buildResultDetails.get("details");
@@ -485,8 +485,6 @@ public class BambooService implements ContinuousIntegrationService {
 
     /**
      * Performs a request to the Bamboo REST API to retrieve details on the failed tests of the latest build.
-     * <p>
-     * TODO: This currently just gets the failed tests of the default job!
      *
      * @param planKey the key of the plan for which to retrieve the details
      * @return
@@ -497,7 +495,7 @@ public class BambooService implements ContinuousIntegrationService {
         RestTemplate restTemplate = new RestTemplate();
         ResponseEntity<Map> response = null;
         try {
-            // https://bamboobruegge.in.tum.de/rest/api/latest/result/EIST16W1-TESTEXERCISEAPP-JOB1/latest.json?expand=testResults.failedTests.testResult.errors
+            // e.g. https://bamboobruegge.in.tum.de/rest/api/latest/result/EIST16W1-TESTEXERCISEAPP-JOB1/latest.json?expand=testResults.failedTests.testResult.errors
             response = restTemplate.exchange(
                 BAMBOO_SERVER_URL + "/rest/api/latest/result/" + planKey.toUpperCase() + "-JOB1/latest.json?expand=testResults.failedTests.testResult.errors",
                 HttpMethod.GET,
