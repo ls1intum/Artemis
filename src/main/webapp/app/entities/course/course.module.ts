@@ -8,7 +8,7 @@ import {
     CourseDeletePopupComponent,
     CourseDetailComponent,
     CourseDialogComponent,
-    CourseParticipationService,
+    CourseExerciseService,
     CoursePopupComponent,
     coursePopupRoute,
     CoursePopupService,
@@ -16,12 +16,14 @@ import {
     CourseScoreCalculationComponent,
     CourseService
 } from './';
-import { CourseResultService, CourseScoresService } from './course.service';
 import { CourseScoreCalculationService } from './courseScoreCalculation.service';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
 import { DatePipeModule } from '../../components/pipes';
 
-const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
+const ENTITY_STATES = [
+  ...courseRoute,
+  ...coursePopupRoute
+];
 
 @NgModule({
     imports: [
@@ -50,10 +52,8 @@ const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
     ],
     providers: [
         CourseService,
+        CourseExerciseService,
         CoursePopupService,
-        CourseParticipationService,
-        CourseResultService,
-        CourseScoresService,
         CourseScoreCalculationService
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

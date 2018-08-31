@@ -15,13 +15,9 @@ import {
     modelingExerciseRoute,
     ModelingExerciseService
 } from './';
-import { CourseModelingExerciseService } from '../course/course.service';
 import { SortByModule, DatePipeModule } from '../../components/pipes';
 
-const ENTITY_STATES = [
-    ...modelingExerciseRoute,
-    ...modelingExercisePopupRoute,
-];
+const ENTITY_STATES = [...modelingExerciseRoute, ...modelingExercisePopupRoute];
 
 @NgModule({
     imports: [
@@ -38,20 +34,16 @@ const ENTITY_STATES = [
         ModelingExerciseDialogComponent,
         ModelingExerciseDeleteDialogComponent,
         ModelingExercisePopupComponent,
-        ModelingExerciseDeletePopupComponent,
+        ModelingExerciseDeletePopupComponent
     ],
     entryComponents: [
         ModelingExerciseComponent,
         ModelingExerciseDialogComponent,
         ModelingExercisePopupComponent,
         ModelingExerciseDeleteDialogComponent,
-        ModelingExerciseDeletePopupComponent,
+        ModelingExerciseDeletePopupComponent
     ],
-    providers: [
-        ModelingExerciseService,
-        ModelingExercisePopupService,
-        CourseModelingExerciseService,
-    ],
+    providers: [ModelingExerciseService, ModelingExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSModelingExerciseModule {}

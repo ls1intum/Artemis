@@ -72,7 +72,7 @@ export const quizExercisePopupRoute: Routes = [
         path: 'quiz-exercise/:id/delete',
         component: QuizExerciseDeletePopupComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
         canActivate: [UserRouteAccessService],

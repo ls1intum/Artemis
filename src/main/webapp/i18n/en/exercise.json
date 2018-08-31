@@ -16,6 +16,7 @@
                 "title": "Exercise"
             },
             "problemStatement": "Problem Statement",
+            "sampleSolution" : "Sample Solution",
             "gradingInstructions": "Grading Instructions",
             "title": "Title",
             "releaseDate": "Release Date",

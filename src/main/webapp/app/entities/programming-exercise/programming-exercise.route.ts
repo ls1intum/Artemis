@@ -69,7 +69,7 @@ export const programmingExercisePopupRoute: Routes = [
         path: 'programming-exercise/:id/delete',
         component: ProgrammingExerciseDeletePopupComponent,
         data: {
-            authorities: ['ROLE_TA', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
+            authorities: ['ROLE_INSTRUCTOR', 'ROLE_ADMIN'],
             pageTitle: 'arTeMiSApp.programmingExercise.home.title'
         },
         canActivate: [UserRouteAccessService],

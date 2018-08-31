@@ -14,15 +14,11 @@ import {
     programmingExercisePopupRoute,
     ProgrammingExercisePopupService,
     programmingExerciseRoute,
-    ProgrammingExerciseService,
+    ProgrammingExerciseService
 } from './';
-import { CourseProgrammingExerciseService } from '../course/course.service';
 import { SortByModule, DatePipeModule } from '../../components/pipes';
 
-const ENTITY_STATES = [
-    ...programmingExerciseRoute,
-    ...programmingExercisePopupRoute,
-];
+const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
 @NgModule({
     imports: [
@@ -39,20 +35,16 @@ const ENTITY_STATES = [
         ProgrammingExerciseDialogComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseDeletePopupComponent
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
         ProgrammingExerciseDialogComponent,
         ProgrammingExercisePopupComponent,
         ProgrammingExerciseDeleteDialogComponent,
-        ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseDeletePopupComponent
     ],
-    providers: [
-        ProgrammingExerciseService,
-        ProgrammingExercisePopupService,
-        CourseProgrammingExerciseService,
-    ],
+    providers: [ProgrammingExerciseService, ProgrammingExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSProgrammingExerciseModule {}

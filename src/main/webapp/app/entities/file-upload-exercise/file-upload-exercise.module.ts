@@ -14,6 +14,7 @@ import {
     fileUploadExerciseRoute,
     FileUploadExerciseService
 } from './';
+import { SortByModule } from '../../components/pipes';
 
 const ENTITY_STATES = [
     ...fileUploadExerciseRoute,
@@ -23,7 +24,8 @@ const ENTITY_STATES = [
 @NgModule({
     imports: [
         ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
+        RouterModule.forChild(ENTITY_STATES),
+        SortByModule
     ],
     declarations: [
         FileUploadExerciseComponent,

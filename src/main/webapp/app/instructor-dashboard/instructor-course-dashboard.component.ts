@@ -2,7 +2,7 @@ import { JhiAlertService } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
-import { Course, CourseParticipationService, CourseResultService, CourseScoresService, CourseService } from '../entities/course';
+import { Course, CourseService } from '../entities/course';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -25,10 +25,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     courseScores = [];
 
     constructor(private route: ActivatedRoute,
-                private courseService: CourseService,
-                private courseResultService: CourseResultService,
-                private courseParticipationService: CourseParticipationService,
-                private courseScoresService: CourseScoresService) {
+                private courseService: CourseService) {
         this.reverse = false;
         this.predicate = 'id';
     }
@@ -43,17 +40,17 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     getResults(courseId: number) {
-        this.courseResultService.findAll(courseId).subscribe(res => {
+        this.courseService.findAllResults(courseId).subscribe(res => {
             this.results = res;
             this.groupResults();
         });
 
-        this.courseParticipationService.findAll(courseId).subscribe(res => {
+        this.courseService.findAllParticipations(courseId).subscribe(res => {
             this.participations = res;
             this.groupResults();
         });
 
-        this.courseScoresService.find(courseId).subscribe(res => {
+        this.courseService.getAllCourseScoresOfCourseUsers(courseId).subscribe(res => {
             this.courseScores = res;
             this.groupResults();
         });

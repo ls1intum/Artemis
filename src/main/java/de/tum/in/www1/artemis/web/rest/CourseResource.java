@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -245,6 +245,12 @@ public class CourseResource {
      * @return the JSON for the given exercise
      */
     private ObjectNode exerciseToJsonWithParticipation(Exercise exercise, List<Participation> participations, String username) {
+
+        ObjectNode exerciseJson = objectMapper.valueToTree(exercise);
+
+        // remove the unnecessary inner course attribute
+        exerciseJson.set("course", null);
+
         // get user's participation for the exercise
         Participation participation = exercise.findRelevantParticipation(participations);
 
@@ -253,14 +259,13 @@ public class CourseResource {
         if (participation == null && exercise instanceof QuizExercise) {
             QuizSubmission submission = QuizScheduleService.getQuizSubmission(exercise.getId(), username);
             if (submission.getSubmissionDate() != null) {
-                participation = new Participation().exercise(exercise).initializationState(ParticipationState.INITIALIZED);
+                participation = new Participation().exercise(exercise).initializationState(InitializationState.INITIALIZED);
             }
         }
 
         // add results to participation
-        ObjectNode participationJson = objectMapper.createObjectNode();
         if (participation != null) {
-            participationJson = objectMapper.valueToTree(participation);
+            ObjectNode participationJson = objectMapper.valueToTree(participation);
 
             // only transmit the relevant result
             Result result = exercise.findLatestRelevantResult(participation);
@@ -275,17 +280,17 @@ public class CourseResource {
             }
             participationJson.set("results", resultsJson);
 
-            // remove questions and quizStatistics from inner quizExercise in participation json
-            if (exercise instanceof QuizExercise) {
-                ObjectNode exerciseJson = (ObjectNode) participationJson.get("exercise");
-                exerciseJson.set("questions", null);
-                exerciseJson.set("quizPointStatistic", null);
-            }
+            // remove unnecessary elements for JSON
+            participationJson.set("exercise", null);
+
+            // add participation into an array
+            ArrayNode participationsArrayJson = objectMapper.createArrayNode();
+            participationsArrayJson.add(participationJson);
+
+            // add the participation array to exercise
+            exerciseJson.set("participations", participationsArrayJson);
         }
 
-        // add participation to exercise
-        ObjectNode exerciseJson = objectMapper.valueToTree(exercise);
-        exerciseJson.set("participation", participationJson);
         return exerciseJson;
     }
 

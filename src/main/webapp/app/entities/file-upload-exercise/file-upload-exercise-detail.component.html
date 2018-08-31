@@ -4,6 +4,37 @@
     <hr>
     <jhi-alert-error></jhi-alert-error>
     <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.title}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.releaseDate | date:'medium'}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.dueDate | date:'medium'}}</span>
+        </dd>
+        <dt><span data-translate="artemisApp.exercise.maxScore">Max Score</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.maxScore}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.course">Course</span></dt>
+        <dd>
+            <div *ngIf="fileUploadExercise.course">
+                <a [routerLink]="['/course', fileUploadExercise.course?.id]">{{fileUploadExercise.course?.title}}</a>
+            </div>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.problemStatement}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.maxScore}}</span>
+        </dd>
+
         <dt><span jhiTranslate="arTeMiSApp.fileUploadExercise.filePattern">File Pattern</span></dt>
         <dd>
             <span>{{fileUploadExercise.filePattern}}</span>

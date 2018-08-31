@@ -33,16 +33,14 @@ export class ModelingExerciseDialogComponent implements OnInit {
         private modelingExerciseService: ModelingExerciseService,
         private courseService: CourseService,
         private eventManager: JhiEventManager
-    ) {}
+    ) {
+    }
 
     ngOnInit() {
         this.isSaving = false;
-        this.courseService.query().subscribe(
-            (res: HttpResponse<Course[]>) => {
-                this.courses = res.body;
-            },
-            (res: HttpResponse<Course[]>) => this.onError(res.body)
-        );
+        this.courseService.query()
+          .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; },
+            (res: HttpResponse<Course[]>) => this.onError(res.body));
         this.releaseDate = new Date(this.modelingExercise.releaseDate || undefined);
         this.dueDate = new Date(this.modelingExercise.dueDate || undefined);
         this.releaseClockToggled = false;
@@ -70,21 +68,21 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.modelingExercise.releaseDate = moment(this.releaseDate).format();
         this.modelingExercise.dueDate = moment(this.dueDate).format();
         if (this.modelingExercise.id !== undefined) {
-            this.subscribeToSaveResponse(this.modelingExerciseService.update(this.modelingExercise));
+            this.subscribeToSaveResponse(
+              this.modelingExerciseService.update(this.modelingExercise));
         } else {
-            this.subscribeToSaveResponse(this.modelingExerciseService.create(this.modelingExercise));
+            this.subscribeToSaveResponse(
+              this.modelingExerciseService.create(this.modelingExercise));
         }
     }
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ModelingExercise>>) {
-        result.subscribe(
-            (res: HttpResponse<ModelingExercise>) => this.onSaveSuccess(res.body),
-            (res: HttpErrorResponse) => this.onSaveError()
-        );
+        result.subscribe((res: HttpResponse<ModelingExercise>) =>
+          this.onSaveSuccess(res.body), (res: HttpErrorResponse) => this.onSaveError());
     }
 
     private onSaveSuccess(result: ModelingExercise) {
-        this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
+        this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK'});
         this.isSaving = false;
         this.activeModal.dismiss(result);
     }
@@ -107,23 +105,26 @@ export class ModelingExerciseDialogComponent implements OnInit {
     template: ''
 })
 export class ModelingExercisePopupComponent implements OnInit, OnDestroy {
+
     routeSub: any;
 
-    constructor(private route: ActivatedRoute, private modelingExercisePopupService: ModelingExercisePopupService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private modelingExercisePopupService: ModelingExercisePopupService
+    ) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            if (params['id']) {
-                this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component, params['id']);
+            if ( params['id'] ) {
+                this.modelingExercisePopupService
+                    .open(ModelingExerciseDialogComponent as Component, params['id']);
             } else {
-                if (params['courseId']) {
-                    this.modelingExercisePopupService.open(
-                        ModelingExerciseDialogComponent as Component,
-                        undefined,
-                        params['courseId']
-                    );
+                if ( params['courseId'] ) {
+                    this.modelingExercisePopupService
+                        .open(ModelingExerciseDialogComponent as Component, undefined, params['courseId']);
                 } else {
-                    this.modelingExercisePopupService.open(ModelingExerciseDialogComponent as Component);
+                    this.modelingExercisePopupService
+                        .open(ModelingExerciseDialogComponent as Component);
                 }
             }
         });

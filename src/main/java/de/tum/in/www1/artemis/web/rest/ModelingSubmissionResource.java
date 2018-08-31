@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
@@ -157,7 +157,7 @@ public class ModelingSubmissionResource {
         Result result = modelingSubmissionService.save(modelingSubmission, modelingExercise, participation);
 
         if (modelingSubmission.isSubmitted()) {
-            participation.setInitializationState(ParticipationState.FINISHED);
+            participation.setInitializationState(InitializationState.FINISHED);
             participationService.save(participation);
         }
 

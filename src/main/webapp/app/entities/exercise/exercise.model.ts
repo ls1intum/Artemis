@@ -3,9 +3,9 @@ import { Course } from '../course';
 import { Participation } from '../participation';
 
 export const enum DifficultyLevel {
-    'EASY',
-    'MEDIUM',
-    'HARD'
+    EASY = 'EASY',
+    MEDIUM = 'MEDIUM',
+    HARD = 'HARD'
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
@@ -15,6 +15,19 @@ export const enum ExerciseType {
     QUIZ = 'quiz',
     TEXT = 'text',
     FILE_UPLOAD = 'file-upload'
+}
+
+export const enum ParticipationStatus {
+    QUIZ_UNINITIALIZED = 'quiz-uninitialized',
+    QUIZ_ACTIVE = 'quiz-active',
+    QUIZ_SUBMITTED = 'quiz-submitted',
+    QUIZ_NOT_STARTED = 'quiz-not-started',
+    QUIZ_NOT_PARTICIPATED = 'quiz-not-participated',
+    QUIZ_FINISHED = 'quiz-finished',
+    MODELING_EXERCISE = 'modeling-exercise',
+    UNINITIALIZED = 'uninitialized',
+    INITIALIZED = 'initialized',
+    INACTIVE = 'inactive'
 }
 
 export abstract class Exercise implements BaseEntity {
@@ -31,7 +44,7 @@ export abstract class Exercise implements BaseEntity {
     public participations: Participation[];
     public course: Course;
     public openForSubmission: boolean;
-    public participationStatus: string;
+    public participationStatus: ParticipationStatus;
     public loading: boolean;
     public isAtLeastTutor: boolean;
     public type: ExerciseType;

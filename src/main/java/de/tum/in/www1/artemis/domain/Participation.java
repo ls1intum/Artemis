@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -42,7 +42,7 @@ public class Participation implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
     @JsonView(QuizView.Before.class)
-    private ParticipationState initializationState;
+    private InitializationState initializationState;
 
     @Column(name = "initialization_date")
     @JsonView(QuizView.Before.class)
@@ -115,16 +115,16 @@ public class Participation implements Serializable {
         this.buildPlanId = buildPlanId;
     }
 
-    public ParticipationState getInitializationState() {
+    public InitializationState getInitializationState() {
         return initializationState;
     }
 
-    public Participation initializationState(ParticipationState initializationState) {
+    public Participation initializationState(InitializationState initializationState) {
         this.initializationState = initializationState;
         return this;
     }
 
-    public void setInitializationState(ParticipationState initializationState) {
+    public void setInitializationState(InitializationState initializationState) {
         this.initializationState = initializationState;
     }
 

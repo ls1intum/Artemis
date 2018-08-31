@@ -1,5 +1,6 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import { DifferencePipe } from 'angular2-moment';
+import { BaseEntity } from '../../shared';
 
 @Pipe({
     name: 'sortBy'
@@ -7,7 +8,7 @@ import { DifferencePipe } from 'angular2-moment';
 export class SortByPipe implements PipeTransform {
     constructor(private momentDiff: DifferencePipe) { }
 
-    transform<T extends Id>(array: Array<T>, predicate: string, reverse: boolean): Array<T> {
+    transform<T extends BaseEntity>(array: Array<T>, predicate: string, reverse: boolean): Array<T> {
         array.sort((a: T, b: T) => {
             let tempA = a;
             let tempB = b;
@@ -21,9 +22,9 @@ export class SortByPipe implements PipeTransform {
             } else if (predicate === 'status') {
                 tempA['status'] = this.statusForQuiz(tempA);
                 tempB['status'] = this.statusForQuiz(tempB);
-            } else if (predicate === 'duration' && (!tempA['duration'] || ! tempB['duration'])) {
-                tempA['duration'] = this.momentDiff.transform(tempA['completionDate'], tempA['participation']['initializationDate'], 'minutes');
-                tempB['duration'] = this.momentDiff.transform(tempB['completionDate'], tempB['participation']['initializationDate'], 'minutes');
+            } else if (predicate === 'duration' && (!tempA['duration'] || !tempB['duration'])) {
+                tempA['duration'] = this.durationForExercise(tempA);
+                tempB['duration'] = this.durationForExercise(tempB);
             }
             const keys = predicate.split('.');
             for (const tempKey of keys) {
@@ -43,17 +44,17 @@ export class SortByPipe implements PipeTransform {
     }
 
     statusForQuiz(quizExercise) {
-        if (quizExercise['isPlannedToStart'] && quizExercise['remainingTime'] != null) {
-            if (quizExercise['remainingTime'] <= 0) {
-                return quizExercise['isOpenForPractice'] ? 1 : 0;
+        if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
+            if (quizExercise.remainingTime <= 0) {
+                return quizExercise.isOpenForPractice ? 1 : 0;
             } else {
                 return 2;
             }
         }
-        return quizExercise['isVisibleBeforeStart'] ? 3 : 4;
+        return quizExercise.isVisibleBeforeStart ? 3 : 4;
     }
-}
 
-interface Id {
-    id?: number;
+    durationForExercise(exercise) {
+        return this.momentDiff.transform(exercise.completionDate, exercise.participations[0].initializationDate, 'minutes');
+    }
 }
