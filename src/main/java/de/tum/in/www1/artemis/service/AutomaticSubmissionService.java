@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import org.slf4j.Logger;
@@ -214,7 +214,7 @@ public class AutomaticSubmissionService {
                     modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
                     modelingSubmission.setModel(model);
                     // set participation state to finished and persist it
-                    participation.setInitializationState(ParticipationState.FINISHED);
+                    participation.setInitializationState(InitializationState.FINISHED);
                     participationService.save(participation);
                     // return modeling submission with model and result
                     return modelingSubmission;

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
@@ -70,7 +70,7 @@ public class ModelingSubmissionService {
         if (modelingSubmission.isSubmitted()) {
             notifyCompass(modelingSubmission, modelingExercise);
             checkAutomaticResult(modelingSubmission);
-            participation.setInitializationState(ParticipationState.FINISHED);
+            participation.setInitializationState(InitializationState.FINISHED);
         } else if (modelingExercise.getDueDate() != null && !modelingExercise.isEnded()) {
             // save submission to HashMap if exercise not ended yet
             AutomaticSubmissionService.updateSubmission(modelingExercise.getId(), user.getLogin(), modelingSubmission);
@@ -150,7 +150,7 @@ public class ModelingSubmissionService {
         } else {
             // create empty result if submission couldn't be assessed automatically
             // the result is needed for manual assessment
-            Result result = new Result().submission(modelingSubmission).participation(participation);
+            Result result = new Result().submission(modelingSubmission).participation(participation).completionDate(ZonedDateTime.now());
             modelingSubmission.setResult(result);
         }
         return modelingSubmission;
