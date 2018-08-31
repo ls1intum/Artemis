@@ -5,8 +5,8 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="feedbackPK"/>
             </column>
-            <column name="detail_text" type="VARCHAR(255)"/>
-            <column name="text" type="VARCHAR(255)"/>
+            <column name="detail_text" type="VARCHAR(2000)"/>
+            <column name="text" type="VARCHAR(500)"/>
             <column name="result_id" type="BIGINT"/>
         </createTable>
     </changeSet>
