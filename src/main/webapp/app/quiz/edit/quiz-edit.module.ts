@@ -6,15 +6,19 @@ import { RepositoryService } from '../../entities/repository/repository.service'
 import { HomeComponent } from '../../home';
 import { JhiMainComponent } from '../../layouts';
 import { QuizComponent } from '../participate/quiz.component';
-import { EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent } from '.';
+import { QuizExerciseComponent } from '../../entities/quiz-exercise';
+import { EditMultipleChoiceQuestionComponent } from './multiple-choice-question/edit-multiple-choice-question.component';
+import { EditDragAndDropQuestionComponent } from './drag-and-drop-question/edit-drag-and-drop-question.component';
 import { AngularFittextModule } from 'angular-fittext';
+import { AceEditorModule } from 'ng2-ace-editor';
 import { DndModule } from 'ng2-dnd';
 
 @NgModule({
     imports: [
         ArTEMiSSharedModule,
         DndModule.forRoot(),
-        AngularFittextModule
+        AngularFittextModule,
+        AceEditorModule
     ],
     declarations: [
         EditMultipleChoiceQuestionComponent,
@@ -23,6 +27,7 @@ import { DndModule } from 'ng2-dnd';
     entryComponents: [
         HomeComponent,
         QuizComponent,
+        QuizExerciseComponent,
         JhiMainComponent,
         EditMultipleChoiceQuestionComponent,
         EditDragAndDropQuestionComponent
@@ -30,7 +35,7 @@ import { DndModule } from 'ng2-dnd';
     providers: [
         RepositoryService,
         JhiWebsocketService,
-        JhiAlertService,
+        JhiAlertService
     ],
     exports: [
         EditMultipleChoiceQuestionComponent,

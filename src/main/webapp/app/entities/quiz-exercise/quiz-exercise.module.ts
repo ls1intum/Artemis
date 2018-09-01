@@ -15,6 +15,7 @@ import {
 } from './';
 import { QuizReEvaluateWarningComponent } from '../../quiz/re-evaluate/quiz-re-evaluate-warning.component';
 import { SortByModule } from '../../components/pipes';
+import { ArTEMiSQuizEditModule } from '../../quiz/edit';
 
 const ENTITY_STATES = [
     ...quizExerciseRoute,
@@ -25,7 +26,8 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule
+        SortByModule,
+        ArTEMiSQuizEditModule
     ],
     declarations: [
         QuizExerciseComponent,
@@ -43,7 +45,7 @@ const ENTITY_STATES = [
     providers: [
         QuizExerciseService,
         QuizExercisePopupService,
-        QuizReEvaluateService,
+        QuizReEvaluateService
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
