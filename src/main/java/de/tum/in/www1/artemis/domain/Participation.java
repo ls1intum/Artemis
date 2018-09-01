@@ -61,7 +61,7 @@ public class Participation implements Serializable {
      * a result. Therefore, the result is persisted with the submission. Refer to Submission.result for cascading settings.
      */
     @OneToMany(mappedBy = "participation")
-    @JsonIgnoreProperties({"participation", "submission"})
+    @JsonIgnoreProperties("participation")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<Result> results = new HashSet<>();
