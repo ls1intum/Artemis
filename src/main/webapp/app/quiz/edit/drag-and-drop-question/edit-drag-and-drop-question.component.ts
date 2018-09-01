@@ -87,12 +87,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         }
     ];
 
-    // $translatePartialLoader.addPart('quizExercise');
-    // $translatePartialLoader.addPart('question');
-    // $translatePartialLoader.addPart('dragAndDropQuestion');
-    // $translatePartialLoader.addPart('multipleChoiceQuestion');
-    // $translate.refresh();
-
     // /**
     //  * Prevent page from jumping back to last clicked/selected element on drop
     //  */

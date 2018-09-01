@@ -4,7 +4,7 @@
             <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
         </div>
         <div class="form-group">
-            <div class="delete-button" (click)="delete()">
+            <div class="delete-button" (click)="deleteQuestion()">
                 <i class="fa fa-trash fa-2x"></i>
             </div>
         </div>
@@ -62,7 +62,8 @@
     </div>
     <div class="background-area">
         <!-- TODO: Replace http src call -->
-        <img http-src="{{vm.question.backgroundFilePath}}" alt="{{'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">
+        <!--<img http-src="{{vm.question.backgroundFilePath}}" alt="{{'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">-->
+        <img alt="{{'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">
         <div id="{{'click-layer-' + random}}" class="click-layer" (mousedown)="backgroundMouseDown()" ng-class="{disabled: !vm.question.backgroundFilePath}">
             <div
                 class="drop-location"
@@ -107,10 +108,11 @@
         <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addMappingsInstructions"></span>
     </div>
     <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-        <div class="drag-item" *ngFor="dragItem of question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
+        <div class="drag-item" *ngFor="let dragItem of question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
             <div *ngIf="dragItem.pictureFilePath">
                 <!-- TODO: Replace http src call -->
-                <img http-src="{{dragItem.pictureFilePath}}">
+                <!--<img http-src="{{dragItem.pictureFilePath}}">-->
+                <img>
             </div>
             <div *ngIf="!dragItem.pictureFilePath">
                 <!-- TODO: check doUpdated call -->
@@ -123,7 +125,7 @@
                 <i class="fa fa-bars fa-lg drag-handle"></i>
             </div>
             <div class="mapping-numbers-wrapper">
-                <div *ngFor="mapping of getMappingsForDragItem(dragItem)" ng-class="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
+                <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" ng-class="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
                     {{getMappingIndex(mapping)}}
                     <div class="unlink-mapping" (click)="deleteMapping(mapping)">
                         <i class="fa fa-chain-broken fa-lg"></i>

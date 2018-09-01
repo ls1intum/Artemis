@@ -1,14 +1,19 @@
 import { Component, Input, Output, OnInit, AfterViewInit, EventEmitter, ViewChild } from '@angular/core';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
+import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
+import { AceEditorComponent } from 'ng2-ace-editor';
+import 'brace/theme/chrome';
+import 'brace/mode/markdown';
 
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
-    templateUrl: './edit-multiple-choice-question.component.html'
+    templateUrl: './edit-multiple-choice-question.component.html',
+    providers: [ ArtemisMarkdown ]
 })
 export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewInit {
 
-    @ViewChild('editor') editor;
+    @ViewChild('questionEditor') private questionEditor: AceEditorComponent;
 
     /**
      question: '=',
@@ -22,6 +27,10 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
     @Output() questionUpdated = new EventEmitter<object>();
     @Output() questionDeleted = new EventEmitter<object>();
 
+    questionEditorText = '';
+    questionEditorMode = 'markdown';
+    questionEditorAutoUpdate = true;
+
     showPreview: boolean;
     scoringTypeOptions = [
         {
@@ -34,11 +43,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
         }
     ];
 
-    // $translatePartialLoader.addPart('quizExercise');
-    // $translatePartialLoader.addPart('question');
-    // $translatePartialLoader.addPart('multipleChoiceQuestion');
-    // $translate.refresh();
-
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
     ngOnInit(): void {
@@ -47,26 +51,31 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
 
     ngAfterViewInit(): void {
         /** Setup editor **/
-        const random = Math.random();
-        // var editor;
-        // requestAnimationFrame(function () {
-        //     editor = ace.edit("question-content-editor-" + vm.random);
-        //     editor.setTheme("ace/theme/chrome");
-        //     editor.getSession().setMode("ace/mode/markdown");
-        //     editor.renderer.setShowGutter(false);
-        //     editor.renderer.setPadding(10);
-        //     editor.renderer.setScrollMargin(8, 8);
-        //     editor.setHighlightActiveLine(false);
-        //     editor.setShowPrintMargin(false);
-        //
-        //     generateMarkdown();
-        //
-        //     editor.on("blur", function () {
-        //         parseMarkdown(editor.getValue());
-        //         vm.onUpdated();
-        //         $scope.$apply();
-        //     });
-        // });
+        requestAnimationFrame(
+            this.setupQuestionEditor.bind(this)
+        );
+    }
+
+    /**
+     * @function setupQuestionEditor
+     * @desc
+     */
+    setupQuestionEditor() {
+        this.questionEditor.setTheme('chrome');
+        this.questionEditor.getEditor().renderer.setShowGutter(false);
+        this.questionEditor.getEditor().renderer.setPadding(10);
+        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
+        this.questionEditor.getEditor().setHighlightActiveLine(false);
+        this.questionEditor.getEditor().setShowPrintMargin(false);
+        this.questionEditorText = this.generateMarkdown();
+        this.questionEditor.getEditor().clearSelection();
+
+        this.questionEditor.getEditor().on('blur', () => {
+            this.parseMarkdown(this.questionEditorText);
+            // TODO: consider emitting the updated question here
+            this.questionUpdated.emit();
+        }, this);
+        // TODO: $scope.$apply(); ??
     }
 
     /**
@@ -83,8 +92,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
             this.question.answerOptions.map(
                 answerOption => (answerOption.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)).join('\n')
         );
-        this.editor.setValue(markdownText);
-        this.editor.clearSelection();
+        return markdownText;
     }
 
     /**
@@ -119,11 +127,11 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
         let endOfPreviousPart = text.indexOf(questionText) + questionText.length;
         for (const answerOptionText of questionParts) {
             // Find the box (text in-between the parts)
-            const answerOption = {};
+            const answerOption = new AnswerOption();
             const startOfThisPart = text.indexOf(answerOptionText, endOfPreviousPart);
             const box = text.substring(endOfPreviousPart, startOfThisPart);
             // Check if box says this answer option is correct or not
-            answerOption['isCorrect'] = (box === '[x]' || box === '[X]');
+            answerOption.isCorrect = (box === '[x]' || box === '[X]');
             // Update endOfPreviousPart for next loop
             endOfPreviousPart = startOfThisPart + answerOptionText.length;
 
@@ -145,15 +153,15 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
      */
     addAnswerOptionTextToEditor(mode: boolean) {
         const textToAdd = mode ? '\n[x] Enter a correct answer option here' : '\n[ ] Enter an incorrect answer option here';
-        let currentText = this.editor.getValue();
-        currentText += textToAdd;
-        this.editor.setValue(currentText);
-        this.editor.focus();
-        const lines = currentText.split('\n').length;
-        const range = this.editor.selection.getRange();
+        this.questionEditor.getEditor().focus();
+        this.questionEditor.getEditor().clearSelection();
+        const lines = this.questionEditorText.split('\n').length;
+        const range = this.questionEditor.getEditor().selection.getRange();
+        this.questionEditor.getEditor().moveCursorTo(this.questionEditor.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
+        this.questionEditor.getEditor().insert(textToAdd);
         range.setStart(lines - 1, 4);
-        range.setEnd(lines - 1, textToAdd.length - 1);
-        this.editor.selection.setRange(range);
+        this.questionEditor.getEditor().selection.setRange(range);
+        // TODO: make sure this is inserted and selected correctly
      }
 
     /**
@@ -161,7 +169,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
      * @desc Adds the markdown for a hint at the current cursor location
      */
     addHintAtCursor() {
-        this.artemisMarkdown.addHintAtCursor(this.editor);
+        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
     }
 
     /**
@@ -169,7 +177,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
      * @desc Adds the markdown for an explanation at the current cursor location
      */
     addExplanationAtCursor() {
-        this.artemisMarkdown.addExplanationAtCursor(this.editor);
+        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
     }
 
     /**

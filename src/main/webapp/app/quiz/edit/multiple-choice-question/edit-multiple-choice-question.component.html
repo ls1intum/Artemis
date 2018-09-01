@@ -34,8 +34,8 @@
     <div class="markupEditorArea">
         <div class="toolbar">
             <div class="btn-group">
-                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption" (click)="addCorrectAnswerOption()"></div>
-                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption" (click)="addIncorrectAnswerOption()"></div>
+                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption" (click)="addAnswerOptionTextToEditor(true)"></div>
+                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption" (click)="addAnswerOptionTextToEditor(false)"></div>
             </div> &nbsp;
             <div class="btn-group">
                 <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
@@ -43,7 +43,14 @@
             </div>
         </div>
         <div class="question-content">
-            <div id="{{'question-content-editor-' + random}}" class="form-control"></div>
+            <ace-editor #questionEditor
+                        [(text)]="questionEditorText"
+                        [mode]="questionEditorMode"
+                        [autoUpdateContent]="questionEditorAutoUpdate"
+                        style="min-height: 200px; width:100%; overflow: auto;"
+                        class="form-control">
+                        <!--style="display: block; width:100%; min-height: 500px; overflow: auto;">-->
+            </ace-editor>
         </div>
         <div class="toolbar">
             <div class="btn btn-outline-secondary" (click)="togglePreview()">
