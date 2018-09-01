@@ -55,6 +55,11 @@ public class Participation implements Serializable {
 //    private Boolean lti;  //TODO: use this in the future
 
 
+    /**
+     * Results are not cascaded through the participation because ideally we want the relationship between participations,
+     * submissions and results as follows: each participations has multiple submissions. For each submission there can be
+     * a result. Therefore, the result is persisted with the submission. Refer to Submission.result for cascading settings.
+     */
     @OneToMany(mappedBy = "participation")
     @JsonIgnoreProperties({"participation", "submission"})
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -62,6 +67,22 @@ public class Participation implements Serializable {
     private Set<Result> results = new HashSet<>();
 
 
+    /**
+     * Because a submission has a reference to the participation and the participation has a collection of submissions,
+     * setting the cascade type to PERSIST would result in exceptions, i.e., if you want to persist a submission,
+     * you have to follow these steps:
+     *
+     * 1. Set the participation of the submission: submission.setParticipation(participation)
+     * 2. Persist the submission: submissionRepository.save(submission)
+     * 3. Add the submission to the participation: participation.addSubmissions(submission)
+     * 4. Persist the participation: participationRepository.save(participation)
+     *
+     * It is important that, if you want to persist the submission and the participation in the same transaction,
+     * you have to use the save function and not the saveAndFlush function because otherwise an exception is thrown.
+     *
+     * We can think about adding orphanRemoval=true here, after adding the participationId to all submissions.
+     *
+     */
     @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE})
     @JsonIgnoreProperties({"participation", "result"})
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -265,6 +286,10 @@ public class Participation implements Serializable {
      * Finds the latest result for the participation. Checks if the participation has any results. If there are no results,
      * return null. Otherwise sort the results by completion date and return the first.
      *
+     * WARNING: The results of the participation might not be loaded because of Hibernate
+     * and therefore, the function might return null, although the participation has results.
+     * This might not be high-performance, so use it at your own risk.
+     *
      * @return the latest result or null
      */
     public Result findLatestResult() {
@@ -281,6 +306,10 @@ public class Participation implements Serializable {
      * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions,
      * return null. Otherwise sort the submissions by submission date and return the first.
      *
+     * WARNING: The submissions of the participation might not be loaded because of Hibernate
+     * and therefore, the function might return null, although the participation has submissions.
+     * This might not be high-performance, so use it at your own risk.
+     *
      * @return the latest submission or null
      */
     public Submission findLatestSubmission() {
@@ -293,6 +322,12 @@ public class Participation implements Serializable {
         return sortedSubmissions.get(0);
     }
 
+    /**
+     * Same functionality as findLatestSubmission() with the difference that this function only returns the found submission,
+     * if it is a modeling submission.
+     *
+     * @return the latest modeling submission or null
+     */
     public ModelingSubmission findLatestModelingSubmission() {
         Submission submission = findLatestSubmission();
         submission = (Submission) Hibernate.unproxy(submission);
