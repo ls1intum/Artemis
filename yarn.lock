@@ -119,9 +119,9 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "^0.2.4"
 
-"@ls1intum/apollon@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-1.0.1.tgz#f74c62cb2ad57939c02e93a59ad5a7acc139c78e"
+"@ls1intum/apollon@^1.0.2":
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@ls1intum/apollon/-/apollon-1.0.2.tgz#5c4797d56e2d9fa8cc582019c71c0e71b1db61f2"
   dependencies:
     react "^16.2.0"
     react-dnd "^2.5.4"
