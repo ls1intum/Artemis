@@ -126,15 +126,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
-
         this.updateDuration();
-
-        console.log('quizExercise', this.quizExercise);
-        console.log(!!this.quizExercise);
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        console.log('changes', changes);
         if (changes.course) {
             this.init();
         }
@@ -290,10 +285,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Remove question from the quiz
      * @param question {Question} the question to remove
      */
-    deleteQuestion(question) {
-        this.quizExercise.questions = this.quizExercise.questions.filter(function(q) {
-            return q !== question;
-        });
+    deleteQuestion(questionToDelete) {
+        this.quizExercise.questions = this.quizExercise.questions.filter(question => question !== questionToDelete);
     }
 
     /**

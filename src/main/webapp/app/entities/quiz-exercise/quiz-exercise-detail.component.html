@@ -96,16 +96,16 @@
                 <jhi-edit-multiple-choice-question
                     [question]="question"
                     [questionIndex]="i + 1"
-                    [doDelete]="deleteQuestion.bind(question)"
-                    [doUpdated]="onQuestionUpdated()">
+                    (questionDeleted)="deleteQuestion.bind(question)"
+                    (questionUpdated)="onQuestionUpdated()">
                 </jhi-edit-multiple-choice-question>
             </div>
             <div *ngIf="question.type === DRAG_AND_DROP">
                 <jhi-edit-drag-and-drop-question
                     [question]="question"
                     [questionIndex]="i + 1"
-                    [doDelete]="deleteQuestion.bind(question)"
-                    [doUpdated]="onQuestionUpdated()">
+                    (questionDeleted)="deleteQuestion.bind(question)"
+                    (questionUpdated)="onQuestionUpdated()">
                 </jhi-edit-drag-and-drop-question>
             </div>
         </div>
@@ -187,6 +187,7 @@
                     <button
                         *ngIf="quizExercise.course"
                         class="btn btn-default"
+                        [ngClass]="{'btn btn-secondary': !pendingChanges(), 'btn btn-danger': pendingChanges()}"
                         [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise']"
                         jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}">
                     </button>
