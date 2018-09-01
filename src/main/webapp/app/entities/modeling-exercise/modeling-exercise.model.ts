@@ -14,8 +14,9 @@ export class ModelingExercise extends Exercise {
     public sampleSolutionModel: String;
     public sampleSolutionExplanation: String;
 
-    constructor(course?: Course) {
+    constructor(course?: Course, diagramType?: DiagramType) {
         super(ExerciseType.MODELING);
         this.course = course;
+        this.diagramType = diagramType;
     }
 }

@@ -126,8 +126,8 @@
                         <tr *ngFor="let assessment of assessments" [hidden]="(assessment.credits === 0 && !assessment.comment) || !isSelected(assessment.id, assessment.type)">
                             <td>
                                 <ng-container [ngSwitch]="assessment.type">
-                                    <span *ngSwitchCase="'relationship'">association</span>
-                                    <span *ngSwitchDefault>{{assessment.type}}</span>
+                                    <span *ngSwitchCase="'relationship'">association </span>
+                                    <span *ngSwitchDefault>{{assessment.type}} </span>
                                 </ng-container>
                                 <code class="text-primary">{{assessmentsNames[assessment.id]}}</code><br>
                                 <span *ngIf="assessment.comment" [ngClass]="{'text-success': assessment.credits > 0, 'text-danger': assessment.credits < 0}"><strong>Feedback:</strong> {{assessment.comment}}</span>
