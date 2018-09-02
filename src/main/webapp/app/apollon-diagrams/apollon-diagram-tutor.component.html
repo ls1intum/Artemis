@@ -75,11 +75,11 @@
                         <div class="card-body">
                             <div class="form-group">
                                 <label>Score</label>
-                                <input type="number" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()">
+                                <input type="number" step="0.5" [(ngModel)]="assessment.credits" (ngModelChange)="checkScoreBoundaries()">
                             </div>
-                            <div class="form-group">
-                                <label>Comment</label>
-                                <input type="text" [(ngModel)]="assessment.comment">
+                            <div class="form-group row">
+                                <label class="col-auto">Feedback</label>
+                                <textarea class="col form-control" rows="2" [(ngModel)]="assessment.comment"></textarea>
                             </div>
                         </div>
                     </div>

@@ -2,7 +2,7 @@ import { Component, Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
-import { ModelingExercise } from './modeling-exercise.model';
+import {DiagramType, ModelingExercise} from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { DatePipe } from '@angular/common';
 import { CourseService } from '../course';
@@ -46,7 +46,7 @@ export class ModelingExercisePopupService {
                     if (courseId) {
                         this.courseService.find(courseId).subscribe(res => {
                             const course = res.body;
-                            this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise(course));
+                            this.ngbModalRef = this.modelingExerciseModalRef(component, new ModelingExercise(course, DiagramType.CLASS));
                             resolve(this.ngbModalRef);
                         });
                     } else {
