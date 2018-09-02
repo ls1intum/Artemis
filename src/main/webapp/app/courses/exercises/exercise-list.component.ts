@@ -119,11 +119,9 @@ export class ExerciseListComponent implements OnInit {
 
                 quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice &&
                     moment(exercise.dueDate).isBefore(moment());
-
-                exercise.isAtLeastTutor = this.principal.hasGroup(this.course.instructorGroupName) ||
-                    this.principal.hasGroup(this.course.teachingAssistantGroupName) ||
-                    this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN']);
             }
+
+            exercise.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(exercise.course);
         }
         exercises.sort((a: Exercise, b: Exercise) => {
             return +new Date(a.dueDate) - +new Date(b.dueDate);

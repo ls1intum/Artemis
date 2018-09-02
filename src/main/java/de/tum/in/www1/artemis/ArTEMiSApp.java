@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis;
 
 import de.tum.in.www1.artemis.config.ApplicationProperties;
 import de.tum.in.www1.artemis.config.DefaultProfileUtil;
+import de.tum.in.www1.artemis.service.AutomaticSubmissionService;
 import de.tum.in.www1.artemis.service.QuizScheduleService;
 import io.github.jhipster.config.JHipsterConstants;
 import org.slf4j.Logger;
@@ -30,10 +31,12 @@ public class ArTEMiSApp {
 
     private final Environment env;
     private final QuizScheduleService quizScheduleService;
+    private final AutomaticSubmissionService automaticSubmissionService;
 
-    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService) {
+    public ArTEMiSApp(Environment env, QuizScheduleService quizScheduleService, AutomaticSubmissionService automaticSubmissionService) {
         this.env = env;
         this.quizScheduleService = quizScheduleService;
+        this.automaticSubmissionService = automaticSubmissionService;
     }
 
     /**
@@ -57,6 +60,8 @@ public class ArTEMiSApp {
 
         // activate Quiz Schedule Service
         quizScheduleService.startSchedule(3000);
+        // activate Automatic Submission Service
+        automaticSubmissionService.startSchedule(3000);
     }
 
     /**

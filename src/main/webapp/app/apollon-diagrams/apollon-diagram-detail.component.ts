@@ -60,7 +60,8 @@ export class ApollonDiagramDetailComponent implements OnInit, OnDestroy {
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             mode: 'FULL',
-            initialState
+            initialState,
+            diagramType: 'CLASS'
         });
     }
 

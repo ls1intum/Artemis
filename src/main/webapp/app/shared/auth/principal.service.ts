@@ -2,7 +2,8 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Subject } from 'rxjs/Subject';
 import { AccountService } from './account.service';
-import { JhiWebsocketService } from '../websocket/websocket.service'; // Barrel doesn't work here. No idea why!
+import { JhiWebsocketService } from '../websocket/websocket.service';
+import { Course } from '../../entities/course';
 
 @Injectable()
 export class Principal {
@@ -92,6 +93,12 @@ export class Principal {
             this.authenticationState.next(this.userIdentity);
             return null;
         });
+    }
+
+    isAtLeastTutorInCourse(course: Course): boolean {
+        return this.hasGroup(course.instructorGroupName) ||
+        this.hasGroup(course.teachingAssistantGroupName) ||
+        this.hasAnyAuthorityDirect(['ROLE_ADMIN']);
     }
 
     isAuthenticated(): boolean {

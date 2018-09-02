@@ -12,7 +12,9 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.text.DecimalFormat;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * A Result.
@@ -56,9 +58,10 @@ public class Result implements Serializable {
     @Column(name = "hasFeedback")
     private Boolean hasFeedback;
 
-    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(unique = true)
     @JsonView(QuizView.Before.class)
+    @JsonIgnoreProperties({"result", "participation"})
     private Submission submission;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.REMOVE)

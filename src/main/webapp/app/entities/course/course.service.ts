@@ -11,7 +11,6 @@ import { Exercise } from '../exercise/exercise.model';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
 import { Participation } from '../participation';
-import { Result } from '../result/result.model';
 import { TextExercise } from 'app/entities/text-exercise';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
 

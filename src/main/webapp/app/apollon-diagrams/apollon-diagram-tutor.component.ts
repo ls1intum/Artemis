@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor from '@ls1intum/apollon';
+import ApollonEditor, { ApollonOptions } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -9,6 +9,7 @@ import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-
 import { Result, ResultService } from '../entities/result';
 import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
 import { Principal } from '../shared';
+import { DiagramType } from '../entities/modeling-exercise';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -69,15 +70,24 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             });
 
             this.modelingAssessmentService.getDataForEditor(exerciseId, id).subscribe(data => {
-                this.modelingExercise = data.modelingExercise;
-                this.submission = data.modelingSubmission;
+                this.modelingExercise = data.modelingExercise as ModelingExercise;
+                /**
+                 * set diagramType to class diagram if exercise is null, use case or communication
+                 * apollon does not support use case and communication yet
+                 */
+                if (this.modelingExercise.diagramType === null ||
+                    this.modelingExercise.diagramType === DiagramType.USE_CASE ||
+                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
+                    this.modelingExercise.diagramType = DiagramType.CLASS;
+                }
+                this.submission = data.modelingSubmission as ModelingSubmission;
                 if (this.submission.model) {
                     this.initializeApollonEditor(JSON.parse(this.submission.model));
                 } else {
                     this.jhiAlertService.error(`No model could be found for this submission.`);
                 }
                 data.result.participation.results = [data.result];
-                this.result = data.result;
+                this.result = data.result as Result;
                 if ((this.result.assessor == null || this.result.assessor.id === this.accountId) && !this.result.rated) {
                     this.jhiAlertService.info('arTeMiSApp.apollonDiagram.lock');
                 }
@@ -112,7 +122,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
 
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             initialState,
-            mode: 'READ_ONLY'
+            mode: 'READ_ONLY',
+            diagramType: <ApollonOptions['diagramType']> this.modelingExercise.diagramType
         });
 
         this.apollonEditor.subscribeToSelectionChange(selection => {

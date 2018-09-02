@@ -8,14 +8,11 @@ import { createRequestOption } from '../../shared';
 import { Result } from '../result';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
-export type ResultResponseType = HttpResponse<Result>;
 
 @Injectable()
 export class ModelingSubmissionService {
 
     private resourceUrl =  SERVER_API_URL + 'api/modeling-submissions';
-
-    // TODO: we need to make sure that the server either returns a modelingSubmission as defined below or that we change the return type of the below typescript functions
 
     constructor(private http: HttpClient) { }
 
@@ -52,16 +49,6 @@ export class ModelingSubmissionService {
 
     delete(id: number): Observable<HttpResponse<any>> {
         return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
-    }
-
-    findWithModel(courseId: number, exerciseId: number, id: number): Observable<EntityResponseType> {
-        return this.http.get<ModelingSubmission>(`api/courses/${courseId}/exercises/${exerciseId}/modeling-submissions/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
-    }
-
-    findByParticipation(participationId: number): Observable<EntityResponseType> {
-        return this.http.get<ModelingSubmission>(`${this.resourceUrl}/participation/${participationId}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

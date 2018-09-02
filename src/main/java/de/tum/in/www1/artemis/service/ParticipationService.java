@@ -17,9 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 
@@ -87,7 +85,9 @@ public class ParticipationService {
         // common for all exercises
         // Check if participation already exists
         Participation participation = participationRepository.findOneByExerciseIdAndStudentLogin(exercise.getId(), username);
-        if (!Optional.ofNullable(participation).isPresent() || (!(exercise instanceof QuizExercise) && participation.getInitializationState() == InitializationState.FINISHED)) { //create a new participation only if it was finished before (not for quiz exercise)
+        if (!Optional.ofNullable(participation).isPresent() ||
+            (exercise instanceof ProgrammingExercise && participation.getInitializationState() == InitializationState.FINISHED)) {
+            // create a new participation only if it was finished before (only for programming exercises)
             participation = new Participation();
             participation.setExercise(exercise);
 
