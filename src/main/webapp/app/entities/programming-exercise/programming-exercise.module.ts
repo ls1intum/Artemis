@@ -35,7 +35,7 @@ const ENTITY_STATES = [
         ProgrammingExerciseDialogComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseDeletePopupComponent
     ],
     entryComponents: [
         ProgrammingExerciseComponent,

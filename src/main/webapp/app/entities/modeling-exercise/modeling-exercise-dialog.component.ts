@@ -5,13 +5,11 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
-import { ExerciseType } from '../exercise';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExercisePopupService } from './modeling-exercise-popup.service';
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { Course, CourseService } from '../course';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
@@ -21,8 +19,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     modelingExercise: ModelingExercise;
     isSaving: boolean;
-    releaseClockToggled: boolean;
-    dueClockToggled: boolean;
 
     courses: Course[];
 
@@ -39,8 +35,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
         this.courseService.query()
             .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
-        this.releaseClockToggled = false;
-        this.dueClockToggled = false;
     }
 
     clear() {

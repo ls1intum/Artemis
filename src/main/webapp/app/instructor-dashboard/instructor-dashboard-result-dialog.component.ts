@@ -7,7 +7,6 @@ import { Result, ResultService } from '../entities/result';
 import { Participation } from '../entities/participation';
 import { Feedback, FeedbackType } from '../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
-import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-instructor-dashboard-result-dialog',
@@ -19,7 +18,6 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     result: Result;
     feedbacks: Feedback[] = [];
     isSaving = false;
-    completionDateToggled = false;
 
     constructor(
         private resultService: ResultService,

@@ -10,8 +10,6 @@ import { Course } from './course.model';
 import { CoursePopupService } from './course-popup.service';
 import { CourseService } from './course.service';
 
-import * as moment from 'moment';
-
 @Component({
     selector: 'jhi-course-dialog',
     templateUrl: './course-dialog.component.html'
@@ -20,8 +18,6 @@ export class CourseDialogComponent implements OnInit {
 
     course: Course;
     isSaving: boolean;
-    endClockToggled = false;
-    startClockToggled = false;
 
     constructor(
         public activeModal: NgbActiveModal,

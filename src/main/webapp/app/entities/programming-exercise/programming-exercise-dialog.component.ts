@@ -8,7 +8,6 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ProgrammingExercise } from './programming-exercise.model';
-import { ExerciseType } from '../exercise';
 import { ProgrammingExercisePopupService } from './programming-exercise-popup.service';
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { Course, CourseService } from '../course';
@@ -21,8 +20,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 
     programmingExercise: ProgrammingExercise;
     isSaving: boolean;
-    releaseClockToggled: boolean;
-    dueClockToggled: boolean;
 
     courses: Course[];
 
@@ -39,8 +36,6 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
         this.courseService.query()
             .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
-        this.releaseClockToggled = false;
-        this.dueClockToggled = false;
     }
 
     clear() {
