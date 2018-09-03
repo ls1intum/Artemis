@@ -33,18 +33,10 @@
                 [(ngModel)]="course.instructorGroupName" />
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.course.startDate" for="field_startDate">Start Date</label>
-            <div class="d-flex" >
-              <label class="form-control" (click)="startClockToggled = !startClockToggled">{{ course.startDate | formatDate}}</label>
-            </div>
-            <owl-date-time-inline *ngIf=startClockToggled startAt="{{course.startDate}}"[(ngModel)]="course.startDate" name="startDatePicker"></owl-date-time-inline>
+          <jhi-date-time-picker labelName="Start Date" [entity]="course" field="startDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.course.endDate" for="field_endDate">End Date</label>
-            <div class="d-flex" >
-              <label class="form-control" (click)="endClockToggled = !endClockToggled">{{ course.endDate | formatDate}}</label>
-            </div>
-            <owl-date-time-inline *ngIf=endClockToggled startAt="{{course.endDate}}"[(ngModel)]="course.endDate" name="endDatePicker"></owl-date-time-inline>
+          <jhi-date-time-picker labelName="End Date" [entity]="course" field="endDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.course.onlineCourse" for="field_onlineCourse">Online Course</label>

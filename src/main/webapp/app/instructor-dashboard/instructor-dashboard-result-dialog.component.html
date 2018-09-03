@@ -25,11 +25,7 @@
             <span class="text-danger" *ngIf="resultString.invalid && resultString.errors.required">Result text is required.</span>
         </div>
         <div class="form-group">
-            <label class="control-label">Completion Date</label>
-            <div class="d-flex" >
-              <label class="form-control" (click)="completionDateToggled = !completionDateToggled">{{ result.completionDate | formatDate}}</label>
-            </div>
-            <owl-date-time-inline *ngIf=completionDateToggled startAt="{{result.completionDate }}"[(ngModel)]="result.completionDate " name="completionDatePicker"></owl-date-time-inline>
+          <jhi-date-time-picker labelName="Completion Date" [entity]="result" field="completionDate"></jhi-date-time-picker>
         </div>
         <div class="form-group row align-items-end">
             <div class="col-md-6">

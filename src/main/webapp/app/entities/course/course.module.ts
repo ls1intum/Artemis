@@ -17,8 +17,7 @@ import {
     CourseService
 } from './';
 import { CourseScoreCalculationService } from './courseScoreCalculation.service';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
-import { DatePipeModule } from '../../components/pipes';
+import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [
     ...courseRoute,
@@ -29,9 +28,7 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        DatePipeModule,
-        OwlDateTimeModule,
-        OwlNativeDateTimeModule,
+        FormDateTimePickerModule,
     ],
     declarations: [
         CourseComponent,

@@ -1,7 +1,5 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { OwlDateTimeModule, OwlNativeDateTimeModule } from 'ng-pick-datetime';
-import { BrowserModule } from '@angular/platform-browser';
 
 import { ArTEMiSSharedModule } from '../../shared';
 import {
@@ -16,7 +14,8 @@ import {
     programmingExerciseRoute,
     ProgrammingExerciseService
 } from './';
-import { SortByModule, DatePipeModule } from '../../components/pipes';
+import { SortByModule } from '../../components/pipes';
+import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [
     ...programmingExerciseRoute,
@@ -28,9 +27,7 @@ const ENTITY_STATES = [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
         SortByModule,
-        OwlDateTimeModule,
-        OwlNativeDateTimeModule,
-        DatePipeModule
+        FormDateTimePickerModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -38,7 +35,7 @@ const ENTITY_STATES = [
         ProgrammingExerciseDialogComponent,
         ProgrammingExerciseDeleteDialogComponent,
         ProgrammingExercisePopupComponent,
-        ProgrammingExerciseDeletePopupComponent
+        ProgrammingExerciseDeletePopupComponent,
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
