@@ -1,13 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.Feedback;
-import de.tum.in.www1.artemis.domain.Participation;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.exception.BambooException;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import org.slf4j.Logger;
@@ -64,15 +62,18 @@ public class BambooService implements ContinuousIntegrationService {
     private final ResultRepository resultRepository;
     private final FeedbackRepository feedbackRepository;
     private final ParticipationRepository participationRepository;
+    private final ProgrammingSubmissionRepository programmingSubmissionRepository;
     private final VersionControlService versionControlService;
     private final ContinuousIntegrationUpdateService continuousIntegrationUpdateService;
 
     public BambooService(GitService gitService, ResultRepository resultRepository, FeedbackRepository feedbackRepository, ParticipationRepository participationRepository,
-                         VersionControlService versionControlService, ContinuousIntegrationUpdateService continuousIntegrationUpdateService) {
+                         ProgrammingSubmissionRepository programmingSubmissionRepository, VersionControlService versionControlService,
+                         ContinuousIntegrationUpdateService continuousIntegrationUpdateService) {
         this.gitService = gitService;
         this.resultRepository = resultRepository;
         this.feedbackRepository = feedbackRepository;
         this.participationRepository = participationRepository;
+        this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.versionControlService = versionControlService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
     }
@@ -292,6 +293,23 @@ public class BambooService implements ContinuousIntegrationService {
             }
         }
         addFeedbackToResult(result, buildResultDetails);
+
+        if (buildResults.containsKey("vcsRevisionKey")) {
+            ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findByCommitHash((String) buildResults.get("vcsRevisionKey"));
+            if (programmingSubmission == null) { // no matching programmingsubmission
+                log.warn("Could not find ProgrammingSubmission for Commit-Hash {} (Participation {}, Build-Plan {})", buildResults.get("vcsRevisionKey"), participation.getId(), participation.getBuildPlanId());
+
+            } else {
+                log.info("Found corresponding submission to build result with Commit-Hash {}", buildResults.get("vcsRevisionKey"));
+                result.setSubmission(programmingSubmission);
+                programmingSubmission.setResult(result);
+                programmingSubmissionRepository.save(programmingSubmission); // result gets saved later, no need to save it now
+            }
+
+        } else { // No commit hash in build result
+            log.warn("Could not find Commit-Hash (Participation {}, Build-Plan {})", participation.getId(), participation.getBuildPlanId());
+        }
+
         resultRepository.save(result);
         //The following was intended to prevent caching problems, but does not work properly due to lazy instantiation exceptions
 //        Hibernate.initialize(participation.getResults());
@@ -408,6 +426,9 @@ public class BambooService implements ContinuousIntegrationService {
             String dateString = (String) response.getBody().get("buildCompletedDate");
             ZonedDateTime buildCompletedDate = ZonedDateTime.parse(dateString);
             result.put("buildCompletedDate", buildCompletedDate);
+            if (response.getBody().containsKey("vcsRevisionKey")) {
+                result.put("vcsRevisionKey", response.getBody().get("vcsRevisionKey"));
+            }
 
             if(response.getBody().containsKey("artifacts")) {
                 Map<String, Object> artifacts = (Map<String, Object>)response.getBody().get("artifacts");
