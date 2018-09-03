@@ -1,17 +1,27 @@
-import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
 import { FileUploaderService } from '../../../shared/http/file-uploader.service';
-import * as $ from 'jquery';
+import { DropLocation } from '../../../entities/drop-location';
+import { DragItem } from '../../../entities/drag-item';
+import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
+import { Option } from '../../../entities/quiz-exercise/quiz-exercise-interfaces';
+import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
+import { DragState } from '../../../entities/drag-item/drag-state.enum';
+import { AceEditorComponent } from 'ng2-ace-editor';
+import 'brace/theme/chrome';
+import 'brace/mode/markdown';
 
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
-    templateUrl: './edit-drag-and-drop-question.component.html'
+    templateUrl: './edit-drag-and-drop-question.component.html',
+    providers: [ ArtemisMarkdown, DragAndDropQuestionUtil ]
 })
 export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
 
-    @ViewChild('editor') editor;
+    @ViewChild('questionEditor') private questionEditor: AceEditorComponent;
+    @ViewChild('clickLayer') private clickLayer: ElementRef;
 
     @Input() question: DragAndDropQuestion;
     @Input() questionIndex: number;
@@ -21,70 +31,41 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     @Output() questionMoveUp = new EventEmitter<object>();
     @Output() questionMoveDown = new EventEmitter<object>();
 
-    backupQuestion: DragAndDropQuestion;
-    random: number;
+    /** Ace Editor configuration constants **/
+    questionEditorText = '';
+    questionEditorMode = 'markdown';
+    questionEditorAutoUpdate = true;
 
-    dragItemPicture = null;
-    backgroundFile = null;
-    dragItemFile = null;
+    backupQuestion: DragAndDropQuestion;
+
+    dragItemPicture: string;
+    backgroundFile: Blob|File;
+    dragItemFile: Blob|File;
 
     showPreview: boolean;
     isUploadingBackgroundFile: boolean;
     isUploadingDragItemFile: boolean;
 
     /**
-     * enum for the different drag operations
-     *
-     * @type {{NONE: number, CREATE: number, MOVE: number, RESIZE_BOTH: number, RESIZE_X: number, RESIZE_Y: number}}
-     */
-    DragState = {
-        NONE: 0,
-        CREATE: 1,
-        MOVE: 2,
-        RESIZE_BOTH: 3,
-        RESIZE_X: 4,
-        RESIZE_Y: 5
-    };
-
-    /**
      * Keep track of what the current drag action is doing
      * @type {number}
      */
-    draggingState = this.DragState.NONE;
+    draggingState = DragState.NONE;
 
     /**
      * Keep track of the currently dragged drop location
      */
-    currentDropLocation = {
-        tempID: null,
-        posX: null,
-        posY: null,
-        width: null,
-        height: null
-    };
+    currentDropLocation: DropLocation;
 
     /**
      * Keep track of the current mouse location
-     * @type {object}
+     * @type {DragAndDropMouseEvent}
      */
-    mouse = {
-        x: null,
-        y: null,
-        startX: null,
-        startY: null,
-        offsetX: null,
-        offsetY: null
-    };
+    mouse: DragAndDropMouseEvent;
 
-    scoringTypeOptions = [
-        {
-            key: 'ALL_OR_NOTHING',
-            label: 'All or Nothing'
-        },
-        {
-            key: 'PROPORTIONAL_WITH_PENALTY',
-            label: 'Proportional with Penalty'
-        }
+    scoringTypeOptions: Option[] = [
+        new Option('ALL_OR_NOTHING', 'All or Nothing'),
+        new Option('PROPORTIONAL_WITH_PENALTY', 'Proportional with Penalty')
     ];
 
     // /**
@@ -129,13 +110,17 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                 private fileUploaderService: FileUploaderService) {}
 
     ngOnInit(): void {
-        // Create question backup for resets
+        /** Create question backup for resets **/
         this.backupQuestion = Object.assign({}, this.question);
 
-        // Assign status booleans
+        /** Assign status booleans **/
         this.showPreview = false;
         this.isUploadingBackgroundFile = false;
         this.isUploadingDragItemFile = false;
+
+        /** Initialize DropLocation and MouseEvent objects **/
+        this.currentDropLocation = new DropLocation();
+        this.mouse = new DragAndDropMouseEvent();
 
         /**
          * Bind to mouse events
@@ -146,10 +131,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     }
 
     ngAfterViewInit(): void {
-        this.random = this.pseudoRandomLong();
-
         // Setup the editor
-        this.setupQuestionEditor();
+        requestAnimationFrame(
+            this.setupQuestionEditor.bind(this)
+        );
     }
 
     /**
@@ -157,41 +142,51 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Set up Question text editor
      */
     setupQuestionEditor() {
-        // requestAnimationFrame(function() {
-        //     this.editor = ace.edit("question-content-editor-" + this.random);
-        //     editor.setTheme("ace/theme/chrome");
-        //     editor.getSession().setMode("ace/mode/markdown");
-        //     editor.renderer.setShowGutter(false);
-        //     editor.renderer.setPadding(10);
-        //     editor.renderer.setScrollMargin(8, 8);
-        //     editor.setHighlightActiveLine(false);
-        //     editor.setShowPrintMargin(false);
-        //
-        //     // generate markdown from question and show result in editor
-        //     editor.setValue(ArtemisMarkdown.generateTextHintExplanation(vm.question));
-        //     editor.clearSelection();
-        //
-        //     editor.on("blur", function () {
-        //         // parse the markdown in the editor and update question accordingly
-        //         ArtemisMarkdown.parseTextHintExplanation(editor.getValue(), vm.question);
-        //         vm.onUpdated();
-        //         $scope.$apply();
-        //     });
-        // });
+        this.questionEditor.setTheme('chrome');
+        this.questionEditor.getEditor().renderer.setShowGutter(false);
+        this.questionEditor.getEditor().renderer.setPadding(10);
+        this.questionEditor.getEditor().renderer.setScrollMargin(8, 8);
+        this.questionEditor.getEditor().setHighlightActiveLine(false);
+        this.questionEditor.getEditor().setShowPrintMargin(false);
+
+        // Generate markdown from question and show result in editor
+        this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
+        this.questionEditor.getEditor().clearSelection();
+
+        this.questionEditor.getEditor().on('blur', () => {
+            // Parse the markdown in the editor and update question accordingly
+            this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
+            // TODO: consider emitting the updated question here
+            this.questionUpdated.emit();
+            // TODO: $scope.$apply(); ??
+        }, this);
     }
 
     /**
-     * add the markdown for a hint at the current cursor location
+     * @function addHintAtCursor
+     * @desc Add the markdown for a hint at the current cursor location
      */
     addHintAtCursor() {
-        this.artemisMarkdown.addHintAtCursor(this.editor);
+        this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
     }
 
     /**
-     * add the markdown for an explanation at the current cursor location
+     * @function addExplanationAtCursor
+     * @desc Add the markdown for an explanation at the current cursor location
      */
     addExplanationAtCursor() {
-        this.artemisMarkdown.addExplanationAtCursor(this.editor);
+        this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
+    }
+
+    /**
+     * @function setBackgroundFile
+     * @param $event {object} Event object which contains the uploaded file
+     */
+    setBackgroundFile($event) {
+        if ($event.target.files.length) {
+            const fileList: FileList = $event.target.files;
+            this.backgroundFile = fileList[0];
+        }
     }
 
     /**
@@ -214,55 +209,49 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     }
 
     /**
-     * react to mousemove events on the entire page to update:
+     * @function mouseMove
+     * @desc React to mousemove events on the entire page to update:
      * - mouse object (always)
      * - current drop location (only while dragging)
-     *
-     * @param e {object} the mouse move event
-     */
-    /**
-     * @function
-     * @desc
-     * @param event
+     * @param e {object} Mouse move event
      */
     mouseMove(e) {
         // Update mouse x and y value
-        const event = e || window.event; // Moz || IE
-        const clickLayer = $('#click-layer-' + this.random);
-        const backgroundOffset = clickLayer.offset();
-        const backgroundWidth = clickLayer.width();
-        const backgroundHeight = clickLayer.height();
+        const event: MouseEvent = e || window.event; // Moz || IE
+        const backgroundElement = this.clickLayer.nativeElement;
+        const backgroundWidth = backgroundElement.offsetWidth;
+        const backgroundHeight = backgroundElement.offsetHeight;
         if (event.pageX) { // Moz
-            this.mouse.x = event.pageX - backgroundOffset.left;
-            this.mouse.y = event.pageY - backgroundOffset.top;
+            this.mouse.x = event.pageX - backgroundElement.offsetLeft;
+            this.mouse.y = event.pageY - backgroundElement.offsetTop;
         } else if (event.clientX) { // IE
-            this.mouse.x = event.clientX - backgroundOffset.left;
-            this.mouse.y = event.clientY - backgroundOffset.top;
+            this.mouse.x = event.clientX - backgroundElement.offsetLeft;
+            this.mouse.y = event.clientY - backgroundElement.offsetTop;
         }
         this.mouse.x = Math.min(Math.max(0, this.mouse.x), backgroundWidth);
         this.mouse.y = Math.min(Math.max(0, this.mouse.y), backgroundHeight);
 
-        if (this.draggingState !== this.DragState.NONE) {
+        if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
-                case this.DragState.CREATE:
-                case this.DragState.RESIZE_BOTH:
+                case DragState.CREATE:
+                case DragState.RESIZE_BOTH:
                     // Update current drop location's position and size
                     this.currentDropLocation.posX = Math.round(200 * Math.min(this.mouse.x, this.mouse.startX) / backgroundWidth);
                     this.currentDropLocation.posY = Math.round(200 * Math.min(this.mouse.y, this.mouse.startY) / backgroundHeight);
                     this.currentDropLocation.width = Math.round(200 * Math.abs(this.mouse.x - this.mouse.startX) / backgroundWidth);
                     this.currentDropLocation.height = Math.round(200 * Math.abs(this.mouse.y - this.mouse.startY) / backgroundHeight);
                     break;
-                case this.DragState.MOVE:
+                case DragState.MOVE:
                     // update current drop location's position
                     this.currentDropLocation.posX = Math.round(Math.min(Math.max(0, 200 * (this.mouse.x + this.mouse.offsetX) / backgroundWidth), 200 - this.currentDropLocation.width));
                     this.currentDropLocation.posY = Math.round(Math.min(Math.max(0, 200 * (this.mouse.y + this.mouse.offsetY) / backgroundHeight), 200 - this.currentDropLocation.height));
                     break;
-                case this.DragState.RESIZE_X:
+                case DragState.RESIZE_X:
                     // Update current drop location's position and size (only x-axis)
                     this.currentDropLocation.posX = Math.round(200 * Math.min(this.mouse.x, this.mouse.startX) / backgroundWidth);
                     this.currentDropLocation.width = Math.round(200 * Math.abs(this.mouse.x - this.mouse.startX) / backgroundWidth);
                     break;
-                case this.DragState.RESIZE_Y:
+                case DragState.RESIZE_Y:
                     // update current drop location's position and size (only y-axis)
                     this.currentDropLocation.posY = Math.round(200 * Math.min(this.mouse.y, this.mouse.startY) / backgroundHeight);
                     this.currentDropLocation.height = Math.round(200 * Math.abs(this.mouse.y - this.mouse.startY) / backgroundHeight);
@@ -280,13 +269,11 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc React to mouseup events to finish dragging operations
      */
     mouseUp() {
-        if (this.draggingState !== this.DragState.NONE) {
+        if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
-                case this.DragState.CREATE:
-                    // TODO: replace this with viewchild ref
-                    const clickLayer = $('#click-layer-' + this.random);
-                    const backgroundWidth = clickLayer.width();
-                    const backgroundHeight = clickLayer.height();
+                case DragState.CREATE:
+                    const backgroundWidth = this.clickLayer.nativeElement.width();
+                    const backgroundHeight = this.clickLayer.nativeElement.height();
                     if (this.currentDropLocation.width / 200 * backgroundWidth < 14 && this.currentDropLocation.height / 200 * backgroundHeight < 14) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
                         this.deleteDropLocation(this.currentDropLocation);
@@ -295,10 +282,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                         this.questionUpdated.emit();
                     }
                     break;
-                case this.DragState.MOVE:
-                case this.DragState.RESIZE_BOTH:
-                case this.DragState.RESIZE_X:
-                case this.DragState.RESIZE_Y:
+                case DragState.MOVE:
+                case DragState.RESIZE_BOTH:
+                case DragState.RESIZE_X:
+                case DragState.RESIZE_Y:
                     // Notify parent of changed drop location
                     this.questionUpdated.emit();
                     break;
@@ -309,7 +296,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
             // $scope.$apply();
         }
         // Update state
-        this.draggingState = this.DragState.NONE;
+        this.draggingState = DragState.NONE;
         this.currentDropLocation = null;
     }
 
@@ -318,19 +305,18 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc React to mouse down events on the background to start dragging
      */
     backgroundMouseDown() {
-        if (this.question.backgroundFilePath && this.draggingState === this.DragState.NONE) {
+        if (this.question.backgroundFilePath && this.draggingState === DragState.NONE) {
             // Save current mouse position as starting position
             this.mouse.startX = this.mouse.x;
             this.mouse.startY = this.mouse.y;
 
             // Create new drop location
-            this.currentDropLocation = {
-                tempID: this.pseudoRandomLong(),
-                posX: this.mouse.x,
-                posY: this.mouse.y,
-                width: 0,
-                height: 0
-            };
+            this.currentDropLocation = new DropLocation();
+            this.currentDropLocation.tempID = this.pseudoRandomLong();
+            this.currentDropLocation.posX = this.mouse.x;
+            this.currentDropLocation.posY = this.mouse.y;
+            this.currentDropLocation.width = 0;
+            this.currentDropLocation.height = 0;
 
             // Add drop location to question
             if (!this.question.dropLocations) {
@@ -339,7 +325,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
             this.question.dropLocations.push(this.currentDropLocation);
 
             // Update state
-            this.draggingState = this.DragState.CREATE;
+            this.draggingState = DragState.CREATE;
         }
     }
 
@@ -348,12 +334,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc React to mousedown events on a drop location to start moving it
      * @param dropLocation {object} the drop location to move
      */
-    dropLocationMouseDown(dropLocation) {
-        if (this.draggingState === this.DragState.NONE) {
-            // TODO: replace this with viewchild ref
-            const clickLayer = $('#click-layer-' + this.random);
-            const backgroundWidth = clickLayer.width();
-            const backgroundHeight = clickLayer.height();
+    dropLocationMouseDown(dropLocation: DropLocation) {
+        if (this.draggingState === DragState.NONE) {
+            const backgroundWidth = this.clickLayer.nativeElement.width();
+            const backgroundHeight = this.clickLayer.nativeElement.height();
 
             const dropLocationX = dropLocation.posX / 200 * backgroundWidth;
             const dropLocationY = dropLocation.posY / 200 * backgroundHeight;
@@ -364,7 +348,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
 
             // Update state
             this.currentDropLocation = dropLocation;
-            this.draggingState = this.DragState.MOVE;
+            this.draggingState = DragState.MOVE;
         }
     }
 
@@ -373,7 +357,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Delete the given drop location
      * @param dropLocationToDelete {object} the drop location to delete
      */
-    deleteDropLocation(dropLocationToDelete) {
+    deleteDropLocation(dropLocationToDelete: DropLocation) {
         this.question.dropLocations = this.question.dropLocations.filter(dropLocation => dropLocation !== dropLocationToDelete);
         this.deleteMappingsForDropLocation(dropLocationToDelete);
     }
@@ -383,14 +367,14 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Add an identical drop location to the question
      * @param dropLocation {object} the drop location to duplicate
      */
-    duplicateDropLocation(dropLocation) {
-        this.question.dropLocations.push({
-            tempID: this.pseudoRandomLong(),
-            posX: dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3),
-            posY: dropLocation.posY + dropLocation.height < 197 ? dropLocation.posY + 3 : Math.max(0, dropLocation.posY - 3),
-            width: dropLocation.width,
-            height: dropLocation.height
-        });
+    duplicateDropLocation(dropLocation: DropLocation) {
+        const duplicatedDropLocation = new DropLocation();
+        duplicatedDropLocation.tempID = this.pseudoRandomLong();
+        duplicatedDropLocation.posX = dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3);
+        duplicatedDropLocation.posY = dropLocation.posY + dropLocation.height < 197 ? dropLocation.posY + 3 : Math.max(0, dropLocation.posY - 3);
+        duplicatedDropLocation.width = dropLocation.width;
+        duplicatedDropLocation.height = dropLocation.height;
+        this.question.dropLocations.push(duplicatedDropLocation);
     }
 
     /**
@@ -400,15 +384,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @param resizeLocationY {string} 'top', 'middle' or 'bottom'
      * @param resizeLocationX {string} 'left', 'center' or 'right'
      */
-    resizeMouseDown(dropLocation, resizeLocationY, resizeLocationX) {
-        if (this.draggingState === this.DragState.NONE) {
-            // TODO: replace this with viewchild ref
-            const clickLayer = $('#click-layer-' + this.random);
-            const backgroundWidth = clickLayer.width();
-            const backgroundHeight = clickLayer.height();
+    resizeMouseDown(dropLocation: DropLocation, resizeLocationY: string, resizeLocationX: string) {
+        if (this.draggingState === DragState.NONE) {
+            const backgroundWidth = this.clickLayer.nativeElement.width();
+            const backgroundHeight = this.clickLayer.nativeElement.height();
 
             // Update state
-            this.draggingState = this.DragState.RESIZE_BOTH;  // Default is both, will be overwritten later, if needed
+            this.draggingState = DragState.RESIZE_BOTH;  // Default is both, will be overwritten later, if needed
             this.currentDropLocation = dropLocation;
 
             switch (resizeLocationY) {
@@ -418,7 +400,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                     break;
                 case 'middle':
                     // Limit to x-axis, startY will not be used
-                    this.draggingState = this.DragState.RESIZE_X;
+                    this.draggingState = DragState.RESIZE_X;
                     break;
                 case 'bottom':
                     // Use opposite end as startY
@@ -433,7 +415,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                     break;
                 case 'center':
                     // Limit to y-axis, startX will not be used
-                    this.draggingState = this.DragState.RESIZE_Y;
+                    this.draggingState = DragState.RESIZE_Y;
                     break;
                 case 'right':
                     // Use opposite end as startX
@@ -452,11 +434,22 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         if (!this.question.dragItems) {
             this.question.dragItems = [];
         }
-        this.question.dragItems.push({
-            tempID: this.pseudoRandomLong(),
-            text: 'Text'
-        });
+        const dragItem = new DragItem();
+        dragItem.tempID = this.pseudoRandomLong();
+        dragItem.text = 'Text';
+        this.question.dragItems.push(dragItem);
         this.questionUpdated.emit();
+    }
+
+    /**
+     * @function setDragItemFile
+     * @param $event {object} Event object which contains the uploaded file
+     */
+    setDragItemFile($event) {
+        if ($event.target.files.length) {
+            const fileList: FileList = $event.target.files;
+            this.dragItemFile = fileList[0];
+        }
     }
 
     /**
@@ -472,10 +465,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
             if (!this.question.dragItems) {
                 this.question.dragItems = [];
             }
-            this.question.dragItems.push({
-                tempID: this.pseudoRandomLong(),
-                pictureFilePath: result.path
-            });
+            const dragItem = new DragItem();
+            dragItem.tempID = this.pseudoRandomLong();
+            dragItem.pictureFilePath = result.path;
+            this.question.dragItems.push(dragItem);
             this.questionUpdated.emit();
             this.isUploadingDragItemFile = false;
             this.dragItemFile = null;
@@ -542,10 +535,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                 this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(existingMapping.dragItem, dragItem)
         )) {
             // Mapping doesn't exit yet => add this mapping
-            this.question.correctMappings.push({
-                dropLocation,
-               dragItem
-            });
+            const dndMapping = new DragAndDropMapping();
+            dndMapping.dropLocation = dropLocation;
+            dndMapping.dragItem = dragItem;
+            this.question.correctMappings.push(dndMapping);
 
             // Notify parent of changes
             this.questionUpdated.emit();

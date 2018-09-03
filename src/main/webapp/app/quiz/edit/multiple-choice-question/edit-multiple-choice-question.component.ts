@@ -2,6 +2,7 @@ import { Component, Input, Output, OnInit, AfterViewInit, EventEmitter, ViewChil
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
+import { Option } from '../../../entities/quiz-exercise/quiz-exercise-interfaces';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -27,20 +28,15 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
     @Output() questionUpdated = new EventEmitter<object>();
     @Output() questionDeleted = new EventEmitter<object>();
 
+    /** Ace Editor configuration constants **/
     questionEditorText = '';
     questionEditorMode = 'markdown';
     questionEditorAutoUpdate = true;
 
     showPreview: boolean;
-    scoringTypeOptions = [
-        {
-            key: 'ALL_OR_NOTHING',
-            label: 'All or Nothing'
-        },
-        {
-            key: 'PROPORTIONAL_WITH_PENALTY',
-            label: 'Proportional with Penalty'
-        }
+    scoringTypeOptions: Option[] = [
+        new Option('ALL_OR_NOTHING', 'All or Nothing'),
+        new Option('PROPORTIONAL_WITH_PENALTY', 'Proportional with Penalty')
     ];
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
@@ -58,7 +54,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
 
     /**
      * @function setupQuestionEditor
-     * @desc
+     * @desc Initializes the ace editor for the mc question
      */
     setupQuestionEditor() {
         this.questionEditor.setTheme('chrome');
@@ -74,8 +70,8 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
             this.parseMarkdown(this.questionEditorText);
             // TODO: consider emitting the updated question here
             this.questionUpdated.emit();
+            // TODO: $scope.$apply(); ??
         }, this);
-        // TODO: $scope.$apply(); ??
     }
 
     /**
@@ -140,7 +136,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
 
             // Assign existing ID if available
             if (this.question.answerOptions.length < existingAnswerOptionIDs.length) {
-                answerOption['id'] = existingAnswerOptionIDs[this.question.answerOptions.length];
+                answerOption.id = existingAnswerOptionIDs[this.question.answerOptions.length];
             }
             this.question.answerOptions.push(answerOption);
         }

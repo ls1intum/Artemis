@@ -1,4 +1,4 @@
-<div class="edit-dnd-question" [hidden]="showPreview">
+<div class="edit-dnd-question" [hidden]="showPreview" (mousemove)="mouseMove($event)" (mouseup)="mouseUp()">
     <div class="question-options">
         <div class="form-group question-title">
             <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
@@ -12,17 +12,17 @@
     <div class="question-options">
         <div class="form-group">
             <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
-            <select class="form-control" ng-options="option.key as option.label for option in vm.scoringTypeOptions" [(ngModel)]="question.scoringType" title="scoring type">
+            <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
                 <option *ngFor="let option of scoringTypeOptions" [ngValue]="option.key">
                     {{option.label}}
                 </option>
             </select>
         </div>
         <div class="form-group">
-            <div class="checkbox">
-                <label>
-                    <input type="checkbox" [(ngModel)]="question.randomizeOrder"/>
-                    <span jhiTranslatee="arTeMiSApp.dragAndDropQuestion.randomizeOrder"></span>
+            <div class="form-check custom-control custom-checkbox">
+                <input type="checkbox" id="cbRandomizeOrder" [(ngModel)]="question.randomizeOrder" class="form-check-input custom-control-input"/>
+                <label class="form-check-label custom-control-label" for="cbRandomizeOrder"
+                       jhiTranslate="arTeMiSApp.dragAndDropQuestion.randomizeOrder">
                 </label>
             </div>
         </div>
@@ -39,18 +39,23 @@
             </div>
         </div>
         <div class="question-content">
-            <div id="{{'question-content-editor-' + random}}" class="form-control"></div>
+            <ace-editor #questionEditor
+                        [(text)]="questionEditorText"
+                        [mode]="questionEditorMode"
+                        [autoUpdateContent]="questionEditorAutoUpdate"
+                        style="display:block; min-height: 200px; width:100%; overflow: auto;"
+                        class="form-control">
+            </ace-editor>
         </div>
     </div>
     <hr/>
     <div class="question-options">
         <div class="form-group">
             <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploadBackgroundPicture" class="colon-suffix no-flex-shrink"></span>
-            <!-- TODO: How to translate file-model -->
-            <input type="file" accept="image/*" file-model="vm.backgroundFile"/>
+            <input #backgroundFile type="file" accept="image/*" (change)="setBackgroundFile($event)"/>
             <button [disabled]="isUploadingBackgroundFile || !backgroundFile" class="btn btn-outline-secondary" (click)="uploadBackground()">
                 <span *ngIf="isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploading"></span>
-                <span *ngIf="isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.upload"></span>
+                <span *ngIf="!isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.upload"></span>
             </button>
         </div>
     </div>
@@ -63,17 +68,16 @@
     <div class="background-area">
         <!-- TODO: Replace http src call -->
         <!--<img http-src="{{vm.question.backgroundFilePath}}" alt="{{'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">-->
-        <img alt="{{'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">
-        <div id="{{'click-layer-' + random}}" class="click-layer" (mousedown)="backgroundMouseDown()" ng-class="{disabled: !vm.question.backgroundFilePath}">
+        <img [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate">
+        <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{'disabled': !question.backgroundFilePath}">
             <div
                 class="drop-location"
-                ng-repeat="dropLocation in vm.question.dropLocations"
-                ng-style="{top: dropLocation.posY/2 + '%', left: dropLocation.posX/2 + '%', width: dropLocation.width/2 + '%', height: dropLocation.height/2 + '%'}"
+                *ngFor="let dropLocation of question.dropLocations"
+                [ngStyle]="{'top': dropLocation.posY/2 + '%', 'left': dropLocation.posX/2 + '%', 'width': dropLocation.width/2 + '%', 'height': dropLocation.height/2 + '%'}"
                 (mousedown)="dropLocationMouseDown(dropLocation)"
                 ui-on-drop="vm.onDragDrop(dropLocation, $data)"
                 drag-enter-class="drop-allowed"
-                drag-hover-class="drop-hover"
-            >
+                drag-hover-class="drop-hover">
                 <div class="dimensions">
                     {{dropLocation.width}}x{{dropLocation.height}}
                 </div>
@@ -83,15 +87,15 @@
                 <div class="delete-button" title="Delete" (click)="deleteDropLocation(dropLocation)">
                     <i class="fa fa-trash fa-lg"></i>
                 </div>
-                <div class="resize top left" ng-mousedown="resizeMouseDown(dropLocation, 'top', 'left')"></div>
-                <div class="resize top center" ng-mousedown="resizeMouseDown(dropLocation, 'top', 'center')"></div>
-                <div class="resize top right" ng-mousedown="resizeMouseDown(dropLocation, 'top', 'right')"></div>
-                <div class="resize middle left" ng-mousedown="resizeMouseDown(dropLocation, 'middle', 'left')"></div>
-                <div class="resize middle right" ng-mousedown="resizeMouseDown(dropLocation, 'middle', 'right')"></div>
-                <div class="resize bottom left" ng-mousedown="resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
-                <div class="resize bottom center" ng-mousedown="resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
-                <div class="resize bottom right" ng-mousedown="resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
-                <div ng-class="'mapping-number mapping-color-' + (getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) % 8)" *ngIf="getMappingsForDropLocation(dropLocation).length">
+                <div class="resize top left" (mousedown)="resizeMouseDown(dropLocation, 'top', 'left')"></div>
+                <div class="resize top center" (mousedown)="resizeMouseDown(dropLocation, 'top', 'center')"></div>
+                <div class="resize top right" (mousedown)="resizeMouseDown(dropLocation, 'top', 'right')"></div>
+                <div class="resize middle left" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'left')"></div>
+                <div class="resize middle right" (mousedown)="resizeMouseDown(dropLocation, 'middle', 'right')"></div>
+                <div class="resize bottom left" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'left')"></div>
+                <div class="resize bottom center" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'center')"></div>
+                <div class="resize bottom right" (mousedown)="resizeMouseDown(dropLocation, 'bottom', 'right')"></div>
+                <div [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(getMappingsForDropLocation(dropLocation)[0]) % 8)" *ngIf="getMappingsForDropLocation(dropLocation).length">
                     {{getMappingIndex(getMappingsForDropLocation(dropLocation)[0])}}
                     <div class="unlink-mapping" (click)="deleteMappingsForDropLocation(dropLocation)">
                         <i class="fa fa-chain-broken fa-lg"></i>
@@ -116,7 +120,7 @@
             </div>
             <div *ngIf="!dragItem.pictureFilePath">
                 <!-- TODO: check doUpdated call -->
-                <textarea [(ngModel)]="dragItem.text" (ngModelChange)="doUpdated()"></textarea>
+                <textarea [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
             </div>
             <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)">
                 <i class="fa fa-trash fa-lg"></i>
@@ -125,7 +129,7 @@
                 <i class="fa fa-bars fa-lg drag-handle"></i>
             </div>
             <div class="mapping-numbers-wrapper">
-                <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" ng-class="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
+                <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
                     {{getMappingIndex(mapping)}}
                     <div class="unlink-mapping" (click)="deleteMapping(mapping)">
                         <i class="fa fa-chain-broken fa-lg"></i>
@@ -141,8 +145,7 @@
                 <span *ngIf="isUploadingDragItemFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploading"></span>
                 <span *ngIf="!isUploadingDragItemFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.addDragItemPicture"></span>
             </button>
-            <!-- TODO: How to translate file-model -->
-            <input type="file" accept="image/*" file-model="vm.dragItemFile"/>
+            <input #dragItemFile type="file" accept="image/*" (change)="setDragItemFile($event)"/>
         </div>
     </div>
     <div class="question-options">
