@@ -1,8 +1,8 @@
 <div *ngIf="course">
-    <h2>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{finalScores.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
+    <h2>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{studentArray.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
 <jhi-alert></jhi-alert>
     <button class="btn btn-primary btn-sm"  (click)="exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results as CSV</button>
-    <div class="table-responsive" *ngIf="finalScores">
+    <div class="table-responsive" *ngIf="studentArray">
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse"  [callback]="callback">
@@ -41,11 +41,11 @@
             </tr>
             </thead>
             <tbody>
-            <tr *ngFor="let row of finalScores | sortBy: predicate: reverse">
+            <tr *ngFor="let row of studentArray | sortBy: predicate: reverse">
                 <td>{{ row.firstName }} {{ row.lastName }}</td>
                 <td>{{ row.login }}</td>
-                <td>{{ row.participated }} ({{ row.participationInPercent | number: '0.0-0'}}%)</td>
-                <td>{{ row.successful }} ({{ row.successfullyCompletedInPercent | number: '0.0-0'}}%)</td>
+                <td>{{ row.participated }} ({{ (row.participated/numberOfExercises)*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.successful }} ({{ (row.successful/numberOfExercises)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.totalScoreQuizzes }} ({{ (row.totalScoreQuizzes/maxScoreForQuizzes)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.totalScoreProgramming }} ({{ (row.totalScoreProgramming/maxScoreForProgramming)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.totalScoreModeling }} ({{ (row.totalScoreModeling/maxScoreForModeling)*100 | number: '0.0-0'}}%)</td>

@@ -36,9 +36,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     titleQuizString: string = '';
     titleProgrammingString: string = '';
     titleModelingString: string = '';
-    maxScoreForQuizzes: number = 0;
-    maxScoreForModeling: number = 0;
-    maxScoreForProgramming: number = 0;
+    maxScoreForQuizzes: number = 0; // needed
+    maxScoreForModeling: number = 0; // needed
+    maxScoreForProgramming: number = 0; // needed
     //finalScores: Array<Student> = []; not in use - not needed
     allExercises: Map<ExerciseTypes, Array<Exercise>> = new Map<ExerciseTypes, Array<Exercise>>([]);
     allQuizExercises: Array<Exercise> = [];
@@ -120,7 +120,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
             let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, 0, 0,0, new Map<ExerciseTypes, Array<Score>>([]),new Map<ExerciseTypes, number>(), [], [],'', [],
                 [],'', [], [],'',
-                0, 0,0,0,0, 0,0,0,
+                0,0,0, 0,0,0,
                 0,0,0,0,0,0,0,0,
                 true,0);
 
@@ -255,10 +255,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             this.studentArray[indexStudent].totalScoreProgramming = student.totalScoreProgramming;
             this.studentArray[indexStudent].everyScoreForProgramming = programmingEveryScore;
             this.studentArray[indexStudent].everyScoreStringForProgramming = programmingScoreString;
-
-            // calculate the successful and participation percentages
-            this.studentArray[indexStudent].successfullyCompletedInPercent = (student.successful/ this.numberOfExercises) * 100;
-            this.studentArray[indexStudent].participationInPercent = (student.participated / this.numberOfExercises) * 100;
         });
 
         // gets all students that were not caught in the results list
@@ -647,9 +643,9 @@ class Student { // creating a class for students for better code quality
     totalScores: Map<ExerciseTypes, number>;
 
     // TODO check if needed
-    totalScoreQuizzes: number;
-    totalScoreProgramming: number;
-    totalScoreModeling: number;
+    totalScoreQuizzes: number; //needed
+    totalScoreProgramming: number; //needed
+    totalScoreModeling: number; //needed
 
     scoreListForQuizzes: Array<Score>;
     everyScoreForQuizzes: Array<Score>;
@@ -668,7 +664,7 @@ class Student { // creating a class for students for better code quality
     participatedProgramming: number;
     participatedModeling: number;
 
-    participationInPercent: number;
+    // participationInPercent: number; // not needed - calculated in frontend
     participationQuizzesInPercent: number;
     participationProgrammingInPercent: number;
     participationModelingInPercent: number;
@@ -679,13 +675,13 @@ class Student { // creating a class for students for better code quality
     successfulProgramming: number;
     successfulModeling: number;
 
-    successfullyCompletedInPercent: number;
+    //successfullyCompletedInPercent: number; // not needed - calculated in frontend
     successfullyCompletedQuizzesInPercent: number;
     successfullyCompletedProgrammingInPercent: number;
     successfullyCompletedModelingInPercent: number;
 
     exerciseNotCounted: boolean;
-    overallScore: number;
+    overallScore: number; // needed
 
     constructor(firstName: string, lastName: string, id: string, login: string, email: string,
                 totalScoreQuizzes: number, totalScoreProgramming: number, totalScoreModeling: number,
@@ -708,11 +704,13 @@ class Student { // creating a class for students for better code quality
 
 
                 participated: number, participatedQuizzes: number, participatedProgramming: number, participatedModeling: number,
-                participationInPercent: number, participationQuizzesInPercent: number, participationProgrammingInPercent: number,
+                //participationInPercent: number, 
+                participationQuizzesInPercent: number, participationProgrammingInPercent: number,
                 participationModelingInPercent: number,
 
                 successful: number, successfulQuizzes:number, successfulProgramming: number, successfulModeling: number,
-                successfullyCompletedInPercent: number, successfullyCompletedQuizzesInPercent: number, successfullyCompletedProgrammingInPercent: number,
+                //successfullyCompletedInPercent: number, 
+                successfullyCompletedQuizzesInPercent: number, successfullyCompletedProgrammingInPercent: number,
                 successfullyCompletedModelingInPercent: number,
 
                 exerciseNotCounted: boolean, overallScore: number)
@@ -749,7 +747,7 @@ class Student { // creating a class for students for better code quality
         this.participatedProgramming = participatedProgramming;
         this.participatedModeling = participatedModeling;
 
-        this.participationInPercent = participationInPercent;
+        //this.participationInPercent = participationInPercent;
         this.participationQuizzesInPercent = participationQuizzesInPercent;
         this.participationProgrammingInPercent = participationProgrammingInPercent;
         this.participationModelingInPercent = participationModelingInPercent;
@@ -759,7 +757,7 @@ class Student { // creating a class for students for better code quality
         this.successfulProgramming = successfulProgramming;
         this.successfulModeling = successfulModeling;
 
-        this.successfullyCompletedInPercent = successfullyCompletedInPercent;
+        //this.successfullyCompletedInPercent = successfullyCompletedInPercent;
         this.successfullyCompletedQuizzesInPercent = successfullyCompletedQuizzesInPercent;
         this.successfullyCompletedProgrammingInPercent = successfullyCompletedProgrammingInPercent;
         this.successfullyCompletedModelingInPercent = successfullyCompletedModelingInPercent;
