@@ -4,22 +4,132 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService, Principal } from '../../shared';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-
-import { Chart } from 'chart.js';
+import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { QuestionType } from '../../entities/question';
 
-
-interface DataSet {
+export interface DataSet {
     data: Array<number>;
-    backgroundColor: Array<string>;
+    backgroundColor: Array<any>;
+}
+
+export interface ChartElement {
+    chart: Chart;
+}
+
+// this code is reused in 4 different statistic components
+export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
+    return {
+        layout: {
+            padding: {
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 30
+            }
+        },
+        legend: {
+            display: false
+        },
+        title: {
+            display: false,
+            text: '',
+            position: 'top',
+            fontSize: 16,
+            padding: 20
+        },
+        tooltips: {
+            enabled: false
+        },
+        scales: {
+            yAxes: [{
+                scaleLabel: {
+                    labelString: '',
+                    display: true
+                },
+                ticks: {
+                    beginAtZero: true
+                }
+            }],
+            xAxes: [{
+                scaleLabel: {
+                    labelString: '',
+                    display: true
+                }
+            }]
+        },
+        hover: {animationDuration: 0},
+        animation: createAnimation(dataSetProvider)
+    };
+}
+
+// this code is reused in 4 different statistic components
+export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimationOptions {
+    return {
+        duration: 500,
+        onComplete: (chartElement: ChartElement) => {
+            const chart = chartElement.chart;
+            const ctx = chart.ctx;
+            const fontSize = 12;
+            const fontStyle = 'normal';
+            const fontFamily = 'Arial';
+            ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            const participants = dataSetProvider.getParticipants();
+            dataSetProvider.getDataSets().forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                meta.data.forEach((bar: any, index) => {
+                    const data = (Math.round(dataset.data[index] * 100) / 100).toString();
+                    const dataPercentage = (Math.round((dataset.data[index] / participants) * 1000) / 10);
+                    const position = bar.tooltipPosition();
+
+                    // if the bar is high enough -> write the percentageValue inside the bar
+                    if (dataPercentage > 6) {
+                        // if the bar is low enough -> write the amountValue above the bar
+                        if (position.y > 15) {
+                            ctx.fillStyle = 'black';
+                            ctx.fillText(data, position.x, position.y - 10);
+
+                            if (participants !== 0) {
+                                ctx.fillStyle = 'white';
+                                ctx.fillText(dataPercentage.toString() + '%', position.x, position.y + 10);
+                            }
+                        } else {
+                            // if the bar is too high -> write the amountValue inside the bar
+                            ctx.fillStyle = 'white';
+                            if (participants !== 0) {
+                                ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y + 10);
+                            } else {
+                                ctx.fillText(data, position.x, position.y + 10);
+                            }
+                        }
+                    } else {
+                        // if the bar is to low -> write the percentageValue above the bar
+                        ctx.fillStyle = 'black';
+                        if (participants !== 0) {
+                            ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y - 10);
+                        } else {
+                            ctx.fillText(data, position.x, position.y - 10);
+                        }
+                    }
+                });
+            });
+        }
+    };
+}
+
+export interface DataSetProvider {
+    getDataSets(): DataSet[];
+    getParticipants(): number;
 }
 
 @Component({
     selector: 'jhi-quiz-statistic',
     templateUrl: './quiz-statistic.component.html'
 })
-export class QuizStatisticComponent implements OnInit, OnDestroy {
+export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
 
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
@@ -47,101 +157,8 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
     websocketChannelForData: string;
     websocketChannelForReleaseState: string;
 
-    // options for chart in chart.js style
-    options = {
-        layout: {
-            padding: {
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 30
-            }
-        },
-        legend: {
-            display: false
-        },
-        title: {
-            display: false,
-            text: '',
-            position: 'top',
-            fontSize: '16',
-            padding: 20
-        },
-        tooltips: {
-            enabled: false
-        },
-        scales: {
-            yAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                },
-                ticks: {
-                    beginAtZero: true
-                }
-            }],
-            xAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                }
-            }]
-        },
-        hover: {animationDuration: 0},
-        // add numbers on top of the bars
-        animation: {
-            duration: 500,
-            onComplete: (chartInstance: Chart) => {
-                const ctx = chartInstance.ctx;
-                const fontSize = 12;
-                const fontStyle = 'normal';
-                const fontFamily = 'Arial';
-                ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.getDatasetMeta(i);
-                    meta.data.forEach((bar: any, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100).toString();
-                        const dataPercentage = (Math.round((dataset.data[index] / this.participants) * 1000) / 10);
-
-                        const position = bar.tooltipPosition();
-
-                        // if the bar is high enough -> write the percentageValue inside the bar
-                        if (dataPercentage > 6) {
-                            // if the bar is low enough -> write the amountValue above the bar
-                            if (position.y > 15) {
-                                ctx.fillStyle = 'black';
-                                ctx.fillText(data, position.x, position.y - 10);
-
-                                if (this.participants !== 0) {
-                                    ctx.fillStyle = 'white';
-                                    ctx.fillText(dataPercentage.toString() + '%', position.x, position.y + 10);
-                                }
-                            } else {
-                                // if the bar is too high -> write the amountValue inside the bar
-                                ctx.fillStyle = 'white';
-                                if (this.participants !== 0) {
-                                    ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y + 10);
-                                } else {
-                                    ctx.fillText(data, position.x, position.y + 10);
-                                }
-                            }
-                        } else {
-                            // if the bar is to low -> write the percentageValue above the bar
-                            ctx.fillStyle = 'black';
-                            if (this.participants !== 0) {
-                                ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y - 10);
-                            } else {
-                                ctx.fillText(data, position.x, position.y - 10);
-                            }
-                        }
-                    });
-                });
-            }
-        }
-    };
+    // options for chart.js style
+    options: ChartOptions;
 
     constructor(private route: ActivatedRoute,
                 private router: Router,
@@ -149,7 +166,9 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
                 private translateService: TranslateService,
                 private quizExerciseService: QuizExerciseService,
                 private jhiWebsocketService: JhiWebsocketService,
-                private quizStatisticUtil: QuizStatisticUtil) {}
+                private quizStatisticUtil: QuizStatisticUtil) {
+        this.options = createOptions(this);
+    }
 
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
@@ -206,6 +225,14 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForReleaseState);
+    }
+
+    getDataSets() {
+        return this.datasets;
+    }
+
+    getParticipants() {
+        return this.participants;
     }
 
     /**

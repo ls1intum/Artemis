@@ -3,8 +3,6 @@ import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise'
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService, Principal } from '../../shared';
 import { TranslateService } from '@ngx-translate/core';
-
-import * as Chart from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
@@ -13,11 +11,8 @@ import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
 import { QuestionType } from '../../entities/question';
 import { DropLocation } from '../../entities/drop-location';
-
-interface DataSet {
-    data: Array<number>;
-    backgroundColor: Array<BackgroundColorConfig>;
-}
+import { ChartOptions } from 'chart.js';
+import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
 
 interface BackgroundColorConfig {
     backgroundColor: string;
@@ -31,7 +26,7 @@ interface BackgroundColorConfig {
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown]
 })
-export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy {
+export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
 
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
@@ -67,103 +62,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
     questionTextRendered: string;
 
     // options for chart in chart.js style
-    options = {
-        layout: {
-            padding: {
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 30
-            }
-        },
-        legend: {
-            display: false
-        },
-        title: {
-            display: false,
-            text: '',
-            position: 'top',
-            fontSize: '16',
-            padding: 20
-        },
-        tooltips: {
-            enabled: false
-        },
-        scales: {
-            yAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                },
-                ticks: {
-                    beginAtZero: true
-                }
-            }],
-            xAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                }
-            }]
-        },
-        hover: {animationDuration: 0},
-        // add numbers on top of the bars
-        animation: {
-            duration: 500,
-            onComplete: (chartInstance: Chart) => {
-                const ctx = chartInstance.ctx;
-                const fontSize = 12;
-                const fontStyle = 'normal';
-                const fontFamily = 'Arial';
-                ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.getDatasetMeta(i);
-                    meta.data.forEach((bar: any, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100).toString();
-                        const dataPercentage = (Math.round((dataset.data[index] / this.participants) * 1000) / 10);
-
-                        const position = bar.tooltipPosition();
-
-                        // if the bar is high enough -> write the percentageValue inside the bar
-                        if (dataPercentage > 6) {
-                            // if the bar is low enough -> write the amountValue above the bar
-                            if (position.y > 15) {
-                                ctx.fillStyle = 'black';
-                                ctx.fillText(data, position.x, position.y - 10);
-
-                                if (this.participants !== 0) {
-                                    ctx.fillStyle = 'white';
-                                    ctx.fillText(dataPercentage.toString()
-                                        + '%', position.x, position.y + 10);
-                                }
-                            } else {
-                                // if the bar is too high -> write the amountValue inside the bar
-                                ctx.fillStyle = 'white';
-                                if (this.participants !== 0) {
-                                    ctx.fillText(data + ' / ' + dataPercentage.toString()
-                                        + '%', position.x, position.y + 10);
-                                } else {
-                                    ctx.fillText(data, position.x, position.y + 10);
-                                }
-                            }
-                        } else {
-                            // if the bar is to low -> write the percentageValue above the bar
-                            ctx.fillStyle = 'black';
-                            if (this.participants !== 0) {
-                                ctx.fillText(data + ' / ' + dataPercentage.toString()
-                                    + '%', position.x, position.y - 10);
-                            } else {
-                                ctx.fillText(data, position.x, position.y - 10);
-                            }
-                        }
-                    });
-                });
-            }
-        }
-    };
+    options: ChartOptions;
 
     constructor(private route: ActivatedRoute,
                 private router: Router,
@@ -174,7 +73,9 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
                 private quizStatisticUtil: QuizStatisticUtil,
                 private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
                 private artemisMarkdown: ArtemisMarkdown,
-                private http: HttpClient) {}
+                private http: HttpClient) {
+        this.options = createOptions(this);
+    }
 
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
@@ -225,6 +126,14 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
     ngOnDestroy() {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForData);
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForReleaseState);
+    }
+
+    getDataSets() {
+        return this.datasets;
+    }
+
+    getParticipants() {
+        return this.participants;
     }
 
     /**
