@@ -32,7 +32,6 @@ export class CustomHandlingStrategy implements UrlHandlingStrategy {
      * every URL change, so this just return 'true'
      */
     shouldProcessUrl(url: UrlTree) {
-        console.log('shouldProcessUrl: ' + url);
         return true;
     }
     extract(url: UrlTree) { return url; }
@@ -41,7 +40,7 @@ export class CustomHandlingStrategy implements UrlHandlingStrategy {
 
 @NgModule({
     imports: [
-        RouterModule.forRoot(LAYOUT_ROUTES, { useHash: true , enableTracing: DEBUG_INFO_ENABLED })
+        RouterModule.forRoot(LAYOUT_ROUTES, { useHash: true , enableTracing: false })
     ],
     exports: [
         RouterModule

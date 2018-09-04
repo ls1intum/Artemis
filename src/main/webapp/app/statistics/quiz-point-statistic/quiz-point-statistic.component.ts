@@ -296,7 +296,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
             data: this.data,
             backgroundColor: this.colors
         }];
-        console.log(this.datasets);
     }
 
     /**

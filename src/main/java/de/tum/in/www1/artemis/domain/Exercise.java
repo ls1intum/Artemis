@@ -86,9 +86,6 @@ public abstract class Exercise implements Serializable {
     @JsonView(QuizView.Before.class)
     private Course course;
 
-    @Transient
-    private boolean isOpenForSubmission;
-
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
     public Long getId() {
         return id;
@@ -241,10 +238,6 @@ public abstract class Exercise implements Serializable {
             return false;
         }
         return ZonedDateTime.now().isAfter(getDueDate());
-    }
-
-    public void setOpenForSubmission(boolean openForSubmission) {
-        isOpenForSubmission = openForSubmission;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove

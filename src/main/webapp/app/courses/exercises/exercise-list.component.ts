@@ -165,7 +165,7 @@ export class ExerciseListComponent implements OnInit {
                 this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
             }
         }, error => {
-            console.log(error);
+            console.log('Error: ' + error);
             this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
         });
     }
@@ -175,7 +175,7 @@ export class ExerciseListComponent implements OnInit {
         this.courseExerciseService.resumeExercise(this.course.id, exercise.id).finally(() => exercise.loading = false)
             .subscribe(
                 () => true, error => {
-                    console.log(error.status + ' ' + error.message);
+                    console.log('Error: ' + error.status + ' ' + error.message);
                 });
     }
 

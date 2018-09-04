@@ -103,7 +103,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
 
     private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
-        console.log(error);
+        console.log('Error: ' + error);
     }
 
     callback() { }
