@@ -10,8 +10,8 @@ import { exercisePopupRoute } from 'app/entities/exercise';
 
 // using own ExerciseTypes enum, since we are not able to iterate through the original const enum ExerciseType
 export enum ExerciseTypes {
-    PROGRAMMING = 'programming',
-    MODELING = 'modeling',
+    PROGRAMMING = 'programming-exercise',
+    MODELING = 'modeling-exercise',
     QUIZ = 'quiz',
 }
 
@@ -247,11 +247,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             
             //this.studentArray[indexStudent].totalScoreModeling = student.totalScoreModeling;
             // this.studentArray[indexStudent].everyScoreForModeling = modelingEveryScore;
-            this.studentArray[indexStudent].everyScoreString['modeling'] = modelingScoreString;
+            this.studentArray[indexStudent].everyScoreString['modeling-exercise'] = modelingScoreString;
             
             //this.studentArray[indexStudent].totalScoreProgramming = student.totalScoreProgramming;
             // this.studentArray[indexStudent].everyScoreForProgramming = programmingEveryScore;
-            this.studentArray[indexStudent].everyScoreString['programming'] = programmingScoreString;
+            this.studentArray[indexStudent].everyScoreString['programming-exercise'] = programmingScoreString;
         });
 
         // gets all students that were not caught in the results list
@@ -326,12 +326,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 const studentId = result.login.trim();
                 const email = result.email.trim();
                 const quizTotal = result.totalScores['quiz']; 
-                const programmingTotal = result.totalScores['programming'];
-                const modelingTotal = result.totalScores['modeling'];
+                const programmingTotal = result.totalScores['programming-exercise'];
+                const modelingTotal = result.totalScores['modeling-exercise'];
                 const score = result.overallScore;
                 const quizString = result.everyScoreString['quiz'];
-                const modelingString = result.everyScoreString['modeling'];
-                const programmingString = result.everyScoreString['programming'];
+                const modelingString = result.everyScoreString['modeling-exercise'];
+                const programmingString = result.everyScoreString['programming-exercise'];
                 if (index === 0) {
                     const info = 'data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,'; // shortening line length and complexity
                     rows.push(info + this.titleQuizString + 'ProgrammingTotalScore,' + this.titleProgrammingString + 'modelingTotalScore,' + this.titleModelingString + 'OverallScore');

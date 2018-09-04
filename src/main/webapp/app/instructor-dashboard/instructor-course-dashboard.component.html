@@ -47,8 +47,8 @@
                 <td>{{ row.participated }} ({{ (row.participated/numberOfExercises)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.successful }} ({{ (row.successful/numberOfExercises)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.totalScores['quiz'] }} ({{ (row.totalScores['quiz'] / maxScoreForQuizzes)*100 | number: '0.0-0'}}%)</td>
-                <td>{{ row.totalScores['programming'] }} ({{ (row.totalScores['programming'] / maxScoreForProgramming)*100 | number: '0.0-0'}}%)</td>
-                <td>{{ row.totalScores['modeling'] }} ({{ (row.totalScores['modeling'] / maxScoreForModeling)*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.totalScores['programming-exercise'] }} ({{ (row.totalScores['programming-exercise'] / maxScoreForProgramming)*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.totalScores['modeling-exercise'] }} ({{ (row.totalScores['modeling-exercise'] / maxScoreForModeling)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.overallScore | number: '0.0-0'}}</td>
             </tr>
             </tbody>
