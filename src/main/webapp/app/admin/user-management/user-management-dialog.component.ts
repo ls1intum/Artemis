@@ -8,7 +8,7 @@ import { UserModalService } from './user-modal.service';
 import { JhiLanguageHelper, User, UserService } from '../../shared';
 
 import { Subscription } from 'rxjs/Subscription';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-user-mgmt-dialog',

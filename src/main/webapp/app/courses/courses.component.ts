@@ -4,7 +4,6 @@ import { Course, CourseScoreCalculationService, CourseService } from '../entitie
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
 import { Principal } from '../shared';
-import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-courses',

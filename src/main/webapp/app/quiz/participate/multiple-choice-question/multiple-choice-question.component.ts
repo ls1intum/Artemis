@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import {MultipleChoiceQuestion} from '../../../entities/multiple-choice-question';
-import {AnswerOption} from '../../../entities/answer-option';
+import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
+import { AnswerOption } from '../../../entities/answer-option';
 
 @Component({
     selector: 'jhi-multiple-choice-question',

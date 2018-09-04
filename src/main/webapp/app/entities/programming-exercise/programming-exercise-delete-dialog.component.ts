@@ -29,7 +29,7 @@ export class ProgrammingExerciseDeleteDialogComponent {
     }
 
     confirmDelete(id: number) {
-        this.programmingExerciseService.delete(id).subscribe((response) => {
+        this.programmingExerciseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'programmingExerciseListModification',
                 content: 'Deleted an programmingExercise'
@@ -53,7 +53,7 @@ export class ProgrammingExerciseDeletePopupComponent implements OnInit, OnDestro
     ) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
+        this.routeSub = this.route.params.subscribe(params => {
             this.programmingExercisePopupService
                 .open(ProgrammingExerciseDeleteDialogComponent as Component, params['id']);
         });

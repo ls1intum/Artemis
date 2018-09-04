@@ -1,11 +1,10 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, HostListener } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { ModelingExercise } from '../entities/modeling-exercise';
+import { DiagramType, ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
-import { ActivatedRoute } from '@angular/router';
 import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import ApollonEditor, { ApollonOptions, State, Point } from '@ls1intum/apollon';
+import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -13,11 +12,9 @@ import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from 
 import * as $ from 'jquery';
 import { ModelingEditorService } from './modeling-editor.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentCanDeactivate } from '../shared';
+import { ComponentCanDeactivate, JhiWebsocketService } from '../shared';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from '../shared';
-import { DiagramType } from '../entities/modeling-exercise';
 
 @Component({
     selector: 'jhi-modeling-editor',

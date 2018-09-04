@@ -2,7 +2,6 @@ import { NgModule } from '@angular/core';
 import { RouterModule, UrlHandlingStrategy, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from './shared';
 import { errorRoute, navbarRoute } from './layouts';
-import { DEBUG_INFO_ENABLED } from './app.constants';
 import { EditorComponent } from './editor';
 
 const LAYOUT_ROUTES = [

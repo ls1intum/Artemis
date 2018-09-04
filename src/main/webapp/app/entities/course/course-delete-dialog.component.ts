@@ -30,7 +30,7 @@ export class CourseDeleteDialogComponent {
     }
 
     confirmDelete(id: number) {
-        this.courseService.delete(id).subscribe((response) => {
+        this.courseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'courseListModification',
                 content: 'Deleted an course'
@@ -54,7 +54,7 @@ export class CourseDeletePopupComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
+        this.routeSub = this.route.params.subscribe(params => {
             this.coursePopupService
                 .open(CourseDeleteDialogComponent as Component, params['id']);
         });

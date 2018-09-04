@@ -1,15 +1,14 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { ApollonOptions, State, Point } from '@ls1intum/apollon';
+import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
+import { DiagramType, ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
 import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
 import { Principal } from '../shared';
-import { DiagramType } from '../entities/modeling-exercise';
 import { Submission } from '../entities/submission';
 
 @Component({

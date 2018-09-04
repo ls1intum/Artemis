@@ -6,7 +6,7 @@ import { JhiWebsocketService } from '../../shared';
 import { EditorComponent } from '../editor.component';
 import { EditorFileBrowserCreateComponent } from './editor-file-browser-create';
 import { EditorFileBrowserDeleteComponent } from './editor-file-browser-delete';
-import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem, TreeItem } from 'ngx-treeview';
+import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
 
 @Component({
     selector: 'jhi-editor-file-browser',

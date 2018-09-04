@@ -7,7 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { QuizExercisePopupService } from '../../entities/quiz-exercise';
 import { Router } from '@angular/router';
-import {Question} from "app/entities/question";
+import { Question } from 'app/entities/question';
 
 /** This Angular directive will act as an interface to the 'upgraded' AngularJS component
  *  The upgrade is realized as given Angular tutorial:

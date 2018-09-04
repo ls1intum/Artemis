@@ -5,7 +5,7 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
 import { Result } from '../result';
-import { State, RelationshipKind, Point } from '@ls1intum/apollon';
+import { Point, RelationshipKind, State } from '@ls1intum/apollon';
 
 export type EntityResponseType = HttpResponse<Result>;
 

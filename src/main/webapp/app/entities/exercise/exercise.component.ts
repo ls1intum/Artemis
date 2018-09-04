@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpResponse, HttpHeaders } from '@angular/common/http';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 
