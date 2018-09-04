@@ -6,14 +6,7 @@ import {
     Course,
     CourseService
 } from '../entities/course';
-import { exercisePopupRoute } from 'app/entities/exercise';
-
-// using own ExerciseTypes enum, since we are not able to iterate through the original const enum ExerciseType
-export enum ExerciseTypes {
-    PROGRAMMING = 'programming-exercise',
-    MODELING = 'modeling-exercise',
-    QUIZ = 'quiz',
-}
+import { ExerciseType } from 'app/entities/exercise';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -40,13 +33,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     maxScoreForModeling: number = 0; // needed
     maxScoreForProgramming: number = 0; // needed
     //finalScores: Array<Student> = []; not in use - not needed
-    allExercises: Map<ExerciseTypes, Array<Exercise>> = new Map<ExerciseTypes, Array<Exercise>>([]);
+    allExercises: Map<ExerciseType, Array<Exercise>> = new Map<ExerciseType, Array<Exercise>>([]);
     allQuizExercises: Array<Exercise> = [];
     allProgrammingExercises: Array<Exercise> = [];
     allModelingExercises: Array<Exercise> = [];
     studentArray: Array<Student> = [];
     exportReady: Boolean = false;
-
 
     constructor(private route: ActivatedRoute,
                 private courseService: CourseService) {
@@ -118,7 +110,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             let stud = result.participation.student;
             let ex = result.participation.exercise;
 
-            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, new Map<ExerciseTypes, Array<Score>>([]),new Map<ExerciseTypes, number>(),new Map<ExerciseTypes, {successful:number, participated:number}>(), new Map<ExerciseTypes, string>(),
+            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, new Map<ExerciseType, Array<Score>>([]),new Map<ExerciseType, number>(),new Map<ExerciseType, {successful:number, participated:number}>(), new Map<ExerciseType, string>(),
                 0,0,true,0);
 
             let exercise : Exercise = new Exercise (ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
@@ -150,7 +142,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             let programmingScoreString = '';// initializing score string for csv export
             let programmingEveryScore: Array<Score> = [];
 
-            for ( let exType in ExerciseTypes ){
+            for ( let exType in ExerciseType ){
                 this.allExercises[exType].forEach((exercise) => {
                     let bool : Boolean = true;
                     student.allExercises[exType].array.forEach( (score) => {
@@ -161,11 +153,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                                     quizScoreString += score.absoluteScore + ',';
                                     quizEveryScore.push( new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
                                     break;
-                                case 'programming-exercise':
+                                case 'programming':
                                     programmingScoreString += score.absoluteScore + ',';
                                     programmingEveryScore.push( new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
                                     break;
-                                case 'modeling-exercise':
+                                case 'modeling':
                                     modelingScoreString += score.absoluteScore + ',';
                                     modelingEveryScore.push(new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
                                     break;
@@ -179,11 +171,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                                 quizEveryScore.push(new Score( null, exercise.id, exercise .title, 0));
                                 quizScoreString += '0,';                                
                                 break;
-                            case 'programming-exercise':
+                            case 'programming':
                                 programmingEveryScore.push(new Score( null, exercise.id, exercise.title, 0));
                                 programmingScoreString += '0,';                                
                                 break;
-                            case 'modeling-exercise':
+                            case 'modeling':
                                 modelingEveryScore.push(new Score( null, exercise.id, exercise.title, 0));
                                 modelingScoreString += '0,';                                
                                 break;
@@ -247,11 +239,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             
             //this.studentArray[indexStudent].totalScoreModeling = student.totalScoreModeling;
             // this.studentArray[indexStudent].everyScoreForModeling = modelingEveryScore;
-            this.studentArray[indexStudent].everyScoreString['modeling-exercise'] = modelingScoreString;
+            this.studentArray[indexStudent].everyScoreString['modeling'] = modelingScoreString;
             
             //this.studentArray[indexStudent].totalScoreProgramming = student.totalScoreProgramming;
             // this.studentArray[indexStudent].everyScoreForProgramming = programmingEveryScore;
-            this.studentArray[indexStudent].everyScoreString['programming-exercise'] = programmingScoreString;
+            this.studentArray[indexStudent].everyScoreString['programming'] = programmingScoreString;
         });
 
         // gets all students that were not caught in the results list
@@ -266,7 +258,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
         //     const stud = participation.student;
 
-        //     let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, 0, 0,0,new Map<ExerciseTypes, Array<Score>>([]),new Map<ExerciseTypes, number>(),[], [],'', [],
+        //     let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, 0, 0,0,new Map<ExerciseType, Array<Score>>([]),new Map<ExerciseType, number>(),[], [],'', [],
         //         [],'', [], [],'',
         //         0, 0,0,0,0, 0,0,0,
         //         0,0,0,0,0,0,0,0,
@@ -326,12 +318,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 const studentId = result.login.trim();
                 const email = result.email.trim();
                 const quizTotal = result.totalScores['quiz']; 
-                const programmingTotal = result.totalScores['programming-exercise'];
-                const modelingTotal = result.totalScores['modeling-exercise'];
+                const programmingTotal = result.totalScores['programming'];
+                const modelingTotal = result.totalScores['modeling'];
                 const score = result.overallScore;
                 const quizString = result.everyScoreString['quiz'];
-                const modelingString = result.everyScoreString['modeling-exercise'];
-                const programmingString = result.everyScoreString['programming-exercise'];
+                const modelingString = result.everyScoreString['modeling'];
+                const programmingString = result.everyScoreString['programming'];
                 if (index === 0) {
                     const info = 'data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,'; // shortening line length and complexity
                     rows.push(info + this.titleQuizString + 'ProgrammingTotalScore,' + this.titleProgrammingString + 'modelingTotalScore,' + this.titleModelingString + 'OverallScore');
@@ -566,7 +558,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             // let totalScoreProgramming : number = 0;
             // let totalScoreModeling : number = 0;
 
-            for ( let exType in ExerciseTypes ){
+            for ( let exType in ExerciseType ){
                 student.allExercises[exType].forEach((excercise) => {
                     student.totalScores[exType] += +excercise.absoluteScore;
                 });
@@ -634,10 +626,10 @@ class Student { // creating a class for students for better code quality
     id: string;
     login: string;
     email: string;
-    allExercises: Map<ExerciseTypes, Array<Score>>;
-    totalScores: Map<ExerciseTypes, number>;
-    successAndParticipationExercises: Map<ExerciseTypes, {successful: number, participated: number}>;
-    everyScoreString: Map<ExerciseTypes, string>;
+    allExercises: Map<ExerciseType, Array<Score>>;
+    totalScores: Map<ExerciseType, number>;
+    successAndParticipationExercises: Map<ExerciseType, {successful: number, participated: number}>;
+    everyScoreString: Map<ExerciseType, string>;
     participated: number;
     successful: number;
     exerciseNotCounted: boolean;
@@ -683,10 +675,10 @@ class Student { // creating a class for students for better code quality
                 id: string, 
                 login: string, 
                 email: string,
-                allExercises: Map<ExerciseTypes, Array<Score>>,
-                totalScores: Map<ExerciseTypes, number>,
-                successAndParticipationExercises: Map<ExerciseTypes, {successful: number, participated: number}>,
-                everyScoreString: Map<ExerciseTypes, string>,
+                allExercises: Map<ExerciseType, Array<Score>>,
+                totalScores: Map<ExerciseType, number>,
+                successAndParticipationExercises: Map<ExerciseType, {successful: number, participated: number}>,
+                everyScoreString: Map<ExerciseType, string>,
                 participated: number, 
                 successful: number,
                 exerciseNotCounted: boolean, 

@@ -9,7 +9,7 @@ export const enum DifficultyLevel {
 }
 
 // IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
-export const enum ExerciseType {
+export enum ExerciseType {
     PROGRAMMING = 'programming',
     MODELING = 'modeling',
     QUIZ = 'quiz',
