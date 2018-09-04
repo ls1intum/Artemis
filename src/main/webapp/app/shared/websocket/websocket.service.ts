@@ -155,7 +155,7 @@ export class JhiWebsocketService implements OnDestroy {
      * @param path {string} the path for the websocket connection
      * @param data {object} the date to send through the websocket connection
      */
-    send(path: string, data) {
+    send(path: string, data: any) {
         if (this.stompClient !== null && this.stompClient.connected) {
             this.stompClient
                 .send(path,

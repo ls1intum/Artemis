@@ -11,6 +11,11 @@ import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question'
 import { MultipleChoiceQuestionStatistic } from '../../entities/multiple-choice-question-statistic';
 import { QuestionType } from '../../entities/question';
 
+interface DataSet {
+    data: Array<number>;
+    backgroundColor: Array<string>;
+}
+
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
     templateUrl: './multiple-choice-question-statistic.component.html',
@@ -25,41 +30,33 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     quizExercise: QuizExercise;
     questionStatistic: MultipleChoiceQuestionStatistic;
     question: MultipleChoiceQuestion;
-    questionIdParam;
+    questionIdParam: number;
     private sub: any;
 
-    /**
-     * For colors and labels the reference must not change otherwise the chart will not update
-     */
-    labels = [];
-    data = [];
-    colors = [];
+    labels = new Array<string>();
+    data = new Array<number>();
+    colors = new Array<string>();
     chartType = 'bar';
-    datasets = [];
+    datasets = new Array<DataSet>();
 
-    label;
-    solutionLabel;
-    ratedData;
-    unratedData;
-    backgroundColor;
-    backgroundSolutionColor;
-    ratedAverage;
-    unratedAverage;
-    ratedCorrectData;
-    unratedCorrectData;
+    label = new Array<string>();
+    solutionLabel = new Array<string>();
+    ratedData = new Array<number>();
+    unratedData = new Array<number>();
+    backgroundColor = new Array<string>();
+    backgroundSolutionColor = new Array<string>();
+    ratedCorrectData: number;
+    unratedCorrectData: number;
 
-    maxScore;
-
+    maxScore: number;
     rated = true;
     showSolution = false;
+    participants: number;
+    websocketChannelForData: string;
+    websocketChannelForReleaseState: string;
 
-    questionTextRendered;
-    answerTextRendered;
-
-    participants;
-
-    websocketChannelForData;
-    websocketChannelForReleaseState;
+    questionTextRendered: string;
+    answerTextRendered: string[];
 
     // options for chart in chart.js style
     options = {
@@ -105,22 +102,20 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
         // add numbers on top of the bars
         animation: {
             duration: 500,
-            onComplete: chart => {
-                const chartInstance = chart.chart,
-                    ctx = chartInstance.ctx;
+            onComplete: (chartInstance: Chart) => {
+                const ctx = chartInstance.ctx;
                 const fontSize = 12;
                 const fontStyle = 'normal';
-                const fontFamily = 'Calibri';
+                const fontFamily = 'Arial';
                 ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-console.log(chart);
-                chartInstance.config.data.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.controller.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100);
-                        const dataPercentage = (Math.round(
-                            (dataset.data[index] / this.participants) * 1000) / 10);
+
+                this.datasets.forEach((dataset, i) => {
+                    const meta = chartInstance.getDatasetMeta(i);
+                    meta.data.forEach((bar: any, index) => {
+                        const data = (Math.round(dataset.data[index] * 100) / 100).toString();
+                        const dataPercentage = (Math.round((dataset.data[index] / this.participants) * 1000) / 10);
 
                         const position = bar.tooltipPosition();
 
@@ -158,7 +153,6 @@ console.log(chart);
                         }
                     });
                 });
-                console.log(chart);
             }
         }
     };
@@ -229,7 +223,7 @@ console.log(chart);
      * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
      * @param {boolean} refresh: true if method is called from Websocket
      */
-    loadQuiz(quiz, refresh) {
+    loadQuiz(quiz: QuizExercise, refresh: boolean) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
         if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
@@ -312,8 +306,7 @@ console.log(chart);
                     this.backgroundColor[i] = '#838383';
                     this.backgroundSolutionColor[i] = '#838383';
 
-                    this.solutionLabel[i] = ([String.fromCharCode(65 + i)
-                    + '.', ' ' + invalidLabel]);
+                    this.solutionLabel[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
                 }
             });
         });
@@ -332,8 +325,7 @@ console.log(chart);
                         //      change solution-label and -color
                         if (!answerOption.invalid) {
                             this.backgroundSolutionColor[i] = '#5cb85c';
-                            this.solutionLabel[i] = ([String.fromCharCode(65 + i)
-                            + '.', ' (' + correctLabel + ')']);
+                            this.solutionLabel[i] = String.fromCharCode(65 + i) + '. (' + correctLabel + ')';
                         }
                     }
                 });
@@ -348,8 +340,7 @@ console.log(chart);
                         //      change solution-label and -color
                         if (!answerOption.invalid) {
                             this.backgroundSolutionColor[i] = '#d9534f';
-                            this.solutionLabel[i] = ([String.fromCharCode(65 + i)
-                            + '.', ' (' + incorrectLabel + ')']);
+                            this.solutionLabel[i] = String.fromCharCode(65 + i) + '. (' + incorrectLabel + ')';
                         }
                     }
                 });
@@ -476,7 +467,7 @@ console.log(chart);
      *
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released) {
+    releaseStatistics(released: boolean) {
         this.quizStatisticUtil.releaseStatistics(released, this.quizExercise);
     }
 

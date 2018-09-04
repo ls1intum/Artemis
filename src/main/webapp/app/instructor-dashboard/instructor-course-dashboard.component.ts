@@ -3,6 +3,8 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService } from '../entities/course';
+import { Result } from '../entities/result';
+import { Participation } from '../entities/participation';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -19,10 +21,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     predicate: any;
     reverse: any;
     numberOfExercises = 0;
-    rows = [];
-    results = [];
-    participations = [];
-    courseScores = [];
+    rows: any;
+    results = new Array<Result>();
+    participations = new Array<Participation>();
+    courseScores = new Array<any>();
 
     constructor(private route: ActivatedRoute,
                 private courseService: CourseService) {

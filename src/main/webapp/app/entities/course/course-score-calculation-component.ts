@@ -78,16 +78,16 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
 
     handleEISTCourse2018() {
         if (this.courseId === 13) { // EIST
-            const homeworkFilter = courseExercise => {
-                return courseExercise.title.match(/Homework.*/g);
+            const homeworkFilter = (courseExercise: Exercise): boolean => {
+                return courseExercise.title.match(/Homework.*/g) != null;
             };
             const homeworkScores = this.calculateScores(this.courseId, homeworkFilter);
             this.eistHomeworkTotalScore = homeworkScores.get('absoluteScore');
             this.eistHomeworkRelativeScore = homeworkScores.get('relativeScore');
             this.eistHomeworkMaxScore = homeworkScores.get('maxScore');
 
-            const inClassFilter = courseExercise => {
-                return courseExercise.title.match(/(Lecture.*)/g);
+            const inClassFilter = (courseExercise: Exercise): boolean => {
+                return courseExercise.title.match(/(Lecture.*)/g) != null;
             };
 
             const inClassScores = this.calculateScores(this.courseId, inClassFilter);
@@ -129,7 +129,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
         this.totalMaxScore = this.calculateTotalScoreForTheCourse(courseId, 'maxScore');
     }
 
-    calculateScores(courseId: number, filterFunction: (Object) => boolean) {
+    calculateScores(courseId: number, filterFunction: (courseExercise: Exercise) => boolean) {
         filterFunction = filterFunction !== undefined ? filterFunction : () => true;
         const filteredExercises = this.courseExercises.filter(filterFunction);
         return this.courseCalculationService.calculateTotalScores(filteredExercises);
@@ -137,7 +137,7 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
 
     calculateScoreTypeForExerciseType(courseId: number, exerciseType: ExerciseType, scoreType: string): number {
       if (exerciseType !== undefined && scoreType !== undefined ) {
-        const filterFunction = courseExercise => courseExercise.hasType(exerciseType);
+        const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
         const scores = this.calculateScores(courseId, filterFunction);
         return scores.get(scoreType);
       } else {

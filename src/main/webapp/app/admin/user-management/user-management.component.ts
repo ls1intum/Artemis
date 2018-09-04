@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { HttpResponse, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 
@@ -59,7 +59,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
         this.eventManager.subscribe('userListModification', () => this.loadAll());
     }
 
-    setActive(user, isActivated) {
+    setActive(user: User, isActivated: boolean) {
         user.activated = isActivated;
 
         this.userService.update(user).subscribe(
@@ -85,7 +85,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
         );
     }
 
-    trackIdentity(index, item: User) {
+    trackIdentity(index: number, item: User) {
         return item.id;
     }
 
@@ -114,14 +114,14 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
         this.loadAll();
     }
 
-    private onSuccess(data, headers) {
+    private onSuccess(data: any, headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = headers.get('X-Total-Count');
         this.queryCount = this.totalItems;
         this.users = data;
     }
 
-    private onError(error) {
+    private onError(error: any) {
         this.alertService.error(error.error, error.message, null);
     }
 }

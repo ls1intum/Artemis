@@ -13,7 +13,7 @@ export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
     isLoading: boolean;
     feedbackList: Feedback[];
-    buildLogs;
+    buildLogs: any[];
 
     constructor(public activeModal: NgbActiveModal,
                 private resultService: ResultService,

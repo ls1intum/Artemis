@@ -22,7 +22,7 @@ import * as interact from 'interactjs';
 
 export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
-    buildLogs = [];
+    buildLogs: any[] = [];
 
     /** Resizable sizing constants **/
     resizableMinHeight = 100;

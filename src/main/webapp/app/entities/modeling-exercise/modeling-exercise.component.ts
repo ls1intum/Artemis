@@ -22,9 +22,9 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     itemsPerPage: number;
     links: any;
-    page: any;
-    predicate: any;
-    reverse: any;
+    page: number;
+    predicate: string;
+    reverse: boolean;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -66,7 +66,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
             (res: HttpResponse<ModelingExercise[]>) => {
                 this.modelingExercises = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -78,7 +78,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
             (res: HttpResponse<ModelingExercise[]>) => {
                 this.modelingExercises = res.body;
             },
-            (res: HttpResponse<ModelingExercise>[]) => this.onError(res)
+            (res: HttpErrorResponse) => this.onError(res)
         );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
@@ -89,7 +89,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    loadPage(page) {
+    loadPage(page: number) {
         this.page = page;
         this.loadAll();
     }
@@ -98,10 +98,10 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', response => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', (response: any) => this.load());
     }
 
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
         console.log(error);
     }

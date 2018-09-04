@@ -36,7 +36,7 @@ export class EditorService {
             .map(res => this.convertPlantUmlResponseToBase64(res));
     }
 
-    private convertPlantUmlResponseToBase64(res) {
+    private convertPlantUmlResponseToBase64(res: any) {
         return Buffer.from(res, 'binary').toString('base64');
     }
 }

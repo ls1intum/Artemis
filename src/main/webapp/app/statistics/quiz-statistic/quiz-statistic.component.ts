@@ -3,10 +3,17 @@ import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise'
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService, Principal } from '../../shared';
 import { TranslateService } from '@ngx-translate/core';
+import { HttpResponse } from '@angular/common/http';
 
-import * as Chart from 'chart.js';
+import { Chart } from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { QuestionType } from '../../entities/question';
+
+
+interface DataSet {
+    data: Array<number>;
+    backgroundColor: Array<string>;
+}
 
 @Component({
     selector: 'jhi-quiz-statistic',
@@ -21,27 +28,24 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
     quizExercise: QuizExercise;
     private sub: any;
 
-    labels = [];
-    data = [];
-    colors = [];
+    labels = new Array<string>();
+    data = new Array<number>();
+    colors = new Array<string>();
     chartType = 'bar';
-    datasets = [];
+    datasets = new Array<DataSet>();
 
-    label;
-    ratedData;
-    unratedData;
-    backgroundColor;
-    ratedAverage;
-    unratedAverage;
+    label = new Array<string>();
+    ratedData = new Array<number>();
+    unratedData = new Array<number>();
+    backgroundColor = new Array<string>();
+    ratedAverage: number;
+    unratedAverage: number;
 
-    maxScore;
-
+    maxScore: number;
     rated = true;
-
-    participants;
-
-    websocketChannelForData;
-    websocketChannelForReleaseState;
+    participants: number;
+    websocketChannelForData: string;
+    websocketChannelForReleaseState: string;
 
     // options for chart in chart.js style
     options = {
@@ -87,20 +91,19 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
         // add numbers on top of the bars
         animation: {
             duration: 500,
-            onComplete: chart => {
-                const chartInstance = chart.chart,
-                    ctx = chartInstance.ctx;
+            onComplete: (chartInstance: Chart) => {
+                const ctx = chartInstance.ctx;
                 const fontSize = 12;
                 const fontStyle = 'normal';
-                const fontFamily = 'Calibri';
+                const fontFamily = 'Arial';
                 ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
                 this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.controller.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100);
+                    const meta = chartInstance.getDatasetMeta(i);
+                    meta.data.forEach((bar: any, index) => {
+                        const data = (Math.round(dataset.data[index] * 100) / 100).toString();
                         const dataPercentage = (Math.round((dataset.data[index] / this.participants) * 1000) / 10);
 
                         const position = bar.tooltipPosition();
@@ -152,7 +155,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
         this.sub = this.route.params.subscribe(params => {
             // use different REST-call if the User is a Student
             if (this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['quizId']).subscribe(res => {
+                this.quizExerciseService.find(params['quizId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body);
                 });
             } else {
@@ -211,7 +214,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
      *
      * @param {QuizExercise} quiz: the quizExercise, which the this quiz-statistic presents.
      */
-    loadQuizSuccess(quiz) {
+    loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
         if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released === false) {
             this.router.navigate(['/courses']);
@@ -348,7 +351,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
      *
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released) {
+    releaseStatistics(released: boolean) {
         this.quizStatisticUtil.releaseStatistics(released, this.quizExercise);
     }
 

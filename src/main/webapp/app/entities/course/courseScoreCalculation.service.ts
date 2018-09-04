@@ -39,7 +39,7 @@ export class CourseScoreCalculationService {
         return scores;
     }
 
-    private round(value, exp) { // helper function to make actually rounding possible
+    private round(value: any, exp: number) { // helper function to make actually rounding possible
         if (typeof exp === 'undefined' || +exp === 0) {
             return Math.round(value);
         }

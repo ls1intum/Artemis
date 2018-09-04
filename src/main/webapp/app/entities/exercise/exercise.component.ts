@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse, HttpHeaders } from '@angular/common/http';
 import { Subscription } from 'rxjs/Subscription';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 
@@ -17,10 +17,9 @@ export class ExerciseComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     itemsPerPage: number;
     links: any;
-    page: any;
-    predicate: any;
-    queryCount: any;
-    reverse: any;
+    page: number;
+    predicate: string;
+    reverse: boolean;
     totalItems: number;
 
     constructor(
@@ -47,7 +46,7 @@ export class ExerciseComponent implements OnInit, OnDestroy {
             sort: this.sort()
         }).subscribe(
             (res: HttpResponse<Exercise[]>) => this.onSuccess(res.body, res.headers),
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -57,7 +56,7 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         this.loadAll();
     }
 
-    loadPage(page) {
+    loadPage(page: number) {
         this.page = page;
         this.loadAll();
     }
@@ -75,7 +74,7 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('exerciseListModification', response => this.reset());
+        this.eventSubscriber = this.eventManager.subscribe('exerciseListModification', (response: any) => this.reset());
     }
 
     sort() {
@@ -86,15 +85,15 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         return result;
     }
 
-    private onSuccess(data, headers) {
+    private onSuccess(exercises: Exercise[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
-        this.totalItems = headers.get('X-Total-Count');
-        for (let i = 0; i < data.length; i++) {
-            this.exercises.push(data[i]);
+        this.totalItems = Number(headers.get('X-Total-Count'));
+        for (let i = 0; i < exercises.length; i++) {
+            this.exercises.push(exercises[i]);
         }
     }
 
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 }

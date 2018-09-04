@@ -14,7 +14,7 @@ import { Exercise, ExerciseService } from '../entities/exercise';
 export class InstructorDashboardArchiveDialogComponent {
 
     exercise: Exercise;
-    archiveInProgress;
+    archiveInProgress: boolean;
 
     constructor(
         private exerciseService: ExerciseService,

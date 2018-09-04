@@ -12,6 +12,19 @@ import { HttpClient } from '@angular/common/http';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
 import { QuestionType } from '../../entities/question';
+import { DropLocation } from '../../entities/drop-location';
+
+interface DataSet {
+    data: Array<number>;
+    backgroundColor: Array<BackgroundColorConfig>;
+}
+
+interface BackgroundColorConfig {
+    backgroundColor: string;
+    borderColor: string;
+    pointBackgroundColor: string;
+    pointBorderColor: string;
+}
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
@@ -27,37 +40,31 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;
     questionStatistic: DragAndDropQuestionStatistic;
-    questionIdParam;
+    questionIdParam: number;
     private sub: any;
 
-    labels = [];
-    data = [];
-    colors = [];
+    labels = new Array<string>();
+    data = new Array<number>();
+    colors = new Array<BackgroundColorConfig>();
     chartType = 'bar';
-    datasets = [];
+    datasets = new Array<DataSet>();
 
-    label;
-    ratedData;
-    unratedData;
-    backgroundColor;
-    backgroundSolutionColor;
-    ratedAverage;
-    unratedAverage;
-    ratedCorrectData;
-    unratedCorrectData;
+    label = new Array<string>();
+    ratedData = new Array<number>();
+    unratedData = new Array<number>();
+    backgroundColor = new Array<BackgroundColorConfig>();
+    backgroundSolutionColor = new Array<BackgroundColorConfig>();
+    ratedCorrectData: number;
+    unratedCorrectData: number;
 
-    maxScore;
-
-    showSolution = false;
+    maxScore: number;
     rated = true;
+    showSolution = false;
+    participants: number;
+    websocketChannelForData: string;
+    websocketChannelForReleaseState: string;
 
-    questionTextRendered;
-    answerTextRendered;
-
-    participants;
-
-    websocketChannelForData;
-    websocketChannelForReleaseState;
+    questionTextRendered: string;
 
     // options for chart in chart.js style
     options = {
@@ -103,22 +110,20 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
         // add numbers on top of the bars
         animation: {
             duration: 500,
-            onComplete: chart => {
-                const chartInstance = chart.chart,
-                    ctx = chartInstance.ctx;
+            onComplete: (chartInstance: Chart) => {
+                const ctx = chartInstance.ctx;
                 const fontSize = 12;
                 const fontStyle = 'normal';
-                const fontFamily = 'Calibri';
+                const fontFamily = 'Arial';
                 ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
                 this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.controller.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100);
-                        const dataPercentage = (Math.round(
-                            (dataset.data[index] / this.participants) * 1000) / 10);
+                    const meta = chartInstance.getDatasetMeta(i);
+                    meta.data.forEach((bar: any, index) => {
+                        const data = (Math.round(dataset.data[index] * 100) / 100).toString();
+                        const dataPercentage = (Math.round((dataset.data[index] / this.participants) * 1000) / 10);
 
                         const position = bar.tooltipPosition();
 
@@ -228,7 +233,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
      * @param {boolean} refresh: true if method is called from Websocket
      */
-    loadQuiz(quiz, refresh) {
+    loadQuiz(quiz: QuizExercise, refresh: boolean) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
         if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
@@ -340,7 +345,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
                             pointBorderColor: '#838383'
                         });
                     // add 'invalid' to bar-Label
-                    this.label[i] = ([String.fromCharCode(65 + i) + '.', ' ' + invalidLabel]);
+                    this.label[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
                 }
             });
         });
@@ -439,7 +444,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      *
      * @param index the given number
      */
-    getLetter(index) {
+    getLetter(index: number) {
         return String.fromCharCode(65 + index);
     }
 
@@ -470,7 +475,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      * @return {object | null} the mapped drag item,
      *                          or null if no drag item has been mapped to this location
      */
-    correctDragItemForDropLocation(dropLocation) {
+    correctDragItemForDropLocation(dropLocation: DropLocation) {
         const currMapping = this.dragAndDropQuestionUtil.solve(this.question, null).filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
         if (currMapping) {
             return currMapping.dragItem;
@@ -500,7 +505,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      *
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released) {
+    releaseStatistics(released: boolean) {
         this.quizStatisticUtil.releaseStatistics(released, this.quizExercise);
     }
 

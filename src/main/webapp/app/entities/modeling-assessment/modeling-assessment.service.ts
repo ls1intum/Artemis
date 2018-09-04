@@ -5,9 +5,14 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
 import { Result } from '../result';
-import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT } from '@ls1intum/apollon/dist/rendering/layouters/entity';
+import { State, RelationshipKind, Point } from '@ls1intum/apollon';
 
 export type EntityResponseType = HttpResponse<Result>;
+
+export const ENTITY_KIND_HEIGHT = 14;
+export const ENTITY_NAME_HEIGHT = 35;
+export const ENTITY_MEMBER_HEIGHT = 25;
+export const ENTITY_MEMBER_LIST_VERTICAL_PADDING = 5;
 
 @Injectable()
 export class ModelingAssessmentService {
@@ -86,8 +91,8 @@ export class ModelingAssessmentService {
         return copy;
     }
 
-    getNamesForAssessments(assessments: ModelingAssessment[], model) {
-        const assessmentsNames = [];
+    getNamesForAssessments(assessments: ModelingAssessment[], model: State) {
+        const assessmentsNames = new Map<string, string>();
         for (const assessment of assessments) {
             if (assessment.type === ModelElementType.CLASS) {
                 assessmentsNames[assessment.id] = model.entities.byId[assessment.id].name;
@@ -111,29 +116,28 @@ export class ModelingAssessmentService {
                 const relationship = model.relationships.byId[assessment.id];
                 const source = model.entities.byId[relationship.source.entityId].name;
                 const target = model.entities.byId[relationship.target.entityId].name;
-                const kind = model.relationships.byId[assessment.id].kind;
-                let relation;
-                //TODO: use an enum here
+                const kind: RelationshipKind = model.relationships.byId[assessment.id].kind;
+                let relation: string;
                 switch (kind) {
-                    case 'ASSOCIATION_BIDIRECTIONAL':
+                    case RelationshipKind.AssociationBidirectional:
                         relation = ' <-> ';
                         break;
-                    case 'ASSOCIATION_UNIDIRECTIONAL':
+                    case RelationshipKind.AssociationUnidirectional:
                         relation = ' -> ';
                         break;
-                    case 'AGGREGATION':
+                    case RelationshipKind.Aggregation:
                         relation = ' -◇ ';
                         break;
-                    case 'INHERITANCE':
+                    case RelationshipKind.Inheritance:
                         relation = ' -▷ ';
                         break;
-                    case 'DEPENDENCY':
+                    case RelationshipKind.Dependency:
                         relation = ' ╌> ';
                         break;
-                    case 'COMPOSITION':
+                    case RelationshipKind.Composition:
                         relation = ' -◆ ';
                         break;
-                    case 'ACTIVITY_CONTROL_FLOW':
+                    case RelationshipKind.ActivityControlFlow:
                         relation = ' -> ';
                         break;
                     default:
@@ -147,15 +151,15 @@ export class ModelingAssessmentService {
         return assessmentsNames;
     }
 
-    getElementPositions(assessments, state) {
+    getElementPositions(assessments: ModelingAssessment[], model: State) {
         const SYMBOL_HEIGHT = 31;
         const SYMBOL_WIDTH = 65;
-        const positions = [];
+        const positions = new Map<string, Point>();
         for (const assessment of assessments) {
-            const elemPosition = {x: 0, y: 0};
+            const elemPosition: Point = {x: 0, y: 0};
             if (assessment.type === ModelElementType.CLASS) {
-                if (state.entities.byId[assessment.id]) {
-                    const entity = state.entities.byId[assessment.id];
+                if (model.entities.byId[assessment.id]) {
+                    const entity = model.entities.byId[assessment.id];
                     elemPosition.x = entity.position.x + entity.size.width;
                     if (entity.kind === 'ACTIVITY_CONTROL_INITIAL_NODE' || entity.kind === 'ACTIVITY_CONTROL_FINAL_NODE') {
                         elemPosition.x = entity.position.x;
@@ -163,8 +167,8 @@ export class ModelingAssessmentService {
                     elemPosition.y = entity.position.y;
                 }
             } else if (assessment.type === ModelElementType.ATTRIBUTE) {
-                for (const entityId of state.entities.allIds) {
-                    const entity = state.entities.byId[entityId];
+                for (const entityId of model.entities.allIds) {
+                    const entity = model.entities.byId[entityId];
                     entity.attributes.forEach((attribute, index) => {
                         if (attribute.id === assessment.id) {
                             elemPosition.x = entity.position.x + entity.size.width;
@@ -179,8 +183,8 @@ export class ModelingAssessmentService {
                     });
                 }
             } else if (assessment.type === ModelElementType.METHOD) {
-                for (const entityId of state.entities.allIds) {
-                    const entity = state.entities.byId[entityId];
+                for (const entityId of model.entities.allIds) {
+                    const entity = model.entities.byId[entityId];
                     entity.methods.forEach((method, index) => {
                         if (method.id === assessment.id) {
                             elemPosition.x = entity.position.x + entity.size.width;
@@ -198,12 +202,12 @@ export class ModelingAssessmentService {
                     });
                 }
             } else if (assessment.type === ModelElementType.RELATIONSHIP) {
-                if (state.relationships.byId[assessment.id]) {
-                    const relationship = state.relationships.byId[assessment.id];
-                    const kind = relationship.kind;
-                    const sourceEntity = state.entities.byId[relationship.source.entityId];
-                    const destEntity = state.entities.byId[relationship.target.entityId];
-                    if (kind === 'BIDIRECTIONAL') {
+                if (model.relationships.byId[assessment.id]) {
+                    const relationship = model.relationships.byId[assessment.id];
+                    const kind: RelationshipKind = relationship.kind;
+                    const sourceEntity = model.entities.byId[relationship.source.entityId];
+                    const destEntity = model.entities.byId[relationship.target.entityId];
+                    if (kind === RelationshipKind.AssociationBidirectional) {
                         const leftElem = (sourceEntity.position.x < destEntity.position.x) ? sourceEntity : destEntity;
                         const rightElem = (sourceEntity.position.x > destEntity.position.x) ? sourceEntity : destEntity;
                         const rightEdge = (rightElem === sourceEntity) ? relationship.source.edge : relationship.target.edge;

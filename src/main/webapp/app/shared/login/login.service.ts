@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { JhiLanguageService } from 'ng-jhipster';
 
 import { Principal } from '../auth/principal.service';
-import { AuthServerProvider } from '../auth/auth-jwt.service';
+import { AuthServerProvider, Credentials } from '../auth/auth-jwt.service';
 import { JhiWebsocketService } from '../websocket/websocket.service';
 
 @Injectable()
@@ -15,7 +15,7 @@ export class LoginService {
         private authServerProvider: AuthServerProvider
     ) {}
 
-    login(credentials, callback?) {
+    login(credentials: Credentials, callback?: any) {
         const cb = callback || function() {};
 
         return new Promise((resolve, reject) => {
@@ -38,7 +38,7 @@ export class LoginService {
         });
     }
 
-    loginWithToken(jwt, rememberMe) {
+    loginWithToken(jwt: string, rememberMe: string) {
         return this.authServerProvider.loginWithToken(jwt, rememberMe);
     }
 

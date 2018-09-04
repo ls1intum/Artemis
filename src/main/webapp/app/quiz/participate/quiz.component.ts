@@ -8,7 +8,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { JhiAlertService } from 'ng-jhipster';
 import { QuizSubmission, QuizSubmissionService } from '../../entities/quiz-submission';
-import { ParticipationService } from '../../entities/participation';
+import {Participation, ParticipationService} from '../../entities/participation';
 import { Result } from '../../entities/result';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
@@ -33,7 +33,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     timeDifference = 0;
     outstandingWebsocketResponses = 0;
 
-    runningTimeouts = [];
+    runningTimeouts = new Array<any>(); // actually the function type setTimeout(): (handler: any, timeout?: any, ...args: any[]): number
 
     isSubmitting = false;
     isSaving = false;
@@ -47,7 +47,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     disconnected = true;
     unsavedChanges = false;
 
-    sendWebsocket = null;
+    sendWebsocket: (data: any) => void;
     showingResult = false;
     userScore: number;
 
@@ -178,11 +178,11 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.participationService.findParticipation(1, this.id).subscribe(participation => {
                 this.applyParticipationFull(participation);
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 
@@ -198,7 +198,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                     alert('Error: This quiz is not open for practice!');
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -210,7 +210,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             (res: HttpResponse<QuizExercise>) => {
                 this.startQuizPreviewOrPractice(res.body);
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -221,7 +221,7 @@ export class QuizComponent implements OnInit, OnDestroy {
                 this.initQuiz();
                 this.showingResult = true;
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -264,7 +264,7 @@ export class QuizComponent implements OnInit, OnDestroy {
             );
 
             // save answers (submissions) through websocket
-            this.sendWebsocket = data => {
+            this.sendWebsocket = (data: any) => {
                 this.outstandingWebsocketResponses++;
                 this.jhiWebsocketService.send(this.submissionChannel, data);
             };
@@ -349,7 +349,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * @param remainingTimeSeconds {number} the amount of seconds to display
      * @return {string} humanized text for the given amount of seconds
      */
-    relativeTimeText(remainingTimeSeconds) {
+    relativeTimeText(remainingTimeSeconds: number) {
         if (remainingTimeSeconds > 210) {
             return Math.ceil(remainingTimeSeconds / 60) + ' min';
         } else if (remainingTimeSeconds > 59) {
@@ -470,12 +470,12 @@ export class QuizComponent implements OnInit, OnDestroy {
     /**
      * Apply the data of the participation, replacing all old data
      */
-    applyParticipationFull(participation) {
-        this.applyQuizFull(participation.exercise);
+    applyParticipationFull(participation: Participation) {
+        this.applyQuizFull(participation.exercise as QuizExercise);
 
         // apply submission if it exists
         if (participation.results.length) {
-            this.submission = participation.results[0].submission;
+            this.submission = participation.results[0].submission as QuizSubmission;
 
             // update submission time
             this.updateSubmissionTime();
@@ -496,7 +496,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * apply the data of the quiz, replacing all old data and enabling reconnect if necessary
      * @param quizExercise
      */
-    applyQuizFull(quizExercise) {
+    applyQuizFull(quizExercise: QuizExercise) {
         this.quizExercise = quizExercise;
         this.initQuiz();
 
@@ -544,16 +544,17 @@ export class QuizComponent implements OnInit, OnDestroy {
     /*
      * This method only handles the update of the quiz after the quiz has ended
      */
-    applyParticipationAfterStart(participation) {
+    applyParticipationAfterStart(participation: Participation) {
+        const quizExercise = participation.exercise as QuizExercise;
         if (participation.results.length &&
             participation.results[0].resultString &&
-            participation.exercise.ended) {
+            quizExercise.ended) {
             // quiz has ended and results are available
-            this.submission = participation.results[0].submission;
+            this.submission = participation.results[0].submission as QuizSubmission;
 
             // update submission time
             this.updateSubmissionTime();
-            this.transferInformationToQuizExercise(participation.exercise);
+            this.transferInformationToQuizExercise(quizExercise);
             this.applySubmission();
             this.showResult(participation.results);
         }
@@ -656,7 +657,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * Shuffles array in place.
      * @param {Array} items An array containing the items.
      */
-    shuffle(items) {
+    shuffle(items: any[]) {
         for (let i = items.length - 1; i > 0; i--) {
             const pickedIndex = Math.floor(Math.random() * (i + 1));
             const picked = items[pickedIndex];
@@ -796,7 +797,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * Callback function for handling error when submitting
      * @param error
      */
-    onSubmitError(error) {
+    onSubmitError(error: string) {
         console.error(error);
         alert('Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.');
         this.isSubmitting = false;

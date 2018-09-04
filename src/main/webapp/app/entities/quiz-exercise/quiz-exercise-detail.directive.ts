@@ -16,6 +16,11 @@ import { MultipleChoiceQuestion } from '../multiple-choice-question';
 import { DragAndDropQuestion } from '../drag-and-drop-question';
 import { AnswerOption } from '../answer-option';
 
+interface Reason {
+    translateKey: string;
+    translateValues: {};
+}
+
 /** This Angular directive will act as an interface to the 'upgraded' AngularJS component
  *  The upgrade is realized as given Angular tutorial:
  *  https://angular.io/guide/upgrade#using-angularjs-component-directives-from-angular-code */
@@ -57,22 +62,21 @@ class QuizExerciseDetailController {
     static $inject = ['Course', 'QuizExercise'];
 
     entity: QuizExercise;
-    savedEntity;
+    savedEntity: QuizExercise;
     quizExercise: QuizExercise;
-    repository;
-    courseRepository;
+    repository: QuizExerciseService;
+    courseRepository: CourseService;
     course: Course;
-    router;
-    translateService;
-    fileUploaderService;
+    router: Router;
+    translateService: TranslateService;
+    fileUploaderService: FileUploaderService;
     isSaving = false;
-    isTrue = true;
-    dragAndDropQuestionUtil;
+    dragAndDropQuestionUtil: DragAndDropQuestionUtil;
     duration = {
         minutes: 0,
         seconds: 0
     };
-    dateTime;
+    dateTime: Date;
     statusOptionsVisible = [{
         key: false,
         label: 'Hidden'
@@ -119,7 +123,7 @@ class QuizExerciseDetailController {
         }
         this.prepareEntity(this.entity);
         this.prepareDateTime();
-        this.savedEntity = this.entity.id ? Object.assign({}, this.entity) : {};
+        this.savedEntity = this.entity.id ? Object.assign({}, this.entity) : null;
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
@@ -127,7 +131,7 @@ class QuizExerciseDetailController {
         this.updateDuration();
     }
 
-    $onChanges(changes) {
+    $onChanges(changes: any) {
         if (changes.course || changes.quizExercise) {
             this.init();
         }
@@ -283,7 +287,7 @@ class QuizExerciseDetailController {
      * Remove question from the quiz
      * @param question {Question} the question to remove
      */
-    deleteQuestion(question) {
+    deleteQuestion(question: Question) {
         this.quizExercise.questions = this.quizExercise.questions.filter(function(q) {
             return q !== question;
         });
@@ -353,7 +357,7 @@ class QuizExerciseDetailController {
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
     invalidReasons() {
-        const reasons = [];
+        const reasons = new Array<Reason>();
         if (!this.quizExercise) {
             return;
         }
@@ -375,7 +379,7 @@ class QuizExerciseDetailController {
                 translateValues: {}
             });
         }
-        this.quizExercise.questions.forEach(function(question, index) {
+        this.quizExercise.questions.forEach(function(question: Question, index: number) {
             if (!question.title || question.title === '') {
                 reasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
@@ -548,11 +552,11 @@ class QuizExerciseDetailController {
         }
     }
 
-    onSaveSuccess(result) {
+    onSaveSuccess(quizExercise: QuizExercise) {
         this.isSaving = false;
-        this.prepareEntity(result);
-        this.savedEntity = Object.assign({}, result);
-        this.quizExercise = result;
+        this.prepareEntity(quizExercise);
+        this.savedEntity = Object.assign({}, quizExercise);
+        this.quizExercise = quizExercise;
     }
 
     onSaveError() {
@@ -562,12 +566,12 @@ class QuizExerciseDetailController {
 
     /**
      * Makes sure the entity is well formed and its fields are of the correct types
-     * @param entity
+     * @param quizExercise
      */
-    prepareEntity(entity) {
-        entity.releaseDate = entity.releaseDate ? new Date(entity.releaseDate) : new Date();
-        entity.duration = Number(entity.duration);
-        entity.duration = isNaN(entity.duration) ? 10 : entity.duration;
+    prepareEntity(quizExercise: QuizExercise) {
+        quizExercise.releaseDate = quizExercise.releaseDate ? new Date(quizExercise.releaseDate) : new Date();
+        quizExercise.duration = Number(quizExercise.duration);
+        quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }
 
     /**
@@ -615,10 +619,9 @@ class QuizExerciseDetailController {
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
     hasSavedQuizStarted() {
-        return !!(
-            this.savedEntity &&
-            (this.savedEntity as any).isPlannedToStart &&
-            moment((this.savedEntity as any).releaseDate).isBefore(moment())
+        return !!(this.savedEntity &&
+            this.savedEntity.isPlannedToStart &&
+            moment(this.savedEntity.releaseDate).isBefore(moment())
         );
     }
 }

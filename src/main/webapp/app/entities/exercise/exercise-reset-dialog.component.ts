@@ -32,7 +32,7 @@ export class ExerciseResetDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    confirmReset(id) {
+    confirmReset(id: number) {
         this.resetInProgress = true;
         this.exerciseService.reset(id).subscribe(() => {
             this.activeModal.close(true);

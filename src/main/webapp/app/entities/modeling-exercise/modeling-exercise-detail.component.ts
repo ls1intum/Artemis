@@ -31,7 +31,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInModelingExercises();
     }
 
-    load(id) {
+    load(id: number) {
         this.modelingExerciseService.find(id)
             .subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
                 this.modelingExercise = modelingExerciseResponse.body;
@@ -49,7 +49,7 @@ export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInModelingExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'modelingExerciseListModification',
-            response => this.load(this.modelingExercise.id)
+            (response: any) => this.load(this.modelingExercise.id)
         );
     }
 }

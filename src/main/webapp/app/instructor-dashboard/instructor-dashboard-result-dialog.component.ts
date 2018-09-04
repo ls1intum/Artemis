@@ -7,6 +7,7 @@ import { Result, ResultService } from '../entities/result';
 import { Participation } from '../entities/participation';
 import { Feedback, FeedbackType } from '../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-instructor-dashboard-result-dialog',
@@ -62,7 +63,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
         }
     }
 
-    onSaveSuccess(result) {
+    onSaveSuccess(result: HttpResponse<Result>) {
         this.activeModal.close(result);
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result'});

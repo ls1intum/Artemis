@@ -27,7 +27,7 @@ export class JhiHealthCheckComponent implements OnInit {
         return this.healthService.getBaseName(name);
     }
 
-    getBadgeClass(statusState) {
+    getBadgeClass(statusState: string) {
         if (statusState === 'UP') {
             return 'badge-success';
         } else {

@@ -9,6 +9,11 @@ import { QuizPointStatistic } from '../../entities/quiz-point-statistic';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { QuestionType } from '../../entities/question';
 
+interface DataSet {
+    data: Array<number>;
+    backgroundColor: Array<string>;
+}
+
 @Component({
     selector: 'jhi-quiz-point-statistic',
     templateUrl: './quiz-point-statistic.component.html',
@@ -24,25 +29,22 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
     quizPointStatistic: QuizPointStatistic;
     private sub: any;
 
-    labels = [];
-    data = [];
-    colors = [];
+    labels = new Array<string>();
+    data = new Array<number>();
+    colors = new Array<string>();
     chartType = 'bar';
-    datasets = [];
+    datasets = new Array<DataSet>();
 
-    label;
-    ratedData;
-    unratedData;
-    backgroundColor;
+    label = new Array<string>();
+    ratedData = new Array<number>();
+    unratedData = new Array<number>();
+    backgroundColor = new Array<string>();
 
-    maxScore;
-
+    maxScore: number;
     rated = true;
-
-    participants;
-
-    websocketChannelForData;
-    websocketChannelForReleaseState;
+    participants: number;
+    websocketChannelForData: string;
+    websocketChannelForReleaseState: string;
 
     // options for chart in chart.js style
     options = {
@@ -88,22 +90,20 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
         // add numbers on top of the bars
         animation: {
             duration: 500,
-            onComplete: chart => {
-                const chartInstance = chart.chart,
-                    ctx = chartInstance.ctx;
+            onComplete: (chartInstance: Chart) => {
+                const ctx = chartInstance.ctx;
                 const fontSize = 12;
                 const fontStyle = 'normal';
-                const fontFamily = 'Calibri';
+                const fontFamily = 'Arial';
                 ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
 
                 this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.controller.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100);
-                        const dataPercentage = (Math.round(
-                            (dataset.data[index] / this.participants) * 1000) / 10);
+                    const meta = chartInstance.getDatasetMeta(i);
+                    meta.data.forEach((bar: any, index) => {
+                        const data = (Math.round(dataset.data[index] * 100) / 100).toString();
+                        const dataPercentage = (Math.round((dataset.data[index] / this.participants) * 1000) / 10);
 
                         const position = bar.tooltipPosition();
 
@@ -208,7 +208,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      * @param {QuizPointStatistic} statistic: the new quizPointStatistic
      *                                          from the server with the new Data.
      */
-    loadNewData(statistic) {
+    loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
         if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && !statistic.released) {
@@ -224,7 +224,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      * @param {QuizExercise} quiz: the quizExercise,
      *                              which the this quiz-point-statistic presents.
      */
-    loadQuizSuccess(quiz) {
+    loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
         if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released === false) {
@@ -264,7 +264,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
 
         // set data based on the pointCounters
         this.quizPointStatistic.pointCounters.forEach(pointCounter => {
-            this.label.push(pointCounter.points);
+            this.label.push(pointCounter.points.toString());
             this.ratedData.push(pointCounter.ratedCounter);
             this.unratedData.push(pointCounter.unRatedCounter);
             this.backgroundColor.push('#428bca');
@@ -324,23 +324,23 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      * order the data and the associated Labels, so that they are ascending (BubbleSort)
      */
     order() {
-        let old = [];
+        let old = new Array<string>();
         while (old.toString() !== this.label.toString()) {
             old = this.label.slice();
             for (let i = 0; i < this.label.length - 1; i++) {
                 if (this.label[i] > this.label[i + 1]) {
                     // switch Labels
-                    let temp = this.label[i];
+                    const tempLabel = this.label[i];
                     this.label[i] = this.label[i + 1];
-                    this.label[i + 1] = temp;
+                    this.label[i + 1] = tempLabel;
                     // switch rated Data
-                    temp = this.ratedData[i];
+                    const tempRatedData = this.ratedData[i];
                     this.ratedData[i] = this.ratedData[i + 1];
-                    this.ratedData[i + 1] = temp;
+                    this.ratedData[i + 1] = tempRatedData;
                     // switch unrated Data
-                    temp = this.unratedData[i];
+                    const tempUnratedData = this.unratedData[i];
                     this.unratedData[i] = this.unratedData[i + 1];
-                    this.unratedData[i + 1] = temp;
+                    this.unratedData[i + 1] = tempUnratedData;
                 }
             }
         }
@@ -369,7 +369,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy {
      *
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released) {
+    releaseStatistics(released: boolean) {
         if (released) {
             this.quizExerciseService.releaseStatistics(this.quizExercise.id);
         } else {

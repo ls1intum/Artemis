@@ -132,7 +132,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @desc Callback function for a save status changes of files
      * @param $event Event object which contains information regarding the save status of files
      */
-    updateSaveStatusLabel($event) {
+    updateSaveStatusLabel($event: any) {
         this.isSaved = $event.isSaved;
         if (!this.isSaved) {
             this.isCommitted = false;
@@ -145,7 +145,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @desc Callback function for when a new result is received from the result component
      * @param $event Event object which contains the newly received result
      */
-    updateLatestResult($event) {
+    updateLatestResult($event: any) {
         this.isBuilding = false;
         this.latestResult = $event.newResult;
     }
@@ -155,7 +155,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @desc Callback function for when a new file is selected within the file-browser component
      * @param $event Event object which contains the new file name
      */
-    updateSelectedFile($event) {
+    updateSelectedFile($event: any) {
         this.file = $event.fileName;
     }
 
@@ -163,7 +163,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @function updateRepositoryCommitStatus
      * @desc Callback function for when a file was created or deleted; updates the current repository files
      */
-    updateRepositoryCommitStatus($event) {
+    updateRepositoryCommitStatus($event: any) {
         this.isSaved = false;
         this.isCommitted = false;
         /** Query the repositoryFileService for updated files in the repository */
@@ -184,7 +184,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param $event
      * @param horizontal
      */
-    toggleCollapse($event, horizontal: boolean) {
+    toggleCollapse($event: any, horizontal: boolean) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
         const $card = $(target).closest('.card');
@@ -202,7 +202,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @desc Commits the current repository filess
      * @param $event
      */
-    commit($event) {
+    commit($event: any) {
         const target = $event.toElement || $event.relatedTarget || $event.target;
         target.blur();
         this.isBuilding = true;

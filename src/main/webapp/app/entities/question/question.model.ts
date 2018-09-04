@@ -14,7 +14,13 @@ export const enum QuestionType {
     DRAG_AND_DROP = 'drag-and-drop'
 }
 
-export abstract class Question implements BaseEntity {
+export interface MarkDownElement {
+    text: string;
+    hint: string;
+    explanation: string;
+}
+
+export abstract class Question implements BaseEntity, MarkDownElement {
 
     public id: number;
     public title: string;

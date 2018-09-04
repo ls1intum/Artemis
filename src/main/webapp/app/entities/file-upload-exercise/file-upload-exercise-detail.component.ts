@@ -31,7 +31,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInFileUploadExercises();
     }
 
-    load(id) {
+    load(id: number) {
         this.fileUploadExerciseService.find(id)
             .subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
                 this.fileUploadExercise = fileUploadExerciseResponse.body;
@@ -49,7 +49,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInFileUploadExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'fileUploadExerciseListModification',
-            response => this.load(this.fileUploadExercise.id)
+            (response: any) => this.load(this.fileUploadExercise.id)
         );
     }
 }

@@ -58,7 +58,7 @@ export class ExerciseListComponent implements OnInit {
             });
         }
     }
-    @Input() filterByExerciseId;
+    @Input() filterByExerciseId: number;
 
     /*
      * IMPORTANT NOTICE:
@@ -187,7 +187,7 @@ export class ExerciseListComponent implements OnInit {
         this.showInactiveExercises = !this.showInactiveExercises;
     }
 
-    buildSourceTreeUrl(cloneUrl): string {
+    buildSourceTreeUrl(cloneUrl: string): string {
         return 'sourcetree://cloneRepo?type=stash&cloneUrl=' + encodeURI(cloneUrl) + '&baseWebUrl=https://repobruegge.in.tum.de';
     }
 
@@ -252,7 +252,7 @@ export class ExerciseListComponent implements OnInit {
     }
 
     @HostListener('document:click', ['$event'])
-    clickOutside(event) {
+    clickOutside(event: any) {
         // If there's a last element-reference AND the click-event target is outside this element
         if (this.lastPopoverRef && (this.lastPopoverRef as any)._elementRef.nativeElement.contains(event.target) &&
             !(this.lastPopoverRef as any)._windowRef &&
@@ -262,7 +262,7 @@ export class ExerciseListComponent implements OnInit {
         }
     }
 
-    setCurrentPopoverOpen(popReference) {
+    setCurrentPopoverOpen(popReference: any) {
         // If there's a last element-reference AND the new reference is different
         if (this.lastPopoverRef && this.lastPopoverRef !== popReference) {
             this.lastPopoverRef.close();

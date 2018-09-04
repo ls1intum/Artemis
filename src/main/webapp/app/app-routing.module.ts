@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { RouterModule, UrlHandlingStrategy } from '@angular/router';
+import { RouterModule, UrlHandlingStrategy, UrlTree } from '@angular/router';
 import { UserRouteAccessService } from './shared';
 import { errorRoute, navbarRoute } from './layouts';
 import { DEBUG_INFO_ENABLED } from './app.constants';
@@ -31,12 +31,12 @@ export class CustomHandlingStrategy implements UrlHandlingStrategy {
      * Useful when in need to handle a dual-router setup. Currently, the Angular router handles
      * every URL change, so this just return 'true'
      */
-    shouldProcessUrl(url) {
+    shouldProcessUrl(url: UrlTree) {
         console.log('shouldProcessUrl: ' + url);
         return true;
     }
-    extract(url) { return url; }
-    merge(url, whole) { return url; }
+    extract(url: UrlTree) { return url; }
+    merge(url: UrlTree, whole: UrlTree) { return url; }
 }
 
 @NgModule({

@@ -7,6 +7,7 @@ import { ParticipationService } from './participation.service';
 import { Principal } from '../../shared';
 import { ActivatedRoute } from '@angular/router';
 import { Exercise, ExerciseService, ExerciseType } from '../exercise';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-participation',
@@ -61,10 +62,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInParticipations() {
-        this.eventSubscriber = this.eventManager.subscribe('participationListModification', response => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('participationListModification', (response: any) => this.loadAll());
     }
 
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 

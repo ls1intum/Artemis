@@ -15,7 +15,7 @@ export class EditorInstructionsResultDetailComponent implements OnInit {
     isLoading: boolean;
     filterTests: string[];
     feedbackList: Feedback[];
-    buildLogs;
+    buildLogs: any[];
 
     constructor(public activeModal: NgbActiveModal,
                 private resultService: ResultService) {}

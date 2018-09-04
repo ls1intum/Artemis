@@ -6,7 +6,7 @@ import { JhiWebsocketService } from '../../shared';
 import { EditorComponent } from '../editor.component';
 import { EditorFileBrowserCreateComponent } from './editor-file-browser-create';
 import { EditorFileBrowserDeleteComponent } from './editor-file-browser-delete';
-import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
+import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem, TreeItem } from 'ngx-treeview';
 
 @Component({
     selector: 'jhi-editor-file-browser',
@@ -141,7 +141,7 @@ export class EditorFileBrowserComponent implements OnChanges {
      * @desc Processes the file array, compresses it and then transforms it to a TreeViewItem
      * @param files: Provided repository files by parent editor component
      */
-    setupTreeview(files) {
+    setupTreeview(files: string[]) {
         let tree = this.buildTree(files);
         tree = this.compressTree(tree);
         this.filesTreeViewItem = this.transformTreeToTreeViewItem(tree);
@@ -152,7 +152,7 @@ export class EditorFileBrowserComponent implements OnChanges {
      * @desc Converts a parsed filetree to a TreeViewItem[] which will then be used by the Treeviewer (ngx-treeview)
      * @param tree: Filetree obtained by parsing the repository file list
      */
-    transformTreeToTreeViewItem(tree): TreeviewItem[] {
+    transformTreeToTreeViewItem(tree: any): TreeviewItem[] {
         const treeViewItem = [];
         for (const node of tree) {
             treeViewItem.push(new TreeviewItem(node));
@@ -167,7 +167,7 @@ export class EditorFileBrowserComponent implements OnChanges {
      * @param tree {array of objects} Current tree structure
      * @param folder {string} Folder name
      */
-    buildTree(files, tree?, folder?) {
+    buildTree(files: string[], tree?: any[], folder?: File) {
         /**
          * Initialize tree if empty
          */
@@ -225,7 +225,7 @@ export class EditorFileBrowserComponent implements OnChanges {
      * @desc Compresses the tree obtained by buildTree() to not contain nodes with only one directory child node
      * @param tree {array of objects} Tree structure
      */
-    compressTree(tree) {
+    compressTree(tree: any): any {
         for (const node of tree) {
             if (node.children && node.children.length === 1 && node.children[0].children) {
                 node.text = node.text + ' / ' + node.children[0].text;

@@ -95,7 +95,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
                 this.quizExercises = res.body;
                 this.setQuizExercisesStatus();
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -116,23 +116,23 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInQuizExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', response => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', (response: any) => this.load());
     }
 
-    private loadForCourse(courseId) {
+    private loadForCourse(courseId: number) {
         this.quizExerciseService.findForCourse(courseId).subscribe(
             (res: HttpResponse<QuizExercise[]>) => {
                 this.quizExercises = res.body;
                 this.setQuizExercisesStatus();
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
     }
 
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 
@@ -141,7 +141,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      * @param quizExercise The quiz exercise we want to know if it's over
      * @returns {boolean} true if the quiz exercise is over, false if not.
      */
-    quizIsOver(quizExercise) {
+    quizIsOver(quizExercise: QuizExercise) {
         if (quizExercise.isPlannedToStart) {
             const plannedEndMoment = moment(quizExercise.releaseDate).add(quizExercise.duration, 'seconds');
             return plannedEndMoment.isBefore(moment());
@@ -156,7 +156,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      * @param seconds {number} the number of seconds
      * @returns {number} the number of full minutes
      */
-    fullMinutesForSeconds(seconds) {
+    fullMinutesForSeconds(seconds: number) {
         return Math.floor(seconds / 60);
     }
 
@@ -165,13 +165,13 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      *
      * @param quizExerciseId the quiz exercise id to start
      */
-    openForPractice(quizExerciseId) {
+    openForPractice(quizExerciseId: number) {
         this.quizExerciseService.openForPractice(quizExerciseId).subscribe(
             () => {
                 this.loadOne(quizExerciseId);
             },
             (res: HttpErrorResponse) => {
-                this.onError(res.message);
+                this.onError(res);
                 this.loadOne(quizExerciseId);
             }
         );
@@ -202,7 +202,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      * @param quizExercise The quiz exercise we want to determine the status of
      * @returns {string} The status as a string
      */
-    statusForQuiz(quizExercise) {
+    statusForQuiz(quizExercise: QuizExercise) {
         if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
             if (quizExercise.remainingTime <= 0) {
                 // the quiz is over
@@ -220,13 +220,13 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      *
      * @param quizExerciseId the quiz exercise id to start
      */
-    startQuiz(quizExerciseId) {
+    startQuiz(quizExerciseId: number) {
         this.quizExerciseService.start(quizExerciseId).subscribe(
             () => {
                 this.loadOne(quizExerciseId);
             },
             (res: HttpErrorResponse) => {
-                this.onError(res.message);
+                this.onError(res);
                 this.loadOne(quizExerciseId);
             }
         );
@@ -237,7 +237,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      *
      * @param quizExerciseId
      */
-    private loadOne(quizExerciseId) {
+    private loadOne(quizExerciseId: number) {
         this.quizExerciseService.find(quizExerciseId).subscribe(
             (res: HttpResponse<QuizExercise>) => {
                 const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === quizExerciseId);
@@ -271,13 +271,13 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      *
      * @param quizExerciseId the quiz exercise id to start
      */
-    showQuiz(quizExerciseId) {
+    showQuiz(quizExerciseId: number) {
         this.quizExerciseService.setVisible(quizExerciseId).subscribe(
             () => {
                 this.loadOne(quizExerciseId);
             },
             (res: HttpErrorResponse) => {
-                this.onError(res.message);
+                this.onError(res);
                 this.loadOne(quizExerciseId);
             }
         );

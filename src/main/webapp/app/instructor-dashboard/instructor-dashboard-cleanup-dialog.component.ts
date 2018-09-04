@@ -14,10 +14,10 @@ import { Exercise, ExerciseService } from '../entities/exercise';
 export class InstructorDashboardCleanupDialogComponent {
 
     exercise: Exercise;
-    confirmExerciseName;
+    confirmExerciseName: string;
     deleteRepositories: boolean;
-    cleanupInProgress;
-    deleteInProgress;
+    cleanupInProgress: boolean;
+    deleteInProgress: boolean;
 
     constructor(
         private exerciseService: ExerciseService,
