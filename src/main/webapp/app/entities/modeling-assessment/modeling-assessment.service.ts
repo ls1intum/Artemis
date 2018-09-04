@@ -5,14 +5,10 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
 import { Result } from '../result';
-import { Point, RelationshipKind, State } from '@ls1intum/apollon';
+import { State, RelationshipKind, Point } from '@ls1intum/apollon';
+import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT } from '@ls1intum/apollon';
 
 export type EntityResponseType = HttpResponse<Result>;
-
-export const ENTITY_KIND_HEIGHT = 14;
-export const ENTITY_NAME_HEIGHT = 35;
-export const ENTITY_MEMBER_HEIGHT = 25;
-export const ENTITY_MEMBER_LIST_VERTICAL_PADDING = 5;
 
 @Injectable()
 export class ModelingAssessmentService {
