@@ -7,13 +7,13 @@ import * as moment from 'moment';
 export class DatePipe implements PipeTransform {
    transform(date: any, args?: any): any {
      if (date == null || date === undefined) {
-       return 'YYYY-MM-dd,HH:mm:ss';
+       return 'DD MMMM YYYY, hh:mm:ss PM';
      }
      const d = new Date(date);
      if (d && !isNaN(d.getTime())) {
-       return moment(d).seconds(0).format('YYYY-MM-DD,HH:mm:ss');
+       return moment(d).seconds(0).format('DD MMMM YYYY, hh:mm:ss A Z');
      } else {
-        return 'YYYY-MM-dd,HH:mm:ss';
+        return 'DD MMMM YYYY, hh:mm:ss PM';
      }
    }
 }
