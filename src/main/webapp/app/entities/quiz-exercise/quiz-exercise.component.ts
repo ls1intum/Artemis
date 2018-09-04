@@ -116,7 +116,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInQuizExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', (response: any) => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', () => this.load());
     }
 
     private loadForCourse(courseId: number) {

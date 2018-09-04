@@ -20,7 +20,7 @@ export class JhiLanguageHelper {
         this.init();
     }
 
-    getAll(): Promise<any> {
+    getAll(): Promise<string[]> {
         return Promise.resolve(LANGUAGES);
     }
 

@@ -74,7 +74,7 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('exerciseListModification', (response: any) => this.reset());
+        this.eventSubscriber = this.eventManager.subscribe('exerciseListModification', () => this.reset());
     }
 
     sort() {

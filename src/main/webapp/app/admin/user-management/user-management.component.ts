@@ -1,7 +1,8 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpResponse, HttpHeaders } from '@angular/common/http';
+import { HttpResponse, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
+import { Subscription } from 'rxjs/Subscription';
 
 import { ITEMS_PER_PAGE, Principal, User, UserService } from '../../shared';
 
@@ -11,19 +12,19 @@ import { ITEMS_PER_PAGE, Principal, User, UserService } from '../../shared';
 })
 export class UserMgmtComponent implements OnInit, OnDestroy {
 
-    currentAccount: any;
+    currentAccount: User;
     users: User[];
-    error: any;
-    success: any;
-    routeData: any;
+    error: string;
+    success: string;
+    routeData: Subscription;
     links: any;
-    totalItems: any;
-    queryCount: any;
-    itemsPerPage: any;
-    page: any;
-    predicate: any;
-    previousPage: any;
-    reverse: any;
+    totalItems: string;
+    queryCount: string;
+    itemsPerPage: number;
+    page: number;
+    predicate: string;
+    previousPage: number;
+    reverse: boolean;
 
     constructor(
         private userService: UserService,
@@ -81,7 +82,7 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
             size: this.itemsPerPage,
             sort: this.sort()}).subscribe(
                 (res: HttpResponse<User[]>) => this.onSuccess(res.body, res.headers),
-                (res: HttpResponse<any>) => this.onError(res.body)
+                (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -114,14 +115,14 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
         this.loadAll();
     }
 
-    private onSuccess(data: any, headers: HttpHeaders) {
+    private onSuccess(data: User[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
         this.totalItems = headers.get('X-Total-Count');
         this.queryCount = this.totalItems;
         this.users = data;
     }
 
-    private onError(error: any) {
+    private onError(error: HttpErrorResponse) {
         this.alertService.error(error.error, error.message, null);
     }
 }

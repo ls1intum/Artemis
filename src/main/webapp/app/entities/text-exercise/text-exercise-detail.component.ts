@@ -49,7 +49,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInTextExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'textExerciseListModification',
-            (response: any) => this.load(this.textExercise.id)
+            () => this.load(this.textExercise.id)
         );
     }
 }

@@ -98,7 +98,7 @@ export class TextExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInTextExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', (response: any) => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('textExerciseListModification', () => this.load());
     }
 
     private onError(error: HttpErrorResponse) {

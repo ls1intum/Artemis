@@ -43,7 +43,7 @@ export class QuizComponent implements OnInit, OnDestroy {
 
     remainingTimeText = '?';
     remainingTimeSeconds = 0;
-    timeUntilStart: any = 0;
+    timeUntilStart = '0';
     disconnected = true;
     unsavedChanges = false;
 
@@ -659,7 +659,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      * Shuffles array in place.
      * @param {Array} items An array containing the items.
      */
-    shuffle(items: any[]) {
+    shuffle<T>(items: T[]) {
         for (let i = items.length - 1; i > 0; i--) {
             const pickedIndex = Math.floor(Math.random() * (i + 1));
             const picked = items[pickedIndex];

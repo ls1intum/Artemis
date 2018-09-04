@@ -7,6 +7,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { QuestionType } from '../../entities/question';
+import { Subscription } from 'rxjs/Subscription';
 
 export interface DataSet {
     data: Array<number>;
@@ -136,18 +137,18 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
 
     quizExercise: QuizExercise;
-    private sub: any;
+    private sub: Subscription;
 
-    labels = new Array<string>();
-    data = new Array<number>();
-    colors = new Array<string>();
+    labels: string[] = [];
+    data: number[] = [];
+    colors: string[] = [];
     chartType = 'bar';
-    datasets = new Array<DataSet>();
+    datasets: DataSet[] = [];
 
-    label = new Array<string>();
-    ratedData = new Array<number>();
-    unratedData = new Array<number>();
-    backgroundColor = new Array<string>();
+    label: string[] = [];
+    ratedData: number[] = [];
+    unratedData: number[] = [];
+    backgroundColor: string[] = [];
     ratedAverage: number;
     unratedAverage: number;
 

@@ -98,7 +98,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', (response: any) => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load());
     }
 
     private onError(error: HttpErrorResponse) {

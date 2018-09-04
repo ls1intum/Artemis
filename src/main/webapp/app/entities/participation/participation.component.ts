@@ -24,8 +24,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     eventSubscriber: Subscription;
     paramSub: Subscription;
     exercise: Exercise;
-    predicate: any;
-    reverse: any;
+    predicate: string;
+    reverse: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -62,7 +62,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInParticipations() {
-        this.eventSubscriber = this.eventManager.subscribe('participationListModification', (response: any) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadAll());
     }
 
     private onError(error: HttpErrorResponse) {

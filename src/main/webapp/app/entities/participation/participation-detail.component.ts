@@ -49,7 +49,7 @@ export class ParticipationDetailComponent implements OnInit, OnDestroy {
     registerChangeInParticipations() {
         this.eventSubscriber = this.eventManager.subscribe(
             'participationListModification',
-            (response: any) => this.load(this.participation.id)
+            () => this.load(this.participation.id)
         );
     }
 }

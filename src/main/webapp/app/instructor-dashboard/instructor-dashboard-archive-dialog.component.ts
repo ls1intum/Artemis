@@ -7,6 +7,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
 import { Exercise, ExerciseService } from '../entities/exercise';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-instructor-dashboard-archive-dialog',
     templateUrl: './instructor-dashboard-archive-dialog.component.html'
@@ -58,7 +60,7 @@ export class InstructorDashboardArchiveDialogComponent {
 })
 export class InstructorDashboardArchivePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

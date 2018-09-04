@@ -50,8 +50,8 @@ export class ModelingAssessmentService {
         return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, {responseType: 'json'});
     }
 
-    resetOptimality(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, {observe: 'response'});
+    resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, {observe: 'response'});
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

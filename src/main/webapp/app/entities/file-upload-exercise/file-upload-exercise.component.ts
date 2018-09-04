@@ -98,7 +98,7 @@ export class FileUploadExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInFileUploadExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', (response: any) => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('fileUploadExerciseListModification', () => this.load());
     }
 
     private onError(error: HttpErrorResponse) {

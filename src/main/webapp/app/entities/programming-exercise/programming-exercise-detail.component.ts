@@ -49,7 +49,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInProgrammingExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'programmingExerciseListModification',
-            (response: any) => this.load(this.programmingExercise.id)
+            () => this.load(this.programmingExercise.id)
         );
     }
 }

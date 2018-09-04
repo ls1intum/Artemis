@@ -31,8 +31,8 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
-    predicate: any;
-    reverse: any;
+    predicate: string;
+    reverse: boolean;
     showAllResults: string;
     results: Result[];
     allResults: Result[];
@@ -128,7 +128,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
 
     exportNames() {
         if (this.results.length > 0) {
-            const rows = new Array<string>();
+            const rows: string[] = [];
             this.results.forEach((result, index) => {
                 let studentName = result.participation.student.firstName;
                 if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {
@@ -148,7 +148,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
 
     exportResults() {
         if (this.results.length > 0) {
-            const rows = new Array<string>();
+            const rows: string[] = [];
             this.results.forEach((result, index) => {
                 let studentName = result.participation.student.firstName;
                 if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {

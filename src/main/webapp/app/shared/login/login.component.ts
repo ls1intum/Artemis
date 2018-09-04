@@ -5,6 +5,7 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { LoginService } from './login.service';
 import { StateStorageService } from '../auth/state-storage.service';
+import { Credentials } from 'app/shared';
 
 @Component({
     selector: 'jhi-login-modal',
@@ -16,7 +17,7 @@ export class JhiLoginModalComponent implements AfterViewInit {
     password: string;
     rememberMe: boolean;
     username: string;
-    credentials: any;
+    credentials: Credentials;
 
     constructor(
         private eventManager: JhiEventManager,
@@ -27,7 +28,11 @@ export class JhiLoginModalComponent implements AfterViewInit {
         private router: Router,
         public activeModal: NgbActiveModal
     ) {
-        this.credentials = {};
+        this.credentials = {
+            username: null,
+            password: null,
+            rememberMe: null
+        };
     }
 
     ngAfterViewInit() {

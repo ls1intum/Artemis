@@ -199,7 +199,7 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
 
     /**
      * @function commit
-     * @desc Commits the current repository filess
+     * @desc Commits the current repository files
      * @param $event
      */
     commit($event: any) {

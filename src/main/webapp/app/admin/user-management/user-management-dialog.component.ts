@@ -7,6 +7,9 @@ import { JhiEventManager } from 'ng-jhipster';
 import { UserModalService } from './user-modal.service';
 import { JhiLanguageHelper, User, UserService } from '../../shared';
 
+import { Subscription } from 'rxjs/Subscription';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+
 @Component({
     selector: 'jhi-user-mgmt-dialog',
     templateUrl: './user-management-dialog.component.html'
@@ -14,8 +17,8 @@ import { JhiLanguageHelper, User, UserService } from '../../shared';
 export class UserMgmtDialogComponent implements OnInit {
 
     user: User;
-    languages: any[];
-    authorities: any[];
+    languages: string[];
+    authorities: string[];
     isSaving: Boolean;
 
     constructor(
@@ -49,7 +52,7 @@ export class UserMgmtDialogComponent implements OnInit {
         }
     }
 
-    private onSaveSuccess(result: any) {
+    private onSaveSuccess(result: HttpResponse<User>) {
         this.eventManager.broadcast({ name: 'userListModification', content: 'OK' });
         this.isSaving = false;
         this.activeModal.dismiss(result.body);
@@ -66,7 +69,7 @@ export class UserMgmtDialogComponent implements OnInit {
 })
 export class UserDialogComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

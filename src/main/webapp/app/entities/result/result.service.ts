@@ -57,8 +57,8 @@ export class ResultService {
         return this.http.get<Feedback[]>(`${this.resultResourceUrl}/${resultId}/details`, { observe: 'response' });
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resultResourceUrl}/${id}`, { observe: 'response' });
     }
 
     private convertArrayResponse(res: HttpResponse<Result[]>): HttpResponse<Result[]> {

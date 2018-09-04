@@ -9,6 +9,8 @@ import { Feedback, FeedbackType } from '../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-instructor-dashboard-result-dialog',
     templateUrl: './instructor-dashboard-result-dialog.component.html'
@@ -92,7 +94,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
 })
 export class InstructorDashboardResultPopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

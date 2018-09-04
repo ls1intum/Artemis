@@ -8,6 +8,7 @@ import { JhiWebsocketService } from '../../shared';
 import { Result, ResultService } from '../../entities/result';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
+import { BuildLogEntry } from '../../entities/build-log';
 
 @Component({
     selector: 'jhi-editor-build-output',
@@ -22,7 +23,7 @@ import * as interact from 'interactjs';
 
 export class EditorBuildOutputComponent implements AfterViewInit, OnChanges {
 
-    buildLogs: any[] = [];
+    buildLogs: BuildLogEntry[] = [];
 
     /** Resizable sizing constants **/
     resizableMinHeight = 100;

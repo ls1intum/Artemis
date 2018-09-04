@@ -185,8 +185,8 @@ export class JhiWebsocketService implements OnDestroy {
         }
     }
 
-    private createListener(channel: string): Observable<any> {
-        return Observable.create((observer: Observer<any>) => {
+    private createListener<T>(channel: string): Observable<T> {
+        return Observable.create((observer: Observer<T>) => {
             this.listenerObservers[channel] = observer;
         });
     }

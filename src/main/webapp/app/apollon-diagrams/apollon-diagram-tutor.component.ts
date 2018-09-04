@@ -1,7 +1,7 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { ApollonOptions, State } from '@ls1intum/apollon';
+import ApollonEditor, { ApollonOptions, State, Point } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -22,8 +22,8 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     @Output() onNewResult = new EventEmitter<Result>();
 
     apollonEditor: ApollonEditor | null = null;
-    selectedEntities: any[];
-    selectedRelationships: any[];
+    selectedEntities: string[];
+    selectedRelationships: string[];
 
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
@@ -33,7 +33,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     assessmentsAreValid: boolean;
     invalidError = '';
     totalScore = 0;
-    positions: {};
+    positions: Map<string, Point>;
     busy: boolean;
     done: boolean;
     timeout: any;
@@ -128,12 +128,12 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         });
 
         this.apollonEditor.subscribeToSelectionChange(selection => {
-            const selectedEntities = [];
+            const selectedEntities: string[] = [];
             for (const entity of selection.entityIds) {
                 selectedEntities.push(entity);
             }
             this.selectedEntities = selectedEntities;
-            const selectedRelationships = [];
+            const selectedRelationships: string[] = [];
             for (const rel of selection.relationshipIds) {
                 selectedRelationships.push(rel);
             }
@@ -312,6 +312,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 }
             });
         }, attempts === 0 ? 0 : 500 + (attempts - 1) * 1000);
+
     }
 
     numberToArray(n: number, startFrom: number): number[] {

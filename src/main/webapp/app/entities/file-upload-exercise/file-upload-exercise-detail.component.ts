@@ -49,7 +49,7 @@ export class FileUploadExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInFileUploadExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'fileUploadExerciseListModification',
-            (response: any) => this.load(this.fileUploadExercise.id)
+            () => this.load(this.fileUploadExercise.id)
         );
     }
 }

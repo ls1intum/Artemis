@@ -8,6 +8,7 @@ import { ChartOptions } from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { QuestionType } from '../../entities/question';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-quiz-point-statistic',
@@ -22,18 +23,18 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
 
     quizExercise: QuizExercise;
     quizPointStatistic: QuizPointStatistic;
-    private sub: any;
+    private sub: Subscription;
 
-    labels = new Array<string>();
-    data = new Array<number>();
-    colors = new Array<string>();
+    labels: string[] = [];
+    data: number[] = [];
+    colors: string[] = [];
     chartType = 'bar';
-    datasets = new Array<DataSet>();
+    datasets: DataSet[] = [];
 
-    label = new Array<string>();
-    ratedData = new Array<number>();
-    unratedData = new Array<number>();
-    backgroundColor = new Array<string>();
+    label: string[] = [];
+    ratedData: number[] = [];
+    unratedData: number[] = [];
+    backgroundColor: string[] = [];
 
     maxScore: number;
     rated = true;
@@ -232,7 +233,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      * order the data and the associated Labels, so that they are ascending (BubbleSort)
      */
     order() {
-        let old = new Array<string>();
+        let old: string[] = [];
         while (old.toString() !== this.label.toString()) {
             old = this.label.slice();
             for (let i = 0; i < this.label.length - 1; i++) {
@@ -259,8 +260,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      * if there is no QuestionStatistic -> go to QuizStatistic
      */
     previousStatistic() {
-        if (this.quizExercise.questions === null
-            || this.quizExercise.questions.length === 0) {
+        if (this.quizExercise.questions === null || this.quizExercise.questions.length === 0) {
             this.router.navigateByUrl('/quiz/' + this.quizExercise.id + '/quiz-statistic');
         } else {
             const previousQuestion = this.quizExercise.questions[this.quizExercise.questions.length - 1];

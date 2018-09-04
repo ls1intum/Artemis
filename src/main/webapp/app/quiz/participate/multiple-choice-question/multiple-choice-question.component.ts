@@ -29,7 +29,7 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
 
     @Output() selectedAnswerOptionsChange = new EventEmitter();
 
-    rendered: any;
+    rendered: MultipleChoiceQuestion;
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -41,18 +41,17 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
     watchCollection() {
         // update html for text, hint and explanation for the question and every answer option
         const artemisMarkdown = this.artemisMarkdown;
-        this.rendered = {
-            text: artemisMarkdown.htmlForMarkdown(this.question.text),
-            hint: artemisMarkdown.htmlForMarkdown(this.question.hint),
-            explanation: artemisMarkdown.htmlForMarkdown(this.question.explanation),
-            answerOptions: this.question.answerOptions.map(function(answerOption) {
-                return {
-                    text: artemisMarkdown.htmlForMarkdown(answerOption.text),
-                    hint: artemisMarkdown.htmlForMarkdown(answerOption.hint),
-                    explanation: artemisMarkdown.htmlForMarkdown(answerOption.explanation)
-                };
-            })
-        };
+        this.rendered = new MultipleChoiceQuestion();
+        this.rendered.text = artemisMarkdown.htmlForMarkdown(this.question.text);
+        this.rendered.hint = artemisMarkdown.htmlForMarkdown(this.question.hint);
+        this.rendered.explanation = artemisMarkdown.htmlForMarkdown(this.question.explanation);
+        this.rendered.answerOptions = this.question.answerOptions.map(function(answerOption) {
+            const renderedAnswerOption = new AnswerOption();
+            renderedAnswerOption.text = artemisMarkdown.htmlForMarkdown(answerOption.text);
+            renderedAnswerOption.hint = artemisMarkdown.htmlForMarkdown(answerOption.hint);
+            renderedAnswerOption.explanation = artemisMarkdown.htmlForMarkdown(answerOption.explanation);
+            return renderedAnswerOption;
+        });
     }
 
     toggleSelection(answerOption: AnswerOption) {

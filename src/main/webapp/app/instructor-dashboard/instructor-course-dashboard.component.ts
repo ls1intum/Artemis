@@ -18,8 +18,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
 
     course: Course;
     paramSub: Subscription;
-    predicate: any;
-    reverse: any;
+    predicate: string;
+    reverse: boolean;
     numberOfExercises = 0;
     rows: any;
     results = new Array<Result>();

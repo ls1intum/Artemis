@@ -8,6 +8,8 @@ import { Course } from './course.model';
 import { CoursePopupService } from './course-popup.service';
 import { CourseService } from './course.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-course-delete-dialog',
     templateUrl: './course-delete-dialog.component.html'
@@ -44,7 +46,7 @@ export class CourseDeleteDialogComponent {
 })
 export class CourseDeletePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

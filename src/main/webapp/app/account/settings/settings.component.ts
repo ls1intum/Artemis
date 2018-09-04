@@ -9,8 +9,8 @@ import { AccountService, JhiLanguageHelper, Principal, User } from '../../shared
 export class SettingsComponent implements OnInit {
     error: string;
     success: string;
-    settingsAccount: any;
-    languages: any[];
+    settingsAccount: User;
+    languages: string[];
 
     constructor(
         private account: AccountService,

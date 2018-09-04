@@ -32,9 +32,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
-    predicate: any;
-    reverse: any;
-    nextOptimalSubmissionIds = new Array<number>();
+    predicate: string;
+    reverse: boolean;
+    nextOptimalSubmissionIds: number[] = [];
     results: Result[];
     allResults: Result[];
     optimalResults: Result[];

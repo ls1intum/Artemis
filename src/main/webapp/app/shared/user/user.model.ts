@@ -1,5 +1,5 @@
 export class User {
-    public id?: any;
+    public id?: number;
     public login?: string;
     public firstName?: string;
     public lastName?: string;
@@ -16,7 +16,7 @@ export class User {
     public imageUrl?: string;
 
     constructor(
-        id?: any,
+        id?: number,
         login?: string,
         firstName?: string,
         lastName?: string,

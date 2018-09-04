@@ -10,6 +10,7 @@ import { MultipleChoiceQuestionStatistic } from '../../entities/multiple-choice-
 import { QuestionType } from '../../entities/question';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-multiple-choice-question-statistic',
@@ -26,20 +27,20 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     questionStatistic: MultipleChoiceQuestionStatistic;
     question: MultipleChoiceQuestion;
     questionIdParam: number;
-    private sub: any;
+    private sub: Subscription;
 
-    labels = new Array<string>();
-    data = new Array<number>();
-    colors = new Array<string>();
+    labels: string[] = [];
+    data: number[] = [];
+    colors: string[] = [];
     chartType = 'bar';
-    datasets = new Array<DataSet>();
+    datasets: DataSet[] = [];
 
-    label = new Array<string>();
-    solutionLabel = new Array<string>();
-    ratedData = new Array<number>();
-    unratedData = new Array<number>();
-    backgroundColor = new Array<string>();
-    backgroundSolutionColor = new Array<string>();
+    label: string[] = [];
+    solutionLabel: string[] = [];
+    ratedData: number[] = [];
+    unratedData: number[] = [];
+    backgroundColor: string[] = [];
+    backgroundSolutionColor: string[] = [];
     ratedCorrectData: number;
     unratedCorrectData: number;
 

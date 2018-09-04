@@ -13,6 +13,7 @@ import { QuestionType } from '../../entities/question';
 import { DropLocation } from '../../entities/drop-location';
 import { ChartOptions } from 'chart.js';
 import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { Subscription } from 'rxjs/Subscription';
 
 interface BackgroundColorConfig {
     backgroundColor: string;
@@ -36,19 +37,19 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     question: DragAndDropQuestion;
     questionStatistic: DragAndDropQuestionStatistic;
     questionIdParam: number;
-    private sub: any;
+    private sub: Subscription;
 
-    labels = new Array<string>();
-    data = new Array<number>();
-    colors = new Array<BackgroundColorConfig>();
+    labels: string[] = [];
+    data: number[] = [];
+    colors: BackgroundColorConfig[] = [];
     chartType = 'bar';
-    datasets = new Array<DataSet>();
+    datasets: DataSet[] = [];
 
-    label = new Array<string>();
-    ratedData = new Array<number>();
-    unratedData = new Array<number>();
-    backgroundColor = new Array<BackgroundColorConfig>();
-    backgroundSolutionColor = new Array<BackgroundColorConfig>();
+    label: string[] = [];
+    ratedData: number[] = [];
+    unratedData: number[] = [];
+    backgroundColor: BackgroundColorConfig[] = [];
+    backgroundSolutionColor: BackgroundColorConfig[] = [];
     ratedCorrectData: number;
     unratedCorrectData: number;
 

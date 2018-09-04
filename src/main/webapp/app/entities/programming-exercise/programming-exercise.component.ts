@@ -98,7 +98,7 @@ export class ProgrammingExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInProgrammingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('programmingExerciseListModification', (response: any) => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('programmingExerciseListModification', () => this.load());
     }
 
     private onError(error: HttpErrorResponse) {

@@ -50,7 +50,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     registerChangeInCourses() {
         this.eventSubscriber = this.eventManager.subscribe(
             'courseListModification',
-            (response: any) => this.load(this.course.id)
+            () => this.load(this.course.id)
         );
     }
 }

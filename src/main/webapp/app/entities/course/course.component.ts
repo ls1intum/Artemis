@@ -44,8 +44,9 @@ export class CourseComponent implements OnInit, OnDestroy {
     trackId(index: number, item: Course) {
         return item.id;
     }
+
     registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('courseListModification', (response:any) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.loadAll());
     }
 
     private onError(error: HttpErrorResponse) {

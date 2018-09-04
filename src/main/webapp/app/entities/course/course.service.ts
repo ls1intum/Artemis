@@ -55,8 +55,8 @@ export class CourseService {
             .map((res: HttpResponse<Course[]>) => this.convertArrayResponse(res));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
     getAllCourseScoresOfCourseUsers(courseId: number): Observable<any> {
