@@ -47,7 +47,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     disconnected = true;
     unsavedChanges = false;
 
-    sendWebsocket: (data: any) => void;
+    sendWebsocket: (submission: QuizSubmission) => void;
     showingResult = false;
     userScore: number;
 
@@ -260,13 +260,15 @@ export class QuizComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe(
                 submission => {
                     this.onSaveSuccess(submission);
-                }, error => {}
+                }, error => {
+                    this.onSubmitError(error);
+                }
             );
 
             // save answers (submissions) through websocket
-            this.sendWebsocket = (data: any) => {
+            this.sendWebsocket = (submission: QuizSubmission) => {
                 this.outstandingWebsocketResponses++;
-                this.jhiWebsocketService.send(this.submissionChannel, data);
+                this.jhiWebsocketService.send(this.submissionChannel, submission);
             };
         }
 
@@ -773,11 +775,11 @@ export class QuizComponent implements OnInit, OnDestroy {
                     this.isSubmitting = false;
                     return;
                 }
-                // send submission through websocket with 'submitted = true'
-                this.jhiWebsocketService.send(this.submissionChannel, {
-                    submittedAnswers: this.submission.submittedAnswers,
-                    submitted: true
-                });
+                // copy submission and send it through websocket with 'submitted = true'
+                const quizSubmission = new QuizSubmission();
+                quizSubmission.submittedAnswers = this.submission.submittedAnswers;
+                quizSubmission.submitted = true;
+                this.jhiWebsocketService.send(this.submissionChannel, quizSubmission);
                 break;
         }
     }

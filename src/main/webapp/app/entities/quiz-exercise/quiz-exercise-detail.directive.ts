@@ -123,7 +123,7 @@ class QuizExerciseDetailController {
         }
         this.prepareEntity(this.entity);
         this.prepareDateTime();
-        this.savedEntity = this.entity.id ? Object.assign({}, this.entity) : null;
+        this.savedEntity = this.entity.id ? Object.assign({}, this.entity) : new QuizExercise();
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
