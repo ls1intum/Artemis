@@ -121,6 +121,9 @@ artemis:
   git:
     name: ArTEMiS
     email: <email>
+  ldap:
+    dn-prefix:
+    dn-suffix:
 
 # ===================================================================
 # JHipster specific properties

@@ -5,6 +5,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.GitlabException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import net.sourceforge.plantuml.Url;
+import org.apache.commons.lang.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,6 +41,12 @@ public class GitlabService implements VersionControlService {
     @Value("${artemis.lti.user-prefix}")
     private String USER_PREFIX = "";
 
+    @Value("${artemis.ldap.dn-prefix}")
+    private String LDAP_DN_PREFIX = "";
+
+    @Value("${artemis.ldap.dn-suffix}")
+    private String LDAP_DN_SUFFIX = "";
+
     private final String API_PATH = "/api/v4/";
 
     private final int USER_NOT_FOUND = -1; // Should be negative to avoid collision with existing user id
@@ -64,18 +71,31 @@ public class GitlabService implements VersionControlService {
 
     @Override
     public void configureRepository(URL repositoryUrl, String username) {
+        User user = userService.getUserByLogin(username).get();
+        String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
+
         if(username.startsWith(USER_PREFIX)) {
             // It is an automatically created user
 
-            User user = userService.getUserByLogin(username).get();
-
             if (!userExists(username)) {
                 log.debug("Gitlab user {} does not exist yet", username);
-                String displayName = (user.getFirstName() + " " + user.getLastName()).trim();
                 createUser(username, userService.decryptPasswordByLogin(username).get(), user.getEmail(), displayName);
 
             } else {
                 log.debug("Gitlab user {} already exists", username);
+            }
+
+        } else {
+            // It is an user connected to LDAP
+            if (!userExists(username) && (!LDAP_DN_PREFIX.equals("") || !LDAP_DN_SUFFIX.equals(""))) {
+                log.debug("Gitlab user {} (LDAP) does not exist yet", username);
+                createUserExternalProvider(username, user.getEmail(), displayName, "ldapmain", LDAP_DN_PREFIX + username + LDAP_DN_SUFFIX); // This will create a User linked to the default LDAP provider
+
+            } else if (LDAP_DN_PREFIX.equals("") && LDAP_DN_SUFFIX.equals("")) {
+                log.debug("No LDAP provider set for user {}", username);
+
+            } else {
+                log.debug("Gitlab user {} (LDAP) already exists", username);
             }
         }
 
@@ -262,10 +282,10 @@ public class GitlabService implements VersionControlService {
     }
 
     /**
-     * Creates an user on Gitlab
+     * Creates an user on Gitlab with the given credentials
      *
      * @param username     The wanted Gitlab username
-     * @param password     The wanted passowrd in clear text
+     * @param password     The wanted password in clear text
      * @param emailAddress The eMail address for the user
      * @param displayName  The display name (full name)
      * @throws GitlabException if the user could not be created
@@ -294,6 +314,51 @@ public class GitlabService implements VersionControlService {
         } catch (HttpClientErrorException e) {
             log.error("Could not create Gitlab user " + username, e);
             throw new GitlabException("Error while creating user");
+        }
+    }
+
+    /**
+     * Creates an user on Gitlab and links it to the given provider. This will create a random password for the user,
+     * which will neither shown to the user nor saved in ArTEMiS.
+     *
+     * @param username     The wanted Gitlab username
+     * @param emailAddress The eMail address for the user
+     * @param displayName  The display name (full name)
+     * @param provider     The provider for the login credentials (e.g. 'ldapmain' for the default LDAP provider)
+     * @param externUid    The extern Uid used to link to the account of the provider
+     * @throws GitlabException if the user could not be created
+     */
+    private void createUserExternalProvider(String username, String emailAddress, String displayName, String provider, String externUid) throws GitlabException {
+        // Create a 15 character random password that will not be used as the user will login using his LDAP credentials, but a password is needed for the Gitlab-API
+        // https://stackoverflow.com/questions/31260512/generate-a-secure-random-password-in-java-with-minimum-special-character-require
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789~`!@#$%^&*()-_=+[{]}\\|;:\'\",<.>/?";
+        String randomPassword = RandomStringUtils.random( 15, characters );
+
+        String baseUrl = GITLAB_SERVER_URL + API_PATH + "users";
+        Map<String, Object> body = new HashMap<>();
+        body.put("email", emailAddress);
+        body.put("username", username);
+        body.put("password", randomPassword);
+        body.put("name", displayName);
+        body.put("skip_confirmation", true); // User should be able to login immediately
+        body.put("provider", provider);
+        body.put("extern_uid", externUid);
+
+        HttpHeaders headers = HeaderUtil.createPrivateTokenAuthorization(GITLAB_PRIVATE_TOKEN);
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        RestTemplate restTemplate = new RestTemplate();
+
+        log.debug("Creating Gitlab user {} (External Provider) ({})", username, emailAddress);
+
+        try {
+            restTemplate.exchange(
+                baseUrl,
+                HttpMethod.POST,
+                entity,
+                Map.class);
+        } catch (HttpClientErrorException e) {
+            log.error("Could not create Gitlab user {} (External Provider)", username, e);
+            throw new GitlabException("Error while creating user (External Provider)");
         }
     }
 
