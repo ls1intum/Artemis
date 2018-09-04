@@ -215,7 +215,7 @@ public class InitializationTest {
         int studentId = 2;
         int exerciseId = 6;
 
-        CompassService compassService = new CompassService(assessmentRepository, modelRepository, null, null);
+        CompassService compassService = new CompassService(assessmentRepository, modelRepository, null, null, null);
         compassService.loadExercise(exerciseId);
 
         compassCalculationEngine = (CompassCalculationEngine) compassService.getEngine(exerciseId);

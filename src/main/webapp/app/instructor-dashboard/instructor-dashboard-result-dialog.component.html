@@ -8,7 +8,7 @@
                 (click)="clear()">&times;</button>
     </div>
     <div class="modal-body">
-        <div *ngIf="result.participation.exercise.openForSubmission" class="alert alert-warning">
+        <div *ngIf="isOpenForSubmission" class="alert alert-warning">
             <strong>Exercise is still open for submissions!</strong> The due date of this exercise is not reached yet. The student could override this manual result by committing a new solution.
         </div>
         <jhi-alert-error></jhi-alert-error>

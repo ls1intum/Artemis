@@ -19,6 +19,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     result: Result;
     feedbacks: Feedback[] = [];
     isSaving = false;
+    isOpenForSubmission = false;
 
     constructor(
         private resultService: ResultService,
@@ -33,6 +34,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
         }
         if (this.participation) {
             this.result.participation = this.participation;
+            this.isOpenForSubmission = this.result.participation.exercise.dueDate < Date.now();
         } else {
             this.clear();
         }
