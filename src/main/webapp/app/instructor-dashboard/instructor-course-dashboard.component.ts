@@ -118,15 +118,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             let stud = result.participation.student;
             let ex = result.participation.exercise;
 
-            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, 0, 0,0, new Map<ExerciseTypes, Array<Score>>([]),new Map<ExerciseTypes, number>(), [], [],'', [],
-                [],'', [], [],'',
-                0,0,0, 0,0,0,
-                0,0,0,0,0,0,0,0,
-                true,0);
+            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, new Map<ExerciseTypes, Array<Score>>([]),new Map<ExerciseTypes, number>(),new Map<ExerciseTypes, {successful:number, participated:number}>(), new Map<ExerciseTypes, string>(),
+                0,0,true,0);
 
             let exercise : Exercise = new Exercise (ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
 
-            if(!this.studentArray.some(score => score['id'] === student.id)) {
+            if(!this.studentArray.some(stud => stud['id'] === student.id)) {
                 this.studentArray.push(student);
             }
 
@@ -244,17 +241,17 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             // });
 
             // adding temporary variables to our final scores array list
-            this.studentArray[indexStudent].totalScoreQuizzes = student.totalScoreQuizzes;
-            this.studentArray[indexStudent].everyScoreForQuizzes = quizEveryScore;
-            this.studentArray[indexStudent].everyScoreStringForQuizzes = quizScoreString;
+            // this.studentArray[indexStudent].totalScoreQuizzes = student.totalScoreQuizzes;
+            // this.studentArray[indexStudent].everyScoreForQuizzes = quizEveryScore; set but never used
+            this.studentArray[indexStudent].everyScoreString['quiz'] = quizScoreString;
             
-            this.studentArray[indexStudent].totalScoreModeling = student.totalScoreModeling;
-            this.studentArray[indexStudent].everyScoreForModeling = modelingEveryScore;
-            this.studentArray[indexStudent].everyScoreStringForModeling = modelingScoreString;
+            //this.studentArray[indexStudent].totalScoreModeling = student.totalScoreModeling;
+            // this.studentArray[indexStudent].everyScoreForModeling = modelingEveryScore;
+            this.studentArray[indexStudent].everyScoreString['modeling'] = modelingScoreString;
             
-            this.studentArray[indexStudent].totalScoreProgramming = student.totalScoreProgramming;
-            this.studentArray[indexStudent].everyScoreForProgramming = programmingEveryScore;
-            this.studentArray[indexStudent].everyScoreStringForProgramming = programmingScoreString;
+            //this.studentArray[indexStudent].totalScoreProgramming = student.totalScoreProgramming;
+            // this.studentArray[indexStudent].everyScoreForProgramming = programmingEveryScore;
+            this.studentArray[indexStudent].everyScoreString['programming'] = programmingScoreString;
         });
 
         // gets all students that were not caught in the results list
@@ -328,19 +325,19 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 const lastName = result.lastName.trim();
                 const studentId = result.login.trim();
                 const email = result.email.trim();
-                const quiz = result.totalScoreQuizzes;
-                const programming = result.totalScoreProgramming;
-                const modeling = result.totalScoreModeling;
+                const quizTotal = result.totalScores['quiz']; 
+                const programmingTotal = result.totalScores['programming'];
+                const modelingTotal = result.totalScores['modeling'];
                 const score = result.overallScore;
-                const quizString = result.everyScoreStringForQuizzes;
-                const modelingString = result.everyScoreStringForModeling;
-                const programmingString = result.everyScoreStringForProgramming;
+                const quizString = result.everyScoreString['quiz'];
+                const modelingString = result.everyScoreString['modeling'];
+                const programmingString = result.everyScoreString['programming'];
                 if (index === 0) {
                     const info = 'data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,'; // shortening line length and complexity
                     rows.push(info + this.titleQuizString + 'ProgrammingTotalScore,' + this.titleProgrammingString + 'modelingTotalScore,' + this.titleModelingString + 'OverallScore');
-                    rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quiz + ',' + quizString + '' + programming + ',' + programmingString + '' + modeling + ',' + modelingString + '' + score);
+                    rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString + '' + modelingTotal + ',' + modelingString + '' + score);
                 } else {
-                    rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quiz + ',' + quizString + '' + programming + ',' + programmingString + '' + modeling + ',' + modelingString + '' + score);
+                    rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString + '' + modelingTotal + ',' + modelingString + '' + score);
                 }
             });
             const csvContent = rows.join('\n');
@@ -406,10 +403,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 if(exercise.type === 'quiz'){
                     // TODO do we need the participation rate / quote ?
                     this.studentArray[indexStudent].participated++;
-                    this.studentArray[indexStudent].participatedQuizzes++;
+                    this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].participated++;
                     if (result.successful) {
                         this.studentArray[indexStudent].successful++;
-                        this.studentArray[indexStudent].successfulQuizzes++;
+                        this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].successful++;
                     }
                     this.studentArray[indexStudent].allExercises[exercise.type].push(new Score( resultCompletionDate, exercise.id, exercise.title, this.round((result.score * exercise.maxScore) / 100, 2)));
                 } else {
@@ -421,12 +418,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                         if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {    // we want to have the last result withing the due date (see above)
                             if (this.studentArray[indexStudent].exerciseNotCounted) {   // TODO do we need the participation rate / quote ?
                                 this.studentArray[indexStudent].participated++;
-                                this.studentArray[indexStudent].participatedProgramming++;
+                                this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].participated++;
                                 this.studentArray[indexStudent].exerciseNotCounted = false;
                             }
                             if (result.successful) {    // TODO do we need the successful count ?
                                 this.studentArray[indexStudent].successful++;
-                                this.studentArray[indexStudent].successfulProgramming++;
+                                this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].successful++;
                             }
                             // update entry with the data of the latest known exercise
                             this.studentArray[indexStudent].allExercises[exercise.type][indexExc] = {
@@ -439,12 +436,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     } else { //if the exercise does not exist in the array yet
                         if (this.studentArray[indexStudent].exerciseNotCounted) {
                             this.studentArray[indexStudent].participated++;
-                            this.studentArray[indexStudent].participatedProgramming++;
+                            this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].participated++;
                             this.studentArray[indexStudent].exerciseNotCounted = false;
                         }
                         if (result.successful) {
                             this.studentArray[indexStudent].successful++;
-                            this.studentArray[indexStudent].successfulProgramming++;
+                            this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].successful++;
                         }
                         this.studentArray[indexStudent].allExercises[exercise.type].push(new Score( resultCompletionDate, exercise.id, exercise.title, this.round((result.score * exercise.maxScore) / 100, 2)));
                     }
@@ -452,112 +449,112 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             }
         }
 
-        switch (exercise.type) {
-            case 'quiz':
-                if (result.rated === true) {   // There should only be 1 rated result
+        // switch (exercise.type) {
+        //     case 'quiz':
+        //         if (result.rated === true) {   // There should only be 1 rated result
                     
-                    let index : number = this.studentArray.findIndex( score => score.id === student.id);
-                    this.studentArray[index].participated++;
-                    this.studentArray[index].participatedQuizzes++;
-                    if (result.successful) {
-                        this.studentArray[index].successful++;
-                        this.studentArray[index].successfulQuizzes++;
-                    }
+        //             let index : number = this.studentArray.findIndex( score => score.id === student.id);
+        //             this.studentArray[index].participated++;
+        //             this.studentArray[index].participatedQuizzes++;
+        //             if (result.successful) {
+        //                 this.studentArray[index].successful++;
+        //                 this.studentArray[index].successfulQuizzes++;
+        //             }
             
-                    this.studentArray[index].scoreListForQuizzes.push(new Score( resultCompletionDate, exercise.id, exercise.title, this.round((result.score * exercise.maxScore) / 100, 2)));
-                }
-                break;
+        //             this.studentArray[index].scoreListForQuizzes.push(new Score( resultCompletionDate, exercise.id, exercise.title, this.round((result.score * exercise.maxScore) / 100, 2)));
+        //         }
+        //         break;
 
-            case 'programming-exercise':
-                if (resultCompletionDate.getTime() <= dueDate.getTime()) {
-                    let indexStudent : number = this.studentArray.findIndex( score => score.id === student.id);
-                    if(indexStudent >= 0) {
-                        let indexExc: number = this.studentArray[indexStudent].scoreListForProgramming.findIndex(exc => exc.exID === exercise.id);
-                        if(indexExc >= 0) { //if the exercise exist in the array
+        //     case 'programming-exercise':
+        //         if (resultCompletionDate.getTime() <= dueDate.getTime()) {
+        //             let indexStudent : number = this.studentArray.findIndex( score => score.id === student.id);
+        //             if(indexStudent >= 0) {
+        //                 let indexExc: number = this.studentArray[indexStudent].scoreListForProgramming.findIndex(exc => exc.exID === exercise.id);
+        //                 if(indexExc >= 0) { //if the exercise exist in the array
                             
-                            let existingScore = this.studentArray[indexStudent].scoreListForProgramming[indexExc];
+        //                     let existingScore = this.studentArray[indexStudent].scoreListForProgramming[indexExc];
 
-                            if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {    // we want to have the last result withing the due date (see above)
-                                if (this.studentArray[indexStudent].exerciseNotCounted) {
-                                    this.studentArray[indexStudent].participated++;
-                                    this.studentArray[indexStudent].participatedProgramming++;
-                                    this.studentArray[indexStudent].exerciseNotCounted = false;
-                                }
-                                if (result.successful) {
-                                    this.studentArray[indexStudent].successful++;
-                                    this.studentArray[indexStudent].successfulProgramming++;
-                                }
-                                this.studentArray[indexStudent].scoreListForProgramming[indexExc] = {
-                                    'resCompletionDate': resultCompletionDate,
-                                    'exID': exercise.id,
-                                    'exTitle': exercise.title,
-                                    'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
-                                };
-                            }
-                        } else { //if the exercise does not exist in the array yet
-                            // TODO Check if rules are fitting to logic
-                            if (this.studentArray[indexStudent].exerciseNotCounted) {
-                                this.studentArray[indexStudent].participated++;
-                                this.studentArray[indexStudent].participatedProgramming++;
-                                this.studentArray[indexStudent].exerciseNotCounted = false;
-                            }
-                            if (result.successful) {
-                                this.studentArray[indexStudent].successful++;
-                                this.studentArray[indexStudent].successfulProgramming++;
-                            }
-                            this.studentArray[indexStudent].scoreListForProgramming.push( new Score( resultCompletionDate, exercise.id, exercise.title, (this.round((result.score * exercise.maxScore) / 100, 2))));
-                        }
-                    }
-                }
-                break;
+        //                     if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {    // we want to have the last result withing the due date (see above)
+        //                         if (this.studentArray[indexStudent].exerciseNotCounted) {
+        //                             this.studentArray[indexStudent].participated++;
+        //                             this.studentArray[indexStudent].participatedProgramming++;
+        //                             this.studentArray[indexStudent].exerciseNotCounted = false;
+        //                         }
+        //                         if (result.successful) {
+        //                             this.studentArray[indexStudent].successful++;
+        //                             this.studentArray[indexStudent].successfulProgramming++;
+        //                         }
+        //                         this.studentArray[indexStudent].scoreListForProgramming[indexExc] = {
+        //                             'resCompletionDate': resultCompletionDate,
+        //                             'exID': exercise.id,
+        //                             'exTitle': exercise.title,
+        //                             'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
+        //                         };
+        //                     }
+        //                 } else { //if the exercise does not exist in the array yet
+        //                     // TODO Check if rules are fitting to logic
+        //                     if (this.studentArray[indexStudent].exerciseNotCounted) {
+        //                         this.studentArray[indexStudent].participated++;
+        //                         this.studentArray[indexStudent].participatedProgramming++;
+        //                         this.studentArray[indexStudent].exerciseNotCounted = false;
+        //                     }
+        //                     if (result.successful) {
+        //                         this.studentArray[indexStudent].successful++;
+        //                         this.studentArray[indexStudent].successfulProgramming++;
+        //                     }
+        //                     this.studentArray[indexStudent].scoreListForProgramming.push( new Score( resultCompletionDate, exercise.id, exercise.title, (this.round((result.score * exercise.maxScore) / 100, 2))));
+        //                 }
+        //             }
+        //         }
+        //         break;
 
-            case 'modeling-exercise':
-                // we can also have results (due to the manual assessment) that appear after the completion date
-                // if (completionDate.getTime() <= dueDate.getTime()) { (REMOVE?)
-                let indexStudent: number = this.studentArray.findIndex(score => score.id === student.id);
-                if (indexStudent >= 0) {
-                    let indexExc: number = this.studentArray[indexStudent].scoreListForModeling.findIndex(exc => exc.exID === exercise.id);
-                    if (indexExc >= 0) {
-                        let existingScore = this.studentArray[indexStudent].scoreListForModeling[indexExc];
-                        if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {     // we want to have the last result
-                            if (this.studentArray[indexStudent].exerciseNotCounted) {
-                                this.studentArray[indexStudent].participated++;
-                                this.studentArray[indexStudent].participatedModeling++;
-                                this.studentArray[indexStudent].exerciseNotCounted = false;
-                            }
+        //     case 'modeling-exercise':
+        //         // we can also have results (due to the manual assessment) that appear after the completion date
+        //         // if (completionDate.getTime() <= dueDate.getTime()) { (REMOVE?)
+        //         let indexStudent: number = this.studentArray.findIndex(score => score.id === student.id);
+        //         if (indexStudent >= 0) {
+        //             let indexExc: number = this.studentArray[indexStudent].scoreListForModeling.findIndex(exc => exc.exID === exercise.id);
+        //             if (indexExc >= 0) {
+        //                 let existingScore = this.studentArray[indexStudent].scoreListForModeling[indexExc];
+        //                 if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {     // we want to have the last result
+        //                     if (this.studentArray[indexStudent].exerciseNotCounted) {
+        //                         this.studentArray[indexStudent].participated++;
+        //                         this.studentArray[indexStudent].participatedModeling++;
+        //                         this.studentArray[indexStudent].exerciseNotCounted = false;
+        //                     }
 
-                            if (result.successful) {
-                                this.studentArray[indexStudent].successful++;
-                                this.studentArray[indexStudent].successfulModeling++;
-                            }
+        //                     if (result.successful) {
+        //                         this.studentArray[indexStudent].successful++;
+        //                         this.studentArray[indexStudent].successfulModeling++;
+        //                     }
 
-                            this.studentArray[indexStudent].scoreListForModeling[indexExc] = {
-                                'resCompletionDate': resultCompletionDate,
-                                'exID': exercise.id,
-                                'exTitle': exercise.title,
-                                'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
-                            };
-                        }
-                    } else {
-                        if (this.studentArray[indexStudent].exerciseNotCounted) {
-                            this.studentArray[indexStudent].participated++;
-                            this.studentArray[indexStudent].participatedModeling++;
-                            this.studentArray[indexStudent].exerciseNotCounted = false;
-                        }
+        //                     this.studentArray[indexStudent].scoreListForModeling[indexExc] = {
+        //                         'resCompletionDate': resultCompletionDate,
+        //                         'exID': exercise.id,
+        //                         'exTitle': exercise.title,
+        //                         'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
+        //                     };
+        //                 }
+        //             } else {
+        //                 if (this.studentArray[indexStudent].exerciseNotCounted) {
+        //                     this.studentArray[indexStudent].participated++;
+        //                     this.studentArray[indexStudent].participatedModeling++;
+        //                     this.studentArray[indexStudent].exerciseNotCounted = false;
+        //                 }
 
-                        if (result.successful) {
-                            this.studentArray[indexStudent].successful++;
-                            this.studentArray[indexStudent].successfulModeling++;
-                        }
+        //                 if (result.successful) {
+        //                     this.studentArray[indexStudent].successful++;
+        //                     this.studentArray[indexStudent].successfulModeling++;
+        //                 }
 
-                        this.studentArray[indexStudent].scoreListForModeling.push(new Score(resultCompletionDate, exercise.id, exercise.title, (this.round((result.score * exercise.maxScore) / 100, 2))));
-                    }
-                }
-                // }
+        //                 this.studentArray[indexStudent].scoreListForModeling.push(new Score(resultCompletionDate, exercise.id, exercise.title, (this.round((result.score * exercise.maxScore) / 100, 2))));
+        //             }
+        //         }
+        //         // }
 
-                break;
-            default:
-        }
+        //         break;
+        //     default:
+        // }
     }
 
     // Updated to Maps - pls check
@@ -637,83 +634,92 @@ class Student { // creating a class for students for better code quality
     id: string;
     login: string;
     email: string;
-
     allExercises: Map<ExerciseTypes, Array<Score>>;
-
     totalScores: Map<ExerciseTypes, number>;
-
-    // TODO check if needed
-    totalScoreQuizzes: number; //needed
-    totalScoreProgramming: number; //needed
-    totalScoreModeling: number; //needed
-
-    scoreListForQuizzes: Array<Score>;
-    everyScoreForQuizzes: Array<Score>;
-    everyScoreStringForQuizzes: string;
-
-    scoreListForProgramming: Array<Score>;
-    everyScoreForProgramming: Array<Score>;
-    everyScoreStringForProgramming: string;
-
-    scoreListForModeling: Array<Score>;
-    everyScoreForModeling: Array<Score>;
-    everyScoreStringForModeling: string;
-
+    successAndParticipationExercises: Map<ExerciseTypes, {successful: number, participated: number}>;
+    everyScoreString: Map<ExerciseTypes, string>;
     participated: number;
-    participatedQuizzes: number;
-    participatedProgramming: number;
-    participatedModeling: number;
-
-    // participationInPercent: number; // not needed - calculated in frontend
-    participationQuizzesInPercent: number;
-    participationProgrammingInPercent: number;
-    participationModelingInPercent: number;
-
-
     successful: number;
-    successfulQuizzes: number;
-    successfulProgramming: number;
-    successfulModeling: number;
-
-    //successfullyCompletedInPercent: number; // not needed - calculated in frontend
-    successfullyCompletedQuizzesInPercent: number;
-    successfullyCompletedProgrammingInPercent: number;
-    successfullyCompletedModelingInPercent: number;
-
     exerciseNotCounted: boolean;
     overallScore: number; // needed
 
-    constructor(firstName: string, lastName: string, id: string, login: string, email: string,
-                totalScoreQuizzes: number, totalScoreProgramming: number, totalScoreModeling: number,
+    // TODO check if needed
+    // totalScoreQuizzes: number; - not needed
+    // totalScoreProgramming: number; - not needed
+    // totalScoreModeling: number; - not needed
 
+    // scoreListForQuizzes: Array<Score>; - not needed
+    // everyScoreForQuizzes: Array<Score>; - set and loaded data but never used
+    // everyScoreStringForQuizzes: string;
+
+    // scoreListForProgramming: Array<Score>; - not needed 
+    // everyScoreForProgramming: Array<Score>;
+    // everyScoreStringForProgramming: string;
+
+    // scoreListForModeling: Array<Score>; - not needed
+    // everyScoreForModeling: Array<Score>;
+    // everyScoreStringForModeling: string;
+
+    // participatedQuizzes: number;
+    // participatedProgramming: number;
+    // participatedModeling: number;
+
+    // participationInPercent: number; // not needed - calculated in frontend
+    // participationQuizzesInPercent: number; // not set in code
+    // participationProgrammingInPercent: number;
+    // participationModelingInPercent: number;
+
+    // successfulQuizzes: number;
+    // successfulProgramming: number;
+    // successfulModeling: number;
+
+    //successfullyCompletedInPercent: number; // not needed - calculated in frontend
+    // successfullyCompletedQuizzesInPercent: number;
+    // successfullyCompletedProgrammingInPercent: number;
+    // successfullyCompletedModelingInPercent: number;
+
+    constructor(firstName: string, 
+                lastName: string, 
+                id: string, 
+                login: string, 
+                email: string,
                 allExercises: Map<ExerciseTypes, Array<Score>>,
-
                 totalScores: Map<ExerciseTypes, number>,
+                successAndParticipationExercises: Map<ExerciseTypes, {successful: number, participated: number}>,
+                everyScoreString: Map<ExerciseTypes, string>,
+                participated: number, 
+                successful: number,
+                exerciseNotCounted: boolean, 
+                overallScore: number
 
-                scoreListForQuizzes: Array<Score>,
-                everyScoreForQuizzes: Array<Score>,
-                everyScoreStringForQuizzes: string,
+                //totalScoreQuizzes: number, totalScoreProgramming: number, totalScoreModeling: number,
+                // scoreListForQuizzes: Array<Score>,
+                // everyScoreForQuizzes: Array<Score>,
+                //everyScoreStringForQuizzes: string,
 
-                scoreListForProgramming: Array<Score>,
-                everyScoreForProgramming: Array<Score>,
-                everyScoreStringForProgramming: string,
+                // scoreListForProgramming: Array<Score>,
+                // everyScoreForProgramming: Array<Score>,
+                // everyScoreStringForProgramming: string,
 
-                scoreListForModeling: Array<Score>,
-                everyScoreForModeling: Array<Score>,
-                everyScoreStringForModeling: string,
+                // scoreListForModeling: Array<Score>,
+                // everyScoreForModeling: Array<Score>,
+                // everyScoreStringForModeling: string,
 
 
-                participated: number, participatedQuizzes: number, participatedProgramming: number, participatedModeling: number,
+                
+                //participatedQuizzes: number, participatedProgramming: number, participatedModeling: number,
                 //participationInPercent: number, 
-                participationQuizzesInPercent: number, participationProgrammingInPercent: number,
-                participationModelingInPercent: number,
+                // participationQuizzesInPercent: number, 
+                // participationProgrammingInPercent: number,
+                // participationModelingInPercent: number,
 
-                successful: number, successfulQuizzes:number, successfulProgramming: number, successfulModeling: number,
+                 
+                //successfulQuizzes:number, successfulProgramming: number, successfulModeling: number,
                 //successfullyCompletedInPercent: number, 
-                successfullyCompletedQuizzesInPercent: number, successfullyCompletedProgrammingInPercent: number,
-                successfullyCompletedModelingInPercent: number,
-
-                exerciseNotCounted: boolean, overallScore: number)
+                // successfullyCompletedQuizzesInPercent: number, 
+                // successfullyCompletedProgrammingInPercent: number,
+                // successfullyCompletedModelingInPercent: number,
+                )
     {
 
         this.firstName = firstName;
@@ -721,48 +727,46 @@ class Student { // creating a class for students for better code quality
         this.id = id;
         this.login = login;
         this.email = email;
-
         this.allExercises = allExercises;
-
         this.totalScores = totalScores;
-
-        this.totalScoreQuizzes = totalScoreQuizzes;
-        this.totalScoreProgramming = totalScoreProgramming;
-        this.totalScoreModeling = totalScoreModeling;
-
-        this.scoreListForQuizzes = scoreListForQuizzes;
-        this.everyScoreForQuizzes = everyScoreForQuizzes;
-        this.everyScoreStringForQuizzes = everyScoreStringForQuizzes;
-
-        this.scoreListForProgramming = scoreListForProgramming;
-        this.everyScoreForProgramming = everyScoreForProgramming;
-        this.everyScoreStringForProgramming = everyScoreStringForProgramming;
-
-        this.scoreListForModeling = scoreListForModeling;
-        this.everyScoreForModeling = everyScoreForModeling;
-        this.everyScoreStringForModeling = everyScoreStringForModeling;
-
+        this.successAndParticipationExercises = successAndParticipationExercises;
+        this.everyScoreString = everyScoreString;
         this.participated = participated;
-        this.participatedQuizzes = participatedQuizzes;
-        this.participatedProgramming = participatedProgramming;
-        this.participatedModeling = participatedModeling;
-
-        //this.participationInPercent = participationInPercent;
-        this.participationQuizzesInPercent = participationQuizzesInPercent;
-        this.participationProgrammingInPercent = participationProgrammingInPercent;
-        this.participationModelingInPercent = participationModelingInPercent;
-
         this.successful = successful;
-        this.successfulQuizzes = successfulQuizzes;
-        this.successfulProgramming = successfulProgramming;
-        this.successfulModeling = successfulModeling;
-
-        //this.successfullyCompletedInPercent = successfullyCompletedInPercent;
-        this.successfullyCompletedQuizzesInPercent = successfullyCompletedQuizzesInPercent;
-        this.successfullyCompletedProgrammingInPercent = successfullyCompletedProgrammingInPercent;
-        this.successfullyCompletedModelingInPercent = successfullyCompletedModelingInPercent;
-
         this.exerciseNotCounted = exerciseNotCounted;
         this.overallScore = overallScore;
+        // this.totalScoreQuizzes = totalScoreQuizzes;
+        // this.totalScoreProgramming = totalScoreProgramming;
+        // this.totalScoreModeling = totalScoreModeling;
+
+        // this.scoreListForQuizzes = scoreListForQuizzes;
+        // this.everyScoreForQuizzes = everyScoreForQuizzes;
+        // this.everyScoreStringForQuizzes = everyScoreStringForQuizzes;
+
+        // this.scoreListForProgramming = scoreListForProgramming;
+        // this.everyScoreForProgramming = everyScoreForProgramming;
+        // this.everyScoreStringForProgramming = everyScoreStringForProgramming;
+
+        // this.scoreListForModeling = scoreListForModeling;
+        // this.everyScoreForModeling = everyScoreForModeling;
+        // this.everyScoreStringForModeling = everyScoreStringForModeling;
+
+        // this.participatedQuizzes = participatedQuizzes;
+        // this.participatedProgramming = participatedProgramming;
+        // this.participatedModeling = participatedModeling;
+
+        //this.participationInPercent = participationInPercent;
+        // this.participationQuizzesInPercent = participationQuizzesInPercent;
+        // this.participationProgrammingInPercent = participationProgrammingInPercent;
+        // this.participationModelingInPercent = participationModelingInPercent;
+
+        // this.successfulQuizzes = successfulQuizzes;
+        // this.successfulProgramming = successfulProgramming;
+        // this.successfulModeling = successfulModeling;
+
+        //this.successfullyCompletedInPercent = successfullyCompletedInPercent;
+        // this.successfullyCompletedQuizzesInPercent = successfullyCompletedQuizzesInPercent;
+        // this.successfullyCompletedProgrammingInPercent = successfullyCompletedProgrammingInPercent;
+        // this.successfullyCompletedModelingInPercent = successfullyCompletedModelingInPercent;
     }
 }
