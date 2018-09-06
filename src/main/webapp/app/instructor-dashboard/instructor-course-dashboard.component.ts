@@ -6,7 +6,7 @@ import {
     Course,
     CourseService
 } from '../entities/course';
-import { ExerciseType } from 'app/entities/exercise';
+import { ExerciseType } from '../entities/exercise';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -109,6 +109,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
         this.results.forEach( (result) => { // iterating through results to create student and corresponding exercise objects
 
+            // TODO
             let stud = result.participation.student;
             let ex = result.participation.exercise;
 
@@ -135,14 +136,14 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
         this.studentArray.forEach((student, indexStudent) => {
 
-            let quizScoreString : string = ''; // initializing score string for csv export
-            let quizEveryScore : Array<Score> = []; // array to save scores
+            // let quizScoreString : string = ''; // initializing score string for csv export
+            // let quizEveryScore : Array<Score> = []; // array to save scores
             
-            let modelingScoreString : string = '';// initializing score string for csv export
-            let modelingEveryScore : Array<Score> = [];
+            // let modelingScoreString : string = '';// initializing score string for csv export
+            // let modelingEveryScore : Array<Score> = [];
 
-            let programmingScoreString = '';// initializing score string for csv export
-            let programmingEveryScore: Array<Score> = [];
+            // let programmingScoreString = '';// initializing score string for csv export
+            // let programmingEveryScore: Array<Score> = [];
 
             for ( let exType in ExerciseType ){
                 this.allExercises[exType].forEach((exercise) => {
@@ -350,7 +351,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         }
     }
 
-    round(value, decimals): Number { // TODO check if useful and remove if not useable - already in use
+    round(value, decimals): Number { // TODO find better one
         return Number(Math.round(Number(value + 'e' + decimals)) + 'e-' + decimals);
     }
 
@@ -396,7 +397,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         let dueDate : Date = new Date(exercise.dueDate);
 
         // filter exercises (quiz filter || programming-exercise filter || modelling-exercise filer)
-        if (result.rated === true || (result.rated == null && resultCompletionDate.getTime() <= dueDate.getTime()) || (exercise.type === 'modeling-exercise')){
+        if (result.rated === true || (result.rated == null && resultCompletionDate.getTime() <= dueDate.getTime()) || (exercise.type === 'modeling')){
             let indexStudent : number = this.studentArray.findIndex( stud => stud.id === student.id);
             if(indexStudent >= 0) {
                 if(exercise.type === 'quiz'){
@@ -410,21 +411,23 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     this.studentArray[indexStudent].allExercises[exercise.type].push(new Score( resultCompletionDate, exercise.id, exercise.title, this.round((result.score * exercise.maxScore) / 100, 2)));
                 } else {
                     let indexExc: number = this.studentArray[indexStudent].allExercises[exercise.type].findIndex(exc => exc.exID === exercise.id);
+                    
+                    if (this.studentArray[indexStudent].exerciseNotCounted) {
+                        this.studentArray[indexStudent].participated++;
+                        this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].participated++;
+                        this.studentArray[indexStudent].exerciseNotCounted = false;
+                    }
+                    if (result.successful) {
+                        this.studentArray[indexStudent].successful++;
+                        this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].successful++;
+                    }
+
                     if(indexExc >= 0) { //if the exercise exist in the array
                         
                         let existingScore = this.studentArray[indexStudent].allExercises[exercise.type][indexExc];
 
                         if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {    // we want to have the last result withing the due date (see above)
-                            if (this.studentArray[indexStudent].exerciseNotCounted) {   // TODO do we need the participation rate / quote ?
-                                this.studentArray[indexStudent].participated++;
-                                this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].participated++;
-                                this.studentArray[indexStudent].exerciseNotCounted = false;
-                            }
-                            if (result.successful) {    // TODO do we need the successful count ?
-                                this.studentArray[indexStudent].successful++;
-                                this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].successful++;
-                            }
-                            // update entry with the data of the latest known exercise
+                             // update entry with the data of the latest known exercise
                             this.studentArray[indexStudent].allExercises[exercise.type][indexExc] = {
                                 'resCompletionDate': resultCompletionDate,
                                 'exID': exercise.id,
@@ -433,15 +436,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                             };
                         }
                     } else { //if the exercise does not exist in the array yet
-                        if (this.studentArray[indexStudent].exerciseNotCounted) {
-                            this.studentArray[indexStudent].participated++;
-                            this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].participated++;
-                            this.studentArray[indexStudent].exerciseNotCounted = false;
-                        }
-                        if (result.successful) {
-                            this.studentArray[indexStudent].successful++;
-                            this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].successful++;
-                        }
                         this.studentArray[indexStudent].allExercises[exercise.type].push(new Score( resultCompletionDate, exercise.id, exercise.title, this.round((result.score * exercise.maxScore) / 100, 2)));
                     }
                 }
