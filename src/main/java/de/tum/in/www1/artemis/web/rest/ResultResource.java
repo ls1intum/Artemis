@@ -353,7 +353,7 @@ public class ResultResource {
              !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+        List<Result> results = resultRepository.findAllResultsForCourse(courseId);
 
         //remove unnecessary elements in the json response
         results.forEach(result -> {
