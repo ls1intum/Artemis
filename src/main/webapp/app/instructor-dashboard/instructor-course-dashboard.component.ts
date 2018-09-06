@@ -112,7 +112,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             let stud = result.participation.student;
             let ex = result.participation.exercise;
 
-            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, new Map<ExerciseType, Array<Score>>([]),new Map<ExerciseType, number>(),new Map<ExerciseType, {successful:number, participated:number}>(), new Map<ExerciseType, string>(),
+            let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, new Map<ExerciseType, Array<Score>>([]),new Map<ExerciseType, number>(),new Map<ExerciseType, {successful:number, participated:number}>(), new Map<ExerciseType, Array<Score>>([]) , new Map<ExerciseType, string>(),
                 0,0,true,0);
 
             let exercise : Exercise = new Exercise (ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
@@ -151,8 +151,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                         if (exercise.id === score.exID) {
                             bool = false; // ensure to only enter the loop later once
                             this.studentArray[indexStudent].everyScoreString[exercise.type] += score.absoluteScore + ',';
+                            this.studentArray[indexStudent].everyScore[exercise.type].push(score);
                             
-                            // TODO create map with all exercises including 0 points ones
                             // switch (exercise.type){
                             //     case 'quiz': 
                             //         quizScoreString += score.absoluteScore + ',';
@@ -172,7 +172,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     });
                     if (bool) {
                         this.studentArray[indexStudent].everyScoreString[exercise.type] += '0,';
-                        
+                        this.studentArray[indexStudent].everyScore[exercise.type].push(new Score(null, exercise.id, exercise.title, 0));
                         // switch (exercise.type){
                         //     case 'quiz': 
                         //         quizEveryScore.push(new Score( null, exercise.id, exercise .title, 0));
@@ -636,6 +636,7 @@ class Student { // creating a class for students for better code quality
     allExercises: Map<ExerciseType, Array<Score>>;
     totalScores: Map<ExerciseType, number>;
     successAndParticipationExercises: Map<ExerciseType, {successful: number, participated: number}>;
+    everyScore: Map<ExerciseType, Array<Score>>;
     everyScoreString: Map<ExerciseType, string>;
     participated: number;
     successful: number;
@@ -685,6 +686,7 @@ class Student { // creating a class for students for better code quality
                 allExercises: Map<ExerciseType, Array<Score>>,
                 totalScores: Map<ExerciseType, number>,
                 successAndParticipationExercises: Map<ExerciseType, {successful: number, participated: number}>,
+                everyScore: Map<ExerciseType, Array<Score>>,
                 everyScoreString: Map<ExerciseType, string>,
                 participated: number, 
                 successful: number,
@@ -729,6 +731,7 @@ class Student { // creating a class for students for better code quality
         this.allExercises = allExercises;
         this.totalScores = totalScores;
         this.successAndParticipationExercises = successAndParticipationExercises;
+        this.everyScore = everyScore;
         this.everyScoreString = everyScoreString;
         this.participated = participated;
         this.successful = successful;
