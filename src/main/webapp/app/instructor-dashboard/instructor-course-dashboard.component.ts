@@ -24,19 +24,21 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     reverse: any;
     numberOfExercises: number = 0;
     results = [];
-    ratedResultsArrayList = []; // not in use - planned for something?
-    participations = [];    // [Participation]
-    titleQuizString: string = '';
-    titleProgrammingString: string = '';
-    titleModelingString: string = '';
-    maxScoreForQuizzes: number = 0; // needed
-    maxScoreForModeling: number = 0; // needed
-    maxScoreForProgramming: number = 0; // needed
+    // ratedResultsArrayList = []; // not in use - planned for something?
+    // participations = [];    // [Participation]
+    exerciseTitles: Map<ExerciseType, string> = new Map<ExerciseType, string>();
+    exerciseMaxScores: Map<ExerciseType, number> = new Map<ExerciseType, number>();
+    // titleQuizString: string = '';
+    // titleProgrammingString: string = '';
+    // titleModelingString: string = '';
+    // maxScoreForQuizzes: number = 0; 
+    // maxScoreForModeling: number = 0;
+    // maxScoreForProgramming: number = 0;
     //finalScores: Array<Student> = []; not in use - not needed
     allExercises: Map<ExerciseType, Array<Exercise>> = new Map<ExerciseType, Array<Exercise>>([]);
-    allQuizExercises: Array<Exercise> = [];
-    allProgrammingExercises: Array<Exercise> = [];
-    allModelingExercises: Array<Exercise> = [];
+    // allQuizExercises: Array<Exercise> = [];
+    // allProgrammingExercises: Array<Exercise> = [];
+    // allModelingExercises: Array<Exercise> = [];
     studentArray: Array<Student> = [];
     exportReady: Boolean = false;
 
@@ -86,16 +88,16 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             }
         });
 
-        console.log('length of Q: '+this.allQuizExercises.length+' maxScores: '+this.maxScoreForQuizzes); // TODO: remove
-        console.log('length of M: '+this.allModelingExercises.length+' maxScores: '+this.maxScoreForModeling); // TODO: remove as well
-        console.log('length of P '+this.allProgrammingExercises.length+' maxScores: '+this.maxScoreForProgramming); // TODO: check if needed and remove
+        // console.log('length of Q: '+this.allQuizExercises.length+' maxScores: '+this.maxScoreForQuizzes); // TODO: remove
+        // console.log('length of M: '+this.allModelingExercises.length+' maxScores: '+this.maxScoreForModeling); // TODO: remove as well
+        // console.log('length of P '+this.allProgrammingExercises.length+' maxScores: '+this.maxScoreForProgramming); // TODO: check if needed and remove
 
         this.getAllScoresForAllCourseParticipants();
 
-        for(var i = 0;i<this.studentArray.length;i++) { // TODO: check if needed and remove
-            console.log(this.studentArray[i]);
-        }
-        console.log(this.studentArray.length); // TODO: check if needed and remove
+        // for(var i = 0;i<this.studentArray.length;i++) { // TODO: check if needed and remove
+        //     console.log(this.studentArray[i]);
+        // }
+        // console.log(this.studentArray.length); // TODO: check if needed and remove
     }
 
     // Updated to Maps - pls check
@@ -145,42 +147,47 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             for ( let exType in ExerciseType ){
                 this.allExercises[exType].forEach((exercise) => {
                     let bool : Boolean = true;
-                    student.allExercises[exType].array.forEach( (score) => {
+                    student.allExercises[exType].forEach( (score) => {
                         if (exercise.id === score.exID) {
                             bool = false; // ensure to only enter the loop later once
-                            switch (exercise.type){
-                                case 'quiz': 
-                                    quizScoreString += score.absoluteScore + ',';
-                                    quizEveryScore.push( new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
-                                    break;
-                                case 'programming':
-                                    programmingScoreString += score.absoluteScore + ',';
-                                    programmingEveryScore.push( new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
-                                    break;
-                                case 'modeling':
-                                    modelingScoreString += score.absoluteScore + ',';
-                                    modelingEveryScore.push(new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
-                                    break;
-                                default: break;
-                            }
+                            this.studentArray[indexStudent].everyScoreString[exercise.type] += score.absoluteScore + ',';
+                            
+                            // TODO create map with all exercises including 0 points ones
+                            // switch (exercise.type){
+                            //     case 'quiz': 
+                            //         quizScoreString += score.absoluteScore + ',';
+                            //         quizEveryScore.push( new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
+                            //         break;
+                            //     case 'programming':
+                            //         programmingScoreString += score.absoluteScore + ',';
+                            //         programmingEveryScore.push( new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
+                            //         break;
+                            //     case 'modeling':
+                            //         modelingScoreString += score.absoluteScore + ',';
+                            //         modelingEveryScore.push(new Score( score.resCompletionDate, score.exID, score.exTitle, +score.absoluteScore));
+                            //         break;
+                            //     default: break;
+                            // }
                         }
                     });
                     if (bool) {
-                        switch (exercise.type){
-                            case 'quiz': 
-                                quizEveryScore.push(new Score( null, exercise.id, exercise .title, 0));
-                                quizScoreString += '0,';                                
-                                break;
-                            case 'programming':
-                                programmingEveryScore.push(new Score( null, exercise.id, exercise.title, 0));
-                                programmingScoreString += '0,';                                
-                                break;
-                            case 'modeling':
-                                modelingEveryScore.push(new Score( null, exercise.id, exercise.title, 0));
-                                modelingScoreString += '0,';                                
-                                break;
-                            default: break;
-                        }
+                        this.studentArray[indexStudent].everyScoreString[exercise.type] += '0,';
+                        
+                        // switch (exercise.type){
+                        //     case 'quiz': 
+                        //         quizEveryScore.push(new Score( null, exercise.id, exercise .title, 0));
+                        //         quizScoreString += '0,';                                
+                        //         break;
+                        //     case 'programming':
+                        //         programmingEveryScore.push(new Score( null, exercise.id, exercise.title, 0));
+                        //         programmingScoreString += '0,';                                
+                        //         break;
+                        //     case 'modeling':
+                        //         modelingEveryScore.push(new Score( null, exercise.id, exercise.title, 0));
+                        //         modelingScoreString += '0,';                                
+                        //         break;
+                        //     default: break;
+                        // }
                     }
                 });
             }
@@ -235,15 +242,15 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             // adding temporary variables to our final scores array list
             // this.studentArray[indexStudent].totalScoreQuizzes = student.totalScoreQuizzes;
             // this.studentArray[indexStudent].everyScoreForQuizzes = quizEveryScore; set but never used
-            this.studentArray[indexStudent].everyScoreString['quiz'] = quizScoreString;
+            // this.studentArray[indexStudent].everyScoreString['quiz'] = quizScoreString;
             
             //this.studentArray[indexStudent].totalScoreModeling = student.totalScoreModeling;
             // this.studentArray[indexStudent].everyScoreForModeling = modelingEveryScore;
-            this.studentArray[indexStudent].everyScoreString['modeling'] = modelingScoreString;
+            // this.studentArray[indexStudent].everyScoreString['modeling'] = modelingScoreString;
             
             //this.studentArray[indexStudent].totalScoreProgramming = student.totalScoreProgramming;
             // this.studentArray[indexStudent].everyScoreForProgramming = programmingEveryScore;
-            this.studentArray[indexStudent].everyScoreString['programming'] = programmingScoreString;
+            // this.studentArray[indexStudent].everyScoreString['programming'] = programmingScoreString;
         });
 
         // gets all students that were not caught in the results list
@@ -326,7 +333,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 const programmingString = result.everyScoreString['programming'];
                 if (index === 0) {
                     const info = 'data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,'; // shortening line length and complexity
-                    rows.push(info + this.titleQuizString + 'ProgrammingTotalScore,' + this.titleProgrammingString + 'modelingTotalScore,' + this.titleModelingString + 'OverallScore');
+                    rows.push(info + this.exerciseTitles['quiz'] + 'ProgrammingTotalScore,' + this.exerciseTitles['programming'] + 'ModelingTotalScore,' + this.exerciseTitles['modeling'] + 'OverallScore');
                     rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString + '' + modelingTotal + ',' + modelingString + '' + score);
                 } else {
                     rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString + '' + modelingTotal + ',' + modelingString + '' + score);
@@ -340,8 +347,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             document.body.appendChild(link); // Required for FF
             link.click();
             console.log(this.results);
-
-            console.log(this.ratedResultsArrayList);
         }
     }
 
@@ -359,27 +364,29 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     // Updated to Maps - pls check
     getTitlesMaxScoresAndAllQuizModelingProgrammingExercises(exercise: Exercise) { // calculating max score and title
         this.allExercises[exercise.type].push(exercise);
-        
-        switch (exercise.type) {
-            case 'quiz':
-                this.maxScoreForQuizzes += exercise.maxScore;
-                // this.allQuizExercises.push(exercise);
-                this.titleQuizString += exercise.title + ',';
-                break;
+        this.exerciseTitles[exercise.type] += exercise.title + ',';
+        this.exerciseMaxScores[exercise.type] += exercise.maxScore;
 
-            case 'programming-exercise':
-                this.maxScoreForProgramming += exercise.maxScore;
-                // this.allProgrammingExercises.push(exercise);
-                this.titleProgrammingString += exercise.title + ',';
-                break;
+        // switch (exercise.type) {
+        //     case 'quiz':
+        //         this.maxScoreForQuizzes += exercise.maxScore;
+        //         // this.allQuizExercises.push(exercise);
+        //         this.titleQuizString += exercise.title + ',';
+        //         break;
 
-            case 'modeling-exercise':
-                this.maxScoreForModeling += exercise.maxScore;
-                // this.allModelingExercises.push(exercise);
-                this.titleModelingString += exercise.title + ',';
-                break;
-            default:
-        }
+        //     case 'programming-exercise':
+        //         this.maxScoreForProgramming += exercise.maxScore;
+        //         // this.allProgrammingExercises.push(exercise);
+        //         this.titleProgrammingString += exercise.title + ',';
+        //         break;
+
+        //     case 'modeling-exercise':
+        //         this.maxScoreForModeling += exercise.maxScore;
+        //         // this.allModelingExercises.push(exercise);
+        //         this.titleModelingString += exercise.title + ',';
+        //         break;
+        //     default:
+        // }
     }
 
     // Updated to Maps - pls check
