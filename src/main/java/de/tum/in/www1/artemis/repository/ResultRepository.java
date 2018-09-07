@@ -30,6 +30,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     //@Query q = em.createNativeQuery("select e.due_date, r.completion_date, e.discriminator, r.rated from Result r, Exercise e, Participation p where r.participation_id = p.id and p.exercise_id = e.id and e.course_id = 13 and e.due_date is not null  and (r.rated = 1 or (r.rated is null && r.completion_date <= e.due_date)) group by p.id order by r.completion_date desc");
     //List<Object[]> authors = q.getResultList();
 
+    //native query to get data from backend. All sorts of exercises by courseID will be returned. 
+    //@Query exerciseQuery = em.createNativeQuery("SELECT title, id ,max_score, discriminator FROM artemis.exercise group by title order by id asc");
+    //List<Object[]> exercises = exerciseQuery.getResultList();
+
 //@Query("select r from Result r where r.completionDate = (select min(rr.completionDate) from Result rr where rr.participation.exercise.id = :exerciseId and rr.participation.student.id = r.participation.student.id and rr.successful = true) and r.participation.exercise.id = :exerciseId and r.successful = true order by r.completionDate asc")
 //List<Result> findEarliestSuccessfulResultsForExercise(@Param("exerciseId") Long exerciseId);
 
