@@ -21,7 +21,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     paramSub: Subscription;
     predicate: any;
     reverse: any;
-    numberOfExercises: number = 0;
+    // numberOfExercises: number = 0;
     results = [];
     // ratedResultsArrayList = []; // not in use - planned for something?
     // participations = [];    // [Participation]
@@ -33,7 +33,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     // maxScoreForQuizzes: number = 0;
     // maxScoreForModeling: number = 0;
     // maxScoreForProgramming: number = 0;
-    //finalScores: Array<Student> = []; not in use - not needed
+    // finalScores: Array<Student> = []; not in use - not needed
     allExercises: Map<ExerciseType, Array<Exercise>> = new Map<ExerciseType, Array<Exercise>>([]);
     exerciseCall = [];
     // allQuizExercises: Array<Exercise> = [];
@@ -55,53 +55,37 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 this.getResults(this.course.id);
             });
         });
-
     }
 
     getResults(courseId: number) {
-         /*this.courseService.findAllResults(courseId).subscribe(res => { // this call gets all information to the results in the exercises
+        this.courseService.findAllResults(courseId).subscribe(res => { // this call gets all information to the results in the exercises
             this.results = res;
-            //console.log(res);
-        });*/
-
-        this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => { // this call gets all information to the results in the exercises
-            this.exerciseCall = res;
-            console.log(this.exerciseCall);
             this.groupResults();
-
         });
 
-       // console.log(this.results);
-
-        // this.courseService.findAllParticipations(courseId).subscribe(res => { // this call gets all information to the participation in the exercises
-        //     this.participations = res;
-        //     this.groupResults();
-        //     // TODO: get rid of this call because all participations are probably stored in this.results anyway, so rather get them from there (DONE)
-        //     // participations is necessary as in results not all students are stored
-        // });
+        this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => { // this call gets all exercise information for the course
+            this.exerciseCall = res;
+            this.groupResults();
+        });
     }
 
-    // Updated to Maps - pls check
     groupResults() {
-       // console.log(this.results);
-       if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length ===0) {
+       
+        if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
             return;
         }
 
-        // iterating through the results means, we are not considerng exercises that nobody worked on
-        this.results.forEach( (result) => { // iterate through results
+        // iterating through the exercises result of the course
+        this.exerciseCall.forEach( (ex) => {
 
-            let exercise : Exercise = new Exercise(result.exercise.id, result.exercise.title, result.exercise.maxScore, result.exercise.type, result.exercise.dueDate);
-            // creating exercise object
-            if (!this.allExercises[exercise.type].some( ex => ex['id'] === exercise.id)) { // matching up excercises
-                this.numberOfExercises++; // to show the count of exercises to display on page
+            // create exercise object
+            let exercise : Exercise = new Exercise(ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
+            
+            // create a list of all exercises without participations
+            if (!this.allExercises[exercise.type].some( ex => ex['id'] === exercise.id)) { // make sure the exercise does not exist yet
                 this.getTitlesMaxScoresAndAllQuizModelingProgrammingExercises(exercise);
             }
         });
-
-        // console.log('length of Q: '+this.allQuizExercises.length+' maxScores: '+this.maxScoreForQuizzes); // TODO: remove
-        // console.log('length of M: '+this.allModelingExercises.length+' maxScores: '+this.maxScoreForModeling); // TODO: remove as well
-        // console.log('length of P '+this.allProgrammingExercises.length+' maxScores: '+this.maxScoreForProgramming); // TODO: check if needed and remove
 
         this.getAllScoresForAllCourseParticipants();
 
@@ -111,19 +95,20 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         // console.log(this.studentArray.length); // TODO: check if needed and remove
     }
 
-    // Updated to Maps - pls check
     getAllScoresForAllCourseParticipants() {
 
-        if (!this.results || this.results.length === 0) {
+        if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
             return;
         } // filtering
 
-        this.results.forEach( (result) => { // iterating through results to create student and corresponding exercise objects
+        // iterating through the students exercise results
+        this.results.forEach( (result) => {
 
             // TODO
             let stud = result.participation.student;
             let ex = result.participation.exercise;
 
+            // create a new student object to save the information in
             let student = new Student (stud.firstName, stud.lastName, stud.id, stud.login, stud.email, new Map<ExerciseType, Array<Score>>([]),new Map<ExerciseType, number>(),new Map<ExerciseType, {successful:number, participated:number}>(), new Map<ExerciseType, Array<Score>>([]) , new Map<ExerciseType, string>(),
                 0,0,true,0);
 
@@ -133,7 +118,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 this.studentArray.push(student);
             }
 
-            this.getScoresForQuizzesModelingProgrammingExercises(student, exercise, result);
+            this.getScoresForExercises(student, exercise, result);
 
         });
 
@@ -156,9 +141,14 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             // let programmingScoreString = '';// initializing score string for csv export
             // let programmingEveryScore: Array<Score> = [];
 
+            // check for all exercise types if we have exercises in the course
             for ( let exType in ExerciseType ){
+
+                // check if the student participated in the exercises of the course and get the scores
                 this.allExercises[exType].forEach((exercise) => {
                     let bool : Boolean = true;
+
+                    // iterate through all the participated exercises by the student
                     student.allExercises[exType].forEach( (score) => {
                         if (exercise.id === score.exID) {
                             bool = false; // ensure to only enter the loop later once
@@ -182,6 +172,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                             // }
                         }
                     });
+
+                    // if the student did not participate in the exercise, a zero points score is generated
                     if (bool) {
                         this.studentArray[indexStudent].everyScoreString[exercise.type] += '0,';
                         this.studentArray[indexStudent].everyScore[exercise.type].push(new Score(null, exercise.id, exercise.title, 0));
@@ -402,17 +394,18 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     }
 
     // Updated to Maps - pls check
-    getScoresForQuizzesModelingProgrammingExercises(student: Student, exercise: Exercise, result) {
+    getScoresForExercises(student: Student, exercise: Exercise, result) {
 
         let resultCompletionDate : Date = new Date(result.completionDate);
         let dueDate : Date = new Date(exercise.dueDate);
 
-        // filter exercises (quiz filter || programming-exercise filter || modelling-exercise filer)
+        // filter if exercise result is relevant (quiz filter || programming-exercise filter || modelling-exercise filer)
         if (result.rated === true || (result.rated == null && resultCompletionDate.getTime() <= dueDate.getTime()) || (exercise.type === 'modeling')){
             let indexStudent : number = this.studentArray.findIndex( stud => stud.id === student.id);
-            if(indexStudent >= 0) {
+            
+            if(indexStudent >= 0) { // check if the student exists in our array
+                // quiz exercises only have one rated result
                 if(exercise.type === 'quiz'){
-                    // TODO do we need the participation rate / quote ?
                     this.studentArray[indexStudent].participated++;
                     this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].participated++;
                     if (result.successful) {
@@ -433,7 +426,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                         this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].successful++;
                     }
 
-                    if(indexExc >= 0) { //if the exercise exist in the array
+                    if(indexExc >= 0) { //if the exercise score exist in the array
 
                         let existingScore = this.studentArray[indexStudent].allExercises[exercise.type][indexExc];
 
@@ -446,7 +439,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                                 'absoluteScore': this.round((result.score * exercise.maxScore) / 100, 2)
                             };
                         }
-                    } else { //if the exercise does not exist in the array yet
+                    } else { //if the exercise score does not exist in the array yet we add it as a new Score
                         this.studentArray[indexStudent].allExercises[exercise.type].push(new Score( resultCompletionDate, exercise.id, exercise.title, this.round((result.score * exercise.maxScore) / 100, 2)));
                     }
                 }

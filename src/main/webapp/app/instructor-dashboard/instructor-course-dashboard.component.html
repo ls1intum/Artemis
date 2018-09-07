@@ -1,5 +1,5 @@
 <div *ngIf="course">
-    <h2>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{studentArray.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
+    <h2>{{course.title}} <small>{{exerciseCall.length}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{studentArray.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
 <jhi-alert></jhi-alert>
     <button class="btn btn-primary btn-sm"  (click)="exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results as CSV</button>
     <div class="table-responsive" *ngIf="studentArray">
