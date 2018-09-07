@@ -117,6 +117,33 @@ public class ExerciseResource {
     }
 
     /**
+     * GET /courses/:courseId/exercises : get all exercises for the given course
+     *
+     * @param courseId the course for which to retrieve all exercises
+     * @return the ResponseEntity with status 200 (OK) and the list of exercises in body
+     */
+    @GetMapping(value = "/courses/{courseId}/exercises2")
+    @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Collection<Exercise>> getExerciseOverviewForCourse(@PathVariable Long courseId) {
+        log.debug("REST request to get Exercises for Course : {}", courseId);
+
+        Course course = courseService.findOne(courseId);
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isStudentInCourse(course, user) &&
+            !authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        List<Exercise> result = exerciseService.findAllExercisesByCourseId(course, user);
+
+        return ResponseEntity.ok(result);
+    }
+
+
+    /**
      * GET  /exercises/:id : get the "id" exercise.
      *
      * @param id the id of the exercise to retrieve

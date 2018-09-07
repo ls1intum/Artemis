@@ -6,7 +6,7 @@ import {
     Course,
     CourseService
 } from '../entities/course';
-import { ExerciseType } from '../entities/exercise';
+import { ExerciseType, ExerciseService } from '../entities/exercise';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
@@ -35,6 +35,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     // maxScoreForProgramming: number = 0;
     //finalScores: Array<Student> = []; not in use - not needed
     allExercises: Map<ExerciseType, Array<Exercise>> = new Map<ExerciseType, Array<Exercise>>([]);
+    exerciseCall = [];
     // allQuizExercises: Array<Exercise> = [];
     // allProgrammingExercises: Array<Exercise> = [];
     // allModelingExercises: Array<Exercise> = [];
@@ -42,7 +43,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     exportReady: Boolean = false;
 
     constructor(private route: ActivatedRoute,
-                private courseService: CourseService) {
+                private courseService: CourseService, private exerciseService: ExerciseService) {
         this.reverse = false;
         this.predicate = 'id';
     }
@@ -54,15 +55,23 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 this.getResults(this.course.id);
             });
         });
+
     }
 
     getResults(courseId: number) {
-        this.courseService.findAllResults(courseId).subscribe(res => { // this call gets all information to the results in the exercises
+         /*this.courseService.findAllResults(courseId).subscribe(res => { // this call gets all information to the results in the exercises
             this.results = res;
+            //console.log(res);
+        });*/
+
+        this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => { // this call gets all information to the results in the exercises
+            this.exerciseCall = res;
+            console.log(this.exerciseCall);
             this.groupResults();
+
         });
 
-        console.log(this.results);
+       // console.log(this.results);
 
         // this.courseService.findAllParticipations(courseId).subscribe(res => { // this call gets all information to the participation in the exercises
         //     this.participations = res;
@@ -74,9 +83,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
     // Updated to Maps - pls check
     groupResults() {
-        if (!this.results || this.results.length === 0) {
+       // console.log(this.results);
+       if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length ===0) {
             return;
-        } // filtering results
+        }
 
         // iterating through the results means, we are not considerng exercises that nobody worked on
         this.results.forEach( (result) => { // iterate through results

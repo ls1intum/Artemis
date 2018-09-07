@@ -63,6 +63,12 @@ export class ExerciseService {
 
     }
 
+//changes by tom wenzel
+    findAllExercisesByCourseId(courseId: number): Observable<any> {
+        return this.http.get(`${SERVER_API_URL}api/courses/${courseId}/exercises2`, {observe: 'response'});
+    }
+
+
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Exercise = this.convertItemFromServer(res.body);
         return res.clone({body});

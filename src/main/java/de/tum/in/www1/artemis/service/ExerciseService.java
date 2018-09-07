@@ -88,6 +88,23 @@ public class ExerciseService {
         return new PageImpl<>(userExercises.collect(Collectors.toList()), pageable, filteredExercises.size());
     }
 
+    /**
+     * Get all exercises by courseID
+     *
+     * @param course  for return of exercises in course
+     * @return the list of entities
+     */
+    @Transactional(readOnly = true)
+    public List<Exercise> findAllExercisesByCourseId(Course course, User user) {
+        List<Exercise> exercises = null;
+        if (authCheckService.isAdmin() ||
+            authCheckService.isInstructorInCourse(course, user) ||
+            authCheckService.isTeachingAssistantInCourse(course, user)) {
+            // user can see this exercise
+            exercises = exerciseRepository.findAllByCourseId(course.getId());
+        }   return exercises;
+    }
+
     @Transactional(readOnly = true)
     public List<Exercise> findAllForCourse(Course course, boolean withLtiOutcomeUrlExisting, Principal principal, User user) {
         List<Exercise> exercises = null;
