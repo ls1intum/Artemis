@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -144,7 +145,7 @@ public class FeedbackResourceIntTest {
             .andExpect(jsonPath("$.[*].text").value(hasItem(DEFAULT_TEXT.toString())))
             .andExpect(jsonPath("$.[*].detailText").value(hasItem(DEFAULT_DETAIL_TEXT.toString())));
     }
-
+    
     @Test
     @Transactional
     public void getFeedback() throws Exception {
@@ -173,10 +174,11 @@ public class FeedbackResourceIntTest {
     public void updateFeedback() throws Exception {
         // Initialize the database
         feedbackRepository.saveAndFlush(feedback);
+
         int databaseSizeBeforeUpdate = feedbackRepository.findAll().size();
 
         // Update the feedback
-        Feedback updatedFeedback = feedbackRepository.findOne(feedback.getId());
+        Feedback updatedFeedback = feedbackRepository.findById(feedback.getId()).get();
         // Disconnect from session so that the updates on updatedFeedback are not directly saved in db
         em.detach(updatedFeedback);
         updatedFeedback
@@ -203,15 +205,15 @@ public class FeedbackResourceIntTest {
 
         // Create the Feedback
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restFeedbackMockMvc.perform(put("/api/feedbacks")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(feedback)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the Feedback in the database
         List<Feedback> feedbackList = feedbackRepository.findAll();
-        assertThat(feedbackList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(feedbackList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -219,6 +221,7 @@ public class FeedbackResourceIntTest {
     public void deleteFeedback() throws Exception {
         // Initialize the database
         feedbackRepository.saveAndFlush(feedback);
+
         int databaseSizeBeforeDelete = feedbackRepository.findAll().size();
 
         // Get the feedback

@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    QuizExerciseService,
-    QuizExercisePopupService,
     QuizExerciseComponent,
     QuizExerciseDetailComponent,
-    QuizExerciseDialogComponent,
-    QuizExercisePopupComponent,
+    QuizExerciseUpdateComponent,
     QuizExerciseDeletePopupComponent,
     QuizExerciseDeleteDialogComponent,
     quizExerciseRoute,
-    quizExercisePopupRoute,
+    quizExercisePopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...quizExerciseRoute,
-    ...quizExercisePopupRoute,
-];
+const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         QuizExerciseComponent,
         QuizExerciseDetailComponent,
-        QuizExerciseDialogComponent,
+        QuizExerciseUpdateComponent,
         QuizExerciseDeleteDialogComponent,
-        QuizExercisePopupComponent,
-        QuizExerciseDeletePopupComponent,
+        QuizExerciseDeletePopupComponent
     ],
     entryComponents: [
         QuizExerciseComponent,
-        QuizExerciseDialogComponent,
-        QuizExercisePopupComponent,
+        QuizExerciseUpdateComponent,
         QuizExerciseDeleteDialogComponent,
-        QuizExerciseDeletePopupComponent,
-    ],
-    providers: [
-        QuizExerciseService,
-        QuizExercisePopupService,
+        QuizExerciseDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

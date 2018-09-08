@@ -1,14 +1,9 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 
 import {
-    Register,
-    ActivateService,
-    PasswordService,
-    PasswordResetInitService,
-    PasswordResetFinishService,
     PasswordStrengthBarComponent,
     RegisterComponent,
     ActivateComponent,
@@ -20,10 +15,7 @@ import {
 } from './';
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(accountState)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(accountState)],
     declarations: [
         ActivateComponent,
         RegisterComponent,
@@ -32,13 +24,6 @@ import {
         PasswordResetInitComponent,
         PasswordResetFinishComponent,
         SettingsComponent
-    ],
-    providers: [
-        Register,
-        ActivateService,
-        PasswordService,
-        PasswordResetInitService,
-        PasswordResetFinishService
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

@@ -34,7 +34,7 @@
                 <constraints nullable="true" />
             </column>
 
-            <column name="initialization_date" type="timestamp">
+            <column name="initialization_date" type="datetime">
                 <constraints nullable="true" />
             </column>
 

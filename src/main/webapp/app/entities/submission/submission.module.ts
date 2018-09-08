@@ -1,49 +1,29 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    SubmissionService,
-    SubmissionPopupService,
     SubmissionComponent,
     SubmissionDetailComponent,
-    SubmissionDialogComponent,
-    SubmissionPopupComponent,
+    SubmissionUpdateComponent,
     SubmissionDeletePopupComponent,
     SubmissionDeleteDialogComponent,
     submissionRoute,
-    submissionPopupRoute,
+    submissionPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...submissionRoute,
-    ...submissionPopupRoute,
-];
+const ENTITY_STATES = [...submissionRoute, ...submissionPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         SubmissionComponent,
         SubmissionDetailComponent,
-        SubmissionDialogComponent,
+        SubmissionUpdateComponent,
         SubmissionDeleteDialogComponent,
-        SubmissionPopupComponent,
-        SubmissionDeletePopupComponent,
+        SubmissionDeletePopupComponent
     ],
-    entryComponents: [
-        SubmissionComponent,
-        SubmissionDialogComponent,
-        SubmissionPopupComponent,
-        SubmissionDeleteDialogComponent,
-        SubmissionDeletePopupComponent,
-    ],
-    providers: [
-        SubmissionService,
-        SubmissionPopupService,
-    ],
+    entryComponents: [SubmissionComponent, SubmissionUpdateComponent, SubmissionDeleteDialogComponent, SubmissionDeletePopupComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTeMiSSubmissionModule {}

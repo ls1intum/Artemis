@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    DragAndDropQuestionService,
-    DragAndDropQuestionPopupService,
     DragAndDropQuestionComponent,
     DragAndDropQuestionDetailComponent,
-    DragAndDropQuestionDialogComponent,
-    DragAndDropQuestionPopupComponent,
+    DragAndDropQuestionUpdateComponent,
     DragAndDropQuestionDeletePopupComponent,
     DragAndDropQuestionDeleteDialogComponent,
     dragAndDropQuestionRoute,
-    dragAndDropQuestionPopupRoute,
+    dragAndDropQuestionPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...dragAndDropQuestionRoute,
-    ...dragAndDropQuestionPopupRoute,
-];
+const ENTITY_STATES = [...dragAndDropQuestionRoute, ...dragAndDropQuestionPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         DragAndDropQuestionComponent,
         DragAndDropQuestionDetailComponent,
-        DragAndDropQuestionDialogComponent,
+        DragAndDropQuestionUpdateComponent,
         DragAndDropQuestionDeleteDialogComponent,
-        DragAndDropQuestionPopupComponent,
-        DragAndDropQuestionDeletePopupComponent,
+        DragAndDropQuestionDeletePopupComponent
     ],
     entryComponents: [
         DragAndDropQuestionComponent,
-        DragAndDropQuestionDialogComponent,
-        DragAndDropQuestionPopupComponent,
+        DragAndDropQuestionUpdateComponent,
         DragAndDropQuestionDeleteDialogComponent,
-        DragAndDropQuestionDeletePopupComponent,
-    ],
-    providers: [
-        DragAndDropQuestionService,
-        DragAndDropQuestionPopupService,
+        DragAndDropQuestionDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

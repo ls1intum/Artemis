@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.SubmittedAnswer;
-
 import de.tum.in.www1.artemis.repository.SubmittedAnswerRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class SubmittedAnswerResource {
     public ResponseEntity<SubmittedAnswer> updateSubmittedAnswer(@RequestBody SubmittedAnswer submittedAnswer) throws URISyntaxException {
         log.debug("REST request to update SubmittedAnswer : {}", submittedAnswer);
         if (submittedAnswer.getId() == null) {
-            return createSubmittedAnswer(submittedAnswer);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         SubmittedAnswer result = submittedAnswerRepository.save(submittedAnswer);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class SubmittedAnswerResource {
     public List<SubmittedAnswer> getAllSubmittedAnswers() {
         log.debug("REST request to get all SubmittedAnswers");
         return submittedAnswerRepository.findAll();
-        }
+    }
 
     /**
      * GET  /submitted-answers/:id : get the "id" submittedAnswer.
@@ -99,8 +98,8 @@ public class SubmittedAnswerResource {
     @Timed
     public ResponseEntity<SubmittedAnswer> getSubmittedAnswer(@PathVariable Long id) {
         log.debug("REST request to get SubmittedAnswer : {}", id);
-        SubmittedAnswer submittedAnswer = submittedAnswerRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(submittedAnswer));
+        Optional<SubmittedAnswer> submittedAnswer = submittedAnswerRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(submittedAnswer);
     }
 
     /**
@@ -113,7 +112,8 @@ public class SubmittedAnswerResource {
     @Timed
     public ResponseEntity<Void> deleteSubmittedAnswer(@PathVariable Long id) {
         log.debug("REST request to delete SubmittedAnswer : {}", id);
-        submittedAnswerRepository.delete(id);
+
+        submittedAnswerRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

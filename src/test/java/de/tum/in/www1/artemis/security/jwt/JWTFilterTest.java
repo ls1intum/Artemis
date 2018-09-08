@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.security.jwt;
 
 import de.tum.in.www1.artemis.security.AuthoritiesConstants;
 import io.github.jhipster.config.JHipsterProperties;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.http.HttpStatus;
@@ -27,7 +30,10 @@ public class JWTFilterTest {
     public void setup() {
         JHipsterProperties jHipsterProperties = new JHipsterProperties();
         tokenProvider = new TokenProvider(jHipsterProperties);
-        ReflectionTestUtils.setField(tokenProvider, "secretKey", "test secret");
+        ReflectionTestUtils.setField(tokenProvider, "key",
+            Keys.hmacShaKeyFor(Decoders.BASE64
+                .decode("fd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8")));
+
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", 60000);
         jwtFilter = new JWTFilter(tokenProvider);
         SecurityContextHolder.getContext().setAuthentication(null);
@@ -42,7 +48,7 @@ public class JWTFilterTest {
         );
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(JWTConfigurer.AUTHORIZATION_HEADER, "Bearer " + jwt);
+        request.addHeader(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -56,7 +62,7 @@ public class JWTFilterTest {
     public void testJWTFilterInvalidToken() throws Exception {
         String jwt = "wrong_jwt";
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(JWTConfigurer.AUTHORIZATION_HEADER, "Bearer " + jwt);
+        request.addHeader(JWTFilter.AUTHORIZATION_HEADER, "Bearer " + jwt);
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -79,7 +85,7 @@ public class JWTFilterTest {
     @Test
     public void testJWTFilterMissingToken() throws Exception {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(JWTConfigurer.AUTHORIZATION_HEADER, "Bearer ");
+        request.addHeader(JWTFilter.AUTHORIZATION_HEADER, "Bearer ");
         request.setRequestURI("/api/test");
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = new MockFilterChain();
@@ -97,8 +103,13 @@ public class JWTFilterTest {
         );
         String jwt = tokenProvider.createToken(authentication, false);
         MockHttpServletRequest request = new MockHttpServletRequest();
-        request.addHeader(JWTConfigurer.AUTHORIZATION_HEADER, "Basic " + jwt);
+        request.addHeader(JWTFilter.AUTHORIZATION_HEADER, "Basic " + jwt);
         request.setRequestURI("/api/test");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        MockFilterChain filterChain = new MockFilterChain();
+        jwtFilter.doFilter(request, response, filterChain);
+        assertThat(response.getStatus()).isEqualTo(HttpStatus.OK.value());
+        assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }
 
 }

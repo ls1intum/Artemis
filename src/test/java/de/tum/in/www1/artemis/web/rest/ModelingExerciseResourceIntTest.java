@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -138,7 +139,7 @@ public class ModelingExerciseResourceIntTest {
             .andExpect(jsonPath("$.[*].id").value(hasItem(modelingExercise.getId().intValue())))
             .andExpect(jsonPath("$.[*].baseFilePath").value(hasItem(DEFAULT_BASE_FILE_PATH.toString())));
     }
-
+    
     @Test
     @Transactional
     public void getModelingExercise() throws Exception {
@@ -166,10 +167,11 @@ public class ModelingExerciseResourceIntTest {
     public void updateModelingExercise() throws Exception {
         // Initialize the database
         modelingExerciseRepository.saveAndFlush(modelingExercise);
+
         int databaseSizeBeforeUpdate = modelingExerciseRepository.findAll().size();
 
         // Update the modelingExercise
-        ModelingExercise updatedModelingExercise = modelingExerciseRepository.findOne(modelingExercise.getId());
+        ModelingExercise updatedModelingExercise = modelingExerciseRepository.findById(modelingExercise.getId()).get();
         // Disconnect from session so that the updates on updatedModelingExercise are not directly saved in db
         em.detach(updatedModelingExercise);
         updatedModelingExercise
@@ -194,15 +196,15 @@ public class ModelingExerciseResourceIntTest {
 
         // Create the ModelingExercise
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restModelingExerciseMockMvc.perform(put("/api/modeling-exercises")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(modelingExercise)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the ModelingExercise in the database
         List<ModelingExercise> modelingExerciseList = modelingExerciseRepository.findAll();
-        assertThat(modelingExerciseList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(modelingExerciseList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -210,6 +212,7 @@ public class ModelingExerciseResourceIntTest {
     public void deleteModelingExercise() throws Exception {
         // Initialize the database
         modelingExerciseRepository.saveAndFlush(modelingExercise);
+
         int databaseSizeBeforeDelete = modelingExerciseRepository.findAll().size();
 
         // Get the modelingExercise

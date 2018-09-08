@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { MultipleChoiceQuestion } from './multiple-choice-question.model';
+import { IMultipleChoiceQuestion } from 'app/shared/model/multiple-choice-question.model';
+import { Principal } from 'app/core';
 import { MultipleChoiceQuestionService } from './multiple-choice-question.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
     templateUrl: './multiple-choice-question.component.html'
 })
 export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
-multipleChoiceQuestions: MultipleChoiceQuestion[];
+    multipleChoiceQuestions: IMultipleChoiceQuestion[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ multipleChoiceQuestions: MultipleChoiceQuestion[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.multipleChoiceQuestionService.query().subscribe(
-            (res: HttpResponse<MultipleChoiceQuestion[]>) => {
+            (res: HttpResponse<IMultipleChoiceQuestion[]>) => {
                 this.multipleChoiceQuestions = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInMultipleChoiceQuestions();
@@ -44,14 +44,15 @@ multipleChoiceQuestions: MultipleChoiceQuestion[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: MultipleChoiceQuestion) {
+    trackId(index: number, item: IMultipleChoiceQuestion) {
         return item.id;
     }
+
     registerChangeInMultipleChoiceQuestions() {
-        this.eventSubscriber = this.eventManager.subscribe('multipleChoiceQuestionListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('multipleChoiceQuestionListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

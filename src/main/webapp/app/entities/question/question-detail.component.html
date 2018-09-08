@@ -1,56 +1,57 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="question">
+            <h2><span jhiTranslate="arTeMiSApp.question.detail.title">Question</span> {{question.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.question.title">Title</span></dt>
+                <dd>
+                    <span>{{question.title}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.text">Text</span></dt>
+                <dd>
+                    <span>{{question.text}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.hint">Hint</span></dt>
+                <dd>
+                    <span>{{question.hint}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.explanation">Explanation</span></dt>
+                <dd>
+                    <span>{{question.explanation}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.score">Score</span></dt>
+                <dd>
+                    <span>{{question.score}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.scoringType">Scoring Type</span></dt>
+                <dd>
+                    <span jhiTranslate="{{'arTeMiSApp.ScoringType.' + question.scoringType}}">{{question.scoringType}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.randomizeOrder">Randomize Order</span></dt>
+                <dd>
+                    <span>{{question.randomizeOrder}}</span>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.question.exercise">Exercise</span></dt>
+                <dd>
+                    <div *ngIf="question.exercise">
+                        <a [routerLink]="['/quiz-exercise', question.exercise?.id, 'view']">{{question.exercise?.id}}</a>
+                    </div>
+                </dd>
+            </dl>
 
-<div *ngIf="question">
-    <h2><span jhiTranslate="arTeMiSApp.question.detail.title">Question</span> {{question.id}}</h2>
-    <hr>
-    <jhi-alert-error></jhi-alert-error>
-    <dl class="row-md jh-entity-details">
-        <dt><span jhiTranslate="arTeMiSApp.question.title">Title</span></dt>
-        <dd>
-            <span>{{question.title}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.question.text">Text</span></dt>
-        <dd>
-            <span>{{question.text}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.question.hint">Hint</span></dt>
-        <dd>
-            <span>{{question.hint}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.question.explanation">Explanation</span></dt>
-        <dd>
-            <span>{{question.explanation}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.question.score">Score</span></dt>
-        <dd>
-            <span>{{question.score}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.question.scoringType">Scoring Type</span></dt>
-        <dd>
-            <span jhiTranslate="{{'arTeMiSApp.ScoringType.' + question.scoringType}}">{{question.scoringType}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.question.randomizeOrder">Randomize Order</span></dt>
-        <dd>
-            <span>{{question.randomizeOrder}}</span>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.question.exercise">Exercise</span></dt>
-        <dd>
-            <div *ngIf="question.exercise">
-                <a [routerLink]="['/quiz-exercise', question.exercise?.id]">{{question.exercise?.id}}</a>
-            </div>
-        </dd>
-    </dl>
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
 
-    <button type="submit"
-            (click)="previousState()"
-            class="btn btn-info">
-        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
-    </button>
-
-    <button type="button"
-            [routerLink]="['/', { outlets: { popup: 'question/'+ question.id + '/edit'} }]"
-            replaceUrl="true"
-            queryParamsHandling="merge"
-            class="btn btn-primary">
-        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-    </button>
+            <button type="button"
+                    [routerLink]="['/question', question.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
 </div>

@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    DragAndDropAssignmentService,
-    DragAndDropAssignmentPopupService,
     DragAndDropAssignmentComponent,
     DragAndDropAssignmentDetailComponent,
-    DragAndDropAssignmentDialogComponent,
-    DragAndDropAssignmentPopupComponent,
+    DragAndDropAssignmentUpdateComponent,
     DragAndDropAssignmentDeletePopupComponent,
     DragAndDropAssignmentDeleteDialogComponent,
     dragAndDropAssignmentRoute,
-    dragAndDropAssignmentPopupRoute,
+    dragAndDropAssignmentPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...dragAndDropAssignmentRoute,
-    ...dragAndDropAssignmentPopupRoute,
-];
+const ENTITY_STATES = [...dragAndDropAssignmentRoute, ...dragAndDropAssignmentPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         DragAndDropAssignmentComponent,
         DragAndDropAssignmentDetailComponent,
-        DragAndDropAssignmentDialogComponent,
+        DragAndDropAssignmentUpdateComponent,
         DragAndDropAssignmentDeleteDialogComponent,
-        DragAndDropAssignmentPopupComponent,
-        DragAndDropAssignmentDeletePopupComponent,
+        DragAndDropAssignmentDeletePopupComponent
     ],
     entryComponents: [
         DragAndDropAssignmentComponent,
-        DragAndDropAssignmentDialogComponent,
-        DragAndDropAssignmentPopupComponent,
+        DragAndDropAssignmentUpdateComponent,
         DragAndDropAssignmentDeleteDialogComponent,
-        DragAndDropAssignmentDeletePopupComponent,
-    ],
-    providers: [
-        DragAndDropAssignmentService,
-        DragAndDropAssignmentPopupService,
+        DragAndDropAssignmentDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

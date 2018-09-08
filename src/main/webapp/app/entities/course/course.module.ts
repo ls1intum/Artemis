@@ -1,49 +1,23 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    CourseService,
-    CoursePopupService,
     CourseComponent,
     CourseDetailComponent,
-    CourseDialogComponent,
-    CoursePopupComponent,
+    CourseUpdateComponent,
     CourseDeletePopupComponent,
     CourseDeleteDialogComponent,
     courseRoute,
-    coursePopupRoute,
+    coursePopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...courseRoute,
-    ...coursePopupRoute,
-];
+const ENTITY_STATES = [...courseRoute, ...coursePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
-    declarations: [
-        CourseComponent,
-        CourseDetailComponent,
-        CourseDialogComponent,
-        CourseDeleteDialogComponent,
-        CoursePopupComponent,
-        CourseDeletePopupComponent,
-    ],
-    entryComponents: [
-        CourseComponent,
-        CourseDialogComponent,
-        CoursePopupComponent,
-        CourseDeleteDialogComponent,
-        CourseDeletePopupComponent,
-    ],
-    providers: [
-        CourseService,
-        CoursePopupService,
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
+    declarations: [CourseComponent, CourseDetailComponent, CourseUpdateComponent, CourseDeleteDialogComponent, CourseDeletePopupComponent],
+    entryComponents: [CourseComponent, CourseUpdateComponent, CourseDeleteDialogComponent, CourseDeletePopupComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTeMiSCourseModule {}

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -138,7 +139,7 @@ public class ModelingSubmissionResourceIntTest {
             .andExpect(jsonPath("$.[*].id").value(hasItem(modelingSubmission.getId().intValue())))
             .andExpect(jsonPath("$.[*].submissionPath").value(hasItem(DEFAULT_SUBMISSION_PATH.toString())));
     }
-
+    
     @Test
     @Transactional
     public void getModelingSubmission() throws Exception {
@@ -166,10 +167,11 @@ public class ModelingSubmissionResourceIntTest {
     public void updateModelingSubmission() throws Exception {
         // Initialize the database
         modelingSubmissionRepository.saveAndFlush(modelingSubmission);
+
         int databaseSizeBeforeUpdate = modelingSubmissionRepository.findAll().size();
 
         // Update the modelingSubmission
-        ModelingSubmission updatedModelingSubmission = modelingSubmissionRepository.findOne(modelingSubmission.getId());
+        ModelingSubmission updatedModelingSubmission = modelingSubmissionRepository.findById(modelingSubmission.getId()).get();
         // Disconnect from session so that the updates on updatedModelingSubmission are not directly saved in db
         em.detach(updatedModelingSubmission);
         updatedModelingSubmission
@@ -194,15 +196,15 @@ public class ModelingSubmissionResourceIntTest {
 
         // Create the ModelingSubmission
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restModelingSubmissionMockMvc.perform(put("/api/modeling-submissions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(modelingSubmission)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the ModelingSubmission in the database
         List<ModelingSubmission> modelingSubmissionList = modelingSubmissionRepository.findAll();
-        assertThat(modelingSubmissionList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(modelingSubmissionList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -210,6 +212,7 @@ public class ModelingSubmissionResourceIntTest {
     public void deleteModelingSubmission() throws Exception {
         // Initialize the database
         modelingSubmissionRepository.saveAndFlush(modelingSubmission);
+
         int databaseSizeBeforeDelete = modelingSubmissionRepository.findAll().size();
 
         // Get the modelingSubmission

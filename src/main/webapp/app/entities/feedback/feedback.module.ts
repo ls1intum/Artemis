@@ -1,49 +1,29 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    FeedbackService,
-    FeedbackPopupService,
     FeedbackComponent,
     FeedbackDetailComponent,
-    FeedbackDialogComponent,
-    FeedbackPopupComponent,
+    FeedbackUpdateComponent,
     FeedbackDeletePopupComponent,
     FeedbackDeleteDialogComponent,
     feedbackRoute,
-    feedbackPopupRoute,
+    feedbackPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...feedbackRoute,
-    ...feedbackPopupRoute,
-];
+const ENTITY_STATES = [...feedbackRoute, ...feedbackPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         FeedbackComponent,
         FeedbackDetailComponent,
-        FeedbackDialogComponent,
+        FeedbackUpdateComponent,
         FeedbackDeleteDialogComponent,
-        FeedbackPopupComponent,
-        FeedbackDeletePopupComponent,
+        FeedbackDeletePopupComponent
     ],
-    entryComponents: [
-        FeedbackComponent,
-        FeedbackDialogComponent,
-        FeedbackPopupComponent,
-        FeedbackDeleteDialogComponent,
-        FeedbackDeletePopupComponent,
-    ],
-    providers: [
-        FeedbackService,
-        FeedbackPopupService,
-    ],
+    entryComponents: [FeedbackComponent, FeedbackUpdateComponent, FeedbackDeleteDialogComponent, FeedbackDeletePopupComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTeMiSFeedbackModule {}

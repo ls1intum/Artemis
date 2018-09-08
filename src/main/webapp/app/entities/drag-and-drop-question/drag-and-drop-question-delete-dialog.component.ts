@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { DragAndDropQuestion } from './drag-and-drop-question.model';
-import { DragAndDropQuestionPopupService } from './drag-and-drop-question-popup.service';
+import { IDragAndDropQuestion } from 'app/shared/model/drag-and-drop-question.model';
 import { DragAndDropQuestionService } from './drag-and-drop-question.service';
 
 @Component({
@@ -13,22 +12,20 @@ import { DragAndDropQuestionService } from './drag-and-drop-question.service';
     templateUrl: './drag-and-drop-question-delete-dialog.component.html'
 })
 export class DragAndDropQuestionDeleteDialogComponent {
-
-    dragAndDropQuestion: DragAndDropQuestion;
+    dragAndDropQuestion: IDragAndDropQuestion;
 
     constructor(
         private dragAndDropQuestionService: DragAndDropQuestionService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
     confirmDelete(id: number) {
-        this.dragAndDropQuestionService.delete(id).subscribe((response) => {
+        this.dragAndDropQuestionService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'dragAndDropQuestionListModification',
                 content: 'Deleted an dragAndDropQuestion'
@@ -43,22 +40,33 @@ export class DragAndDropQuestionDeleteDialogComponent {
     template: ''
 })
 export class DragAndDropQuestionDeletePopupComponent implements OnInit, OnDestroy {
+    private ngbModalRef: NgbModalRef;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private dragAndDropQuestionPopupService: DragAndDropQuestionPopupService
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
-            this.dragAndDropQuestionPopupService
-                .open(DragAndDropQuestionDeleteDialogComponent as Component, params['id']);
+        this.activatedRoute.data.subscribe(({ dragAndDropQuestion }) => {
+            setTimeout(() => {
+                this.ngbModalRef = this.modalService.open(DragAndDropQuestionDeleteDialogComponent as Component, {
+                    size: 'lg',
+                    backdrop: 'static'
+                });
+                this.ngbModalRef.componentInstance.dragAndDropQuestion = dragAndDropQuestion;
+                this.ngbModalRef.result.then(
+                    result => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    },
+                    reason => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    }
+                );
+            }, 0);
         });
     }
 
     ngOnDestroy() {
-        this.routeSub.unsubscribe();
+        this.ngbModalRef = null;
     }
 }

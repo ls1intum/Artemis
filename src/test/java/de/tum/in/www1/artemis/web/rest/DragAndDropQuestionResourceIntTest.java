@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -138,7 +139,7 @@ public class DragAndDropQuestionResourceIntTest {
             .andExpect(jsonPath("$.[*].id").value(hasItem(dragAndDropQuestion.getId().intValue())))
             .andExpect(jsonPath("$.[*].backgroundFilePath").value(hasItem(DEFAULT_BACKGROUND_FILE_PATH.toString())));
     }
-
+    
     @Test
     @Transactional
     public void getDragAndDropQuestion() throws Exception {
@@ -166,10 +167,11 @@ public class DragAndDropQuestionResourceIntTest {
     public void updateDragAndDropQuestion() throws Exception {
         // Initialize the database
         dragAndDropQuestionRepository.saveAndFlush(dragAndDropQuestion);
+
         int databaseSizeBeforeUpdate = dragAndDropQuestionRepository.findAll().size();
 
         // Update the dragAndDropQuestion
-        DragAndDropQuestion updatedDragAndDropQuestion = dragAndDropQuestionRepository.findOne(dragAndDropQuestion.getId());
+        DragAndDropQuestion updatedDragAndDropQuestion = dragAndDropQuestionRepository.findById(dragAndDropQuestion.getId()).get();
         // Disconnect from session so that the updates on updatedDragAndDropQuestion are not directly saved in db
         em.detach(updatedDragAndDropQuestion);
         updatedDragAndDropQuestion
@@ -194,15 +196,15 @@ public class DragAndDropQuestionResourceIntTest {
 
         // Create the DragAndDropQuestion
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restDragAndDropQuestionMockMvc.perform(put("/api/drag-and-drop-questions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(dragAndDropQuestion)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the DragAndDropQuestion in the database
         List<DragAndDropQuestion> dragAndDropQuestionList = dragAndDropQuestionRepository.findAll();
-        assertThat(dragAndDropQuestionList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(dragAndDropQuestionList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -210,6 +212,7 @@ public class DragAndDropQuestionResourceIntTest {
     public void deleteDragAndDropQuestion() throws Exception {
         // Initialize the database
         dragAndDropQuestionRepository.saveAndFlush(dragAndDropQuestion);
+
         int databaseSizeBeforeDelete = dragAndDropQuestionRepository.findAll().size();
 
         // Get the dragAndDropQuestion

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -144,7 +145,7 @@ public class LtiOutcomeUrlResourceIntTest {
             .andExpect(jsonPath("$.[*].url").value(hasItem(DEFAULT_URL.toString())))
             .andExpect(jsonPath("$.[*].sourcedId").value(hasItem(DEFAULT_SOURCED_ID.toString())));
     }
-
+    
     @Test
     @Transactional
     public void getLtiOutcomeUrl() throws Exception {
@@ -173,10 +174,11 @@ public class LtiOutcomeUrlResourceIntTest {
     public void updateLtiOutcomeUrl() throws Exception {
         // Initialize the database
         ltiOutcomeUrlRepository.saveAndFlush(ltiOutcomeUrl);
+
         int databaseSizeBeforeUpdate = ltiOutcomeUrlRepository.findAll().size();
 
         // Update the ltiOutcomeUrl
-        LtiOutcomeUrl updatedLtiOutcomeUrl = ltiOutcomeUrlRepository.findOne(ltiOutcomeUrl.getId());
+        LtiOutcomeUrl updatedLtiOutcomeUrl = ltiOutcomeUrlRepository.findById(ltiOutcomeUrl.getId()).get();
         // Disconnect from session so that the updates on updatedLtiOutcomeUrl are not directly saved in db
         em.detach(updatedLtiOutcomeUrl);
         updatedLtiOutcomeUrl
@@ -203,15 +205,15 @@ public class LtiOutcomeUrlResourceIntTest {
 
         // Create the LtiOutcomeUrl
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restLtiOutcomeUrlMockMvc.perform(put("/api/lti-outcome-urls")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(ltiOutcomeUrl)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the LtiOutcomeUrl in the database
         List<LtiOutcomeUrl> ltiOutcomeUrlList = ltiOutcomeUrlRepository.findAll();
-        assertThat(ltiOutcomeUrlList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(ltiOutcomeUrlList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -219,6 +221,7 @@ public class LtiOutcomeUrlResourceIntTest {
     public void deleteLtiOutcomeUrl() throws Exception {
         // Initialize the database
         ltiOutcomeUrlRepository.saveAndFlush(ltiOutcomeUrl);
+
         int databaseSizeBeforeDelete = ltiOutcomeUrlRepository.findAll().size();
 
         // Get the ltiOutcomeUrl

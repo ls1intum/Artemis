@@ -1,16 +1,14 @@
 <div>
-    <h2>
+    <h2 id="page-heading">
         <span jhiTranslate="arTeMiSApp.modelingSubmission.home.title">Modeling Submissions</span>
-        <button class="btn btn-primary float-right jh-create-entity create-modeling-submission" [routerLink]="['/', { outlets: { popup: ['modeling-submission-new'] } }]">
-            <span class="fa fa-plus"></span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-modeling-submission" [routerLink]="['/modeling-submission/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.modelingSubmission.home.createLabel">
             Create new Modeling Submission
             </span>
         </button>
     </h2>
     <jhi-alert></jhi-alert>
-    <div class="row">
-    </div>
     <br/>
     <div class="table-responsive" *ngIf="modelingSubmissions">
         <table class="table table-striped">
@@ -23,22 +21,20 @@
             </thead>
             <tbody>
             <tr *ngFor="let modelingSubmission of modelingSubmissions ;trackBy: trackId">
-                <td><a [routerLink]="['../modeling-submission', modelingSubmission.id ]">{{modelingSubmission.id}}</a></td>
+                <td><a [routerLink]="['/modeling-submission', modelingSubmission.id, 'view' ]">{{modelingSubmission.id}}</a></td>
                 <td>{{modelingSubmission.submissionPath}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
-                                [routerLink]="['../modeling-submission', modelingSubmission.id ]"
+                                [routerLink]="['/modeling-submission', modelingSubmission.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'modeling-submission/'+ modelingSubmission.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/modeling-submission', modelingSubmission.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -46,7 +42,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

@@ -1,49 +1,29 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    DragItemService,
-    DragItemPopupService,
     DragItemComponent,
     DragItemDetailComponent,
-    DragItemDialogComponent,
-    DragItemPopupComponent,
+    DragItemUpdateComponent,
     DragItemDeletePopupComponent,
     DragItemDeleteDialogComponent,
     dragItemRoute,
-    dragItemPopupRoute,
+    dragItemPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...dragItemRoute,
-    ...dragItemPopupRoute,
-];
+const ENTITY_STATES = [...dragItemRoute, ...dragItemPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         DragItemComponent,
         DragItemDetailComponent,
-        DragItemDialogComponent,
+        DragItemUpdateComponent,
         DragItemDeleteDialogComponent,
-        DragItemPopupComponent,
-        DragItemDeletePopupComponent,
+        DragItemDeletePopupComponent
     ],
-    entryComponents: [
-        DragItemComponent,
-        DragItemDialogComponent,
-        DragItemPopupComponent,
-        DragItemDeleteDialogComponent,
-        DragItemDeletePopupComponent,
-    ],
-    providers: [
-        DragItemService,
-        DragItemPopupService,
-    ],
+    entryComponents: [DragItemComponent, DragItemUpdateComponent, DragItemDeleteDialogComponent, DragItemDeletePopupComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTeMiSDragItemModule {}

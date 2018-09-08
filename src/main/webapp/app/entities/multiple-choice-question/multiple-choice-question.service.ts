@@ -1,74 +1,38 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { Observable } from 'rxjs';
 
-import { MultipleChoiceQuestion } from './multiple-choice-question.model';
-import { createRequestOption } from '../../shared';
+import { SERVER_API_URL } from 'app/app.constants';
+import { createRequestOption } from 'app/shared';
+import { IMultipleChoiceQuestion } from 'app/shared/model/multiple-choice-question.model';
 
-export type EntityResponseType = HttpResponse<MultipleChoiceQuestion>;
+type EntityResponseType = HttpResponse<IMultipleChoiceQuestion>;
+type EntityArrayResponseType = HttpResponse<IMultipleChoiceQuestion[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class MultipleChoiceQuestionService {
+    private resourceUrl = SERVER_API_URL + 'api/multiple-choice-questions';
 
-    private resourceUrl =  SERVER_API_URL + 'api/multiple-choice-questions';
+    constructor(private http: HttpClient) {}
 
-    constructor(private http: HttpClient) { }
-
-    create(multipleChoiceQuestion: MultipleChoiceQuestion): Observable<EntityResponseType> {
-        const copy = this.convert(multipleChoiceQuestion);
-        return this.http.post<MultipleChoiceQuestion>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    create(multipleChoiceQuestion: IMultipleChoiceQuestion): Observable<EntityResponseType> {
+        return this.http.post<IMultipleChoiceQuestion>(this.resourceUrl, multipleChoiceQuestion, { observe: 'response' });
     }
 
-    update(multipleChoiceQuestion: MultipleChoiceQuestion): Observable<EntityResponseType> {
-        const copy = this.convert(multipleChoiceQuestion);
-        return this.http.put<MultipleChoiceQuestion>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    update(multipleChoiceQuestion: IMultipleChoiceQuestion): Observable<EntityResponseType> {
+        return this.http.put<IMultipleChoiceQuestion>(this.resourceUrl, multipleChoiceQuestion, { observe: 'response' });
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<MultipleChoiceQuestion>(`${this.resourceUrl}/${id}`, { observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.get<IMultipleChoiceQuestion>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    query(req?: any): Observable<HttpResponse<MultipleChoiceQuestion[]>> {
+    query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<MultipleChoiceQuestion[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<MultipleChoiceQuestion[]>) => this.convertArrayResponse(res));
+        return this.http.get<IMultipleChoiceQuestion[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 
     delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
-    }
-
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: MultipleChoiceQuestion = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    private convertArrayResponse(res: HttpResponse<MultipleChoiceQuestion[]>): HttpResponse<MultipleChoiceQuestion[]> {
-        const jsonResponse: MultipleChoiceQuestion[] = res.body;
-        const body: MultipleChoiceQuestion[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to MultipleChoiceQuestion.
-     */
-    private convertItemFromServer(multipleChoiceQuestion: MultipleChoiceQuestion): MultipleChoiceQuestion {
-        const copy: MultipleChoiceQuestion = Object.assign({}, multipleChoiceQuestion);
-        return copy;
-    }
-
-    /**
-     * Convert a MultipleChoiceQuestion to a JSON which can be sent to the server.
-     */
-    private convert(multipleChoiceQuestion: MultipleChoiceQuestion): MultipleChoiceQuestion {
-        const copy: MultipleChoiceQuestion = Object.assign({}, multipleChoiceQuestion);
-        return copy;
+        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 }

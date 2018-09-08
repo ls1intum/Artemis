@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { FeedbackDetailComponent } from '../../../../../../main/webapp/app/entities/feedback/feedback-detail.component';
-import { FeedbackService } from '../../../../../../main/webapp/app/entities/feedback/feedback.service';
-import { Feedback } from '../../../../../../main/webapp/app/entities/feedback/feedback.model';
+import { FeedbackDetailComponent } from 'app/entities/feedback/feedback-detail.component';
+import { Feedback } from 'app/shared/model/feedback.model';
 
 describe('Component Tests', () => {
-
     describe('Feedback Management Detail Component', () => {
         let comp: FeedbackDetailComponent;
         let fixture: ComponentFixture<FeedbackDetailComponent>;
-        let service: FeedbackService;
+        const route = ({ data: of({ feedback: new Feedback(123) }) } as any) as ActivatedRoute;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [FeedbackDetailComponent],
-                providers: [
-                    FeedbackService
-                ]
+                providers: [{ provide: ActivatedRoute, useValue: route }]
             })
-            .overrideTemplate(FeedbackDetailComponent, '')
-            .compileComponents();
-        }));
-
-        beforeEach(() => {
+                .overrideTemplate(FeedbackDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(FeedbackDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(FeedbackService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new Feedback(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.feedback).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.feedback).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

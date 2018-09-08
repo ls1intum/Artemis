@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import de.tum.in.www1.artemis.ArTeMiSApp;
-import de.tum.in.www1.artemis.config.CacheConfiguration;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -16,7 +15,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
@@ -33,8 +31,8 @@ import java.time.Instant;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -103,10 +101,10 @@ public class UserResourceIntTest {
 
     @Before
     public void setup() {
-        MockitoAnnotations.initMocks(this);
         cacheManager.getCache(UserRepository.USERS_BY_LOGIN_CACHE).clear();
         cacheManager.getCache(UserRepository.USERS_BY_EMAIL_CACHE).clear();
-        UserResource userResource = new UserResource(userRepository, userService, mailService);
+        UserResource userResource = new UserResource(userService, userRepository, mailService);
+
         this.restUserMockMvc = MockMvcBuilders.standaloneSetup(userResource)
             .setCustomArgumentResolvers(pageableArgumentResolver)
             .setControllerAdvice(exceptionTranslator)
@@ -316,7 +314,7 @@ public class UserResourceIntTest {
         int databaseSizeBeforeUpdate = userRepository.findAll().size();
 
         // Update the user
-        User updatedUser = userRepository.findOne(user.getId());
+        User updatedUser = userRepository.findById(user.getId()).get();
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
         managedUserVM.setId(updatedUser.getId());
@@ -358,7 +356,7 @@ public class UserResourceIntTest {
         int databaseSizeBeforeUpdate = userRepository.findAll().size();
 
         // Update the user
-        User updatedUser = userRepository.findOne(user.getId());
+        User updatedUser = userRepository.findById(user.getId()).get();
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
         managedUserVM.setId(updatedUser.getId());
@@ -411,7 +409,7 @@ public class UserResourceIntTest {
         userRepository.saveAndFlush(anotherUser);
 
         // Update the user
-        User updatedUser = userRepository.findOne(user.getId());
+        User updatedUser = userRepository.findById(user.getId()).get();
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
         managedUserVM.setId(updatedUser.getId());
@@ -453,7 +451,7 @@ public class UserResourceIntTest {
         userRepository.saveAndFlush(anotherUser);
 
         // Update the user
-        User updatedUser = userRepository.findOne(user.getId());
+        User updatedUser = userRepository.findById(user.getId()).get();
 
         ManagedUserVM managedUserVM = new ManagedUserVM();
         managedUserVM.setId(updatedUser.getId());
@@ -505,7 +503,7 @@ public class UserResourceIntTest {
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$").value(containsInAnyOrder(AuthoritiesConstants.USER, AuthoritiesConstants.ADMIN)));
+            .andExpect(jsonPath("$").value(hasItems(AuthoritiesConstants.USER, AuthoritiesConstants.ADMIN)));
     }
 
     @Test
@@ -592,7 +590,7 @@ public class UserResourceIntTest {
     }
 
     @Test
-    public void testAuthorityEquals() throws Exception {
+    public void testAuthorityEquals() {
         Authority authorityA = new Authority();
         assertThat(authorityA).isEqualTo(authorityA);
         assertThat(authorityA).isNotEqualTo(null);

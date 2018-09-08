@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    DropLocationService,
-    DropLocationPopupService,
     DropLocationComponent,
     DropLocationDetailComponent,
-    DropLocationDialogComponent,
-    DropLocationPopupComponent,
+    DropLocationUpdateComponent,
     DropLocationDeletePopupComponent,
     DropLocationDeleteDialogComponent,
     dropLocationRoute,
-    dropLocationPopupRoute,
+    dropLocationPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...dropLocationRoute,
-    ...dropLocationPopupRoute,
-];
+const ENTITY_STATES = [...dropLocationRoute, ...dropLocationPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         DropLocationComponent,
         DropLocationDetailComponent,
-        DropLocationDialogComponent,
+        DropLocationUpdateComponent,
         DropLocationDeleteDialogComponent,
-        DropLocationPopupComponent,
-        DropLocationDeletePopupComponent,
+        DropLocationDeletePopupComponent
     ],
     entryComponents: [
         DropLocationComponent,
-        DropLocationDialogComponent,
-        DropLocationPopupComponent,
+        DropLocationUpdateComponent,
         DropLocationDeleteDialogComponent,
-        DropLocationDeletePopupComponent,
-    ],
-    providers: [
-        DropLocationService,
-        DropLocationPopupService,
+        DropLocationDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

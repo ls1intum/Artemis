@@ -1,55 +1,24 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager } from 'ng-jhipster';
 
-import { Participation } from './participation.model';
-import { ParticipationService } from './participation.service';
+import { IParticipation } from 'app/shared/model/participation.model';
 
 @Component({
     selector: 'jhi-participation-detail',
     templateUrl: './participation-detail.component.html'
 })
-export class ParticipationDetailComponent implements OnInit, OnDestroy {
+export class ParticipationDetailComponent implements OnInit {
+    participation: IParticipation;
 
-    participation: Participation;
-    private subscription: Subscription;
-    private eventSubscriber: Subscription;
-
-    constructor(
-        private eventManager: JhiEventManager,
-        private participationService: ParticipationService,
-        private route: ActivatedRoute
-    ) {
-    }
+    constructor(private activatedRoute: ActivatedRoute) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
-            this.load(params['id']);
+        this.activatedRoute.data.subscribe(({ participation }) => {
+            this.participation = participation;
         });
-        this.registerChangeInParticipations();
     }
 
-    load(id) {
-        this.participationService.find(id)
-            .subscribe((participationResponse: HttpResponse<Participation>) => {
-                this.participation = participationResponse.body;
-            });
-    }
     previousState() {
         window.history.back();
-    }
-
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    registerChangeInParticipations() {
-        this.eventSubscriber = this.eventManager.subscribe(
-            'participationListModification',
-            (response) => this.load(this.participation.id)
-        );
     }
 }

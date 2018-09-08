@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -138,7 +139,7 @@ public class LtiUserIdResourceIntTest {
             .andExpect(jsonPath("$.[*].id").value(hasItem(ltiUserId.getId().intValue())))
             .andExpect(jsonPath("$.[*].ltiUserId").value(hasItem(DEFAULT_LTI_USER_ID.toString())));
     }
-
+    
     @Test
     @Transactional
     public void getLtiUserId() throws Exception {
@@ -166,10 +167,11 @@ public class LtiUserIdResourceIntTest {
     public void updateLtiUserId() throws Exception {
         // Initialize the database
         ltiUserIdRepository.saveAndFlush(ltiUserId);
+
         int databaseSizeBeforeUpdate = ltiUserIdRepository.findAll().size();
 
         // Update the ltiUserId
-        LtiUserId updatedLtiUserId = ltiUserIdRepository.findOne(ltiUserId.getId());
+        LtiUserId updatedLtiUserId = ltiUserIdRepository.findById(ltiUserId.getId()).get();
         // Disconnect from session so that the updates on updatedLtiUserId are not directly saved in db
         em.detach(updatedLtiUserId);
         updatedLtiUserId
@@ -194,15 +196,15 @@ public class LtiUserIdResourceIntTest {
 
         // Create the LtiUserId
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restLtiUserIdMockMvc.perform(put("/api/lti-user-ids")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(ltiUserId)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the LtiUserId in the database
         List<LtiUserId> ltiUserIdList = ltiUserIdRepository.findAll();
-        assertThat(ltiUserIdList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(ltiUserIdList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -210,6 +212,7 @@ public class LtiUserIdResourceIntTest {
     public void deleteLtiUserId() throws Exception {
         // Initialize the database
         ltiUserIdRepository.saveAndFlush(ltiUserId);
+
         int databaseSizeBeforeDelete = ltiUserIdRepository.findAll().size();
 
         // Get the ltiUserId

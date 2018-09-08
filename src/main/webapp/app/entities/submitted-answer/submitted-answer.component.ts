@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { SubmittedAnswer } from './submitted-answer.model';
+import { ISubmittedAnswer } from 'app/shared/model/submitted-answer.model';
+import { Principal } from 'app/core';
 import { SubmittedAnswerService } from './submitted-answer.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-submitted-answer',
     templateUrl: './submitted-answer.component.html'
 })
 export class SubmittedAnswerComponent implements OnInit, OnDestroy {
-submittedAnswers: SubmittedAnswer[];
+    submittedAnswers: ISubmittedAnswer[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ submittedAnswers: SubmittedAnswer[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.submittedAnswerService.query().subscribe(
-            (res: HttpResponse<SubmittedAnswer[]>) => {
+            (res: HttpResponse<ISubmittedAnswer[]>) => {
                 this.submittedAnswers = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInSubmittedAnswers();
@@ -44,14 +44,15 @@ submittedAnswers: SubmittedAnswer[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: SubmittedAnswer) {
+    trackId(index: number, item: ISubmittedAnswer) {
         return item.id;
     }
+
     registerChangeInSubmittedAnswers() {
-        this.eventSubscriber = this.eventManager.subscribe('submittedAnswerListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('submittedAnswerListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

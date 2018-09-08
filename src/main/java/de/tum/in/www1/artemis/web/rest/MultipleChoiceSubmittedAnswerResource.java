@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.MultipleChoiceSubmittedAnswer;
-
 import de.tum.in.www1.artemis.repository.MultipleChoiceSubmittedAnswerRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class MultipleChoiceSubmittedAnswerResource {
     public ResponseEntity<MultipleChoiceSubmittedAnswer> updateMultipleChoiceSubmittedAnswer(@RequestBody MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer) throws URISyntaxException {
         log.debug("REST request to update MultipleChoiceSubmittedAnswer : {}", multipleChoiceSubmittedAnswer);
         if (multipleChoiceSubmittedAnswer.getId() == null) {
-            return createMultipleChoiceSubmittedAnswer(multipleChoiceSubmittedAnswer);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         MultipleChoiceSubmittedAnswer result = multipleChoiceSubmittedAnswerRepository.save(multipleChoiceSubmittedAnswer);
         return ResponseEntity.ok()
@@ -80,14 +79,15 @@ public class MultipleChoiceSubmittedAnswerResource {
     /**
      * GET  /multiple-choice-submitted-answers : get all the multipleChoiceSubmittedAnswers.
      *
+     * @param eagerload flag to eager load entities from relationships (This is applicable for many-to-many)
      * @return the ResponseEntity with status 200 (OK) and the list of multipleChoiceSubmittedAnswers in body
      */
     @GetMapping("/multiple-choice-submitted-answers")
     @Timed
-    public List<MultipleChoiceSubmittedAnswer> getAllMultipleChoiceSubmittedAnswers() {
+    public List<MultipleChoiceSubmittedAnswer> getAllMultipleChoiceSubmittedAnswers(@RequestParam(required = false, defaultValue = "false") boolean eagerload) {
         log.debug("REST request to get all MultipleChoiceSubmittedAnswers");
         return multipleChoiceSubmittedAnswerRepository.findAllWithEagerRelationships();
-        }
+    }
 
     /**
      * GET  /multiple-choice-submitted-answers/:id : get the "id" multipleChoiceSubmittedAnswer.
@@ -99,8 +99,8 @@ public class MultipleChoiceSubmittedAnswerResource {
     @Timed
     public ResponseEntity<MultipleChoiceSubmittedAnswer> getMultipleChoiceSubmittedAnswer(@PathVariable Long id) {
         log.debug("REST request to get MultipleChoiceSubmittedAnswer : {}", id);
-        MultipleChoiceSubmittedAnswer multipleChoiceSubmittedAnswer = multipleChoiceSubmittedAnswerRepository.findOneWithEagerRelationships(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(multipleChoiceSubmittedAnswer));
+        Optional<MultipleChoiceSubmittedAnswer> multipleChoiceSubmittedAnswer = multipleChoiceSubmittedAnswerRepository.findOneWithEagerRelationships(id);
+        return ResponseUtil.wrapOrNotFound(multipleChoiceSubmittedAnswer);
     }
 
     /**
@@ -113,7 +113,8 @@ public class MultipleChoiceSubmittedAnswerResource {
     @Timed
     public ResponseEntity<Void> deleteMultipleChoiceSubmittedAnswer(@PathVariable Long id) {
         log.debug("REST request to delete MultipleChoiceSubmittedAnswer : {}", id);
-        multipleChoiceSubmittedAnswerRepository.delete(id);
+
+        multipleChoiceSubmittedAnswerRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

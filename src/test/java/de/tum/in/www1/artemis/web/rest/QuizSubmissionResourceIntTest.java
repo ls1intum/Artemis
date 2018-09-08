@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -132,7 +133,7 @@ public class QuizSubmissionResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(quizSubmission.getId().intValue())));
     }
-
+    
     @Test
     @Transactional
     public void getQuizSubmission() throws Exception {
@@ -159,10 +160,11 @@ public class QuizSubmissionResourceIntTest {
     public void updateQuizSubmission() throws Exception {
         // Initialize the database
         quizSubmissionRepository.saveAndFlush(quizSubmission);
+
         int databaseSizeBeforeUpdate = quizSubmissionRepository.findAll().size();
 
         // Update the quizSubmission
-        QuizSubmission updatedQuizSubmission = quizSubmissionRepository.findOne(quizSubmission.getId());
+        QuizSubmission updatedQuizSubmission = quizSubmissionRepository.findById(quizSubmission.getId()).get();
         // Disconnect from session so that the updates on updatedQuizSubmission are not directly saved in db
         em.detach(updatedQuizSubmission);
 
@@ -184,15 +186,15 @@ public class QuizSubmissionResourceIntTest {
 
         // Create the QuizSubmission
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restQuizSubmissionMockMvc.perform(put("/api/quiz-submissions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(quizSubmission)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the QuizSubmission in the database
         List<QuizSubmission> quizSubmissionList = quizSubmissionRepository.findAll();
-        assertThat(quizSubmissionList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(quizSubmissionList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -200,6 +202,7 @@ public class QuizSubmissionResourceIntTest {
     public void deleteQuizSubmission() throws Exception {
         // Initialize the database
         quizSubmissionRepository.saveAndFlush(quizSubmission);
+
         int databaseSizeBeforeDelete = quizSubmissionRepository.findAll().size();
 
         // Get the quizSubmission

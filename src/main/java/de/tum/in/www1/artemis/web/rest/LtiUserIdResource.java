@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.LtiUserId;
-
 import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class LtiUserIdResource {
     public ResponseEntity<LtiUserId> updateLtiUserId(@RequestBody LtiUserId ltiUserId) throws URISyntaxException {
         log.debug("REST request to update LtiUserId : {}", ltiUserId);
         if (ltiUserId.getId() == null) {
-            return createLtiUserId(ltiUserId);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         LtiUserId result = ltiUserIdRepository.save(ltiUserId);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class LtiUserIdResource {
     public List<LtiUserId> getAllLtiUserIds() {
         log.debug("REST request to get all LtiUserIds");
         return ltiUserIdRepository.findAll();
-        }
+    }
 
     /**
      * GET  /lti-user-ids/:id : get the "id" ltiUserId.
@@ -99,8 +98,8 @@ public class LtiUserIdResource {
     @Timed
     public ResponseEntity<LtiUserId> getLtiUserId(@PathVariable Long id) {
         log.debug("REST request to get LtiUserId : {}", id);
-        LtiUserId ltiUserId = ltiUserIdRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(ltiUserId));
+        Optional<LtiUserId> ltiUserId = ltiUserIdRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(ltiUserId);
     }
 
     /**
@@ -113,7 +112,8 @@ public class LtiUserIdResource {
     @Timed
     public ResponseEntity<Void> deleteLtiUserId(@PathVariable Long id) {
         log.debug("REST request to delete LtiUserId : {}", id);
-        ltiUserIdRepository.delete(id);
+
+        ltiUserIdRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
-
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingExercise> updateModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to update ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() == null) {
-            return createModelingExercise(modelingExercise);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class ModelingExerciseResource {
     public List<ModelingExercise> getAllModelingExercises() {
         log.debug("REST request to get all ModelingExercises");
         return modelingExerciseRepository.findAll();
-        }
+    }
 
     /**
      * GET  /modeling-exercises/:id : get the "id" modelingExercise.
@@ -99,8 +98,8 @@ public class ModelingExerciseResource {
     @Timed
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long id) {
         log.debug("REST request to get ModelingExercise : {}", id);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(modelingExercise));
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(modelingExercise);
     }
 
     /**
@@ -113,7 +112,8 @@ public class ModelingExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ModelingExercise : {}", id);
-        modelingExerciseRepository.delete(id);
+
+        modelingExerciseRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

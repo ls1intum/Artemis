@@ -38,7 +38,7 @@
                 <constraints nullable="true" />
             </column>
             <column name="correct_location_id" type="bigint">
-                <constraints unique="true" nullable="true" />
+                <constraints unique="true" nullable="true" uniqueConstraintName="ux_drag_item_correct_location_id" />
             </column>
             <column name="question_id" type="bigint">
                 <constraints nullable="true" />

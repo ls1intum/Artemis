@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { QuizExercise } from './quiz-exercise.model';
+import { IQuizExercise } from 'app/shared/model/quiz-exercise.model';
+import { Principal } from 'app/core';
 import { QuizExerciseService } from './quiz-exercise.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-quiz-exercise',
     templateUrl: './quiz-exercise.component.html'
 })
 export class QuizExerciseComponent implements OnInit, OnDestroy {
-quizExercises: QuizExercise[];
+    quizExercises: IQuizExercise[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ quizExercises: QuizExercise[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.quizExerciseService.query().subscribe(
-            (res: HttpResponse<QuizExercise[]>) => {
+            (res: HttpResponse<IQuizExercise[]>) => {
                 this.quizExercises = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInQuizExercises();
@@ -44,14 +44,15 @@ quizExercises: QuizExercise[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: QuizExercise) {
+    trackId(index: number, item: IQuizExercise) {
         return item.id;
     }
+
     registerChangeInQuizExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('quizExerciseListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { Submission } from './submission.model';
+import { ISubmission } from 'app/shared/model/submission.model';
+import { Principal } from 'app/core';
 import { SubmissionService } from './submission.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-submission',
     templateUrl: './submission.component.html'
 })
 export class SubmissionComponent implements OnInit, OnDestroy {
-submissions: Submission[];
+    submissions: ISubmission[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ submissions: Submission[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.submissionService.query().subscribe(
-            (res: HttpResponse<Submission[]>) => {
+            (res: HttpResponse<ISubmission[]>) => {
                 this.submissions = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInSubmissions();
@@ -44,14 +44,15 @@ submissions: Submission[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: Submission) {
+    trackId(index: number, item: ISubmission) {
         return item.id;
     }
+
     registerChangeInSubmissions() {
-        this.eventSubscriber = this.eventManager.subscribe('submissionListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('submissionListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

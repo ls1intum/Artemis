@@ -27,6 +27,7 @@ import java.time.ZoneOffset;
 import java.time.ZoneId;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.sameInstant;
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -155,7 +156,7 @@ public class ExerciseResourceIntTest {
             .andExpect(jsonPath("$.[*].releaseDate").value(hasItem(sameInstant(DEFAULT_RELEASE_DATE))))
             .andExpect(jsonPath("$.[*].dueDate").value(hasItem(sameInstant(DEFAULT_DUE_DATE))));
     }
-
+    
     @Test
     @Transactional
     public void getExercise() throws Exception {
@@ -185,10 +186,11 @@ public class ExerciseResourceIntTest {
     public void updateExercise() throws Exception {
         // Initialize the database
         exerciseRepository.saveAndFlush(exercise);
+
         int databaseSizeBeforeUpdate = exerciseRepository.findAll().size();
 
         // Update the exercise
-        Exercise updatedExercise = exerciseRepository.findOne(exercise.getId());
+        Exercise updatedExercise = exerciseRepository.findById(exercise.getId()).get();
         // Disconnect from session so that the updates on updatedExercise are not directly saved in db
         em.detach(updatedExercise);
         updatedExercise
@@ -217,15 +219,15 @@ public class ExerciseResourceIntTest {
 
         // Create the Exercise
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restExerciseMockMvc.perform(put("/api/exercises")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(exercise)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the Exercise in the database
         List<Exercise> exerciseList = exerciseRepository.findAll();
-        assertThat(exerciseList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(exerciseList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -233,6 +235,7 @@ public class ExerciseResourceIntTest {
     public void deleteExercise() throws Exception {
         // Initialize the database
         exerciseRepository.saveAndFlush(exercise);
+
         int databaseSizeBeforeDelete = exerciseRepository.findAll().size();
 
         // Get the exercise

@@ -1,34 +1,35 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <div *ngIf="submittedAnswer">
+            <h2><span jhiTranslate="arTeMiSApp.submittedAnswer.detail.title">Submitted Answer</span> {{submittedAnswer.id}}</h2>
+            <hr>
+            <jhi-alert-error></jhi-alert-error>
+            <dl class="row-md jh-entity-details">
+                <dt><span jhiTranslate="arTeMiSApp.submittedAnswer.question">Question</span></dt>
+                <dd>
+                    <div *ngIf="submittedAnswer.question">
+                        <a [routerLink]="['/question', submittedAnswer.question?.id, 'view']">{{submittedAnswer.question?.id}}</a>
+                    </div>
+                </dd>
+                <dt><span jhiTranslate="arTeMiSApp.submittedAnswer.submission">Submission</span></dt>
+                <dd>
+                    <div *ngIf="submittedAnswer.submission">
+                        <a [routerLink]="['/quiz-submission', submittedAnswer.submission?.id, 'view']">{{submittedAnswer.submission?.id}}</a>
+                    </div>
+                </dd>
+            </dl>
 
-<div *ngIf="submittedAnswer">
-    <h2><span jhiTranslate="arTeMiSApp.submittedAnswer.detail.title">Submitted Answer</span> {{submittedAnswer.id}}</h2>
-    <hr>
-    <jhi-alert-error></jhi-alert-error>
-    <dl class="row-md jh-entity-details">
-        <dt><span jhiTranslate="arTeMiSApp.submittedAnswer.question">Question</span></dt>
-        <dd>
-            <div *ngIf="submittedAnswer.question">
-                <a [routerLink]="['/question', submittedAnswer.question?.id]">{{submittedAnswer.question?.id}}</a>
-            </div>
-        </dd>
-        <dt><span jhiTranslate="arTeMiSApp.submittedAnswer.submission">Submission</span></dt>
-        <dd>
-            <div *ngIf="submittedAnswer.submission">
-                <a [routerLink]="['/quiz-submission', submittedAnswer.submission?.id]">{{submittedAnswer.submission?.id}}</a>
-            </div>
-        </dd>
-    </dl>
+            <button type="submit"
+                    (click)="previousState()"
+                    class="btn btn-info">
+                <fa-icon [icon]="'arrow-left'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+            </button>
 
-    <button type="submit"
-            (click)="previousState()"
-            class="btn btn-info">
-        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
-    </button>
-
-    <button type="button"
-            [routerLink]="['/', { outlets: { popup: 'submitted-answer/'+ submittedAnswer.id + '/edit'} }]"
-            replaceUrl="true"
-            queryParamsHandling="merge"
-            class="btn btn-primary">
-        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
-    </button>
+            <button type="button"
+                    [routerLink]="['/submitted-answer', submittedAnswer.id, 'edit']"
+                    class="btn btn-primary">
+                <fa-icon [icon]="'pencil-alt'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+            </button>
+        </div>
+    </div>
 </div>

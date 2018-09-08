@@ -1,50 +1,34 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
-import { ArTeMiSAdminModule } from '../../admin/admin.module';
+import { ArTeMiSSharedModule } from 'app/shared';
+import { ArTeMiSAdminModule } from 'app/admin/admin.module';
 import {
-    ParticipationService,
-    ParticipationPopupService,
     ParticipationComponent,
     ParticipationDetailComponent,
-    ParticipationDialogComponent,
-    ParticipationPopupComponent,
+    ParticipationUpdateComponent,
     ParticipationDeletePopupComponent,
     ParticipationDeleteDialogComponent,
     participationRoute,
-    participationPopupRoute,
+    participationPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...participationRoute,
-    ...participationPopupRoute,
-];
+const ENTITY_STATES = [...participationRoute, ...participationPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        ArTeMiSAdminModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, ArTeMiSAdminModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         ParticipationComponent,
         ParticipationDetailComponent,
-        ParticipationDialogComponent,
+        ParticipationUpdateComponent,
         ParticipationDeleteDialogComponent,
-        ParticipationPopupComponent,
-        ParticipationDeletePopupComponent,
+        ParticipationDeletePopupComponent
     ],
     entryComponents: [
         ParticipationComponent,
-        ParticipationDialogComponent,
-        ParticipationPopupComponent,
+        ParticipationUpdateComponent,
         ParticipationDeleteDialogComponent,
-        ParticipationDeletePopupComponent,
-    ],
-    providers: [
-        ParticipationService,
-        ParticipationPopupService,
+        ParticipationDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

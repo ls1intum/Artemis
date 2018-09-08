@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ModelingExercise } from './modeling-exercise.model';
-import { ModelingExercisePopupService } from './modeling-exercise-popup.service';
+import { IModelingExercise } from 'app/shared/model/modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
 
 @Component({
@@ -13,22 +12,20 @@ import { ModelingExerciseService } from './modeling-exercise.service';
     templateUrl: './modeling-exercise-delete-dialog.component.html'
 })
 export class ModelingExerciseDeleteDialogComponent {
-
-    modelingExercise: ModelingExercise;
+    modelingExercise: IModelingExercise;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
     confirmDelete(id: number) {
-        this.modelingExerciseService.delete(id).subscribe((response) => {
+        this.modelingExerciseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'modelingExerciseListModification',
                 content: 'Deleted an modelingExercise'
@@ -43,22 +40,33 @@ export class ModelingExerciseDeleteDialogComponent {
     template: ''
 })
 export class ModelingExerciseDeletePopupComponent implements OnInit, OnDestroy {
+    private ngbModalRef: NgbModalRef;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private modelingExercisePopupService: ModelingExercisePopupService
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
-            this.modelingExercisePopupService
-                .open(ModelingExerciseDeleteDialogComponent as Component, params['id']);
+        this.activatedRoute.data.subscribe(({ modelingExercise }) => {
+            setTimeout(() => {
+                this.ngbModalRef = this.modalService.open(ModelingExerciseDeleteDialogComponent as Component, {
+                    size: 'lg',
+                    backdrop: 'static'
+                });
+                this.ngbModalRef.componentInstance.modelingExercise = modelingExercise;
+                this.ngbModalRef.result.then(
+                    result => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    },
+                    reason => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    }
+                );
+            }, 0);
         });
     }
 
     ngOnDestroy() {
-        this.routeSub.unsubscribe();
+        this.ngbModalRef = null;
     }
 }

@@ -1,51 +1,30 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
-import { ArTeMiSAdminModule } from '../../admin/admin.module';
+import { ArTeMiSSharedModule } from 'app/shared';
+import { ArTeMiSAdminModule } from 'app/admin/admin.module';
 import {
-    LtiUserIdService,
-    LtiUserIdPopupService,
     LtiUserIdComponent,
     LtiUserIdDetailComponent,
-    LtiUserIdDialogComponent,
-    LtiUserIdPopupComponent,
+    LtiUserIdUpdateComponent,
     LtiUserIdDeletePopupComponent,
     LtiUserIdDeleteDialogComponent,
     ltiUserIdRoute,
-    ltiUserIdPopupRoute,
+    ltiUserIdPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...ltiUserIdRoute,
-    ...ltiUserIdPopupRoute,
-];
+const ENTITY_STATES = [...ltiUserIdRoute, ...ltiUserIdPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        ArTeMiSAdminModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, ArTeMiSAdminModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         LtiUserIdComponent,
         LtiUserIdDetailComponent,
-        LtiUserIdDialogComponent,
+        LtiUserIdUpdateComponent,
         LtiUserIdDeleteDialogComponent,
-        LtiUserIdPopupComponent,
-        LtiUserIdDeletePopupComponent,
+        LtiUserIdDeletePopupComponent
     ],
-    entryComponents: [
-        LtiUserIdComponent,
-        LtiUserIdDialogComponent,
-        LtiUserIdPopupComponent,
-        LtiUserIdDeleteDialogComponent,
-        LtiUserIdDeletePopupComponent,
-    ],
-    providers: [
-        LtiUserIdService,
-        LtiUserIdPopupService,
-    ],
+    entryComponents: [LtiUserIdComponent, LtiUserIdUpdateComponent, LtiUserIdDeleteDialogComponent, LtiUserIdDeletePopupComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTeMiSLtiUserIdModule {}

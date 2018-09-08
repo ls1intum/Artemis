@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { ModelingExercise } from './modeling-exercise.model';
+import { IModelingExercise } from 'app/shared/model/modeling-exercise.model';
+import { Principal } from 'app/core';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-modeling-exercise',
     templateUrl: './modeling-exercise.component.html'
 })
 export class ModelingExerciseComponent implements OnInit, OnDestroy {
-modelingExercises: ModelingExercise[];
+    modelingExercises: IModelingExercise[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ modelingExercises: ModelingExercise[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.modelingExerciseService.query().subscribe(
-            (res: HttpResponse<ModelingExercise[]>) => {
+            (res: HttpResponse<IModelingExercise[]>) => {
                 this.modelingExercises = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInModelingExercises();
@@ -44,14 +44,15 @@ modelingExercises: ModelingExercise[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: ModelingExercise) {
+    trackId(index: number, item: IModelingExercise) {
         return item.id;
     }
+
     registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

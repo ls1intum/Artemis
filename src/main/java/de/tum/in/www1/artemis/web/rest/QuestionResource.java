@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Question;
-
 import de.tum.in.www1.artemis.repository.QuestionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class QuestionResource {
     public ResponseEntity<Question> updateQuestion(@RequestBody Question question) throws URISyntaxException {
         log.debug("REST request to update Question : {}", question);
         if (question.getId() == null) {
-            return createQuestion(question);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Question result = questionRepository.save(question);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class QuestionResource {
     public List<Question> getAllQuestions() {
         log.debug("REST request to get all Questions");
         return questionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /questions/:id : get the "id" question.
@@ -99,8 +98,8 @@ public class QuestionResource {
     @Timed
     public ResponseEntity<Question> getQuestion(@PathVariable Long id) {
         log.debug("REST request to get Question : {}", id);
-        Question question = questionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(question));
+        Optional<Question> question = questionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(question);
     }
 
     /**
@@ -113,7 +112,8 @@ public class QuestionResource {
     @Timed
     public ResponseEntity<Void> deleteQuestion(@PathVariable Long id) {
         log.debug("REST request to delete Question : {}", id);
-        questionRepository.delete(id);
+
+        questionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

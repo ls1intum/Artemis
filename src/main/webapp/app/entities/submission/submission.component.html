@@ -1,16 +1,14 @@
 <div>
-    <h2>
+    <h2 id="page-heading">
         <span jhiTranslate="arTeMiSApp.submission.home.title">Submissions</span>
-        <button class="btn btn-primary float-right jh-create-entity create-submission" [routerLink]="['/', { outlets: { popup: ['submission-new'] } }]">
-            <span class="fa fa-plus"></span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-submission" [routerLink]="['/submission/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.submission.home.createLabel">
             Create new Submission
             </span>
         </button>
     </h2>
     <jhi-alert></jhi-alert>
-    <div class="row">
-    </div>
     <br/>
     <div class="table-responsive" *ngIf="submissions">
         <table class="table table-striped">
@@ -24,23 +22,21 @@
             </thead>
             <tbody>
             <tr *ngFor="let submission of submissions ;trackBy: trackId">
-                <td><a [routerLink]="['../submission', submission.id ]">{{submission.id}}</a></td>
+                <td><a [routerLink]="['/submission', submission.id, 'view' ]">{{submission.id}}</a></td>
                 <td>{{submission.submitted}}</td>
                 <td jhiTranslate="{{'arTeMiSApp.SubmissionType.' + submission.type}}">{{submission.type}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
-                                [routerLink]="['../submission', submission.id ]"
+                                [routerLink]="['/submission', submission.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'submission/'+ submission.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/submission', submission.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -48,7 +44,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

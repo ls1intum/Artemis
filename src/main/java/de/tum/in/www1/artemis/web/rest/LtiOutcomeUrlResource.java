@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.LtiOutcomeUrl;
-
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class LtiOutcomeUrlResource {
     public ResponseEntity<LtiOutcomeUrl> updateLtiOutcomeUrl(@RequestBody LtiOutcomeUrl ltiOutcomeUrl) throws URISyntaxException {
         log.debug("REST request to update LtiOutcomeUrl : {}", ltiOutcomeUrl);
         if (ltiOutcomeUrl.getId() == null) {
-            return createLtiOutcomeUrl(ltiOutcomeUrl);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         LtiOutcomeUrl result = ltiOutcomeUrlRepository.save(ltiOutcomeUrl);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class LtiOutcomeUrlResource {
     public List<LtiOutcomeUrl> getAllLtiOutcomeUrls() {
         log.debug("REST request to get all LtiOutcomeUrls");
         return ltiOutcomeUrlRepository.findAll();
-        }
+    }
 
     /**
      * GET  /lti-outcome-urls/:id : get the "id" ltiOutcomeUrl.
@@ -99,8 +98,8 @@ public class LtiOutcomeUrlResource {
     @Timed
     public ResponseEntity<LtiOutcomeUrl> getLtiOutcomeUrl(@PathVariable Long id) {
         log.debug("REST request to get LtiOutcomeUrl : {}", id);
-        LtiOutcomeUrl ltiOutcomeUrl = ltiOutcomeUrlRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(ltiOutcomeUrl));
+        Optional<LtiOutcomeUrl> ltiOutcomeUrl = ltiOutcomeUrlRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(ltiOutcomeUrl);
     }
 
     /**
@@ -113,7 +112,8 @@ public class LtiOutcomeUrlResource {
     @Timed
     public ResponseEntity<Void> deleteLtiOutcomeUrl(@PathVariable Long id) {
         log.debug("REST request to delete LtiOutcomeUrl : {}", id);
-        ltiOutcomeUrlRepository.delete(id);
+
+        ltiOutcomeUrlRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

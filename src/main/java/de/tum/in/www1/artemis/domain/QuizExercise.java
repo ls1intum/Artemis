@@ -50,7 +50,6 @@ public class QuizExercise implements Serializable {
     private Integer duration;
 
     @OneToMany(mappedBy = "exercise")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Question> questions = new HashSet<>();
 

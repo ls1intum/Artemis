@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Submission;
-
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class SubmissionResource {
     public ResponseEntity<Submission> updateSubmission(@RequestBody Submission submission) throws URISyntaxException {
         log.debug("REST request to update Submission : {}", submission);
         if (submission.getId() == null) {
-            return createSubmission(submission);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Submission result = submissionRepository.save(submission);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class SubmissionResource {
     public List<Submission> getAllSubmissions() {
         log.debug("REST request to get all Submissions");
         return submissionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /submissions/:id : get the "id" submission.
@@ -99,8 +98,8 @@ public class SubmissionResource {
     @Timed
     public ResponseEntity<Submission> getSubmission(@PathVariable Long id) {
         log.debug("REST request to get Submission : {}", id);
-        Submission submission = submissionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(submission));
+        Optional<Submission> submission = submissionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(submission);
     }
 
     /**
@@ -113,7 +112,8 @@ public class SubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteSubmission(@PathVariable Long id) {
         log.debug("REST request to delete Submission : {}", id);
-        submissionRepository.delete(id);
+
+        submissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

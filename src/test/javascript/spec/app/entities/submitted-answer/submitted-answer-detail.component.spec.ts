@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { SubmittedAnswerDetailComponent } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer-detail.component';
-import { SubmittedAnswerService } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer.service';
-import { SubmittedAnswer } from '../../../../../../main/webapp/app/entities/submitted-answer/submitted-answer.model';
+import { SubmittedAnswerDetailComponent } from 'app/entities/submitted-answer/submitted-answer-detail.component';
+import { SubmittedAnswer } from 'app/shared/model/submitted-answer.model';
 
 describe('Component Tests', () => {
-
     describe('SubmittedAnswer Management Detail Component', () => {
         let comp: SubmittedAnswerDetailComponent;
         let fixture: ComponentFixture<SubmittedAnswerDetailComponent>;
-        let service: SubmittedAnswerService;
+        const route = ({ data: of({ submittedAnswer: new SubmittedAnswer(123) }) } as any) as ActivatedRoute;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [SubmittedAnswerDetailComponent],
-                providers: [
-                    SubmittedAnswerService
-                ]
+                providers: [{ provide: ActivatedRoute, useValue: route }]
             })
-            .overrideTemplate(SubmittedAnswerDetailComponent, '')
-            .compileComponents();
-        }));
-
-        beforeEach(() => {
+                .overrideTemplate(SubmittedAnswerDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(SubmittedAnswerDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(SubmittedAnswerService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new SubmittedAnswer(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.submittedAnswer).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.submittedAnswer).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { AnswerOption } from './answer-option.model';
+import { IAnswerOption } from 'app/shared/model/answer-option.model';
+import { Principal } from 'app/core';
 import { AnswerOptionService } from './answer-option.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-answer-option',
     templateUrl: './answer-option.component.html'
 })
 export class AnswerOptionComponent implements OnInit, OnDestroy {
-answerOptions: AnswerOption[];
+    answerOptions: IAnswerOption[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ answerOptions: AnswerOption[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.answerOptionService.query().subscribe(
-            (res: HttpResponse<AnswerOption[]>) => {
+            (res: HttpResponse<IAnswerOption[]>) => {
                 this.answerOptions = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInAnswerOptions();
@@ -44,14 +44,15 @@ answerOptions: AnswerOption[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: AnswerOption) {
+    trackId(index: number, item: IAnswerOption) {
         return item.id;
     }
+
     registerChangeInAnswerOptions() {
-        this.eventSubscriber = this.eventManager.subscribe('answerOptionListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('answerOptionListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

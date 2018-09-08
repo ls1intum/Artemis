@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    SubmittedAnswerService,
-    SubmittedAnswerPopupService,
     SubmittedAnswerComponent,
     SubmittedAnswerDetailComponent,
-    SubmittedAnswerDialogComponent,
-    SubmittedAnswerPopupComponent,
+    SubmittedAnswerUpdateComponent,
     SubmittedAnswerDeletePopupComponent,
     SubmittedAnswerDeleteDialogComponent,
     submittedAnswerRoute,
-    submittedAnswerPopupRoute,
+    submittedAnswerPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...submittedAnswerRoute,
-    ...submittedAnswerPopupRoute,
-];
+const ENTITY_STATES = [...submittedAnswerRoute, ...submittedAnswerPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         SubmittedAnswerComponent,
         SubmittedAnswerDetailComponent,
-        SubmittedAnswerDialogComponent,
+        SubmittedAnswerUpdateComponent,
         SubmittedAnswerDeleteDialogComponent,
-        SubmittedAnswerPopupComponent,
-        SubmittedAnswerDeletePopupComponent,
+        SubmittedAnswerDeletePopupComponent
     ],
     entryComponents: [
         SubmittedAnswerComponent,
-        SubmittedAnswerDialogComponent,
-        SubmittedAnswerPopupComponent,
+        SubmittedAnswerUpdateComponent,
         SubmittedAnswerDeleteDialogComponent,
-        SubmittedAnswerDeletePopupComponent,
-    ],
-    providers: [
-        SubmittedAnswerService,
-        SubmittedAnswerPopupService,
+        SubmittedAnswerDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

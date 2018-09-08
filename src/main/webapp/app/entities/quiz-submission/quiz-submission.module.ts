@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    QuizSubmissionService,
-    QuizSubmissionPopupService,
     QuizSubmissionComponent,
     QuizSubmissionDetailComponent,
-    QuizSubmissionDialogComponent,
-    QuizSubmissionPopupComponent,
+    QuizSubmissionUpdateComponent,
     QuizSubmissionDeletePopupComponent,
     QuizSubmissionDeleteDialogComponent,
     quizSubmissionRoute,
-    quizSubmissionPopupRoute,
+    quizSubmissionPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...quizSubmissionRoute,
-    ...quizSubmissionPopupRoute,
-];
+const ENTITY_STATES = [...quizSubmissionRoute, ...quizSubmissionPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         QuizSubmissionComponent,
         QuizSubmissionDetailComponent,
-        QuizSubmissionDialogComponent,
+        QuizSubmissionUpdateComponent,
         QuizSubmissionDeleteDialogComponent,
-        QuizSubmissionPopupComponent,
-        QuizSubmissionDeletePopupComponent,
+        QuizSubmissionDeletePopupComponent
     ],
     entryComponents: [
         QuizSubmissionComponent,
-        QuizSubmissionDialogComponent,
-        QuizSubmissionPopupComponent,
+        QuizSubmissionUpdateComponent,
         QuizSubmissionDeleteDialogComponent,
-        QuizSubmissionDeletePopupComponent,
-    ],
-    providers: [
-        QuizSubmissionService,
-        QuizSubmissionPopupService,
+        QuizSubmissionDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

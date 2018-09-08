@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -36,11 +37,11 @@ public class Exercise implements Serializable {
     private ZonedDateTime dueDate;
 
     @OneToMany(mappedBy = "exercise")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Participation> participations = new HashSet<>();
 
     @ManyToOne
+    @JsonIgnoreProperties("exercises")
     private Course course;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

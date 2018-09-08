@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -156,7 +157,7 @@ public class ProgrammingExerciseResourceIntTest {
             .andExpect(jsonPath("$.[*].publishBuildPlanUrl").value(hasItem(DEFAULT_PUBLISH_BUILD_PLAN_URL.booleanValue())))
             .andExpect(jsonPath("$.[*].allowOnlineEditor").value(hasItem(DEFAULT_ALLOW_ONLINE_EDITOR.booleanValue())));
     }
-
+    
     @Test
     @Transactional
     public void getProgrammingExercise() throws Exception {
@@ -187,10 +188,11 @@ public class ProgrammingExerciseResourceIntTest {
     public void updateProgrammingExercise() throws Exception {
         // Initialize the database
         programmingExerciseRepository.saveAndFlush(programmingExercise);
+
         int databaseSizeBeforeUpdate = programmingExerciseRepository.findAll().size();
 
         // Update the programmingExercise
-        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findOne(programmingExercise.getId());
+        ProgrammingExercise updatedProgrammingExercise = programmingExerciseRepository.findById(programmingExercise.getId()).get();
         // Disconnect from session so that the updates on updatedProgrammingExercise are not directly saved in db
         em.detach(updatedProgrammingExercise);
         updatedProgrammingExercise
@@ -221,15 +223,15 @@ public class ProgrammingExerciseResourceIntTest {
 
         // Create the ProgrammingExercise
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restProgrammingExerciseMockMvc.perform(put("/api/programming-exercises")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(programmingExercise)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the ProgrammingExercise in the database
         List<ProgrammingExercise> programmingExerciseList = programmingExerciseRepository.findAll();
-        assertThat(programmingExerciseList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(programmingExerciseList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -237,6 +239,7 @@ public class ProgrammingExerciseResourceIntTest {
     public void deleteProgrammingExercise() throws Exception {
         // Initialize the database
         programmingExerciseRepository.saveAndFlush(programmingExercise);
+
         int databaseSizeBeforeDelete = programmingExerciseRepository.findAll().size();
 
         // Get the programmingExercise

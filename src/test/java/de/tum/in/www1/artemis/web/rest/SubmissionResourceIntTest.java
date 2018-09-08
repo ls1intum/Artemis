@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -145,7 +146,7 @@ public class SubmissionResourceIntTest {
             .andExpect(jsonPath("$.[*].submitted").value(hasItem(DEFAULT_SUBMITTED.booleanValue())))
             .andExpect(jsonPath("$.[*].type").value(hasItem(DEFAULT_TYPE.toString())));
     }
-
+    
     @Test
     @Transactional
     public void getSubmission() throws Exception {
@@ -174,10 +175,11 @@ public class SubmissionResourceIntTest {
     public void updateSubmission() throws Exception {
         // Initialize the database
         submissionRepository.saveAndFlush(submission);
+
         int databaseSizeBeforeUpdate = submissionRepository.findAll().size();
 
         // Update the submission
-        Submission updatedSubmission = submissionRepository.findOne(submission.getId());
+        Submission updatedSubmission = submissionRepository.findById(submission.getId()).get();
         // Disconnect from session so that the updates on updatedSubmission are not directly saved in db
         em.detach(updatedSubmission);
         updatedSubmission
@@ -204,15 +206,15 @@ public class SubmissionResourceIntTest {
 
         // Create the Submission
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restSubmissionMockMvc.perform(put("/api/submissions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(submission)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the Submission in the database
         List<Submission> submissionList = submissionRepository.findAll();
-        assertThat(submissionList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(submissionList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -220,6 +222,7 @@ public class SubmissionResourceIntTest {
     public void deleteSubmission() throws Exception {
         // Initialize the database
         submissionRepository.saveAndFlush(submission);
+
         int databaseSizeBeforeDelete = submissionRepository.findAll().size();
 
         // Get the submission

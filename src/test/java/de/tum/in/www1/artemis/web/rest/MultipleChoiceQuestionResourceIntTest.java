@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -132,7 +133,7 @@ public class MultipleChoiceQuestionResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(multipleChoiceQuestion.getId().intValue())));
     }
-
+    
     @Test
     @Transactional
     public void getMultipleChoiceQuestion() throws Exception {
@@ -159,10 +160,11 @@ public class MultipleChoiceQuestionResourceIntTest {
     public void updateMultipleChoiceQuestion() throws Exception {
         // Initialize the database
         multipleChoiceQuestionRepository.saveAndFlush(multipleChoiceQuestion);
+
         int databaseSizeBeforeUpdate = multipleChoiceQuestionRepository.findAll().size();
 
         // Update the multipleChoiceQuestion
-        MultipleChoiceQuestion updatedMultipleChoiceQuestion = multipleChoiceQuestionRepository.findOne(multipleChoiceQuestion.getId());
+        MultipleChoiceQuestion updatedMultipleChoiceQuestion = multipleChoiceQuestionRepository.findById(multipleChoiceQuestion.getId()).get();
         // Disconnect from session so that the updates on updatedMultipleChoiceQuestion are not directly saved in db
         em.detach(updatedMultipleChoiceQuestion);
 
@@ -184,15 +186,15 @@ public class MultipleChoiceQuestionResourceIntTest {
 
         // Create the MultipleChoiceQuestion
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restMultipleChoiceQuestionMockMvc.perform(put("/api/multiple-choice-questions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(multipleChoiceQuestion)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the MultipleChoiceQuestion in the database
         List<MultipleChoiceQuestion> multipleChoiceQuestionList = multipleChoiceQuestionRepository.findAll();
-        assertThat(multipleChoiceQuestionList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(multipleChoiceQuestionList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -200,6 +202,7 @@ public class MultipleChoiceQuestionResourceIntTest {
     public void deleteMultipleChoiceQuestion() throws Exception {
         // Initialize the database
         multipleChoiceQuestionRepository.saveAndFlush(multipleChoiceQuestion);
+
         int databaseSizeBeforeDelete = multipleChoiceQuestionRepository.findAll().size();
 
         // Get the multipleChoiceQuestion

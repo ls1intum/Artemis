@@ -1,0 +1,65 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-result-heading" jhiTranslate="arTeMiSApp.result.home.createOrEditLabel">Create or edit a Result</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!result.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="result.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.result.resultString" for="field_resultString">Result String</label>
+                    <input type="text" class="form-control" name="resultString" id="field_resultString"
+                        [(ngModel)]="result.resultString" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.result.completionDate" for="field_completionDate">Completion Date</label>
+                    <div class="d-flex">
+                        <input id="field_completionDate" type="datetime-local" class="form-control" name="completionDate" [(ngModel)]="completionDate"
+                        />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.result.successful" for="field_successful">Successful</label>
+                    <input type="checkbox" class="form-control" name="successful" id="field_successful"
+                        [(ngModel)]="result.successful" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.result.buildArtifact" for="field_buildArtifact">Build Artifact</label>
+                    <input type="checkbox" class="form-control" name="buildArtifact" id="field_buildArtifact"
+                        [(ngModel)]="result.buildArtifact" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.result.score" for="field_score">Score</label>
+                    <input type="number" class="form-control" name="score" id="field_score"
+                        [(ngModel)]="result.score" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.result.submission" for="field_submission">Submission</label>
+                    <select class="form-control" id="field_submission" name="submission" [(ngModel)]="result.submission">
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="submissionOption.id === result.submission?.id ? result.submission : submissionOption" *ngFor="let submissionOption of submissions; trackBy: trackSubmissionById">{{submissionOption.id}}</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.result.participation" for="field_participation">Participation</label>
+                    <select class="form-control" id="field_participation" name="participation" [(ngModel)]="result.participation" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="participationOption.id === result.participation?.id ? result.participation : participationOption" *ngFor="let participationOption of participations; trackBy: trackParticipationById">{{participationOption.id}}</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

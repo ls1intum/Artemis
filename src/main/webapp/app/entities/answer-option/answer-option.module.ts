@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    AnswerOptionService,
-    AnswerOptionPopupService,
     AnswerOptionComponent,
     AnswerOptionDetailComponent,
-    AnswerOptionDialogComponent,
-    AnswerOptionPopupComponent,
+    AnswerOptionUpdateComponent,
     AnswerOptionDeletePopupComponent,
     AnswerOptionDeleteDialogComponent,
     answerOptionRoute,
-    answerOptionPopupRoute,
+    answerOptionPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...answerOptionRoute,
-    ...answerOptionPopupRoute,
-];
+const ENTITY_STATES = [...answerOptionRoute, ...answerOptionPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         AnswerOptionComponent,
         AnswerOptionDetailComponent,
-        AnswerOptionDialogComponent,
+        AnswerOptionUpdateComponent,
         AnswerOptionDeleteDialogComponent,
-        AnswerOptionPopupComponent,
-        AnswerOptionDeletePopupComponent,
+        AnswerOptionDeletePopupComponent
     ],
     entryComponents: [
         AnswerOptionComponent,
-        AnswerOptionDialogComponent,
-        AnswerOptionPopupComponent,
+        AnswerOptionUpdateComponent,
         AnswerOptionDeleteDialogComponent,
-        AnswerOptionDeletePopupComponent,
-    ],
-    providers: [
-        AnswerOptionService,
-        AnswerOptionPopupService,
+        AnswerOptionDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

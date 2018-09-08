@@ -24,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -50,7 +51,7 @@ public class CourseResourceIntTest {
 
     @Autowired
     private CourseRepository courseRepository;
-
+    
     @Autowired
     private CourseService courseService;
 
@@ -154,7 +155,7 @@ public class CourseResourceIntTest {
             .andExpect(jsonPath("$.[*].studentGroupName").value(hasItem(DEFAULT_STUDENT_GROUP_NAME.toString())))
             .andExpect(jsonPath("$.[*].teachingAssistantGroupName").value(hasItem(DEFAULT_TEACHING_ASSISTANT_GROUP_NAME.toString())));
     }
-
+    
     @Test
     @Transactional
     public void getCourse() throws Exception {
@@ -188,7 +189,7 @@ public class CourseResourceIntTest {
         int databaseSizeBeforeUpdate = courseRepository.findAll().size();
 
         // Update the course
-        Course updatedCourse = courseRepository.findOne(course.getId());
+        Course updatedCourse = courseRepository.findById(course.getId()).get();
         // Disconnect from session so that the updates on updatedCourse are not directly saved in db
         em.detach(updatedCourse);
         updatedCourse
@@ -217,15 +218,15 @@ public class CourseResourceIntTest {
 
         // Create the Course
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restCourseMockMvc.perform(put("/api/courses")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(course)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the Course in the database
         List<Course> courseList = courseRepository.findAll();
-        assertThat(courseList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(courseList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test

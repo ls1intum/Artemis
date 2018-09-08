@@ -1,0 +1,51 @@
+<div class="row justify-content-center">
+    <div class="col-8">
+        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+            <h2 id="jhi-answer-option-heading" jhiTranslate="arTeMiSApp.answerOption.home.createOrEditLabel">Create or edit a Answer Option</h2>
+            <div>
+                <jhi-alert-error></jhi-alert-error>
+                <div class="form-group" [hidden]="!answerOption.id">
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input type="text" class="form-control" id="id" name="id"
+                        [(ngModel)]="answerOption.id" readonly />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.answerOption.text" for="field_text">Text</label>
+                    <input type="text" class="form-control" name="text" id="field_text"
+                        [(ngModel)]="answerOption.text" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.answerOption.hint" for="field_hint">Hint</label>
+                    <input type="text" class="form-control" name="hint" id="field_hint"
+                        [(ngModel)]="answerOption.hint" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.answerOption.explanation" for="field_explanation">Explanation</label>
+                    <input type="text" class="form-control" name="explanation" id="field_explanation"
+                        [(ngModel)]="answerOption.explanation" />
+                </div>
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.answerOption.isCorrect" for="field_isCorrect">Is Correct</label>
+                    <input type="checkbox" class="form-control" name="isCorrect" id="field_isCorrect"
+                        [(ngModel)]="answerOption.isCorrect" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-control-label" jhiTranslate="arTeMiSApp.answerOption.question" for="field_question">Question</label>
+                    <select class="form-control" id="field_question" name="question" [(ngModel)]="answerOption.question" >
+                        <option [ngValue]="null"></option>
+                        <option [ngValue]="multipleChoiceQuestionOption.id === answerOption.question?.id ? answerOption.question : multipleChoiceQuestionOption" *ngFor="let multipleChoiceQuestionOption of multiplechoicequestions; trackBy: trackMultipleChoiceQuestionById">{{multipleChoiceQuestionOption.id}}</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <button type="button" id="cancel-save" class="btn btn-secondary"  (click)="previousState()">
+                    <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+                <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">
+                    <fa-icon [icon]="'save'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

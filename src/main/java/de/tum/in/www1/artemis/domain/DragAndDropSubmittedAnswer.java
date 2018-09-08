@@ -26,7 +26,6 @@ public class DragAndDropSubmittedAnswer implements Serializable {
     private Long id;
 
     @OneToMany(mappedBy = "submittedAnswer")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragAndDropAssignment> assignments = new HashSet<>();
 

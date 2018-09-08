@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain;
 
-import java.io.Serializable;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.hibernate.envers.Audited;
 import org.springframework.data.annotation.CreatedBy;
@@ -9,6 +7,8 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.io.Serializable;
 import java.time.Instant;
 import javax.persistence.Column;
 import javax.persistence.EntityListeners;
@@ -31,7 +31,7 @@ public abstract class AbstractAuditingEntity implements Serializable {
     private String createdBy;
 
     @CreatedDate
-    @Column(name = "created_date", nullable = false)
+    @Column(name = "created_date", nullable = false, updatable = false)
     @JsonIgnore
     private Instant createdDate = Instant.now();
 

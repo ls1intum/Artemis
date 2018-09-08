@@ -29,12 +29,10 @@ public class DragAndDropQuestion implements Serializable {
     private String backgroundFilePath;
 
     @OneToMany(mappedBy = "question")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DropLocation> dropLocations = new HashSet<>();
 
     @OneToMany(mappedBy = "question")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<DragItem> dragItems = new HashSet<>();
 

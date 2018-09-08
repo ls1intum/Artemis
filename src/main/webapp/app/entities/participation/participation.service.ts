@@ -1,80 +1,73 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { Observable } from 'rxjs';
+import * as moment from 'moment';
+import { DATE_FORMAT } from 'app/shared/constants/input.constants';
+import { map } from 'rxjs/operators';
 
-import { JhiDateUtils } from 'ng-jhipster';
+import { SERVER_API_URL } from 'app/app.constants';
+import { createRequestOption } from 'app/shared';
+import { IParticipation } from 'app/shared/model/participation.model';
 
-import { Participation } from './participation.model';
-import { createRequestOption } from '../../shared';
+type EntityResponseType = HttpResponse<IParticipation>;
+type EntityArrayResponseType = HttpResponse<IParticipation[]>;
 
-export type EntityResponseType = HttpResponse<Participation>;
-
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ParticipationService {
+    private resourceUrl = SERVER_API_URL + 'api/participations';
 
-    private resourceUrl =  SERVER_API_URL + 'api/participations';
+    constructor(private http: HttpClient) {}
 
-    constructor(private http: HttpClient, private dateUtils: JhiDateUtils) { }
-
-    create(participation: Participation): Observable<EntityResponseType> {
-        const copy = this.convert(participation);
-        return this.http.post<Participation>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    create(participation: IParticipation): Observable<EntityResponseType> {
+        const copy = this.convertDateFromClient(participation);
+        return this.http
+            .post<IParticipation>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    update(participation: Participation): Observable<EntityResponseType> {
-        const copy = this.convert(participation);
-        return this.http.put<Participation>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    update(participation: IParticipation): Observable<EntityResponseType> {
+        const copy = this.convertDateFromClient(participation);
+        return this.http
+            .put<IParticipation>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Participation>(`${this.resourceUrl}/${id}`, { observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http
+            .get<IParticipation>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
-    query(req?: any): Observable<HttpResponse<Participation[]>> {
+    query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<Participation[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<Participation[]>) => this.convertArrayResponse(res));
+        return this.http
+            .get<IParticipation[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Participation = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    private convertArrayResponse(res: HttpResponse<Participation[]>): HttpResponse<Participation[]> {
-        const jsonResponse: Participation[] = res.body;
-        const body: Participation[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to Participation.
-     */
-    private convertItemFromServer(participation: Participation): Participation {
-        const copy: Participation = Object.assign({}, participation);
-        copy.initializationDate = this.dateUtils
-            .convertDateTimeFromServer(participation.initializationDate);
+    private convertDateFromClient(participation: IParticipation): IParticipation {
+        const copy: IParticipation = Object.assign({}, participation, {
+            initializationDate:
+                participation.initializationDate != null && participation.initializationDate.isValid()
+                    ? participation.initializationDate.toJSON()
+                    : null
+        });
         return copy;
     }
 
-    /**
-     * Convert a Participation to a JSON which can be sent to the server.
-     */
-    private convert(participation: Participation): Participation {
-        const copy: Participation = Object.assign({}, participation);
+    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        res.body.initializationDate = res.body.initializationDate != null ? moment(res.body.initializationDate) : null;
+        return res;
+    }
 
-        copy.initializationDate = this.dateUtils.toDate(participation.initializationDate);
-        return copy;
+    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        res.body.forEach((participation: IParticipation) => {
+            participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+        });
+        return res;
     }
 }

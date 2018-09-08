@@ -4,11 +4,13 @@ import de.tum.in.www1.artemis.domain.Participation;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
+import java.util.List;
+import java.util.Optional;
 /**
  * Service Implementation for managing Participation.
  */
@@ -31,8 +33,7 @@ public class ParticipationService {
      * @return the persisted entity
      */
     public Participation save(Participation participation) {
-        log.debug("Request to save Participation : {}", participation);
-        return participationRepository.save(participation);
+        log.debug("Request to save Participation : {}", participation);        return participationRepository.save(participation);
     }
 
     /**
@@ -46,6 +47,7 @@ public class ParticipationService {
         return participationRepository.findAll();
     }
 
+
     /**
      * Get one participation by id.
      *
@@ -53,9 +55,9 @@ public class ParticipationService {
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Participation findOne(Long id) {
+    public Optional<Participation> findOne(Long id) {
         log.debug("Request to get Participation : {}", id);
-        return participationRepository.findOne(id);
+        return participationRepository.findById(id);
     }
 
     /**
@@ -65,6 +67,6 @@ public class ParticipationService {
      */
     public void delete(Long id) {
         log.debug("Request to delete Participation : {}", id);
-        participationRepository.delete(id);
+        participationRepository.deleteById(id);
     }
 }

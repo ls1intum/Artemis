@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.DragItem;
-
 import de.tum.in.www1.artemis.repository.DragItemRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class DragItemResource {
     public ResponseEntity<DragItem> updateDragItem(@RequestBody DragItem dragItem) throws URISyntaxException {
         log.debug("REST request to update DragItem : {}", dragItem);
         if (dragItem.getId() == null) {
-            return createDragItem(dragItem);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         DragItem result = dragItemRepository.save(dragItem);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class DragItemResource {
     public List<DragItem> getAllDragItems() {
         log.debug("REST request to get all DragItems");
         return dragItemRepository.findAll();
-        }
+    }
 
     /**
      * GET  /drag-items/:id : get the "id" dragItem.
@@ -99,8 +98,8 @@ public class DragItemResource {
     @Timed
     public ResponseEntity<DragItem> getDragItem(@PathVariable Long id) {
         log.debug("REST request to get DragItem : {}", id);
-        DragItem dragItem = dragItemRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(dragItem));
+        Optional<DragItem> dragItem = dragItemRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(dragItem);
     }
 
     /**
@@ -113,7 +112,8 @@ public class DragItemResource {
     @Timed
     public ResponseEntity<Void> deleteDragItem(@PathVariable Long id) {
         log.debug("REST request to delete DragItem : {}", id);
-        dragItemRepository.delete(id);
+
+        dragItemRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

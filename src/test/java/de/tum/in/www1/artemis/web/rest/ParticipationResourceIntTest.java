@@ -28,6 +28,7 @@ import java.time.ZoneOffset;
 import java.time.ZoneId;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.sameInstant;
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,7 +60,7 @@ public class ParticipationResourceIntTest {
 
     @Autowired
     private ParticipationRepository participationRepository;
-
+    
     @Autowired
     private ParticipationService participationService;
 
@@ -166,7 +167,7 @@ public class ParticipationResourceIntTest {
             .andExpect(jsonPath("$.[*].initializationState").value(hasItem(DEFAULT_INITIALIZATION_STATE.toString())))
             .andExpect(jsonPath("$.[*].initializationDate").value(hasItem(sameInstant(DEFAULT_INITIALIZATION_DATE))));
     }
-
+    
     @Test
     @Transactional
     public void getParticipation() throws Exception {
@@ -201,7 +202,7 @@ public class ParticipationResourceIntTest {
         int databaseSizeBeforeUpdate = participationRepository.findAll().size();
 
         // Update the participation
-        Participation updatedParticipation = participationRepository.findOne(participation.getId());
+        Participation updatedParticipation = participationRepository.findById(participation.getId()).get();
         // Disconnect from session so that the updates on updatedParticipation are not directly saved in db
         em.detach(updatedParticipation);
         updatedParticipation
@@ -232,15 +233,15 @@ public class ParticipationResourceIntTest {
 
         // Create the Participation
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restParticipationMockMvc.perform(put("/api/participations")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(participation)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the Participation in the database
         List<Participation> participationList = participationRepository.findAll();
-        assertThat(participationList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(participationList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test

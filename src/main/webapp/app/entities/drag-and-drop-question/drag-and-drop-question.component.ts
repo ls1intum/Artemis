@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { DragAndDropQuestion } from './drag-and-drop-question.model';
+import { IDragAndDropQuestion } from 'app/shared/model/drag-and-drop-question.model';
+import { Principal } from 'app/core';
 import { DragAndDropQuestionService } from './drag-and-drop-question.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-drag-and-drop-question',
     templateUrl: './drag-and-drop-question.component.html'
 })
 export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
-dragAndDropQuestions: DragAndDropQuestion[];
+    dragAndDropQuestions: IDragAndDropQuestion[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ dragAndDropQuestions: DragAndDropQuestion[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.dragAndDropQuestionService.query().subscribe(
-            (res: HttpResponse<DragAndDropQuestion[]>) => {
+            (res: HttpResponse<IDragAndDropQuestion[]>) => {
                 this.dragAndDropQuestions = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInDragAndDropQuestions();
@@ -44,14 +44,15 @@ dragAndDropQuestions: DragAndDropQuestion[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: DragAndDropQuestion) {
+    trackId(index: number, item: IDragAndDropQuestion) {
         return item.id;
     }
+
     registerChangeInDragAndDropQuestions() {
-        this.eventSubscriber = this.eventManager.subscribe('dragAndDropQuestionListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('dragAndDropQuestionListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

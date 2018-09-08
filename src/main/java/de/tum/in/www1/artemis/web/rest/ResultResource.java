@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Result;
-
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class ResultResource {
     public ResponseEntity<Result> updateResult(@RequestBody Result result) throws URISyntaxException {
         log.debug("REST request to update Result : {}", result);
         if (result.getId() == null) {
-            return createResult(result);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Result result = resultRepository.save(result);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class ResultResource {
     public List<Result> getAllResults() {
         log.debug("REST request to get all Results");
         return resultRepository.findAll();
-        }
+    }
 
     /**
      * GET  /results/:id : get the "id" result.
@@ -99,8 +98,8 @@ public class ResultResource {
     @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
         log.debug("REST request to get Result : {}", id);
-        Result result = resultRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(result));
+        Optional<Result> result = resultRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(result);
     }
 
     /**
@@ -113,7 +112,8 @@ public class ResultResource {
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);
-        resultRepository.delete(id);
+
+        resultRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

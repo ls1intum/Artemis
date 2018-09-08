@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -180,7 +181,7 @@ public class QuizExerciseResourceIntTest {
             .andExpect(jsonPath("$.[*].isPlannedToStart").value(hasItem(DEFAULT_IS_PLANNED_TO_START.booleanValue())))
             .andExpect(jsonPath("$.[*].duration").value(hasItem(DEFAULT_DURATION)));
     }
-
+    
     @Test
     @Transactional
     public void getQuizExercise() throws Exception {
@@ -215,10 +216,11 @@ public class QuizExerciseResourceIntTest {
     public void updateQuizExercise() throws Exception {
         // Initialize the database
         quizExerciseRepository.saveAndFlush(quizExercise);
+
         int databaseSizeBeforeUpdate = quizExerciseRepository.findAll().size();
 
         // Update the quizExercise
-        QuizExercise updatedQuizExercise = quizExerciseRepository.findOne(quizExercise.getId());
+        QuizExercise updatedQuizExercise = quizExerciseRepository.findById(quizExercise.getId()).get();
         // Disconnect from session so that the updates on updatedQuizExercise are not directly saved in db
         em.detach(updatedQuizExercise);
         updatedQuizExercise
@@ -257,15 +259,15 @@ public class QuizExerciseResourceIntTest {
 
         // Create the QuizExercise
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restQuizExerciseMockMvc.perform(put("/api/quiz-exercises")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(quizExercise)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the QuizExercise in the database
         List<QuizExercise> quizExerciseList = quizExerciseRepository.findAll();
-        assertThat(quizExerciseList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(quizExerciseList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -273,6 +275,7 @@ public class QuizExerciseResourceIntTest {
     public void deleteQuizExercise() throws Exception {
         // Initialize the database
         quizExerciseRepository.saveAndFlush(quizExercise);
+
         int databaseSizeBeforeDelete = quizExerciseRepository.findAll().size();
 
         // Get the quizExercise

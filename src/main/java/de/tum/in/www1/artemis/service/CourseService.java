@@ -4,11 +4,13 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 
+import java.util.List;
+import java.util.Optional;
 /**
  * Service Implementation for managing Course.
  */
@@ -31,8 +33,7 @@ public class CourseService {
      * @return the persisted entity
      */
     public Course save(Course course) {
-        log.debug("Request to save Course : {}", course);
-        return courseRepository.save(course);
+        log.debug("Request to save Course : {}", course);        return courseRepository.save(course);
     }
 
     /**
@@ -46,6 +47,7 @@ public class CourseService {
         return courseRepository.findAll();
     }
 
+
     /**
      * Get one course by id.
      *
@@ -53,9 +55,9 @@ public class CourseService {
      * @return the entity
      */
     @Transactional(readOnly = true)
-    public Course findOne(Long id) {
+    public Optional<Course> findOne(Long id) {
         log.debug("Request to get Course : {}", id);
-        return courseRepository.findOne(id);
+        return courseRepository.findById(id);
     }
 
     /**
@@ -65,6 +67,6 @@ public class CourseService {
      */
     public void delete(Long id) {
         log.debug("Request to delete Course : {}", id);
-        courseRepository.delete(id);
+        courseRepository.deleteById(id);
     }
 }

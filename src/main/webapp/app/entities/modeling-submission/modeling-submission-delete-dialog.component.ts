@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { ModelingSubmission } from './modeling-submission.model';
-import { ModelingSubmissionPopupService } from './modeling-submission-popup.service';
+import { IModelingSubmission } from 'app/shared/model/modeling-submission.model';
 import { ModelingSubmissionService } from './modeling-submission.service';
 
 @Component({
@@ -13,22 +12,20 @@ import { ModelingSubmissionService } from './modeling-submission.service';
     templateUrl: './modeling-submission-delete-dialog.component.html'
 })
 export class ModelingSubmissionDeleteDialogComponent {
-
-    modelingSubmission: ModelingSubmission;
+    modelingSubmission: IModelingSubmission;
 
     constructor(
         private modelingSubmissionService: ModelingSubmissionService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
     confirmDelete(id: number) {
-        this.modelingSubmissionService.delete(id).subscribe((response) => {
+        this.modelingSubmissionService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'modelingSubmissionListModification',
                 content: 'Deleted an modelingSubmission'
@@ -43,22 +40,33 @@ export class ModelingSubmissionDeleteDialogComponent {
     template: ''
 })
 export class ModelingSubmissionDeletePopupComponent implements OnInit, OnDestroy {
+    private ngbModalRef: NgbModalRef;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private modelingSubmissionPopupService: ModelingSubmissionPopupService
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
-            this.modelingSubmissionPopupService
-                .open(ModelingSubmissionDeleteDialogComponent as Component, params['id']);
+        this.activatedRoute.data.subscribe(({ modelingSubmission }) => {
+            setTimeout(() => {
+                this.ngbModalRef = this.modalService.open(ModelingSubmissionDeleteDialogComponent as Component, {
+                    size: 'lg',
+                    backdrop: 'static'
+                });
+                this.ngbModalRef.componentInstance.modelingSubmission = modelingSubmission;
+                this.ngbModalRef.result.then(
+                    result => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    },
+                    reason => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    }
+                );
+            }, 0);
         });
     }
 
     ngOnDestroy() {
-        this.routeSub.unsubscribe();
+        this.ngbModalRef = null;
     }
 }

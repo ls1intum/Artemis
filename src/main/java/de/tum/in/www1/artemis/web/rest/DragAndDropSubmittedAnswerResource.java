@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.DragAndDropSubmittedAnswer;
-
 import de.tum.in.www1.artemis.repository.DragAndDropSubmittedAnswerRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class DragAndDropSubmittedAnswerResource {
     public ResponseEntity<DragAndDropSubmittedAnswer> updateDragAndDropSubmittedAnswer(@RequestBody DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer) throws URISyntaxException {
         log.debug("REST request to update DragAndDropSubmittedAnswer : {}", dragAndDropSubmittedAnswer);
         if (dragAndDropSubmittedAnswer.getId() == null) {
-            return createDragAndDropSubmittedAnswer(dragAndDropSubmittedAnswer);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         DragAndDropSubmittedAnswer result = dragAndDropSubmittedAnswerRepository.save(dragAndDropSubmittedAnswer);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class DragAndDropSubmittedAnswerResource {
     public List<DragAndDropSubmittedAnswer> getAllDragAndDropSubmittedAnswers() {
         log.debug("REST request to get all DragAndDropSubmittedAnswers");
         return dragAndDropSubmittedAnswerRepository.findAll();
-        }
+    }
 
     /**
      * GET  /drag-and-drop-submitted-answers/:id : get the "id" dragAndDropSubmittedAnswer.
@@ -99,8 +98,8 @@ public class DragAndDropSubmittedAnswerResource {
     @Timed
     public ResponseEntity<DragAndDropSubmittedAnswer> getDragAndDropSubmittedAnswer(@PathVariable Long id) {
         log.debug("REST request to get DragAndDropSubmittedAnswer : {}", id);
-        DragAndDropSubmittedAnswer dragAndDropSubmittedAnswer = dragAndDropSubmittedAnswerRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(dragAndDropSubmittedAnswer));
+        Optional<DragAndDropSubmittedAnswer> dragAndDropSubmittedAnswer = dragAndDropSubmittedAnswerRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(dragAndDropSubmittedAnswer);
     }
 
     /**
@@ -113,7 +112,8 @@ public class DragAndDropSubmittedAnswerResource {
     @Timed
     public ResponseEntity<Void> deleteDragAndDropSubmittedAnswer(@PathVariable Long id) {
         log.debug("REST request to delete DragAndDropSubmittedAnswer : {}", id);
-        dragAndDropSubmittedAnswerRepository.delete(id);
+
+        dragAndDropSubmittedAnswerRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

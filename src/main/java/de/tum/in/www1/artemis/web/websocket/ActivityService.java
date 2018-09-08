@@ -1,21 +1,20 @@
 package de.tum.in.www1.artemis.web.websocket;
 
+import static de.tum.in.www1.artemis.config.WebsocketConfiguration.IP_ADDRESS;
+
 import de.tum.in.www1.artemis.web.websocket.dto.ActivityDTO;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.context.ApplicationListener;
-import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.messaging.simp.annotation.SubscribeMapping;
-import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.security.Principal;
 import java.time.Instant;
 
-import static de.tum.in.www1.artemis.config.WebsocketConfiguration.IP_ADDRESS;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationListener;
+import org.springframework.messaging.handler.annotation.*;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 @Controller
 public class ActivityService implements ApplicationListener<SessionDisconnectEvent> {
@@ -28,7 +27,7 @@ public class ActivityService implements ApplicationListener<SessionDisconnectEve
         this.messagingTemplate = messagingTemplate;
     }
 
-    @SubscribeMapping("/topic/activity")
+    @MessageMapping("/topic/activity")
     @SendTo("/topic/tracker")
     public ActivityDTO sendActivity(@Payload ActivityDTO activityDTO, StompHeaderAccessor stompHeaderAccessor, Principal principal) {
         activityDTO.setUserLogin(principal.getName());
