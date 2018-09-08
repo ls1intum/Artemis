@@ -13,7 +13,8 @@ import { InstructorDashboardCleanupDialogComponent, InstructorDashboardCleanupPo
 import { InstructorDashboardExportReposComponent, InstructorDashboardExportReposPopupComponent } from './instructor-dashboard-repo-export-dialog.component';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
 import { InstructorDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './instructor-dashboard-result-dialog.component';
-import { SortByModule } from '../components/pipes/sort-by.module';
+import { SortByModule } from '../components/pipes';
+import { FormDateTimePickerModule} from '../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [
     {
@@ -75,6 +76,7 @@ const ENTITY_STATES = [
         NgbModule,
         ArTEMiSResultModule,
         SortByModule,
+        FormDateTimePickerModule,
     ],
     declarations: [
         InstructorDashboardComponent,

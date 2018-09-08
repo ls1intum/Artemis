@@ -17,6 +17,7 @@ import {
     CourseService
 } from './';
 import { CourseScoreCalculationService } from './courseScoreCalculation.service';
+import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [
     ...courseRoute,
@@ -26,7 +27,8 @@ const ENTITY_STATES = [
 @NgModule({
     imports: [
         ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
+        RouterModule.forChild(ENTITY_STATES),
+        FormDateTimePickerModule,
     ],
     declarations: [
         CourseComponent,
