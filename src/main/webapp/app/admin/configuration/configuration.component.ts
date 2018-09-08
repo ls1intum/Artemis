@@ -23,12 +23,12 @@ export class JhiConfigurationComponent implements OnInit {
         this.reverse = false;
     }
 
-    keys(dict): Array<string> {
+    keys(dict: any): Array<string> {
         return (dict === undefined) ? [] : Object.keys(dict);
     }
 
     ngOnInit() {
-        this.configurationService.get().subscribe((configuration) => {
+        this.configurationService.get().subscribe((configuration: any) => {
             this.configuration = configuration;
 
             for (const config of configuration) {
@@ -38,7 +38,7 @@ export class JhiConfigurationComponent implements OnInit {
             }
         });
 
-        this.configurationService.getEnv().subscribe((configuration) => {
+        this.configurationService.getEnv().subscribe((configuration: any) => {
             this.allConfiguration = configuration;
         });
     }

@@ -10,6 +10,8 @@ import { Course } from './course.model';
 import { CoursePopupService } from './course-popup.service';
 import { CourseService } from './course.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-course-dialog',
     templateUrl: './course-dialog.component.html'
@@ -67,7 +69,7 @@ export class CourseDialogComponent implements OnInit {
 })
 export class CoursePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

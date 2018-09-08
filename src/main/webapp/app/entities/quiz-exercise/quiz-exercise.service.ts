@@ -42,21 +42,21 @@ export class QuizExerciseService {
             .map((res: HttpResponse<QuizExercise[]>) => this.convertArrayResponse(res));
     }
 
-    openForPractice(id: number): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${id}/open-for-practice`, { observe: 'response'});
+    openForPractice(id: number): Observable<HttpResponse<string>> {
+        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/open-for-practice`, { observe: 'response'});
     }
 
     findForStudent(id: number): Observable<HttpResponse<QuizExercise>> {
-        return this.http.get<any>(`${this.resourceUrl}/${id}/for-student`, { observe: 'response'})
+        return this.http.get<QuizExercise>(`${this.resourceUrl}/${id}/for-student`, { observe: 'response'})
             .map((res: HttpResponse<QuizExercise>) => this.convertResponse(res));
     }
 
-    start(id: number): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${id}/start-now`, { observe: 'response'});
+    start(id: number): Observable<HttpResponse<string>> {
+        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/start-now`, { observe: 'response'});
     }
 
-    setVisible(id: number): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${id}/set-visible`, { observe: 'response'});
+    setVisible(id: number): Observable<HttpResponse<string>> {
+        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/set-visible`, { observe: 'response'});
     }
 
     query(req?: any): Observable<HttpResponse<QuizExercise[]>> {
@@ -65,16 +65,16 @@ export class QuizExerciseService {
             .map((res: HttpResponse<QuizExercise[]>) => this.convertArrayResponse(res));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
-    releaseStatistics(id: number): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${id}/release-statistics`, { observe: 'response'});
+    releaseStatistics(id: number): Observable<HttpResponse<string>> {
+        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/release-statistics`, { observe: 'response'});
     }
 
-    revokeStatistics(id: number): Observable<HttpResponse<any>> {
-        return this.http.post<any>(`${this.resourceUrl}/${id}/revoke-statistics`, { observe: 'response'});
+    revokeStatistics(id: number): Observable<HttpResponse<string>> {
+        return this.http.post<HttpResponse<string>>(`${this.resourceUrl}/${id}/revoke-statistics`, { observe: 'response'});
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

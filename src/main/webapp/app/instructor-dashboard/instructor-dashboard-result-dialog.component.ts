@@ -7,6 +7,9 @@ import { Result, ResultService } from '../entities/result';
 import { Participation } from '../entities/participation';
 import { Feedback, FeedbackType } from '../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
+import { HttpResponse } from '@angular/common/http';
+
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-instructor-dashboard-result-dialog',
@@ -18,6 +21,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     result: Result;
     feedbacks: Feedback[] = [];
     isSaving = false;
+    isOpenForSubmission = false;
 
     constructor(
         private resultService: ResultService,
@@ -32,6 +36,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
         }
         if (this.participation) {
             this.result.participation = this.participation;
+            this.isOpenForSubmission = this.result.participation.exercise.dueDate < Date.now();
         } else {
             this.clear();
         }
@@ -62,7 +67,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
         }
     }
 
-    onSaveSuccess(result) {
+    onSaveSuccess(result: HttpResponse<Result>) {
         this.activeModal.close(result);
         this.isSaving = false;
         this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result'});
@@ -89,7 +94,7 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
 })
 export class InstructorDashboardResultPopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

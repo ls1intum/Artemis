@@ -5,6 +5,8 @@ import { ActivatedRoute } from '@angular/router';
 import { ExercisePopupService } from './exercise-popup.service';
 import { ExerciseService } from './exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-exercise-reset-dialog',
     templateUrl: './exercise-reset-dialog.component.html'
@@ -32,7 +34,7 @@ export class ExerciseResetDialogComponent implements OnInit {
         this.activeModal.dismiss('cancel');
     }
 
-    confirmReset(id) {
+    confirmReset(id: number) {
         this.resetInProgress = true;
         this.exerciseService.reset(id).subscribe(() => {
             this.activeModal.close(true);
@@ -49,7 +51,7 @@ export class ExerciseResetDialogComponent implements OnInit {
 })
 export class ExerciseResetPopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

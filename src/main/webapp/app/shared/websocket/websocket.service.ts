@@ -59,7 +59,7 @@ export class JhiWebsocketService implements OnDestroy {
                 waitUntilReconnectAttempt = 1;
             }
             setTimeout(this.connect.bind(this), waitUntilReconnectAttempt * 1000);
-            console.log('Websocket: Try to reconnect in ' + waitUntilReconnectAttempt + ' seconds...');
+            // console.log('Websocket: Try to reconnect in ' + waitUntilReconnectAttempt + ' seconds...');
         }
     }
 
@@ -79,8 +79,9 @@ export class JhiWebsocketService implements OnDestroy {
             url += '?access_token=' + authToken;
         }
         const socket = new SockJS(url);
-        this.stompClient = Stomp.over(socket);
-
+        this.stompClient = Stomp.over(socket, {debug: false});
+        // deactivate websocket debugging
+        this.stompClient.debug = function(str) { };
         const headers = <Stomp.ConnectionHeaders>{};
         headers['X-CSRFToken'] = this.csrfService.getCSRF('csrftoken');
 
@@ -155,7 +156,7 @@ export class JhiWebsocketService implements OnDestroy {
      * @param path {string} the path for the websocket connection
      * @param data {object} the date to send through the websocket connection
      */
-    send(path: string, data) {
+    send(path: string, data: any) {
         if (this.stompClient !== null && this.stompClient.connected) {
             this.stompClient
                 .send(path,
@@ -184,8 +185,8 @@ export class JhiWebsocketService implements OnDestroy {
         }
     }
 
-    private createListener(channel: string): Observable<any> {
-        return Observable.create((observer: Observer<any>) => {
+    private createListener<T>(channel: string): Observable<T> {
+        return Observable.create((observer: Observer<T>) => {
             this.listenerObservers[channel] = observer;
         });
     }

@@ -11,6 +11,8 @@ import { FileUploadExercisePopupService } from './file-upload-exercise-popup.ser
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { Course, CourseService } from '../course';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-file-upload-exercise-dialog',
     templateUrl: './file-upload-exercise-dialog.component.html'
@@ -34,7 +36,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
     ngOnInit() {
         this.isSaving = false;
         this.courseService.query()
-            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
+            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpErrorResponse) => this.onError(res));
     }
 
     clear() {
@@ -67,7 +69,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
         this.isSaving = false;
     }
 
-    private onError(error: any) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 
@@ -82,7 +84,7 @@ export class FileUploadExerciseDialogComponent implements OnInit {
 })
 export class FileUploadExercisePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

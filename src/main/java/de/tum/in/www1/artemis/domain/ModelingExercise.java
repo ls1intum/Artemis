@@ -4,7 +4,6 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**

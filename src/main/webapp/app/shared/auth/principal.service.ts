@@ -4,19 +4,20 @@ import { Subject } from 'rxjs/Subject';
 import { AccountService } from './account.service';
 import { JhiWebsocketService } from '../websocket/websocket.service';
 import { Course } from '../../entities/course';
+import { User } from '../../shared';
 
 @Injectable()
 export class Principal {
-    private userIdentity: any;
+    private userIdentity: User;
     private authenticated = false;
-    private authenticationState = new Subject<any>();
+    private authenticationState = new Subject<User>();
 
     constructor(
         private account: AccountService,
         private trackerService: JhiWebsocketService
     ) {}
 
-    authenticate(identity) {
+    authenticate(identity: User) {
         this.userIdentity = identity;
         this.authenticated = identity !== null;
         this.authenticationState.next(this.userIdentity);
@@ -57,10 +58,10 @@ export class Principal {
             return false;
         }
 
-        return this.userIdentity.groups.some(userGroup => userGroup === group);
+        return this.userIdentity.groups.some((userGroup: string) => userGroup === group);
     }
 
-    identity(force?: boolean): Promise<any> {
+    identity(force?: boolean): Promise<User> {
         if (force === true) {
             this.userIdentity = undefined;
         }
@@ -109,7 +110,7 @@ export class Principal {
         return this.userIdentity !== undefined;
     }
 
-    getAuthenticationState(): Observable<any> {
+    getAuthenticationState(): Observable<User> {
         return this.authenticationState.asObservable();
     }
 

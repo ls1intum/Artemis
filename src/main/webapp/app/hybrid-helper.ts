@@ -7,8 +7,8 @@ export interface IComponentUpgradeOptions {
      * @param inputs: An array of strings that specify what inputs the component accepts
      * @param outputs: An array of strings that specify what outputs the component accepts
      */
-    inputs?: string[],
-    outputs?: string[]
+    inputs?: string[];
+    outputs?: string[];
 }
 
 /**
@@ -18,10 +18,10 @@ export interface IComponentUpgradeOptions {
  * It helps us to separate our application from the changes of angular hybrid process.
  */
 export interface IHybridHelper {
-    downgradeComponent(moduleName: string, componentSelector: string, componentClass: any, options?: IComponentUpgradeOptions): IHybridHelper,
-    downgradeProvider(moduleName: string, providerName: string, providerClass: any): IHybridHelper,
-    buildProviderForUpgrade(ng1Name: string, ng2Name?: string): FactoryProvider,
-    buildFactoryForUpgradeProvider(ng1Name: string): Function
+    downgradeComponent(moduleName: string, componentSelector: string, componentClass: any, options?: IComponentUpgradeOptions): IHybridHelper;
+    downgradeProvider(moduleName: string, providerName: string, providerClass: any): IHybridHelper;
+    buildProviderForUpgrade(ng1Name: string, ng2Name?: string): FactoryProvider;
+    buildFactoryForUpgradeProvider(ng1Name: string): Function;
 }
 
 export const HybridHelper: IHybridHelper = {
@@ -87,7 +87,4 @@ export const HybridHelper: IHybridHelper = {
     buildFactoryForUpgradeProvider(ng1Name: string): Function {
         return (injector: any) => injector.get(ng1Name);
     }
-}
-
-
-
+};

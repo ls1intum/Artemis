@@ -31,7 +31,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInTextExercises();
     }
 
-    load(id) {
+    load(id: number) {
         this.textExerciseService.find(id)
             .subscribe((textExerciseResponse: HttpResponse<TextExercise>) => {
                 this.textExercise = textExerciseResponse.body;
@@ -49,7 +49,7 @@ export class TextExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInTextExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'textExerciseListModification',
-            response => this.load(this.textExercise.id)
+            () => this.load(this.textExercise.id)
         );
     }
 }

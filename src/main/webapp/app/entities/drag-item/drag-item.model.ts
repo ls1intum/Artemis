@@ -10,7 +10,7 @@ export class DragItem implements BaseEntity {
     public correctScore: number;
     public incorrectScore: number;
     public question: DragAndDropQuestion;
-    public invalid = false;      //default value
+    public invalid = false;                 // default value
 
     constructor() {
     }

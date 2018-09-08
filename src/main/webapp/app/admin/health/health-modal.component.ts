@@ -13,11 +13,11 @@ export class JhiHealthModalComponent {
 
     constructor(private healthService: JhiHealthService, public activeModal: NgbActiveModal) {}
 
-    baseName(name) {
+    baseName(name: string) {
         return this.healthService.getBaseName(name);
     }
 
-    subSystemName(name) {
+    subSystemName(name: string) {
         return this.healthService.getSubSystemName(name);
     }
 

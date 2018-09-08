@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 

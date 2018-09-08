@@ -16,6 +16,8 @@ export class DragAndDropMapping implements BaseEntity {
     public submittedAnswer: DragAndDropSubmittedAnswer;
     public question: DragAndDropQuestion;
 
-    constructor() {
+    constructor(dragItem?: DragItem, dropLocation?: DropLocation) {
+        this.dragItem = dragItem;
+        this.dropLocation = dropLocation;
     }
 }

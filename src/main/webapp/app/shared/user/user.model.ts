@@ -1,5 +1,5 @@
 export class User {
-    public id?: any;
+    public id?: number;
     public login?: string;
     public firstName?: string;
     public lastName?: string;
@@ -13,9 +13,10 @@ export class User {
     public lastModifiedBy?: string;
     public lastModifiedDate?: Date;
     public password?: string;
+    public imageUrl?: string;
 
     constructor(
-        id?: any,
+        id?: number,
         login?: string,
         firstName?: string,
         lastName?: string,
@@ -28,7 +29,8 @@ export class User {
         createdDate?: Date,
         lastModifiedBy?: string,
         lastModifiedDate?: Date,
-        password?: string
+        password?: string,
+        imageUrl?: string,
     ) {
         this.id = id ? id : null;
         this.login = login ? login : null;
@@ -44,5 +46,6 @@ export class User {
         this.lastModifiedBy = lastModifiedBy ? lastModifiedBy : null;
         this.lastModifiedDate = lastModifiedDate ? lastModifiedDate : null;
         this.password = password ? password : null;
+        this.imageUrl = imageUrl ? imageUrl : null;
     }
 }

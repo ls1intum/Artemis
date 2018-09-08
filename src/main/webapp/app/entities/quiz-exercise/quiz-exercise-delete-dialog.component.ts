@@ -8,6 +8,8 @@ import { QuizExercise } from './quiz-exercise.model';
 import { QuizExercisePopupService } from './quiz-exercise-popup.service';
 import { QuizExerciseService } from './quiz-exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-quiz-exercise-delete-dialog',
     templateUrl: './quiz-exercise-delete-dialog.component.html'
@@ -44,7 +46,7 @@ export class QuizExerciseDeleteDialogComponent {
 })
 export class QuizExerciseDeletePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,
