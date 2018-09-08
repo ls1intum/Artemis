@@ -26,6 +26,7 @@ import { ArTeMiSDragAndDropAssignmentModule } from './drag-and-drop-assignment/d
 /* jhipster-needle-add-entity-module-import - JHipster will add entity modules imports here */
 
 @NgModule({
+    // prettier-ignore
     imports: [
         ArTeMiSSubmissionModule,
         ArTeMiSCourseModule,

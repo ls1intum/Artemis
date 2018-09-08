@@ -1,49 +1,29 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    ExerciseService,
-    ExercisePopupService,
     ExerciseComponent,
     ExerciseDetailComponent,
-    ExerciseDialogComponent,
-    ExercisePopupComponent,
+    ExerciseUpdateComponent,
     ExerciseDeletePopupComponent,
     ExerciseDeleteDialogComponent,
     exerciseRoute,
-    exercisePopupRoute,
+    exercisePopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...exerciseRoute,
-    ...exercisePopupRoute,
-];
+const ENTITY_STATES = [...exerciseRoute, ...exercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         ExerciseComponent,
         ExerciseDetailComponent,
-        ExerciseDialogComponent,
+        ExerciseUpdateComponent,
         ExerciseDeleteDialogComponent,
-        ExercisePopupComponent,
-        ExerciseDeletePopupComponent,
+        ExerciseDeletePopupComponent
     ],
-    entryComponents: [
-        ExerciseComponent,
-        ExerciseDialogComponent,
-        ExercisePopupComponent,
-        ExerciseDeleteDialogComponent,
-        ExerciseDeletePopupComponent,
-    ],
-    providers: [
-        ExerciseService,
-        ExercisePopupService,
-    ],
+    entryComponents: [ExerciseComponent, ExerciseUpdateComponent, ExerciseDeleteDialogComponent, ExerciseDeletePopupComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTeMiSExerciseModule {}

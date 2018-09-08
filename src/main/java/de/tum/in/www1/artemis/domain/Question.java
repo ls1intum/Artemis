@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -47,6 +48,7 @@ public class Question implements Serializable {
     private Boolean randomizeOrder;
 
     @ManyToOne
+    @JsonIgnoreProperties("questions")
     private QuizExercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

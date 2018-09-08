@@ -1,16 +1,14 @@
 <div>
-    <h2>
+    <h2 id="page-heading">
         <span jhiTranslate="arTeMiSApp.dropLocation.home.title">Drop Locations</span>
-        <button class="btn btn-primary float-right jh-create-entity create-drop-location" [routerLink]="['/', { outlets: { popup: ['drop-location-new'] } }]">
-            <span class="fa fa-plus"></span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-drop-location" [routerLink]="['/drop-location/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.dropLocation.home.createLabel">
             Create new Drop Location
             </span>
         </button>
     </h2>
     <jhi-alert></jhi-alert>
-    <div class="row">
-    </div>
     <br/>
     <div class="table-responsive" *ngIf="dropLocations">
         <table class="table table-striped">
@@ -27,30 +25,28 @@
             </thead>
             <tbody>
             <tr *ngFor="let dropLocation of dropLocations ;trackBy: trackId">
-                <td><a [routerLink]="['../drop-location', dropLocation.id ]">{{dropLocation.id}}</a></td>
+                <td><a [routerLink]="['/drop-location', dropLocation.id, 'view' ]">{{dropLocation.id}}</a></td>
                 <td>{{dropLocation.posX}}</td>
                 <td>{{dropLocation.posY}}</td>
                 <td>{{dropLocation.width}}</td>
                 <td>{{dropLocation.height}}</td>
                 <td>
                     <div *ngIf="dropLocation.question">
-                        <a [routerLink]="['../drag-and-drop-question', dropLocation.question?.id ]" >{{dropLocation.question?.id}}</a>
+                        <a [routerLink]="['../drag-and-drop-question', dropLocation.question?.id, 'view' ]" >{{dropLocation.question?.id}}</a>
                     </div>
                 </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
-                                [routerLink]="['../drop-location', dropLocation.id ]"
+                                [routerLink]="['/drop-location', dropLocation.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'drop-location/'+ dropLocation.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/drop-location', dropLocation.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -58,7 +54,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

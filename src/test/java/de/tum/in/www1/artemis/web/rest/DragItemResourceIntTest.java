@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -156,7 +157,7 @@ public class DragItemResourceIntTest {
             .andExpect(jsonPath("$.[*].correctScore").value(hasItem(DEFAULT_CORRECT_SCORE)))
             .andExpect(jsonPath("$.[*].incorrectScore").value(hasItem(DEFAULT_INCORRECT_SCORE)));
     }
-
+    
     @Test
     @Transactional
     public void getDragItem() throws Exception {
@@ -187,10 +188,11 @@ public class DragItemResourceIntTest {
     public void updateDragItem() throws Exception {
         // Initialize the database
         dragItemRepository.saveAndFlush(dragItem);
+
         int databaseSizeBeforeUpdate = dragItemRepository.findAll().size();
 
         // Update the dragItem
-        DragItem updatedDragItem = dragItemRepository.findOne(dragItem.getId());
+        DragItem updatedDragItem = dragItemRepository.findById(dragItem.getId()).get();
         // Disconnect from session so that the updates on updatedDragItem are not directly saved in db
         em.detach(updatedDragItem);
         updatedDragItem
@@ -221,15 +223,15 @@ public class DragItemResourceIntTest {
 
         // Create the DragItem
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restDragItemMockMvc.perform(put("/api/drag-items")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(dragItem)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the DragItem in the database
         List<DragItem> dragItemList = dragItemRepository.findAll();
-        assertThat(dragItemList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(dragItemList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -237,6 +239,7 @@ public class DragItemResourceIntTest {
     public void deleteDragItem() throws Exception {
         // Initialize the database
         dragItemRepository.saveAndFlush(dragItem);
+
         int databaseSizeBeforeDelete = dragItemRepository.findAll().size();
 
         // Get the dragItem

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -175,7 +176,7 @@ public class QuestionResourceIntTest {
             .andExpect(jsonPath("$.[*].scoringType").value(hasItem(DEFAULT_SCORING_TYPE.toString())))
             .andExpect(jsonPath("$.[*].randomizeOrder").value(hasItem(DEFAULT_RANDOMIZE_ORDER.booleanValue())));
     }
-
+    
     @Test
     @Transactional
     public void getQuestion() throws Exception {
@@ -209,10 +210,11 @@ public class QuestionResourceIntTest {
     public void updateQuestion() throws Exception {
         // Initialize the database
         questionRepository.saveAndFlush(question);
+
         int databaseSizeBeforeUpdate = questionRepository.findAll().size();
 
         // Update the question
-        Question updatedQuestion = questionRepository.findOne(question.getId());
+        Question updatedQuestion = questionRepository.findById(question.getId()).get();
         // Disconnect from session so that the updates on updatedQuestion are not directly saved in db
         em.detach(updatedQuestion);
         updatedQuestion
@@ -249,15 +251,15 @@ public class QuestionResourceIntTest {
 
         // Create the Question
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restQuestionMockMvc.perform(put("/api/questions")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(question)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the Question in the database
         List<Question> questionList = questionRepository.findAll();
-        assertThat(questionList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(questionList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -265,6 +267,7 @@ public class QuestionResourceIntTest {
     public void deleteQuestion() throws Exception {
         // Initialize the database
         questionRepository.saveAndFlush(question);
+
         int databaseSizeBeforeDelete = questionRepository.findAll().size();
 
         // Get the question

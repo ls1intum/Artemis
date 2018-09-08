@@ -6,14 +6,14 @@
     </div>
     <div class="modal-body">
         <jhi-alert-error></jhi-alert-error>
-        <p jhiTranslate="arTeMiSApp.quizExercise.delete.question" translateValues="{id: '{{quizExercise.id}}'}">Are you sure you want to delete this Quiz Exercise?</p>
+        <p id="jhi-delete-quizExercise-heading" jhiTranslate="arTeMiSApp.quizExercise.delete.question" translateValues="{id: '{{quizExercise.id}}'}">Are you sure you want to delete this Quiz Exercise?</p>
     </div>
     <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal" (click)="clear()">
-            <span class="fa fa-ban"></span>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+            <fa-icon [icon]="'ban'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
         </button>
-        <button type="submit" class="btn btn-danger">
-            <span class="fa fa-remove"></span>&nbsp;<span jhiTranslate="entity.action.delete">Delete</span>
+        <button id="jhi-confirm-delete-quizExercise" type="submit" class="btn btn-danger">
+            <fa-icon [icon]="'times'"></fa-icon>&nbsp;<span jhiTranslate="entity.action.delete">Delete</span>
         </button>
     </div>
 </form>

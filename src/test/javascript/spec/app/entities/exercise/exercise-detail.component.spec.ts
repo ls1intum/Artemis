@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { ExerciseDetailComponent } from '../../../../../../main/webapp/app/entities/exercise/exercise-detail.component';
-import { ExerciseService } from '../../../../../../main/webapp/app/entities/exercise/exercise.service';
-import { Exercise } from '../../../../../../main/webapp/app/entities/exercise/exercise.model';
+import { ExerciseDetailComponent } from 'app/entities/exercise/exercise-detail.component';
+import { Exercise } from 'app/shared/model/exercise.model';
 
 describe('Component Tests', () => {
-
     describe('Exercise Management Detail Component', () => {
         let comp: ExerciseDetailComponent;
         let fixture: ComponentFixture<ExerciseDetailComponent>;
-        let service: ExerciseService;
+        const route = ({ data: of({ exercise: new Exercise(123) }) } as any) as ActivatedRoute;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [ExerciseDetailComponent],
-                providers: [
-                    ExerciseService
-                ]
+                providers: [{ provide: ActivatedRoute, useValue: route }]
             })
-            .overrideTemplate(ExerciseDetailComponent, '')
-            .compileComponents();
-        }));
-
-        beforeEach(() => {
+                .overrideTemplate(ExerciseDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(ExerciseDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(ExerciseService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new Exercise(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.exercise).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.exercise).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

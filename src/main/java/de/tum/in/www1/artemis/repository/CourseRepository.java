@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
 import de.tum.in.www1.artemis.domain.Course;
-import org.springframework.stereotype.Repository;
-
 import org.springframework.data.jpa.repository.*;
+import org.springframework.stereotype.Repository;
 
 
 /**
- * Spring Data JPA repository for the Course entity.
+ * Spring Data  repository for the Course entity.
  */
 @SuppressWarnings("unused")
 @Repository

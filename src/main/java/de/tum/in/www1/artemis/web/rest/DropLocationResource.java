@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.DropLocation;
-
 import de.tum.in.www1.artemis.repository.DropLocationRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class DropLocationResource {
     public ResponseEntity<DropLocation> updateDropLocation(@RequestBody DropLocation dropLocation) throws URISyntaxException {
         log.debug("REST request to update DropLocation : {}", dropLocation);
         if (dropLocation.getId() == null) {
-            return createDropLocation(dropLocation);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         DropLocation result = dropLocationRepository.save(dropLocation);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class DropLocationResource {
     public List<DropLocation> getAllDropLocations() {
         log.debug("REST request to get all DropLocations");
         return dropLocationRepository.findAll();
-        }
+    }
 
     /**
      * GET  /drop-locations/:id : get the "id" dropLocation.
@@ -99,8 +98,8 @@ public class DropLocationResource {
     @Timed
     public ResponseEntity<DropLocation> getDropLocation(@PathVariable Long id) {
         log.debug("REST request to get DropLocation : {}", id);
-        DropLocation dropLocation = dropLocationRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(dropLocation));
+        Optional<DropLocation> dropLocation = dropLocationRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(dropLocation);
     }
 
     /**
@@ -113,7 +112,8 @@ public class DropLocationResource {
     @Timed
     public ResponseEntity<Void> deleteDropLocation(@PathVariable Long id) {
         log.debug("REST request to delete DropLocation : {}", id);
-        dropLocationRepository.delete(id);
+
+        dropLocationRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

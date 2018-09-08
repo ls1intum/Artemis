@@ -1,49 +1,23 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    ResultService,
-    ResultPopupService,
     ResultComponent,
     ResultDetailComponent,
-    ResultDialogComponent,
-    ResultPopupComponent,
+    ResultUpdateComponent,
     ResultDeletePopupComponent,
     ResultDeleteDialogComponent,
     resultRoute,
-    resultPopupRoute,
+    resultPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...resultRoute,
-    ...resultPopupRoute,
-];
+const ENTITY_STATES = [...resultRoute, ...resultPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
-    declarations: [
-        ResultComponent,
-        ResultDetailComponent,
-        ResultDialogComponent,
-        ResultDeleteDialogComponent,
-        ResultPopupComponent,
-        ResultDeletePopupComponent,
-    ],
-    entryComponents: [
-        ResultComponent,
-        ResultDialogComponent,
-        ResultPopupComponent,
-        ResultDeleteDialogComponent,
-        ResultDeletePopupComponent,
-    ],
-    providers: [
-        ResultService,
-        ResultPopupService,
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
+    declarations: [ResultComponent, ResultDetailComponent, ResultUpdateComponent, ResultDeleteDialogComponent, ResultDeletePopupComponent],
+    entryComponents: [ResultComponent, ResultUpdateComponent, ResultDeleteDialogComponent, ResultDeletePopupComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTeMiSResultModule {}

@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { QuizSubmission } from './quiz-submission.model';
+import { IQuizSubmission } from 'app/shared/model/quiz-submission.model';
+import { Principal } from 'app/core';
 import { QuizSubmissionService } from './quiz-submission.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-quiz-submission',
     templateUrl: './quiz-submission.component.html'
 })
 export class QuizSubmissionComponent implements OnInit, OnDestroy {
-quizSubmissions: QuizSubmission[];
+    quizSubmissions: IQuizSubmission[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ quizSubmissions: QuizSubmission[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.quizSubmissionService.query().subscribe(
-            (res: HttpResponse<QuizSubmission[]>) => {
+            (res: HttpResponse<IQuizSubmission[]>) => {
                 this.quizSubmissions = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInQuizSubmissions();
@@ -44,14 +44,15 @@ quizSubmissions: QuizSubmission[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: QuizSubmission) {
+    trackId(index: number, item: IQuizSubmission) {
         return item.id;
     }
+
     registerChangeInQuizSubmissions() {
-        this.eventSubscriber = this.eventManager.subscribe('quizSubmissionListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('quizSubmissionListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

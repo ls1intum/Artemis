@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    DragAndDropSubmittedAnswerService,
-    DragAndDropSubmittedAnswerPopupService,
     DragAndDropSubmittedAnswerComponent,
     DragAndDropSubmittedAnswerDetailComponent,
-    DragAndDropSubmittedAnswerDialogComponent,
-    DragAndDropSubmittedAnswerPopupComponent,
+    DragAndDropSubmittedAnswerUpdateComponent,
     DragAndDropSubmittedAnswerDeletePopupComponent,
     DragAndDropSubmittedAnswerDeleteDialogComponent,
     dragAndDropSubmittedAnswerRoute,
-    dragAndDropSubmittedAnswerPopupRoute,
+    dragAndDropSubmittedAnswerPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...dragAndDropSubmittedAnswerRoute,
-    ...dragAndDropSubmittedAnswerPopupRoute,
-];
+const ENTITY_STATES = [...dragAndDropSubmittedAnswerRoute, ...dragAndDropSubmittedAnswerPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         DragAndDropSubmittedAnswerComponent,
         DragAndDropSubmittedAnswerDetailComponent,
-        DragAndDropSubmittedAnswerDialogComponent,
+        DragAndDropSubmittedAnswerUpdateComponent,
         DragAndDropSubmittedAnswerDeleteDialogComponent,
-        DragAndDropSubmittedAnswerPopupComponent,
-        DragAndDropSubmittedAnswerDeletePopupComponent,
+        DragAndDropSubmittedAnswerDeletePopupComponent
     ],
     entryComponents: [
         DragAndDropSubmittedAnswerComponent,
-        DragAndDropSubmittedAnswerDialogComponent,
-        DragAndDropSubmittedAnswerPopupComponent,
+        DragAndDropSubmittedAnswerUpdateComponent,
         DragAndDropSubmittedAnswerDeleteDialogComponent,
-        DragAndDropSubmittedAnswerDeletePopupComponent,
-    ],
-    providers: [
-        DragAndDropSubmittedAnswerService,
-        DragAndDropSubmittedAnswerPopupService,
+        DragAndDropSubmittedAnswerDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

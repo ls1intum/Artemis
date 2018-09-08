@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -132,7 +133,7 @@ public class DragAndDropAssignmentResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(dragAndDropAssignment.getId().intValue())));
     }
-
+    
     @Test
     @Transactional
     public void getDragAndDropAssignment() throws Exception {
@@ -159,10 +160,11 @@ public class DragAndDropAssignmentResourceIntTest {
     public void updateDragAndDropAssignment() throws Exception {
         // Initialize the database
         dragAndDropAssignmentRepository.saveAndFlush(dragAndDropAssignment);
+
         int databaseSizeBeforeUpdate = dragAndDropAssignmentRepository.findAll().size();
 
         // Update the dragAndDropAssignment
-        DragAndDropAssignment updatedDragAndDropAssignment = dragAndDropAssignmentRepository.findOne(dragAndDropAssignment.getId());
+        DragAndDropAssignment updatedDragAndDropAssignment = dragAndDropAssignmentRepository.findById(dragAndDropAssignment.getId()).get();
         // Disconnect from session so that the updates on updatedDragAndDropAssignment are not directly saved in db
         em.detach(updatedDragAndDropAssignment);
 
@@ -184,15 +186,15 @@ public class DragAndDropAssignmentResourceIntTest {
 
         // Create the DragAndDropAssignment
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restDragAndDropAssignmentMockMvc.perform(put("/api/drag-and-drop-assignments")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(dragAndDropAssignment)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the DragAndDropAssignment in the database
         List<DragAndDropAssignment> dragAndDropAssignmentList = dragAndDropAssignmentRepository.findAll();
-        assertThat(dragAndDropAssignmentList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(dragAndDropAssignmentList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -200,6 +202,7 @@ public class DragAndDropAssignmentResourceIntTest {
     public void deleteDragAndDropAssignment() throws Exception {
         // Initialize the database
         dragAndDropAssignmentRepository.saveAndFlush(dragAndDropAssignment);
+
         int databaseSizeBeforeDelete = dragAndDropAssignmentRepository.findAll().size();
 
         // Get the dragAndDropAssignment

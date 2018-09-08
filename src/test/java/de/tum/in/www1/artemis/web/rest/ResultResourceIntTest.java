@@ -27,6 +27,7 @@ import java.time.ZoneOffset;
 import java.time.ZoneId;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.sameInstant;
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -167,7 +168,7 @@ public class ResultResourceIntTest {
             .andExpect(jsonPath("$.[*].buildArtifact").value(hasItem(DEFAULT_BUILD_ARTIFACT.booleanValue())))
             .andExpect(jsonPath("$.[*].score").value(hasItem(DEFAULT_SCORE.intValue())));
     }
-
+    
     @Test
     @Transactional
     public void getResult() throws Exception {
@@ -199,10 +200,11 @@ public class ResultResourceIntTest {
     public void updateResult() throws Exception {
         // Initialize the database
         resultRepository.saveAndFlush(result);
+
         int databaseSizeBeforeUpdate = resultRepository.findAll().size();
 
         // Update the result
-        Result updatedResult = resultRepository.findOne(result.getId());
+        Result updatedResult = resultRepository.findById(result.getId()).get();
         // Disconnect from session so that the updates on updatedResult are not directly saved in db
         em.detach(updatedResult);
         updatedResult
@@ -235,15 +237,15 @@ public class ResultResourceIntTest {
 
         // Create the Result
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restResultMockMvc.perform(put("/api/results")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(result)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the Result in the database
         List<Result> resultList = resultRepository.findAll();
-        assertThat(resultList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(resultList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -251,6 +253,7 @@ public class ResultResourceIntTest {
     public void deleteResult() throws Exception {
         // Initialize the database
         resultRepository.saveAndFlush(result);
+
         int databaseSizeBeforeDelete = resultRepository.findAll().size();
 
         // Get the result

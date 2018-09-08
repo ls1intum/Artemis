@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -35,6 +36,7 @@ public class DropLocation implements Serializable {
     private Integer height;
 
     @ManyToOne
+    @JsonIgnoreProperties("dropLocations")
     private DragAndDropQuestion question;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.MarkerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.*;
 
 import javax.annotation.PostConstruct;
@@ -46,7 +47,9 @@ public class MetricsConfiguration extends MetricsConfigurerAdapter {
 
     private HikariDataSource hikariDataSource;
 
-    public MetricsConfiguration(JHipsterProperties jHipsterProperties) {
+    // The cacheManager is injected here to force its initialization, so the JCacheGaugeSet
+    // will be correctly created below.
+    public MetricsConfiguration(JHipsterProperties jHipsterProperties, CacheManager cacheManager) {
         this.jHipsterProperties = jHipsterProperties;
     }
 
@@ -79,6 +82,8 @@ public class MetricsConfiguration extends MetricsConfigurerAdapter {
         metricRegistry.register(PROP_METRIC_REG_JCACHE_STATISTICS, new JCacheGaugeSet());
         if (hikariDataSource != null) {
             log.debug("Monitoring the datasource");
+            // remove the factory created by HikariDataSourceMetricsPostProcessor until JHipster migrate to Micrometer
+            hikariDataSource.setMetricsTrackerFactory(null);
             hikariDataSource.setMetricRegistry(metricRegistry);
         }
         if (jHipsterProperties.getMetrics().getJmx().isEnabled()) {

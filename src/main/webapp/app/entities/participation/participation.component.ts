@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { Participation } from './participation.model';
+import { IParticipation } from 'app/shared/model/participation.model';
+import { Principal } from 'app/core';
 import { ParticipationService } from './participation.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-participation',
     templateUrl: './participation.component.html'
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
-participations: Participation[];
+    participations: IParticipation[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ participations: Participation[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.participationService.query().subscribe(
-            (res: HttpResponse<Participation[]>) => {
+            (res: HttpResponse<IParticipation[]>) => {
                 this.participations = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInParticipations();
@@ -44,14 +44,15 @@ participations: Participation[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: Participation) {
+    trackId(index: number, item: IParticipation) {
         return item.id;
     }
+
     registerChangeInParticipations() {
-        this.eventSubscriber = this.eventManager.subscribe('participationListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('participationListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

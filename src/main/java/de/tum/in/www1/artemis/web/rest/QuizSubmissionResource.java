@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.QuizSubmission;
-
 import de.tum.in.www1.artemis.repository.QuizSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class QuizSubmissionResource {
     public ResponseEntity<QuizSubmission> updateQuizSubmission(@RequestBody QuizSubmission quizSubmission) throws URISyntaxException {
         log.debug("REST request to update QuizSubmission : {}", quizSubmission);
         if (quizSubmission.getId() == null) {
-            return createQuizSubmission(quizSubmission);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         QuizSubmission result = quizSubmissionRepository.save(quizSubmission);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class QuizSubmissionResource {
     public List<QuizSubmission> getAllQuizSubmissions() {
         log.debug("REST request to get all QuizSubmissions");
         return quizSubmissionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /quiz-submissions/:id : get the "id" quizSubmission.
@@ -99,8 +98,8 @@ public class QuizSubmissionResource {
     @Timed
     public ResponseEntity<QuizSubmission> getQuizSubmission(@PathVariable Long id) {
         log.debug("REST request to get QuizSubmission : {}", id);
-        QuizSubmission quizSubmission = quizSubmissionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(quizSubmission));
+        Optional<QuizSubmission> quizSubmission = quizSubmissionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(quizSubmission);
     }
 
     /**
@@ -113,7 +112,8 @@ public class QuizSubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteQuizSubmission(@PathVariable Long id) {
         log.debug("REST request to delete QuizSubmission : {}", id);
-        quizSubmissionRepository.delete(id);
+
+        quizSubmissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

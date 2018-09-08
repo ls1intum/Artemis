@@ -1,74 +1,38 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { Observable } from 'rxjs';
 
-import { DragAndDropSubmittedAnswer } from './drag-and-drop-submitted-answer.model';
-import { createRequestOption } from '../../shared';
+import { SERVER_API_URL } from 'app/app.constants';
+import { createRequestOption } from 'app/shared';
+import { IDragAndDropSubmittedAnswer } from 'app/shared/model/drag-and-drop-submitted-answer.model';
 
-export type EntityResponseType = HttpResponse<DragAndDropSubmittedAnswer>;
+type EntityResponseType = HttpResponse<IDragAndDropSubmittedAnswer>;
+type EntityArrayResponseType = HttpResponse<IDragAndDropSubmittedAnswer[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class DragAndDropSubmittedAnswerService {
+    private resourceUrl = SERVER_API_URL + 'api/drag-and-drop-submitted-answers';
 
-    private resourceUrl =  SERVER_API_URL + 'api/drag-and-drop-submitted-answers';
+    constructor(private http: HttpClient) {}
 
-    constructor(private http: HttpClient) { }
-
-    create(dragAndDropSubmittedAnswer: DragAndDropSubmittedAnswer): Observable<EntityResponseType> {
-        const copy = this.convert(dragAndDropSubmittedAnswer);
-        return this.http.post<DragAndDropSubmittedAnswer>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    create(dragAndDropSubmittedAnswer: IDragAndDropSubmittedAnswer): Observable<EntityResponseType> {
+        return this.http.post<IDragAndDropSubmittedAnswer>(this.resourceUrl, dragAndDropSubmittedAnswer, { observe: 'response' });
     }
 
-    update(dragAndDropSubmittedAnswer: DragAndDropSubmittedAnswer): Observable<EntityResponseType> {
-        const copy = this.convert(dragAndDropSubmittedAnswer);
-        return this.http.put<DragAndDropSubmittedAnswer>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    update(dragAndDropSubmittedAnswer: IDragAndDropSubmittedAnswer): Observable<EntityResponseType> {
+        return this.http.put<IDragAndDropSubmittedAnswer>(this.resourceUrl, dragAndDropSubmittedAnswer, { observe: 'response' });
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<DragAndDropSubmittedAnswer>(`${this.resourceUrl}/${id}`, { observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.get<IDragAndDropSubmittedAnswer>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    query(req?: any): Observable<HttpResponse<DragAndDropSubmittedAnswer[]>> {
+    query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<DragAndDropSubmittedAnswer[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<DragAndDropSubmittedAnswer[]>) => this.convertArrayResponse(res));
+        return this.http.get<IDragAndDropSubmittedAnswer[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 
     delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
-    }
-
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: DragAndDropSubmittedAnswer = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    private convertArrayResponse(res: HttpResponse<DragAndDropSubmittedAnswer[]>): HttpResponse<DragAndDropSubmittedAnswer[]> {
-        const jsonResponse: DragAndDropSubmittedAnswer[] = res.body;
-        const body: DragAndDropSubmittedAnswer[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to DragAndDropSubmittedAnswer.
-     */
-    private convertItemFromServer(dragAndDropSubmittedAnswer: DragAndDropSubmittedAnswer): DragAndDropSubmittedAnswer {
-        const copy: DragAndDropSubmittedAnswer = Object.assign({}, dragAndDropSubmittedAnswer);
-        return copy;
-    }
-
-    /**
-     * Convert a DragAndDropSubmittedAnswer to a JSON which can be sent to the server.
-     */
-    private convert(dragAndDropSubmittedAnswer: DragAndDropSubmittedAnswer): DragAndDropSubmittedAnswer {
-        const copy: DragAndDropSubmittedAnswer = Object.assign({}, dragAndDropSubmittedAnswer);
-        return copy;
+        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 }

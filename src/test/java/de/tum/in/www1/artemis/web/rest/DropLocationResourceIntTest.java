@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -156,7 +157,7 @@ public class DropLocationResourceIntTest {
             .andExpect(jsonPath("$.[*].width").value(hasItem(DEFAULT_WIDTH)))
             .andExpect(jsonPath("$.[*].height").value(hasItem(DEFAULT_HEIGHT)));
     }
-
+    
     @Test
     @Transactional
     public void getDropLocation() throws Exception {
@@ -187,10 +188,11 @@ public class DropLocationResourceIntTest {
     public void updateDropLocation() throws Exception {
         // Initialize the database
         dropLocationRepository.saveAndFlush(dropLocation);
+
         int databaseSizeBeforeUpdate = dropLocationRepository.findAll().size();
 
         // Update the dropLocation
-        DropLocation updatedDropLocation = dropLocationRepository.findOne(dropLocation.getId());
+        DropLocation updatedDropLocation = dropLocationRepository.findById(dropLocation.getId()).get();
         // Disconnect from session so that the updates on updatedDropLocation are not directly saved in db
         em.detach(updatedDropLocation);
         updatedDropLocation
@@ -221,15 +223,15 @@ public class DropLocationResourceIntTest {
 
         // Create the DropLocation
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restDropLocationMockMvc.perform(put("/api/drop-locations")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(dropLocation)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the DropLocation in the database
         List<DropLocation> dropLocationList = dropLocationRepository.findAll();
-        assertThat(dropLocationList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(dropLocationList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -237,6 +239,7 @@ public class DropLocationResourceIntTest {
     public void deleteDropLocation() throws Exception {
         // Initialize the database
         dropLocationRepository.saveAndFlush(dropLocation);
+
         int databaseSizeBeforeDelete = dropLocationRepository.findAll().size();
 
         // Get the dropLocation

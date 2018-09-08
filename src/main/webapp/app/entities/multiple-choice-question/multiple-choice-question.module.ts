@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    MultipleChoiceQuestionService,
-    MultipleChoiceQuestionPopupService,
     MultipleChoiceQuestionComponent,
     MultipleChoiceQuestionDetailComponent,
-    MultipleChoiceQuestionDialogComponent,
-    MultipleChoiceQuestionPopupComponent,
+    MultipleChoiceQuestionUpdateComponent,
     MultipleChoiceQuestionDeletePopupComponent,
     MultipleChoiceQuestionDeleteDialogComponent,
     multipleChoiceQuestionRoute,
-    multipleChoiceQuestionPopupRoute,
+    multipleChoiceQuestionPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...multipleChoiceQuestionRoute,
-    ...multipleChoiceQuestionPopupRoute,
-];
+const ENTITY_STATES = [...multipleChoiceQuestionRoute, ...multipleChoiceQuestionPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         MultipleChoiceQuestionComponent,
         MultipleChoiceQuestionDetailComponent,
-        MultipleChoiceQuestionDialogComponent,
+        MultipleChoiceQuestionUpdateComponent,
         MultipleChoiceQuestionDeleteDialogComponent,
-        MultipleChoiceQuestionPopupComponent,
-        MultipleChoiceQuestionDeletePopupComponent,
+        MultipleChoiceQuestionDeletePopupComponent
     ],
     entryComponents: [
         MultipleChoiceQuestionComponent,
-        MultipleChoiceQuestionDialogComponent,
-        MultipleChoiceQuestionPopupComponent,
+        MultipleChoiceQuestionUpdateComponent,
         MultipleChoiceQuestionDeleteDialogComponent,
-        MultipleChoiceQuestionDeletePopupComponent,
-    ],
-    providers: [
-        MultipleChoiceQuestionService,
-        MultipleChoiceQuestionPopupService,
+        MultipleChoiceQuestionDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

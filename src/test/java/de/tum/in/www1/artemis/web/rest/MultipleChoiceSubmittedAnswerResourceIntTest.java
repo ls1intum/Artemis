@@ -9,9 +9,12 @@ import de.tum.in.www1.artemis.web.rest.errors.ExceptionTranslator;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -21,11 +24,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import java.util.ArrayList;
 import java.util.List;
+
 
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -40,6 +46,9 @@ public class MultipleChoiceSubmittedAnswerResourceIntTest {
 
     @Autowired
     private MultipleChoiceSubmittedAnswerRepository multipleChoiceSubmittedAnswerRepository;
+
+    @Mock
+    private MultipleChoiceSubmittedAnswerRepository multipleChoiceSubmittedAnswerRepositoryMock;
 
     @Autowired
     private MappingJackson2HttpMessageConverter jacksonMessageConverter;
@@ -132,6 +141,37 @@ public class MultipleChoiceSubmittedAnswerResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(multipleChoiceSubmittedAnswer.getId().intValue())));
     }
+    
+    public void getAllMultipleChoiceSubmittedAnswersWithEagerRelationshipsIsEnabled() throws Exception {
+        MultipleChoiceSubmittedAnswerResource multipleChoiceSubmittedAnswerResource = new MultipleChoiceSubmittedAnswerResource(multipleChoiceSubmittedAnswerRepositoryMock);
+        when(multipleChoiceSubmittedAnswerRepositoryMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
+
+        MockMvc restMultipleChoiceSubmittedAnswerMockMvc = MockMvcBuilders.standaloneSetup(multipleChoiceSubmittedAnswerResource)
+            .setCustomArgumentResolvers(pageableArgumentResolver)
+            .setControllerAdvice(exceptionTranslator)
+            .setConversionService(createFormattingConversionService())
+            .setMessageConverters(jacksonMessageConverter).build();
+
+        restMultipleChoiceSubmittedAnswerMockMvc.perform(get("/api/multiple-choice-submitted-answers?eagerload=true"))
+        .andExpect(status().isOk());
+
+        verify(multipleChoiceSubmittedAnswerRepositoryMock, times(1)).findAllWithEagerRelationships(any());
+    }
+
+    public void getAllMultipleChoiceSubmittedAnswersWithEagerRelationshipsIsNotEnabled() throws Exception {
+        MultipleChoiceSubmittedAnswerResource multipleChoiceSubmittedAnswerResource = new MultipleChoiceSubmittedAnswerResource(multipleChoiceSubmittedAnswerRepositoryMock);
+            when(multipleChoiceSubmittedAnswerRepositoryMock.findAllWithEagerRelationships(any())).thenReturn(new PageImpl(new ArrayList<>()));
+            MockMvc restMultipleChoiceSubmittedAnswerMockMvc = MockMvcBuilders.standaloneSetup(multipleChoiceSubmittedAnswerResource)
+            .setCustomArgumentResolvers(pageableArgumentResolver)
+            .setControllerAdvice(exceptionTranslator)
+            .setConversionService(createFormattingConversionService())
+            .setMessageConverters(jacksonMessageConverter).build();
+
+        restMultipleChoiceSubmittedAnswerMockMvc.perform(get("/api/multiple-choice-submitted-answers?eagerload=true"))
+        .andExpect(status().isOk());
+
+            verify(multipleChoiceSubmittedAnswerRepositoryMock, times(1)).findAllWithEagerRelationships(any());
+    }
 
     @Test
     @Transactional
@@ -159,10 +199,11 @@ public class MultipleChoiceSubmittedAnswerResourceIntTest {
     public void updateMultipleChoiceSubmittedAnswer() throws Exception {
         // Initialize the database
         multipleChoiceSubmittedAnswerRepository.saveAndFlush(multipleChoiceSubmittedAnswer);
+
         int databaseSizeBeforeUpdate = multipleChoiceSubmittedAnswerRepository.findAll().size();
 
         // Update the multipleChoiceSubmittedAnswer
-        MultipleChoiceSubmittedAnswer updatedMultipleChoiceSubmittedAnswer = multipleChoiceSubmittedAnswerRepository.findOne(multipleChoiceSubmittedAnswer.getId());
+        MultipleChoiceSubmittedAnswer updatedMultipleChoiceSubmittedAnswer = multipleChoiceSubmittedAnswerRepository.findById(multipleChoiceSubmittedAnswer.getId()).get();
         // Disconnect from session so that the updates on updatedMultipleChoiceSubmittedAnswer are not directly saved in db
         em.detach(updatedMultipleChoiceSubmittedAnswer);
 
@@ -184,15 +225,15 @@ public class MultipleChoiceSubmittedAnswerResourceIntTest {
 
         // Create the MultipleChoiceSubmittedAnswer
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restMultipleChoiceSubmittedAnswerMockMvc.perform(put("/api/multiple-choice-submitted-answers")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(multipleChoiceSubmittedAnswer)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the MultipleChoiceSubmittedAnswer in the database
         List<MultipleChoiceSubmittedAnswer> multipleChoiceSubmittedAnswerList = multipleChoiceSubmittedAnswerRepository.findAll();
-        assertThat(multipleChoiceSubmittedAnswerList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(multipleChoiceSubmittedAnswerList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -200,6 +241,7 @@ public class MultipleChoiceSubmittedAnswerResourceIntTest {
     public void deleteMultipleChoiceSubmittedAnswer() throws Exception {
         // Initialize the database
         multipleChoiceSubmittedAnswerRepository.saveAndFlush(multipleChoiceSubmittedAnswer);
+
         int databaseSizeBeforeDelete = multipleChoiceSubmittedAnswerRepository.findAll().size();
 
         // Get the multipleChoiceSubmittedAnswer

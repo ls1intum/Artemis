@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.DragAndDropQuestion;
-
 import de.tum.in.www1.artemis.repository.DragAndDropQuestionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class DragAndDropQuestionResource {
     public ResponseEntity<DragAndDropQuestion> updateDragAndDropQuestion(@RequestBody DragAndDropQuestion dragAndDropQuestion) throws URISyntaxException {
         log.debug("REST request to update DragAndDropQuestion : {}", dragAndDropQuestion);
         if (dragAndDropQuestion.getId() == null) {
-            return createDragAndDropQuestion(dragAndDropQuestion);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         DragAndDropQuestion result = dragAndDropQuestionRepository.save(dragAndDropQuestion);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class DragAndDropQuestionResource {
     public List<DragAndDropQuestion> getAllDragAndDropQuestions() {
         log.debug("REST request to get all DragAndDropQuestions");
         return dragAndDropQuestionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /drag-and-drop-questions/:id : get the "id" dragAndDropQuestion.
@@ -99,8 +98,8 @@ public class DragAndDropQuestionResource {
     @Timed
     public ResponseEntity<DragAndDropQuestion> getDragAndDropQuestion(@PathVariable Long id) {
         log.debug("REST request to get DragAndDropQuestion : {}", id);
-        DragAndDropQuestion dragAndDropQuestion = dragAndDropQuestionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(dragAndDropQuestion));
+        Optional<DragAndDropQuestion> dragAndDropQuestion = dragAndDropQuestionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(dragAndDropQuestion);
     }
 
     /**
@@ -113,7 +112,8 @@ public class DragAndDropQuestionResource {
     @Timed
     public ResponseEntity<Void> deleteDragAndDropQuestion(@PathVariable Long id) {
         log.debug("REST request to delete DragAndDropQuestion : {}", id);
-        dragAndDropQuestionRepository.delete(id);
+
+        dragAndDropQuestionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

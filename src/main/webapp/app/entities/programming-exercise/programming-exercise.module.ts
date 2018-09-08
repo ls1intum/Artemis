@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    ProgrammingExerciseService,
-    ProgrammingExercisePopupService,
     ProgrammingExerciseComponent,
     ProgrammingExerciseDetailComponent,
-    ProgrammingExerciseDialogComponent,
-    ProgrammingExercisePopupComponent,
+    ProgrammingExerciseUpdateComponent,
     ProgrammingExerciseDeletePopupComponent,
     ProgrammingExerciseDeleteDialogComponent,
     programmingExerciseRoute,
-    programmingExercisePopupRoute,
+    programmingExercisePopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...programmingExerciseRoute,
-    ...programmingExercisePopupRoute,
-];
+const ENTITY_STATES = [...programmingExerciseRoute, ...programmingExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         ProgrammingExerciseComponent,
         ProgrammingExerciseDetailComponent,
-        ProgrammingExerciseDialogComponent,
+        ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseDeleteDialogComponent,
-        ProgrammingExercisePopupComponent,
-        ProgrammingExerciseDeletePopupComponent,
+        ProgrammingExerciseDeletePopupComponent
     ],
     entryComponents: [
         ProgrammingExerciseComponent,
-        ProgrammingExerciseDialogComponent,
-        ProgrammingExercisePopupComponent,
+        ProgrammingExerciseUpdateComponent,
         ProgrammingExerciseDeleteDialogComponent,
-        ProgrammingExerciseDeletePopupComponent,
-    ],
-    providers: [
-        ProgrammingExerciseService,
-        ProgrammingExercisePopupService,
+        ProgrammingExerciseDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

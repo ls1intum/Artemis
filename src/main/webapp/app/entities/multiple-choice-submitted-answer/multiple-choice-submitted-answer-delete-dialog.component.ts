@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { MultipleChoiceSubmittedAnswer } from './multiple-choice-submitted-answer.model';
-import { MultipleChoiceSubmittedAnswerPopupService } from './multiple-choice-submitted-answer-popup.service';
+import { IMultipleChoiceSubmittedAnswer } from 'app/shared/model/multiple-choice-submitted-answer.model';
 import { MultipleChoiceSubmittedAnswerService } from './multiple-choice-submitted-answer.service';
 
 @Component({
@@ -13,22 +12,20 @@ import { MultipleChoiceSubmittedAnswerService } from './multiple-choice-submitte
     templateUrl: './multiple-choice-submitted-answer-delete-dialog.component.html'
 })
 export class MultipleChoiceSubmittedAnswerDeleteDialogComponent {
-
-    multipleChoiceSubmittedAnswer: MultipleChoiceSubmittedAnswer;
+    multipleChoiceSubmittedAnswer: IMultipleChoiceSubmittedAnswer;
 
     constructor(
         private multipleChoiceSubmittedAnswerService: MultipleChoiceSubmittedAnswerService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
     confirmDelete(id: number) {
-        this.multipleChoiceSubmittedAnswerService.delete(id).subscribe((response) => {
+        this.multipleChoiceSubmittedAnswerService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'multipleChoiceSubmittedAnswerListModification',
                 content: 'Deleted an multipleChoiceSubmittedAnswer'
@@ -43,22 +40,33 @@ export class MultipleChoiceSubmittedAnswerDeleteDialogComponent {
     template: ''
 })
 export class MultipleChoiceSubmittedAnswerDeletePopupComponent implements OnInit, OnDestroy {
+    private ngbModalRef: NgbModalRef;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private multipleChoiceSubmittedAnswerPopupService: MultipleChoiceSubmittedAnswerPopupService
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
-            this.multipleChoiceSubmittedAnswerPopupService
-                .open(MultipleChoiceSubmittedAnswerDeleteDialogComponent as Component, params['id']);
+        this.activatedRoute.data.subscribe(({ multipleChoiceSubmittedAnswer }) => {
+            setTimeout(() => {
+                this.ngbModalRef = this.modalService.open(MultipleChoiceSubmittedAnswerDeleteDialogComponent as Component, {
+                    size: 'lg',
+                    backdrop: 'static'
+                });
+                this.ngbModalRef.componentInstance.multipleChoiceSubmittedAnswer = multipleChoiceSubmittedAnswer;
+                this.ngbModalRef.result.then(
+                    result => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    },
+                    reason => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    }
+                );
+            }, 0);
         });
     }
 
     ngOnDestroy() {
-        this.routeSub.unsubscribe();
+        this.ngbModalRef = null;
     }
 }

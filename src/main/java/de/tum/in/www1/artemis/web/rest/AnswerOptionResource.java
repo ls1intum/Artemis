@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.AnswerOption;
-
 import de.tum.in.www1.artemis.repository.AnswerOptionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class AnswerOptionResource {
     public ResponseEntity<AnswerOption> updateAnswerOption(@RequestBody AnswerOption answerOption) throws URISyntaxException {
         log.debug("REST request to update AnswerOption : {}", answerOption);
         if (answerOption.getId() == null) {
-            return createAnswerOption(answerOption);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         AnswerOption result = answerOptionRepository.save(answerOption);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class AnswerOptionResource {
     public List<AnswerOption> getAllAnswerOptions() {
         log.debug("REST request to get all AnswerOptions");
         return answerOptionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /answer-options/:id : get the "id" answerOption.
@@ -99,8 +98,8 @@ public class AnswerOptionResource {
     @Timed
     public ResponseEntity<AnswerOption> getAnswerOption(@PathVariable Long id) {
         log.debug("REST request to get AnswerOption : {}", id);
-        AnswerOption answerOption = answerOptionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(answerOption));
+        Optional<AnswerOption> answerOption = answerOptionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(answerOption);
     }
 
     /**
@@ -113,7 +112,8 @@ public class AnswerOptionResource {
     @Timed
     public ResponseEntity<Void> deleteAnswerOption(@PathVariable Long id) {
         log.debug("REST request to delete AnswerOption : {}", id);
-        answerOptionRepository.delete(id);
+
+        answerOptionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

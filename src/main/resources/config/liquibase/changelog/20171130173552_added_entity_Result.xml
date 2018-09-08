@@ -26,7 +26,7 @@
                 <constraints nullable="true" />
             </column>
 
-            <column name="completion_date" type="timestamp">
+            <column name="completion_date" type="datetime">
                 <constraints nullable="true" />
             </column>
 
@@ -42,7 +42,7 @@
                 <constraints nullable="true" />
             </column>
             <column name="submission_id" type="bigint">
-                <constraints unique="true" nullable="true" />
+                <constraints unique="true" nullable="true" uniqueConstraintName="ux_result_submission_id" />
             </column>
             <column name="participation_id" type="bigint">
                 <constraints nullable="true" />

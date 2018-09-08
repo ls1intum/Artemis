@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Exercise;
-
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -74,7 +73,7 @@ public class ExerciseResource {
     public ResponseEntity<Exercise> updateExercise(@RequestBody Exercise exercise) throws URISyntaxException {
         log.debug("REST request to update Exercise : {}", exercise);
         if (exercise.getId() == null) {
-            return createExercise(exercise);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Exercise result = exerciseRepository.save(exercise);
         return ResponseEntity.ok()
@@ -107,8 +106,8 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Exercise> getExercise(@PathVariable Long id) {
         log.debug("REST request to get Exercise : {}", id);
-        Exercise exercise = exerciseRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(exercise));
+        Optional<Exercise> exercise = exerciseRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(exercise);
     }
 
     /**
@@ -121,7 +120,8 @@ public class ExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteExercise(@PathVariable Long id) {
         log.debug("REST request to delete Exercise : {}", id);
-        exerciseRepository.delete(id);
+
+        exerciseRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

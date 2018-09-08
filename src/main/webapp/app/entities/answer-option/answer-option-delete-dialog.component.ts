@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { AnswerOption } from './answer-option.model';
-import { AnswerOptionPopupService } from './answer-option-popup.service';
+import { IAnswerOption } from 'app/shared/model/answer-option.model';
 import { AnswerOptionService } from './answer-option.service';
 
 @Component({
@@ -13,22 +12,20 @@ import { AnswerOptionService } from './answer-option.service';
     templateUrl: './answer-option-delete-dialog.component.html'
 })
 export class AnswerOptionDeleteDialogComponent {
-
-    answerOption: AnswerOption;
+    answerOption: IAnswerOption;
 
     constructor(
         private answerOptionService: AnswerOptionService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
     confirmDelete(id: number) {
-        this.answerOptionService.delete(id).subscribe((response) => {
+        this.answerOptionService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'answerOptionListModification',
                 content: 'Deleted an answerOption'
@@ -43,22 +40,33 @@ export class AnswerOptionDeleteDialogComponent {
     template: ''
 })
 export class AnswerOptionDeletePopupComponent implements OnInit, OnDestroy {
+    private ngbModalRef: NgbModalRef;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private answerOptionPopupService: AnswerOptionPopupService
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
-            this.answerOptionPopupService
-                .open(AnswerOptionDeleteDialogComponent as Component, params['id']);
+        this.activatedRoute.data.subscribe(({ answerOption }) => {
+            setTimeout(() => {
+                this.ngbModalRef = this.modalService.open(AnswerOptionDeleteDialogComponent as Component, {
+                    size: 'lg',
+                    backdrop: 'static'
+                });
+                this.ngbModalRef.componentInstance.answerOption = answerOption;
+                this.ngbModalRef.result.then(
+                    result => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    },
+                    reason => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    }
+                );
+            }, 0);
         });
     }
 
     ngOnDestroy() {
-        this.routeSub.unsubscribe();
+        this.ngbModalRef = null;
     }
 }

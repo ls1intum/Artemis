@@ -35,7 +35,6 @@ public class Course implements Serializable {
     private String teachingAssistantGroupName;
 
     @OneToMany(mappedBy = "course")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Exercise> exercises = new HashSet<>();
 

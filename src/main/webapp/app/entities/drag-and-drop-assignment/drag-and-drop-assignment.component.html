@@ -1,16 +1,14 @@
 <div>
-    <h2>
+    <h2 id="page-heading">
         <span jhiTranslate="arTeMiSApp.dragAndDropAssignment.home.title">Drag And Drop Assignments</span>
-        <button class="btn btn-primary float-right jh-create-entity create-drag-and-drop-assignment" [routerLink]="['/', { outlets: { popup: ['drag-and-drop-assignment-new'] } }]">
-            <span class="fa fa-plus"></span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-drag-and-drop-assignment" [routerLink]="['/drag-and-drop-assignment/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.dragAndDropAssignment.home.createLabel">
             Create new Drag And Drop Assignment
             </span>
         </button>
     </h2>
     <jhi-alert></jhi-alert>
-    <div class="row">
-    </div>
     <br/>
     <div class="table-responsive" *ngIf="dragAndDropAssignments">
         <table class="table table-striped">
@@ -25,36 +23,34 @@
             </thead>
             <tbody>
             <tr *ngFor="let dragAndDropAssignment of dragAndDropAssignments ;trackBy: trackId">
-                <td><a [routerLink]="['../drag-and-drop-assignment', dragAndDropAssignment.id ]">{{dragAndDropAssignment.id}}</a></td>
+                <td><a [routerLink]="['/drag-and-drop-assignment', dragAndDropAssignment.id, 'view' ]">{{dragAndDropAssignment.id}}</a></td>
                 <td>
                     <div *ngIf="dragAndDropAssignment.item">
-                        <a [routerLink]="['../drag-item', dragAndDropAssignment.item?.id ]" >{{dragAndDropAssignment.item?.id}}</a>
+                        <a [routerLink]="['../drag-item', dragAndDropAssignment.item?.id, 'view' ]" >{{dragAndDropAssignment.item?.id}}</a>
                     </div>
                 </td>
                 <td>
                     <div *ngIf="dragAndDropAssignment.location">
-                        <a [routerLink]="['../drop-location', dragAndDropAssignment.location?.id ]" >{{dragAndDropAssignment.location?.id}}</a>
+                        <a [routerLink]="['../drop-location', dragAndDropAssignment.location?.id, 'view' ]" >{{dragAndDropAssignment.location?.id}}</a>
                     </div>
                 </td>
                 <td>
                     <div *ngIf="dragAndDropAssignment.submittedAnswer">
-                        <a [routerLink]="['../drag-and-drop-submitted-answer', dragAndDropAssignment.submittedAnswer?.id ]" >{{dragAndDropAssignment.submittedAnswer?.id}}</a>
+                        <a [routerLink]="['../drag-and-drop-submitted-answer', dragAndDropAssignment.submittedAnswer?.id, 'view' ]" >{{dragAndDropAssignment.submittedAnswer?.id}}</a>
                     </div>
                 </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
-                                [routerLink]="['../drag-and-drop-assignment', dragAndDropAssignment.id ]"
+                                [routerLink]="['/drag-and-drop-assignment', dragAndDropAssignment.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'drag-and-drop-assignment/'+ dragAndDropAssignment.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/drag-and-drop-assignment', dragAndDropAssignment.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -62,7 +58,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

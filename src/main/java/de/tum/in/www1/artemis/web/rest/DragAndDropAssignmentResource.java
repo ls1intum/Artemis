@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.DragAndDropAssignment;
-
 import de.tum.in.www1.artemis.repository.DragAndDropAssignmentRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class DragAndDropAssignmentResource {
     public ResponseEntity<DragAndDropAssignment> updateDragAndDropAssignment(@RequestBody DragAndDropAssignment dragAndDropAssignment) throws URISyntaxException {
         log.debug("REST request to update DragAndDropAssignment : {}", dragAndDropAssignment);
         if (dragAndDropAssignment.getId() == null) {
-            return createDragAndDropAssignment(dragAndDropAssignment);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         DragAndDropAssignment result = dragAndDropAssignmentRepository.save(dragAndDropAssignment);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class DragAndDropAssignmentResource {
     public List<DragAndDropAssignment> getAllDragAndDropAssignments() {
         log.debug("REST request to get all DragAndDropAssignments");
         return dragAndDropAssignmentRepository.findAll();
-        }
+    }
 
     /**
      * GET  /drag-and-drop-assignments/:id : get the "id" dragAndDropAssignment.
@@ -99,8 +98,8 @@ public class DragAndDropAssignmentResource {
     @Timed
     public ResponseEntity<DragAndDropAssignment> getDragAndDropAssignment(@PathVariable Long id) {
         log.debug("REST request to get DragAndDropAssignment : {}", id);
-        DragAndDropAssignment dragAndDropAssignment = dragAndDropAssignmentRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(dragAndDropAssignment));
+        Optional<DragAndDropAssignment> dragAndDropAssignment = dragAndDropAssignmentRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(dragAndDropAssignment);
     }
 
     /**
@@ -113,7 +112,8 @@ public class DragAndDropAssignmentResource {
     @Timed
     public ResponseEntity<Void> deleteDragAndDropAssignment(@PathVariable Long id) {
         log.debug("REST request to delete DragAndDropAssignment : {}", id);
-        dragAndDropAssignmentRepository.delete(id);
+
+        dragAndDropAssignmentRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

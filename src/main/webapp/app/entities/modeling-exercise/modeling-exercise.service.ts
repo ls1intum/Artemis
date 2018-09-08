@@ -1,74 +1,38 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
+import { Observable } from 'rxjs';
 
-import { ModelingExercise } from './modeling-exercise.model';
-import { createRequestOption } from '../../shared';
+import { SERVER_API_URL } from 'app/app.constants';
+import { createRequestOption } from 'app/shared';
+import { IModelingExercise } from 'app/shared/model/modeling-exercise.model';
 
-export type EntityResponseType = HttpResponse<ModelingExercise>;
+type EntityResponseType = HttpResponse<IModelingExercise>;
+type EntityArrayResponseType = HttpResponse<IModelingExercise[]>;
 
-@Injectable()
+@Injectable({ providedIn: 'root' })
 export class ModelingExerciseService {
+    private resourceUrl = SERVER_API_URL + 'api/modeling-exercises';
 
-    private resourceUrl =  SERVER_API_URL + 'api/modeling-exercises';
+    constructor(private http: HttpClient) {}
 
-    constructor(private http: HttpClient) { }
-
-    create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
-        const copy = this.convert(modelingExercise);
-        return this.http.post<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    create(modelingExercise: IModelingExercise): Observable<EntityResponseType> {
+        return this.http.post<IModelingExercise>(this.resourceUrl, modelingExercise, { observe: 'response' });
     }
 
-    update(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
-        const copy = this.convert(modelingExercise);
-        return this.http.put<ModelingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+    update(modelingExercise: IModelingExercise): Observable<EntityResponseType> {
+        return this.http.put<IModelingExercise>(this.resourceUrl, modelingExercise, { observe: 'response' });
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<ModelingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http.get<IModelingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    query(req?: any): Observable<HttpResponse<ModelingExercise[]>> {
+    query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<ModelingExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<ModelingExercise[]>) => this.convertArrayResponse(res));
+        return this.http.get<IModelingExercise[]>(this.resourceUrl, { params: options, observe: 'response' });
     }
 
     delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
-    }
-
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ModelingExercise = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    private convertArrayResponse(res: HttpResponse<ModelingExercise[]>): HttpResponse<ModelingExercise[]> {
-        const jsonResponse: ModelingExercise[] = res.body;
-        const body: ModelingExercise[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to ModelingExercise.
-     */
-    private convertItemFromServer(modelingExercise: ModelingExercise): ModelingExercise {
-        const copy: ModelingExercise = Object.assign({}, modelingExercise);
-        return copy;
-    }
-
-    /**
-     * Convert a ModelingExercise to a JSON which can be sent to the server.
-     */
-    private convert(modelingExercise: ModelingExercise): ModelingExercise {
-        const copy: ModelingExercise = Object.assign({}, modelingExercise);
-        return copy;
+        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 }

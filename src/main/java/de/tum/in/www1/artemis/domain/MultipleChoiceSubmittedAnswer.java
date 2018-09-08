@@ -27,8 +27,8 @@ public class MultipleChoiceSubmittedAnswer implements Serializable {
     @ManyToMany
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JoinTable(name = "multiple_choice_submitted_answer_selected_options",
-               joinColumns = @JoinColumn(name="multiple_choice_submitted_answers_id", referencedColumnName="id"),
-               inverseJoinColumns = @JoinColumn(name="selected_options_id", referencedColumnName="id"))
+               joinColumns = @JoinColumn(name = "multiple_choice_submitted_answers_id", referencedColumnName = "id"),
+               inverseJoinColumns = @JoinColumn(name = "selected_options_id", referencedColumnName = "id"))
     private Set<AnswerOption> selectedOptions = new HashSet<>();
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -29,6 +30,7 @@ public class Feedback implements Serializable {
     private String detailText;
 
     @ManyToOne
+    @JsonIgnoreProperties("feedbacks")
     private Result result;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

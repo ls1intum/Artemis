@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.MultipleChoiceQuestion;
-
 import de.tum.in.www1.artemis.repository.MultipleChoiceQuestionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class MultipleChoiceQuestionResource {
     public ResponseEntity<MultipleChoiceQuestion> updateMultipleChoiceQuestion(@RequestBody MultipleChoiceQuestion multipleChoiceQuestion) throws URISyntaxException {
         log.debug("REST request to update MultipleChoiceQuestion : {}", multipleChoiceQuestion);
         if (multipleChoiceQuestion.getId() == null) {
-            return createMultipleChoiceQuestion(multipleChoiceQuestion);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         MultipleChoiceQuestion result = multipleChoiceQuestionRepository.save(multipleChoiceQuestion);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class MultipleChoiceQuestionResource {
     public List<MultipleChoiceQuestion> getAllMultipleChoiceQuestions() {
         log.debug("REST request to get all MultipleChoiceQuestions");
         return multipleChoiceQuestionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /multiple-choice-questions/:id : get the "id" multipleChoiceQuestion.
@@ -99,8 +98,8 @@ public class MultipleChoiceQuestionResource {
     @Timed
     public ResponseEntity<MultipleChoiceQuestion> getMultipleChoiceQuestion(@PathVariable Long id) {
         log.debug("REST request to get MultipleChoiceQuestion : {}", id);
-        MultipleChoiceQuestion multipleChoiceQuestion = multipleChoiceQuestionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(multipleChoiceQuestion));
+        Optional<MultipleChoiceQuestion> multipleChoiceQuestion = multipleChoiceQuestionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(multipleChoiceQuestion);
     }
 
     /**
@@ -113,7 +112,8 @@ public class MultipleChoiceQuestionResource {
     @Timed
     public ResponseEntity<Void> deleteMultipleChoiceQuestion(@PathVariable Long id) {
         log.debug("REST request to delete MultipleChoiceQuestion : {}", id);
-        multipleChoiceQuestionRepository.delete(id);
+
+        multipleChoiceQuestionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -29,9 +30,11 @@ public class LtiOutcomeUrl implements Serializable {
     private String sourcedId;
 
     @ManyToOne
+    @JsonIgnoreProperties("")
     private User user;
 
     @ManyToOne
+    @JsonIgnoreProperties("")
     private Exercise exercise;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

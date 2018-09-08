@@ -1,19 +1,20 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiParseLinks, JhiAlertService } from 'ng-jhipster';
 
-import { Exercise } from './exercise.model';
+import { IExercise } from 'app/shared/model/exercise.model';
+import { Principal } from 'app/core';
+
+import { ITEMS_PER_PAGE } from 'app/shared';
 import { ExerciseService } from './exercise.service';
-import { ITEMS_PER_PAGE, Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-exercise',
     templateUrl: './exercise.component.html'
 })
 export class ExerciseComponent implements OnInit, OnDestroy {
-
-    exercises: Exercise[];
+    exercises: IExercise[];
     currentAccount: any;
     eventSubscriber: Subscription;
     itemsPerPage: number;
@@ -42,14 +43,16 @@ export class ExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        this.exerciseService.query({
-            page: this.page,
-            size: this.itemsPerPage,
-            sort: this.sort()
-        }).subscribe(
-            (res: HttpResponse<Exercise[]>) => this.onSuccess(res.body, res.headers),
-            (res: HttpErrorResponse) => this.onError(res.message)
-        );
+        this.exerciseService
+            .query({
+                page: this.page,
+                size: this.itemsPerPage,
+                sort: this.sort()
+            })
+            .subscribe(
+                (res: HttpResponse<IExercise[]>) => this.paginateExercises(res.body, res.headers),
+                (res: HttpErrorResponse) => this.onError(res.message)
+            );
     }
 
     reset() {
@@ -62,9 +65,10 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         this.page = page;
         this.loadAll();
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInExercises();
@@ -74,11 +78,12 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: Exercise) {
+    trackId(index: number, item: IExercise) {
         return item.id;
     }
+
     registerChangeInExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('exerciseListModification', (response) => this.reset());
+        this.eventSubscriber = this.eventManager.subscribe('exerciseListModification', response => this.reset());
     }
 
     sort() {
@@ -89,15 +94,15 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         return result;
     }
 
-    private onSuccess(data, headers) {
+    private paginateExercises(data: IExercise[], headers: HttpHeaders) {
         this.links = this.parseLinks.parse(headers.get('link'));
-        this.totalItems = headers.get('X-Total-Count');
+        this.totalItems = parseInt(headers.get('X-Total-Count'), 10);
         for (let i = 0; i < data.length; i++) {
             this.exercises.push(data[i]);
         }
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

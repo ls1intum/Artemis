@@ -1,48 +1,33 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
+import { ArTeMiSSharedModule } from 'app/shared';
 import {
-    ModelingSubmissionService,
-    ModelingSubmissionPopupService,
     ModelingSubmissionComponent,
     ModelingSubmissionDetailComponent,
-    ModelingSubmissionDialogComponent,
-    ModelingSubmissionPopupComponent,
+    ModelingSubmissionUpdateComponent,
     ModelingSubmissionDeletePopupComponent,
     ModelingSubmissionDeleteDialogComponent,
     modelingSubmissionRoute,
-    modelingSubmissionPopupRoute,
+    modelingSubmissionPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...modelingSubmissionRoute,
-    ...modelingSubmissionPopupRoute,
-];
+const ENTITY_STATES = [...modelingSubmissionRoute, ...modelingSubmissionPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         ModelingSubmissionComponent,
         ModelingSubmissionDetailComponent,
-        ModelingSubmissionDialogComponent,
+        ModelingSubmissionUpdateComponent,
         ModelingSubmissionDeleteDialogComponent,
-        ModelingSubmissionPopupComponent,
-        ModelingSubmissionDeletePopupComponent,
+        ModelingSubmissionDeletePopupComponent
     ],
     entryComponents: [
         ModelingSubmissionComponent,
-        ModelingSubmissionDialogComponent,
-        ModelingSubmissionPopupComponent,
+        ModelingSubmissionUpdateComponent,
         ModelingSubmissionDeleteDialogComponent,
-        ModelingSubmissionDeletePopupComponent,
-    ],
-    providers: [
-        ModelingSubmissionService,
-        ModelingSubmissionPopupService,
+        ModelingSubmissionDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

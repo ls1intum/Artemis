@@ -1,55 +1,24 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
-import { JhiEventManager } from 'ng-jhipster';
 
-import { ModelingExercise } from './modeling-exercise.model';
-import { ModelingExerciseService } from './modeling-exercise.service';
+import { IModelingExercise } from 'app/shared/model/modeling-exercise.model';
 
 @Component({
     selector: 'jhi-modeling-exercise-detail',
     templateUrl: './modeling-exercise-detail.component.html'
 })
-export class ModelingExerciseDetailComponent implements OnInit, OnDestroy {
+export class ModelingExerciseDetailComponent implements OnInit {
+    modelingExercise: IModelingExercise;
 
-    modelingExercise: ModelingExercise;
-    private subscription: Subscription;
-    private eventSubscriber: Subscription;
-
-    constructor(
-        private eventManager: JhiEventManager,
-        private modelingExerciseService: ModelingExerciseService,
-        private route: ActivatedRoute
-    ) {
-    }
+    constructor(private activatedRoute: ActivatedRoute) {}
 
     ngOnInit() {
-        this.subscription = this.route.params.subscribe((params) => {
-            this.load(params['id']);
+        this.activatedRoute.data.subscribe(({ modelingExercise }) => {
+            this.modelingExercise = modelingExercise;
         });
-        this.registerChangeInModelingExercises();
     }
 
-    load(id) {
-        this.modelingExerciseService.find(id)
-            .subscribe((modelingExerciseResponse: HttpResponse<ModelingExercise>) => {
-                this.modelingExercise = modelingExerciseResponse.body;
-            });
-    }
     previousState() {
         window.history.back();
-    }
-
-    ngOnDestroy() {
-        this.subscription.unsubscribe();
-        this.eventManager.destroy(this.eventSubscriber);
-    }
-
-    registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe(
-            'modelingExerciseListModification',
-            (response) => this.load(this.modelingExercise.id)
-        );
     }
 }

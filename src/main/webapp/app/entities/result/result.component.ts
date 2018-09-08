@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { Result } from './result.model';
+import { IResult } from 'app/shared/model/result.model';
+import { Principal } from 'app/core';
 import { ResultService } from './result.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html'
 })
 export class ResultComponent implements OnInit, OnDestroy {
-results: Result[];
+    results: IResult[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ results: Result[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.resultService.query().subscribe(
-            (res: HttpResponse<Result[]>) => {
+            (res: HttpResponse<IResult[]>) => {
                 this.results = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInResults();
@@ -44,14 +44,15 @@ results: Result[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: Result) {
+    trackId(index: number, item: IResult) {
         return item.id;
     }
+
     registerChangeInResults() {
-        this.eventSubscriber = this.eventManager.subscribe('resultListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('resultListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

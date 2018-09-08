@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 import { ArTeMiSTestModule } from '../../../test.module';
-import { ProgrammingExerciseDetailComponent } from '../../../../../../main/webapp/app/entities/programming-exercise/programming-exercise-detail.component';
-import { ProgrammingExerciseService } from '../../../../../../main/webapp/app/entities/programming-exercise/programming-exercise.service';
-import { ProgrammingExercise } from '../../../../../../main/webapp/app/entities/programming-exercise/programming-exercise.model';
+import { ProgrammingExerciseDetailComponent } from 'app/entities/programming-exercise/programming-exercise-detail.component';
+import { ProgrammingExercise } from 'app/shared/model/programming-exercise.model';
 
 describe('Component Tests', () => {
-
     describe('ProgrammingExercise Management Detail Component', () => {
         let comp: ProgrammingExerciseDetailComponent;
         let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
-        let service: ProgrammingExerciseService;
+        const route = ({ data: of({ programmingExercise: new ProgrammingExercise(123) }) } as any) as ActivatedRoute;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTeMiSTestModule],
                 declarations: [ProgrammingExerciseDetailComponent],
-                providers: [
-                    ProgrammingExerciseService
-                ]
+                providers: [{ provide: ActivatedRoute, useValue: route }]
             })
-            .overrideTemplate(ProgrammingExerciseDetailComponent, '')
-            .compileComponents();
-        }));
-
-        beforeEach(() => {
+                .overrideTemplate(ProgrammingExerciseDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(ProgrammingExerciseDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(ProgrammingExerciseService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new ProgrammingExercise(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.programmingExercise).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.programmingExercise).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

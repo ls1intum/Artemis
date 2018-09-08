@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { ModelingSubmission } from './modeling-submission.model';
+import { IModelingSubmission } from 'app/shared/model/modeling-submission.model';
+import { Principal } from 'app/core';
 import { ModelingSubmissionService } from './modeling-submission.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-modeling-submission',
     templateUrl: './modeling-submission.component.html'
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy {
-modelingSubmissions: ModelingSubmission[];
+    modelingSubmissions: IModelingSubmission[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ modelingSubmissions: ModelingSubmission[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.modelingSubmissionService.query().subscribe(
-            (res: HttpResponse<ModelingSubmission[]>) => {
+            (res: HttpResponse<IModelingSubmission[]>) => {
                 this.modelingSubmissions = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInModelingSubmissions();
@@ -44,14 +44,15 @@ modelingSubmissions: ModelingSubmission[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: ModelingSubmission) {
+    trackId(index: number, item: IModelingSubmission) {
         return item.id;
     }
+
     registerChangeInModelingSubmissions() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingSubmissionListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('modelingSubmissionListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

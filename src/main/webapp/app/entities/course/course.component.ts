@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { Course } from './course.model';
+import { ICourse } from 'app/shared/model/course.model';
+import { Principal } from 'app/core';
 import { CourseService } from './course.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-course',
     templateUrl: './course.component.html'
 })
 export class CourseComponent implements OnInit, OnDestroy {
-courses: Course[];
+    courses: ICourse[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ courses: Course[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.courseService.query().subscribe(
-            (res: HttpResponse<Course[]>) => {
+            (res: HttpResponse<ICourse[]>) => {
                 this.courses = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInCourses();
@@ -44,14 +44,15 @@ courses: Course[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: Course) {
+    trackId(index: number, item: ICourse) {
         return item.id;
     }
+
     registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('courseListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('courseListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

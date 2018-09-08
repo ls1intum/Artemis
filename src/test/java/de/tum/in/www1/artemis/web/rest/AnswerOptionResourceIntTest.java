@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -156,7 +157,7 @@ public class AnswerOptionResourceIntTest {
             .andExpect(jsonPath("$.[*].explanation").value(hasItem(DEFAULT_EXPLANATION.toString())))
             .andExpect(jsonPath("$.[*].isCorrect").value(hasItem(DEFAULT_IS_CORRECT.booleanValue())));
     }
-
+    
     @Test
     @Transactional
     public void getAnswerOption() throws Exception {
@@ -187,10 +188,11 @@ public class AnswerOptionResourceIntTest {
     public void updateAnswerOption() throws Exception {
         // Initialize the database
         answerOptionRepository.saveAndFlush(answerOption);
+
         int databaseSizeBeforeUpdate = answerOptionRepository.findAll().size();
 
         // Update the answerOption
-        AnswerOption updatedAnswerOption = answerOptionRepository.findOne(answerOption.getId());
+        AnswerOption updatedAnswerOption = answerOptionRepository.findById(answerOption.getId()).get();
         // Disconnect from session so that the updates on updatedAnswerOption are not directly saved in db
         em.detach(updatedAnswerOption);
         updatedAnswerOption
@@ -221,15 +223,15 @@ public class AnswerOptionResourceIntTest {
 
         // Create the AnswerOption
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restAnswerOptionMockMvc.perform(put("/api/answer-options")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(answerOption)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the AnswerOption in the database
         List<AnswerOption> answerOptionList = answerOptionRepository.findAll();
-        assertThat(answerOptionList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(answerOptionList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -237,6 +239,7 @@ public class AnswerOptionResourceIntTest {
     public void deleteAnswerOption() throws Exception {
         // Initialize the database
         answerOptionRepository.saveAndFlush(answerOption);
+
         int databaseSizeBeforeDelete = answerOptionRepository.findAll().size();
 
         // Get the answerOption

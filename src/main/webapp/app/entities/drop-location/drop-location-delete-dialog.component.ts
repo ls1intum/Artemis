@@ -1,11 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { DropLocation } from './drop-location.model';
-import { DropLocationPopupService } from './drop-location-popup.service';
+import { IDropLocation } from 'app/shared/model/drop-location.model';
 import { DropLocationService } from './drop-location.service';
 
 @Component({
@@ -13,22 +12,20 @@ import { DropLocationService } from './drop-location.service';
     templateUrl: './drop-location-delete-dialog.component.html'
 })
 export class DropLocationDeleteDialogComponent {
-
-    dropLocation: DropLocation;
+    dropLocation: IDropLocation;
 
     constructor(
         private dropLocationService: DropLocationService,
         public activeModal: NgbActiveModal,
         private eventManager: JhiEventManager
-    ) {
-    }
+    ) {}
 
     clear() {
         this.activeModal.dismiss('cancel');
     }
 
     confirmDelete(id: number) {
-        this.dropLocationService.delete(id).subscribe((response) => {
+        this.dropLocationService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'dropLocationListModification',
                 content: 'Deleted an dropLocation'
@@ -43,22 +40,33 @@ export class DropLocationDeleteDialogComponent {
     template: ''
 })
 export class DropLocationDeletePopupComponent implements OnInit, OnDestroy {
+    private ngbModalRef: NgbModalRef;
 
-    routeSub: any;
-
-    constructor(
-        private route: ActivatedRoute,
-        private dropLocationPopupService: DropLocationPopupService
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private modalService: NgbModal) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
-            this.dropLocationPopupService
-                .open(DropLocationDeleteDialogComponent as Component, params['id']);
+        this.activatedRoute.data.subscribe(({ dropLocation }) => {
+            setTimeout(() => {
+                this.ngbModalRef = this.modalService.open(DropLocationDeleteDialogComponent as Component, {
+                    size: 'lg',
+                    backdrop: 'static'
+                });
+                this.ngbModalRef.componentInstance.dropLocation = dropLocation;
+                this.ngbModalRef.result.then(
+                    result => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    },
+                    reason => {
+                        this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                        this.ngbModalRef = null;
+                    }
+                );
+            }, 0);
         });
     }
 
     ngOnDestroy() {
-        this.routeSub.unsubscribe();
+        this.ngbModalRef = null;
     }
 }

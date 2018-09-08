@@ -1,16 +1,14 @@
 <div>
-    <h2>
+    <h2 id="page-heading">
         <span jhiTranslate="arTeMiSApp.multipleChoiceSubmittedAnswer.home.title">Multiple Choice Submitted Answers</span>
-        <button class="btn btn-primary float-right jh-create-entity create-multiple-choice-submitted-answer" [routerLink]="['/', { outlets: { popup: ['multiple-choice-submitted-answer-new'] } }]">
-            <span class="fa fa-plus"></span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-multiple-choice-submitted-answer" [routerLink]="['/multiple-choice-submitted-answer/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.multipleChoiceSubmittedAnswer.home.createLabel">
             Create new Multiple Choice Submitted Answer
             </span>
         </button>
     </h2>
     <jhi-alert></jhi-alert>
-    <div class="row">
-    </div>
     <br/>
     <div class="table-responsive" *ngIf="multipleChoiceSubmittedAnswers">
         <table class="table table-striped">
@@ -23,26 +21,24 @@
             </thead>
             <tbody>
             <tr *ngFor="let multipleChoiceSubmittedAnswer of multipleChoiceSubmittedAnswers ;trackBy: trackId">
-                <td><a [routerLink]="['../multiple-choice-submitted-answer', multipleChoiceSubmittedAnswer.id ]">{{multipleChoiceSubmittedAnswer.id}}</a></td>
+                <td><a [routerLink]="['/multiple-choice-submitted-answer', multipleChoiceSubmittedAnswer.id, 'view' ]">{{multipleChoiceSubmittedAnswer.id}}</a></td>
                 <td>
                     <span *ngFor="let selectedOptions of multipleChoiceSubmittedAnswer.selectedOptions; let last = last">
-                            <a class="form-control-static" [routerLink]="['../answer-option', selectedOptions?.id ]">{{selectedOptions.id}}</a>{{last ? '' : ', '}}
+                            <a class="form-control-static" [routerLink]="['../answer-option', selectedOptions?.id, 'view' ]">{{selectedOptions.id}}</a>{{last ? '' : ', '}}
                         </span>
                 </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
-                                [routerLink]="['../multiple-choice-submitted-answer', multipleChoiceSubmittedAnswer.id ]"
+                                [routerLink]="['/multiple-choice-submitted-answer', multipleChoiceSubmittedAnswer.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'multiple-choice-submitted-answer/'+ multipleChoiceSubmittedAnswer.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/multiple-choice-submitted-answer', multipleChoiceSubmittedAnswer.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -50,7 +46,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import java.util.List;
 
+
 import static de.tum.in.www1.artemis.web.rest.TestUtil.createFormattingConversionService;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasItem;
@@ -132,7 +133,7 @@ public class SubmittedAnswerResourceIntTest {
             .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8_VALUE))
             .andExpect(jsonPath("$.[*].id").value(hasItem(submittedAnswer.getId().intValue())));
     }
-
+    
     @Test
     @Transactional
     public void getSubmittedAnswer() throws Exception {
@@ -159,10 +160,11 @@ public class SubmittedAnswerResourceIntTest {
     public void updateSubmittedAnswer() throws Exception {
         // Initialize the database
         submittedAnswerRepository.saveAndFlush(submittedAnswer);
+
         int databaseSizeBeforeUpdate = submittedAnswerRepository.findAll().size();
 
         // Update the submittedAnswer
-        SubmittedAnswer updatedSubmittedAnswer = submittedAnswerRepository.findOne(submittedAnswer.getId());
+        SubmittedAnswer updatedSubmittedAnswer = submittedAnswerRepository.findById(submittedAnswer.getId()).get();
         // Disconnect from session so that the updates on updatedSubmittedAnswer are not directly saved in db
         em.detach(updatedSubmittedAnswer);
 
@@ -184,15 +186,15 @@ public class SubmittedAnswerResourceIntTest {
 
         // Create the SubmittedAnswer
 
-        // If the entity doesn't have an ID, it will be created instead of just being updated
+        // If the entity doesn't have an ID, it will throw BadRequestAlertException
         restSubmittedAnswerMockMvc.perform(put("/api/submitted-answers")
             .contentType(TestUtil.APPLICATION_JSON_UTF8)
             .content(TestUtil.convertObjectToJsonBytes(submittedAnswer)))
-            .andExpect(status().isCreated());
+            .andExpect(status().isBadRequest());
 
         // Validate the SubmittedAnswer in the database
         List<SubmittedAnswer> submittedAnswerList = submittedAnswerRepository.findAll();
-        assertThat(submittedAnswerList).hasSize(databaseSizeBeforeUpdate + 1);
+        assertThat(submittedAnswerList).hasSize(databaseSizeBeforeUpdate);
     }
 
     @Test
@@ -200,6 +202,7 @@ public class SubmittedAnswerResourceIntTest {
     public void deleteSubmittedAnswer() throws Exception {
         // Initialize the database
         submittedAnswerRepository.saveAndFlush(submittedAnswer);
+
         int databaseSizeBeforeDelete = submittedAnswerRepository.findAll().size();
 
         // Get the submittedAnswer

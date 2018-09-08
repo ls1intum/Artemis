@@ -1,16 +1,14 @@
 <div>
-    <h2>
+    <h2 id="page-heading">
         <span jhiTranslate="arTeMiSApp.submittedAnswer.home.title">Submitted Answers</span>
-        <button class="btn btn-primary float-right jh-create-entity create-submitted-answer" [routerLink]="['/', { outlets: { popup: ['submitted-answer-new'] } }]">
-            <span class="fa fa-plus"></span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-submitted-answer" [routerLink]="['/submitted-answer/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.submittedAnswer.home.createLabel">
             Create new Submitted Answer
             </span>
         </button>
     </h2>
     <jhi-alert></jhi-alert>
-    <div class="row">
-    </div>
     <br/>
     <div class="table-responsive" *ngIf="submittedAnswers">
         <table class="table table-striped">
@@ -24,31 +22,29 @@
             </thead>
             <tbody>
             <tr *ngFor="let submittedAnswer of submittedAnswers ;trackBy: trackId">
-                <td><a [routerLink]="['../submitted-answer', submittedAnswer.id ]">{{submittedAnswer.id}}</a></td>
+                <td><a [routerLink]="['/submitted-answer', submittedAnswer.id, 'view' ]">{{submittedAnswer.id}}</a></td>
                 <td>
                     <div *ngIf="submittedAnswer.question">
-                        <a [routerLink]="['../question', submittedAnswer.question?.id ]" >{{submittedAnswer.question?.id}}</a>
+                        <a [routerLink]="['../question', submittedAnswer.question?.id, 'view' ]" >{{submittedAnswer.question?.id}}</a>
                     </div>
                 </td>
                 <td>
                     <div *ngIf="submittedAnswer.submission">
-                        <a [routerLink]="['../quiz-submission', submittedAnswer.submission?.id ]" >{{submittedAnswer.submission?.id}}</a>
+                        <a [routerLink]="['../quiz-submission', submittedAnswer.submission?.id, 'view' ]" >{{submittedAnswer.submission?.id}}</a>
                     </div>
                 </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
-                                [routerLink]="['../submitted-answer', submittedAnswer.id ]"
+                                [routerLink]="['/submitted-answer', submittedAnswer.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'submitted-answer/'+ submittedAnswer.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/submitted-answer', submittedAnswer.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -56,7 +52,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

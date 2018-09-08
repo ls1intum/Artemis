@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class ProgrammingExerciseResource {
     public ResponseEntity<ProgrammingExercise> updateProgrammingExercise(@RequestBody ProgrammingExercise programmingExercise) throws URISyntaxException {
         log.debug("REST request to update ProgrammingExercise : {}", programmingExercise);
         if (programmingExercise.getId() == null) {
-            return createProgrammingExercise(programmingExercise);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         ProgrammingExercise result = programmingExerciseRepository.save(programmingExercise);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class ProgrammingExerciseResource {
     public List<ProgrammingExercise> getAllProgrammingExercises() {
         log.debug("REST request to get all ProgrammingExercises");
         return programmingExerciseRepository.findAll();
-        }
+    }
 
     /**
      * GET  /programming-exercises/:id : get the "id" programmingExercise.
@@ -99,8 +98,8 @@ public class ProgrammingExerciseResource {
     @Timed
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to get ProgrammingExercise : {}", id);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(programmingExercise));
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(programmingExercise);
     }
 
     /**
@@ -113,7 +112,8 @@ public class ProgrammingExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
-        programmingExerciseRepository.delete(id);
+
+        programmingExerciseRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

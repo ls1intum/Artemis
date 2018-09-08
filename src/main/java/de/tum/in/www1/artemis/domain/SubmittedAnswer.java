@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -23,9 +24,11 @@ public class SubmittedAnswer implements Serializable {
     private Long id;
 
     @ManyToOne
+    @JsonIgnoreProperties("")
     private Question question;
 
     @ManyToOne
+    @JsonIgnoreProperties("submittedAnswers")
     private QuizSubmission submission;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove

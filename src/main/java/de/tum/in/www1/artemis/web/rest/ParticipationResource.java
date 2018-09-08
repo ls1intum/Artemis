@@ -68,7 +68,7 @@ public class ParticipationResource {
     public ResponseEntity<Participation> updateParticipation(@RequestBody Participation participation) throws URISyntaxException {
         log.debug("REST request to update Participation : {}", participation);
         if (participation.getId() == null) {
-            return createParticipation(participation);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Participation result = participationService.save(participation);
         return ResponseEntity.ok()
@@ -86,7 +86,7 @@ public class ParticipationResource {
     public List<Participation> getAllParticipations() {
         log.debug("REST request to get all Participations");
         return participationService.findAll();
-        }
+    }
 
     /**
      * GET  /participations/:id : get the "id" participation.
@@ -98,8 +98,8 @@ public class ParticipationResource {
     @Timed
     public ResponseEntity<Participation> getParticipation(@PathVariable Long id) {
         log.debug("REST request to get Participation : {}", id);
-        Participation participation = participationService.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(participation));
+        Optional<Participation> participation = participationService.findOne(id);
+        return ResponseUtil.wrapOrNotFound(participation);
     }
 
     /**

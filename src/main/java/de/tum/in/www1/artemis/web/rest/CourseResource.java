@@ -68,7 +68,7 @@ public class CourseResource {
     public ResponseEntity<Course> updateCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to update Course : {}", course);
         if (course.getId() == null) {
-            return createCourse(course);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Course result = courseService.save(course);
         return ResponseEntity.ok()
@@ -86,7 +86,7 @@ public class CourseResource {
     public List<Course> getAllCourses() {
         log.debug("REST request to get all Courses");
         return courseService.findAll();
-        }
+    }
 
     /**
      * GET  /courses/:id : get the "id" course.
@@ -98,8 +98,8 @@ public class CourseResource {
     @Timed
     public ResponseEntity<Course> getCourse(@PathVariable Long id) {
         log.debug("REST request to get Course : {}", id);
-        Course course = courseService.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+        Optional<Course> course = courseService.findOne(id);
+        return ResponseUtil.wrapOrNotFound(course);
     }
 
     /**

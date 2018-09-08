@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Feedback;
-
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class FeedbackResource {
     public ResponseEntity<Feedback> updateFeedback(@RequestBody Feedback feedback) throws URISyntaxException {
         log.debug("REST request to update Feedback : {}", feedback);
         if (feedback.getId() == null) {
-            return createFeedback(feedback);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         Feedback result = feedbackRepository.save(feedback);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class FeedbackResource {
     public List<Feedback> getAllFeedbacks() {
         log.debug("REST request to get all Feedbacks");
         return feedbackRepository.findAll();
-        }
+    }
 
     /**
      * GET  /feedbacks/:id : get the "id" feedback.
@@ -99,8 +98,8 @@ public class FeedbackResource {
     @Timed
     public ResponseEntity<Feedback> getFeedback(@PathVariable Long id) {
         log.debug("REST request to get Feedback : {}", id);
-        Feedback feedback = feedbackRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(feedback));
+        Optional<Feedback> feedback = feedbackRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(feedback);
     }
 
     /**
@@ -113,7 +112,8 @@ public class FeedbackResource {
     @Timed
     public ResponseEntity<Void> deleteFeedback(@PathVariable Long id) {
         log.debug("REST request to delete Feedback : {}", id);
-        feedbackRepository.delete(id);
+
+        feedbackRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

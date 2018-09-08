@@ -1,16 +1,14 @@
 <div>
-    <h2>
+    <h2 id="page-heading">
         <span jhiTranslate="arTeMiSApp.result.home.title">Results</span>
-        <button class="btn btn-primary float-right jh-create-entity create-result" [routerLink]="['/', { outlets: { popup: ['result-new'] } }]">
-            <span class="fa fa-plus"></span>
+        <button id="jh-create-entity" class="btn btn-primary float-right jh-create-entity create-result" [routerLink]="['/result/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
             <span  jhiTranslate="arTeMiSApp.result.home.createLabel">
             Create new Result
             </span>
         </button>
     </h2>
     <jhi-alert></jhi-alert>
-    <div class="row">
-    </div>
     <br/>
     <div class="table-responsive" *ngIf="results">
         <table class="table table-striped">
@@ -29,7 +27,7 @@
             </thead>
             <tbody>
             <tr *ngFor="let result of results ;trackBy: trackId">
-                <td><a [routerLink]="['../result', result.id ]">{{result.id}}</a></td>
+                <td><a [routerLink]="['/result', result.id, 'view' ]">{{result.id}}</a></td>
                 <td>{{result.resultString}}</td>
                 <td>{{result.completionDate | date:'medium'}}</td>
                 <td>{{result.successful}}</td>
@@ -37,28 +35,26 @@
                 <td>{{result.score}}</td>
                 <td>
                     <div *ngIf="result.submission">
-                        <a [routerLink]="['../submission', result.submission?.id ]" >{{result.submission?.id}}</a>
+                        <a [routerLink]="['../submission', result.submission?.id, 'view' ]" >{{result.submission?.id}}</a>
                     </div>
                 </td>
                 <td>
                     <div *ngIf="result.participation">
-                        <a [routerLink]="['../participation', result.participation?.id ]" >{{result.participation?.id}}</a>
+                        <a [routerLink]="['../participation', result.participation?.id, 'view' ]" >{{result.participation?.id}}</a>
                     </div>
                 </td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <button type="submit"
-                                [routerLink]="['../result', result.id ]"
+                                [routerLink]="['/result', result.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <fa-icon [icon]="'eye'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'result/'+ result.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/result', result.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <fa-icon [icon]="'pencil-alt'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -66,7 +62,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <fa-icon [icon]="'times'"></fa-icon>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

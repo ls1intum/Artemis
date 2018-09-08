@@ -1,18 +1,18 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { HttpResponse, HttpErrorResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs/Subscription';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { JhiEventManager, JhiAlertService } from 'ng-jhipster';
 
-import { Question } from './question.model';
+import { IQuestion } from 'app/shared/model/question.model';
+import { Principal } from 'app/core';
 import { QuestionService } from './question.service';
-import { Principal } from '../../shared';
 
 @Component({
     selector: 'jhi-question',
     templateUrl: './question.component.html'
 })
 export class QuestionComponent implements OnInit, OnDestroy {
-questions: Question[];
+    questions: IQuestion[];
     currentAccount: any;
     eventSubscriber: Subscription;
 
@@ -21,20 +21,20 @@ questions: Question[];
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.questionService.query().subscribe(
-            (res: HttpResponse<Question[]>) => {
+            (res: HttpResponse<IQuestion[]>) => {
                 this.questions = res.body;
             },
             (res: HttpErrorResponse) => this.onError(res.message)
         );
     }
+
     ngOnInit() {
         this.loadAll();
-        this.principal.identity().then((account) => {
+        this.principal.identity().then(account => {
             this.currentAccount = account;
         });
         this.registerChangeInQuestions();
@@ -44,14 +44,15 @@ questions: Question[];
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    trackId(index: number, item: Question) {
+    trackId(index: number, item: IQuestion) {
         return item.id;
     }
+
     registerChangeInQuestions() {
-        this.eventSubscriber = this.eventManager.subscribe('questionListModification', (response) => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('questionListModification', response => this.loadAll());
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(errorMessage: string) {
+        this.jhiAlertService.error(errorMessage, null, null);
     }
 }

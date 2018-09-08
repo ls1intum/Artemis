@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.ModelingSubmission;
-
 import de.tum.in.www1.artemis.repository.ModelingSubmissionRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -69,7 +68,7 @@ public class ModelingSubmissionResource {
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@RequestBody ModelingSubmission modelingSubmission) throws URISyntaxException {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission);
         if (modelingSubmission.getId() == null) {
-            return createModelingSubmission(modelingSubmission);
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
         }
         ModelingSubmission result = modelingSubmissionRepository.save(modelingSubmission);
         return ResponseEntity.ok()
@@ -87,7 +86,7 @@ public class ModelingSubmissionResource {
     public List<ModelingSubmission> getAllModelingSubmissions() {
         log.debug("REST request to get all ModelingSubmissions");
         return modelingSubmissionRepository.findAll();
-        }
+    }
 
     /**
      * GET  /modeling-submissions/:id : get the "id" modelingSubmission.
@@ -99,8 +98,8 @@ public class ModelingSubmissionResource {
     @Timed
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long id) {
         log.debug("REST request to get ModelingSubmission : {}", id);
-        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(modelingSubmission));
+        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(modelingSubmission);
     }
 
     /**
@@ -113,7 +112,8 @@ public class ModelingSubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteModelingSubmission(@PathVariable Long id) {
         log.debug("REST request to delete ModelingSubmission : {}", id);
-        modelingSubmissionRepository.delete(id);
+
+        modelingSubmissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

@@ -1,50 +1,34 @@
 import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTeMiSSharedModule } from '../../shared';
-import { ArTeMiSAdminModule } from '../../admin/admin.module';
+import { ArTeMiSSharedModule } from 'app/shared';
+import { ArTeMiSAdminModule } from 'app/admin/admin.module';
 import {
-    LtiOutcomeUrlService,
-    LtiOutcomeUrlPopupService,
     LtiOutcomeUrlComponent,
     LtiOutcomeUrlDetailComponent,
-    LtiOutcomeUrlDialogComponent,
-    LtiOutcomeUrlPopupComponent,
+    LtiOutcomeUrlUpdateComponent,
     LtiOutcomeUrlDeletePopupComponent,
     LtiOutcomeUrlDeleteDialogComponent,
     ltiOutcomeUrlRoute,
-    ltiOutcomeUrlPopupRoute,
+    ltiOutcomeUrlPopupRoute
 } from './';
 
-const ENTITY_STATES = [
-    ...ltiOutcomeUrlRoute,
-    ...ltiOutcomeUrlPopupRoute,
-];
+const ENTITY_STATES = [...ltiOutcomeUrlRoute, ...ltiOutcomeUrlPopupRoute];
 
 @NgModule({
-    imports: [
-        ArTeMiSSharedModule,
-        ArTeMiSAdminModule,
-        RouterModule.forChild(ENTITY_STATES)
-    ],
+    imports: [ArTeMiSSharedModule, ArTeMiSAdminModule, RouterModule.forChild(ENTITY_STATES)],
     declarations: [
         LtiOutcomeUrlComponent,
         LtiOutcomeUrlDetailComponent,
-        LtiOutcomeUrlDialogComponent,
+        LtiOutcomeUrlUpdateComponent,
         LtiOutcomeUrlDeleteDialogComponent,
-        LtiOutcomeUrlPopupComponent,
-        LtiOutcomeUrlDeletePopupComponent,
+        LtiOutcomeUrlDeletePopupComponent
     ],
     entryComponents: [
         LtiOutcomeUrlComponent,
-        LtiOutcomeUrlDialogComponent,
-        LtiOutcomeUrlPopupComponent,
+        LtiOutcomeUrlUpdateComponent,
         LtiOutcomeUrlDeleteDialogComponent,
-        LtiOutcomeUrlDeletePopupComponent,
-    ],
-    providers: [
-        LtiOutcomeUrlService,
-        LtiOutcomeUrlPopupService,
+        LtiOutcomeUrlDeletePopupComponent
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

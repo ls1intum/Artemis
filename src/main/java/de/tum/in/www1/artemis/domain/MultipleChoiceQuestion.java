@@ -26,7 +26,6 @@ public class MultipleChoiceQuestion implements Serializable {
     private Long id;
 
     @OneToMany(mappedBy = "question")
-    @JsonIgnore
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<AnswerOption> answerOptions = new HashSet<>();
 

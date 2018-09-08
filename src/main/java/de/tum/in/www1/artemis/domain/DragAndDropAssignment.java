@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -23,12 +24,15 @@ public class DragAndDropAssignment implements Serializable {
     private Long id;
 
     @ManyToOne
+    @JsonIgnoreProperties("")
     private DragItem item;
 
     @ManyToOne
+    @JsonIgnoreProperties("")
     private DropLocation location;
 
     @ManyToOne
+    @JsonIgnoreProperties("assignments")
     private DragAndDropSubmittedAnswer submittedAnswer;
 
     // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
