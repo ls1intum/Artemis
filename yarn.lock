@@ -25,6 +25,12 @@
     "@angular-devkit/core" "0.8.1"
     rxjs "~6.2.0"
 
+"@angular/animations@^6.1.7":
+  version "6.1.7"
+  resolved "https://registry.yarnpkg.com/@angular/animations/-/animations-6.1.7.tgz#5d1ca6a2f2e5827ac751c88265b7916d17a732d0"
+  dependencies:
+    tslib "^1.9.0"
+
 "@angular/cli@^6.2.1":
   version "6.2.1"
   resolved "https://registry.yarnpkg.com/@angular/cli/-/cli-6.2.1.tgz#be53e02a73bd8584103d08e408cc4aae7f4b6488"
@@ -5510,6 +5516,10 @@ ng-jhipster@^0.5.4:
   dependencies:
     "@ngx-translate/core" "^10.0.1"
     "@ngx-translate/http-loader" "^3.0.1"
+
+ng-pick-datetime@^6.0.16:
+  version "6.0.16"
+  resolved "https://registry.yarnpkg.com/ng-pick-datetime/-/ng-pick-datetime-6.0.16.tgz#82a400f0aba5cc905bb443616f5ac4b9bfcc88e1"
 
 ng2-ace-editor@^0.3.8:
   version "0.3.8"

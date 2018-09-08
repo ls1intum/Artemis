@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
 import { JhiDateUtils } from 'ng-jhipster';
+import * as moment from 'moment';
 
 import { Result } from './result.model';
 import { createRequestOption } from '../../shared';
@@ -89,7 +90,7 @@ export class ResultService {
      */
     private convert(result: Result): Result {
         const copy: Result = Object.assign({}, result);
-        copy.completionDate = this.dateUtils.toDate(result.completionDate);
+        copy.completionDate = result.completionDate != null ? moment(result.completionDate).format() : null;
         return copy;
     }
 

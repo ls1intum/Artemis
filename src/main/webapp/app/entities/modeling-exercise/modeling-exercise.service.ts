@@ -6,6 +6,7 @@ import { SERVER_API_URL } from '../../app.constants';
 import { ModelingExercise } from './modeling-exercise.model';
 import { createRequestOption } from '../../shared';
 import { JhiDateUtils } from 'ng-jhipster';
+import * as moment from 'moment';
 
 export type EntityResponseType = HttpResponse<ModelingExercise>;
 
@@ -72,8 +73,8 @@ export class ModelingExerciseService {
      */
     private convert(modelingExercise: ModelingExercise): ModelingExercise {
         const copy: ModelingExercise = Object.assign({}, modelingExercise);
-        copy.releaseDate = this.dateUtils.toDate(modelingExercise.releaseDate);
-        copy.dueDate = this.dateUtils.toDate(modelingExercise.dueDate);
+        copy.releaseDate = moment(modelingExercise.releaseDate).format();
+        copy.dueDate = moment(modelingExercise.dueDate).format();
         return copy;
     }
 }
