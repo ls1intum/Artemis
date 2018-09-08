@@ -22,7 +22,7 @@ export class RepositoryService {
     }
 
     pull(participationId: number): Observable<void> {
-        return this.http.post<void>(`${this.resourceUrl}/${participationId}/pull`, {});
+        return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
     }
 
     buildlogs(participationId: number): Observable<Array<BuildLogEntry>> {

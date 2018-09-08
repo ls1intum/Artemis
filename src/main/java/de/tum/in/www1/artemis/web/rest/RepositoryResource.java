@@ -240,7 +240,7 @@ public class RepositoryResource {
     }
 
     /**
-     * POST /repository/{participationId}/pull: Pull into the participation repository
+     * GET /repository/{participationId}/pull: Pull into the participation repository
      *
      * @param participationId Participation ID
      * @param request
@@ -249,7 +249,7 @@ public class RepositoryResource {
      * @throws IOException
      * @throws GitAPIException
      */
-    @PostMapping(value = "/repository/{participationId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId, HttpServletRequest request, AbstractAuthenticationToken authentication) throws IOException, GitAPIException {
         log.debug("REST request to commit Repository for Participation : {}", participationId);
         Participation participation = participationService.findOne(participationId);
