@@ -59,6 +59,7 @@
   },
   "devDependencies": {
     "@angular/cli": "^6.2.1",
+    "@angular/cdk": "^6.4.7",
     "@angular/compiler-cli": "^6.1.7",
     "@ngtools/webpack": "^6.2.1",
     "@types/angular": "^1.6.50",
