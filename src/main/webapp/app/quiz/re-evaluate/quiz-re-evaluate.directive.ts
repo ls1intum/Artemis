@@ -7,6 +7,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { QuizExercisePopupService } from '../../entities/quiz-exercise';
 import { Router } from '@angular/router';
+import { Question } from 'app/entities/question';
 
 /** This Angular directive will act as an interface to the 'upgraded' AngularJS component
  *  The upgrade is realized as given Angular tutorial:
@@ -92,7 +93,7 @@ class QuizReEvaluateController {
         this.backUpQuiz = angular.copy(this.quizExercise);
     }
 
-    $onChanges(changes) {
+    $onChanges(changes: SimpleChanges) {
         if (changes.quizExercise && typeof changes.quizExercise.currentValue !== 'undefined') {
             this.init();
         }
@@ -102,7 +103,7 @@ class QuizReEvaluateController {
      * Remove question from the quiz
      * @param question {Question} the question to remove
      */
-    deleteQuestion(question) {
+    deleteQuestion(question: Question) {
         this.quizExercise.questions = this.quizExercise.questions.filter(function(q) {
             return q !== question;
         });
@@ -150,13 +151,13 @@ class QuizReEvaluateController {
     }
 
     /**
-     * Makes sure the entity is well formed and its fields are of the correct types
-     * @param entity
+     * Makes sure the quizExercise is well formed and its fields are of the correct types
+     * @param quizExercise
      */
-    prepareEntity(entity) {
-        entity.releaseDate = entity.releaseDate ? new Date(entity.releaseDate) : new Date();
-        entity.duration = Number(entity.duration);
-        entity.duration = isNaN(entity.duration) ? 10 : entity.duration;
+    prepareEntity(quizExercise: QuizExercise) {
+        quizExercise.releaseDate = quizExercise.releaseDate ? new Date(quizExercise.releaseDate) : new Date();
+        quizExercise.duration = Number(quizExercise.duration);
+        quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }
 
     /**
@@ -209,7 +210,7 @@ class QuizReEvaluateController {
      * move the question one position up
      * @param question {Question} the question to move
      */
-    moveUp(question) {
+    moveUp(question: Question) {
         const index = this.quizExercise.questions.indexOf(question);
         if (index === 0) {
             return;
@@ -225,7 +226,7 @@ class QuizReEvaluateController {
      * move the question one position down
      * @param question {Question} the question to move
      */
-    moveDown(question) {
+    moveDown(question: Question) {
         const index = this.quizExercise.questions.indexOf(question);
         if (index === (this.quizExercise.questions.length - 1)) {
             return;

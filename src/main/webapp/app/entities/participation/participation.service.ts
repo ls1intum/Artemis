@@ -52,7 +52,7 @@ export class ParticipationService {
 
     delete(id: number, req?: any): Observable<HttpResponse<any>> {
         const options = createRequestOption(req);
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { params: options, observe: 'response' });
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { params: options, observe: 'response' });
     }
 
     repositoryWebUrl(participationId: number) {

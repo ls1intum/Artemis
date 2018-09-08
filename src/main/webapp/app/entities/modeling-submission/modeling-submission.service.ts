@@ -5,7 +5,6 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelingSubmission } from './modeling-submission.model';
 import { createRequestOption } from '../../shared';
-import { Result } from '../result';
 
 export type EntityResponseType = HttpResponse<ModelingSubmission>;
 
@@ -47,8 +46,8 @@ export class ModelingSubmissionService {
             .map((res: HttpResponse<ModelingSubmission[]>) => this.convertArrayResponse(res));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {

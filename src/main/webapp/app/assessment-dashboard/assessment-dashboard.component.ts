@@ -12,6 +12,7 @@ import { ResultDetailComponent } from '../entities/result/result-detail.componen
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
 import { Principal } from '../shared';
+import { Submission } from '../entities/submission';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
@@ -31,9 +32,9 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
-    predicate: any;
-    reverse: any;
-    nextOptimalSubmissionIds = [];
+    predicate: string;
+    reverse: boolean;
+    nextOptimalSubmissionIds: number[] = [];
     results: Result[];
     allResults: Result[];
     optimalResults: Result[];
@@ -104,7 +105,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.results = [];
         if (this.nextOptimalSubmissionIds.length < 3 || forceReload) {
             this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
-                this.nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
+                this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
                 this.applyFilter();
             });
         } else {
@@ -126,7 +127,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         });
     }
 
-    durationString(completionDate, initializationDate) {
+    durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
@@ -151,7 +152,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    assessNextOptimal(attempts) {
+    assessNextOptimal(attempts: number) {
         if (attempts > 3) {
             this.busy = false;
             this.jhiAlertService.info('assessmentDashboard.noSubmissionFound');
@@ -161,7 +162,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         if (this.nextOptimalSubmissionIds.length === 0) {
             setTimeout(() => {
                 this.modelingAssessmentService.getOptimalSubmissions(this.exercise.id).subscribe(optimal => {
-                    this.nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
+                    this.nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
                     this.assessNextOptimal(attempts + 1);
                 });
             }, 500 + 1000 * attempts);

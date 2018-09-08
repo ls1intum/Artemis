@@ -8,6 +8,8 @@ import { FileUploadExercise } from './file-upload-exercise.model';
 import { FileUploadExercisePopupService } from './file-upload-exercise-popup.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-file-upload-exercise-delete-dialog',
     templateUrl: './file-upload-exercise-delete-dialog.component.html'
@@ -44,7 +46,7 @@ export class FileUploadExerciseDeleteDialogComponent {
 })
 export class FileUploadExerciseDeletePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

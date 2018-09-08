@@ -31,8 +31,8 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInProgrammingExercises();
     }
 
-    load(id) {
-        this.programmingExerciseService.find(id)
+    load(exerciseId: number) {
+        this.programmingExerciseService.find(exerciseId)
             .subscribe((programmingExerciseResponse: HttpResponse<ProgrammingExercise>) => {
                 this.programmingExercise = programmingExerciseResponse.body;
             });
@@ -49,7 +49,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     registerChangeInProgrammingExercises() {
         this.eventSubscriber = this.eventManager.subscribe(
             'programmingExerciseListModification',
-            response => this.load(this.programmingExercise.id)
+            () => this.load(this.programmingExercise.id)
         );
     }
 }

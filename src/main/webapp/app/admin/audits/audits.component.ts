@@ -13,7 +13,7 @@ import { ITEMS_PER_PAGE } from '../../shared';
 export class AuditsComponent implements OnInit {
     audits: Audit[];
     fromDate: string;
-    itemsPerPage: any;
+    itemsPerPage: number;
     links: any;
     page: number;
     orderProp: string;

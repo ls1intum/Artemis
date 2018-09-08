@@ -6,6 +6,12 @@ import { SERVER_API_URL } from '../../app.constants';
 import { NG1AUTH_SERVICE } from './ng1-auth-wrapper.service';
 import { JhiAlertService } from 'ng-jhipster';
 
+export interface Credentials {
+    username: string;
+    password: string;
+    rememberMe: boolean;
+}
+
 @Injectable()
 export class AuthServerProvider {
     constructor(
@@ -20,7 +26,7 @@ export class AuthServerProvider {
         return this.$localStorage.retrieve('authenticationToken') || this.$sessionStorage.retrieve('authenticationToken');
     }
 
-    login(credentials): Observable<any> {
+    login(credentials: Credentials): Observable<any> {
 
         const data = {
             username: credentials.username,
@@ -42,7 +48,7 @@ export class AuthServerProvider {
          * that both applications in our setup are logged in, have a authToken and can therefore make API calls
          * without running into "403 - Forbidden" errors.
          */
-        function authenticateSuccess(resp) {
+        function authenticateSuccess(resp: any) {
             /**
              * Extract bearer token from response header
              */
@@ -63,7 +69,7 @@ export class AuthServerProvider {
         }
     }
 
-    loginWithToken(jwt, rememberMe) {
+    loginWithToken(jwt: string, rememberMe: string) {
         if (jwt) {
             this.storeAuthenticationToken(jwt, rememberMe);
             return Promise.resolve(jwt);
@@ -72,7 +78,7 @@ export class AuthServerProvider {
         }
     }
 
-    storeAuthenticationToken(jwt, rememberMe) {
+    storeAuthenticationToken(jwt: string, rememberMe: string) {
         if (rememberMe) {
             this.$localStorage.store('authenticationToken', jwt);
         } else {

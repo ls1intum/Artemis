@@ -7,6 +7,8 @@ import { JhiAlertService } from 'ng-jhipster';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
 import { Exercise, ExerciseService } from '../entities/exercise';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-instructor-dashboard-cleanup-dialog',
     templateUrl: './instructor-dashboard-cleanup-dialog.component.html'
@@ -14,10 +16,10 @@ import { Exercise, ExerciseService } from '../entities/exercise';
 export class InstructorDashboardCleanupDialogComponent {
 
     exercise: Exercise;
-    confirmExerciseName;
+    confirmExerciseName: string;
     deleteRepositories: boolean;
-    cleanupInProgress;
-    deleteInProgress;
+    cleanupInProgress: boolean;
+    deleteInProgress: boolean;
 
     constructor(
         private exerciseService: ExerciseService,
@@ -65,7 +67,7 @@ export class InstructorDashboardCleanupDialogComponent {
 })
 export class InstructorDashboardCleanupPopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

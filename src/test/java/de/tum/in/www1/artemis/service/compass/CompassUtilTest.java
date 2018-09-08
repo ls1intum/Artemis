@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.offset;
 public class CompassUtilTest {
     @Test
     public void roundingTest() {
-        CompassService compassService = new CompassService(null, null, null, null);
+        CompassService compassService = new CompassService(null, null, null, null, null);
         double[] points = {0.0000001, 0.1, 5.09, 6.12, 7.5, 7.59, 8, 9.68, 9.9999999999999};
         double pointSum = 0;
         Map<String, Double> idToPoints = new HashMap<>();

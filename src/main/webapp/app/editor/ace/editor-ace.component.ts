@@ -22,7 +22,7 @@ declare let ace: any;
 })
 
 export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
-    @ViewChild('editor') editor;
+    @ViewChild('editor') editor: any; // TODO what is the proper type?
 
     /** Ace Editor Options **/
     editorText = '';
@@ -175,7 +175,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @desc Callback function for text changes in the Ace Editor
      * @param code {string} Current editor code
      */
-    onFileTextChanged(code) {
+    onFileTextChanged(code: string) {
         /** Is the code different to what we have on our session? This prevents us from saving when a file is loaded **/
         if (this.editorFileSessions[this.fileName].code !== code) {
             // Assign received code to our session

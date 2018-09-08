@@ -8,8 +8,8 @@ export class ActivateService {
 
     constructor(private http: HttpClient) {}
 
-    get(key: string): Observable<any> {
-        return this.http.get(SERVER_API_URL + 'api/activate', {
+    get(key: string): Observable<void> {
+        return this.http.get<void>(SERVER_API_URL + 'api/activate', {
             params: new HttpParams().set('key', key)
         });
     }

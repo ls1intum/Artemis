@@ -4,7 +4,9 @@ import { JhiEventManager } from 'ng-jhipster';
 
 import { QuizExercise, QuizExerciseService, QuizReEvaluateService } from '../../entities/quiz-exercise';
 import { Router } from '@angular/router';
-import { QuestionType } from '../../entities/question';
+import { Question, QuestionType } from '../../entities/question';
+import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
+import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
@@ -61,7 +63,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      *
      * @param quiz {quizExercise} the reference Quiz from Server
      */
-    loadQuizSuccess(quiz) {
+    loadQuizSuccess(quiz: QuizExercise) {
         // question deleted?
         this.questionDeleted = (this.backUpQuiz.questions.length !== this.quizExercise.questions.length);
 
@@ -83,7 +85,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * @param question changed question
      * @param backUpQuestion original not changed question
      */
-    checkQuestion(question, backUpQuestion) {
+    checkQuestion(question: Question, backUpQuestion: Question) {
         if (backUpQuestion !== null) {
             // question set invalid?
             if (question.invalid !== backUpQuestion.invalid) {
@@ -95,11 +97,11 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             }
             // check MultipleChoiceQuestions
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
-                this.checkMultipleChoiceQuestion(question, backUpQuestion);
+                this.checkMultipleChoiceQuestion(question as MultipleChoiceQuestion, backUpQuestion as MultipleChoiceQuestion);
             }
             // check DragAndDropQuestions
             if (question.type === QuestionType.DRAG_AND_DROP) {
-                this.checkDragAndDropQuestion(question, backUpQuestion);
+                this.checkDragAndDropQuestion(question as DragAndDropQuestion, backUpQuestion as DragAndDropQuestion);
             }
         }
     }
@@ -111,7 +113,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * @param question changed Multiple-Choice-Question
      * @param backUpQuestion original not changed Multiple-Choice-Question
      */
-    checkMultipleChoiceQuestion(question, backUpQuestion) {
+    checkMultipleChoiceQuestion(question: MultipleChoiceQuestion, backUpQuestion: MultipleChoiceQuestion) {
         // question-Element deleted?
         if (question.answerOptions.length !== backUpQuestion.answerOptions.length) {
             this.questionElementDeleted = true;
@@ -144,7 +146,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      * @param question changed DragAndDrop-Question
      * @param backUpQuestion original not changed DragAndDrop-Question
      */
-    checkDragAndDropQuestion(question, backUpQuestion) {
+    checkDragAndDropQuestion(question: DragAndDropQuestion, backUpQuestion: DragAndDropQuestion) {
         // check if a dropLocation or dragItem was deleted
         if (question.dragItems.length !== backUpQuestion.dragItems.length
             || question.dropLocations.length !== backUpQuestion.dropLocations.length) {

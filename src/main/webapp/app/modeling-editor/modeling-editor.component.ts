@@ -1,11 +1,10 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, HostListener } from '@angular/core';
-import { Router } from '@angular/router';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { ModelingExercise } from '../entities/modeling-exercise';
+import { DiagramType, ModelingExercise } from '../entities/modeling-exercise';
 import { Participation } from '../entities/participation';
-import { ActivatedRoute } from '@angular/router';
 import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import ApollonEditor, { ApollonOptions } from '@ls1intum/apollon';
+import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
 import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
@@ -13,11 +12,9 @@ import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from 
 import * as $ from 'jquery';
 import { ModelingEditorService } from './modeling-editor.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentCanDeactivate } from '../shared';
+import { ComponentCanDeactivate, JhiWebsocketService } from '../shared';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
-import { JhiWebsocketService } from '../shared';
-import { DiagramType } from '../entities/modeling-exercise';
 
 @Component({
     selector: 'jhi-modeling-editor',
@@ -33,8 +30,8 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     result: Result;
 
     apollonEditor: ApollonEditor | null = null;
-    selectedEntities: number[];
-    selectedRelationships: number[];
+    selectedEntities: string[];
+    selectedRelationships: string[];
 
     submission: ModelingSubmission;
 
@@ -42,19 +39,19 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
      * JSON with the following keys: editor, entities, interactiveElements, relationships
      * format is given by Apollon
      */
-    submissionState: JSON;
+    submissionState: State;
 
     assessments: ModelingAssessment[];
-    assessmentsNames;
+    assessmentsNames: Map<string, string>;
     totalScore: number;
 
     /**
      * an Array of model element IDs as keys with {x: <xOffset>, y: <yOffset>} as values
      * is used for positioning the assessment symbols
      */
-    positions: any[];
+    positions: Map<string, Point>;
 
-    diagramState = null;
+    diagramState: State = null;
     isActive: boolean;
     isSaving: boolean;
     retryStarted = false;
@@ -105,7 +102,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
                     if (this.submission && this.submission.model) {
                         this.initializeApollonEditor(JSON.parse(this.submission.model));
                     } else {
-                        this.initializeApollonEditor({});
+                        this.initializeApollonEditor(null);
                     }
                     if (this.submission && this.submission.submitted && this.result && this.result.rated) {
                         if (data.assessments) {
@@ -152,7 +149,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         });
     }
 
-    initializeApollonEditor(initialState) {
+    initializeApollonEditor(initialState: State) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -348,7 +345,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 
-    isSelected(id: number, type: ModelElementType) {
+    isSelected(id: string, type: ModelElementType) {
         if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
             return true;
         }
@@ -359,7 +356,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         }
     }
 
-    open(content) {
+    open(content: any) {
         this.modalService.open(content, {size: 'lg'});
     }
 
@@ -389,7 +386,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (this.submission.model) {
             this.initializeApollonEditor(JSON.parse(this.submission.model));
         } else {
-            this.initializeApollonEditor({});
+            this.initializeApollonEditor(null);
         }
     }
 

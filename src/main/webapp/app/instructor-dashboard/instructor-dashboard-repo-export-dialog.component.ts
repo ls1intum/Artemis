@@ -77,7 +77,6 @@ export class InstructorDashboardExportReposPopupComponent implements OnInit, OnD
             this.instructorDashboardPopupService
                 .open(InstructorDashboardExportReposComponent as Component, params['id'], true);
         });
-        console.log(this.routeSub);
     }
 
     ngOnDestroy() {

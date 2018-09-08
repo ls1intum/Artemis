@@ -31,7 +31,7 @@ export class ParticipationDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInParticipations();
     }
 
-    load(id) {
+    load(id: number) {
         this.participationService.find(id)
             .subscribe((participationResponse: HttpResponse<Participation>) => {
                 this.participation = participationResponse.body;
@@ -49,7 +49,7 @@ export class ParticipationDetailComponent implements OnInit, OnDestroy {
     registerChangeInParticipations() {
         this.eventSubscriber = this.eventManager.subscribe(
             'participationListModification',
-            response => this.load(this.participation.id)
+            () => this.load(this.participation.id)
         );
     }
 }

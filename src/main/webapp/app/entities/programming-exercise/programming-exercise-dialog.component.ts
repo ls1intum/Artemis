@@ -11,6 +11,8 @@ import { ProgrammingExercisePopupService } from './programming-exercise-popup.se
 import { ProgrammingExerciseService } from './programming-exercise.service';
 import { Course, CourseService } from '../course';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-programming-exercise-dialog',
     templateUrl: './programming-exercise-dialog.component.html'
@@ -34,7 +36,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
     ngOnInit() {
         this.isSaving = false;
         this.courseService.query()
-            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
+            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpErrorResponse) => this.onError(res));
     }
 
     clear() {
@@ -67,7 +69,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
     }
 
-    private onError(error: any) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 
@@ -82,7 +84,7 @@ export class ProgrammingExerciseDialogComponent implements OnInit {
 })
 export class ProgrammingExercisePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,
