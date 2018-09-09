@@ -27,15 +27,45 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     List<Result> findLatestResultsForExercise(@Param("exerciseId") Long exerciseId);
 
     //native query to get data from backend. where only most recent result gets called to reduce load on server
-    //@Query q = em.createNativeQuery("select e.due_date, r.completion_date, e.discriminator, r.rated from Result r, Exercise e, Participation p where r.participation_id = p.id and p.exercise_id = e.id and e.course_id = 13 and e.due_date is not null  and (r.rated = 1 or (r.rated is null && r.completion_date <= e.due_date)) group by p.id order by r.completion_date desc");
+    /*@Query q = em.createNativeQuery("select alldata.id, alldata.first_name, alldata.last_name, alldata.login, alldata.email, alldata.studentID,alldata.exerciseTitle, alldata.exerciseID, alldata.score,alldata.max_score, alldata.completion_date, alldata.due_date, alldata.discriminator, alldata.rated from (select studentID ,exerciseID, max(completion_date) as max_date
+from (SELECT
+        `p`.`id` AS `id`,
+        `j`.`id` AS `studentID`,
+        `j`.`first_name` AS `first_name`,
+        `j`.`last_name` AS `last_name`,
+        `j`.`login` AS `login`,
+        `j`.`email` AS `email`,
+        `e`.`title` AS `exerciseTitle`,
+        `e`.`due_date` AS `due_date`,
+        `e`.`discriminator` AS `discriminator`,
+        `e`.`id` AS `exerciseID`,
+        `e`.`max_score` AS `max_score`,
+        `r`.`completion_date` AS `completion_date`,
+        `r`.`score` AS `score`,
+        `r`.`rated` AS `rated`
+    FROM
+        (((`result` `r`
+        JOIN `exercise` `e`)
+        JOIN `participation` `p`)
+        JOIN `jhi_user` `j`)
+    WHERE
+        ((`r`.`participation_id` = `p`.`id`)
+            AND (`p`.`exercise_id` = `e`.`id`)
+            AND (`j`.`id` = `p`.`student_id`)
+            AND (`e`.`course_id` = 18)
+            AND (((`r`.`rated` = 1)
+            AND ISNULL(`e`.`due_date`))
+            OR (ISNULL(`r`.`rated`)
+            AND (`r`.`completion_date` <= `e`.`due_date`))))) as alldata group by studentID, exerciseID) as t1 inner join alldata on alldata.exerciseID = t1.exerciseID and alldata.completion_date = t1.max_date and alldata.studentID = t1.studentID order by studentID, exerciseID desc limit 20000");
+            */
     //List<Object[]> authors = q.getResultList();
 
-    //native query to get data from backend. All sorts of exercises by courseID will be returned. 
-    //@Query exerciseQuery = em.createNativeQuery("SELECT title, id ,max_score, discriminator FROM artemis.exercise group by title order by id asc");
+    //native query to get data from backend. All sorts of exercises by courseID will be returned.
+    //@Query exerciseQuery = em.createNativeQuery("SELECT title, id ,max_score, discriminator, due_date FROM artemis.exercise group by title order by id asc");
     //List<Object[]> exercises = exerciseQuery.getResultList();
 
-//@Query("select r from Result r where r.completionDate = (select min(rr.completionDate) from Result rr where rr.participation.exercise.id = :exerciseId and rr.participation.student.id = r.participation.student.id and rr.successful = true) and r.participation.exercise.id = :exerciseId and r.successful = true order by r.completionDate asc")
-//List<Result> findEarliestSuccessfulResultsForExercise(@Param("exerciseId") Long exerciseId);
+    //@Query("select r from Result r where r.completionDate = (select min(rr.completionDate) from Result rr where rr.participation.exercise.id = :exerciseId and rr.participation.student.id = r.participation.student.id and rr.successful = true) and r.participation.exercise.id = :exerciseId and r.successful = true order by r.completionDate asc")
+    //List<Result> findEarliestSuccessfulResultsForExercise(@Param("exerciseId") Long exerciseId);
 
     @Query("select r from Result r where r.participation.exercise.course.id = :courseId order by r.completionDate asc")
     List<Result> findAllResultsForCourse(@Param("courseId") Long courseId);
