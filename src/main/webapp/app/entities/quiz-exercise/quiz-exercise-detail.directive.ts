@@ -10,6 +10,7 @@ import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import 'angular';
 import * as moment from 'moment';
+import { Moment } from 'moment';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
 import { Question, QuestionType, ScoringType } from '../question';
 import { MultipleChoiceQuestion } from '../multiple-choice-question';
@@ -31,14 +32,22 @@ export class QuizExerciseDetailWrapper extends UpgradeComponent implements OnIni
     /** The names of the input and output properties here must match the names of the
      *  `<` and `&` bindings in the AngularJS component that is being wrapped */
 
-    @Input() course: Course;
-    @Input() quizExercise: QuizExercise;
-    @Input() repository: QuizExerciseService;
-    @Input() courseRepository: CourseService;
-    @Input() dragAndDropQuestionUtil: DragAndDropQuestionUtil;
-    @Input() router: Router;
-    @Input() translateService: TranslateService;
-    @Input() fileUploaderService: FileUploaderService;
+    @Input()
+    course: Course;
+    @Input()
+    quizExercise: QuizExercise;
+    @Input()
+    repository: QuizExerciseService;
+    @Input()
+    courseRepository: CourseService;
+    @Input()
+    dragAndDropQuestionUtil: DragAndDropQuestionUtil;
+    @Input()
+    router: Router;
+    @Input()
+    translateService: TranslateService;
+    @Input()
+    fileUploaderService: FileUploaderService;
 
     constructor(@Inject(ElementRef) elementRef: ElementRef, @Inject(Injector) injector: Injector) {
         /** We must pass the name of the directive as used by AngularJS (!) to the super */
@@ -47,13 +56,21 @@ export class QuizExerciseDetailWrapper extends UpgradeComponent implements OnIni
 
     /** For this class to work when compiled with AoT, we must implement these lifecycle hooks
      *  because the AoT compiler will not realise that the super class implements them */
-    ngOnInit() { super.ngOnInit(); }
+    ngOnInit() {
+        super.ngOnInit();
+    }
 
-    ngOnChanges(changes: SimpleChanges) { super.ngOnChanges(changes); }
+    ngOnChanges(changes: SimpleChanges) {
+        super.ngOnChanges(changes);
+    }
 
-    ngDoCheck() { super.ngDoCheck(); }
+    ngDoCheck() {
+        super.ngDoCheck();
+    }
 
-    ngOnDestroy() { super.ngOnDestroy(); }
+    ngOnDestroy() {
+        super.ngOnDestroy();
+    }
 }
 
 declare const angular: any;
@@ -76,25 +93,33 @@ class QuizExerciseDetailController {
         minutes: 0,
         seconds: 0
     };
-    dateTime: Date;
-    statusOptionsVisible = [{
-        key: false,
-        label: 'Hidden'
-    }, {
-        key: true,
-        label: 'Visible'
-    }];
-    statusOptionsPractice = [{
-        key: false,
-        label: 'Closed'
-    }, {
-        key: true,
-        label: 'Open for Practice'
-    }];
-    statusOptionsActive = [{
-        key: true,
-        label: 'Active'
-    }];
+    dateTime: Moment;
+    statusOptionsVisible = [
+        {
+            key: false,
+            label: 'Hidden'
+        },
+        {
+            key: true,
+            label: 'Visible'
+        }
+    ];
+    statusOptionsPractice = [
+        {
+            key: false,
+            label: 'Closed'
+        },
+        {
+            key: true,
+            label: 'Open for Practice'
+        }
+    ];
+    statusOptionsActive = [
+        {
+            key: true,
+            label: 'Active'
+        }
+    ];
     showExistingQuestions = false;
     courses: Course[] = [];
     selectedCourse: string;
@@ -116,7 +141,7 @@ class QuizExerciseDetailController {
             this.entity.isVisibleBeforeStart = false;
             this.entity.isOpenForPractice = false;
             this.entity.isPlannedToStart = false;
-            this.entity.releaseDate = new Date((new Date()).toISOString().substring(0, 16));
+            this.entity.releaseDate = moment();
             this.entity.randomizeQuestionOrder = true;
             this.entity.questions = [];
             this.quizExercise = this.entity;
@@ -164,7 +189,7 @@ class QuizExerciseDetailController {
         const mcQuestion = new MultipleChoiceQuestion();
         mcQuestion.title = '';
         mcQuestion.text = 'Enter your question text here';
-        mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING;                    // explicit default value for multiple questions
+        mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.score = 1;
 
@@ -191,7 +216,7 @@ class QuizExerciseDetailController {
         const dndQuestion = new DragAndDropQuestion();
         dndQuestion.title = '';
         dndQuestion.text = 'Enter your question text here';
-        dndQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS;     // explicit default value for drag and drop questions
+        dndQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
         dndQuestion.score = 1;
         dndQuestion.dropLocations = [];
@@ -210,11 +235,9 @@ class QuizExerciseDetailController {
 
         // If courses are not populated, then populate list of courses,
         if (this.courses.length === 0) {
-            this.courseRepository.query().subscribe(
-                (res: HttpResponse<Course[]>) => {
-                    this.courses = res.body;
-                }
-            );
+            this.courseRepository.query().subscribe((res: HttpResponse<Course[]>) => {
+                this.courses = res.body;
+            });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
     }
@@ -229,36 +252,38 @@ class QuizExerciseDetailController {
         }
         const course = JSON.parse(this.selectedCourse) as Course;
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.repository.findForCourse(course.id)
-            .subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                if (quizExercisesResponse.body) {
-                    const quizExercises = quizExercisesResponse.body;
-                    for (const quizExercise of quizExercises) {
-                        this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                            const quizExerciseResponse = response.body;
-                            for (const question of quizExerciseResponse.questions) {
-                                question.exercise = quizExercise;
-                                this.allExistingQuestions.push(question);
-                            }
-                            this.applyFilter();
-                        });
-                    }
-                } else {
-                    this.onSaveError();
+        this.repository.findForCourse(course.id).subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+            if (quizExercisesResponse.body) {
+                const quizExercises = quizExercisesResponse.body;
+                for (const quizExercise of quizExercises) {
+                    this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
+                        const quizExerciseResponse = response.body;
+                        for (const question of quizExerciseResponse.questions) {
+                            question.exercise = quizExercise;
+                            this.allExistingQuestions.push(question);
+                        }
+                        this.applyFilter();
+                    });
                 }
-            });
+            } else {
+                this.onSaveError();
+            }
+        });
     }
 
     /**
      * Applies filter on questions shown in add existing questions view.
-    */
+     */
     applyFilter() {
         this.existingQuestions = [];
         // Depending on the filter selected by user, filter out questions.
         // allExistingQuestions contains list of all questions. We don't change it. We populate existingQuestions list depending on the filter options,
         for (const question of this.allExistingQuestions) {
-            if (!this.searchQueryText || this.searchQueryText === ''
-                || question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
+            if (
+                !this.searchQueryText ||
+                this.searchQueryText === '' ||
+                question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1
+            ) {
                 if (this.mcqFilterEnabled === true && question.type === QuestionType.MULTIPLE_CHOICE) {
                     this.existingQuestions.push(question);
                 }
@@ -308,17 +333,12 @@ class QuizExerciseDetailController {
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        return [
-            'title',
-            'duration',
-            'isPlannedToStart',
-            'releaseDate',
-            'isVisibleBeforeStart',
-            'isOpenForPractice',
-            'questions'
-        ].some(function(key) {
-            return this.quizExercise[key] !== this.savedEntity[key];
-        }, this);
+        return ['title', 'duration', 'isPlannedToStart', 'releaseDate', 'isVisibleBeforeStart', 'isOpenForPractice', 'questions'].some(
+            function(key) {
+                return this.quizExercise[key] !== this.savedEntity[key];
+            },
+            this
+        );
     }
 
     /**
@@ -329,19 +349,32 @@ class QuizExerciseDetailController {
         if (!this.quizExercise) {
             return false;
         }
-        const isGenerallyValid = this.quizExercise.title && this.quizExercise.title !== '' &&
-            this.quizExercise.duration && this.quizExercise.questions && this.quizExercise.questions.length;
+        const isGenerallyValid =
+            this.quizExercise.title &&
+            this.quizExercise.title !== '' &&
+            this.quizExercise.duration &&
+            this.quizExercise.questions &&
+            this.quizExercise.questions.length;
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return question.title && question.title !== '' && mcQuestion.answerOptions.some(function(answerOption) {
-                    return answerOption.isCorrect;
-                });
+                return (
+                    question.title &&
+                    question.title !== '' &&
+                    mcQuestion.answerOptions.some(function(answerOption) {
+                        return answerOption.isCorrect;
+                    })
+                );
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
-                return question.title && question.title !== '' && dndQuestion.correctMappings &&
-                    dndQuestion.correctMappings.length > 0 && this.dragAndDropQuestionUtil.solve(question).length &&
-                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question);
+                return (
+                    question.title &&
+                    question.title !== '' &&
+                    dndQuestion.correctMappings &&
+                    dndQuestion.correctMappings.length > 0 &&
+                    this.dragAndDropQuestionUtil.solve(question).length &&
+                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question)
+                );
             } else {
                 console.log('Unknown question type: ' + question);
                 return question.title && question.title !== '';
@@ -388,9 +421,11 @@ class QuizExerciseDetailController {
             }
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions.some(function(answerOption) {
-                    return answerOption.isCorrect;
-                })) {
+                if (
+                    !mcQuestion.answerOptions.some(function(answerOption) {
+                        return answerOption.isCorrect;
+                    })
+                ) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 }
@@ -532,23 +567,21 @@ class QuizExerciseDetailController {
         }
         this.isSaving = true;
         if (this.quizExercise.id !== undefined) {
-            this.repository.update(this.quizExercise)
-                .subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                    if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body);
-                    } else {
-                        this.onSaveError();
-                    }
-                });
+            this.repository.update(this.quizExercise).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                if (quizExerciseResponse.body) {
+                    this.onSaveSuccess(quizExerciseResponse.body);
+                } else {
+                    this.onSaveError();
+                }
+            });
         } else {
-            this.repository.create(this.quizExercise)
-                .subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                    if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body);
-                    } else {
-                        this.onSaveError();
-                    }
-                });
+            this.repository.create(this.quizExercise).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                if (quizExerciseResponse.body) {
+                    this.onSaveSuccess(quizExerciseResponse.body);
+                } else {
+                    this.onSaveError();
+                }
+            });
         }
     }
 
@@ -569,7 +602,7 @@ class QuizExerciseDetailController {
      * @param quizExercise
      */
     prepareEntity(quizExercise: QuizExercise) {
-        quizExercise.releaseDate = quizExercise.releaseDate ? new Date(quizExercise.releaseDate) : new Date();
+        quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : moment();
         quizExercise.duration = Number(quizExercise.duration);
         quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }
@@ -619,30 +652,25 @@ class QuizExerciseDetailController {
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
     hasSavedQuizStarted() {
-        return !!(this.savedEntity &&
-            this.savedEntity.isPlannedToStart &&
-            moment(this.savedEntity.releaseDate).isBefore(moment())
-        );
+        return !!(this.savedEntity && this.savedEntity.isPlannedToStart && moment(this.savedEntity.releaseDate).isBefore(moment()));
     }
 }
 
 /** Defining the angularJS module here to circumvent separation of scopes
  *  The definition is identical to the one in the AngularJS application */
-angular
-    .module('artemisApp')
-    .component('quizExerciseDetail', {
-        bindings: {
-            'course': '<',
-            'quizExercise': '<',
-            'repository': '<',
-            'courseRepository': '<',
-            'courseService': '<',
-            'dragAndDropQuestionUtil': '<',
-            'router': '<',
-            'translateService': '<',
-            'fileUploaderService': '<'
-        },
-        template: require('../../../ng1/entities/quiz-exercise/quiz-exercise-detail.html'),
-        controller: QuizExerciseDetailController,
-        controllerAs: 'vm'
-    });
+angular.module('artemisApp').component('quizExerciseDetail', {
+    bindings: {
+        course: '<',
+        quizExercise: '<',
+        repository: '<',
+        courseRepository: '<',
+        courseService: '<',
+        dragAndDropQuestionUtil: '<',
+        router: '<',
+        translateService: '<',
+        fileUploaderService: '<'
+    },
+    template: require('../../../ng1/entities/quiz-exercise/quiz-exercise-detail.html'),
+    controller: QuizExerciseDetailController,
+    controllerAs: 'vm'
+});

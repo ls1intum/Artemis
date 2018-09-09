@@ -123,14 +123,17 @@ public class ExerciseService {
      */
     @Transactional(readOnly = true)
     public Exercise findOne(Long id) {
-        Exercise exercise = exerciseRepository.findOne(id);
-        if (exercise instanceof QuizExercise) {
-            QuizExercise quizExercise = (QuizExercise) exercise;
+        Optional<Exercise> exercise = exerciseRepository.findById(id);
+        if (!exercise.isPresent()) {
+            return null;
+        }
+        if (exercise.get() instanceof QuizExercise) {
+            QuizExercise quizExercise = (QuizExercise) exercise.get();
             //eagerly load questions and statistic
             quizExercise.getQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
         }
-        return exercise;
+        return exercise.get();
     }
 
     /**
@@ -174,7 +177,7 @@ public class ExerciseService {
         log.debug("Request to delete Exercise : {}", id);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(id, false, false);
-        exerciseRepository.delete(id);
+        exerciseRepository.deleteById(id);
     }
 
     /**

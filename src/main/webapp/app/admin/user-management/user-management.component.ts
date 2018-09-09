@@ -4,14 +4,14 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 import { Subscription } from 'rxjs/Subscription';
 
-import { ITEMS_PER_PAGE, Principal, User, UserService } from '../../shared';
+import { ITEMS_PER_PAGE } from '../../shared';
+import { Principal, User, UserService } from '../../core';
 
 @Component({
     selector: 'jhi-user-mgmt',
     templateUrl: './user-management.component.html'
 })
 export class UserMgmtComponent implements OnInit, OnDestroy {
-
     currentAccount: User;
     users: User[];
     error: string;
@@ -63,27 +63,26 @@ export class UserMgmtComponent implements OnInit, OnDestroy {
     setActive(user: User, isActivated: boolean) {
         user.activated = isActivated;
 
-        this.userService.update(user).subscribe(
-            response => {
-                if (response.status === 200) {
-                    this.error = null;
-                    this.success = 'OK';
-                    this.loadAll();
-                } else {
-                    this.success = null;
-                    this.error = 'ERROR';
-                }
-            });
+        this.userService.update(user).subscribe(response => {
+            if (response.status === 200) {
+                this.error = null;
+                this.success = 'OK';
+                this.loadAll();
+            } else {
+                this.success = null;
+                this.error = 'ERROR';
+            }
+        });
     }
 
     loadAll() {
-        this.userService.query({
-            page: this.page - 1,
-            size: this.itemsPerPage,
-            sort: this.sort()}).subscribe(
-                (res: HttpResponse<User[]>) => this.onSuccess(res.body, res.headers),
-                (res: HttpErrorResponse) => this.onError(res)
-        );
+        this.userService
+            .query({
+                page: this.page - 1,
+                size: this.itemsPerPage,
+                sort: this.sort()
+            })
+            .subscribe((res: HttpResponse<User[]>) => this.onSuccess(res.body, res.headers), (res: HttpErrorResponse) => this.onError(res));
     }
 
     trackIdentity(index: number, item: User) {

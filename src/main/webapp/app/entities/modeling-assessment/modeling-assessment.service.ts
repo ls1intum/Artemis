@@ -5,54 +5,69 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
 import { Result } from '../result';
-import { State, RelationshipKind, Point } from '@ls1intum/apollon';
-import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT } from '@ls1intum/apollon';
+import {
+    ENTITY_KIND_HEIGHT,
+    ENTITY_MEMBER_HEIGHT,
+    ENTITY_MEMBER_LIST_VERTICAL_PADDING,
+    ENTITY_NAME_HEIGHT,
+    Point,
+    RelationshipKind,
+    State
+} from '@ls1intum/apollon';
 
 export type EntityResponseType = HttpResponse<Result>;
 
 @Injectable()
 export class ModelingAssessmentService {
-    private resourceUrl =  SERVER_API_URL + 'api/modeling-assessments';
+    private resourceUrl = SERVER_API_URL + 'api/modeling-assessments';
 
-    constructor(private http: HttpClient) { }
+    constructor(private http: HttpClient) {}
 
     save(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingAssessment);
-        return this.http.put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, copy, { observe: 'response' })
+        return this.http
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     submit(modelingAssessment: ModelingAssessment[], exerciseId: number, resultId: number): Observable<EntityResponseType> {
         const copy = this.convert(modelingAssessment);
-        return this.http.put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, copy, { observe: 'response' })
+        return this.http
+            .put<Result>(`${this.resourceUrl}/exercise/${exerciseId}/result/${resultId}/submit`, copy, { observe: 'response' })
             .map((res: EntityResponseType) => this.convertResponse(res));
     }
 
     find(participationId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
-        return this.http.get<ModelingAssessment[]>(`${this.resourceUrl}/participation/${participationId}/submission/${submissionId}`, {observe: 'response'})
+        return this.http
+            .get<ModelingAssessment[]>(`${this.resourceUrl}/participation/${participationId}/submission/${submissionId}`, {
+                observe: 'response'
+            })
             .map(res => this.convertArrayResponse(res));
     }
 
     getOptimalSubmissions(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.get(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, {observe: 'response'});
+        return this.http.get(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, { observe: 'response' });
     }
 
     getPartialAssessment(exerciseId: number, submissionId: number): Observable<HttpResponse<ModelingAssessment[]>> {
-        return this.http.get<ModelingAssessment[]>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/partial-assessment`, {observe: 'response'})
+        return this.http
+            .get<ModelingAssessment[]>(`${this.resourceUrl}/exercise/${exerciseId}/submission/${submissionId}/partial-assessment`, {
+                observe: 'response'
+            })
             .map(res => this.convertArrayResponse(res));
     }
 
     getDataForEditor(exerciseId: number, submissionId: number): Observable<any> {
-        return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, {responseType: 'json'});
+        return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, { responseType: 'json' });
     }
 
     resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, {observe: 'response'});
+        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, { observe: 'response' });
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
         const body: Result = this.convertItemFromServer(res.body);
-        return res.clone({body});
+        return res.clone({ body });
     }
 
     /**
@@ -76,14 +91,14 @@ export class ModelingAssessmentService {
                 body.push(this.convertAssessmentFromServer(jsonResponse[i]));
             }
         }
-        return res.clone({body});
+        return res.clone({ body });
     }
 
     /**
      * Convert the assessment to a String which can be sent to the server.
      */
     private convert(modelingAssessment: ModelingAssessment[]): String {
-        const copy: String = JSON.stringify({'assessments': modelingAssessment});
+        const copy: String = JSON.stringify({ assessments: modelingAssessment });
         return copy;
     }
 
@@ -152,7 +167,7 @@ export class ModelingAssessmentService {
         const SYMBOL_WIDTH = 65;
         const positions = new Map<string, Point>();
         for (const assessment of assessments) {
-            const elemPosition: Point = {x: 0, y: 0};
+            const elemPosition: Point = { x: 0, y: 0 };
             if (assessment.type === ModelElementType.CLASS) {
                 if (model.entities.byId[assessment.id]) {
                     const entity = model.entities.byId[assessment.id];
@@ -204,9 +219,9 @@ export class ModelingAssessmentService {
                     const sourceEntity = model.entities.byId[relationship.source.entityId];
                     const destEntity = model.entities.byId[relationship.target.entityId];
                     if (kind === RelationshipKind.AssociationBidirectional) {
-                        const leftElem = (sourceEntity.position.x < destEntity.position.x) ? sourceEntity : destEntity;
-                        const rightElem = (sourceEntity.position.x > destEntity.position.x) ? sourceEntity : destEntity;
-                        const rightEdge = (rightElem === sourceEntity) ? relationship.source.edge : relationship.target.edge;
+                        const leftElem = sourceEntity.position.x < destEntity.position.x ? sourceEntity : destEntity;
+                        const rightElem = sourceEntity.position.x > destEntity.position.x ? sourceEntity : destEntity;
+                        const rightEdge = rightElem === sourceEntity ? relationship.source.edge : relationship.target.edge;
                         elemPosition.x = rightElem.position.x;
                         elemPosition.y = rightElem.position.y;
                         if (rightEdge === 'TOP') {

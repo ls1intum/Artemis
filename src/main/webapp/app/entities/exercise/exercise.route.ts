@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { ExerciseComponent } from './exercise.component';
 import { ExerciseLtiConfigurationPopupComponent } from './exercise-lti-configuration-dialog.component';
 import { ExerciseResetPopupComponent } from './exercise-reset-dialog.component';

@@ -1,3 +1,4 @@
+
 {
   "name": "ArTEMiS",
   "version": "2.2.0",
@@ -90,18 +91,9 @@
     "generator-jhipster": "^5.3.1",
     "html-loader": "^0.5.5",
     "html-webpack-plugin": "^3.2.0",
+    "husky": "0.14.3",
+    "lint-staged": "7.0.0",
     "jasmine-core": "^3.2.1",
-    "karma": "3.0.0",
-    "karma-chrome-launcher": "^2.2.0",
-    "karma-coverage": "^1.1.2",
-    "karma-intl-shim": "^1.0.3",
-    "karma-jasmine": "^1.1.2",
-    "karma-junit-reporter": "^1.2.0",
-    "karma-notify-reporter": "^1.0.1",
-    "karma-phantomjs-launcher": "^1.0.4",
-    "karma-remap-istanbul": "^0.6.0",
-    "karma-sourcemap-loader": "^0.3.7",
-    "karma-webpack": "^3.0.4",
     "merge-jsons-webpack-plugin": "^1.0.17",
     "moment-locales-webpack-plugin": "^1.0.7",
     "node-sass": "^4.9.3",
@@ -112,6 +104,7 @@
     "prettier": "^1.14.2",
     "proxy-middleware": "^0.15.0",
     "rimraf": "^2.6.2",
+    "sass": "1.13.0",
     "sass-loader": "^7.1.0",
     "simple-progress-webpack-plugin": "^1.1.2",
     "sourcemap-istanbul-instrumenter-loader": "^0.2.0",
@@ -138,6 +131,9 @@
   "engines": {
     "node": ">=8.9.0",
     "yarn": ">=1.3.2"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,css,scss}": ["prettier --write", "git add"]
   },
   "scripts": {
     "precommit": "lint-staged",

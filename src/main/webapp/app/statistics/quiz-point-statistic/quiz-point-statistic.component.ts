@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../shared';
+import { JhiWebsocketService, Principal } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizPointStatistic } from '../../entities/quiz-point-statistic';
 import { ChartOptions } from 'chart.js';
@@ -16,7 +16,6 @@ import { Subscription } from 'rxjs/Subscription';
     providers: [QuizStatisticUtil]
 })
 export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
@@ -45,13 +44,15 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     // options for chart.js style
     options: ChartOptions;
 
-    constructor(private route: ActivatedRoute,
-                private router: Router,
-                private principal: Principal,
-                private translateService: TranslateService,
-                private quizExerciseService: QuizExerciseService,
-                private jhiWebsocketService: JhiWebsocketService,
-                private quizStatisticUtil: QuizStatisticUtil) {
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private principal: Principal,
+        private translateService: TranslateService,
+        private quizExerciseService: QuizExerciseService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private quizStatisticUtil: QuizStatisticUtil
+    ) {
         this.options = createOptions(this);
     }
 
@@ -121,7 +122,7 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadNewData(statistic: QuizPointStatistic) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && !statistic.released) {
+        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !statistic.released) {
             this.router.navigate(['courses']);
         }
         this.quizPointStatistic = statistic;
@@ -137,7 +138,10 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
     loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released === false) {
+        if (
+            !this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) &&
+            quiz.quizPointStatistic.released === false
+        ) {
             this.router.navigate(['courses']);
         }
         this.quizExercise = quiz;
@@ -165,7 +169,6 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
-
         // reset old data
         this.label = [];
         this.backgroundColor = [];
@@ -202,10 +205,12 @@ export class QuizPointStatisticComponent implements OnInit, OnDestroy, DataSetPr
             this.participants = this.quizPointStatistic.participantsUnrated;
             this.data = this.unratedData;
         }
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**

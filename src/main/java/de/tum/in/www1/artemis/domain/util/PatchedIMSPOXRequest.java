@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain.util;
 import oauth.signpost.commonshttp.CommonsHttpOAuthConsumer;
 import oauth.signpost.exception.OAuthException;
 import oauth.signpost.http.HttpParameters;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.imsglobal.pox.IMSPOXRequest;
@@ -44,10 +44,10 @@ public class PatchedIMSPOXRequest extends IMSPOXRequest {
         String dataXml = "";
         if (resultData != null) {
             String format = isUrl ? resultDataUrl : resultDataText;
-            dataXml = String.format(format, StringEscapeUtils.escapeXml(resultData));
+            dataXml = String.format(format, StringEscapeUtils.escapeXml10(resultData));
         }
-        String xml = String.format(patchedReplaceResultMessage, StringEscapeUtils.escapeXml(sourcedid),
-            StringEscapeUtils.escapeXml(score), dataXml);
+        String xml = String.format(patchedReplaceResultMessage, StringEscapeUtils.escapeXml10(sourcedid),
+            StringEscapeUtils.escapeXml10(score), dataXml);
 
         HttpParameters parameters = new HttpParameters();
         String hash = getBodyHash(xml);

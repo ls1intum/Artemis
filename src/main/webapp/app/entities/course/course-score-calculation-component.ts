@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
+import { HttpResponse } from '@angular/common/http';
 
 import { CourseService } from './course.service';
 import { CourseScoreCalculationService } from './courseScoreCalculation.service';
@@ -12,7 +13,6 @@ import { Course } from '../../entities/course/course.model';
     templateUrl: './course-score-calculation.component.html'
 })
 export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
-
     private courseId: number;
     private courseExercises: Exercise[];
     private subscription: Subscription;
@@ -46,7 +46,8 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
         private courseService: CourseService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseServer: CourseService,
-        private route: ActivatedRoute) {}
+        private route: ActivatedRoute
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
@@ -56,17 +57,15 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
         this.course = this.courseCalculationService.getCourse(this.courseId);
 
         if (this.course === undefined) {
-                this.courseService.findAll().subscribe(
-                    (res: Course[]) => {
-                        this.courseCalculationService.setCourses(res);
-                        this.course = this.courseCalculationService.getCourse(this.courseId);
-                        this.courseExercises = this.course.exercises;
-                        this.calculateAbsoluteScores(this.courseId);
-                        this.calculateRelativeScores(this.courseId);
-                        this.calculateMaxScores(this.courseId);
-                        this.handleEISTCourse2018();
-                    }
-                );
+            this.courseService.findAll().subscribe((res: HttpResponse<Course[]>) => {
+                this.courseCalculationService.setCourses(res.body);
+                this.course = this.courseCalculationService.getCourse(this.courseId);
+                this.courseExercises = this.course.exercises;
+                this.calculateAbsoluteScores(this.courseId);
+                this.calculateRelativeScores(this.courseId);
+                this.calculateMaxScores(this.courseId);
+                this.handleEISTCourse2018();
+            });
         } else {
             this.courseExercises = this.course.exercises;
             this.calculateAbsoluteScores(this.courseId);
@@ -77,7 +76,8 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     }
 
     handleEISTCourse2018() {
-        if (this.courseId === 13) { // EIST
+        if (this.courseId === 13) {
+            // EIST
             const homeworkFilter = (courseExercise: Exercise): boolean => {
                 return courseExercise.title.match(/Homework.*/g) != null;
             };
@@ -115,7 +115,11 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
 
     calculateRelativeScores(courseId: number) {
         this.quizzesTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.QUIZ, 'relativeScore');
-        this.programmingExerciseTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.PROGRAMMING, 'relativeScore');
+        this.programmingExerciseTotalRelativeScore = this.calculateScoreTypeForExerciseType(
+            courseId,
+            ExerciseType.PROGRAMMING,
+            'relativeScore'
+        );
         this.modelingExerciseTotalRelativeScore = this.calculateScoreTypeForExerciseType(courseId, ExerciseType.MODELING, 'relativeScore');
 
         this.totalRelativeScore = this.calculateTotalScoreForTheCourse(courseId, 'relativeScore');
@@ -136,17 +140,17 @@ export class CourseScoreCalculationComponent implements OnInit, OnDestroy {
     }
 
     calculateScoreTypeForExerciseType(courseId: number, exerciseType: ExerciseType, scoreType: string): number {
-      if (exerciseType !== undefined && scoreType !== undefined ) {
-        const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
-        const scores = this.calculateScores(courseId, filterFunction);
-        return scores.get(scoreType);
-      } else {
-        return NaN;
-      }
+        if (exerciseType !== undefined && scoreType !== undefined) {
+            const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
+            const scores = this.calculateScores(courseId, filterFunction);
+            return scores.get(scoreType);
+        } else {
+            return NaN;
+        }
     }
 
     calculateTotalScoreForTheCourse(courseId: number, scoreType: string): number {
-      const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
-      return scores.get(scoreType);
+        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises);
+        return scores.get(scoreType);
     }
 }

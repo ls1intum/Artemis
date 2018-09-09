@@ -172,15 +172,15 @@ public class FileUploadExerciseResource {
     @Transactional(readOnly = true)
     public ResponseEntity<FileUploadExercise> getFileUploadExercise(@PathVariable Long id) {
         log.debug("REST request to get FileUploadExercise : {}", id);
-        FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findOne(id);
-        Course course = fileUploadExercise.getCourse();
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(id);
+        Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(fileUploadExercise));
+        return ResponseUtil.wrapOrNotFound(fileUploadExercise);
     }
 
     /**
@@ -194,14 +194,14 @@ public class FileUploadExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteFileUploadExercise(@PathVariable Long id) {
         log.debug("REST request to delete FileUploadExercise : {}", id);
-        FileUploadExercise fileUploadExercise= fileUploadExerciseRepository.findOne(id);
-        Course course = fileUploadExercise.getCourse();
+        Optional<FileUploadExercise> fileUploadExercise = fileUploadExerciseRepository.findById(id);
+        Course course = fileUploadExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) &&
             !authCheckService.isAdmin()) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        fileUploadExerciseRepository.delete(id);
+        fileUploadExerciseRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

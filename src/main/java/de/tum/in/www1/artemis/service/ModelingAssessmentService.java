@@ -79,7 +79,7 @@ public class ModelingAssessmentService {
      */
     @Transactional
     public Result updateManualResult(Long resultId, Long exerciseId, String modelingAssessment, Boolean rated) {
-        Result result = resultRepository.findOne(resultId);
+        Result result = resultRepository.findById(resultId).get();
         result.setRated(rated);
         result.setCompletionDate(ZonedDateTime.now());
         result.setAssessmentType(AssessmentType.MANUAL);

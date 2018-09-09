@@ -1,6 +1,7 @@
 import { BaseEntity } from './../../shared';
 import { Result } from '../result';
 import { Participation } from '../participation';
+import { Moment } from 'moment';
 
 export const enum SubmissionType {
     MANUAL = 'MANUAL',
@@ -17,10 +18,9 @@ export const enum SubmissionExerciseType {
 }
 
 export abstract class Submission implements BaseEntity {
-
     public id: number;
-    public submitted = false;   // default value
-    public submissionDate: any;
+    public submitted = false; // default value
+    public submissionDate: Moment;
     public type: SubmissionType;
     public result: Result;
     public participation: Participation;

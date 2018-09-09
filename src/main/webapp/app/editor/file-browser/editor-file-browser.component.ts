@@ -2,7 +2,7 @@ import { RepositoryFileService } from '../../entities/repository/repository.serv
 import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Participation } from '../../entities/participation';
-import { JhiWebsocketService } from '../../shared';
+import { JhiWebsocketService } from '../../core';
 import { EditorComponent } from '../editor.component';
 import { EditorFileBrowserCreateComponent } from './editor-file-browser-create';
 import { EditorFileBrowserDeleteComponent } from './editor-file-browser-delete';
@@ -11,22 +11,24 @@ import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 
 @Component({
     selector: 'jhi-editor-file-browser',
     templateUrl: './editor-file-browser.component.html',
-    providers: [
-        NgbModal,
-        RepositoryFileService
-    ]
+    providers: [NgbModal, RepositoryFileService]
 })
-
 export class EditorFileBrowserComponent implements OnChanges {
+    @Input()
+    participation: Participation;
+    @Input()
+    repositoryFiles: string[];
+    @Input()
+    fileName: string;
+    @Output()
+    createdFile = new EventEmitter<object>();
+    @Output()
+    deletedFile = new EventEmitter<object>();
+    @Output()
+    selectedFile = new EventEmitter<object>();
 
-    @Input() participation: Participation;
-    @Input() repositoryFiles: string[];
-    @Input() fileName: string;
-    @Output() createdFile = new EventEmitter<object>();
-    @Output() deletedFile = new EventEmitter<object>();
-    @Output() selectedFile = new EventEmitter<object>();
-
-    @ViewChild('treeview') treeview: TreeviewComponent;
+    @ViewChild('treeview')
+    treeview: TreeviewComponent;
 
     folder: string;
     filesTreeViewItem: TreeviewItem[];
@@ -41,10 +43,12 @@ export class EditorFileBrowserComponent implements OnChanges {
         maxHeight: 380
     });
 
-    constructor(private parent: EditorComponent,
-                private jhiWebsocketService: JhiWebsocketService,
-                private repositoryFileService: RepositoryFileService,
-                public modalService: NgbModal) {}
+    constructor(
+        private parent: EditorComponent,
+        private jhiWebsocketService: JhiWebsocketService,
+        private repositoryFileService: RepositoryFileService,
+        public modalService: NgbModal
+    ) {}
 
     /**
      * @function ngOnInit
@@ -103,7 +107,7 @@ export class EditorFileBrowserComponent implements OnChanges {
 
             // Inform parent editor component about the file selection change
             this.selectedFile.emit({
-               fileName: item.value
+                fileName: item.value
             });
         }
         /** Reset folder and search our parent with the TreeviewHelper and set the folder value accordingly **/
@@ -112,7 +116,10 @@ export class EditorFileBrowserComponent implements OnChanges {
             const parent = TreeviewHelper.findParent(treeviewItem, item);
             // We found our parent => process the value and assign it
             if (parent) {
-                this.folder = parent.text.split('/').map(str => str.trim()).join('/');
+                this.folder = parent.text
+                    .split('/')
+                    .map(str => str.trim())
+                    .join('/');
             }
         }
     }
@@ -125,12 +132,15 @@ export class EditorFileBrowserComponent implements OnChanges {
     getRepositoryFiles() {
         if (!this.repositoryFiles) {
             /** Query the repositoryFileService for files in the repository */
-            this.repositoryFileService.query(this.parent.participation.id).subscribe(files => {
-                this.repositoryFiles = files;
-                this.setupTreeview(this.repositoryFiles);
-            }, err => {
-                console.log('There was an error while getting files: ' + err.body.msg);
-            });
+            this.repositoryFileService.query(this.parent.participation.id).subscribe(
+                files => {
+                    this.repositoryFiles = files;
+                    this.setupTreeview(this.repositoryFiles);
+                },
+                err => {
+                    console.log('There was an error while getting files: ' + err.body.msg);
+                }
+            );
         } else {
             this.setupTreeview(this.repositoryFiles);
         }
@@ -184,7 +194,7 @@ export class EditorFileBrowserComponent implements OnChanges {
             // Split file path by slashes
             const fileSplit = file.split('/');
             // Check if the first path part is already in our current tree
-            let node = tree.find( element => element.text === fileSplit[0]);
+            let node = tree.find(element => element.text === fileSplit[0]);
             // Path part doesn't exist => add it to tree
             if (node == null) {
                 node = {
@@ -206,7 +216,7 @@ export class EditorFileBrowserComponent implements OnChanges {
             } else {
                 // File node
                 node.folder = folder;
-                node.file = (folder ? folder  + '/' : '' ) + node.text;
+                node.file = (folder ? folder + '/' : '') + node.text;
                 node.value = node.file;
                 node.checked = false;
 
@@ -246,7 +256,7 @@ export class EditorFileBrowserComponent implements OnChanges {
      * @desc Opens a popup to create a new repository file
      */
     openCreateFileModal() {
-        const modalRef = this.modalService.open(EditorFileBrowserCreateComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(EditorFileBrowserCreateComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.participation = this.participation;
         modalRef.componentInstance.parent = this;
         if (this.folder) {
@@ -263,7 +273,7 @@ export class EditorFileBrowserComponent implements OnChanges {
          * We only open the modal if the user has a file selected
          */
         if (this.fileName) {
-            const modalRef = this.modalService.open(EditorFileBrowserDeleteComponent, {keyboard: true, size: 'lg'});
+            const modalRef = this.modalService.open(EditorFileBrowserDeleteComponent, { keyboard: true, size: 'lg' });
             modalRef.componentInstance.participation = this.participation;
             modalRef.componentInstance.parent = this;
             modalRef.componentInstance.fileNameToDelete = this.fileName;

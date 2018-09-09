@@ -6,17 +6,17 @@ import { UpgradeModule } from '@angular/upgrade/static';
 import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { LocalStorageService, Ng2Webstorage, SessionStorageService } from 'ngx-webstorage';
 import { JhiEventManager } from 'ng-jhipster';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
 import { ErrorHandlerInterceptor } from './blocks/interceptor/errorhandler.interceptor';
 import { NotificationInterceptor } from './blocks/interceptor/notification.interceptor';
-import { ArTEMiSSharedModule, JhiWebsocketService, Principal, UserRouteAccessService } from './shared';
+import { JhiWebsocketService, Principal, UserRouteAccessService } from './core';
+import { ArTEMiSSharedModule } from './shared';
+import { ArTEMiSCoreModule } from 'app/core';
 import { ArTEMiSAppRoutingModule } from './app-routing.module';
 import { ArTEMiSHomeModule } from './home/home.module';
-import { ArTEMiSAdminModule } from './admin/admin.module';
 import { ArTEMiSAccountModule } from './account/account.module';
 import { ArTEMiSCoursesModule } from './courses';
 import { ArTEMiSEntityModule } from './entities/entity.module';
@@ -27,15 +27,23 @@ import { DifferencePipe, MomentModule } from 'angular2-moment';
 import { ArTEMiSEditorModule } from './editor';
 import { RepositoryInterceptor, RepositoryService } from './entities/repository';
 import { ArTEMiSQuizModule } from './quiz/participate';
-import { ng1AuthServiceProvider } from './shared/auth/ng1-auth-wrapper.service';
-import { ng1JhiWebsocketService } from './shared/websocket/ng1-websocket.service';
+import { ng1AuthServiceProvider } from './core/auth/ng1-auth-wrapper.service';
+import { ng1JhiWebsocketService } from './core/websocket/ng1-websocket.service';
 // jhipster-needle-angular-add-module-import JHipster will add new module here
-import { ActiveMenuDirective, ErrorComponent, FooterComponent, JhiMainComponent, NavbarComponent, PageRibbonComponent, ProfileService } from './layouts';
+import {
+    ActiveMenuDirective,
+    ErrorComponent,
+    FooterComponent,
+    JhiMainComponent,
+    NavbarComponent,
+    PageRibbonComponent,
+    ProfileService
+} from './layouts';
 import { ArTEMiSApollonDiagramsModule } from './apollon-diagrams';
 import { QuizExerciseDetailWrapper } from './entities/quiz-exercise/quiz-exercise-detail.directive';
 import { QuizExerciseDetailComponent } from './entities/quiz-exercise';
-import { ng1TranslateService } from './shared/language/ng1-translate.service';
-import { ng1TranslatePartialLoaderService } from './shared/language/ng1-translate-partial-loader.service';
+import { ng1TranslateService } from './core/language/ng1-translate.service';
+import { ng1TranslatePartialLoaderService } from './core/language/ng1-translate-partial-loader.service';
 import { ArTEMiSStatisticModule } from './statistics/statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
 import { QuizReEvaluateWrapper } from './quiz/re-evaluate/quiz-re-evaluate.directive';
@@ -61,10 +69,9 @@ declare var angular: any;
          * @external Moment is a date library for parsing, validating, manipulating, and formatting dates.
          */
         MomentModule,
-        NgbModule.forRoot(),
         ArTEMiSSharedModule,
+        ArTEMiSCoreModule,
         ArTEMiSHomeModule,
-        ArTEMiSAdminModule,
         ArTEMiSAccountModule,
         ArTEMiSEntityModule,
         ArTEMiSApollonDiagramsModule,
@@ -135,34 +142,25 @@ declare var angular: any;
             provide: HTTP_INTERCEPTORS,
             useClass: AuthInterceptor,
             multi: true,
-            deps: [
-                LocalStorageService,
-                SessionStorageService
-            ]
+            deps: [LocalStorageService, SessionStorageService]
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: AuthExpiredInterceptor,
             multi: true,
-            deps: [
-                Injector
-            ]
+            deps: [Injector]
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: ErrorHandlerInterceptor,
             multi: true,
-            deps: [
-                JhiEventManager
-            ]
+            deps: [JhiEventManager]
         },
         {
             provide: HTTP_INTERCEPTORS,
             useClass: NotificationInterceptor,
             multi: true,
-            deps: [
-                Injector
-            ]
+            deps: [Injector]
         },
         {
             provide: HTTP_INTERCEPTORS,
@@ -187,4 +185,4 @@ declare var angular: any;
     ],
     bootstrap: [JhiMainComponent]
 })
-export class ArTEMiSAppModule { }
+export class ArTEMiSAppModule {}

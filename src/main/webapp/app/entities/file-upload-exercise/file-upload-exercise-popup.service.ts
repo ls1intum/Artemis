@@ -17,7 +17,6 @@ export class FileUploadExercisePopupService {
         private router: Router,
         private fileUploadExerciseService: FileUploadExerciseService,
         private courseService: CourseService
-
     ) {
         this.ngbModalRef = null;
     }
@@ -30,14 +29,11 @@ export class FileUploadExercisePopupService {
             }
 
             if (id) {
-                this.fileUploadExerciseService.find(id)
-                    .subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
-                        const fileUploadExercise: FileUploadExercise = fileUploadExerciseResponse.body;
-                        fileUploadExercise.releaseDate = this.datePipe.transform(fileUploadExercise.releaseDate, 'yyyy-MM-ddTHH:mm:ss');
-                        fileUploadExercise.dueDate = this.datePipe.transform(fileUploadExercise.dueDate, 'yyyy-MM-ddTHH:mm:ss');
-                        this.ngbModalRef = this.fileUploadExerciseModalRef(component, fileUploadExercise);
-                        resolve(this.ngbModalRef);
-                    });
+                this.fileUploadExerciseService.find(id).subscribe((fileUploadExerciseResponse: HttpResponse<FileUploadExercise>) => {
+                    const fileUploadExercise: FileUploadExercise = fileUploadExerciseResponse.body;
+                    this.ngbModalRef = this.fileUploadExerciseModalRef(component, fileUploadExercise);
+                    resolve(this.ngbModalRef);
+                });
             } else {
                 // setTimeout used as a workaround for getting ExpressionChangedAfterItHasBeenCheckedError
                 setTimeout(() => {
@@ -57,15 +53,18 @@ export class FileUploadExercisePopupService {
     }
 
     fileUploadExerciseModalRef(component: Component, fileUploadExercise: FileUploadExercise): NgbModalRef {
-        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static'});
+        const modalRef = this.modalService.open(component, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.fileUploadExercise = fileUploadExercise;
-        modalRef.result.then(result => {
-            this.router.navigate([{ outlets: { popup: null }}], { replaceUrl: true, queryParamsHandling: 'merge' });
-            this.ngbModalRef = null;
-        }, reason => {
-            this.router.navigate([{ outlets: { popup: null }}], { replaceUrl: true, queryParamsHandling: 'merge' });
-            this.ngbModalRef = null;
-        });
+        modalRef.result.then(
+            result => {
+                this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                this.ngbModalRef = null;
+            },
+            reason => {
+                this.router.navigate([{ outlets: { popup: null } }], { replaceUrl: true, queryParamsHandling: 'merge' });
+                this.ngbModalRef = null;
+            }
+        );
         return modalRef;
     }
 }

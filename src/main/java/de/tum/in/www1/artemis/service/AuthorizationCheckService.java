@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 /**
  * Service used to check whether user is authorized to perform actions on the entity.
  */
@@ -22,6 +24,42 @@ public class AuthorizationCheckService {
         this.userService = userService;
         adminAuthority = new Authority();
         adminAuthority.setName(AuthoritiesConstants.ADMIN);
+    }
+
+    public <T extends Exercise> boolean isAtLeastTeachingAssistantForExercise(Optional<T> exercise) {
+        if (exercise.isPresent()) {
+            return isAtLeastTeachingAssistantForExercise(exercise.get());
+        }
+        else {
+            return false;
+        }
+    }
+
+    public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise) {
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourse(), null);
+    }
+
+    public boolean isAtLeastTeachingAssistantForExercise(Optional<Exercise> exercise, User user) {
+        if (exercise.isPresent()) {
+            return isAtLeastTeachingAssistantForExercise(exercise.get(), user);
+        }
+        else {
+            return false;
+        }
+    }
+
+    public boolean isAtLeastTeachingAssistantForExercise(Exercise exercise, User user) {
+        return isAtLeastTeachingAssistantInCourse(exercise.getCourse(), user);
+    }
+
+    public boolean isAtLeastTeachingAssistantInCourse(Course course, User user) {
+        if (user == null || user.getGroups() == null) {
+            user = userService.getUserWithGroupsAndAuthorities();
+        }
+        return user.getGroups().contains(course.getInstructorGroupName()) ||
+            user.getGroups().contains(course.getTeachingAssistantGroupName()) ||
+            isAdmin();
+
     }
 
     /**

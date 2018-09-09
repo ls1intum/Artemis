@@ -1,7 +1,8 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule, UserRouteAccessService } from '../shared';
+import { ArTEMiSSharedModule } from '../shared';
+import { UserRouteAccessService } from '../core';
 import { HomeComponent } from '../home';
 import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
@@ -21,19 +22,8 @@ const ENTITY_STATES = [
 ];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        MomentModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule
-    ],
-    declarations: [
-        InstructorCourseDashboardComponent
-    ],
-    entryComponents: [
-        HomeComponent,
-        InstructorCourseDashboardComponent,
-        JhiMainComponent
-    ]
+    imports: [ArTEMiSSharedModule, MomentModule, RouterModule.forChild(ENTITY_STATES), SortByModule],
+    declarations: [InstructorCourseDashboardComponent],
+    entryComponents: [HomeComponent, InstructorCourseDashboardComponent, JhiMainComponent]
 })
 export class ArTEMiSInstructorCourseDashboardModule {}

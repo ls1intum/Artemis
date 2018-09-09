@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../shared';
+import { JhiWebsocketService, Principal } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
@@ -28,7 +28,6 @@ interface BackgroundColorConfig {
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown]
 })
 export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
@@ -65,16 +64,18 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     // options for chart in chart.js style
     options: ChartOptions;
 
-    constructor(private route: ActivatedRoute,
-                private router: Router,
-                private principal: Principal,
-                private translateService: TranslateService,
-                private quizExerciseService: QuizExerciseService,
-                private jhiWebsocketService: JhiWebsocketService,
-                private quizStatisticUtil: QuizStatisticUtil,
-                private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-                private artemisMarkdown: ArtemisMarkdown,
-                private http: HttpClient) {
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private principal: Principal,
+        private translateService: TranslateService,
+        private quizExerciseService: QuizExerciseService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private quizStatisticUtil: QuizStatisticUtil,
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private artemisMarkdown: ArtemisMarkdown,
+        private http: HttpClient
+    ) {
         this.options = createOptions(this);
     }
 
@@ -146,13 +147,12 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-            && !quiz.quizPointStatistic.released) {
+        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !quiz.quizPointStatistic.released) {
             this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.questions.filter( question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.questions.filter(question => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as DragAndDropQuestion;
         // if the Anyone finds a way to the Website,
         // with an wrong combination of QuizId and QuestionId
@@ -174,7 +174,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      * build the Chart-Layout based on the the Json-entity (questionStatistic)
      */
     loadLayout() {
-
         this.orderDropLocationByPos();
 
         // reset old data
@@ -185,20 +184,18 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         // set label and backgroundcolor based on the dropLocations
         this.question.dropLocations.forEach((dropLocation, i) => {
             this.label.push(String.fromCharCode(65 + i) + '.');
-            this.backgroundColor.push(
-                {
-                    backgroundColor: '#428bca',
-                    borderColor: '#428bca',
-                    pointBackgroundColor: '#428bca',
-                    pointBorderColor: '#428bca'
-                });
-            this.backgroundSolutionColor.push(
-                {
-                    backgroundColor: '#5cb85c',
-                    borderColor: '#5cb85c',
-                    pointBackgroundColor: '#5cb85c',
-                    pointBorderColor: '#5cb85c'
-                });
+            this.backgroundColor.push({
+                backgroundColor: '#428bca',
+                borderColor: '#428bca',
+                pointBackgroundColor: '#428bca',
+                pointBorderColor: '#428bca'
+            });
+            this.backgroundSolutionColor.push({
+                backgroundColor: '#5cb85c',
+                borderColor: '#5cb85c',
+                pointBackgroundColor: '#5cb85c',
+                pointBorderColor: '#5cb85c'
+            });
         });
 
         this.addLastBarLayout();
@@ -210,13 +207,12 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      */
     addLastBarLayout() {
         // add Color for last bar
-        this.backgroundColor.push(
-            {
-                backgroundColor: '#5bc0de',
-                borderColor: '#5bc0de',
-                pointBackgroundColor: '#5bc0de',
-                pointBorderColor: '#5bc0de'
-            });
+        this.backgroundColor.push({
+            backgroundColor: '#5bc0de',
+            borderColor: '#5bc0de',
+            pointBackgroundColor: '#5bc0de',
+            pointBorderColor: '#5bc0de'
+        });
         this.backgroundSolutionColor[this.question.dropLocations.length] = {
             backgroundColor: '#5bc0de',
             borderColor: '#5bc0de',
@@ -226,7 +222,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
 
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
-            this.label[this.question.dropLocations.length] = (lastLabel.split(' '));
+            this.label[this.question.dropLocations.length] = lastLabel.split(' ');
             this.labels = this.label;
         });
     }
@@ -235,25 +231,22 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      * change label and Color if a dropLocation is invalid
      */
     loadInvalidLayout() {
-
         // set Background for invalid answers = grey
         this.translateService.get('showStatistic.invalid').subscribe(invalidLabel => {
             this.question.dropLocations.forEach((dropLocation, i) => {
                 if (dropLocation.invalid) {
-                    this.backgroundColor[i] = (
-                        {
-                            backgroundColor: '#838383',
-                            borderColor: '#838383',
-                            pointBackgroundColor: '#838383',
-                            pointBorderColor: '#838383'
-                        });
-                    this.backgroundSolutionColor[i] = (
-                        {
-                            backgroundColor: '#838383',
-                            borderColor: '#838383',
-                            pointBackgroundColor: '#838383',
-                            pointBorderColor: '#838383'
-                        });
+                    this.backgroundColor[i] = {
+                        backgroundColor: '#838383',
+                        borderColor: '#838383',
+                        pointBackgroundColor: '#838383',
+                        pointBorderColor: '#838383'
+                    };
+                    this.backgroundSolutionColor[i] = {
+                        backgroundColor: '#838383',
+                        borderColor: '#838383',
+                        pointBackgroundColor: '#838383',
+                        pointBorderColor: '#838383'
+                    };
                     // add 'invalid' to bar-Label
                     this.label[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
                 }
@@ -265,17 +258,15 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
-
         // reset old data
         this.ratedData = [];
         this.unratedData = [];
 
         // set data based on the dropLocations for each dropLocation
         this.question.dropLocations.forEach(dropLocation => {
-            const dropLocationCounter = this.questionStatistic.dropLocationCounters
-                .find(dlCounter => {
-                    return dropLocation.id === dlCounter.dropLocation.id;
-                });
+            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find(dlCounter => {
+                return dropLocation.id === dlCounter.dropLocation.id;
+            });
             this.ratedData.push(dropLocationCounter.ratedCounter);
             this.unratedData.push(dropLocationCounter.unRatedCounter);
         });
@@ -293,7 +284,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      * load the rated or unrated data into the diagram
      */
     loadDataInDiagram() {
-
         // if show Solution is true use the label,
         // backgroundColor and Data, which show the solution
         if (this.showSolution) {
@@ -326,10 +316,12 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
             }
         }
 
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**
@@ -366,8 +358,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
         while (change) {
             change = false;
             for (let i = 0; i < this.question.dropLocations.length - 1; i++) {
-                if ((this.question.dropLocations[i].posX )
-                    > this.question.dropLocations[i + 1].posX) {
+                if (this.question.dropLocations[i].posX > this.question.dropLocations[i + 1].posX) {
                     // switch DropLocations
                     const temp = this.question.dropLocations[i];
                     this.question.dropLocations[i] = this.question.dropLocations[i + 1];
@@ -386,7 +377,9 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy,
      *                          or null if no drag item has been mapped to this location
      */
     correctDragItemForDropLocation(dropLocation: DropLocation) {
-        const currMapping = this.dragAndDropQuestionUtil.solve(this.question, null).filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
+        const currMapping = this.dragAndDropQuestionUtil
+            .solve(this.question, null)
+            .filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
         if (currMapping) {
             return currMapping.dragItem;
         } else {

@@ -163,19 +163,19 @@ public class CompassService {
 
     private void assessAutomatically(long modelId, long exerciseId) {
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOne(modelId);
-        if (modelingSubmission == null) {
+        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(modelId);
+        if (!modelingSubmission.isPresent()) {
             log.error("No modeling submission with ID {} could be found.", modelId);
             return;
         }
-        Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission).participation(modelingSubmission.getParticipation()));
+        Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
         // unrated result exists
         if (result != null) {
             if (!result.isRated()) {
                 Grade grade = engine.getResultForModel(modelId);
                 // automatic assessment holds confidence and coverage threshold
                 if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-                    ModelingExercise modelingExercise = modelingExerciseRepository.findOne(result.getParticipation().getExercise().getId());
+                    ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
                     // Round compass grades to avoid machine precision errors, make the grades more readable
                     // and give a slight advantage which makes 100% scores easier reachable
                     // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
@@ -211,7 +211,7 @@ public class CompassService {
         }
     }
 
-    Grade roundGrades(Grade grade) {
+    private Grade roundGrades(Grade grade) {
         Map<String, Double> jsonIdPointsMapping = grade.getJsonIdPointsMapping();
         BigDecimal pointsSum = new BigDecimal(0);
         for (Map.Entry<String, Double> entry: jsonIdPointsMapping.entrySet()) {
@@ -268,11 +268,11 @@ public class CompassService {
         }
     }
 
-    CalculationEngine getEngine(long exerciseId) {
+    private CalculationEngine getEngine(long exerciseId) {
         return compassCalculationEngines.get(exerciseId);
     }
 
-    void suspendEngine(long exerciseId) {
+    private void suspendEngine(long exerciseId) {
         compassCalculationEngines.remove(exerciseId);
     }
 
