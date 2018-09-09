@@ -182,8 +182,8 @@ public class ModelingSubmissionResource {
     @Timed
     public ResponseEntity<ModelingSubmission> getModelingSubmission(@PathVariable Long id) {
         log.debug("REST request to get ModelingSubmission : {}", id);
-        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(modelingSubmission));
+        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(modelingSubmission);
     }
 
     /**
@@ -197,7 +197,7 @@ public class ModelingSubmissionResource {
     @Timed
     public ResponseEntity<Void> deleteModelingSubmission(@PathVariable Long id) {
         log.debug("REST request to delete ModelingSubmission : {}", id);
-        modelingSubmissionRepository.delete(id);
+        modelingSubmissionRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 
@@ -218,14 +218,14 @@ public class ModelingSubmissionResource {
     @Timed
     public ResponseEntity<ModelingSubmission> getModelingSubmissionWithModel(@PathVariable Long courseId, @PathVariable Long exerciseId, @PathVariable Long id, Principal principal) {
         log.debug("REST request to get ModelingSubmission with model : {}", id);
-        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOne(id);
-        if (Optional.ofNullable(modelingSubmission).isPresent()) {
+        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(id);
+        if (modelingSubmission.isPresent()) {
             Long studentId = userRepository.findUserIdBySubmissionId(id);
             JsonObject model = modelingSubmissionService.getModel(exerciseId, studentId, id);
             if (model != null) {
-                modelingSubmission.setModel(model.toString());
+                modelingSubmission.get().setModel(model.toString());
             }
         }
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(modelingSubmission));
+        return ResponseUtil.wrapOrNotFound(modelingSubmission);
     }
 }

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../shared';
+import { JhiWebsocketService, Principal } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
@@ -18,7 +18,6 @@ import { Subscription } from 'rxjs/Subscription';
     providers: [QuizStatisticUtil, ArtemisMarkdown]
 })
 export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
@@ -57,14 +56,16 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     // options for chart in chart.js style
     options: ChartOptions;
 
-    constructor(private route: ActivatedRoute,
-                private router: Router,
-                private principal: Principal,
-                private translateService: TranslateService,
-                private quizExerciseService: QuizExerciseService,
-                private jhiWebsocketService: JhiWebsocketService,
-                private quizStatisticUtil: QuizStatisticUtil,
-                private artemisMarkdown: ArtemisMarkdown) {
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private principal: Principal,
+        private translateService: TranslateService,
+        private quizExerciseService: QuizExerciseService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private quizStatisticUtil: QuizStatisticUtil,
+        private artemisMarkdown: ArtemisMarkdown
+    ) {
         this.options = createOptions(this);
     }
 
@@ -136,13 +137,15 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
     loadQuiz(quiz: QuizExercise, refresh: boolean) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-            && quiz.quizPointStatistic.released === false) {
+        if (
+            !this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) &&
+            quiz.quizPointStatistic.released === false
+        ) {
             this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        const updatedQuestion = this.quizExercise.questions.filter( question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.questions.filter(question => this.questionIdParam === question.id)[0];
         this.question = updatedQuestion as MultipleChoiceQuestion;
         // if the Anyone finds a way to the Website,
         // with an wrong combination of QuizId and QuestionId
@@ -168,7 +171,6 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
      * build the Chart-Layout based on the the Json-entity (questionStatistic)
      */
     loadLayout() {
-
         // reset old data
         this.label = [];
         this.backgroundColor = [];
@@ -195,8 +197,8 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
 
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
-            this.solutionLabel[this.question.answerOptions.length] = (lastLabel.split(' '));
-            this.label[this.question.answerOptions.length] = (lastLabel.split(' '));
+            this.solutionLabel[this.question.answerOptions.length] = lastLabel.split(' ');
+            this.label[this.question.answerOptions.length] = lastLabel.split(' ');
             this.labels.length = 0;
             for (let i = 0; i < this.label.length; i++) {
                 this.labels.push(this.label[i]);
@@ -208,7 +210,6 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
      * change label and Color if a dropLocation is invalid
      */
     loadInvalidLayout() {
-
         // set Background for invalid answers = grey
         this.translateService.get('showStatistic.invalid').subscribe(invalidLabel => {
             this.question.answerOptions.forEach((answerOption, i) => {
@@ -227,49 +228,47 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
      */
     loadSolutionLayout() {
         // add correct-text to the label based on the language
-        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.correct')
-            .subscribe(correctLabel => {
-                this.question.answerOptions.forEach((answerOption, i) => {
-                    if (answerOption.isCorrect) {
-                        // check if the answer is valid and if true:
-                        //      change solution-label and -color
-                        if (!answerOption.invalid) {
-                            this.backgroundSolutionColor[i] = '#5cb85c';
-                            this.solutionLabel[i] = String.fromCharCode(65 + i) + '. (' + correctLabel + ')';
-                        }
+        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.correct').subscribe(correctLabel => {
+            this.question.answerOptions.forEach((answerOption, i) => {
+                if (answerOption.isCorrect) {
+                    // check if the answer is valid and if true:
+                    //      change solution-label and -color
+                    if (!answerOption.invalid) {
+                        this.backgroundSolutionColor[i] = '#5cb85c';
+                        this.solutionLabel[i] = String.fromCharCode(65 + i) + '. (' + correctLabel + ')';
                     }
-                });
+                }
             });
+        });
 
         // add incorrect-text to the label based on the language
-        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.incorrect')
-            .subscribe(incorrectLabel => {
-                this.question.answerOptions.forEach((answerOption, i) => {
-                    if (!answerOption.isCorrect) {
-                        // check if the answer is valid and if false:
-                        //      change solution-label and -color
-                        if (!answerOption.invalid) {
-                            this.backgroundSolutionColor[i] = '#d9534f';
-                            this.solutionLabel[i] = String.fromCharCode(65 + i) + '. (' + incorrectLabel + ')';
-                        }
+        this.translateService.get('showStatistic.multipleChoiceQuestionStatistic.incorrect').subscribe(incorrectLabel => {
+            this.question.answerOptions.forEach((answerOption, i) => {
+                if (!answerOption.isCorrect) {
+                    // check if the answer is valid and if false:
+                    //      change solution-label and -color
+                    if (!answerOption.invalid) {
+                        this.backgroundSolutionColor[i] = '#d9534f';
+                        this.solutionLabel[i] = String.fromCharCode(65 + i) + '. (' + incorrectLabel + ')';
                     }
-                });
+                }
             });
+        });
     }
 
     /**
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
-
         // reset old data
         this.ratedData = [];
         this.unratedData = [];
 
         // set data based on the answerCounters for each AnswerOption
         this.question.answerOptions.forEach(answerOption => {
-            const answerOptionCounter = this.questionStatistic.answerCounters
-                .filter(answerCounter => answerOption.id === answerCounter.answer.id)[0];
+            const answerOptionCounter = this.questionStatistic.answerCounters.filter(
+                answerCounter => answerOption.id === answerCounter.answer.id
+            )[0];
             this.ratedData.push(answerOptionCounter.ratedCounter);
             this.unratedData.push(answerOptionCounter.unRatedCounter);
         });
@@ -330,10 +329,12 @@ export class MultipleChoiceQuestionStatisticComponent implements OnInit, OnDestr
                 this.data = this.unratedData;
             }
         }
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**

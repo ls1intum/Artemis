@@ -28,7 +28,7 @@ public class QuizSubmissionService {
 
     @Transactional(readOnly = true)
     public QuizSubmission findOne(Long id) {
-        return quizSubmissionRepository.findOne(id);
+        return quizSubmissionRepository.findById(id).get();
     }
 
     @Transactional(readOnly = true)
@@ -38,7 +38,7 @@ public class QuizSubmissionService {
 
     @Transactional
     public void delete(Long id) {
-        quizSubmissionRepository.delete(id);
+        quizSubmissionRepository.deleteById(id);
     }
 
     /**

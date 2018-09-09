@@ -97,8 +97,8 @@ public class LtiOutcomeUrlResource {
     @Timed
     public ResponseEntity<LtiOutcomeUrl> getLtiOutcomeUrl(@PathVariable Long id) {
         log.debug("REST request to get LtiOutcomeUrl : {}", id);
-        LtiOutcomeUrl ltiOutcomeUrl = ltiOutcomeUrlRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(ltiOutcomeUrl));
+        Optional<LtiOutcomeUrl> ltiOutcomeUrl = ltiOutcomeUrlRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(ltiOutcomeUrl);
     }
 
     /**
@@ -111,7 +111,7 @@ public class LtiOutcomeUrlResource {
     @Timed
     public ResponseEntity<Void> deleteLtiOutcomeUrl(@PathVariable Long id) {
         log.debug("REST request to delete LtiOutcomeUrl : {}", id);
-        ltiOutcomeUrlRepository.delete(id);
+        ltiOutcomeUrlRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

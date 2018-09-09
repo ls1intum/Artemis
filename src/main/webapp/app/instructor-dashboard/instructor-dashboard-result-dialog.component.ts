@@ -8,6 +8,7 @@ import { Participation } from '../entities/participation';
 import { Feedback, FeedbackType } from '../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
+import * as moment from 'moment';
 
 import { Subscription } from 'rxjs/Subscription';
 
@@ -16,7 +17,6 @@ import { Subscription } from 'rxjs/Subscription';
     templateUrl: './instructor-dashboard-result-dialog.component.html'
 })
 export class InstructorDashboardResultDialogComponent implements OnInit {
-
     participation: Participation;
     result: Result;
     feedbacks: Feedback[] = [];
@@ -31,12 +31,9 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        if (this.result.completionDate) {
-            this.result.completionDate = this.datePipe.transform(this.result.completionDate, 'yyyy-MM-ddTHH:mm:ss');
-        }
         if (this.participation) {
             this.result.participation = this.participation;
-            this.isOpenForSubmission = this.result.participation.exercise.dueDate < Date.now();
+            this.isOpenForSubmission = this.result.participation.exercise.dueDate.isAfter(moment());
         } else {
             this.clear();
         }
@@ -53,24 +50,30 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
         if (this.result.id !== null) {
-            this.resultService.update(this.result).subscribe(res => {
+            this.resultService.update(this.result).subscribe(
+                res => {
                     this.onSaveSuccess(res);
-                }, err => {
+                },
+                err => {
                     this.onSaveError();
-                });
+                }
+            );
         } else {
-            this.resultService.create(this.result).subscribe(res => {
+            this.resultService.create(this.result).subscribe(
+                res => {
                     this.onSaveSuccess(res);
-                }, err => {
+                },
+                err => {
                     this.onSaveError();
-                });
+                }
+            );
         }
     }
 
     onSaveSuccess(result: HttpResponse<Result>) {
         this.activeModal.close(result);
         this.isSaving = false;
-        this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result'});
+        this.eventManager.broadcast({ name: 'resultListModification', content: 'Added a manual result' });
     }
 
     onSaveError() {
@@ -93,18 +96,17 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
     template: ''
 })
 export class InstructorDashboardResultPopupComponent implements OnInit, OnDestroy {
-
     routeSub: Subscription;
 
-    constructor(
-        private route: ActivatedRoute,
-        private instructorDashboardPopupService: InstructorDashboardPopupService
-    ) {}
+    constructor(private route: ActivatedRoute, private instructorDashboardPopupService: InstructorDashboardPopupService) {}
 
     ngOnInit() {
         this.routeSub = this.route.params.subscribe(params => {
-            this.instructorDashboardPopupService
-                .open(InstructorDashboardResultDialogComponent as Component, params['participationId'], false);
+            this.instructorDashboardPopupService.open(
+                InstructorDashboardResultDialogComponent as Component,
+                params['participationId'],
+                false
+            );
         });
     }
 

@@ -3,21 +3,27 @@ import { RouterModule } from '@angular/router';
 
 import { ArTEMiSSharedModule } from '../shared';
 
-import { accountState, ActivateComponent, ActivateService, Register, RegisterComponent, SettingsComponent } from './';
+import {
+    PasswordStrengthBarComponent,
+    RegisterComponent,
+    ActivateComponent,
+    PasswordComponent,
+    PasswordResetInitComponent,
+    PasswordResetFinishComponent,
+    SettingsComponent,
+    accountState
+} from './';
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(accountState)
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(accountState)],
     declarations: [
         ActivateComponent,
         RegisterComponent,
+        PasswordComponent,
+        PasswordStrengthBarComponent,
+        PasswordResetInitComponent,
+        PasswordResetFinishComponent,
         SettingsComponent
-    ],
-    providers: [
-        Register,
-        ActivateService,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

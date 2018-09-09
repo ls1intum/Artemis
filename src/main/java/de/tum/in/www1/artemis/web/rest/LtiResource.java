@@ -78,12 +78,13 @@ public class LtiResource {
         }
 
         // Check if exercise ID is valid
-        Exercise exercise = exerciseRepository.findOne(exerciseId);
-        if (exercise == null) {
+        Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
+        if (!optionalExercise.isPresent()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, "Exercise not found");
             return;
         }
 
+        Exercise exercise = optionalExercise.get();
         // Handle the launch request using LtiService
         try {
             ltiService.handleLaunchRequest(launchRequest, exercise);
@@ -123,16 +124,15 @@ public class LtiResource {
     @GetMapping(value = "/lti/configuration/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ExerciseLtiConfigurationDTO> exerciseLtiConfiguration(@PathVariable("exerciseId") Long exerciseId, HttpServletRequest request) {
-        Exercise exercise = exerciseRepository.findOne(exerciseId);
+        Optional<Exercise> exercise = exerciseRepository.findById(exerciseId);
 
-
-        return Optional.ofNullable(exercise)
+        return exercise
             .map(result -> {
                 String launchUrl = request.getScheme() + // "http"
                     "://" +                                // "://"
                     request.getServerName() +              // "myhost"                     // ":"
                     (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "" ) +
-                    "/api/lti/launch/" + exercise.getId();
+                    "/api/lti/launch/" + exercise.get().getId();
 
                 String ltiId = LTI_ID;
                 String ltiPassport = LTI_ID + ":" + LTI_OAUTH_KEY + ":" + LTI_OAUTH_SECRET;

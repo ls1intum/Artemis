@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../shared';
+import { JhiWebsocketService, Principal } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
@@ -43,23 +43,27 @@ export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
             enabled: false
         },
         scales: {
-            yAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                },
-                ticks: {
-                    beginAtZero: true
+            yAxes: [
+                {
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
                 }
-            }],
-            xAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
+            ],
+            xAxes: [
+                {
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    }
                 }
-            }]
+            ]
         },
-        hover: {animationDuration: 0},
+        hover: { animationDuration: 0 },
         animation: createAnimation(dataSetProvider)
     };
 }
@@ -83,7 +87,7 @@ export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimatio
                 const meta = chart.getDatasetMeta(i);
                 meta.data.forEach((bar: any, index) => {
                     const data = (Math.round(dataset.data[index] * 100) / 100).toString();
-                    const dataPercentage = (Math.round((dataset.data[index] / participants) * 1000) / 10);
+                    const dataPercentage = Math.round((dataset.data[index] / participants) * 1000) / 10;
                     const position = bar.tooltipPosition();
 
                     // if the bar is high enough -> write the percentageValue inside the bar
@@ -131,7 +135,6 @@ export interface DataSetProvider {
     templateUrl: './quiz-statistic.component.html'
 })
 export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
-
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
@@ -161,13 +164,15 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
     // options for chart.js style
     options: ChartOptions;
 
-    constructor(private route: ActivatedRoute,
-                private router: Router,
-                private principal: Principal,
-                private translateService: TranslateService,
-                private quizExerciseService: QuizExerciseService,
-                private jhiWebsocketService: JhiWebsocketService,
-                private quizStatisticUtil: QuizStatisticUtil) {
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private principal: Principal,
+        private translateService: TranslateService,
+        private quizExerciseService: QuizExerciseService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private quizStatisticUtil: QuizStatisticUtil
+    ) {
         this.options = createOptions(this);
     }
 
@@ -244,7 +249,10 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
      */
     loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released === false) {
+        if (
+            !this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) &&
+            quiz.quizPointStatistic.released === false
+        ) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
@@ -284,8 +292,12 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.backgroundColor.push('#5bc0de');
             this.ratedData.push(this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter);
             this.unratedData.push(this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter);
-            this.ratedAverage = this.ratedAverage + (this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter * this.quizExercise.questions[i].score);
-            this.unratedAverage = this.unratedAverage + (this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * this.quizExercise.questions[i].score);
+            this.ratedAverage =
+                this.ratedAverage +
+                this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter * this.quizExercise.questions[i].score;
+            this.unratedAverage =
+                this.unratedAverage +
+                this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * this.quizExercise.questions[i].score;
         }
 
         // set Background for invalid questions = grey
@@ -318,10 +330,12 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.participants = this.quizExercise.quizPointStatistic.participantsUnrated;
             this.data = this.unratedData;
         }
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**
@@ -341,10 +355,12 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
             this.participants = this.quizExercise.quizPointStatistic.participantsRated;
             this.rated = true;
         }
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**
@@ -353,21 +369,30 @@ export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvide
      */
     nextStatistic() {
         if (this.quizExercise.questions === null || this.quizExercise.questions.length === 0) {
-            this.router.navigate(['/quiz/:quizExerciseId/quiz-point-statistic', {
-                quizExerciseId: this.quizExercise.id
-            }]);
+            this.router.navigate([
+                '/quiz/:quizExerciseId/quiz-point-statistic',
+                {
+                    quizExerciseId: this.quizExercise.id
+                }
+            ]);
         } else {
             const nextQuestion = this.quizExercise.questions[0];
             if (nextQuestion.type === QuestionType.MULTIPLE_CHOICE) {
-                this.router.navigate(['quiz/:quizId/multiple-choice-question-statistic/:questionId', {
-                    quizId: this.quizExercise.id,
-                    questionId: nextQuestion.id
-                }]);
+                this.router.navigate([
+                    'quiz/:quizId/multiple-choice-question-statistic/:questionId',
+                    {
+                        quizId: this.quizExercise.id,
+                        questionId: nextQuestion.id
+                    }
+                ]);
             } else if (nextQuestion.type === QuestionType.DRAG_AND_DROP) {
-                this.router.navigate(['quiz/:quizId/drag-and-drop-question-statistic/:questionId', {
-                    quizId: this.quizExercise.id,
-                    questionId: nextQuestion.id
-                }]);
+                this.router.navigate([
+                    'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
+                    {
+                        quizId: this.quizExercise.id,
+                        questionId: nextQuestion.id
+                    }
+                ]);
             } else {
                 console.log('Question type not yet supported: ' + nextQuestion);
             }

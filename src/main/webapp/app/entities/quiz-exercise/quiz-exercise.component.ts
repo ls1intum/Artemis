@@ -5,7 +5,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { QuizExercise } from './quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
-import { Principal } from '../../shared';
+import { Principal } from '../../core';
 import { ActivatedRoute } from '@angular/router';
 import * as moment from 'moment';
 import { Course, CourseService } from '../course';
@@ -62,9 +62,11 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      */
     static downloadFile(blob: Blob) {
         // Different browsers require different code to download file,
-        if (window.navigator.msSaveOrOpenBlob) { // IE & Edge
+        if (window.navigator.msSaveOrOpenBlob) {
+            // IE & Edge
             window.navigator.msSaveBlob(blob, 'quiz.json');
-        } else { // Chrome & FF
+        } else {
+            // Chrome & FF
             // Create a url and attach file to it,
             const url = window.URL.createObjectURL(blob);
             const anchor = document.createElement('a');
@@ -186,7 +188,7 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
     }
 
     setQuizExercisesStatus() {
-        this.quizExercises.forEach(quizExercise => quizExercise.status = this.statusForQuiz(quizExercise));
+        this.quizExercises.forEach(quizExercise => (quizExercise.status = this.statusForQuiz(quizExercise)));
     }
 
     /**
@@ -238,18 +240,16 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      * @param quizExerciseId
      */
     private loadOne(quizExerciseId: number) {
-        this.quizExerciseService.find(quizExerciseId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
-                const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === quizExerciseId);
-                const exercise = res.body;
-                exercise.status = this.statusForQuiz(exercise);
-                if (index === -1) {
-                    this.quizExercises.push(exercise);
-                } else {
-                    this.quizExercises[index] = exercise;
-                }
+        this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
+            const index = this.quizExercises.findIndex(quizExercise => quizExercise.id === quizExerciseId);
+            const exercise = res.body;
+            exercise.status = this.statusForQuiz(exercise);
+            if (index === -1) {
+                this.quizExercises.push(exercise);
+            } else {
+                this.quizExercises[index] = exercise;
             }
-        );
+        });
     }
 
     /**
@@ -258,12 +258,10 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
      * @param exportAll If true exports all questions, else exports only those whose export flag is true
      */
     exportQuizById(quizExerciseId: number, exportAll: boolean) {
-        this.quizExerciseService.find(quizExerciseId).subscribe(
-            (res: HttpResponse<QuizExercise>) => {
-                const exercise = res.body;
-                QuizExerciseComponent.exportQuiz(exercise.questions, exportAll);
-            }
-        );
+        this.quizExerciseService.find(quizExerciseId).subscribe((res: HttpResponse<QuizExercise>) => {
+            const exercise = res.body;
+            QuizExerciseComponent.exportQuiz(exercise.questions, exportAll);
+        });
     }
 
     /**
@@ -283,5 +281,5 @@ export class QuizExerciseComponent implements OnInit, OnDestroy {
         );
     }
 
-    callback() { }
+    callback() {}
 }

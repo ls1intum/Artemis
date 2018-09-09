@@ -1,38 +1,21 @@
 import { DatePipe } from '@angular/common';
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgbDateAdapter } from '@ng-bootstrap/ng-bootstrap';
 import {
-    AccountService,
     ArTEMiSSharedCommonModule,
     ArTEMiSSharedLibsModule,
-    AuthServerProvider,
-    CSRFService,
     HasAnyAuthorityDirective,
     JhiLoginModalComponent,
-    LoginModalService,
-    LoginService,
-    Principal,
     SafeHtmlPipe,
-    SafeUrlPipe,
-    StateStorageService,
-    UserService
+    SafeUrlPipe
 } from './';
 import { FileUploaderService } from './http/file-uploader.service';
+import { NgbDateMomentAdapter } from './util/datepicker-adapter';
 
 @NgModule({
     imports: [ArTEMiSSharedLibsModule, ArTEMiSSharedCommonModule],
     declarations: [JhiLoginModalComponent, HasAnyAuthorityDirective, SafeHtmlPipe, SafeUrlPipe],
-    providers: [
-        LoginService,
-        LoginModalService,
-        AccountService,
-        StateStorageService,
-        Principal,
-        CSRFService,
-        AuthServerProvider,
-        UserService,
-        FileUploaderService,
-        DatePipe
-    ],
+    providers: [FileUploaderService, DatePipe, { provide: NgbDateAdapter, useClass: NgbDateMomentAdapter }],
     entryComponents: [JhiLoginModalComponent],
     exports: [ArTEMiSSharedCommonModule, JhiLoginModalComponent, HasAnyAuthorityDirective, DatePipe, SafeHtmlPipe, SafeUrlPipe],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]

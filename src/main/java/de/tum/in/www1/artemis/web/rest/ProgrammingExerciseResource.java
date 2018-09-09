@@ -200,15 +200,17 @@ public class ProgrammingExerciseResource {
     @Timed
     public ResponseEntity<ProgrammingExercise> getProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to get ProgrammingExercise : {}", id);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
-        Course course = programmingExercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        if (programmingExercise.isPresent()) {
+            Course course = programmingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
         }
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(programmingExercise));
+        return ResponseUtil.wrapOrNotFound(programmingExercise);
     }
 
     /**
@@ -222,14 +224,19 @@ public class ProgrammingExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteProgrammingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ProgrammingExercise : {}", id);
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findOne(id);
-        Course course = programmingExercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository.findById(id);
+        if (programmingExercise.isPresent()) {
+            Course course = programmingExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            exerciseService.delete(id);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }
-        exerciseService.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

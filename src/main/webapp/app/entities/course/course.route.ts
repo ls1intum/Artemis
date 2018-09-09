@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { CourseComponent } from './course.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CoursePopupComponent } from './course-dialog.component';
@@ -16,7 +16,8 @@ export const courseRoute: Routes = [
             pageTitle: 'arTeMiSApp.course.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:id',
         component: CourseDetailComponent,
         data: {

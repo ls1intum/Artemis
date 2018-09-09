@@ -5,21 +5,21 @@ import { Course } from './course.model';
 import { Exercise } from '../exercise/exercise.model';
 import { Participation } from '../participation';
 
-import { JhiDateUtils } from 'ng-jhipster';
+import * as moment from 'moment';
+import { Moment } from 'moment';
 
 @Injectable()
 export class CourseScoreCalculationService {
-
     private SCORE_NORMALIZATION_VALUE = 0.01;
     private courses: Course[] = [];
 
-    constructor(private dateUtils: JhiDateUtils) { }
+    constructor() {}
 
     calculateTotalScores(courseExercises: Exercise[]): Map<string, number> {
         const scores = new Map<string, number>();
         let absoluteScore = 0.0;
         let maxScore = 0;
-        courseExercises.forEach( exercise => {
+        courseExercises.forEach(exercise => {
             if (exercise.maxScore !== null) {
                 maxScore = maxScore + exercise.maxScore;
                 const participation: Participation = this.getParticipationForExercise(exercise);
@@ -39,7 +39,8 @@ export class CourseScoreCalculationService {
         return scores;
     }
 
-    private round(value: any, exp: number) { // helper function to make actually rounding possible
+    private round(value: any, exp: number) {
+        // helper function to make actually rounding possible
         if (typeof exp === 'undefined' || +exp === 0) {
             return Math.round(value);
         }
@@ -53,11 +54,11 @@ export class CourseScoreCalculationService {
 
         // Shift
         value = value.toString().split('e');
-        value = Math.round(+(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp)));
+        value = Math.round(+(value[0] + 'e' + (value[1] ? +value[1] + exp : exp)));
 
         // Shift back
         value = value.toString().split('e');
-        return +(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp));
+        return +(value[0] + 'e' + (value[1] ? +value[1] - exp : -exp));
     }
 
     setCourses(courses: Course[]) {
@@ -79,18 +80,22 @@ export class CourseScoreCalculationService {
     }
 
     getParticipationForExercise(exercise: Exercise): Participation {
-        const exerciseParticipation: Participation = exercise['participation'];
-        return this.convertParticipationFromServer(exerciseParticipation);
+        if (exercise.participations != null && exercise.participations.length > 0) {
+            const exerciseParticipation: Participation = exercise.participations[0];
+            return this.convertDateForParticipationFromServer(exerciseParticipation);
+        } else {
+            return null;
+        }
     }
 
-    getResultForParticipation(participation: Participation, dueDate: Date): Result {
+    getResultForParticipation(participation: Participation, dueDate: Moment): Result {
         const results: Result[] = participation.results;
         const resultsArray: Result[] = [];
         let chosenResult: Result;
 
         if (results !== undefined) {
             for (let i = 0; i < results.length; i++) {
-                resultsArray.push(this.convertResultFromServer(results[i]));
+                resultsArray.push(this.convertDateForResultFromServer(results[i]));
             }
 
             if (resultsArray.length <= 0) {
@@ -100,11 +105,17 @@ export class CourseScoreCalculationService {
             }
 
             // sorting in descending order to have the last result at the beginning
-            resultsArray.sort((result1, result2): number => {
-                if (result1.completionDate > result2.completionDate) { return -1; }
-                if (result1.completionDate < result2.completionDate) { return 1; }
-                return 0;
-            });
+            resultsArray.sort(
+                (result1, result2): number => {
+                    if (result1.completionDate > result2.completionDate) {
+                        return -1;
+                    }
+                    if (result1.completionDate < result2.completionDate) {
+                        return 1;
+                    }
+                    return 0;
+                }
+            );
 
             if (dueDate === null || dueDate >= resultsArray[0].completionDate) {
                 // find the first result that is before the due date
@@ -128,14 +139,13 @@ export class CourseScoreCalculationService {
         return chosenResult;
     }
 
-    private convertResultFromServer(result: Result): Result {
-        const copy: Result = Object.assign({}, result);
-        copy.completionDate = this.dateUtils.toDate(result.completionDate);
-        return copy;
+    private convertDateForResultFromServer(result: Result): Result {
+        result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+        return result;
     }
 
-    private convertParticipationFromServer(participation: Participation): Participation {
-        const entity: Participation = Object.assign({}, participation);
-        return entity;
+    private convertDateForParticipationFromServer(participation: Participation): Participation {
+        participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+        return participation;
     }
 }

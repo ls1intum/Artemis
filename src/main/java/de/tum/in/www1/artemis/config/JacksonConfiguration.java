@@ -2,10 +2,11 @@ package de.tum.in.www1.artemis.config;
 
 import com.fasterxml.jackson.datatype.hibernate5.Hibernate5Module;
 import com.fasterxml.jackson.module.afterburner.AfterburnerModule;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.zalando.problem.ProblemModule;
-import org.zalando.problem.validation.ConstraintViolationProblemModule;
+import org.zalando.problem.violations.ConstraintViolationProblemModule;
 
 @Configuration
 public class JacksonConfiguration {

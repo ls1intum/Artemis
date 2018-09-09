@@ -3,8 +3,8 @@ import { QuizExercise, QuizExercisePopupService, QuizExerciseService } from '../
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
-import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
+import { NG1TRANSLATE_SERVICE } from '../../core/language/ng1-translate.service';
+import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../core/language/ng1-translate-partial-loader.service';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate',
@@ -17,7 +17,6 @@ import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-tra
     providers: []
 })
 export class QuizReEvaluateComponent implements OnInit, OnDestroy {
-
     private subscription: Subscription;
 
     quizExercise: QuizExercise;
@@ -25,18 +24,20 @@ export class QuizReEvaluateComponent implements OnInit, OnDestroy {
     popupService: QuizExercisePopupService;
     router: Router;
 
-    constructor(private quizExerciseService: QuizExerciseService,
-                private route: ActivatedRoute,
-                private routerC: Router,
-                private modalServiceC: NgbModal,
-                private quizExercisePopupService: QuizExercisePopupService,
-                @Inject(NG1TRANSLATE_SERVICE) private $translate: any,
-                @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any) {}
+    constructor(
+        private quizExerciseService: QuizExerciseService,
+        private route: ActivatedRoute,
+        private routerC: Router,
+        private modalServiceC: NgbModal,
+        private quizExercisePopupService: QuizExercisePopupService,
+        @Inject(NG1TRANSLATE_SERVICE) private $translate: any,
+        @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any
+    ) {}
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
             this.quizExerciseService.find(params['id']).subscribe(res => {
-               this.quizExercise = res.body;
+                this.quizExercise = res.body;
             });
         });
 

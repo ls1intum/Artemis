@@ -7,8 +7,8 @@ import { Course } from '../course/course.model';
 import { CourseService } from '../course/course.service';
 import { QuizExercise } from './quiz-exercise.model';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
-import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
-import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
+import { NG1TRANSLATE_SERVICE } from '../../core/language/ng1-translate.service';
+import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../core/language/ng1-translate-partial-loader.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
 import { QuestionType } from '../../entities/question';
@@ -28,7 +28,6 @@ import { QuestionType } from '../../entities/question';
     providers: [DragAndDropQuestionUtil]
 })
 export class QuizExerciseDetailComponent implements OnInit, OnDestroy {
-
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
@@ -44,7 +43,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnDestroy {
     translateService: TranslateService;
     fileUploaderService: FileUploaderService;
 
-    constructor(private route: ActivatedRoute,
+    constructor(
+        private route: ActivatedRoute,
         private courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
         dragAndDropQuestionUtil: DragAndDropQuestionUtil,
@@ -52,7 +52,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnDestroy {
         translateService: TranslateService,
         fileUploaderService: FileUploaderService,
         @Inject(NG1TRANSLATE_SERVICE) private $translate: any,
-        @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any) {
+        @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any
+    ) {
         this.dragAndDropQuestionUtil = dragAndDropQuestionUtil;
         this.router = router;
         this.translateService = translateService;

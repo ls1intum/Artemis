@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { JhiWebsocketService } from '../../shared';
+import { JhiWebsocketService } from '../../core';
 import * as moment from 'moment';
 import * as _ from 'lodash';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
@@ -22,7 +22,6 @@ import { QuestionType } from '../../entities/question';
     providers: [ParticipationService]
 })
 export class QuizComponent implements OnInit, OnDestroy {
-
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
@@ -79,12 +78,14 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.justSaved = false;
     }, 2000);
 
-    constructor(private jhiWebsocketService: JhiWebsocketService,
-                private quizExerciseService: QuizExerciseService,
-                private participationService: ParticipationService,
-                private route: ActivatedRoute,
-                private jhiAlertService: JhiAlertService,
-                private quizSubmissionService: QuizSubmissionService) {}
+    constructor(
+        private jhiWebsocketService: JhiWebsocketService,
+        private quizExerciseService: QuizExerciseService,
+        private participationService: ParticipationService,
+        private route: ActivatedRoute,
+        private jhiAlertService: JhiAlertService,
+        private quizSubmissionService: QuizSubmissionService
+    ) {}
 
     ngOnInit() {
         // set correct mode
@@ -175,8 +176,9 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.subscribeToWebsocketChannels();
 
         // load the quiz (and existing submission if quiz has started)
-        this.participationService.findParticipation(1, this.id).subscribe(participation => {
-                this.applyParticipationFull(participation);
+        this.participationService.findParticipation(1, this.id).subscribe(
+            (response: HttpResponse<Participation>) => {
+                this.applyParticipationFull(response.body);
             },
             (res: HttpErrorResponse) => this.onError(res)
         );
@@ -245,7 +247,11 @@ export class QuizComponent implements OnInit, OnDestroy {
         this.quizExercise.adjustedDueDate = moment().add(this.quizExercise.duration, 'seconds');
 
         // auto submit when time is up
-        this.runningTimeouts.push(setTimeout( () => { this.onSubmit(); }, quizExercise.duration * 1000));
+        this.runningTimeouts.push(
+            setTimeout(() => {
+                this.onSubmit();
+            }, quizExercise.duration * 1000)
+        );
     }
 
     /**
@@ -260,7 +266,8 @@ export class QuizComponent implements OnInit, OnDestroy {
             this.jhiWebsocketService.receive('/user' + this.submissionChannel).subscribe(
                 submission => {
                     this.onSaveSuccess(submission);
-                }, error => {
+                },
+                error => {
                     this.onSubmitError(error);
                 }
             );
@@ -286,7 +293,8 @@ export class QuizComponent implements OnInit, OnDestroy {
                         // update quizExercise and results / submission
                         this.applyParticipationAfterStart(payload);
                     }
-                }, error => {}
+                },
+                error => {}
             );
         }
 
@@ -300,7 +308,8 @@ export class QuizComponent implements OnInit, OnDestroy {
                     if (this.waitingForQuizStart) {
                         this.applyQuizFull(payload);
                     }
-                }, error => {}
+                },
+                error => {}
             );
         }
     }
@@ -366,9 +375,11 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     initQuiz() {
         // calculate score
-        this.totalScore = this.quizExercise.questions ? this.quizExercise.questions.reduce(function(score, question) {
-            return score + question.score;
-        }, 0) : 0;
+        this.totalScore = this.quizExercise.questions
+            ? this.quizExercise.questions.reduce(function(score, question) {
+                  return score + question.score;
+              }, 0)
+            : 0;
 
         // prepare selection arrays for each question
         this.selectedAnswerOptions = {};
@@ -410,7 +421,9 @@ export class QuizComponent implements OnInit, OnDestroy {
                 });
                 if (question.type === QuestionType.MULTIPLE_CHOICE) {
                     // add the array of selected options to the dictionary (add an empty array, if there is no submittedAnswer for this question)
-                    this.selectedAnswerOptions[question.id] = submittedAnswer ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions : [];
+                    this.selectedAnswerOptions[question.id] = submittedAnswer
+                        ? (submittedAnswer as MultipleChoiceSubmittedAnswer).selectedOptions
+                        : [];
                 } else if (question.type === QuestionType.DRAG_AND_DROP) {
                     // add the array of mappings to the dictionary (add an empty array, if there is no submittedAnswer for this question)
                     this.dragAndDropMappings[question.id] = submittedAnswer ? (submittedAnswer as DragAndDropSubmittedAnswer).mappings : [];
@@ -548,9 +561,7 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     applyParticipationAfterStart(participation: Participation) {
         const quizExercise = participation.exercise as QuizExercise;
-        if (participation.results.length &&
-            participation.results[0].resultString &&
-            quizExercise.ended) {
+        if (participation.results.length && participation.results[0].resultString && quizExercise.ended) {
             // quiz has ended and results are available
             this.submission = participation.results[0].submission as QuizSubmission;
 
@@ -577,29 +588,29 @@ export class QuizComponent implements OnInit, OnDestroy {
                 return question.id === localQuestion.id;
             });
             if (fullQuestion) {
-            question.explanation = fullQuestion.explanation;
+                question.explanation = fullQuestion.explanation;
 
-            if (question.type === QuestionType.MULTIPLE_CHOICE) {
-                const mcQuestion = question as MultipleChoiceQuestion;
+                if (question.type === QuestionType.MULTIPLE_CHOICE) {
+                    const mcQuestion = question as MultipleChoiceQuestion;
 
-                mcQuestion.answerOptions.forEach(function(answerOption) {
-                    // find updated answerOption
-                    const fullAnswerOption = mcQuestion.answerOptions.find(function(option) {
-                        return answerOption.id === option.id;
+                    mcQuestion.answerOptions.forEach(function(answerOption) {
+                        // find updated answerOption
+                        const fullAnswerOption = mcQuestion.answerOptions.find(function(option) {
+                            return answerOption.id === option.id;
+                        });
+                        if (fullAnswerOption) {
+                            answerOption.explanation = fullAnswerOption.explanation;
+                            answerOption.isCorrect = fullAnswerOption.isCorrect;
+                        }
                     });
-                    if (fullAnswerOption) {
-                        answerOption.explanation = fullAnswerOption.explanation;
-                        answerOption.isCorrect = fullAnswerOption.isCorrect;
-                    }
-                });
-            } else if (question.type === QuestionType.DRAG_AND_DROP) {
-                const dndQuestion = fullQuestion as DragAndDropQuestion;
-                dndQuestion.correctMappings = dndQuestion.correctMappings;
-            } else {
-                console.log('Unknown question type ' + question);
+                } else if (question.type === QuestionType.DRAG_AND_DROP) {
+                    const dndQuestion = fullQuestion as DragAndDropQuestion;
+                    dndQuestion.correctMappings = dndQuestion.correctMappings;
+                } else {
+                    console.log('Unknown question type ' + question);
+                }
             }
-        }
-    }, this);
+        }, this);
     }
 
     /**
@@ -688,7 +699,9 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     updateSubmissionTime() {
         if (this.submission.submissionDate) {
-            this.submission.adjustedSubmissionDate = moment(this.submission.submissionDate).subtract(this.timeDifference, 'seconds').toDate();
+            this.submission.adjustedSubmissionDate = moment(this.submission.submissionDate)
+                .subtract(this.timeDifference, 'seconds')
+                .toDate();
             if (Math.abs(moment(this.submission.adjustedSubmissionDate).diff(moment(), 'seconds')) < 2) {
                 this.justSaved = true;
                 this.timeoutJustSaved();
@@ -770,8 +783,10 @@ export class QuizComponent implements OnInit, OnDestroy {
                 break;
             case 'default':
                 if (this.disconnected || !this.submissionChannel) {
-                    alert('Cannot Submit while disconnected. Don\'t worry, answers that were saved' +
-                    'while you were still connected will be submitted automatically when the quiz ends.');
+                    alert(
+                        "Cannot Submit while disconnected. Don't worry, answers that were saved" +
+                            'while you were still connected will be submitted automatically when the quiz ends.'
+                    );
                     this.isSubmitting = false;
                     return;
                 }
@@ -801,7 +816,9 @@ export class QuizComponent implements OnInit, OnDestroy {
      */
     onSubmitError(error: string) {
         console.error(error);
-        alert('Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.');
+        alert(
+            'Submitting was not possible. Please try again later. If your answers have been saved, you can also wait until the quiz has finished.'
+        );
         this.isSubmitting = false;
     }
 }
