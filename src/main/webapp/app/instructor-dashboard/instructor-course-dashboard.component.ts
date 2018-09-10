@@ -45,12 +45,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     }
 
     getResults(courseId: number) {
-        /*this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - this call gets all information to the results in the exercises
+        this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - currently this call gets all results of the course - change to call with already build native query
            this.results = res;
             this.groupResults();
-        });*/
-        // test data
-        this.results = [{id:'58731',first_name:'Stephan Krusche', last_name:'', login:'ne23kow', email: 'testmail@test.com', studentID: '108', exerciseTitle:'Quiz 20c', exerciseID: '265', score:'17', max_score:'6', completion_date: '2018-07-11 10:54:53', due_date: null, discriminator: 'Quiz', rated: true}];
+        });
 
         this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => { // this call gets all exercise information for the course
             this.exerciseCall = res.body;
@@ -102,10 +100,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         this.results.forEach( result => {
 
             // create a new student object to save the information in
-            const student = new Student (result.first_name, result.last_name, result.id, result.login, result.email, new Map<ExerciseType, Array<Score>>([]),new Map<ExerciseType, number>(),new Map<ExerciseType, {successful:number, participated:number}>(), new Map<ExerciseType, Array<Score>>([]) , new Map<ExerciseType, string>(),
+            const student = new Student (result.participation.student.firstName, result.participation.student.lastName, result.participation.student.id, result.participation.student.login, result.participation.student.email, new Map<ExerciseType, Array<Score>>([]),new Map<ExerciseType, number>(),new Map<ExerciseType, {successful:number, participated:number}>(), new Map<ExerciseType, Array<Score>>([]) , new Map<ExerciseType, string>(),
                 0,0,true,0);
 
-            const exercise: Exercise = new Exercise (result.exerciseID, result.exerciseTitle, result.max_score, result.discriminator, result.due_date);
+            const exercise: Exercise = new Exercise (result.participation.exercise.id, result.participation.exercise.title, result.participation.exercise.maxScore, result.participation.exercise.type, result.participation.exercise.dueDate);
 
             if(!this.studentArray.some(stud => stud.id === student.id)) {
                 this.studentArray.push(student);
@@ -200,7 +198,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
     getScoresForExercises(student: Student, exercise: Exercise, result) {
 
-        const resultCompletionDate: Date = new Date(result.completion_date);
+        const resultCompletionDate: Date = new Date(result.completionDate);
         const dueDate: Date = new Date(exercise.dueDate);
 
         // filter if exercise result is relevant (quiz filter || programming-exercise filter || modelling-exercise filer)
