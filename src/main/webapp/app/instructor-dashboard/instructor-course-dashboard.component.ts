@@ -45,10 +45,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     }
 
     getResults(courseId: number) {
-        this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - currently this call gets all results of the course - change to call with already build native query
+       /* this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - currently this call gets all results of the course - change to call with already build native query
            this.results = res;
-            this.groupResults();
-        });
+           console.log(this.results);
+           this.groupResults();
+        });*/
+       this.results = [{completionDate:"2018-04-01T10:17:11+02:00", participation:{exercise:{id:169, title:"Quiz 01", maxScore: 2, type : 'quiz'},student:{email:"friederike.dollinger@tum.de", firstName:"Friederike Dollinger",id: 4457, lastName:"" ,login:"ge29wub"}}, rated : true, score: 100, successful:true}];
+
 
         this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => { // this call gets all exercise information for the course
             this.exerciseCall = res.body;
@@ -56,7 +59,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         });
     }
 
-    groupResults() {
+    groupResults(){
 
         if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
             return;
@@ -89,7 +92,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         this.createStudents();
     }
 
-    createStudents() { // creates students and initializes the result processing
+    createStudents(){ // creates students and initializes the result processing
 
         if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
             return;
@@ -127,7 +130,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         this.createScoreString();
     }
 
-    createScoreString() { // create a score string for each student and add the exercise (even if 0 points) to the everyScore Map
+    createScoreString(){ // create a score string for each student and add the exercise (even if 0 points) to the everyScore Map
 
         this.studentArray.forEach((student, indexStudent) => {
 
