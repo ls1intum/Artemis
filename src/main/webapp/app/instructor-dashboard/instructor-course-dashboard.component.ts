@@ -24,7 +24,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     results = [];
     exerciseTitles: Map<ExerciseType, string> = new Map<ExerciseType, string>();
     exerciseMaxScores: Map<ExerciseType, number> = new Map<ExerciseType, number>();
-    allExercises: Map<ExerciseType, Array<Exercise>> = new Map<ExerciseType, Array<Exercise>>([]);
+    allExercises: Map<ExerciseType, Array<Exercise>> = new Map<ExerciseType, Array<Exercise>>();
     exerciseCall = [];
     studentArray: Array<Student> = [];
     exportReady: Boolean = false;
@@ -45,21 +45,29 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     }
 
     getResults(courseId: number) {
-        this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - this call gets all information to the results in the exercises
-            this.results = res;
+        /*this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - this call gets all information to the results in the exercises
+           this.results = res;
             this.groupResults();
-        });
+        });*/
+        this.results = [{id:'58731',first_name:'Stephan Krusche', last_name:'', login:'ne23kow', email: 'testmail@test.com', studentID: '108', exerciseTitle:'Quiz 20c', exerciseID: '265', score:'17', max_score:'6', completion_date: '2018-07-11 10:54:53', due_date: null, discriminator: 'Quiz', rated: true}];
 
         this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => { // this call gets all exercise information for the course
-            this.exerciseCall = res;
+            this.exerciseCall = res.body;
+
+            console.log(this.exerciseCall);
+
             this.groupResults();
         });
     }
 
     groupResults() {
-       
+
         if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
             return;
+        }
+
+        for(const exerciseType in ExerciseType){
+            this.allExercises[exerciseType] = [];
         }
 
         // iterating through the exercises result of the course
@@ -67,9 +75,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
             // create exercise object
             const exercise: Exercise = new Exercise(ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
-            
+
+            console.log(this.allExercises);
             // create a list of all exercises
-            if (!this.allExercises[exercise.type].some( ex => ex['id'] === exercise.id)) { // make sure the exercise does not exist yet
+            if (!this.allExercises[exercise.type].some( exc => exc['id'] === exercise.id)) { // make sure the exercise does not exist yet
                 this.extractExerciseInformation(exercise);
             }
         });
@@ -138,8 +147,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
         this.exportReady = true;
     }
-    
-    extractExerciseInformation(exercise: Exercise) { 
+
+    extractExerciseInformation(exercise: Exercise) {
         // extracting max score and title for each exercise in the course
         this.allExercises[exercise.type].push(exercise);
         this.exerciseTitles[exercise.type] += exercise.title + ',';
@@ -154,7 +163,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         // filter if exercise result is relevant (quiz filter || programming-exercise filter || modelling-exercise filer)
         if (result.rated === true || (result.rated == null && resultCompletionDate.getTime() <= dueDate.getTime())){
             const indexStudent: number = this.studentArray.findIndex( stud => stud.id === student.id);
-            
+
             if(indexStudent >= 0) { // check if the student exists in our array
                 // quiz exercises only have one rated result
                 if(exercise.type === 'quiz'){
@@ -167,7 +176,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     this.studentArray[indexStudent].allExercises[exercise.type].push(new Score( resultCompletionDate, exercise.id, exercise.title, this.roundLikeMozilla((result.score * exercise.maxScore) / 100, -2)));
                 } else {
                     const indexExc: number = this.studentArray[indexStudent].allExercises[exercise.type].findIndex(exc => exc.exerciseID === exercise.id);
-                    
+
                     if (this.studentArray[indexStudent].exerciseNotCounted) {
                         this.studentArray[indexStudent].participated++;
                         this.studentArray[indexStudent].successAndParticipationExercises[exercise.type].participated++;
@@ -181,7 +190,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     if(indexExc >= 0) { // if the exercise score exist in the array
 
                         const existingScore = this.studentArray[indexStudent].allExercises[exercise.type][indexExc];
-                        
+
                         // we want to have the last result withing the due date (see above)
                         if (resultCompletionDate.getTime() > existingScore.resCompletionDate.getTime()) {
                              // update entry with the data of the latest known exercise
