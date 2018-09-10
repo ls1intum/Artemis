@@ -108,7 +108,7 @@ public class AuthorizationCheckService {
      * @return true, if user is student is owner of this participation, otherwise false
      */
     public boolean isOwnerOfParticipation(Participation participation) {
-        return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin());
+        return participation.getStudent().getLogin().equals(SecurityUtils.getCurrentUserLogin().get());
     }
 
     /**

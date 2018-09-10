@@ -327,7 +327,6 @@ public class ResultResource {
 
         //remove unnecessary elements in the json response
         results.forEach(result -> {
-            result.getParticipation().setExercise(null);
             result.getParticipation().setResults(null);
             result.getParticipation().setSubmissions(null);
         });

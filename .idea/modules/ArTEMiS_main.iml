@@ -74,7 +74,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/bitbucket-cli-7.8.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/bitbucket-cli-8.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -83,7 +83,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/bamboo-cli-7.8.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/bamboo-cli-8.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -92,7 +92,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/cli-7.8.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/cli-8.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -137,7 +137,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/upm-cli-7.8.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/upm-cli-8.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -146,7 +146,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/../../libs/marketplace-cli-7.8.0.jar!/" />
+          <root url="jar://$MODULE_DIR$/../../libs/marketplace-cli-8.0.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

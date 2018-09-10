@@ -7,7 +7,8 @@ import * as moment from 'moment';
 
 import { Exercise } from './exercise.model';
 import { createRequestOption } from '../../shared';
-import { LtiConfiguration } from 'app/entities/lti-configuration';
+import { LtiConfiguration } from '../lti-configuration';
+import { ParticipationService } from '../participation/participation.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -16,7 +17,7 @@ export type EntityArrayResponseType = HttpResponse<Exercise[]>;
 export class ExerciseService {
     private resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private participationService: ParticipationService) {}
 
     create(exercise: Exercise): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(exercise);
@@ -66,7 +67,7 @@ export class ExerciseService {
         return this.http.get(`${this.resourceUrl}/${id}/participations/${students}`, { observe: 'response', responseType: 'blob' });
     }
 
-    private convertDateFromClient(exercise: Exercise): Exercise {
+    convertDateFromClient(exercise: Exercise): Exercise {
         const copy: Exercise = Object.assign({}, exercise, {
             releaseDate: exercise.releaseDate != null && exercise.releaseDate.isValid() ? exercise.releaseDate.toJSON() : null,
             dueDate: exercise.dueDate != null && exercise.dueDate.isValid() ? exercise.dueDate.toJSON() : null
@@ -74,16 +75,33 @@ export class ExerciseService {
         return copy;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    convertExerciseDateFromServer(exercise: Exercise) {
+        exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+        exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+        exercise.participations = this.participationService.convertParticipationsDateFromServer(exercise.participations);
+        return exercise;
+    }
+
+    convertExercisesDateFromServer(exercises: Exercise[]) {
+        const convertedExercises: Exercise[] = [];
+        if (exercises != null && exercises.length > 0) {
+            exercises.forEach((exercise: Exercise) => {
+                convertedExercises.push(this.convertExerciseDateFromServer(exercise));
+            });
+        }
+        return convertedExercises;
+    }
+
+    convertDateFromServer(res: EntityResponseType): EntityResponseType {
         res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
         res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+        res.body.participations = this.participationService.convertParticipationsDateFromServer(res.body.participations);
         return res;
     }
 
-    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         res.body.forEach((exercise: Exercise) => {
-            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+            this.convertExerciseDateFromServer(exercise);
         });
         return res;
     }

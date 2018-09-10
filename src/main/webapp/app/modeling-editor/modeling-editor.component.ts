@@ -387,6 +387,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     canDeactivate(): Observable<boolean> | boolean {
         if (
             (!this.submission &&
+                this.apollonEditor &&
                 this.apollonEditor.getState().entities.allIds.length > 0 &&
                 JSON.stringify(this.apollonEditor.getState()) !== '') ||
             (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))

@@ -12,17 +12,14 @@ import { Result } from '../entities/result';
 import { ResultDetailComponent } from '../entities/result/result-detail.component';
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-instructor-dashboard',
     templateUrl: './instructor-dashboard.component.html',
-    providers:  [
-        JhiAlertService, ModelingAssessmentService
-    ]
+    providers: [JhiAlertService, ModelingAssessmentService]
 })
-
 export class InstructorDashboardComponent implements OnInit, OnDestroy {
-
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -38,15 +35,17 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     allResults: Result[];
     eventSubscriber: Subscription;
 
-    constructor(private route: ActivatedRoute,
-                private momentDiff: DifferencePipe,
-                private courseService: CourseService,
-                private exerciseService: ExerciseService,
-                private resultService: ResultService,
-                private modelingAssessmentService: ModelingAssessmentService,
-                private participationService: ParticipationService,
-                private modalService: NgbModal,
-                private eventManager: JhiEventManager) {
+    constructor(
+        private route: ActivatedRoute,
+        private momentDiff: DifferencePipe,
+        private courseService: CourseService,
+        private exerciseService: ExerciseService,
+        private resultService: ResultService,
+        private modelingAssessmentService: ModelingAssessmentService,
+        private participationService: ParticipationService,
+        private modalService: NgbModal,
+        private eventManager: JhiEventManager
+    ) {
         this.reverse = false;
         this.predicate = 'id';
         this.showAllResults = 'all';
@@ -72,19 +71,21 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     }
 
     getResults() {
-        this.resultService.getResultsForExercise(this.exercise.course.id, this.exercise.id, {
-            showAllResults: this.showAllResults,
-            ratedOnly: this.exercise.type === ExerciseType.QUIZ,
-            withSubmissions: this.exercise.type === ExerciseType.MODELING,
-            withAssessors: this.exercise.type === ExerciseType.MODELING
-        }).subscribe((res: HttpResponse<Result[]>) => {
-            const tempResults: Result[] = res.body;
-            tempResults.forEach(function(result: Result) {
-                result.participation.results = [result];
+        this.resultService
+            .getResultsForExercise(this.exercise.course.id, this.exercise.id, {
+                showAllResults: this.showAllResults,
+                ratedOnly: this.exercise.type === ExerciseType.QUIZ,
+                withSubmissions: this.exercise.type === ExerciseType.MODELING,
+                withAssessors: this.exercise.type === ExerciseType.MODELING
+            })
+            .subscribe((res: HttpResponse<Result[]>) => {
+                const tempResults: Result[] = res.body;
+                tempResults.forEach(function(result: Result) {
+                    result.participation.results = [result];
+                });
+                this.allResults = tempResults;
+                this.filterResults();
             });
-            this.allResults = tempResults;
-            this.filterResults();
-        });
     }
 
     filterResults() {
@@ -102,7 +103,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    durationString(completionDate: Date, initializationDate: Date) {
+    durationString(completionDate: Moment, initializationDate: Moment) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
@@ -117,7 +118,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
     }
 
@@ -190,5 +191,5 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    callback() { }
+    callback() {}
 }

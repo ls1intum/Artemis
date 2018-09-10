@@ -1,11 +1,13 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService } from '../participation/index';
+import { Participation, ParticipationService } from '../participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
 import { JhiWebsocketService, Principal } from '../../core';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from '../../entities/exercise';
+
+import * as moment from 'moment';
 
 @Component({
     selector: 'jhi-result',
@@ -71,12 +73,13 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
                 this.principal.identity().then(account => {
                     // only subscribe for the currently logged in user
-                    const now = new Date();
-                    if (account.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.toDate() > now)) {
+                    if (account.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) {
                         // subscribe for new results (e.g. when a programming exercise was automatically tested)
                         this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannel);
-                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(newResult => {
+                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe((newResult: Result) => {
+                            //convert json string to moment
+                            newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                             this.handleNewResult(newResult);
                         });
 

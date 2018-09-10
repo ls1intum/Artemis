@@ -193,9 +193,13 @@ public class Result implements Serializable {
      */
     public void setScore(Long score) {
         this.score = score;
-
-        //if score is 100 set successful true, if not set it false
-        successful = score == 100;
+        if (score == null) {
+            this.successful = false;
+        }
+        else {
+            //if score is 100 set successful true, if not, set it false
+            successful = score == 100;
+        }
     }
 
     public Boolean isRated() {
