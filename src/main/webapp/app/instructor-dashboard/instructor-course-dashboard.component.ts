@@ -24,7 +24,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     results = [];
     exerciseTitles: Map<ExerciseType, string> = new Map<ExerciseType, string>();
     exerciseMaxScores: Map<ExerciseType, number> = new Map<ExerciseType, number>();
-    allExercises: Map<ExerciseType, Array<Exercise>> = new Map<ExerciseType, Array<Exercise>>();
+    allExercises: Map<string, Array<Exercise>> = new Map<string, Array<Exercise>>();
     exerciseCall = [];
     studentArray: Array<Student> = [];
     exportReady: Boolean = false;
@@ -67,7 +67,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         }
 
         for(const exerciseType in ExerciseType){
-            this.allExercises[exerciseType] = [];
+            this.allExercises.set(exerciseType, []);
         }
 
         // iterating through the exercises result of the course
@@ -78,7 +78,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
             console.log(this.allExercises);
             // create a list of all exercises
-            if (!this.allExercises[exercise.type].some( exc => exc['id'] === exercise.id)) { // make sure the exercise does not exist yet
+            const temp = this.allExercises.get(exercise.type);
+            if (!temp.some( exc => exc['id'] === exercise.id)) { // make sure the exercise does not exist yet
                 this.extractExerciseInformation(exercise);
             }
         });
@@ -150,7 +151,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
     extractExerciseInformation(exercise: Exercise) {
         // extracting max score and title for each exercise in the course
-        this.allExercises[exercise.type].push(exercise);
+        let exArr: Exercise[] = this.allExercises.get(exercise.type);
+        exArr.push(exercise);
+        this.allExercises.set(exercise.type , exArr);
+        // this.allExercises[exercise.type].push(exercise);
         this.exerciseTitles[exercise.type] += exercise.title + ',';
         this.exerciseMaxScores[exercise.type] += exercise.maxScore;
     }
