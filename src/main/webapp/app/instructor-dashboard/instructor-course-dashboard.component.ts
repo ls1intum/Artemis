@@ -45,14 +45,21 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
     }
 
     getResults(courseId: number) {
-        this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - currently this call gets all results of the course - change to call with already build native query
+      /*  this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - currently this call gets all results of the course - change to call with already build native query
             // this.results = res;
-            this.results = [{completionDate:"2018-04-01T10:17:11+02:00", participation:{exercise:{id:169, title:"Quiz 01", maxScore: 2, type : 'quiz'},student:{email:"friederike.dollinger@tum.de", firstName:"Friederike Dollinger",id: 4457, lastName:"" ,login:"ge29wub"}}, rated : true, score: 100, successful:true}];
             console.log(this.results);
-            this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res1 => { // this call gets all exercise information for the course
-                this.exerciseCall = res1.body;
-                this.groupResults();
-            });
+            this.groupResults();
+        });*/
+        //temporary call to mock real data in the future
+        this.results = [{completionDate:"2018-04-01T10:17:11+02:00", participation:{exercise:{id:169, title:"Quiz 01", maxScore: 2, type : 'quiz'},student:{email:"friederike.dollinger@tum.de", firstName:"Friederike Dollinger",id: 4457, lastName:"" ,login:"ge29wub"}}, rated : true, score: 100, successful:true},
+            {completionDate:"2018-04-01T10:17:11+02:00", participation:{exercise:{id:215, title:"Distributed version control", maxScore: 10, type : 'programming'},student:{email:"jakob.haar@tum.de", firstName:"Jakob von der Haar",id: 792, lastName:"" ,login:"ga63mek"}}, rated : true, score: 100, successful:true},
+            {completionDate:"2018-04-01T10:17:11+02:00", participation:{exercise:{id:192, title:"Quiz 03b", maxScore: 3, type : 'quiz'},student:{email:"friederike.dollinger@tum.de", firstName:"Friederike Dollinger",id: 4457, lastName:"" ,login:"ge29wub"}}, rated : true, score: 100, successful:true}];
+
+
+
+        this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => { // this call gets all exercise information for the course
+            this.exerciseCall = res.body;
+            this.groupResults();
         });
     }
 
@@ -275,6 +282,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                         totS += +excercise.absoluteScore;
                     });
                     student.totalScores.set(ExerciseType[exType], totS);
+                }
+                for (const exType in ExerciseType) {
+                    student.overallScore += student.totalScores.get(ExerciseType[exType]);
                 }
             }
         });

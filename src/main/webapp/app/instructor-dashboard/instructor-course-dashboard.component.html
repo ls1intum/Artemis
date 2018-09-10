@@ -2,7 +2,7 @@
     <h2>{{course.title}} <small>{{exerciseCall.length}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{studentArray.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
 <jhi-alert></jhi-alert>
     <button class="btn btn-primary btn-sm"  (click)="exportResults()"><i class="fa fa-download fa-fw"></i>&nbsp;Export Results as CSV</button>
-    <div class="table-responsive" *ngIf="studentArray">
+    <div class="table-responsive" *ngIf="exportReady">
         <table class="table table-striped">
             <thead>
             <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse"  [callback]="callback">
@@ -47,8 +47,8 @@
                 <td>{{ row.participated }} ({{ (row.participated/exerciseCall.length)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.successful }} ({{ (row.successful/exerciseCall.length)*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.totalScores.get('quiz') }} ({{ (row.totalScores.get('quiz') / exerciseMaxScores.get('quiz'))*100 | number: '0.0-0'}}%)</td>
-                <td>{{ (row.totalScores.get('programming') }} ({{ (row.totalScores.get('programming') / exerciseMaxScores.get('programming'))*100 | number: '0.0-0'}}%)</td>
-                <td>{{ (row.totalScores.get('modeling') }} ({{ (row.totalScores.get('modeling') / exerciseMaxScores.get('modeling'))*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.totalScores.get('programming') }} ({{ (row.totalScores.get('programming') / exerciseMaxScores.get('programming'))*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.totalScores.get('modeling') }} ({{ (row.totalScores.get('modeling') / exerciseMaxScores.get('modeling'))*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.overallScore | number: '0.0-0'}}</td>
             </tr>
             </tbody>
