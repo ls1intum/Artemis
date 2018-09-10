@@ -1,8 +1,8 @@
 export class Option {
-    key: boolean|string;
+    key: boolean | string;
     label: string;
 
-    constructor(key?, label?: string) {
+    constructor(key?: boolean | string, label?: string) {
         this.key = key;
         this.label = label;
     }

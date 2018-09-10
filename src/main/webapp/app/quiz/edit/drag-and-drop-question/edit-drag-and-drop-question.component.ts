@@ -182,7 +182,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @function setBackgroundFile
      * @param $event {object} Event object which contains the uploaded file
      */
-    setBackgroundFile($event) {
+    setBackgroundFile($event: any) {
         if ($event.target.files.length) {
             const fileList: FileList = $event.target.files;
             this.backgroundFile = fileList[0];
@@ -215,7 +215,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * - current drop location (only while dragging)
      * @param e {object} Mouse move event
      */
-    mouseMove(e) {
+    mouseMove(e: any) {
         // Update mouse x and y value
         const event: MouseEvent = e || window.event; // Moz || IE
         const backgroundElement = this.clickLayer.nativeElement;
@@ -445,7 +445,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @function setDragItemFile
      * @param $event {object} Event object which contains the uploaded file
      */
-    setDragItemFile($event) {
+    setDragItemFile($event: any) {
         if ($event.target.files.length) {
             const fileList: FileList = $event.target.files;
             this.dragItemFile = fileList[0];
@@ -504,7 +504,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Delete the drag item from the question
      * @param dragItemToDelete {object} the drag item that should be deleted
      */
-    deleteDragItem(dragItemToDelete) {
+    deleteDragItem(dragItemToDelete: DragItem) {
         this.question.dragItems = this.question.dragItems.filter(dragItem =>  dragItem !== dragItemToDelete);
         this.deleteMappingsForDragItem(dragItemToDelete);
     }
@@ -515,7 +515,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @param dropLocation {object} the drop location involved
      * @param dragItem {object} the drag item involved (may be a copy at this point)
      */
-    onDragDrop(dropLocation, dragItem) {
+    onDragDrop(dropLocation: DropLocation, dragItem: DragItem) {
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.question.dragItems.find(originalDragItem => dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID);
 
@@ -530,9 +530,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
 
         // Check if this mapping already exists
         if (!this.question.correctMappings.some(existingMapping =>
-                this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(existingMapping.dropLocation, dropLocation)
+                this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation, dropLocation)
                 &&
-                this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(existingMapping.dragItem, dragItem)
+                this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem, dragItem)
         )) {
             // Mapping doesn't exit yet => add this mapping
             const dndMapping = new DragAndDropMapping();
@@ -551,17 +551,17 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @param mapping {object} the mapping we want to get an index for
      * @return {number} the index of the mapping (starting with 1), or 0 if unassigned
      */
-    getMappingIndex(mapping) {
-        const visitedDropLocations = [];
+    getMappingIndex(mapping: DragAndDropMapping) {
+        const visitedDropLocations: DropLocation[] = [];
         // Save reference to this due to nested some calls
         const that = this;
         if (this.question.correctMappings.some(function(correctMapping) {
-            if (!visitedDropLocations.some(dropLocation => {
-                return that.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(dropLocation, correctMapping.dropLocation);
+            if (!visitedDropLocations.some((dropLocation: DropLocation) => {
+                return that.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, correctMapping.dropLocation);
             })) {
                 visitedDropLocations.push(correctMapping.dropLocation);
             }
-            return that.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(correctMapping.dropLocation, mapping.dropLocation);
+            return that.dragAndDropQuestionUtil.isSameDropLocation(correctMapping.dropLocation, mapping.dropLocation);
         })) {
             return visitedDropLocations.length;
         } else {
@@ -575,11 +575,11 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @param dropLocation {object} the drop location for which we want to get all mappings
      * @return {Array} all mappings that belong to the given drop location
      */
-    getMappingsForDropLocation(dropLocation) {
+    getMappingsForDropLocation(dropLocation: DropLocation) {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation));
+        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation));
     }
 
     /**
@@ -588,11 +588,11 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @param dragItem {object} the drag item for which we want to get all mappings
      * @return {Array} all mappings that belong to the given drag item
      */
-    getMappingsForDragItem(dragItem) {
+    getMappingsForDragItem(dragItem: DragItem) {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem))
+        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem))
             /** Moved the sorting from the template to the function call **/
             .sort( (m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2));
     }
@@ -602,12 +602,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Delete all mappings for the given drop location
      * @param dropLocation {object} the drop location for which we want to delete all mappings
      */
-    deleteMappingsForDropLocation(dropLocation) {
+    deleteMappingsForDropLocation(dropLocation: DropLocation) {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(mapping =>
-            !this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation)
+            !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
         );
     }
 
@@ -616,12 +616,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Delete all mappings for the given drag item
      * @param dragItem {object} the drag item for which we want to delete all mappings
      */
-    deleteMappingsForDragItem(dragItem) {
+    deleteMappingsForDragItem(dragItem: DragItem) {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
         this.question.correctMappings = this.question.correctMappings.filter(mapping =>
-            !this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem)
+            !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem)
         );
     }
 
@@ -630,7 +630,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Delete the given mapping from the question
      * @param mappingToDelete {object} the mapping to delete
      */
-    deleteMapping(mappingToDelete) {
+    deleteMapping(mappingToDelete: DragAndDropMapping) {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
@@ -666,7 +666,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Change Picture-Drag-Item to Text-Drag-Item with text: 'Text'
      * @param dragItem {dragItem} the dragItem, which will be changed
      */
-    changeToTextDragItem(dragItem) {
+    changeToTextDragItem(dragItem: DragItem) {
         dragItem.pictureFilePath = null;
         dragItem.text = 'Text';
     }
@@ -676,7 +676,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Change Text-Drag-Item to Picture-Drag-Item with PictureFile: this.dragItemFile
      * @param dragItem {dragItem} the dragItem, which will be changed
      */
-    changeToPictureDragItem(dragItem) {
+    changeToPictureDragItem(dragItem: DragItem) {
         const file = this.dragItemFile;
 
         this.isUploadingDragItemFile = true;
@@ -745,7 +745,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Resets the dropLocation
      * @param dropLocation {dropLocation} the dropLocation, which will be reset
      */
-    resetDropLocation(dropLocation) {
+    resetDropLocation(dropLocation: DropLocation) {
         for (const backupDropLocation of this.backupQuestion.dropLocations) {
             if (backupDropLocation.id === dropLocation.id) {
                 // Find correct answer if they have another order
@@ -760,7 +760,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc Resets the dragItem
      * @param dragItem {dragItem} the dragItem, which will be reset
      */
-    resetDragItem(dragItem) {
+    resetDragItem(dragItem: DragItem) {
         for (const backupDragItem of this.backupQuestion.dragItems) {
             if (backupDragItem.id === dragItem.id) {
                 // Find correct answer if they have another order

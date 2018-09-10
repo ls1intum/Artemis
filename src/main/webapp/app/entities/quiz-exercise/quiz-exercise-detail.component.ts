@@ -35,7 +35,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
     entity: QuizExercise;
     savedEntity = {};
-    dateTime;
+    /** Corresponds to question.releaseDate, which is explicit any **/
+    dateTime: any;
 
     showExistingQuestions = false;
     courses: Course[] = [];
@@ -283,9 +284,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
     /**
      * Remove question from the quiz
-     * @param question {Question} the question to remove
+     * @param questionToDelete {Question} the question to remove
      */
-    deleteQuestion(questionToDelete) {
+    deleteQuestion(questionToDelete: Question) {
         this.quizExercise.questions = this.quizExercise.questions.filter(question => question !== questionToDelete);
     }
 
@@ -349,7 +350,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
     invalidReasons() {
-        const reasons = [];
+        const reasons: Object[] = [];
         if (!this.quizExercise) {
             return;
         }
@@ -422,7 +423,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const translate = this.translateService;
         let reasonString = '';
         for (const reason of this.invalidReasons()) {
-            translate.get(reason.translateKey, reason.translateValues).subscribe((res: string) => {
+            translate.get(reason['translateKey'], reason['translateValues']).subscribe((res: string) => {
                 reasonString += res + '   -   ';
             });
         }
@@ -544,7 +545,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
     }
 
-    onSaveSuccess(result) {
+    onSaveSuccess(result: QuizExercise) {
         this.isSaving = false;
         this.prepareEntity(result);
         this.savedEntity = Object.assign({}, result);
@@ -560,7 +561,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Makes sure the entity is well formed and its fields are of the correct types
      * @param entity
      */
-    prepareEntity(entity) {
+    prepareEntity(entity: QuizExercise) {
         entity.releaseDate = entity.releaseDate ? new Date(entity.releaseDate) : new Date();
         entity.duration = Number(entity.duration);
         entity.duration = isNaN(entity.duration) ? 10 : entity.duration;
