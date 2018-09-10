@@ -44,11 +44,11 @@
             <tr *ngFor="let row of studentArray | sortBy: predicate: reverse">
                 <td>{{ row.firstName }} {{ row.lastName }}</td>
                 <td>{{ row.login }}</td>
-                <td>{{ row.participated }} ({{ (row.participated/numberOfExercises)*100 | number: '0.0-0'}}%)</td>
-                <td>{{ row.successful }} ({{ (row.successful/numberOfExercises)*100 | number: '0.0-0'}}%)</td>
-                <td>{{ row.totalScores['quiz'] }} ({{ (row.totalScores['quiz'] / maxScoreForQuizzes)*100 | number: '0.0-0'}}%)</td>
-                <td>{{ row.totalScores['programming-exercise'] }} ({{ (row.totalScores['programming-exercise'] / maxScoreForProgramming)*100 | number: '0.0-0'}}%)</td>
-                <td>{{ row.totalScores['modeling-exercise'] }} ({{ (row.totalScores['modeling-exercise'] / maxScoreForModeling)*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.participated }} ({{ (row.participated/exerciseCall.length)*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.successful }} ({{ (row.successful/exerciseCall.length)*100 | number: '0.0-0'}}%)</td>
+                <td>{{ row.totalScores.get('quiz') }} ({{ (row.totalScores.get('quiz') / exerciseMaxScores.get('quiz'))*100 | number: '0.0-0'}}%)</td>
+                <td>{{ (row.totalScores.get('programming') }} ({{ (row.totalScores.get('programming') / exerciseMaxScores.get('programming'))*100 | number: '0.0-0'}}%)</td>
+                <td>{{ (row.totalScores.get('modeling') }} ({{ (row.totalScores.get('modeling') / exerciseMaxScores.get('modeling'))*100 | number: '0.0-0'}}%)</td>
                 <td>{{ row.overallScore | number: '0.0-0'}}</td>
             </tr>
             </tbody>

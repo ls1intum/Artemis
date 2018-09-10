@@ -46,13 +46,11 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
     getResults(courseId: number) {
         this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - currently this call gets all results of the course - change to call with already build native query
-           this.results = res;
-            this.groupResults();
-        });
-
-        this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res => { // this call gets all exercise information for the course
-            this.exerciseCall = res.body;
-            this.groupResults();
+            this.results = res;
+            this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res1 => { // this call gets all exercise information for the course
+                this.exerciseCall = res1.body;
+                this.groupResults();
+            });
         });
     }
 
@@ -280,8 +278,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
     exportResults() { // method for exporting the csv with the needed data
 
-        this.createStudents();
-
         if (this.exportReady && this.studentArray.length > 0) {
             const rows = [];
             this.studentArray.forEach( (student, index) => {
@@ -293,13 +289,13 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 const quizTotal = student.totalScores.get('quiz');
                 const programmingTotal = student.totalScores.get('programming');
                 const modelingTotal = student.totalScores.get('modeling');
-                const score = student.overallScore;
+                const score = quizTotal + programmingTotal + modelingTotal;
                 const quizString = student.everyScoreString.get('quiz');
                 const modelingString = student.everyScoreString.get('modeling');
                 const programmingString = student.everyScoreString.get('programming');
                 if (index === 0) {
                     const info = 'data:text/csv;charset=utf-8,FirstName,LastName,TumId,Email,QuizTotalScore,'; // shortening line length and complexity
-                    rows.push(info + this.exerciseTitles['quiz'] + 'ProgrammingTotalScore,' + this.exerciseTitles['programming'] + 'ModelingTotalScore,' + this.exerciseTitles['modeling'] + 'OverallScore');
+                    rows.push(info + this.exerciseTitles.get('quiz') + 'ProgrammingTotalScore,' + this.exerciseTitles.get('programming') + 'ModelingTotalScore,' + this.exerciseTitles.get('modeling') + 'OverallScore');
                     rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString + '' + modelingTotal + ',' + modelingString + '' + score);
                 } else {
                     rows.push(firstName + ',' + lastName + ',' + studentId + ',' + email + ',' + quizTotal + ',' + quizString + '' + programmingTotal + ',' + programmingString + '' + modelingTotal + ',' + modelingString + '' + score);
