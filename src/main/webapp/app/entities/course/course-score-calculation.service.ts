@@ -23,9 +23,11 @@ export class CourseScoreCalculationService {
             if (exercise.maxScore !== null) {
                 maxScore = maxScore + exercise.maxScore;
                 const participation: Participation = this.getParticipationForExercise(exercise);
-                if (participation !== undefined) {
+                if (participation !== null) {
                     const result: Result = this.getResultForParticipation(participation, exercise.dueDate);
-                    absoluteScore = absoluteScore + result.score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
+                    if (result !== null) {
+                        absoluteScore = absoluteScore + result.score * this.SCORE_NORMALIZATION_VALUE * exercise.maxScore;
+                    }
                 }
             }
         });
@@ -89,6 +91,9 @@ export class CourseScoreCalculationService {
     }
 
     getResultForParticipation(participation: Participation, dueDate: Moment): Result {
+        if (participation === null || (participation.results === null && participation.results.length === 0)) {
+            return null;
+        }
         const results: Result[] = participation.results;
         const resultsArray: Result[] = [];
         let chosenResult: Result;

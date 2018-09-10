@@ -6,9 +6,8 @@ import { WindowRef } from '../../core/websocket/window.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { JhiWebsocketService } from '../../core';
 import { EditorComponent } from '../editor.component';
+import * as ace from 'brace';
 import 'brace/theme/dreamweaver';
-
-declare let ace: any;
 
 @Component({
     selector: 'jhi-editor-ace',
@@ -58,9 +57,12 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      * @desc Sets the theme and other editor options
      */
     ngAfterViewInit(): void {
+        ace.acequire('ace/ext/language_tools');
         this.editor.setTheme('dreamweaver');
         this.editor.getEditor().setOptions({
-            animatedScroll: true
+            animatedScroll: true,
+            enableBasicAutocompletion: true,
+            enableLiveAutocompletion: true
         });
     }
 
@@ -113,7 +115,7 @@ export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
      */
     loadFile(fileName: string) {
         // This fetches a list of all supported editor modes and matches it afterwards against the file extension
-        const aceModeList = ace.require('ace/ext/modelist');
+        const aceModeList = ace.acequire('ace/ext/modelist');
         // TODO: handle the case that fileName is null or undefined
         const fileNameSplit = fileName.split('/');
         const aceMode = aceModeList.getModeForPath(fileNameSplit[fileNameSplit.length - 1]);

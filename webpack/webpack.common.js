@@ -20,6 +20,7 @@ module.exports = (options) => ({
     },
     module: {
         rules: [
+            { test: /bootstrap\/dist\/js\/umd\//, loader: 'imports-loader?jQuery=jquery' },
             {
                 test: /\.html$/,
                 loader: 'html-loader',
@@ -34,22 +35,12 @@ module.exports = (options) => ({
             },
             {
                 test: /\.(jpe?g|png|gif|svg|woff2?|ttf|eot)$/i,
-                loader: 'file-loader',
-                    options: {
-                    digest: 'hex',
-                    hash: 'sha512',
-                    name: 'content/[hash].[ext]'
-                }
+                loaders: ['file-loader?hash=sha512&digest=hex&name=content/[hash].[ext]']
             },
             {
                 test: /manifest.webapp$/,
-                loader: 'file-loader',
-                    options: {
-                    name: 'manifest.webapp'
-                }
-            },
-            // Ignore warnings about System.import in Angular
-            { test: /[\/\\]@angular[\/\\].+\.js$/, parser: { system: true } },
+                loader: 'file-loader?name=manifest.webapp'
+            }
         ]
     },
     plugins: [
@@ -59,7 +50,7 @@ module.exports = (options) => ({
                 BUILD_TIMESTAMP: `'${new Date().getTime()}'`,
                 VERSION: `'${utils.parseVersion()}'`,
                 DEBUG_INFO_ENABLED: options.env === 'development',
-                // The root URL for API calls, ending with a '/' - for example: `"https://www.jhipster.tech:8081/myservice/"`.
+                // The root URL for API calls, ending with a '/' - for example: `"http://www.jhipster.tech:8081/myservice/"`.
                 // If this URL is left empty (""), then it will be relative to the current context.
                 // If you use an API server, in `prod` mode, you will need to enable CORS
                 // (see the `jhipster.cors` common JHipster property in the `application-*.yml` configurations)
@@ -89,8 +80,7 @@ module.exports = (options) => ({
         }),
         new HtmlWebpackPlugin({
             template: './src/main/webapp/index.html',
-            chunks: ['vendors', 'polyfills', 'global', 'main'],
-            chunksSortMode: 'manual',
+            chunksSortMode: 'dependency',
             inject: 'body'
         })
     ]
