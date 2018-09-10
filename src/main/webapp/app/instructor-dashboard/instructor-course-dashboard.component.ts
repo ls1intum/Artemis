@@ -46,7 +46,9 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
 
     getResults(courseId: number) {
         this.courseService.findAllResults(courseId).subscribe(res => { // TODO Change call - currently this call gets all results of the course - change to call with already build native query
-            this.results = res;
+            // this.results = res;
+            this.results = [{completionDate:"2018-04-01T10:17:11+02:00", participation:{exercise:{id:169, title:"Quiz 01", maxScore: 2, type : 'quiz'},student:{email:"friederike.dollinger@tum.de", firstName:"Friederike Dollinger",id: 4457, lastName:"" ,login:"ge29wub"}}, rated : true, score: 100, successful:true}];
+            console.log(this.results);
             this.exerciseService.findAllExercisesByCourseId(courseId).subscribe(res1 => { // this call gets all exercise information for the course
                 this.exerciseCall = res1.body;
                 this.groupResults();
@@ -54,7 +56,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         });
     }
 
-    groupResults() {
+    groupResults(){
 
         if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
             return;
@@ -73,10 +75,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             // create exercise object
             const exercise: Exercise = new Exercise(ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
 
-            console.log(this.allExercises);
-            console.log(exercise.type);
-            console.log(this.allExercises.get(exercise.type));
-            console.log(this.allExercises.has(exercise.type));
+            // console.log(this.allExercises);
+            // console.log(exercise.type);
+            // console.log(this.allExercises.get(exercise.type));
+            // console.log(this.allExercises.has(exercise.type));
             // create a list of all exercises
             const temp = this.allExercises.get(exercise.type);
             if (!temp.some( exc => exc.id === exercise.id)) { // make sure the exercise does not exist yet
@@ -84,10 +86,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             }
         });
 
+        console.log(this.allExercises);
+
         this.createStudents();
     }
 
-    createStudents() { // creates students and initializes the result processing
+    createStudents(){ // creates students and initializes the result processing
 
         if (!this.results || this.results.length === 0 || !this.exerciseCall || this.exerciseCall.length === 0) {
             return;
@@ -125,7 +129,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         this.createScoreString();
     }
 
-    createScoreString() { // create a score string for each student and add the exercise (even if 0 points) to the everyScore Map
+    createScoreString(){ // create a score string for each student and add the exercise (even if 0 points) to the everyScore Map
 
         this.studentArray.forEach((student, indexStudent) => {
 
