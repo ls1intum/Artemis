@@ -138,12 +138,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                 for ( const exType in ExerciseType ){
 
                     // check if the student participated in the exercises of the course and get the scores
-                    let excAll: Exercise[] = this.allExercises.get(exType);
+                    let excAll: Exercise[] = this.allExercises.get(ExerciseType[exType]);
                     excAll.forEach( exercise => {
                         let bool: Boolean = true;
 
                         // iterate through all the participated exercises by the student
-                        let excStAll: Score[] = student.allExercises.get(exType);
+                        let excStAll: Score[] = student.allExercises.get(ExerciseType[exType]);
                         excStAll.forEach( score => {
                             if (exercise.id === score.exerciseID) {
                                 bool = false; // ensure to only enter the loop later once
@@ -188,7 +188,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         let excArr: Exercise[] = this.allExercises.get(exercise.type);
         excArr.push(exercise);
         this.allExercises.set(exercise.type , excArr);
-        // this.allExercises[exercise.type].push(exercise);
 
         let excTitle: string = this.exerciseTitles.get(exercise.type);
         excTitle += exercise.title + ',';
@@ -197,9 +196,6 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         let excScore: number = this.exerciseMaxScores.get(exercise.type);
         excScore += exercise.maxScore;
         this.exerciseMaxScores.set(exercise.type, excScore);
-
-        // this.exerciseTitles[exercise.type] += exercise.title + ',';
-        // this.exerciseMaxScores[exercise.type] += exercise.maxScore;
     }
 
     getScoresForExercises(student: Student, exercise: Exercise, result) {
@@ -217,7 +213,7 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
                     this.studentArray[indexStudent].participated++;
 
                     let excSP: {successful: number, participated: number} = this.studentArray[indexStudent].successAndParticipationExercises.get(exercise.type);
-                    excSP.participated ++; 
+                    excSP.participated ++;
                     if (result.successful) {
                         this.studentArray[indexStudent].successful++;
                         excSP.successful++;
@@ -273,12 +269,12 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         this.studentArray.forEach ( student => {
             if(ExerciseType){
                 for ( const exType in ExerciseType ){
-                    let excAll: Score[] = student.allExercises.get(exType);
-                    let totS: number = student.totalScores.get(exType);
+                    let excAll: Score[] = student.allExercises.get(ExerciseType[exType]);
+                    let totS: number = student.totalScores.get(ExerciseType[exType]);
                     excAll.forEach( excercise => {
                         totS += +excercise.absoluteScore;
                     });
-                    student.totalScores.set(exType, totS);
+                    student.totalScores.set(ExerciseType[exType], totS);
                 }
             }
         });
