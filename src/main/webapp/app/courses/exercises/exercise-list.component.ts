@@ -17,10 +17,7 @@ export class ShowExercisePipe implements PipeTransform {
     transform(allExercises: Exercise[], showInactiveExercises: boolean) {
         return allExercises.filter(
             exercise =>
-                showInactiveExercises === true ||
-                exercise.type === ExerciseType.QUIZ ||
-                !exercise.dueDate ||
-                exercise.dueDate.isAfter(moment())
+                showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment()
         );
     }
 }
@@ -127,7 +124,15 @@ export class ExerciseListComponent implements OnInit {
             exercise.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(exercise.course);
         }
         exercises.sort((a: Exercise, b: Exercise) => {
-            return +a.dueDate.toDate() - +b.dueDate.toDate();
+            if (a.dueDate === null && b.dueDate === null) {
+                return 0;
+            } else if (a.dueDate === null) {
+                return +1;
+            } else if (b.dueDate === null) {
+                return -1;
+            } else {
+                return +a.dueDate.toDate() - +b.dueDate.toDate();
+            }
         });
         this.exercises = exercises;
     }
@@ -142,10 +147,7 @@ export class ExerciseListComponent implements OnInit {
 
     showExercise(exercise: Exercise) {
         return (
-            this.showInactiveExercises === true ||
-            exercise.type === ExerciseType.QUIZ ||
-            !exercise.dueDate ||
-            exercise.dueDate.isAfter(moment())
+            this.showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment()
         );
     }
 

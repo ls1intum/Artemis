@@ -5,7 +5,7 @@ import { CourseComponent } from './course.component';
 import { CourseDetailComponent } from './course-detail.component';
 import { CoursePopupComponent } from './course-dialog.component';
 import { CourseDeletePopupComponent } from './course-delete-dialog.component';
-import { CourseScoreCalculationComponent } from './course-score-calculation-component';
+import { CourseScoreCalculationComponent } from './course-score-calculation.component';
 
 export const courseRoute: Routes = [
     {

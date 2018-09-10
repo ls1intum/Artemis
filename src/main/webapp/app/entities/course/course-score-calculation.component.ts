@@ -4,7 +4,7 @@ import { Subscription } from 'rxjs/Subscription';
 import { HttpResponse } from '@angular/common/http';
 
 import { CourseService } from './course.service';
-import { CourseScoreCalculationService } from './courseScoreCalculation.service';
+import { CourseScoreCalculationService } from './course-score-calculation.service';
 import { Exercise, ExerciseType } from '../../entities/exercise';
 import { Course } from '../../entities/course/course.model';
 

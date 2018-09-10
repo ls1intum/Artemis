@@ -13,6 +13,8 @@ import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
 import { Participation } from '../participation';
 import { TextExercise } from 'app/entities/text-exercise';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise';
+import { Result } from 'app/entities/result';
+import { Submission } from 'app/entities/submission';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -47,7 +49,6 @@ export class CourseService {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
             .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
-        //TODO: do we need to convert the date for exercise included in this call as well?
     }
 
     // TODO: deprecated --> this method does not scale and should not be used in the future
@@ -92,6 +93,29 @@ export class CourseService {
         res.body.forEach((course: Course) => {
             course.startDate = course.startDate != null ? moment(course.startDate) : null;
             course.endDate = course.endDate != null ? moment(course.endDate) : null;
+            if (course.exercises != null && course.exercises.length > 0) {
+                course.exercises.forEach((exercise: Exercise) => {
+                    exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+                    exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+                    if (exercise.participations != null && exercise.participations.length > 0) {
+                        exercise.participations.forEach((participation: Participation) => {
+                            participation.initializationDate =
+                                participation.initializationDate != null ? moment(participation.initializationDate) : null;
+                            if (participation.results != null && participation.results.length > 0) {
+                                participation.results.forEach((result: Result) => {
+                                    result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+                                });
+                            }
+                            if (participation.submissions != null && participation.submissions.length > 0) {
+                                participation.submissions.forEach((submission: Submission) => {
+                                    submission.submissionDate =
+                                        submission.submissionDate != null ? moment(submission.submissionDate) : null;
+                                });
+                            }
+                        });
+                    }
+                });
+            }
         });
         return res;
     }

@@ -2,19 +2,16 @@ const webpack = require('webpack');
 const writeFilePlugin = require('write-file-webpack-plugin');
 const webpackMerge = require('webpack-merge');
 const BrowserSyncPlugin = require('browser-sync-webpack-plugin');
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
-const FriendlyErrorsWebpackPlugin = require('friendly-errors-webpack-plugin');
-const SimpleProgressWebpackPlugin = require('simple-progress-webpack-plugin');
 const WebpackNotifierPlugin = require('webpack-notifier');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 const path = require('path');
-const sass = require('sass');
 
 const utils = require('./utils.js');
 const commonConfig = require('./webpack.common.js');
 
 const ENV = 'development';
 
-module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
+module.exports = webpackMerge(commonConfig({ env: ENV }), {
     devtool: 'eval-source-map',
     devServer: {
         contentBase: './build/www',
@@ -37,7 +34,6 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
             target: 'ws://127.0.0.1:8080',
             ws: true
         }],
-        stats: options.stats,
         watchOptions: {
             ignored: /node_modules/
         }
@@ -58,68 +54,52 @@ module.exports = (options) => webpackMerge(commonConfig({ env: ENV }), {
         rules: [{
             test: /\.ts$/,
             enforce: 'pre',
-            loader: 'tslint-loader',
+            loaders: 'tslint-loader',
             exclude: ['node_modules', new RegExp('reflect-metadata\\' + path.sep + 'Reflect\\.ts')]
         },
-        {
-            test: /\.ts$/,
-            use: [
-                'angular2-template-loader',
-                {
-                    loader: 'cache-loader',
-                    options: {
-                        cacheDirectory: path.resolve('build/cache-loader')
-                    }
-                },
-                {
-                    loader: 'thread-loader',
-                    options: {
-                        // there should be 1 cpu for the fork-ts-checker-webpack-plugin
-                        workers: require('os').cpus().length - 1
-                    }
-                },
-                {
-                    loader: 'ts-loader',
-                    options: {
-                        transpileOnly: true,
-                        happyPackMode: true
-                    }
-                },
-                'angular-router-loader'
-            ],
-            exclude: ['node_modules']
-        },
-        {
-            test: /\.scss$/,
-            use: ['to-string-loader', 'css-loader', {
-                loader: 'sass-loader',
-                options: { implementation: sass }
-            }],
-            exclude: /(vendor\.scss|global\.scss)/
-        },
-        {
-            test: /(vendor\.scss|global\.scss)/,
-            use: ['style-loader', 'css-loader', 'postcss-loader', {
-                loader: 'sass-loader',
-                options: { implementation: sass }
+            {
+                test: /\.ts$/,
+                use: [
+                    { loader: 'angular2-template-loader' },
+                    { loader: 'cache-loader' },
+                    {
+                        loader: 'thread-loader',
+                        options: {
+                            // there should be 1 cpu for the fork-ts-checker-webpack-plugin
+                            workers: require('os').cpus().length - 1
+                        }
+                    },
+                    {
+                        loader: 'ts-loader',
+                        options: {
+                            transpileOnly: true,
+                            happyPackMode: true
+                        }
+                    },
+                    { loader: 'angular-router-loader' }
+                ],
+                exclude: ['node_modules']
+            },
+            {
+                test: /\.scss$/,
+                loaders: ['to-string-loader', 'css-loader', 'sass-loader'],
+                exclude: /(vendor\.scss|global\.scss)/
+            },
+            {
+                test: /(vendor\.scss|global\.scss)/,
+                loaders: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader']
+            },
+            {
+                test: /\.css$/,
+                loaders: ['to-string-loader', 'css-loader'],
+                exclude: /(vendor\.css|global\.css)/
+            },
+            {
+                test: /(vendor\.css|global\.css)/,
+                loaders: ['style-loader', 'css-loader']
             }]
-        },
-        {
-            test: /\.css$/,
-            use: ['to-string-loader', 'css-loader'],
-            exclude: /(vendor\.css|global\.css)/
-        },
-        {
-            test: /(vendor\.css|global\.css)/,
-            use: ['style-loader', 'css-loader']
-        }]
     },
-    stats: options.stats,
     plugins: [
-        new SimpleProgressWebpackPlugin({
-            format: options.stats === 'minimal' ? 'compact' : 'expanded'
-        }),
-        new FriendlyErrorsWebpackPlugin(),
         new ForkTsCheckerWebpackPlugin(),
         new BrowserSyncPlugin({
             host: 'localhost',
