@@ -7,7 +7,9 @@ import * as moment from 'moment';
 
 import { Result } from './result.model';
 import { createRequestOption } from '../../shared';
-import { Feedback } from '../feedback';
+import { Feedback } from '../feedback/feedback.model';
+import { Participation } from '../participation/participation.model';
+import { Exercise } from '../exercise/exercise.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -62,10 +64,12 @@ export class ResultService {
 
     getResultsForExercise(courseId: number, exerciseId: number, req?: any): Observable<HttpResponse<Result[]>> {
         const options = createRequestOption(req);
-        return this.http.get<Result[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/results`, {
-            params: options,
-            observe: 'response'
-        });
+        return this.http
+            .get<Result[]>(`${this.courseResourceUrl}/${courseId}/exercises/${exerciseId}/results`, {
+                params: options,
+                observe: 'response'
+            })
+            .map((res: HttpResponse<Result[]>) => this.convertDateArrayFromServer(res));
     }
 
     getFeedbackDetailsForResult(resultId: number): Observable<HttpResponse<Feedback[]>> {
@@ -83,15 +87,33 @@ export class ResultService {
         return copy;
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
-        res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
-        return res;
-    }
-
     private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         res.body.forEach((result: Result) => {
             result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+            result.participation = this.convertParticipationDateFromServer(result.participation);
         });
         return res;
+    }
+
+    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        res.body.completionDate = res.body.completionDate != null ? moment(res.body.completionDate) : null;
+        res.body.participation = this.convertParticipationDateFromServer(res.body.participation);
+        return res;
+    }
+
+    convertParticipationDateFromServer(participation: Participation) {
+        if (participation) {
+            participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+            participation.exercise = this.convertExerciseDateFromServer(participation.exercise);
+        }
+        return participation;
+    }
+
+    convertExerciseDateFromServer(exercise: Exercise) {
+        if (exercise) {
+            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+        }
+        return exercise;
     }
 }

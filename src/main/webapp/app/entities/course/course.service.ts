@@ -7,14 +7,13 @@ import * as moment from 'moment';
 
 import { Course } from './course.model';
 import { createRequestOption } from '../../shared';
-import { Exercise } from '../exercise/exercise.model';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
-import { Participation } from '../participation';
-import { TextExercise } from 'app/entities/text-exercise';
-import { FileUploadExercise } from 'app/entities/file-upload-exercise';
-import { Result } from 'app/entities/result';
-import { Submission } from 'app/entities/submission';
+import { Participation } from '../participation/participation.model';
+import { TextExercise } from '../text-exercise/text-exercise.model';
+import { FileUploadExercise } from '../file-upload-exercise/file-upload-exercise.model';
+import { Exercise } from '../exercise/exercise.model';
+import { ExerciseService } from '../exercise/exercise.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -23,7 +22,7 @@ export type EntityArrayResponseType = HttpResponse<Course[]>;
 export class CourseService {
     private resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     create(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
@@ -86,6 +85,7 @@ export class CourseService {
     private convertDateFromServer(res: EntityResponseType): EntityResponseType {
         res.body.startDate = res.body.startDate != null ? moment(res.body.startDate) : null;
         res.body.endDate = res.body.endDate != null ? moment(res.body.endDate) : null;
+        res.body.exercises = this.exerciseService.convertExercisesDateFromServer(res.body.exercises);
         return res;
     }
 
@@ -93,29 +93,7 @@ export class CourseService {
         res.body.forEach((course: Course) => {
             course.startDate = course.startDate != null ? moment(course.startDate) : null;
             course.endDate = course.endDate != null ? moment(course.endDate) : null;
-            if (course.exercises != null && course.exercises.length > 0) {
-                course.exercises.forEach((exercise: Exercise) => {
-                    exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
-                    exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
-                    if (exercise.participations != null && exercise.participations.length > 0) {
-                        exercise.participations.forEach((participation: Participation) => {
-                            participation.initializationDate =
-                                participation.initializationDate != null ? moment(participation.initializationDate) : null;
-                            if (participation.results != null && participation.results.length > 0) {
-                                participation.results.forEach((result: Result) => {
-                                    result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
-                                });
-                            }
-                            if (participation.submissions != null && participation.submissions.length > 0) {
-                                participation.submissions.forEach((submission: Submission) => {
-                                    submission.submissionDate =
-                                        submission.submissionDate != null ? moment(submission.submissionDate) : null;
-                                });
-                            }
-                        });
-                    }
-                });
-            }
+            course.exercises = this.exerciseService.convertExercisesDateFromServer(course.exercises);
         });
         return res;
     }
@@ -125,7 +103,7 @@ export class CourseService {
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient, private exerciseService: ExerciseService) {}
 
     findExercise(courseId: number, exerciseId: number): Observable<Exercise> {
         return this.http
@@ -211,10 +189,16 @@ export class CourseExerciseService {
     }
 
     handleParticipation(participation: Participation) {
-        if (participation && participation.exercise) {
-            const exercise = participation.exercise;
-            exercise.participations = [participation];
-            return participation;
+        if (participation) {
+            // convert date
+            participation.initializationDate = participation.initializationDate ? moment(participation.initializationDate) : null;
+            if (participation.exercise) {
+                const exercise = participation.exercise;
+                exercise.dueDate = exercise.dueDate ? moment(exercise.dueDate) : null;
+                exercise.releaseDate = exercise.releaseDate ? moment(exercise.releaseDate) : null;
+                exercise.participations = [participation];
+                return participation;
+            }
         }
         return participation;
     }

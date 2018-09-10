@@ -262,7 +262,10 @@ public class ModelingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
         }
 
-        if (!courseService.userHasAtLeastStudentPermissions(modelingExercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
+        // users can only see their own models (to prevent cheating), TAs, instructors and admins can see all models
+        if (authCheckService.isOwnerOfParticipation(participation) || courseService.userHasAtLeastTAPermissions(modelingExercise.getCourse())) {
+            //continue
+        } else {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 

@@ -4,9 +4,9 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { Participation } from './participation.model';
 import { ParticipationService } from './participation.service';
-import { Principal } from '../../core';
 import { ActivatedRoute } from '@angular/router';
-import { Exercise, ExerciseService, ExerciseType } from '../exercise';
+import { Exercise, ExerciseType } from '../exercise';
+import { ExerciseService } from '../exercise/exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -31,7 +31,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private principal: Principal,
         private exerciseService: ExerciseService
     ) {
         this.reverse = true;
@@ -41,7 +40,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     loadAll() {
         this.paramSub = this.route.params.subscribe(params => {
             this.participationService.findAllParticipationsByExercise(params['exerciseId']).subscribe(res => {
-                this.participations = res;
+                this.participations = res.body;
             });
             this.exerciseService.find(params['exerciseId']).subscribe(res => {
                 this.exercise = res.body;

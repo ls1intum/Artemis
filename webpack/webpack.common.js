@@ -40,7 +40,9 @@ module.exports = (options) => ({
             {
                 test: /manifest.webapp$/,
                 loader: 'file-loader?name=manifest.webapp'
-            }
+            },
+            // Ignore warnings about System.import in Angular
+            { test: /[\/\\]@angular[\/\\].+\.js$/, parser: { system: true } },
         ]
     },
     plugins: [
