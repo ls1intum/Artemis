@@ -26,10 +26,11 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     @Query("select r from Result r where r.completionDate = (select max(rr.completionDate) from Result rr where rr.participation.exercise.id = :exerciseId and rr.participation.student.id = r.participation.student.id) and r.participation.exercise.id = :exerciseId order by r.completionDate asc")
     List<Result> findLatestResultsForExercise(@Param("exerciseId") Long exerciseId);
 
-/*
+    /*
     String sql = "select alldata.id, alldata.first_name, alldata.last_name, alldata.login, alldata.email, alldata.studentID,alldata.exerciseTitle, alldata.exerciseID, alldata.score,alldata.max_score, alldata.completion_date, alldata.due_date, alldata.discriminator, alldata.rated from (select studentID ,exerciseID, max(completion_date) as max_date
-      from (SELECT
-          `p`.`id` AS `id`,
+      from (select alldata.id, alldata.first_name, alldata.last_name, alldata.login, alldata.email, alldata.studentID,alldata.exerciseTitle, alldata.exerciseID, alldata.score,alldata.max_score, alldata.completion_date, alldata.due_date, alldata.discriminator, alldata.rated,alldata.jhi_successful from (select studentID ,exerciseID, max(completion_date) as max_date
+from (SELECT
+        `p`.`id` AS `id`,
         `j`.`id` AS `studentID`,
         `j`.`first_name` AS `first_name`,
         `j`.`last_name` AS `last_name`,
@@ -42,13 +43,14 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         `e`.`max_score` AS `max_score`,
         `r`.`completion_date` AS `completion_date`,
         `r`.`score` AS `score`,
+        `r`.`jhi_successful`,
         `r`.`rated` AS `rated`
-        FROM
+    FROM
         (((`result` `r`
         JOIN `exercise` `e`)
         JOIN `participation` `p`)
         JOIN `jhi_user` `j`)
-        WHERE
+    WHERE
         ((`r`.`participation_id` = `p`.`id`)
             AND (`p`.`exercise_id` = `e`.`id`)
             AND (`j`.`id` = `p`.`student_id`)
@@ -56,7 +58,36 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             AND (((`r`.`rated` = 1)
             AND ISNULL(`e`.`due_date`))
             OR (ISNULL(`r`.`rated`)
-            AND (`r`.`completion_date` <= `e`.`due_date`))))) as alldata group by studentID, exerciseID) as t1 inner join alldata on alldata.exerciseID = t1.exerciseID and alldata.completion_date = t1.max_date and alldata.studentID = t1.studentID order by studentID, exerciseID desc limit 20000")
+            AND (`r`.`completion_date` <= `e`.`due_date`))))) as alldata group by studentID, exerciseID) as t1 inner join (SELECT
+        `p`.`id` AS `id`,
+        `j`.`id` AS `studentID`,
+        `j`.`first_name` AS `first_name`,
+        `j`.`last_name` AS `last_name`,
+        `j`.`login` AS `login`,
+        `j`.`email` AS `email`,
+        `e`.`title` AS `exerciseTitle`,
+        `e`.`due_date` AS `due_date`,
+        `e`.`discriminator` AS `discriminator`,
+        `e`.`id` AS `exerciseID`,
+        `e`.`max_score` AS `max_score`,
+        `r`.`completion_date` AS `completion_date`,
+        `r`.`score` AS `score`,
+        `r`.`jhi_successful`,
+        `r`.`rated` AS `rated`
+    FROM
+        (((`result` `r`
+        JOIN `exercise` `e`)
+        JOIN `participation` `p`)
+        JOIN `jhi_user` `j`)
+    WHERE
+        ((`r`.`participation_id` = `p`.`id`)
+            AND (`p`.`exercise_id` = `e`.`id`)
+            AND (`j`.`id` = `p`.`student_id`)
+            AND (`e`.`course_id` = 18)
+            AND (((`r`.`rated` = 1)
+            AND ISNULL(`e`.`due_date`))
+            OR (ISNULL(`r`.`rated`)
+            AND (`r`.`completion_date` <= `e`.`due_date`))))) as alldata on alldata.exerciseID = t1.exerciseID and alldata.completion_date = t1.max_date and alldata.studentID = t1.studentID order by studentID, exerciseID desc limit 20000")
 
             Query query = em.createNativeQuery(sql, User.class);
             query.setParameter(1,id);
