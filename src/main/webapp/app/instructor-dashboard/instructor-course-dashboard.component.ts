@@ -98,27 +98,28 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         // iterating through the students exercise results
         this.results.forEach( result => {
 
-            // create a new student object to save the information in
-            const student = new Student (result.participation.student.firstName, result.participation.student.lastName, result.participation.student.id, result.participation.student.login, result.participation.student.email, new Map<ExerciseType, Array<Score>>([]), new Map<ExerciseType, number>(), new Map<ExerciseType, {successful:number, participated:number}>(), new Map<ExerciseType, Array<Score>>([]) , new Map<ExerciseType, string>(),
-                0,0,true,0);
+            if(result.participation && result.participation.student && result.participation.exercise) {
+                // create a new student object to save the information in
+                const student = new Student (result.participation.student.firstName, result.participation.student.lastName, result.participation.student.id, result.participation.student.login, result.participation.student.email, new Map<ExerciseType, Array<Score>>([]), new Map<ExerciseType, number>(), new Map<ExerciseType, {successful:number, participated:number}>(), new Map<ExerciseType, Array<Score>>([]) , new Map<ExerciseType, string>(),
+                    0,0,true,0);
 
-            const exercise: Exercise = new Exercise (result.participation.exercise.id, result.participation.exercise.title, result.participation.exercise.maxScore, result.participation.exercise.type, result.participation.exercise.dueDate);
+                const exercise: Exercise = new Exercise (result.participation.exercise.id, result.participation.exercise.title, result.participation.exercise.maxScore, result.participation.exercise.type, result.participation.exercise.dueDate);
 
-            if(!this.studentArray.some(stud => stud.id === student.id)) {
-                this.studentArray.push(student);
-                const indexStudent: number = this.studentArray.findIndex( stud => stud.id === student.id);
-                // generate empty maps for each student
-                for (const exerciseType in ExerciseType) {
-                    this.studentArray[indexStudent].everyScoreString.set(ExerciseType[exerciseType], '');
-                    this.studentArray[indexStudent].everyScore.set(ExerciseType[exerciseType], []);
-                    this.studentArray[indexStudent].successAndParticipationExercises.set(ExerciseType[exerciseType], {successful: 0, participated: 0});
-                    this.studentArray[indexStudent].allExercises.set(ExerciseType[exerciseType], []);
-                    this.studentArray[indexStudent].totalScores.set(ExerciseType[exerciseType], 0);
+                if(!this.studentArray.some(stud => stud.id === student.id)) {
+                    this.studentArray.push(student);
+                    const indexStudent: number = this.studentArray.findIndex( stud => stud.id === student.id);
+                    // generate empty maps for each student
+                    for (const exerciseType in ExerciseType) {
+                        this.studentArray[indexStudent].everyScoreString.set(ExerciseType[exerciseType], '');
+                        this.studentArray[indexStudent].everyScore.set(ExerciseType[exerciseType], []);
+                        this.studentArray[indexStudent].successAndParticipationExercises.set(ExerciseType[exerciseType], {successful: 0, participated: 0});
+                        this.studentArray[indexStudent].allExercises.set(ExerciseType[exerciseType], []);
+                        this.studentArray[indexStudent].totalScores.set(ExerciseType[exerciseType], 0);
+                    }
                 }
+
+                this.getScoresForExercises(student, exercise, result);
             }
-
-            this.getScoresForExercises(student, exercise, result);
-
         });
 
         this.getTotalScores();
