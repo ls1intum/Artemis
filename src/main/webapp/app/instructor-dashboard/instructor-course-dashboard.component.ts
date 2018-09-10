@@ -67,7 +67,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
         }
 
         for(const exerciseType in ExerciseType){
-            this.allExercises.set(exerciseType, []);
+            this.allExercises.set(ExerciseType[exerciseType], []);
+            console.log(exerciseType);
         }
 
         // iterating through the exercises result of the course
@@ -77,6 +78,10 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy { /
             const exercise: Exercise = new Exercise(ex.id, ex.title, ex.maxScore, ex.type, ex.dueDate);
 
             console.log(this.allExercises);
+            console.log("test");
+            console.log(exercise.type);
+            console.log(this.allExercises.get(exercise.type));
+            console.log(this.allExercises.has(exercise.type));
             // create a list of all exercises
             const temp = this.allExercises.get(exercise.type);
             if (!temp.some( exc => exc['id'] === exercise.id)) { // make sure the exercise does not exist yet
