@@ -3,6 +3,7 @@ import { Result, ResultService } from './';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { Feedback } from '../feedback/index';
+import { BuildLogEntry } from '../../entities/build-log';
 
 // Modal -> Result details view
 @Component({
@@ -13,7 +14,7 @@ export class ResultDetailComponent implements OnInit {
     @Input() result: Result;
     isLoading: boolean;
     feedbackList: Feedback[];
-    buildLogs;
+    buildLogs: BuildLogEntry[];
 
     constructor(public activeModal: NgbActiveModal,
                 private resultService: ResultService,

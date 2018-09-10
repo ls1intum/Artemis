@@ -3,8 +3,6 @@ import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise'
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService, Principal } from '../../shared';
 import { TranslateService } from '@ngx-translate/core';
-
-import * as Chart from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
@@ -12,13 +10,24 @@ import { HttpClient } from '@angular/common/http';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
 import { QuestionType } from '../../entities/question';
+import { DropLocation } from '../../entities/drop-location';
+import { ChartOptions } from 'chart.js';
+import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { Subscription } from 'rxjs/Subscription';
+
+interface BackgroundColorConfig {
+    backgroundColor: string;
+    borderColor: string;
+    pointBackgroundColor: string;
+    pointBorderColor: string;
+}
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown]
 })
-export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy {
+export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
 
     // make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
@@ -27,138 +36,34 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;
     questionStatistic: DragAndDropQuestionStatistic;
-    questionIdParam;
-    private sub: any;
+    questionIdParam: number;
+    private sub: Subscription;
 
-    labels = [];
-    data = [];
-    colors = [];
+    labels: string[] = [];
+    data: number[] = [];
+    colors: BackgroundColorConfig[] = [];
     chartType = 'bar';
-    datasets = [];
+    datasets: DataSet[] = [];
 
-    label;
-    ratedData;
-    unratedData;
-    backgroundColor;
-    backgroundSolutionColor;
-    ratedAverage;
-    unratedAverage;
-    ratedCorrectData;
-    unratedCorrectData;
+    label: string[] = [];
+    ratedData: number[] = [];
+    unratedData: number[] = [];
+    backgroundColor: BackgroundColorConfig[] = [];
+    backgroundSolutionColor: BackgroundColorConfig[] = [];
+    ratedCorrectData: number;
+    unratedCorrectData: number;
 
-    maxScore;
-
-    showSolution = false;
+    maxScore: number;
     rated = true;
+    showSolution = false;
+    participants: number;
+    websocketChannelForData: string;
+    websocketChannelForReleaseState: string;
 
-    questionTextRendered;
-    answerTextRendered;
-
-    participants;
-
-    websocketChannelForData;
-    websocketChannelForReleaseState;
+    questionTextRendered: string;
 
     // options for chart in chart.js style
-    options = {
-        layout: {
-            padding: {
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 30
-            }
-        },
-        legend: {
-            display: false
-        },
-        title: {
-            display: false,
-            text: '',
-            position: 'top',
-            fontSize: '16',
-            padding: 20
-        },
-        tooltips: {
-            enabled: false
-        },
-        scales: {
-            yAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                },
-                ticks: {
-                    beginAtZero: true
-                }
-            }],
-            xAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                }
-            }]
-        },
-        hover: {animationDuration: 0},
-        // add numbers on top of the bars
-        animation: {
-            duration: 500,
-            onComplete: chart => {
-                const chartInstance = chart.chart,
-                    ctx = chartInstance.ctx;
-                const fontSize = 12;
-                const fontStyle = 'normal';
-                const fontFamily = 'Calibri';
-                ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-
-                this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.controller.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100);
-                        const dataPercentage = (Math.round(
-                            (dataset.data[index] / this.participants) * 1000) / 10);
-
-                        const position = bar.tooltipPosition();
-
-                        // if the bar is high enough -> write the percentageValue inside the bar
-                        if (dataPercentage > 6) {
-                            // if the bar is low enough -> write the amountValue above the bar
-                            if (position.y > 15) {
-                                ctx.fillStyle = 'black';
-                                ctx.fillText(data, position.x, position.y - 10);
-
-                                if (this.participants !== 0) {
-                                    ctx.fillStyle = 'white';
-                                    ctx.fillText(dataPercentage.toString()
-                                        + '%', position.x, position.y + 10);
-                                }
-                            } else {
-                                // if the bar is too high -> write the amountValue inside the bar
-                                ctx.fillStyle = 'white';
-                                if (this.participants !== 0) {
-                                    ctx.fillText(data + ' / ' + dataPercentage.toString()
-                                        + '%', position.x, position.y + 10);
-                                } else {
-                                    ctx.fillText(data, position.x, position.y + 10);
-                                }
-                            }
-                        } else {
-                            // if the bar is to low -> write the percentageValue above the bar
-                            ctx.fillStyle = 'black';
-                            if (this.participants !== 0) {
-                                ctx.fillText(data + ' / ' + dataPercentage.toString()
-                                    + '%', position.x, position.y - 10);
-                            } else {
-                                ctx.fillText(data, position.x, position.y - 10);
-                            }
-                        }
-                    });
-                });
-            }
-        }
-    };
+    options: ChartOptions;
 
     constructor(private route: ActivatedRoute,
                 private router: Router,
@@ -169,7 +74,9 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
                 private quizStatisticUtil: QuizStatisticUtil,
                 private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
                 private artemisMarkdown: ArtemisMarkdown,
-                private http: HttpClient) {}
+                private http: HttpClient) {
+        this.options = createOptions(this);
+    }
 
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
@@ -222,13 +129,21 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForReleaseState);
     }
 
+    getDataSets() {
+        return this.datasets;
+    }
+
+    getParticipants() {
+        return this.participants;
+    }
+
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template
      *
      * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
      * @param {boolean} refresh: true if method is called from Websocket
      */
-    loadQuiz(quiz, refresh) {
+    loadQuiz(quiz: QuizExercise, refresh: boolean) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
         if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
@@ -340,7 +255,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
                             pointBorderColor: '#838383'
                         });
                     // add 'invalid' to bar-Label
-                    this.label[i] = ([String.fromCharCode(65 + i) + '.', ' ' + invalidLabel]);
+                    this.label[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
                 }
             });
         });
@@ -439,7 +354,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      *
      * @param index the given number
      */
-    getLetter(index) {
+    getLetter(index: number) {
         return String.fromCharCode(65 + index);
     }
 
@@ -470,7 +385,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      * @return {object | null} the mapped drag item,
      *                          or null if no drag item has been mapped to this location
      */
-    correctDragItemForDropLocation(dropLocation) {
+    correctDragItemForDropLocation(dropLocation: DropLocation) {
         const currMapping = this.dragAndDropQuestionUtil.solve(this.question, null).filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
         if (currMapping) {
             return currMapping.dragItem;
@@ -500,7 +415,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      *
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released) {
+    releaseStatistics(released: boolean) {
         this.quizStatisticUtil.releaseStatistics(released, this.quizExercise);
     }
 

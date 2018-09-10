@@ -43,7 +43,7 @@ export class SortByPipe implements PipeTransform {
         return array;
     }
 
-    statusForQuiz(quizExercise) {
+    statusForQuiz(quizExercise: any) {
         if (quizExercise.isPlannedToStart && quizExercise.remainingTime != null) {
             if (quizExercise.remainingTime <= 0) {
                 return quizExercise.isOpenForPractice ? 1 : 0;
@@ -54,7 +54,7 @@ export class SortByPipe implements PipeTransform {
         return quizExercise.isVisibleBeforeStart ? 3 : 4;
     }
 
-    durationForExercise(exercise) {
+    durationForExercise(exercise: any) {
         return this.momentDiff.transform(exercise.completionDate, exercise.participations[0].initializationDate, 'minutes');
     }
 }

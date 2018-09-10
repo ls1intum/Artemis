@@ -4,6 +4,7 @@ import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
 import { JhiDateUtils } from 'ng-jhipster';
+import * as moment from 'moment';
 
 import { Course } from './course.model';
 import { createRequestOption } from '../../shared';
@@ -55,8 +56,8 @@ export class CourseService {
             .map((res: HttpResponse<Course[]>) => this.convertArrayResponse(res));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
     getAllCourseScoresOfCourseUsers(courseId: number): Observable<any> {
@@ -96,8 +97,8 @@ export class CourseService {
      */
     private convert(course: Course): Course {
         const copy: Course = Object.assign({}, course);
-        copy.startDate = this.dateUtils.toDate(course.startDate);
-        copy.endDate = this.dateUtils.toDate(course.endDate);
+        copy.startDate = course.startDate != null ? moment(course.startDate).format() : null;
+        copy.endDate = course.endDate != null ? moment(course.endDate).format() : null;
         return copy;
     }
 }

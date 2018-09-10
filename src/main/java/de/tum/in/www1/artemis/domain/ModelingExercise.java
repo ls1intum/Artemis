@@ -4,7 +4,6 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.time.ZonedDateTime;
 import java.util.Objects;
 
 /**
@@ -71,13 +70,6 @@ public class ModelingExercise extends Exercise implements Serializable {
     }
 
     // jhipster-needle-entity-add-getters-setters - Jhipster will add getters and setters here, do not remove
-
-    public Boolean isEnded() {
-        if (getDueDate() == null) {
-            return false;
-        }
-        return ZonedDateTime.now().isAfter(getDueDate());
-    }
 
     @Override
     public boolean equals(Object o) {

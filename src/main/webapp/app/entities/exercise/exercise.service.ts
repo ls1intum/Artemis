@@ -41,8 +41,8 @@ export class ExerciseService {
             .map((res: HttpResponse<Exercise[]>) => this.convertArrayResponse(res));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
     archive(id: number): Observable<HttpResponse<Blob>> {
@@ -54,8 +54,8 @@ export class ExerciseService {
         return this.http.delete(`${this.resourceUrl}/${id}/cleanup`, { params, observe: 'response', responseType: 'blob'});
     }
 
-    reset(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}/participations`, { observe: 'response'});
+    reset(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}/participations`, { observe: 'response'});
     }
 
     exportRepos(id: number, students: string[]): Observable<HttpResponse<Blob>> {

@@ -29,7 +29,7 @@ export class NotificationInterceptor implements HttpInterceptor {
                 if (alert) {
                     if (typeof alert === 'string') {
                         if (this.alertService) {
-                            const alertParam = alertParams;
+                            const alertParam: any = alertParams;
                             this.alertService.success(alert, { param : alertParam }, null);
                         }
                     }

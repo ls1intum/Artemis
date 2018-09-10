@@ -31,8 +31,8 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
-    predicate: any;
-    reverse: any;
+    predicate: string;
+    reverse: boolean;
     showAllResults: string;
     results: Result[];
     allResults: Result[];
@@ -102,17 +102,17 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    durationString(completionDate, initializationDate) {
+    durationString(completionDate: Date, initializationDate: Date) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
-    goToBuildPlan(result) {
+    goToBuildPlan(result: Result) {
         this.participationService.buildPlanWebUrl(result.participation.id).subscribe(res => {
             window.open(res.url);
         });
     }
 
-    goToRepository(result) {
+    goToRepository(result: Result) {
         window.open(result.participation.repositoryUrl);
     }
 
@@ -121,14 +121,14 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.result = result;
     }
 
-    toggleShowAllResults(newValue) {
+    toggleShowAllResults(newValue: string) {
         this.showAllResults = newValue;
         this.filterResults();
     }
 
     exportNames() {
         if (this.results.length > 0) {
-            const rows = [];
+            const rows: string[] = [];
             this.results.forEach((result, index) => {
                 let studentName = result.participation.student.firstName;
                 if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {
@@ -148,7 +148,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
 
     exportResults() {
         if (this.results.length > 0) {
-            const rows = [];
+            const rows: string[] = [];
             this.results.forEach((result, index) => {
                 let studentName = result.participation.student.firstName;
                 if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {

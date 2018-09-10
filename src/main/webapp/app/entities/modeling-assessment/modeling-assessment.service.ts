@@ -5,7 +5,8 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ModelElementType, ModelingAssessment } from './modeling-assessment.model';
 import { Result } from '../result';
-import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT } from '@ls1intum/apollon/dist/rendering/layouters/entity';
+import { State, RelationshipKind, Point } from '@ls1intum/apollon';
+import { ENTITY_KIND_HEIGHT, ENTITY_MEMBER_HEIGHT, ENTITY_MEMBER_LIST_VERTICAL_PADDING, ENTITY_NAME_HEIGHT } from '@ls1intum/apollon';
 
 export type EntityResponseType = HttpResponse<Result>;
 
@@ -45,8 +46,8 @@ export class ModelingAssessmentService {
         return this.http.get(`api/assessment-editor/${exerciseId}/${submissionId}`, {responseType: 'json'});
     }
 
-    resetOptimality(exerciseId: number): Observable<HttpResponse<any>> {
-        return this.http.delete(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, {observe: 'response'});
+    resetOptimality(exerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/exercise/${exerciseId}/optimal-models`, {observe: 'response'});
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
@@ -86,8 +87,8 @@ export class ModelingAssessmentService {
         return copy;
     }
 
-    getNamesForAssessments(assessments: ModelingAssessment[], model) {
-        const assessmentsNames = [];
+    getNamesForAssessments(assessments: ModelingAssessment[], model: State) {
+        const assessmentsNames = new Map<string, string>();
         for (const assessment of assessments) {
             if (assessment.type === ModelElementType.CLASS) {
                 assessmentsNames[assessment.id] = model.entities.byId[assessment.id].name;
@@ -111,30 +112,32 @@ export class ModelingAssessmentService {
                 const relationship = model.relationships.byId[assessment.id];
                 const source = model.entities.byId[relationship.source.entityId].name;
                 const target = model.entities.byId[relationship.target.entityId].name;
-                const kind = model.relationships.byId[assessment.id].kind;
-                let relation;
-                //TODO: use an enum here
+                const kind: RelationshipKind = model.relationships.byId[assessment.id].kind;
+                let relation: string;
                 switch (kind) {
-                    case 'ASSOCIATION_BIDIRECTIONAL':
+                    case RelationshipKind.AssociationBidirectional:
                         relation = ' <-> ';
                         break;
-                    case 'ASSOCIATION_UNIDIRECTIONAL':
+                    case RelationshipKind.AssociationUnidirectional:
                         relation = ' -> ';
                         break;
-                    case 'AGGREGATION':
+                    case RelationshipKind.Aggregation:
                         relation = ' -◇ ';
                         break;
-                    case 'INHERITANCE':
+                    case RelationshipKind.Inheritance:
                         relation = ' -▷ ';
                         break;
-                    case 'DEPENDENCY':
+                    case RelationshipKind.Dependency:
                         relation = ' ╌> ';
                         break;
-                    case 'COMPOSITION':
+                    case RelationshipKind.Composition:
                         relation = ' -◆ ';
                         break;
+                    case RelationshipKind.ActivityControlFlow:
+                        relation = ' -> ';
+                        break;
                     default:
-                        relation = '/';
+                        relation = ' -- ';
                 }
                 assessmentsNames[assessment.id] = source + relation + target;
             } else {
@@ -144,19 +147,24 @@ export class ModelingAssessmentService {
         return assessmentsNames;
     }
 
-    getElementPositions(assessments, state) {
-        const positions = [];
+    getElementPositions(assessments: ModelingAssessment[], model: State) {
+        const SYMBOL_HEIGHT = 31;
+        const SYMBOL_WIDTH = 65;
+        const positions = new Map<string, Point>();
         for (const assessment of assessments) {
-            const elemPosition = {x: 0, y: 0};
+            const elemPosition: Point = {x: 0, y: 0};
             if (assessment.type === ModelElementType.CLASS) {
-                if (state.entities.byId[assessment.id]) {
-                    const entity = state.entities.byId[assessment.id];
+                if (model.entities.byId[assessment.id]) {
+                    const entity = model.entities.byId[assessment.id];
                     elemPosition.x = entity.position.x + entity.size.width;
+                    if (entity.kind === 'ACTIVITY_CONTROL_INITIAL_NODE' || entity.kind === 'ACTIVITY_CONTROL_FINAL_NODE') {
+                        elemPosition.x = entity.position.x;
+                    }
                     elemPosition.y = entity.position.y;
                 }
             } else if (assessment.type === ModelElementType.ATTRIBUTE) {
-                for (const entityId of state.entities.allIds) {
-                    const entity = state.entities.byId[entityId];
+                for (const entityId of model.entities.allIds) {
+                    const entity = model.entities.byId[entityId];
                     entity.attributes.forEach((attribute, index) => {
                         if (attribute.id === assessment.id) {
                             elemPosition.x = entity.position.x + entity.size.width;
@@ -171,8 +179,8 @@ export class ModelingAssessmentService {
                     });
                 }
             } else if (assessment.type === ModelElementType.METHOD) {
-                for (const entityId of state.entities.allIds) {
-                    const entity = state.entities.byId[entityId];
+                for (const entityId of model.entities.allIds) {
+                    const entity = model.entities.byId[entityId];
                     entity.methods.forEach((method, index) => {
                         if (method.id === assessment.id) {
                             elemPosition.x = entity.position.x + entity.size.width;
@@ -190,26 +198,52 @@ export class ModelingAssessmentService {
                     });
                 }
             } else if (assessment.type === ModelElementType.RELATIONSHIP) {
-                if (state.relationships.byId[assessment.id]) {
-                    const relationship = state.relationships.byId[assessment.id];
-                    const sourceEntity = state.entities.byId[relationship.source.entityId];
-                    const destEntity = state.entities.byId[relationship.target.entityId];
-                    const leftElem = (sourceEntity.position.x < destEntity.position.x) ? sourceEntity : destEntity;
-                    const rightElem = (sourceEntity.position.x > destEntity.position.x) ? sourceEntity : destEntity;
-                    const rightEdge = (rightElem === sourceEntity) ? relationship.source.edge : relationship.target.edge;
-                    elemPosition.x = rightElem.position.x;
-                    elemPosition.y = rightElem.position.y;
-                    if (rightEdge === 'TOP') {
-                        elemPosition.x += rightElem.size.width / 2;
-                        elemPosition.y -= 31;
-                    } else if (rightEdge === 'BOTTOM') {
-                        elemPosition.x += rightElem.size.width / 2;
-                        elemPosition.y += rightElem.size.height;
-                    } else if (rightEdge === 'LEFT') {
-                        elemPosition.y += rightElem.size.height / 2;
-                    } else if (rightEdge === 'RIGHT') {
-                        elemPosition.x += rightElem.size.width + 65;
-                        elemPosition.y += rightElem.size.height / 2;
+                if (model.relationships.byId[assessment.id]) {
+                    const relationship = model.relationships.byId[assessment.id];
+                    const kind: RelationshipKind = relationship.kind;
+                    const sourceEntity = model.entities.byId[relationship.source.entityId];
+                    const destEntity = model.entities.byId[relationship.target.entityId];
+                    if (kind === RelationshipKind.AssociationBidirectional) {
+                        const leftElem = (sourceEntity.position.x < destEntity.position.x) ? sourceEntity : destEntity;
+                        const rightElem = (sourceEntity.position.x > destEntity.position.x) ? sourceEntity : destEntity;
+                        const rightEdge = (rightElem === sourceEntity) ? relationship.source.edge : relationship.target.edge;
+                        elemPosition.x = rightElem.position.x;
+                        elemPosition.y = rightElem.position.y;
+                        if (rightEdge === 'TOP') {
+                            elemPosition.x += rightElem.size.width / 2;
+                            elemPosition.y -= SYMBOL_HEIGHT;
+                        } else if (rightEdge === 'BOTTOM') {
+                            elemPosition.x += rightElem.size.width / 2;
+                            elemPosition.y += rightElem.size.height;
+                        } else if (rightEdge === 'LEFT') {
+                            elemPosition.y += rightElem.size.height / 2;
+                        } else if (rightEdge === 'RIGHT') {
+                            elemPosition.x += rightElem.size.width + SYMBOL_WIDTH;
+                            elemPosition.y += rightElem.size.height / 2;
+                        }
+                    } else {
+                        elemPosition.x = sourceEntity.position.x;
+                        elemPosition.y = sourceEntity.position.y;
+                        const sourceEdge = relationship.source.edge;
+                        switch (sourceEdge) {
+                            case 'TOP':
+                                elemPosition.x += sourceEntity.size.width / 2;
+                                elemPosition.y -= SYMBOL_HEIGHT;
+                                break;
+                            case 'BOTTOM':
+                                elemPosition.x += sourceEntity.size.width / 2;
+                                elemPosition.y += sourceEntity.size.height;
+                                break;
+                            case 'LEFT':
+                                elemPosition.y += sourceEntity.size.height / 2;
+                                break;
+                            case 'RIGHT':
+                                elemPosition.x += sourceEntity.size.width + SYMBOL_WIDTH;
+                                elemPosition.y += sourceEntity.size.height / 2;
+                                break;
+                            default:
+                                break;
+                        }
                     }
                 }
             }

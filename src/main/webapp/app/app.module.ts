@@ -7,6 +7,7 @@ import { HTTP_INTERCEPTORS } from '@angular/common/http';
 import { LocalStorageService, Ng2Webstorage, SessionStorageService } from 'ngx-webstorage';
 import { JhiEventManager } from 'ng-jhipster';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AuthInterceptor } from './blocks/interceptor/auth.interceptor';
 import { AuthExpiredInterceptor } from './blocks/interceptor/auth-expired.interceptor';
@@ -45,6 +46,7 @@ declare var angular: any;
 @NgModule({
     imports: [
         BrowserModule,
+        BrowserAnimationsModule,
         /**
          * @description Import UpgradeModule:
          * We need the UpgradeModule provided by Angular to up- and downgrade components and services.

@@ -48,7 +48,7 @@ export class QuizExerciseExportComponent implements OnInit {
      * Loads course for the given id and populates quiz exercises for the given course id
      * @param courseId Id of the course
      */
-    private loadForCourse(courseId) {
+    private loadForCourse(courseId: number) {
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
@@ -66,7 +66,7 @@ export class QuizExerciseExportComponent implements OnInit {
                     });
                 }
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
@@ -74,7 +74,7 @@ export class QuizExerciseExportComponent implements OnInit {
      * Handles when error is received
      * @param error Error
      */
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 

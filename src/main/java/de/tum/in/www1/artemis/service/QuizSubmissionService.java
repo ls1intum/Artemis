@@ -65,7 +65,8 @@ public class QuizSubmissionService {
         // calculate score and update result accordingly
         result.evaluateSubmission();
         // save result
-        resultRepository.save(result);
+        quizSubmission.setResult(result);
+        quizSubmissionRepository.save(quizSubmission);
         // replace proxy with submission, because of Lazy-fetching
         result.setSubmission(quizSubmission);
 

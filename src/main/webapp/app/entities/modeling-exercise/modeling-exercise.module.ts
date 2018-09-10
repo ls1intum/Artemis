@@ -15,6 +15,7 @@ import {
     ModelingExerciseService
 } from './';
 import { SortByModule } from '../../components/pipes';
+import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [
     ...modelingExerciseRoute,
@@ -25,7 +26,8 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule
+        SortByModule,
+        FormDateTimePickerModule,
     ],
     declarations: [
         ModelingExerciseComponent,

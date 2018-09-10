@@ -2,12 +2,10 @@ package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
-import de.tum.in.www1.artemis.repository.JsonAssessmentRepository;
-import de.tum.in.www1.artemis.repository.JsonModelRepository;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.grade.CompassGrade;
 import de.tum.in.www1.artemis.service.compass.grade.Grade;
 import de.tum.in.www1.artemis.service.compass.grade.GradeParser;
@@ -37,6 +35,7 @@ public class CompassService {
     private final JsonModelRepository modelRepository;
     private final ResultRepository resultRepository;
     private final ModelingExerciseRepository modelingExerciseRepository;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
     /**
      * Map exerciseId to compass CalculationEngines
      */
@@ -52,11 +51,13 @@ public class CompassService {
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
 
     public CompassService (JsonAssessmentRepository assessmentRepository, JsonModelRepository modelRepository,
-                           ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository) {
+                           ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository,
+                           ModelingSubmissionRepository modelingSubmissionRepository) {
         this.assessmentRepository = assessmentRepository;
         this.modelRepository = modelRepository;
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -162,7 +163,12 @@ public class CompassService {
 
     private void assessAutomatically(long modelId, long exerciseId) {
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-        Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(null);
+        ModelingSubmission modelingSubmission = modelingSubmissionRepository.findOne(modelId);
+        if (modelingSubmission == null) {
+            log.error("No modeling submission with ID {} could be found.", modelId);
+            return;
+        }
+        Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission).participation(modelingSubmission.getParticipation()));
         // unrated result exists
         if (result != null) {
             if (!result.isRated()) {

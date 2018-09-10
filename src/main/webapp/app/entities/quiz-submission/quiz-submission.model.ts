@@ -6,7 +6,7 @@ export class QuizSubmission extends Submission {
     public scoreInPoints: number;
     public submittedAnswers: SubmittedAnswer[];
 
-    //helper attributes
+    // helper attributes
     public adjustedSubmissionDate: Date;
 
     constructor() {

@@ -6,6 +6,7 @@ import { SERVER_API_URL } from '../../app.constants';
 import { ProgrammingExercise } from './programming-exercise.model';
 import { createRequestOption } from '../../shared';
 import { JhiDateUtils } from 'ng-jhipster';
+import * as moment from 'moment';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 
@@ -39,8 +40,8 @@ export class ProgrammingExerciseService {
             .map((res: HttpResponse<ProgrammingExercise[]>) => this.convertArrayResponse(res));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response'});
     }
 
     private convertResponse(res: EntityResponseType): EntityResponseType {
@@ -74,8 +75,8 @@ export class ProgrammingExerciseService {
      */
     private convert(programmingExercise: ProgrammingExercise): ProgrammingExercise {
         const copy: ProgrammingExercise = Object.assign({}, programmingExercise);
-        copy.releaseDate = this.dateUtils.toDate(programmingExercise.releaseDate);
-        copy.dueDate = this.dateUtils.toDate(programmingExercise.dueDate);
+        copy.releaseDate = programmingExercise.releaseDate != null ? moment(programmingExercise.releaseDate).format() : null;
+        copy.dueDate = programmingExercise.dueDate != null ? moment(programmingExercise.dueDate).format() : null;
         return copy;
     }
 }

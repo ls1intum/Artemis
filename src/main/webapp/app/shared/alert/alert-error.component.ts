@@ -22,7 +22,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
     constructor(private alertService: JhiAlertService, private eventManager: JhiEventManager, private translateService: TranslateService) {
         this.alerts = [];
 
-        this.cleanHttpErrorListener = eventManager.subscribe('arTeMiSApp.httpError', response => {
+        this.cleanHttpErrorListener = eventManager.subscribe('arTeMiSApp.httpError', (response: any) => {
             let i;
             const httpErrorResponse = response.content;
             switch (httpErrorResponse.status) {
@@ -35,7 +35,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
                     const arr = httpErrorResponse.headers.keys();
                     let errorHeader = null;
                     let entityKey = null;
-                    arr.forEach(entry => {
+                    arr.forEach((entry: string) => {
                         if (entry.endsWith('app-error')) {
                             errorHeader = httpErrorResponse.headers.get(entry);
                         } else if (entry.endsWith('app-params')) {
@@ -84,7 +84,7 @@ export class JhiAlertErrorComponent implements OnDestroy {
         }
     }
 
-    addErrorAlert(message, key?, data?) {
+    addErrorAlert(message: string, key?: string, data?: any) {
         key = (key && key !== null) ? key : message;
         this.alerts.push(
             this.alertService.addAlert(

@@ -62,8 +62,8 @@ export class CoursesComponent implements OnInit {
         return item.id;
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(error: string) {
+        this.jhiAlertService.error(error, null, null);
     }
 
     showWelcomeAlert() {

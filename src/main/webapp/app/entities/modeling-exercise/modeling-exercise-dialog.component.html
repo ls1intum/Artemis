@@ -18,19 +18,12 @@
                    [(ngModel)]="modelingExercise.title" />
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.releaseDate" for="field_releaseDate">Release Date</label>
-            <div class="d-flex">
-                <input id="field_releaseDate" type="datetime-local" class="form-control" name="releaseDate" [(ngModel)]="modelingExercise.releaseDate"
-                />
-            </div>
+          <jhi-date-time-picker labelName="Release Date" [entity]="modelingExercise" field="releaseDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.dueDate" for="field_dueDate">Due Date</label>
-            <div class="d-flex">
-                <input id="field_dueDate" type="datetime-local" class="form-control" name="dueDate" [(ngModel)]="modelingExercise.dueDate"
-                />
-            </div>
+          <jhi-date-time-picker labelName="Due Date" [entity]="modelingExercise" field="dueDate"></jhi-date-time-picker>
         </div>
+
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>
             <input type="number" required class="form-control" name="maxScore" id="field_maxScore"
@@ -41,8 +34,9 @@
             <select class="form-control" name="diagramType" [(ngModel)]="modelingExercise.diagramType" id="field_diagramType" >
                 <option value="CLASS">{{'arTeMiSApp.DiagramType.CLASS' | translate}}</option>
                 <option value="ACTIVITY">{{'arTeMiSApp.DiagramType.ACTIVITY' | translate}}</option>
+                <!-- currently we do not support use case and communication diagrams
                 <option value="USE_CASE">{{'arTeMiSApp.DiagramType.USE_CASE' | translate}}</option>
-                <option value="COMMUNICATION">{{'arTeMiSApp.DiagramType.COMMUNICATION' | translate}}</option>
+                <option value="COMMUNICATION">{{'arTeMiSApp.DiagramType.COMMUNICATION' | translate}}</option>-->
             </select>
         </div>
         <div class="form-group">

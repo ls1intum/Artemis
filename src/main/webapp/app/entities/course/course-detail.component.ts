@@ -31,7 +31,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.registerChangeInCourses();
     }
 
-    load(id) {
+    load(id: number) {
         this.courseService.find(id)
             .subscribe((courseResponse: HttpResponse<Course>) => {
                 this.course = courseResponse.body;
@@ -50,7 +50,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     registerChangeInCourses() {
         this.eventSubscriber = this.eventManager.subscribe(
             'courseListModification',
-            response => this.load(this.course.id)
+            () => this.load(this.course.id)
         );
     }
 }
