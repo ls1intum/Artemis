@@ -15,6 +15,12 @@ import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { AnswerOption } from '../../entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
 import * as moment from 'moment';
+import { Moment } from 'moment';
+
+interface Reason {
+    translateKey: string;
+    translateValues: {};
+}
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -34,9 +40,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     courseRepository: CourseService;
 
     entity: QuizExercise;
-    savedEntity = {};
-    /** Corresponds to question.releaseDate, which is explicit any **/
-    dateTime: any;
+    savedEntity: QuizExercise;
+    dateTime: Moment;
 
     showExistingQuestions = false;
     courses: Course[] = [];
@@ -117,14 +122,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             this.entity.isVisibleBeforeStart = false;
             this.entity.isOpenForPractice = false;
             this.entity.isPlannedToStart = false;
-            this.entity.releaseDate = new Date((new Date()).toISOString().substring(0, 16));
+            this.entity.releaseDate = moment();
             this.entity.randomizeQuestionOrder = true;
             this.entity.questions = [];
             this.quizExercise = this.entity;
         }
         this.prepareEntity(this.entity);
         this.prepareDateTime();
-        this.savedEntity = this.entity.id ? Object.assign({}, this.entity) : {};
+        this.savedEntity = this.entity.id ? Object.assign({}, this.entity) : new QuizExercise();
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
@@ -164,7 +169,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const mcQuestion = new MultipleChoiceQuestion();
         mcQuestion.title = '';
         mcQuestion.text = 'Enter your question text here';
-        mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING;                    // explicit default value for multiple questions
+        mcQuestion.scoringType = ScoringType.ALL_OR_NOTHING; // explicit default value for multiple questions
         mcQuestion.randomizeOrder = true;
         mcQuestion.score = 1;
 
@@ -191,7 +196,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const dndQuestion = new DragAndDropQuestion();
         dndQuestion.title = '';
         dndQuestion.text = 'Enter your question text here';
-        dndQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS;     // explicit default value for drag and drop questions
+        dndQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
         dndQuestion.score = 1;
         dndQuestion.dropLocations = [];
@@ -210,11 +215,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
         // If courses are not populated, then populate list of courses,
         if (this.courses.length === 0) {
-            this.courseRepository.query().subscribe(
-                (res: HttpResponse<Course[]>) => {
+            this.courseRepository.query().subscribe((res: HttpResponse<Course[]>) => {
                     this.courses = res.body;
-                }
-            );
+            });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
     }
@@ -229,24 +232,23 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         const course = JSON.parse(this.selectedCourse) as Course;
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.repository.findForCourse(course.id)
-            .subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
-                if (quizExercisesResponse.body) {
-                    const quizExercises = quizExercisesResponse.body;
-                    for (const quizExercise of quizExercises) {
-                        this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
-                            const quizExerciseResponse = response.body;
-                            for (const question of quizExerciseResponse.questions) {
-                                question.exercise = quizExercise;
-                                this.allExistingQuestions.push(question);
-                            }
-                            this.applyFilter();
-                        });
-                    }
-                } else {
-                    this.onSaveError();
+        this.repository.findForCourse(course.id).subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+            if (quizExercisesResponse.body) {
+                const quizExercises = quizExercisesResponse.body;
+                for (const quizExercise of quizExercises) {
+                    this.repository.find(quizExercise.id).subscribe((response: HttpResponse<QuizExercise>) => {
+                        const quizExerciseResponse = response.body;
+                        for (const question of quizExerciseResponse.questions) {
+                            question.exercise = quizExercise;
+                            this.allExistingQuestions.push(question);
+                        }
+                        this.applyFilter();
+                    });
                 }
-            });
+            } else {
+                this.onSaveError();
+            }
+        });
     }
 
     /**
@@ -257,8 +259,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         // Depending on the filter selected by user, filter out questions.
         // allExistingQuestions contains list of all questions. We don't change it. We populate existingQuestions list depending on the filter options,
         for (const question of this.allExistingQuestions) {
-            if (!this.searchQueryText || this.searchQueryText === ''
-                || question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1) {
+            if (!this.searchQueryText ||
+                this.searchQueryText === '' ||
+                question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1
+            ) {
                 if (this.mcqFilterEnabled === true && question.type === QuestionType.MULTIPLE_CHOICE) {
                     this.existingQuestions.push(question);
                 }
@@ -306,15 +310,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        return [
-            'title',
-            'duration',
-            'isPlannedToStart',
-            'releaseDate',
-            'isVisibleBeforeStart',
-            'isOpenForPractice',
-            'questions'
-        ].some(key => this.quizExercise[key] !== this.savedEntity[key]);
+        return ['title', 'duration', 'isPlannedToStart', 'releaseDate', 'isVisibleBeforeStart', 'isOpenForPractice', 'questions'].some(
+            key => this.quizExercise[key] !== this.savedEntity[key]
+        );
     }
 
     /**
@@ -325,17 +323,30 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise) {
             return false;
         }
-        const isGenerallyValid = this.quizExercise.title && this.quizExercise.title !== '' &&
-            this.quizExercise.duration && this.quizExercise.questions && this.quizExercise.questions.length;
+        const isGenerallyValid =
+            this.quizExercise.title &&
+            this.quizExercise.title !== '' &&
+            this.quizExercise.duration &&
+            this.quizExercise.questions &&
+            this.quizExercise.questions.length;
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return question.title && question.title !== '' && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
+                return (
+                    question.title &&
+                    question.title !== ''
+                    && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)
+                );
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
-                return question.title && question.title !== '' && dndQuestion.correctMappings &&
-                    dndQuestion.correctMappings.length > 0 && this.dragAndDropQuestionUtil.solve(question).length &&
-                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question);
+                return (
+                    question.title &&
+                    question.title !== '' &&
+                    dndQuestion.correctMappings &&
+                    dndQuestion.correctMappings.length > 0 &&
+                    this.dragAndDropQuestionUtil.solve(question).length &&
+                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question)
+                );
             } else {
                 console.log('Unknown question type: ' + question);
                 return question.title && question.title !== '';
@@ -351,7 +362,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
     invalidReasons() {
-        const reasons: Object[] = [];
+        const reasons = new Array<Reason>();
         if (!this.quizExercise) {
             return;
         }
@@ -373,7 +384,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 translateValues: {}
             });
         }
-        this.quizExercise.questions.forEach(function(question, index) {
+        this.quizExercise.questions.forEach(function(question: Question, index: number) {
             if (!question.title || question.title === '') {
                 reasons.push({
                     translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionTitle',
@@ -382,9 +393,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             }
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                if (!mcQuestion.answerOptions.some(function(answerOption) {
-                    return answerOption.isCorrect;
-                })) {
+                if (!mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectAnswerOption',
                         translateValues: { index: index + 1 }
@@ -526,31 +535,29 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         this.isSaving = true;
         if (this.quizExercise.id !== undefined) {
-            this.repository.update(this.quizExercise)
-                .subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                    if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body);
-                    } else {
-                        this.onSaveError();
-                    }
-                });
+            this.repository.update(this.quizExercise).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                if (quizExerciseResponse.body) {
+                    this.onSaveSuccess(quizExerciseResponse.body);
+                } else {
+                    this.onSaveError();
+                }
+            });
         } else {
-            this.repository.create(this.quizExercise)
-                .subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
-                    if (quizExerciseResponse.body) {
-                        this.onSaveSuccess(quizExerciseResponse.body);
-                    } else {
-                        this.onSaveError();
-                    }
-                });
+            this.repository.create(this.quizExercise).subscribe((quizExerciseResponse: HttpResponse<QuizExercise>) => {
+                if (quizExerciseResponse.body) {
+                    this.onSaveSuccess(quizExerciseResponse.body);
+                } else {
+                    this.onSaveError();
+                }
+            });
         }
     }
 
-    onSaveSuccess(result: QuizExercise) {
+    onSaveSuccess(quizExercise: QuizExercise) {
         this.isSaving = false;
-        this.prepareEntity(result);
-        this.savedEntity = Object.assign({}, result);
-        this.quizExercise = result;
+        this.prepareEntity(quizExercise);
+        this.savedEntity = Object.assign({}, quizExercise);
+        this.quizExercise = quizExercise;
     }
 
     onSaveError() {
@@ -562,10 +569,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Makes sure the entity is well formed and its fields are of the correct types
      * @param entity
      */
-    prepareEntity(entity: QuizExercise) {
-        entity.releaseDate = entity.releaseDate ? new Date(entity.releaseDate) : new Date();
-        entity.duration = Number(entity.duration);
-        entity.duration = isNaN(entity.duration) ? 10 : entity.duration;
+    prepareEntity(quizExercise: QuizExercise) {
+        quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : moment();
+        quizExercise.duration = Number(quizExercise.duration);
+        quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }
 
     /**
@@ -613,11 +620,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
     hasSavedQuizStarted() {
-        return !!(
-            this.savedEntity &&
-            (this.savedEntity as any).isPlannedToStart &&
-            moment((this.savedEntity as any).releaseDate).isBefore(moment())
-        );
+        return !!(this.savedEntity && this.savedEntity.isPlannedToStart && moment(this.savedEntity.releaseDate).isBefore(moment()));
     }
 
     ngOnDestroy() {
