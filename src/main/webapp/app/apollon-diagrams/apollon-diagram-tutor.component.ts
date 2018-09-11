@@ -8,7 +8,7 @@ import { ModelingSubmission, ModelingSubmissionService } from '../entities/model
 import { DiagramType, ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
 import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
-import { Principal } from '../shared';
+import { Principal } from '../core';
 import { Submission } from '../entities/submission';
 
 @Component({
@@ -17,8 +17,10 @@ import { Submission } from '../entities/submission';
     providers: [ModelingAssessmentService]
 })
 export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
-    @ViewChild('editorContainer') editorContainer: ElementRef;
-    @Output() onNewResult = new EventEmitter<Result>();
+    @ViewChild('editorContainer')
+    editorContainer: ElementRef;
+    @Output()
+    onNewResult = new EventEmitter<Result>();
 
     apollonEditor: ApollonEditor | null = null;
     selectedEntities: string[];
@@ -75,9 +77,11 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                  * set diagramType to class diagram if exercise is null, use case or communication
                  * apollon does not support use case and communication yet
                  */
-                if (this.modelingExercise.diagramType === null ||
+                if (
+                    this.modelingExercise.diagramType === null ||
                     this.modelingExercise.diagramType === DiagramType.USE_CASE ||
-                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
+                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION
+                ) {
                     this.modelingExercise.diagramType = DiagramType.CLASS;
                 }
                 this.submission = data.modelingSubmission as ModelingSubmission;
@@ -123,7 +127,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             initialState,
             mode: 'READ_ONLY',
-            diagramType: <ApollonOptions['diagramType']> this.modelingExercise.diagramType
+            diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
         });
 
         this.apollonEditor.subscribeToSelectionChange(selection => {
@@ -228,7 +232,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             totalScore += assessment.credits;
             if (assessment.credits == null) {
                 this.assessmentsAreValid = false;
-                return this.invalidError = 'The score field must be a number and can not be empty!';
+                return (this.invalidError = 'The score field must be a number and can not be empty!');
             }
         }
         this.totalScore = totalScore;
@@ -307,16 +311,17 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                 } else {
                     // TODO: Workaround We have to fake path change to make angular reload the component
                     const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
-                    this.router.navigateByUrl(`/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`);
+                    this.router.navigateByUrl(
+                        `/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`
+                    );
                 }
             });
         }, attempts === 0 ? 0 : 500 + (attempts - 1) * 1000);
-
     }
 
     numberToArray(n: number, startFrom: number): number[] {
-        n = (n > 5) ? 5 : n;
-        n = (n < -5) ? -5 : n;
+        n = n > 5 ? 5 : n;
+        n = n < -5 ? -5 : n;
         return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 

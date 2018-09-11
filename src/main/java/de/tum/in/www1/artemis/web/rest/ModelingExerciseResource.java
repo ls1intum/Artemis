@@ -210,8 +210,8 @@ public class ModelingExerciseResource {
     @Timed
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long id) {
         log.debug("REST request to get ModelingExercise : {}", id);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(modelingExercise));
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(modelingExercise);
     }
 
     /**
@@ -225,7 +225,7 @@ public class ModelingExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteModelingExercise(@PathVariable Long id) {
         log.debug("REST request to delete ModelingExercise : {}", id);
-        ModelingExercise modelingExercise = modelingExerciseRepository.findOne(id);
+        ModelingExercise modelingExercise = modelingExerciseRepository.findById(id).get();
         Course course = modelingExercise.getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isInstructorInCourse(course, user) &&
@@ -262,7 +262,10 @@ public class ModelingExerciseResource {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "wrongExerciseType", "The exercise of the participation is not a modeling exercise.")).body(null);
         }
 
-        if (!courseService.userHasAtLeastStudentPermissions(modelingExercise.getCourse()) || !authCheckService.isOwnerOfParticipation(participation)) {
+        // users can only see their own models (to prevent cheating), TAs, instructors and admins can see all models
+        if (authCheckService.isOwnerOfParticipation(participation) || courseService.userHasAtLeastTAPermissions(modelingExercise.getCourse())) {
+            //continue
+        } else {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
 
@@ -315,12 +318,12 @@ public class ModelingExerciseResource {
     @Transactional
     @Timed
     public ResponseEntity<JsonNode> getDataForAssessmentEditor(@PathVariable Long exerciseId, @PathVariable Long submissionId) {
-        ModelingExercise modelingExercise = modelingExerciseRepository.findOne(exerciseId);
-        if (modelingExercise == null) {
+        Optional<ModelingExercise> modelingExercise = modelingExerciseRepository.findById(exerciseId);
+        if (!modelingExercise.isPresent()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("modelingExercise", "exerciseNotFound", "No exercise was found for the given ID.")).body(null);
         }
 
-        Course course = modelingExercise.getCourse();
+        Course course = modelingExercise.get().getCourse();
         User user = userService.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
             !authCheckService.isInstructorInCourse(course, user) &&
@@ -349,7 +352,7 @@ public class ModelingExerciseResource {
             if (relevantResult.getAssessor() instanceof HibernateProxy) {
                 relevantResult.setAssessor((User) Hibernate.unproxy(relevantResult.getAssessor()));
             }
-            JsonObject model = modelingSubmissionService.getModel(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), submissionId);
+            JsonObject model = modelingSubmissionService.getModel(modelingExercise.get().getId(), relevantResult.getParticipation().getStudent().getId(), submissionId);
             if (model != null) {
                 modelingSubmission.setModel(model.toString());
             }
@@ -358,7 +361,7 @@ public class ModelingExerciseResource {
             data.set("result", objectMapper.valueToTree(relevantResult));
             data.set("modelingSubmission", objectMapper.valueToTree(modelingSubmission));
             if (modelingSubmission.isSubmitted()) {
-                String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.getId(), relevantResult.getParticipation().getStudent().getId(), modelingSubmission.getId());
+                String assessment = modelingAssessmentService.findLatestAssessment(modelingExercise.get().getId(), relevantResult.getParticipation().getStudent().getId(), modelingSubmission.getId());
                 if (assessment != null && assessment != "") {
                     try {
                         data.set("assessments", objectMapper.readTree(assessment));

@@ -5,7 +5,8 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { ITEMS_PER_PAGE, Principal } from '../../shared';
+import { ITEMS_PER_PAGE } from '../../shared';
+import { Principal } from '../../core';
 import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService } from '../course';
@@ -71,15 +72,17 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAllForCourse() {
-        this.courseExerciseService.findAllModelingExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<ModelingExercise[]>) => {
-                this.modelingExercises = res.body;
-            },
-            (res: HttpErrorResponse) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllModelingExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<ModelingExercise[]>) => {
+                    this.modelingExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
@@ -106,5 +109,5 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         console.log('Error: ' + error);
     }
 
-    callback() { }
+    callback() {}
 }

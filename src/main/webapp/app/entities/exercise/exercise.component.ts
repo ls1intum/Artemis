@@ -5,14 +5,13 @@ import { JhiAlertService, JhiEventManager, JhiParseLinks } from 'ng-jhipster';
 
 import { Exercise } from './exercise.model';
 import { ExerciseService } from './exercise.service';
-import { ITEMS_PER_PAGE, Principal } from '../../shared';
+import { ITEMS_PER_PAGE } from '../../shared';
 
 @Component({
     selector: 'jhi-exercise',
     templateUrl: './exercise.component.html'
 })
 export class ExerciseComponent implements OnInit, OnDestroy {
-
     exercises: Exercise[];
     eventSubscriber: Subscription;
     itemsPerPage: number;
@@ -26,8 +25,7 @@ export class ExerciseComponent implements OnInit, OnDestroy {
         private exerciseService: ExerciseService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private parseLinks: JhiParseLinks,
-        private principal: Principal
+        private parseLinks: JhiParseLinks
     ) {
         this.exercises = [];
         this.itemsPerPage = ITEMS_PER_PAGE;
@@ -40,14 +38,16 @@ export class ExerciseComponent implements OnInit, OnDestroy {
     }
 
     loadAll() {
-        this.exerciseService.query({
-            page: this.page,
-            size: this.itemsPerPage,
-            sort: this.sort()
-        }).subscribe(
-            (res: HttpResponse<Exercise[]>) => this.onSuccess(res.body, res.headers),
-            (res: HttpErrorResponse) => this.onError(res)
-        );
+        this.exerciseService
+            .query({
+                page: this.page,
+                size: this.itemsPerPage,
+                sort: this.sort()
+            })
+            .subscribe(
+                (res: HttpResponse<Exercise[]>) => this.onSuccess(res.body, res.headers),
+                (res: HttpErrorResponse) => this.onError(res)
+            );
     }
 
     reset() {

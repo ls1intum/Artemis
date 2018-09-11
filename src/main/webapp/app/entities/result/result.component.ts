@@ -1,19 +1,18 @@
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
-import { Participation, ParticipationService } from '../participation/index';
+import { Participation, ParticipationService } from '../participation';
 import { Result, ResultDetailComponent, ResultService } from '.';
-import { JhiWebsocketService, Principal } from '../../shared/index';
+import { JhiWebsocketService, Principal } from '../../core';
 import { RepositoryService } from '../repository/repository.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { HttpClient } from '@angular/common/http';
 import { ExerciseType } from '../../entities/exercise';
 
+import * as moment from 'moment';
+
 @Component({
     selector: 'jhi-result',
     templateUrl: './result.component.html',
-    providers: [
-        ResultService,
-        RepositoryService
-    ]
+    providers: [ResultService, RepositoryService]
 })
 
 /**
@@ -21,16 +20,19 @@ import { ExerciseType } from '../../entities/exercise';
  * e.g. by using Object.assign to trigger ngOnChanges which makes sure that the result is updated
  */
 export class ResultComponent implements OnInit, OnChanges, OnDestroy {
-
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
 
-    @Input() participation: Participation;
-    @Input() isBuilding: boolean;
-    @Input() doInitialRefresh: boolean;
-    @Output() newResult = new EventEmitter<object>();
+    @Input()
+    participation: Participation;
+    @Input()
+    isBuilding: boolean;
+    @Input()
+    doInitialRefresh: boolean;
+    @Output()
+    newResult = new EventEmitter<object>();
 
     result: Result;
     websocketChannel: string;
@@ -39,13 +41,15 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     resultIconClass: string;
     resultString: string;
 
-    constructor(private jhiWebsocketService: JhiWebsocketService,
-                private resultService: ResultService,
-                private participationService: ParticipationService,
-                private repositoryService: RepositoryService,
-                private principal: Principal,
-                private http: HttpClient,
-                private modalService: NgbModal) {}
+    constructor(
+        private jhiWebsocketService: JhiWebsocketService,
+        private resultService: ResultService,
+        private participationService: ParticipationService,
+        private repositoryService: RepositoryService,
+        private principal: Principal,
+        private http: HttpClient,
+        private modalService: NgbModal
+    ) {}
 
     ngOnInit(): void {
         if (this.participation && this.participation.id) {
@@ -67,15 +71,15 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
             }
 
             if (exercise && exercise.type === ExerciseType.PROGRAMMING) {
-                this.principal.identity().then(account => { // only subscribe for the currently logged in user
-                    const now = new Date();
-                    if (account.id === this.participation.student.id && (exercise.dueDate == null ||
-                        new Date(Date.parse(exercise.dueDate)) > now)) {
-
+                this.principal.identity().then(account => {
+                    // only subscribe for the currently logged in user
+                    if (account.id === this.participation.student.id && (exercise.dueDate == null || exercise.dueDate.isAfter(moment()))) {
                         // subscribe for new results (e.g. when a programming exercise was automatically tested)
                         this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannel);
-                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(newResult => {
+                        this.jhiWebsocketService.receive(this.websocketChannel).subscribe((newResult: Result) => {
+                            //convert json string to moment
+                            newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                             this.handleNewResult(newResult);
                         });
 
@@ -104,12 +108,14 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
      * TODO: in any case we should ask the server for the latest 'rated' result
      */
     refreshResult() {
-        this.resultService.findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
-            showAllResults: false,
-            ratedOnly: this.participation.exercise.type === 'quiz'
-        }).subscribe(results => {
-            this.handleNewResult(results.body[0]);
-        });
+        this.resultService
+            .findResultsForParticipation(this.participation.exercise.course.id, this.participation.exercise.id, this.participation.id, {
+                showAllResults: false,
+                ratedOnly: this.participation.exercise.type === 'quiz'
+            })
+            .subscribe(results => {
+                this.handleNewResult(results.body[0]);
+            });
     }
 
     init() {
@@ -150,21 +156,20 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
     }
 
     downloadBuildResult(participationId: number) {
         this.participationService.downloadArtifact(participationId).subscribe(artifact => {
-                const fileURL = URL.createObjectURL(artifact);
-                const a = document.createElement('a');
-                a.href = fileURL;
-                a.target = '_blank';
-                a.download = 'artifact';
-                document.body.appendChild(a);
-                a.click();
-            }
-        );
+            const fileURL = URL.createObjectURL(artifact);
+            const a = document.createElement('a');
+            a.href = fileURL;
+            a.target = '_blank';
+            a.download = 'artifact';
+            document.body.appendChild(a);
+            a.click();
+        });
     }
 
     /**

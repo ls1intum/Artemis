@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { FileUploadExerciseComponent } from './file-upload-exercise.component';
 import { FileUploadExerciseDetailComponent } from './file-upload-exercise-detail.component';
 import { FileUploadExercisePopupComponent } from './file-upload-exercise-dialog.component';
@@ -15,7 +15,8 @@ export const fileUploadExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.fileUploadExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'file-upload-exercise/:id',
         component: FileUploadExerciseDetailComponent,
         data: {
@@ -32,7 +33,8 @@ export const fileUploadExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.textExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/file-upload-exercise/:id',
         component: FileUploadExerciseDetailComponent,
         data: {

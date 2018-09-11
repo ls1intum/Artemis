@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { ProgrammingExerciseComponent } from './programming-exercise.component';
 import { ProgrammingExerciseDetailComponent } from './programming-exercise-detail.component';
 import { ProgrammingExercisePopupComponent } from './programming-exercise-dialog.component';
@@ -15,7 +15,8 @@ export const programmingExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.programmingExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'programming-exercise/:id',
         component: ProgrammingExerciseDetailComponent,
         data: {
@@ -32,7 +33,8 @@ export const programmingExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.programmingExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/programming-exercise/:id',
         component: ProgrammingExerciseDetailComponent,
         data: {
@@ -41,7 +43,6 @@ export const programmingExerciseRoute: Routes = [
         },
         canActivate: [UserRouteAccessService]
     }
-
 ];
 
 export const programmingExercisePopupRoute: Routes = [

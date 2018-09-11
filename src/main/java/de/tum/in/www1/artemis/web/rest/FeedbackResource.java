@@ -92,8 +92,8 @@ public class FeedbackResource {
     @Timed
     public ResponseEntity<Feedback> getFeedback(@PathVariable Long id) {
         log.debug("REST request to get Feedback : {}", id);
-        Feedback feedback = feedbackRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(feedback));
+        Optional<Feedback> feedback = feedbackRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(feedback);
     }
 
     /**
@@ -107,7 +107,7 @@ public class FeedbackResource {
     @Timed
     public ResponseEntity<Void> deleteFeedback(@PathVariable Long id) {
         log.debug("REST request to delete Feedback : {}", id);
-        feedbackRepository.delete(id);
+        feedbackRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

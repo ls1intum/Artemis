@@ -12,7 +12,8 @@ import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from 
 import * as $ from 'jquery';
 import { ModelingEditorService } from './modeling-editor.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ComponentCanDeactivate, JhiWebsocketService } from '../shared';
+import { ComponentCanDeactivate } from '../shared';
+import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -22,7 +23,8 @@ import { TranslateService } from '@ngx-translate/core';
     providers: [ModelingAssessmentService, ApollonDiagramService]
 })
 export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    @ViewChild('editorContainer') editorContainer: ElementRef;
+    @ViewChild('editorContainer')
+    editorContainer: ElementRef;
 
     private subscription: Subscription;
     participation: Participation;
@@ -79,47 +81,54 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
             if (params['participationId']) {
-                this.modelingEditorService.get(params['participationId']).subscribe(data => {
-                    this.participation = data.participation;
-                    this.modelingExercise = this.participation.exercise as ModelingExercise;
-                    /**
-                     * set diagramType to class diagram if exercise is null, use case or communication
-                     * apollon does not support use case and communication yet
-                     */
-                    if (this.modelingExercise.diagramType === null ||
-                        this.modelingExercise.diagramType === DiagramType.USE_CASE ||
-                        this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
-                        this.modelingExercise.diagramType = DiagramType.CLASS;
-                    }
-                    this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
-                    this.submission = data.modelingSubmission;
-                    if (this.submission && this.submission.id && !this.submission.submitted) {
-                        this.subscribeToWebsocket();
-                    }
-                    if (this.submission && this.submission.result) {
-                        this.result = this.submission.result;
-                    }
-                    if (this.submission && this.submission.model) {
-                        this.initializeApollonEditor(JSON.parse(this.submission.model));
-                    } else {
-                        this.initializeApollonEditor(null);
-                    }
-                    if (this.submission && this.submission.submitted && this.result && this.result.rated) {
-                        if (data.assessments) {
-                            this.assessments = data.assessments;
-                            this.initializeAssessmentInfo();
+                this.modelingEditorService.get(params['participationId']).subscribe(
+                    data => {
+                        this.participation = data.participation;
+                        this.modelingExercise = this.participation.exercise as ModelingExercise;
+                        /**
+                         * set diagramType to class diagram if exercise is null, use case or communication
+                         * apollon does not support use case and communication yet
+                         */
+                        if (
+                            this.modelingExercise.diagramType === null ||
+                            this.modelingExercise.diagramType === DiagramType.USE_CASE ||
+                            this.modelingExercise.diagramType === DiagramType.COMMUNICATION
+                        ) {
+                            this.modelingExercise.diagramType = DiagramType.CLASS;
+                        }
+                        this.isActive = this.modelingExercise.dueDate == null || new Date() <= this.modelingExercise.dueDate.toDate();
+                        this.submission = data.modelingSubmission;
+                        if (this.submission && this.submission.id && !this.submission.submitted) {
+                            this.subscribeToWebsocket();
+                        }
+                        if (this.submission && this.submission.result) {
+                            this.result = this.submission.result;
+                        }
+                        if (this.submission && this.submission.model) {
+                            this.initializeApollonEditor(JSON.parse(this.submission.model));
                         } else {
-                            this.modelingAssessmentService.find(params['participationId'], this.submission.id).subscribe(assessments => {
-                                this.assessments = assessments.body;
+                            this.initializeApollonEditor(null);
+                        }
+                        if (this.submission && this.submission.submitted && this.result && this.result.rated) {
+                            if (data.assessments) {
+                                this.assessments = data.assessments;
                                 this.initializeAssessmentInfo();
-                            });
+                            } else {
+                                this.modelingAssessmentService
+                                    .find(params['participationId'], this.submission.id)
+                                    .subscribe(assessments => {
+                                        this.assessments = assessments.body;
+                                        this.initializeAssessmentInfo();
+                                    });
+                            }
+                        }
+                    },
+                    error => {
+                        if (error.status === 403) {
+                            this.router.navigate(['accessdenied']);
                         }
                     }
-                }, error => {
-                    if (error.status === 403) {
-                        this.router.navigate(['accessdenied']);
-                    }
-                });
+                );
             }
         });
         window.scroll(0, 0);
@@ -159,7 +168,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 initialState,
                 mode: 'READ_ONLY',
-                diagramType: <ApollonOptions['diagramType']> this.modelingExercise.diagramType
+                diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
             });
 
             const state = this.apollonEditor.getState();
@@ -195,7 +204,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 initialState,
                 mode: 'MODELING_ONLY',
-                diagramType: <ApollonOptions['diagramType']> this.modelingExercise.diagramType
+                diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
             });
             this.updateSubmissionModel();
             this.autoSaveInterval = window.setInterval(() => {
@@ -225,30 +234,36 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         this.autoSaveTimer = 0;
 
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(response => {
-                this.submission = response.body;
-                this.result = this.submission.result;
-                if (!this.submission.model) {
-                    this.updateSubmissionModel();
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+                response => {
+                    this.submission = response.body;
+                    this.result = this.submission.result;
+                    if (!this.submission.model) {
+                        this.updateSubmissionModel();
+                    }
+                    this.isSaving = false;
+                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                },
+                e => {
+                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.isSaving = false;
                 }
-                this.isSaving = false;
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-            }, e => {
-                this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
-                this.isSaving = false;
-            });
+            );
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(submission => {
-                this.submission = submission.body;
-                this.result = this.submission.result;
-                this.isSaving = false;
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-                this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
-                this.subscribeToWebsocket();
-            }, e => {
-                this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
-                this.isSaving = false;
-            });
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+                submission => {
+                    this.submission = submission.body;
+                    this.result = this.submission.result;
+                    this.isSaving = false;
+                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= this.modelingExercise.dueDate.toDate();
+                    this.subscribeToWebsocket();
+                },
+                e => {
+                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.isSaving = false;
+                }
+            );
         }
     }
 
@@ -264,41 +279,46 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
 
         let confirmSubmit = true;
         if (this.calculateNumberOfModelElements() < 10) {
-            confirmSubmit = window.confirm('Are you sure you want to submit? You cannot edit your model anymore until you get an assessment!');
+            confirmSubmit = window.confirm(
+                'Are you sure you want to submit? You cannot edit your model anymore until you get an assessment!'
+            );
         }
 
         if (confirmSubmit) {
             this.submission.submitted = true;
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(response => {
-                this.submission = response.body;
-                this.result = this.submission.result;
-                // Compass has already calculated a result
-                if (this.result && this.result.assessmentType) {
-                    const participation = this.participation;
-                    participation.results = [this.result];
-                    this.participation = Object.assign({}, participation);
-                    this.modelingAssessmentService.find(this.participation.id, this.submission.id).subscribe(assessments => {
-                        this.assessments = assessments.body;
-                        this.initializeAssessmentInfo();
-                    });
-                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
-                } else {
-                    if (this.isActive) {
-                        this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+                response => {
+                    this.submission = response.body;
+                    this.result = this.submission.result;
+                    // Compass has already calculated a result
+                    if (this.result && this.result.assessmentType) {
+                        const participation = this.participation;
+                        participation.results = [this.result];
+                        this.participation = Object.assign({}, participation);
+                        this.modelingAssessmentService.find(this.participation.id, this.submission.id).subscribe(assessments => {
+                            this.assessments = assessments.body;
+                            this.initializeAssessmentInfo();
+                        });
+                        this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
                     } else {
-                        this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+                        if (this.isActive) {
+                            this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+                        } else {
+                            this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+                        }
                     }
+                    this.retryStarted = false;
+                    clearInterval(this.autoSaveInterval);
+                    this.initializeApollonEditor(JSON.parse(this.submission.model));
+                    if (this.websocketChannel) {
+                        this.jhiWebsocketService.unsubscribe(this.websocketChannel);
+                    }
+                },
+                err => {
+                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.submission.submitted = false;
                 }
-                this.retryStarted = false;
-                clearInterval(this.autoSaveInterval);
-                this.initializeApollonEditor(JSON.parse(this.submission.model));
-                if (this.websocketChannel) {
-                    this.jhiWebsocketService.unsubscribe(this.websocketChannel);
-                }
-            }, err => {
-                this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
-                this.submission.submitted = false;
-            });
+            );
         }
     }
 
@@ -340,13 +360,16 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     numberToArray(n: number, startFrom: number): number[] {
-        n = (n > 5) ? 5 : n;
-        n = (n < -5) ? -5 : n;
+        n = n > 5 ? 5 : n;
+        n = n < -5 ? -5 : n;
         return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 
     isSelected(id: string, type: ModelElementType) {
-        if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
+        if (
+            (!this.selectedEntities || this.selectedEntities.length === 0) &&
+            (!this.selectedRelationships || this.selectedRelationships.length === 0)
+        ) {
             return true;
         }
         if (type !== ModelElementType.RELATIONSHIP) {
@@ -357,13 +380,18 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     open(content: any) {
-        this.modalService.open(content, {size: 'lg'});
+        this.modalService.open(content, { size: 'lg' });
     }
 
     // function to check whether there are pending changes
     canDeactivate(): Observable<boolean> | boolean {
-        if ((!this.submission && this.apollonEditor.getState().entities.allIds.length > 0 && JSON.stringify(this.apollonEditor.getState()) !== '') ||
-            (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))) {
+        if (
+            (!this.submission &&
+                this.apollonEditor &&
+                this.apollonEditor.getState().entities.allIds.length > 0 &&
+                JSON.stringify(this.apollonEditor.getState()) !== '') ||
+            (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))
+        ) {
             return false;
         }
         return true;

@@ -354,6 +354,8 @@ public class RepositoryResource {
 
     private boolean userHasPermissions(Participation participation) {
         if (!authCheckService.isOwnerOfParticipation(participation)) {
+            //if the user is not the owner of the participation, the user can only see it in case he is
+            //a teaching assistant or an instructor of the course, or in case he is admin
             User user = userService.getUserWithGroupsAndAuthorities();
             Course course = participation.getExercise().getCourse();
             if (!authCheckService.isTeachingAssistantInCourse(course, user) &&

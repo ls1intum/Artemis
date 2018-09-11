@@ -1,8 +1,8 @@
 import { Component, HostListener, Input, OnInit, Pipe, PipeTransform } from '@angular/core';
 import { Course, CourseExerciseService } from '../../entities/course';
 import { Exercise, ExerciseType, ParticipationStatus } from '../../entities/exercise';
-import { Principal } from '../../shared';
-import { WindowRef } from '../../shared/websocket/window.service';
+import { Principal } from '../../core';
+import { WindowRef } from '../../core/websocket/window.service';
 import { NgbModal, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { JhiAlertService } from 'ng-jhipster';
 import { Router } from '@angular/router';
@@ -15,24 +15,19 @@ import { QuizExercise } from '../../entities/quiz-exercise';
 @Pipe({ name: 'showExercise' })
 export class ShowExercisePipe implements PipeTransform {
     transform(allExercises: Exercise[], showInactiveExercises: boolean) {
-        return allExercises.filter(exercise => showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || Date.parse(exercise.dueDate) >= Date.now());
+        return allExercises.filter(
+            exercise =>
+                showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment()
+        );
     }
 }
 
 @Component({
     selector: 'jhi-exercise-list',
     templateUrl: './exercise-list.component.html',
-    providers: [
-                    JhiAlertService,
-                    WindowRef,
-                    ParticipationService,
-                    CourseExerciseService,
-                    NgbModal
-                ]
+    providers: [JhiAlertService, WindowRef, ParticipationService, CourseExerciseService, NgbModal]
 })
-
 export class ExerciseListComponent implements OnInit {
-
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -50,15 +45,18 @@ export class ExerciseListComponent implements OnInit {
             // exercises already included in data, no need to load them
             this.initExercises(course.exercises);
         } else {
-            this.courseExerciseService.findAllExercises(course.id, {
-                courseId: course.id,
-                withLtiOutcomeUrlExisting: true
-            }).subscribe(exercises => {
-                this.initExercises(exercises.body);
-            });
+            this.courseExerciseService
+                .findAllExercises(course.id, {
+                    courseId: course.id,
+                    withLtiOutcomeUrlExisting: true
+                })
+                .subscribe(exercises => {
+                    this.initExercises(exercises.body);
+                });
         }
     }
-    @Input() filterByExerciseId: number;
+    @Input()
+    filterByExerciseId: number;
 
     /*
      * IMPORTANT NOTICE:
@@ -75,13 +73,15 @@ export class ExerciseListComponent implements OnInit {
     private repositoryPassword: string;
     lastPopoverRef: NgbPopover;
 
-    constructor(private jhiAlertService: JhiAlertService,
-                private $window: WindowRef,
-                private participationService: ParticipationService,
-                private principal: Principal,
-                private httpClient: HttpClient,
-                private courseExerciseService: CourseExerciseService,
-                private router: Router) {
+    constructor(
+        private jhiAlertService: JhiAlertService,
+        private $window: WindowRef,
+        private participationService: ParticipationService,
+        private principal: Principal,
+        private httpClient: HttpClient,
+        private courseExerciseService: CourseExerciseService,
+        private router: Router
+    ) {
         // Initialize array to avoid undefined errors
         this.exercises = [];
     }
@@ -117,26 +117,38 @@ export class ExerciseListComponent implements OnInit {
                 const quizExercise = exercise as QuizExercise;
                 quizExercise.isActiveQuiz = this.isActiveQuiz(exercise);
 
-                quizExercise.isPracticeModeAvailable = quizExercise.isPlannedToStart && quizExercise.isOpenForPractice &&
-                    moment(exercise.dueDate).isBefore(moment());
+                quizExercise.isPracticeModeAvailable =
+                    quizExercise.isPlannedToStart && quizExercise.isOpenForPractice && moment(exercise.dueDate).isBefore(moment());
             }
 
             exercise.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(exercise.course);
         }
         exercises.sort((a: Exercise, b: Exercise) => {
-            return +new Date(a.dueDate) - +new Date(b.dueDate);
+            if (a.dueDate === null && b.dueDate === null) {
+                return 0;
+            } else if (a.dueDate === null) {
+                return +1;
+            } else if (b.dueDate === null) {
+                return -1;
+            } else {
+                return +a.dueDate.toDate() - +b.dueDate.toDate();
+            }
         });
         this.exercises = exercises;
     }
 
     isActiveQuiz(exercise: Exercise) {
-        return exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
+        return (
+            exercise.participationStatus === ParticipationStatus.QUIZ_UNINITIALIZED ||
             exercise.participationStatus === ParticipationStatus.QUIZ_ACTIVE ||
-            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED;
+            exercise.participationStatus === ParticipationStatus.QUIZ_SUBMITTED
+        );
     }
 
     showExercise(exercise: Exercise) {
-        return this.showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || Date.parse(exercise.dueDate) >= Date.now();
+        return (
+            this.showInactiveExercises === true || exercise.type === ExerciseType.QUIZ || !exercise.dueDate || exercise.dueDate > moment()
+        );
     }
 
     getRepositoryPassword() {
@@ -156,27 +168,37 @@ export class ExerciseListComponent implements OnInit {
             return this.router.navigate(['/quiz', exercise.id]);
         }
 
-        this.courseExerciseService.startExercise(this.course.id, exercise.id).finally(() => exercise.loading = false).subscribe(participation => {
-            if (participation) {
-                exercise.participations = [participation];
-                exercise.participationStatus = this.participationStatus(exercise);
-            }
-            if (exercise.type === ExerciseType.PROGRAMMING) {
-                this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
-            }
-        }, error => {
-            console.log('Error: ' + error);
-            this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
-        });
+        this.courseExerciseService
+            .startExercise(this.course.id, exercise.id)
+            .finally(() => (exercise.loading = false))
+            .subscribe(
+                participation => {
+                    if (participation) {
+                        exercise.participations = [participation];
+                        exercise.participationStatus = this.participationStatus(exercise);
+                    }
+                    if (exercise.type === ExerciseType.PROGRAMMING) {
+                        this.jhiAlertService.success('arTeMiSApp.exercise.personalRepository');
+                    }
+                },
+                error => {
+                    console.log('Error: ' + error);
+                    this.jhiAlertService.warning('arTeMiSApp.exercise.startError');
+                }
+            );
     }
 
     resumeExercise(exercise: Exercise) {
         exercise.loading = true;
-        this.courseExerciseService.resumeExercise(this.course.id, exercise.id).finally(() => exercise.loading = false)
+        this.courseExerciseService
+            .resumeExercise(this.course.id, exercise.id)
+            .finally(() => (exercise.loading = false))
             .subscribe(
-                () => true, error => {
+                () => true,
+                error => {
                     console.log('Error: ' + error.status + ' ' + error.message);
-                });
+                }
+            );
     }
 
     startPractice(exercise: Exercise) {
@@ -200,9 +222,15 @@ export class ExerciseListComponent implements OnInit {
     getClonePopoverTemplate(exercise: Exercise) {
         const html = [
             '<p>Clone your personal repository for this exercise:</p>',
-            '<pre style="max-width: 550px;">', exercise.participations[0].repositoryUrl, '</pre>',
-            this.repositoryPassword ? '<p>Your password is: <code class="password">' + this.repositoryPassword + '</code> (hover to show)<p>' : '',
-            '<a class="btn btn-primary btn-sm" href="', this.buildSourceTreeUrl(exercise.participations[0].repositoryUrl), '">Clone in SourceTree</a>',
+            '<pre style="max-width: 550px;">',
+            exercise.participations[0].repositoryUrl,
+            '</pre>',
+            this.repositoryPassword
+                ? '<p>Your password is: <code class="password">' + this.repositoryPassword + '</code> (hover to show)<p>'
+                : '',
+            '<a class="btn btn-primary btn-sm" href="',
+            this.buildSourceTreeUrl(exercise.participations[0].repositoryUrl),
+            '">Clone in SourceTree</a>',
             ' <a href="http://www.sourcetreeapp.com" target="_blank">Atlassian SourceTree</a> is the free Git client for Windows or Mac. '
         ].join('');
 
@@ -214,14 +242,23 @@ export class ExerciseListComponent implements OnInit {
             const quizExercise = exercise as QuizExercise;
             if ((!quizExercise.isPlannedToStart || moment(quizExercise.releaseDate).isAfter(moment())) && quizExercise.visibleToStudents) {
                 return ParticipationStatus.QUIZ_NOT_STARTED;
-            } else if (!this.hasParticipations(exercise) &&
-                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) && quizExercise.visibleToStudents) {
+            } else if (
+                !this.hasParticipations(exercise) &&
+                (!quizExercise.isPlannedToStart || moment(quizExercise.dueDate).isAfter(moment())) &&
+                quizExercise.visibleToStudents
+            ) {
                 return ParticipationStatus.QUIZ_UNINITIALIZED;
             } else if (!this.hasParticipations(exercise)) {
                 return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-            } else if (exercise.participations[0].initializationState === InitializationState.INITIALIZED && moment(exercise.dueDate).isAfter(moment())) {
+            } else if (
+                exercise.participations[0].initializationState === InitializationState.INITIALIZED &&
+                moment(exercise.dueDate).isAfter(moment())
+            ) {
                 return ParticipationStatus.QUIZ_ACTIVE;
-            } else if (exercise.participations[0].initializationState === InitializationState.FINISHED && moment(exercise.dueDate).isAfter(moment())) {
+            } else if (
+                exercise.participations[0].initializationState === InitializationState.FINISHED &&
+                moment(exercise.dueDate).isAfter(moment())
+            ) {
                 return ParticipationStatus.QUIZ_SUBMITTED;
             } else {
                 if (!this.hasResults(exercise.participations[0])) {
@@ -231,7 +268,10 @@ export class ExerciseListComponent implements OnInit {
             }
         } else if (exercise.type === ExerciseType.MODELING && this.hasParticipations(exercise)) {
             const participation = exercise.participations[0];
-            if (participation.initializationState === InitializationState.INITIALIZED || participation.initializationState === InitializationState.FINISHED) {
+            if (
+                participation.initializationState === InitializationState.INITIALIZED ||
+                participation.initializationState === InitializationState.FINISHED
+            ) {
                 return ParticipationStatus.MODELING_EXERCISE;
             }
         }
@@ -254,9 +294,12 @@ export class ExerciseListComponent implements OnInit {
     @HostListener('document:click', ['$event'])
     clickOutside(event: any) {
         // If there's a last element-reference AND the click-event target is outside this element
-        if (this.lastPopoverRef && (this.lastPopoverRef as any)._elementRef.nativeElement.contains(event.target) &&
+        if (
+            this.lastPopoverRef &&
+            (this.lastPopoverRef as any)._elementRef.nativeElement.contains(event.target) &&
             !(this.lastPopoverRef as any)._windowRef &&
-            !(this.lastPopoverRef as any)._windowRef.location.nativeElement.contains(event.target)) {
+            !(this.lastPopoverRef as any)._windowRef.location.nativeElement.contains(event.target)
+        ) {
             this.lastPopoverRef.close();
             this.lastPopoverRef = null;
         }

@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { AnswerOptionDetailComponent } from '../../../../../../main/webapp/app/entities/answer-option/answer-option-detail.component';
-import { AnswerOptionService } from '../../../../../../main/webapp/app/entities/answer-option/answer-option.service';
-import { AnswerOption } from '../../../../../../main/webapp/app/entities/answer-option/answer-option.model';
+import { AnswerOptionDetailComponent } from 'app/entities/answer-option/answer-option-detail.component';
+import { AnswerOption } from 'app/shared/model/answer-option.model';
 
 describe('Component Tests', () => {
-
     describe('AnswerOption Management Detail Component', () => {
         let comp: AnswerOptionDetailComponent;
         let fixture: ComponentFixture<AnswerOptionDetailComponent>;
-        let service: AnswerOptionService;
+        const route = ({ data: of({ answerOption: new AnswerOption(123) }) } as any) as ActivatedRoute;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [AnswerOptionDetailComponent],
-                providers: [
-                    AnswerOptionService
-                ]
+                providers: [{ provide: ActivatedRoute, useValue: route }]
             })
-            .overrideTemplate(AnswerOptionDetailComponent, '')
-            .compileComponents();
-        }));
-
-        beforeEach(() => {
+                .overrideTemplate(AnswerOptionDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(AnswerOptionDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(AnswerOptionService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new AnswerOption(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.answerOption).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.answerOption).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

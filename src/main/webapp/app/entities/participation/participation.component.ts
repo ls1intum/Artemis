@@ -4,17 +4,16 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { Participation } from './participation.model';
 import { ParticipationService } from './participation.service';
-import { Principal } from '../../shared';
 import { ActivatedRoute } from '@angular/router';
-import { Exercise, ExerciseService, ExerciseType } from '../exercise';
+import { Exercise, ExerciseType } from '../exercise';
+import { ExerciseService } from '../exercise/exercise.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-participation',
-    templateUrl: './participation.component.html',
+    templateUrl: './participation.component.html'
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
-
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -32,7 +31,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         private participationService: ParticipationService,
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
-        private principal: Principal,
         private exerciseService: ExerciseService
     ) {
         this.reverse = true;
@@ -42,7 +40,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     loadAll() {
         this.paramSub = this.route.params.subscribe(params => {
             this.participationService.findAllParticipationsByExercise(params['exerciseId']).subscribe(res => {
-                this.participations = res;
+                this.participations = res.body;
             });
             this.exerciseService.find(params['exerciseId']).subscribe(res => {
                 this.exercise = res.body;
@@ -69,5 +67,5 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.jhiAlertService.error(error.message, null, null);
     }
 
-    callback() { }
+    callback() {}
 }

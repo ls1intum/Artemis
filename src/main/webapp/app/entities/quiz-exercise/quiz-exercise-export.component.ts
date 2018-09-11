@@ -3,8 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 
-import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../shared/language/ng1-translate-partial-loader.service';
-import { NG1TRANSLATE_SERVICE } from '../../shared/language/ng1-translate.service';
+import { NG1TRANSLATEPARTIALLOADER_SERVICE } from '../../core/language/ng1-translate-partial-loader.service';
+import { NG1TRANSLATE_SERVICE } from '../../core/language/ng1-translate.service';
 
 import { QuizExerciseService } from './quiz-exercise.service';
 import { QuizExercise } from './quiz-exercise.model';
@@ -25,14 +25,16 @@ export class QuizExerciseExportComponent implements OnInit {
     translateService: TranslateService;
     router: Router;
 
-    constructor(private route: ActivatedRoute,
+    constructor(
+        private route: ActivatedRoute,
         private quizExerciseService: QuizExerciseService,
         private courseService: CourseService,
         private jhiAlertService: JhiAlertService,
         router: Router,
         translateService: TranslateService,
         @Inject(NG1TRANSLATE_SERVICE) private $translate: any,
-        @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any) {
+        @Inject(NG1TRANSLATEPARTIALLOADER_SERVICE) private $translatePartialLoader: any
+    ) {
         this.router = router;
         this.translateService = translateService;
     }

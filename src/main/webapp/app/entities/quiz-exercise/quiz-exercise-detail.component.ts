@@ -69,7 +69,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         new Option(true, 'Active')
     ];
 
-    constructor(private route: ActivatedRoute,
+    constructor(
+        private route: ActivatedRoute,
         private courseService: CourseService,
         private quizExerciseService: QuizExerciseService,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,

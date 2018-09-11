@@ -2,7 +2,8 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Exercise, ExerciseService, ExerciseType } from '../entities/exercise';
+import { Exercise, ExerciseType } from '../entities/exercise';
+import { ExerciseService } from '../entities/exercise/exercise.service';
 import { Course, CourseService } from '../entities/course';
 import { ResultService } from '../entities/result/result.service';
 import { DifferencePipe } from 'angular2-moment';
@@ -11,19 +12,15 @@ import { Result } from '../entities/result';
 import { ResultDetailComponent } from '../entities/result/result-detail.component';
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
-import { Principal } from '../shared';
+import { Principal } from '../core';
 import { Submission } from '../entities/submission';
 
 @Component({
     selector: 'jhi-assessment-dashboard',
     templateUrl: './assessment-dashboard.component.html',
-    providers:  [
-        JhiAlertService, ModelingAssessmentService
-    ]
+    providers: [JhiAlertService, ModelingAssessmentService]
 })
-
 export class AssessmentDashboardComponent implements OnInit, OnDestroy {
-
     // make constants available to html for comparison
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
@@ -45,17 +42,19 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     accountId: number;
     isAuthorized: boolean;
 
-    constructor(private route: ActivatedRoute,
-                private jhiAlertService: JhiAlertService,
-                private router: Router,
-                private momentDiff: DifferencePipe,
-                private courseService: CourseService,
-                private exerciseService: ExerciseService,
-                private resultService: ResultService,
-                private modelingAssessmentService: ModelingAssessmentService,
-                private modalService: NgbModal,
-                private eventManager: JhiEventManager,
-                private principal: Principal) {
+    constructor(
+        private route: ActivatedRoute,
+        private jhiAlertService: JhiAlertService,
+        private router: Router,
+        private momentDiff: DifferencePipe,
+        private courseService: CourseService,
+        private exerciseService: ExerciseService,
+        private resultService: ResultService,
+        private modelingAssessmentService: ModelingAssessmentService,
+        private modalService: NgbModal,
+        private eventManager: JhiEventManager,
+        private principal: Principal
+    ) {
         this.reverse = false;
         this.predicate = 'id';
         this.results = [];
@@ -85,20 +84,22 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     getResults(forceReload: boolean) {
-        this.resultService.getResultsForExercise(this.exercise.course.id, this.exercise.id, {
-            showAllResults: 'all',
-            ratedOnly: false,
-            withSubmissions: true,
-            withAssessors: true
-        }).subscribe((res: HttpResponse<Result[]>) => {
-            const tempResults: Result[] = res.body;
-            tempResults.forEach(function(result: Result) {
-                result.participation.results = [result];
+        this.resultService
+            .getResultsForExercise(this.exercise.course.id, this.exercise.id, {
+                showAllResults: 'all',
+                ratedOnly: false,
+                withSubmissions: true,
+                withAssessors: true
+            })
+            .subscribe((res: HttpResponse<Result[]>) => {
+                const tempResults: Result[] = res.body;
+                tempResults.forEach(function(result: Result) {
+                    result.participation.results = [result];
+                });
+                this.allResults = tempResults;
+                this.filterResults(forceReload);
+                this.assessedResults = this.allResults.filter(result => result.rated).length;
             });
-            this.allResults = tempResults;
-            this.filterResults(forceReload);
-            this.assessedResults = this.allResults.filter(result => result.rated).length;
-        });
     }
 
     filterResults(forceReload: boolean) {
@@ -116,8 +117,10 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     applyFilter() {
         // A result is optimal if it is part of nextOptimalSubmissionIds and nobody is currently assessing it or you are currently assessing it
         this.allResults.forEach(result => {
-            result.optimal = result.submission && ((this.nextOptimalSubmissionIds.includes(result.submission.id) && !result.assessor) ||
-                (result.assessor != null && !result.rated));
+            result.optimal =
+                result.submission &&
+                ((this.nextOptimalSubmissionIds.includes(result.submission.id) && !result.assessor) ||
+                    (result.assessor != null && !result.rated));
         });
         this.optimalResults = this.allResults.filter(result => {
             return result.optimal;
@@ -132,7 +135,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(ResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
     }
 
@@ -167,7 +170,7 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
                 });
             }, 500 + 1000 * attempts);
         } else {
-            const randomInt = Math.floor(Math.random() * (this.nextOptimalSubmissionIds.length));
+            const randomInt = Math.floor(Math.random() * this.nextOptimalSubmissionIds.length);
             this.router.navigate(['apollon-diagrams', 'exercise', this.exercise.id, this.nextOptimalSubmissionIds[randomInt], 'tutor']);
         }
     }
@@ -177,5 +180,5 @@ export class AssessmentDashboardComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    callback() { }
+    callback() {}
 }

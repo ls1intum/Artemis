@@ -3,7 +3,7 @@ apply plugin: 'com.gorylenko.gradle-git-properties'
 apply plugin: 'com.moowork.node'
 
 dependencies {
-
+    testCompile "com.h2database:h2"
 }
 
 def profiles = 'prod'
@@ -15,7 +15,6 @@ bootRun {
     args = []
 }
 
-
 task webpack_test(type: YarnTask, dependsOn: 'yarn_install') {
     args = ["run", "webpack:test"]
 }
@@ -26,6 +25,11 @@ task webpack(type: YarnTask, dependsOn: 'yarn_install') {
 
 war {
     webAppDirName = 'build/www/'
+}
+
+task copyIntoStatic (type: Copy) {
+    from 'build/www/'
+    into 'build/resources/main/static'
 }
 
 processResources {
@@ -41,15 +45,7 @@ processResources {
     }
 }
 
-generateGitProperties {
-    onlyIf {
-        !source.isEmpty()
-    }
-}
-
-gitProperties {
-    keys = ['git.branch', 'git.commit.id.abbrev']
-}
-
 test.dependsOn webpack_test
 processResources.dependsOn webpack
+copyIntoStatic.dependsOn processResources
+bootJar.dependsOn copyIntoStatic

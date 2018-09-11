@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { ModelingExerciseComponent } from './modeling-exercise.component';
 import { ModelingExerciseDetailComponent } from './modeling-exercise-detail.component';
 import { ModelingExercisePopupComponent } from './modeling-exercise-dialog.component';
@@ -15,7 +15,8 @@ export const modelingExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.modelingExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'modeling-exercise/:id',
         component: ModelingExerciseDetailComponent,
         data: {
@@ -32,7 +33,8 @@ export const modelingExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.modelingExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/modeling-exercise/:id',
         component: ModelingExerciseDetailComponent,
         data: {

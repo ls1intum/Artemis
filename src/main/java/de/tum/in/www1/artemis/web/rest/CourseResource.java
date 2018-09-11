@@ -205,7 +205,7 @@ public class CourseResource {
     @Timed
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);
-        Course course = courseRepository.findOne(id);
+        Course course = courseService.findOne(id);
         if (course == null) {
             return ResponseEntity.notFound().build();
         }

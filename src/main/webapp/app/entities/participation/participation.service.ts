@@ -3,51 +3,61 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs/Observable';
 import { SERVER_API_URL } from '../../app.constants';
 
-import { JhiDateUtils } from 'ng-jhipster';
+import * as moment from 'moment';
 
 import { Participation } from './participation.model';
 import { createRequestOption } from '../../shared';
+import { Result } from '../../entities/result/result.model';
+import { Submission } from '../../entities/submission/submission.model';
+import { Exercise } from '../../entities/exercise/exercise.model';
 
 export type EntityResponseType = HttpResponse<Participation>;
+export type EntityArrayResponseType = HttpResponse<Participation[]>;
 
 @Injectable()
 export class ParticipationService {
+    private resourceUrl = SERVER_API_URL + 'api/participations';
 
-    private resourceUrl =  SERVER_API_URL + 'api/participations';
-
-    constructor(private http: HttpClient, private dateUtils: JhiDateUtils) { }
+    constructor(private http: HttpClient) {}
 
     create(participation: Participation): Observable<EntityResponseType> {
-        const copy = this.convert(participation);
-        return this.http.post<Participation>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.convertDateFromClient(participation);
+        return this.http
+            .post<Participation>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(participation: Participation): Observable<EntityResponseType> {
-        const copy = this.convert(participation);
-        return this.http.put<Participation>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.convertDateFromClient(participation);
+        return this.http
+            .put<Participation>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<Participation>(`${this.resourceUrl}/${id}`, { observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http
+            .get<Participation>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     /*
      * Finds one participation for the currently logged in user for the given exercise in the given course
      */
-    findParticipation(courseId: number, exerciseId: number): Observable<Participation> {
-        return this.http.get<Participation>(SERVER_API_URL + `api/courses/${courseId}/exercises/${exerciseId}/participation`).map((res: Participation) => {
-            if (typeof res === 'undefined' || res === null) {
-                return null;
-            }
-            return this.convertItemFromServer(res);
-        });
+    findParticipation(courseId: number, exerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Participation>(SERVER_API_URL + `api/courses/${courseId}/exercises/${exerciseId}/participation`, { observe: 'response' })
+            .map((res: EntityResponseType) => {
+                if (typeof res === 'undefined' || res === null) {
+                    return null;
+                }
+                return this.convertDateFromServer(res);
+            });
     }
 
-    findAllParticipationsByExercise(exerciseId: number): Observable<Participation[]> {
-        return this.http.get<Participation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`);
+    findAllParticipationsByExercise(exerciseId: number): Observable<EntityArrayResponseType> {
+        return this.http
+            .get<Participation[]>(SERVER_API_URL + `api/exercise/${exerciseId}/participations`, { observe: 'response' })
+            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
     delete(id: number, req?: any): Observable<HttpResponse<any>> {
@@ -57,13 +67,13 @@ export class ParticipationService {
 
     repositoryWebUrl(participationId: number) {
         return this.http.get(`${this.resourceUrl}/${participationId}/repositoryWebUrl`, { responseType: 'text' }).map(repositoryWebUrl => {
-            return {url: repositoryWebUrl};
+            return { url: repositoryWebUrl };
         });
     }
 
     buildPlanWebUrl(participationId: number) {
         return this.http.get(`${this.resourceUrl}/${participationId}/buildPlanWebUrl`, { responseType: 'text' }).map(buildPlanWebUrl => {
-            return {url: buildPlanWebUrl};
+            return { url: buildPlanWebUrl };
         });
     }
 
@@ -73,26 +83,75 @@ export class ParticipationService {
         });
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: Participation = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to Participation.
-     */
-    private convertItemFromServer(participation: Participation): Participation {
-        const copy: Participation = Object.assign({}, participation);
-        copy.initializationDate = this.dateUtils.convertDateTimeFromServer(participation.initializationDate);
+    convertDateFromClient(participation: Participation): Participation {
+        const copy: Participation = Object.assign({}, participation, {
+            initializationDate:
+                participation.initializationDate != null && participation.initializationDate.isValid()
+                    ? participation.initializationDate.toJSON()
+                    : null
+        });
         return copy;
     }
 
-    /**
-     * Convert a Participation to a JSON which can be sent to the server.
-     */
-    private convert(participation: Participation): Participation {
-        const copy: Participation = Object.assign({}, participation);
-        copy.initializationDate = this.dateUtils.toDate(participation.initializationDate);
-        return copy;
+    convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        res.body.initializationDate = res.body.initializationDate != null ? moment(res.body.initializationDate) : null;
+        res.body.results = this.convertResultsDateFromServer(res.body.results);
+        res.body.submissions = this.convertSubmissionsDateFromServer(res.body.submissions);
+        res.body.exercise = this.convertExerciseDateFromServer(res.body.exercise);
+        return res;
+    }
+
+    convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        res.body.forEach((participation: Participation) => {
+            this.convertParticipationDateFromServer(participation);
+        });
+        return res;
+    }
+
+    convertExerciseDateFromServer(exercise: Exercise) {
+        if (exercise !== null) {
+            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+        }
+        return exercise;
+    }
+
+    convertParticipationDateFromServer(participation: Participation) {
+        participation.initializationDate = participation.initializationDate != null ? moment(participation.initializationDate) : null;
+        participation.results = this.convertResultsDateFromServer(participation.results);
+        participation.submissions = this.convertSubmissionsDateFromServer(participation.submissions);
+        return participation;
+    }
+
+    convertParticipationsDateFromServer(participations: Participation[]) {
+        const convertedParticipations: Participation[] = [];
+        if (participations != null && participations.length > 0) {
+            participations.forEach((participation: Participation) => {
+                convertedParticipations.push(this.convertParticipationDateFromServer(participation));
+            });
+        }
+        return convertedParticipations;
+    }
+
+    convertResultsDateFromServer(results: Result[]) {
+        const convertedResults: Result[] = [];
+        if (results != null && results.length > 0) {
+            results.forEach((result: Result) => {
+                result.completionDate = result.completionDate != null ? moment(result.completionDate) : null;
+                convertedResults.push(result);
+            });
+        }
+        return convertedResults;
+    }
+
+    convertSubmissionsDateFromServer(submissions: Submission[]) {
+        const convertedSubmissions: Submission[] = [];
+        if (submissions != null && submissions.length > 0) {
+            submissions.forEach((submission: Submission) => {
+                submission.submissionDate = submission.submissionDate != null ? moment(submission.submissionDate) : null;
+                convertedSubmissions.push(submission);
+            });
+        }
+        return convertedSubmissions;
     }
 }
