@@ -11,7 +11,7 @@ buildscript {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         classpath "org.openapitools:openapi-generator-gradle-plugin:3.0.1"
-        classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.5.1"
+        classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.5.2"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
@@ -154,10 +154,6 @@ liquibase {
     runList = project.ext.runList
 }
 
-if (project.hasProperty('zipkin')) {
-    apply from: 'gradle/zipkin.gradle'
-}
-
 configurations {
     providedRuntime
     compile.exclude module: "spring-boot-starter-tomcat"
@@ -173,7 +169,7 @@ dependencies {
 
     compile fileTree(dir: 'libs', include: '*.jar')
     // https://mvnrepository.com/artifact/org.eclipse.jgit/org.eclipse.jgit
-    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '4.9.0.201710071750-r'
+    compile group: 'org.eclipse.jgit', name: 'org.eclipse.jgit', version: '5.0.3.201809091024-r'
     // https://mvnrepository.com/artifact/net.sourceforge.plantuml/plantuml
     compile group: 'net.sourceforge.plantuml', name: 'plantuml', version: '8059'
     compile "org.imsglobal:basiclti-util:1.1.2"
