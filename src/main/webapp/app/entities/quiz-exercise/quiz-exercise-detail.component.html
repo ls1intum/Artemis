@@ -170,7 +170,7 @@
                     </span>
                     <ng-template #tooltipTranslate>
                         <div *ngFor="let reason of invalidReasons()">
-                            <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{reason.translateKey}}" translateValues="{index: '{{reason.translateValues}}'"></p>
+                            <p *ngIf="(reason.translateValues | json) != '{}'" jhiTranslate="{{reason.translateKey}}" translateValues="{index: '{{reason.translateValues.index}}'}"></p>
                             <p *ngIf="(reason.translateValues | json) == '{}'" jhiTranslate="{{reason.translateKey}}"></p>
                         </div>
                     </ng-template>
