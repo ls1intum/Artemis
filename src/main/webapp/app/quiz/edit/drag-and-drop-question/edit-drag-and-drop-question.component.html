@@ -13,15 +13,15 @@
         <div class="form-group">
             <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
             <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
-                <option *ngFor="let option of scoringTypeOptions" [ngValue]="option.key">
+                <option *ngFor="let option of scoringTypeOptions" [value]="option.key">
                     {{option.label}}
                 </option>
             </select>
         </div>
         <div class="form-group">
             <div class="form-check custom-control custom-checkbox">
-                <input type="checkbox" id="cbRandomizeOrder" [(ngModel)]="question.randomizeOrder" class="form-check-input custom-control-input"/>
-                <label class="form-check-label custom-control-label" for="cbRandomizeOrder"
+                <input type="checkbox" id="{{'cbRandomizeOrderDnD' + questionIndex}}" [(ngModel)]="question.randomizeOrder" class="form-check-input custom-control-input"/>
+                <label class="form-check-label custom-control-label" for="{{'cbRandomizeOrderDnD' + questionIndex}}"
                        jhiTranslate="arTeMiSApp.dragAndDropQuestion.randomizeOrder">
                 </label>
             </div>
