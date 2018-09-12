@@ -205,7 +205,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const file = this.backgroundFile;
 
         this.isUploadingBackgroundFile = true;
-        this.fileUploaderService.uploadFile(file).then(
+        this.fileUploaderService.uploadFile(file, file['name']).then(
             result => {
                 this.question.backgroundFilePath = result.path;
                 this.isUploadingBackgroundFile = false;
@@ -488,7 +488,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const file = this.dragItemFile;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file).then(
+        this.fileUploaderService.uploadFile(file, file['name']).then(
             result => {
                 // Add drag item to question
                 if (!this.question.dragItems) {
@@ -518,7 +518,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const file = this.dragItemFile;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file).then(
+        this.fileUploaderService.uploadFile(file, file['name']).then(
             result => {
                 this.dragItemPicture = result.path;
                 this.questionUpdated.emit();
@@ -727,7 +727,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const file = this.dragItemFile;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file).then(
+        this.fileUploaderService.uploadFile(file, file['name']).then(
             result => {
                 this.dragItemPicture = result.path;
                 this.questionUpdated.emit();
