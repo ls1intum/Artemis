@@ -16,20 +16,27 @@ import 'brace/mode/markdown';
 @Component({
     selector: 'jhi-edit-drag-and-drop-question',
     templateUrl: './edit-drag-and-drop-question.component.html',
-    providers: [ ArtemisMarkdown, DragAndDropQuestionUtil ]
+    providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
 export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
+    @ViewChild('questionEditor')
+    private questionEditor: AceEditorComponent;
+    @ViewChild('clickLayer')
+    private clickLayer: ElementRef;
 
-    @ViewChild('questionEditor') private questionEditor: AceEditorComponent;
-    @ViewChild('clickLayer') private clickLayer: ElementRef;
+    @Input()
+    question: DragAndDropQuestion;
+    @Input()
+    questionIndex: number;
 
-    @Input() question: DragAndDropQuestion;
-    @Input() questionIndex: number;
-
-    @Output() questionUpdated = new EventEmitter<object>();
-    @Output() questionDeleted = new EventEmitter<object>();
-    @Output() questionMoveUp = new EventEmitter<object>();
-    @Output() questionMoveDown = new EventEmitter<object>();
+    @Output()
+    questionUpdated = new EventEmitter<object>();
+    @Output()
+    questionDeleted = new EventEmitter<object>();
+    @Output()
+    questionMoveUp = new EventEmitter<object>();
+    @Output()
+    questionMoveDown = new EventEmitter<object>();
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
@@ -39,8 +46,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     backupQuestion: DragAndDropQuestion;
 
     dragItemPicture: string;
-    backgroundFile: Blob|File;
-    dragItemFile: Blob|File;
+    backgroundFile: Blob | File;
+    dragItemFile: Blob | File;
 
     showPreview: boolean;
     isUploadingBackgroundFile: boolean;
@@ -63,10 +70,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      */
     mouse: DragAndDropMouseEvent;
 
-    scoringTypeOptions: Option[] = [
-        new Option('ALL_OR_NOTHING', 'All or Nothing'),
-        new Option('PROPORTIONAL_WITH_PENALTY', 'Proportional with Penalty')
-    ];
+    scoringTypeOptions: Option[] = [new Option('0', 'All or Nothing'), new Option('1', 'Proportional with Penalty')];
 
     // /**
     //  * Prevent page from jumping back to last clicked/selected element on drop
@@ -105,9 +109,11 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     //     vm.onUpdated();
     // });
 
-    constructor(private artemisMarkdown: ArtemisMarkdown,
-                private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-                private fileUploaderService: FileUploaderService) {}
+    constructor(
+        private artemisMarkdown: ArtemisMarkdown,
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private fileUploaderService: FileUploaderService
+    ) {}
 
     ngOnInit(): void {
         /** Create question backup for resets **/
@@ -132,9 +138,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
 
     ngAfterViewInit(): void {
         // Setup the editor
-        requestAnimationFrame(
-            this.setupQuestionEditor.bind(this)
-        );
+        requestAnimationFrame(this.setupQuestionEditor.bind(this));
     }
 
     /**
@@ -153,13 +157,17 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
         this.questionEditor.getEditor().clearSelection();
 
-        this.questionEditor.getEditor().on('blur', () => {
-            // Parse the markdown in the editor and update question accordingly
-            this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
-            // TODO: consider emitting the updated question here
-            this.questionUpdated.emit();
-            // TODO: $scope.$apply(); ??
-        }, this);
+        this.questionEditor.getEditor().on(
+            'blur',
+            () => {
+                // Parse the markdown in the editor and update question accordingly
+                this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
+                // TODO: consider emitting the updated question here
+                this.questionUpdated.emit();
+                // TODO: $scope.$apply(); ??
+            },
+            this
+        );
     }
 
     /**
@@ -197,15 +205,18 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const file = this.backgroundFile;
 
         this.isUploadingBackgroundFile = true;
-        this.fileUploaderService.uploadFile(file).then( result => {
-            this.question.backgroundFilePath = result.path;
-            this.isUploadingBackgroundFile = false;
-            this.backgroundFile = null;
-        }, error => {
-            console.error('Error during file upload in uploadBackground()', error.message);
-            this.isUploadingBackgroundFile = false;
-            this.backgroundFile = null;
-        });
+        this.fileUploaderService.uploadFile(file).then(
+            result => {
+                this.question.backgroundFilePath = result.path;
+                this.isUploadingBackgroundFile = false;
+                this.backgroundFile = null;
+            },
+            error => {
+                console.error('Error during file upload in uploadBackground()', error.message);
+                this.isUploadingBackgroundFile = false;
+                this.backgroundFile = null;
+            }
+        );
     }
 
     /**
@@ -221,10 +232,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const backgroundElement = this.clickLayer.nativeElement;
         const backgroundWidth = backgroundElement.offsetWidth;
         const backgroundHeight = backgroundElement.offsetHeight;
-        if (event.pageX) { // Moz
+        if (event.pageX) {
+            // Moz
             this.mouse.x = event.pageX - backgroundElement.offsetLeft;
             this.mouse.y = event.pageY - backgroundElement.offsetTop;
-        } else if (event.clientX) { // IE
+        } else if (event.clientX) {
+            // IE
             this.mouse.x = event.clientX - backgroundElement.offsetLeft;
             this.mouse.y = event.clientY - backgroundElement.offsetTop;
         }
@@ -236,25 +249,35 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                 case DragState.CREATE:
                 case DragState.RESIZE_BOTH:
                     // Update current drop location's position and size
-                    this.currentDropLocation.posX = Math.round(200 * Math.min(this.mouse.x, this.mouse.startX) / backgroundWidth);
-                    this.currentDropLocation.posY = Math.round(200 * Math.min(this.mouse.y, this.mouse.startY) / backgroundHeight);
-                    this.currentDropLocation.width = Math.round(200 * Math.abs(this.mouse.x - this.mouse.startX) / backgroundWidth);
-                    this.currentDropLocation.height = Math.round(200 * Math.abs(this.mouse.y - this.mouse.startY) / backgroundHeight);
+                    this.currentDropLocation.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation.posY = Math.round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
                     break;
                 case DragState.MOVE:
                     // update current drop location's position
-                    this.currentDropLocation.posX = Math.round(Math.min(Math.max(0, 200 * (this.mouse.x + this.mouse.offsetX) / backgroundWidth), 200 - this.currentDropLocation.width));
-                    this.currentDropLocation.posY = Math.round(Math.min(Math.max(0, 200 * (this.mouse.y + this.mouse.offsetY) / backgroundHeight), 200 - this.currentDropLocation.height));
+                    this.currentDropLocation.posX = Math.round(
+                        Math.min(
+                            Math.max(0, (200 * (this.mouse.x + this.mouse.offsetX)) / backgroundWidth),
+                            200 - this.currentDropLocation.width
+                        )
+                    );
+                    this.currentDropLocation.posY = Math.round(
+                        Math.min(
+                            Math.max(0, (200 * (this.mouse.y + this.mouse.offsetY)) / backgroundHeight),
+                            200 - this.currentDropLocation.height
+                        )
+                    );
                     break;
                 case DragState.RESIZE_X:
                     // Update current drop location's position and size (only x-axis)
-                    this.currentDropLocation.posX = Math.round(200 * Math.min(this.mouse.x, this.mouse.startX) / backgroundWidth);
-                    this.currentDropLocation.width = Math.round(200 * Math.abs(this.mouse.x - this.mouse.startX) / backgroundWidth);
+                    this.currentDropLocation.posX = Math.round((200 * Math.min(this.mouse.x, this.mouse.startX)) / backgroundWidth);
+                    this.currentDropLocation.width = Math.round((200 * Math.abs(this.mouse.x - this.mouse.startX)) / backgroundWidth);
                     break;
                 case DragState.RESIZE_Y:
                     // update current drop location's position and size (only y-axis)
-                    this.currentDropLocation.posY = Math.round(200 * Math.min(this.mouse.y, this.mouse.startY) / backgroundHeight);
-                    this.currentDropLocation.height = Math.round(200 * Math.abs(this.mouse.y - this.mouse.startY) / backgroundHeight);
+                    this.currentDropLocation.posY = Math.round((200 * Math.min(this.mouse.y, this.mouse.startY)) / backgroundHeight);
+                    this.currentDropLocation.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
                     break;
             }
 
@@ -274,7 +297,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                 case DragState.CREATE:
                     const backgroundWidth = this.clickLayer.nativeElement.width();
                     const backgroundHeight = this.clickLayer.nativeElement.height();
-                    if (this.currentDropLocation.width / 200 * backgroundWidth < 14 && this.currentDropLocation.height / 200 * backgroundHeight < 14) {
+                    if (
+                        (this.currentDropLocation.width / 200) * backgroundWidth < 14 &&
+                        (this.currentDropLocation.height / 200) * backgroundHeight < 14
+                    ) {
                         // Remove drop Location if too small (assume it was an accidental click/drag),
                         this.deleteDropLocation(this.currentDropLocation);
                     } else {
@@ -339,8 +365,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
             const backgroundWidth = this.clickLayer.nativeElement.width();
             const backgroundHeight = this.clickLayer.nativeElement.height();
 
-            const dropLocationX = dropLocation.posX / 200 * backgroundWidth;
-            const dropLocationY = dropLocation.posY / 200 * backgroundHeight;
+            const dropLocationX = (dropLocation.posX / 200) * backgroundWidth;
+            const dropLocationY = (dropLocation.posY / 200) * backgroundHeight;
 
             // Save offset of mouse in drop location
             this.mouse.offsetX = dropLocationX - this.mouse.x;
@@ -370,8 +396,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     duplicateDropLocation(dropLocation: DropLocation) {
         const duplicatedDropLocation = new DropLocation();
         duplicatedDropLocation.tempID = this.pseudoRandomLong();
-        duplicatedDropLocation.posX = dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3);
-        duplicatedDropLocation.posY = dropLocation.posY + dropLocation.height < 197 ? dropLocation.posY + 3 : Math.max(0, dropLocation.posY - 3);
+        duplicatedDropLocation.posX =
+            dropLocation.posX + dropLocation.width < 197 ? dropLocation.posX + 3 : Math.max(0, dropLocation.posX - 3);
+        duplicatedDropLocation.posY =
+            dropLocation.posY + dropLocation.height < 197 ? dropLocation.posY + 3 : Math.max(0, dropLocation.posY - 3);
         duplicatedDropLocation.width = dropLocation.width;
         duplicatedDropLocation.height = dropLocation.height;
         this.question.dropLocations.push(duplicatedDropLocation);
@@ -390,13 +418,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
             const backgroundHeight = this.clickLayer.nativeElement.height();
 
             // Update state
-            this.draggingState = DragState.RESIZE_BOTH;  // Default is both, will be overwritten later, if needed
+            this.draggingState = DragState.RESIZE_BOTH; // Default is both, will be overwritten later, if needed
             this.currentDropLocation = dropLocation;
 
             switch (resizeLocationY) {
                 case 'top':
                     // Use opposite end as startY
-                    this.mouse.startY = (dropLocation.posY + dropLocation.height) / 200 * backgroundHeight;
+                    this.mouse.startY = ((dropLocation.posY + dropLocation.height) / 200) * backgroundHeight;
                     break;
                 case 'middle':
                     // Limit to x-axis, startY will not be used
@@ -404,14 +432,14 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                     break;
                 case 'bottom':
                     // Use opposite end as startY
-                    this.mouse.startY = dropLocation.posY / 200 * backgroundHeight;
+                    this.mouse.startY = (dropLocation.posY / 200) * backgroundHeight;
                     break;
             }
 
             switch (resizeLocationX) {
                 case 'left':
                     // Use opposite end as startX
-                    this.mouse.startX = (dropLocation.posX + dropLocation.width) / 200 * backgroundWidth;
+                    this.mouse.startX = ((dropLocation.posX + dropLocation.width) / 200) * backgroundWidth;
                     break;
                 case 'center':
                     // Limit to y-axis, startX will not be used
@@ -419,7 +447,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                     break;
                 case 'right':
                     // Use opposite end as startX
-                    this.mouse.startX = dropLocation.posX / 200 * backgroundWidth;
+                    this.mouse.startX = (dropLocation.posX / 200) * backgroundWidth;
                     break;
             }
         }
@@ -460,23 +488,26 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const file = this.dragItemFile;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file).then(result => {
-            // Add drag item to question
-            if (!this.question.dragItems) {
-                this.question.dragItems = [];
+        this.fileUploaderService.uploadFile(file).then(
+            result => {
+                // Add drag item to question
+                if (!this.question.dragItems) {
+                    this.question.dragItems = [];
+                }
+                const dragItem = new DragItem();
+                dragItem.tempID = this.pseudoRandomLong();
+                dragItem.pictureFilePath = result.path;
+                this.question.dragItems.push(dragItem);
+                this.questionUpdated.emit();
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = null;
+            },
+            error => {
+                console.error('Error during file upload in uploadDragItem()', error.message);
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = null;
             }
-            const dragItem = new DragItem();
-            dragItem.tempID = this.pseudoRandomLong();
-            dragItem.pictureFilePath = result.path;
-            this.question.dragItems.push(dragItem);
-            this.questionUpdated.emit();
-            this.isUploadingDragItemFile = false;
-            this.dragItemFile = null;
-        }, error => {
-            console.error('Error during file upload in uploadDragItem()', error.message);
-            this.isUploadingDragItemFile = false;
-            this.dragItemFile = null;
-        });
+        );
     }
 
     /**
@@ -487,16 +518,19 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const file = this.dragItemFile;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file).then(result => {
-            this.dragItemPicture = result.path;
-            this.questionUpdated.emit();
-            this.isUploadingDragItemFile = false;
-            this.dragItemFile = null;
-        }, error => {
-            console.error('Error during file upload in uploadPictureForDragItemChange()', error.message);
-            this.isUploadingDragItemFile = false;
-            this.dragItemFile = null;
-        });
+        this.fileUploaderService.uploadFile(file).then(
+            result => {
+                this.dragItemPicture = result.path;
+                this.questionUpdated.emit();
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = null;
+            },
+            error => {
+                console.error('Error during file upload in uploadPictureForDragItemChange()', error.message);
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = null;
+            }
+        );
     }
 
     /**
@@ -505,7 +539,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @param dragItemToDelete {object} the drag item that should be deleted
      */
     deleteDragItem(dragItemToDelete: DragItem) {
-        this.question.dragItems = this.question.dragItems.filter(dragItem =>  dragItem !== dragItemToDelete);
+        this.question.dragItems = this.question.dragItems.filter(dragItem => dragItem !== dragItemToDelete);
         this.deleteMappingsForDragItem(dragItemToDelete);
     }
 
@@ -517,7 +551,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      */
     onDragDrop(dropLocation: DropLocation, dragItem: DragItem) {
         // Replace dragItem with original (because it may be a copy)
-        dragItem = this.question.dragItems.find(originalDragItem => dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID);
+        dragItem = this.question.dragItems.find(
+            originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID)
+        );
 
         if (!dragItem) {
             // Drag item was not found in question => do nothing
@@ -529,11 +565,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         }
 
         // Check if this mapping already exists
-        if (!this.question.correctMappings.some(existingMapping =>
-                this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation, dropLocation)
-                &&
-                this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem, dragItem)
-        )) {
+        if (
+            !this.question.correctMappings.some(
+                existingMapping =>
+                    this.dragAndDropQuestionUtil.isSameDropLocation(existingMapping.dropLocation, dropLocation) &&
+                    this.dragAndDropQuestionUtil.isSameDragItem(existingMapping.dragItem, dragItem)
+            )
+        ) {
             // Mapping doesn't exit yet => add this mapping
             const dndMapping = new DragAndDropMapping();
             dndMapping.dropLocation = dropLocation;
@@ -555,14 +593,18 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const visitedDropLocations: DropLocation[] = [];
         // Save reference to this due to nested some calls
         const that = this;
-        if (this.question.correctMappings.some(function(correctMapping) {
-            if (!visitedDropLocations.some((dropLocation: DropLocation) => {
-                return that.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, correctMapping.dropLocation);
-            })) {
-                visitedDropLocations.push(correctMapping.dropLocation);
-            }
-            return that.dragAndDropQuestionUtil.isSameDropLocation(correctMapping.dropLocation, mapping.dropLocation);
-        })) {
+        if (
+            this.question.correctMappings.some(function(correctMapping) {
+                if (
+                    !visitedDropLocations.some((dropLocation: DropLocation) => {
+                        return that.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, correctMapping.dropLocation);
+                    })
+                ) {
+                    visitedDropLocations.push(correctMapping.dropLocation);
+                }
+                return that.dragAndDropQuestionUtil.isSameDropLocation(correctMapping.dropLocation, mapping.dropLocation);
+            })
+        ) {
             return visitedDropLocations.length;
         } else {
             return 0;
@@ -579,7 +621,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation));
+        return this.question.correctMappings.filter(mapping =>
+            this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
+        );
     }
 
     /**
@@ -592,9 +636,12 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        return this.question.correctMappings.filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem))
-            /** Moved the sorting from the template to the function call **/
-            .sort( (m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2));
+        return (
+            this.question.correctMappings
+                .filter(mapping => this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem))
+                /** Moved the sorting from the template to the function call **/
+                .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
+        );
     }
 
     /**
@@ -606,8 +653,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping =>
-            !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
+        this.question.correctMappings = this.question.correctMappings.filter(
+            mapping => !this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation)
         );
     }
 
@@ -620,8 +667,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping =>
-            !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem)
+        this.question.correctMappings = this.question.correctMappings.filter(
+            mapping => !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem)
         );
     }
 
@@ -634,7 +681,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         if (!this.question.correctMappings) {
             this.question.correctMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter(mapping =>  mapping !== mappingToDelete);
+        this.question.correctMappings = this.question.correctMappings.filter(mapping => mapping !== mappingToDelete);
     }
 
     /**
@@ -680,19 +727,22 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         const file = this.dragItemFile;
 
         this.isUploadingDragItemFile = true;
-        this.fileUploaderService.uploadFile(file).then(result => {
-            this.dragItemPicture = result.path;
-            this.questionUpdated.emit();
-            this.isUploadingDragItemFile = false;
-            if (this.dragItemPicture != null) {
-                dragItem.text = null;
-                dragItem.pictureFilePath = this.dragItemPicture;
+        this.fileUploaderService.uploadFile(file).then(
+            result => {
+                this.dragItemPicture = result.path;
+                this.questionUpdated.emit();
+                this.isUploadingDragItemFile = false;
+                if (this.dragItemPicture != null) {
+                    dragItem.text = null;
+                    dragItem.pictureFilePath = this.dragItemPicture;
+                }
+            },
+            error => {
+                console.error('Error during file upload in changeToPictureDragItem()', error.message);
+                this.isUploadingDragItemFile = false;
+                this.dragItemFile = null;
             }
-        }, error => {
-            console.error('Error during file upload in changeToPictureDragItem()', error.message);
-            this.isUploadingDragItemFile = false;
-            this.dragItemFile = null;
-        });
+        );
     }
 
     /**

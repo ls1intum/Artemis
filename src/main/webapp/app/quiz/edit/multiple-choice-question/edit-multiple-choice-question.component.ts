@@ -10,11 +10,11 @@ import 'brace/mode/markdown';
 @Component({
     selector: 'jhi-edit-multiple-choice-question',
     templateUrl: './edit-multiple-choice-question.component.html',
-    providers: [ ArtemisMarkdown ]
+    providers: [ArtemisMarkdown]
 })
 export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewInit {
-
-    @ViewChild('questionEditor') private questionEditor: AceEditorComponent;
+    @ViewChild('questionEditor')
+    private questionEditor: AceEditorComponent;
 
     /**
      question: '=',
@@ -22,11 +22,15 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
      onUpdated: '&',
      questionIndex: '<'
      **/
-    @Input() question: MultipleChoiceQuestion;
-    @Input() questionIndex: number;
+    @Input()
+    question: MultipleChoiceQuestion;
+    @Input()
+    questionIndex: number;
 
-    @Output() questionUpdated = new EventEmitter<object>();
-    @Output() questionDeleted = new EventEmitter<object>();
+    @Output()
+    questionUpdated = new EventEmitter<object>();
+    @Output()
+    questionDeleted = new EventEmitter<object>();
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
@@ -34,10 +38,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
     questionEditorAutoUpdate = true;
 
     showPreview: boolean;
-    scoringTypeOptions: Option[] = [
-        new Option('ALL_OR_NOTHING', 'All or Nothing'),
-        new Option('PROPORTIONAL_WITH_PENALTY', 'Proportional with Penalty')
-    ];
+    scoringTypeOptions: Option[] = [new Option('0', 'All or Nothing'), new Option('1', 'Proportional with Penalty')];
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 
@@ -47,9 +48,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
 
     ngAfterViewInit(): void {
         /** Setup editor **/
-        requestAnimationFrame(
-            this.setupQuestionEditor.bind(this)
-        );
+        requestAnimationFrame(this.setupQuestionEditor.bind(this));
     }
 
     /**
@@ -66,12 +65,16 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
         this.questionEditorText = this.generateMarkdown();
         this.questionEditor.getEditor().clearSelection();
 
-        this.questionEditor.getEditor().on('blur', () => {
-            this.parseMarkdown(this.questionEditorText);
-            // TODO: consider emitting the updated question here
-            this.questionUpdated.emit();
-            // TODO: $scope.$apply(); ??
-        }, this);
+        this.questionEditor.getEditor().on(
+            'blur',
+            () => {
+                this.parseMarkdown(this.questionEditorText);
+                // TODO: consider emitting the updated question here
+                this.questionUpdated.emit();
+                // TODO: $scope.$apply(); ??
+            },
+            this
+        );
     }
 
     /**
@@ -82,12 +85,15 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
      * 3. For each answer option: text, hint and explanation are added using ArtemisMarkdown
      */
     generateMarkdown() {
-        const markdownText = (
+        const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n' +
-            this.question.answerOptions.map(
-                answerOption => (answerOption.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)).join('\n')
-        );
+            this.question.answerOptions
+                .map(
+                    answerOption =>
+                        (answerOption.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answerOption)
+                )
+                .join('\n');
         return markdownText;
     }
 
@@ -106,7 +112,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
      *
      * Note: Existing IDs for answer options are reused in the original order.
      */
-     parseMarkdown(text: string) {
+    parseMarkdown(text: string) {
         // First split by [], [ ], [x] and [X]
         const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
         const questionText = questionParts[0];
@@ -115,19 +121,23 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
         this.artemisMarkdown.parseTextHintExplanation(questionText, this.question);
 
         // Extract existing answer option IDs
-        const existingAnswerOptionIDs = this.question.answerOptions.filter(questionAnswerOption =>
-            questionAnswerOption.id != null).map(questionAnswerOption => questionAnswerOption.id);
+        const existingAnswerOptionIDs = this.question.answerOptions
+            .filter(questionAnswerOption => questionAnswerOption.id != null)
+            .map(questionAnswerOption => questionAnswerOption.id);
         this.question.answerOptions = [];
 
-        // Work on answer options
         let endOfPreviousPart = text.indexOf(questionText) + questionText.length;
-        for (const answerOptionText of questionParts) {
+        /**
+         * Work on answer options
+         * We slice the first questionPart since that's our question text and no real answer option
+         */
+        for (const answerOptionText of questionParts.slice(1)) {
             // Find the box (text in-between the parts)
             const answerOption = new AnswerOption();
             const startOfThisPart = text.indexOf(answerOptionText, endOfPreviousPart);
             const box = text.substring(endOfPreviousPart, startOfThisPart);
             // Check if box says this answer option is correct or not
-            answerOption.isCorrect = (box === '[x]' || box === '[X]');
+            answerOption.isCorrect = box === '[x]' || box === '[X]';
             // Update endOfPreviousPart for next loop
             endOfPreviousPart = startOfThisPart + answerOptionText.length;
 
@@ -140,7 +150,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
             }
             this.question.answerOptions.push(answerOption);
         }
-     }
+    }
 
     /**
      * @function addAnswerOptionTextToEditor
@@ -158,7 +168,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
         range.setStart(lines - 1, 4);
         this.questionEditor.getEditor().selection.setRange(range);
         // TODO: make sure this is inserted and selected correctly
-     }
+    }
 
     /**
      * @function addHintAtCursor
