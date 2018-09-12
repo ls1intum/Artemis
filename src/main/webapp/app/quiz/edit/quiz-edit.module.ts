@@ -1,6 +1,6 @@
 import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
 
-import { ArTEMiSSharedModule, JhiWebsocketService } from '../../shared';
+import { ArTEMiSSharedModule } from '../../shared';
 import { JhiAlertService } from 'ng-jhipster';
 import { RepositoryService } from '../../entities/repository/repository.service';
 import { HomeComponent } from '../../home';
@@ -12,18 +12,11 @@ import { EditDragAndDropQuestionComponent } from './drag-and-drop-question/edit-
 import { AngularFittextModule } from 'angular-fittext';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { DndModule } from 'ng2-dnd';
+import { ArTEMiSQuizModule } from '../participate';
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        DndModule.forRoot(),
-        AngularFittextModule,
-        AceEditorModule
-    ],
-    declarations: [
-        EditMultipleChoiceQuestionComponent,
-        EditDragAndDropQuestionComponent
-    ],
+    imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule],
+    declarations: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent],
     entryComponents: [
         HomeComponent,
         QuizComponent,
@@ -32,15 +25,8 @@ import { DndModule } from 'ng2-dnd';
         EditMultipleChoiceQuestionComponent,
         EditDragAndDropQuestionComponent
     ],
-    providers: [
-        RepositoryService,
-        JhiWebsocketService,
-        JhiAlertService
-    ],
-    exports: [
-        EditMultipleChoiceQuestionComponent,
-        EditDragAndDropQuestionComponent
-    ],
+    providers: [RepositoryService, JhiAlertService],
+    exports: [EditMultipleChoiceQuestionComponent, EditDragAndDropQuestionComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSQuizEditModule {}

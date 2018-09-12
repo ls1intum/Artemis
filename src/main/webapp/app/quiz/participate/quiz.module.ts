@@ -23,7 +23,7 @@ const ENTITY_STATES = [...quizRoute];
     declarations: [QuizComponent, MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, DragItemComponent, SecuredImageComponent],
     entryComponents: [HomeComponent, QuizComponent, JhiMainComponent],
     providers: [RepositoryService, JhiWebsocketService, JhiAlertService],
-    exports: [DragItemComponent, SecuredImageComponent],
+    exports: [MultipleChoiceQuestionComponent, DragAndDropQuestionComponent, DragItemComponent, SecuredImageComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSQuizModule {}
