@@ -8,6 +8,8 @@ import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExercisePopupService } from './modeling-exercise-popup.service';
 import { ModelingExerciseService } from './modeling-exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-modeling-exercise-delete-dialog',
     templateUrl: './modeling-exercise-delete-dialog.component.html'
@@ -44,7 +46,7 @@ export class ModelingExerciseDeleteDialogComponent {
 })
 export class ModelingExerciseDeletePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

@@ -2,7 +2,7 @@ import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/co
 import { JhiAlertService } from 'ng-jhipster';
 import { ApollonDiagram, ApollonDiagramService } from '../entities/apollon-diagram';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor from '@ls1intum/apollon';
+import ApollonEditor, { State } from '@ls1intum/apollon';
 import { ActivatedRoute } from '@angular/router';
 import * as ApollonDiagramTitleFormatter from './apollonDiagramTitleFormatter';
 
@@ -17,7 +17,7 @@ export class ApollonDiagramStudentComponent implements OnInit, OnDestroy {
     diagramTitle = '';
     diagram: ApollonDiagram | null = null;
     apollonEditor: ApollonEditor | null = null;
-    submitted;
+    submitted: boolean;
 
     constructor(
         private apollonDiagramService: ApollonDiagramService,
@@ -55,7 +55,7 @@ export class ApollonDiagramStudentComponent implements OnInit, OnDestroy {
         }
     }
 
-    initializeApollonEditor(initialState) {
+    initializeApollonEditor(initialState: State) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }

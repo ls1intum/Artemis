@@ -1,4 +1,16 @@
-import { Component, Directive, DoCheck, ElementRef, Inject, Injector, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from '@angular/core';
+import {
+    Component,
+    Directive,
+    DoCheck,
+    ElementRef,
+    Inject,
+    Injector,
+    Input,
+    OnChanges,
+    OnDestroy,
+    OnInit,
+    SimpleChanges
+} from '@angular/core';
 import { UpgradeComponent } from '@angular/upgrade/static';
 import { QuizExercise } from '../../entities/quiz-exercise/quiz-exercise.model';
 import 'angular';
@@ -7,21 +19,26 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
 import { QuizExercisePopupService } from '../../entities/quiz-exercise';
 import { Router } from '@angular/router';
+import { Question } from 'app/entities/question';
 
 /** This Angular directive will act as an interface to the 'upgraded' AngularJS component
  *  The upgrade is realized as given Angular tutorial:
  *  https://angular.io/guide/upgrade#using-angularjs-component-directives-from-angular-code */
 /* tslint:disable-next-line:directive-selector */
-@Directive({selector: 'quiz-re-evaluate'})
+@Directive({ selector: 'quiz-re-evaluate' })
 /* tslint:disable-next-line:directive-class-suffix */
 export class QuizReEvaluateWrapper extends UpgradeComponent implements OnInit, OnChanges, DoCheck, OnDestroy {
     /** The names of the input and output properties here must match the names of the
      *  `<` and `&` bindings in the AngularJS component that is being wrapped */
 
-    @Input() quizExercise: QuizExercise;
-    @Input() modalService: NgbModal;
-    @Input() popupService: QuizExercisePopupService;
-    @Input() router: Router;
+    @Input()
+    quizExercise: QuizExercise;
+    @Input()
+    modalService: NgbModal;
+    @Input()
+    popupService: QuizExercisePopupService;
+    @Input()
+    router: Router;
 
     constructor(@Inject(ElementRef) elementRef: ElementRef, @Inject(Injector) injector: Injector) {
         /** We must pass the name of the directive as used by AngularJS (!) to the super */
@@ -30,13 +47,21 @@ export class QuizReEvaluateWrapper extends UpgradeComponent implements OnInit, O
 
     /** For this class to work when compiled with AoT, we must implement these lifecycle hooks
      *  because the AoT compiler will not realise that the super class implements them */
-    ngOnInit() { super.ngOnInit(); }
+    ngOnInit() {
+        super.ngOnInit();
+    }
 
-    ngOnChanges(changes: SimpleChanges) { super.ngOnChanges(changes); }
+    ngOnChanges(changes: SimpleChanges) {
+        super.ngOnChanges(changes);
+    }
 
-    ngDoCheck() { super.ngDoCheck(); }
+    ngDoCheck() {
+        super.ngDoCheck();
+    }
 
-    ngOnDestroy() { super.ngOnDestroy(); }
+    ngOnDestroy() {
+        super.ngOnDestroy();
+    }
 }
 
 declare const angular: any;
@@ -92,7 +117,7 @@ class QuizReEvaluateController {
         this.backUpQuiz = angular.copy(this.quizExercise);
     }
 
-    $onChanges(changes) {
+    $onChanges(changes: SimpleChanges) {
         if (changes.quizExercise && typeof changes.quizExercise.currentValue !== 'undefined') {
             this.init();
         }
@@ -102,7 +127,7 @@ class QuizReEvaluateController {
      * Remove question from the quiz
      * @param question {Question} the question to remove
      */
-    deleteQuestion(question) {
+    deleteQuestion(question: Question) {
         this.quizExercise.questions = this.quizExercise.questions.filter(function(q) {
             return q !== question;
         });
@@ -129,10 +154,7 @@ class QuizReEvaluateController {
      * @returns {boolean} true if valid, false otherwise
      */
     validQuiz() {
-        return this.quizExercise
-            && this.quizExercise.title
-            && this.quizExercise.title !== ''
-            && this.quizExercise.duration;
+        return this.quizExercise && this.quizExercise.title && this.quizExercise.title !== '' && this.quizExercise.duration;
     }
 
     /**
@@ -150,13 +172,13 @@ class QuizReEvaluateController {
     }
 
     /**
-     * Makes sure the entity is well formed and its fields are of the correct types
-     * @param entity
+     * Makes sure the quizExercise is well formed and its fields are of the correct types
+     * @param quizExercise
      */
-    prepareEntity(entity) {
-        entity.releaseDate = entity.releaseDate ? new Date(entity.releaseDate) : new Date();
-        entity.duration = Number(entity.duration);
-        entity.duration = isNaN(entity.duration) ? 10 : entity.duration;
+    prepareEntity(quizExercise: QuizExercise) {
+        quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : moment();
+        quizExercise.duration = Number(quizExercise.duration);
+        quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }
 
     /**
@@ -209,7 +231,7 @@ class QuizReEvaluateController {
      * move the question one position up
      * @param question {Question} the question to move
      */
-    moveUp(question) {
+    moveUp(question: Question) {
         const index = this.quizExercise.questions.indexOf(question);
         if (index === 0) {
             return;
@@ -225,9 +247,9 @@ class QuizReEvaluateController {
      * move the question one position down
      * @param question {Question} the question to move
      */
-    moveDown(question) {
+    moveDown(question: Question) {
         const index = this.quizExercise.questions.indexOf(question);
-        if (index === (this.quizExercise.questions.length - 1)) {
+        if (index === this.quizExercise.questions.length - 1) {
             return;
         }
         const tempQuestions = angular.copy(this.quizExercise.questions);
@@ -240,16 +262,14 @@ class QuizReEvaluateController {
 
 /** Defining the angularJS module here to circumvent separation of scopes
  *  The definition is identical to the one in the AngularJS application */
-angular
-    .module('artemisApp')
-    .component('quizReEvaluate', {
-        bindings: {
-            'quizExercise': '<',
-            'modalService': '<',
-            'popupService': '<',
-            'router': '<'
-        },
-        template: require('../../../ng1/quiz/re-evaluate/quiz-re-evaluate.html'),
-        controller: QuizReEvaluateController,
-        controllerAs: 'vm'
-    });
+angular.module('artemisApp').component('quizReEvaluate', {
+    bindings: {
+        quizExercise: '<',
+        modalService: '<',
+        popupService: '<',
+        router: '<'
+    },
+    template: require('../../../ng1/quiz/re-evaluate/quiz-re-evaluate.html'),
+    controller: QuizReEvaluateController,
+    controllerAs: 'vm'
+});

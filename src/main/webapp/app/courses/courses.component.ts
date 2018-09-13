@@ -3,18 +3,15 @@ import { ActivatedRoute } from '@angular/router';
 import { Course, CourseScoreCalculationService, CourseService } from '../entities/course';
 import { JhiAlertService } from 'ng-jhipster';
 import { Subscription } from 'rxjs';
-import { Principal } from '../shared';
+import { Principal } from '../core';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-courses',
     templateUrl: './courses.component.html',
-    providers:  [
-                    JhiAlertService,
-                    CourseService
-                ]
+    providers: [JhiAlertService, CourseService]
 })
 export class CoursesComponent implements OnInit {
-
     courses: Course[];
     filterByCourseId: number;
     filterByExerciseId: number;
@@ -25,7 +22,8 @@ export class CoursesComponent implements OnInit {
         private jhiAlertService: JhiAlertService,
         private principal: Principal,
         private courseScoreCalculationService: CourseScoreCalculationService,
-        private route: ActivatedRoute) {}
+        private route: ActivatedRoute
+    ) {}
 
     ngOnInit(): void {
         // (+) converts string 'id' to a number
@@ -44,8 +42,8 @@ export class CoursesComponent implements OnInit {
 
     loadAll() {
         this.courseService.findAll().subscribe(
-            (res: Course[]) => {
-                this.courses = res;
+            (res: HttpResponse<Course[]>) => {
+                this.courses = res.body;
                 for (const course of this.courses) {
                     course.isAtLeastTutor = this.principal.isAtLeastTutorInCourse(course);
                 }
@@ -62,8 +60,8 @@ export class CoursesComponent implements OnInit {
         return item.id;
     }
 
-    private onError(error) {
-        this.jhiAlertService.error(error.message, null, null);
+    private onError(error: string) {
+        this.jhiAlertService.error(error, null, null);
     }
 
     showWelcomeAlert() {
@@ -75,9 +73,7 @@ export class CoursesComponent implements OnInit {
 
     displayTotalRelativeScoreForCourse(course: Course): number {
         if (course.exercises.length > 0) {
-            return this.courseScoreCalculationService
-                .calculateTotalScores(course.exercises)
-                .get('relativeScore');
+            return this.courseScoreCalculationService.calculateTotalScores(course.exercises).get('relativeScore');
         } else {
             return 0;
         }

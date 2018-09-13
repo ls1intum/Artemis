@@ -7,6 +7,8 @@ import { JhiEventManager } from 'ng-jhipster';
 import { Participation, ParticipationPopupService, ParticipationService } from '../participation';
 import { ExerciseType } from '../exercise';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-participation-delete-dialog',
     templateUrl: './participation-delete-dialog.component.html'
@@ -55,7 +57,7 @@ export class ParticipationDeleteDialogComponent implements OnInit {
 })
 export class ParticipationDeletePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

@@ -8,6 +8,8 @@ import { TextExercise } from './text-exercise.model';
 import { TextExercisePopupService } from './text-exercise-popup.service';
 import { TextExerciseService } from './text-exercise.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-text-exercise-delete-dialog',
     templateUrl: './text-exercise-delete-dialog.component.html'
@@ -44,7 +46,7 @@ export class TextExerciseDeleteDialogComponent {
 })
 export class TextExerciseDeletePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

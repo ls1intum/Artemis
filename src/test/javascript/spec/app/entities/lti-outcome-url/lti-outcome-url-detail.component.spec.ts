@@ -1,54 +1,40 @@
 /* tslint:disable max-line-length */
-import { ComponentFixture, TestBed, async } from '@angular/core/testing';
-import { HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ActivatedRoute } from '@angular/router';
+import { of } from 'rxjs';
 
 import { ArTEMiSTestModule } from '../../../test.module';
-import { LtiOutcomeUrlDetailComponent } from '../../../../../../main/webapp/app/entities/lti-outcome-url/lti-outcome-url-detail.component';
-import { LtiOutcomeUrlService } from '../../../../../../main/webapp/app/entities/lti-outcome-url/lti-outcome-url.service';
-import { LtiOutcomeUrl } from '../../../../../../main/webapp/app/entities/lti-outcome-url/lti-outcome-url.model';
+import { LtiOutcomeUrlDetailComponent } from 'app/entities/lti-outcome-url/lti-outcome-url-detail.component';
+import { LtiOutcomeUrl } from 'app/shared/model/lti-outcome-url.model';
 
 describe('Component Tests', () => {
-
     describe('LtiOutcomeUrl Management Detail Component', () => {
         let comp: LtiOutcomeUrlDetailComponent;
         let fixture: ComponentFixture<LtiOutcomeUrlDetailComponent>;
-        let service: LtiOutcomeUrlService;
+        const route = ({ data: of({ ltiOutcomeUrl: new LtiOutcomeUrl(123) }) } as any) as ActivatedRoute;
 
-        beforeEach(async(() => {
+        beforeEach(() => {
             TestBed.configureTestingModule({
                 imports: [ArTEMiSTestModule],
                 declarations: [LtiOutcomeUrlDetailComponent],
-                providers: [
-                    LtiOutcomeUrlService
-                ]
+                providers: [{ provide: ActivatedRoute, useValue: route }]
             })
-            .overrideTemplate(LtiOutcomeUrlDetailComponent, '')
-            .compileComponents();
-        }));
-
-        beforeEach(() => {
+                .overrideTemplate(LtiOutcomeUrlDetailComponent, '')
+                .compileComponents();
             fixture = TestBed.createComponent(LtiOutcomeUrlDetailComponent);
             comp = fixture.componentInstance;
-            service = fixture.debugElement.injector.get(LtiOutcomeUrlService);
         });
 
         describe('OnInit', () => {
             it('Should call load all on init', () => {
                 // GIVEN
 
-                spyOn(service, 'find').and.returnValue(Observable.of(new HttpResponse({
-                    body: new LtiOutcomeUrl(123)
-                })));
-
                 // WHEN
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.find).toHaveBeenCalledWith(123);
-                expect(comp.ltiOutcomeUrl).toEqual(jasmine.objectContaining({id: 123}));
+                expect(comp.ltiOutcomeUrl).toEqual(jasmine.objectContaining({ id: 123 }));
             });
         });
     });
-
 });

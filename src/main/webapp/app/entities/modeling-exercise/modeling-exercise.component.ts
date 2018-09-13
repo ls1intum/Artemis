@@ -5,7 +5,8 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { ModelingExercise } from './modeling-exercise.model';
 import { ModelingExerciseService } from './modeling-exercise.service';
-import { ITEMS_PER_PAGE, Principal } from '../../shared';
+import { ITEMS_PER_PAGE } from '../../shared';
+import { Principal } from '../../core';
 import { CourseExerciseService } from '../course/course.service';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService } from '../course';
@@ -22,9 +23,9 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
     courseId: number;
     itemsPerPage: number;
     links: any;
-    page: any;
-    predicate: any;
-    reverse: any;
+    page: number;
+    predicate: string;
+    reverse: boolean;
 
     constructor(
         private modelingExerciseService: ModelingExerciseService,
@@ -66,20 +67,22 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
             (res: HttpResponse<ModelingExercise[]>) => {
                 this.modelingExercises = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
 
     loadAllForCourse() {
-        this.courseExerciseService.findAllModelingExercises(this.courseId, {
-            page: this.page,
-            size: this.itemsPerPage
-        }).subscribe(
-            (res: HttpResponse<ModelingExercise[]>) => {
-                this.modelingExercises = res.body;
-            },
-            (res: HttpResponse<ModelingExercise>[]) => this.onError(res)
-        );
+        this.courseExerciseService
+            .findAllModelingExercises(this.courseId, {
+                page: this.page,
+                size: this.itemsPerPage
+            })
+            .subscribe(
+                (res: HttpResponse<ModelingExercise[]>) => {
+                    this.modelingExercises = res.body;
+                },
+                (res: HttpErrorResponse) => this.onError(res)
+            );
         this.courseService.find(this.courseId).subscribe(res => {
             this.course = res.body;
         });
@@ -89,7 +92,7 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    loadPage(page) {
+    loadPage(page: number) {
         this.page = page;
         this.loadAll();
     }
@@ -98,13 +101,13 @@ export class ModelingExerciseComponent implements OnInit, OnDestroy {
         return item.id;
     }
     registerChangeInModelingExercises() {
-        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', response => this.load());
+        this.eventSubscriber = this.eventManager.subscribe('modelingExerciseListModification', () => this.load());
     }
 
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
-        console.log(error);
+        console.log('Error: ' + error);
     }
 
-    callback() { }
+    callback() {}
 }

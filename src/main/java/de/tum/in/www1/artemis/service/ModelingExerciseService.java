@@ -39,7 +39,7 @@ public class ModelingExerciseService {
     @Transactional(readOnly = true)
     public ModelingExercise findOne(Long id) {
         log.debug("Request to get Modeling Exercise : {}", id);
-        return modelingExerciseRepository.findOne(id);
+        return modelingExerciseRepository.findById(id).get();
     }
 
     /**
@@ -52,7 +52,7 @@ public class ModelingExerciseService {
         log.debug("Request to delete Modeling Exercise : {}", id);
         // delete all participations belonging to this modeling exercise
         participationService.deleteAllByExerciseId(id, false, false);
-        modelingExerciseRepository.delete(id);
+        modelingExerciseRepository.deleteById(id);
         // clean data on file system
         try {
             Path exercisePath = Paths.get(Constants.FILEPATH_COMPASS + File.separator + id);

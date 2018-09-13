@@ -16,7 +16,7 @@ export class ActiveMenuDirective implements OnInit {
       this.updateActiveFlag(this.translateService.currentLang);
     }
 
-    updateActiveFlag(selectedLanguage) {
+    updateActiveFlag(selectedLanguage: string) {
       if (this.jhiActiveMenu === selectedLanguage) {
           this.renderer.setElementClass(this.el.nativeElement, 'active', true);
       } else {

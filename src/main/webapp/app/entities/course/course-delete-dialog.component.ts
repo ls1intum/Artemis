@@ -8,6 +8,8 @@ import { Course } from './course.model';
 import { CoursePopupService } from './course-popup.service';
 import { CourseService } from './course.service';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-course-delete-dialog',
     templateUrl: './course-delete-dialog.component.html'
@@ -28,7 +30,7 @@ export class CourseDeleteDialogComponent {
     }
 
     confirmDelete(id: number) {
-        this.courseService.delete(id).subscribe((response) => {
+        this.courseService.delete(id).subscribe(response => {
             this.eventManager.broadcast({
                 name: 'courseListModification',
                 content: 'Deleted an course'
@@ -44,7 +46,7 @@ export class CourseDeleteDialogComponent {
 })
 export class CourseDeletePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,
@@ -52,7 +54,7 @@ export class CourseDeletePopupComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.routeSub = this.route.params.subscribe((params) => {
+        this.routeSub = this.route.params.subscribe(params => {
             this.coursePopupService
                 .open(CourseDeleteDialogComponent as Component, params['id']);
         });

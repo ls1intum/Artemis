@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { QuizExerciseComponent } from './quiz-exercise.component';
 import { QuizExerciseDetailComponent } from './quiz-exercise-detail.component';
 import { QuizExerciseExportComponent } from './quiz-exercise-export.component';
@@ -16,7 +16,8 @@ export const quizExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'quiz-exercise/:id',
         component: QuizExerciseDetailComponent,
         data: {
@@ -24,7 +25,8 @@ export const quizExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/quiz-exercise',
         component: QuizExerciseComponent,
         data: {
@@ -32,7 +34,8 @@ export const quizExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/quiz-exercise/re-evaluate/:id',
         component: QuizReEvaluateComponent,
         data: {
@@ -40,7 +43,8 @@ export const quizExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/quiz-exercise/edit/:id',
         component: QuizExerciseDetailComponent,
         data: {
@@ -48,7 +52,8 @@ export const quizExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/quiz-exercise/new',
         component: QuizExerciseDetailComponent,
         data: {
@@ -56,7 +61,8 @@ export const quizExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.quizExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/quiz-exercise/export',
         component: QuizExerciseExportComponent,
         data: {

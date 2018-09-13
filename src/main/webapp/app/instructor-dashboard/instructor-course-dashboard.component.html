@@ -1,5 +1,5 @@
 <div *ngIf="course">
-    <h2>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{rows.length}} <span jhiTranslate="instructorDashboard.students">students</span></small></h2>
+    <h4>{{course.title}} <small>{{numberOfExercises}} <span jhiTranslate="arTeMiSApp.exercise.home.title"> exercises</span>, {{numberOfStudents}} <span *ngIf="rows" jhiTranslate="instructorDashboard.students">students</span></small></h4>
 <jhi-alert></jhi-alert>
     <div class="table-responsive" *ngIf="rows">
         <table class="table table-striped">
@@ -38,7 +38,7 @@
 
             </tr>
             </thead>
-            <tbody>
+            <tbody *ngIf="rows && rows.length > 0">
             <tr *ngFor="let row of rows | sortBy: predicate: reverse">
                 <td>{{ row.firstName }} {{ row.lastName }}</td>
                 <td>{{ row.login }}</td>

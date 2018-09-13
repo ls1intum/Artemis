@@ -3,29 +3,27 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
 import { Course, CourseService } from '../entities/course';
+import { Result } from '../entities/result';
+import { Participation } from '../entities/participation';
 
 @Component({
     selector: 'jhi-instructor-course-dashboard',
     templateUrl: './instructor-course-dashboard.component.html',
-    providers:  [
-        JhiAlertService
-    ]
+    providers: [JhiAlertService]
 })
-
 export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
-
     course: Course;
     paramSub: Subscription;
-    predicate: any;
-    reverse: any;
+    predicate: string;
+    reverse: boolean;
     numberOfExercises = 0;
-    rows = [];
-    results = [];
-    participations = [];
-    courseScores = [];
+    numberOfStudents = 0;
+    rows: any[] = [];
+    results = new Array<Result>();
+    participations = new Array<Participation>();
+    courseScores = new Array<any>();
 
-    constructor(private route: ActivatedRoute,
-                private courseService: CourseService) {
+    constructor(private route: ActivatedRoute, private courseService: CourseService) {
         this.reverse = false;
         this.predicate = 'id';
     }
@@ -57,24 +55,33 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
     }
 
     groupResults() {
-        if (!this.results || !this.participations || !this.courseScores || this.participations.length === 0 || this.results.length === 0 || this.courseScores.length === 0) {
+        if (
+            !this.results ||
+            !this.participations ||
+            !this.courseScores ||
+            this.participations.length === 0 ||
+            this.results.length === 0 ||
+            this.courseScores.length === 0
+        ) {
             return;
         }
 
-        const rows = {};
+        const rows: any[] = [];
         const exercisesSeen = {};
+        this.numberOfStudents = 0;
         for (const p of this.participations) {
             if (!rows[p.student.id]) {
                 rows[p.student.id] = {
-                    'firstName': p.student.firstName,
-                    'lastName': p.student.lastName,
-                    'login': p.student.login,
-                    'participated': 0,
-                    'participationInPercent': 0,
-                    'successful': 0,
-                    'successfullyCompletedInPercent': 0,
-                    'overallScore': 0,
+                    firstName: p.student.firstName,
+                    lastName: p.student.lastName,
+                    login: p.student.login,
+                    participated: 0,
+                    participationInPercent: 0,
+                    successful: 0,
+                    successfullyCompletedInPercent: 0,
+                    overallScore: 0
                 };
+                this.numberOfStudents++;
             }
 
             rows[p.student.id].participated++;
@@ -88,7 +95,8 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         // Successful Participations as the total amount and a relative value to all Exercises
         for (const r of this.results) {
             rows[r.participation.student.id].successful++;
-            rows[r.participation.student.id].successfullyCompletedInPercent = (rows[r.participation.student.id].successful / this.numberOfExercises) * 100;
+            rows[r.participation.student.id].successfullyCompletedInPercent =
+                (rows[r.participation.student.id].successful / this.numberOfExercises) * 100;
         }
 
         // Relative amount of participation in all exercises
@@ -115,5 +123,5 @@ export class InstructorCourseDashboardComponent implements OnInit, OnDestroy {
         this.paramSub.unsubscribe();
     }
 
-    callback() { }
+    callback() {}
 }

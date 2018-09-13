@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { TextExerciseComponent } from './text-exercise.component';
 import { TextExerciseDetailComponent } from './text-exercise-detail.component';
 import { TextExercisePopupComponent } from './text-exercise-dialog.component';
@@ -15,7 +15,8 @@ export const textExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.textExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'text-exercise/:id',
         component: TextExerciseDetailComponent,
         data: {
@@ -32,7 +33,8 @@ export const textExerciseRoute: Routes = [
             pageTitle: 'arTeMiSApp.textExercise.home.title'
         },
         canActivate: [UserRouteAccessService]
-    }, {
+    },
+    {
         path: 'course/:courseId/text-exercise/:id',
         component: TextExerciseDetailComponent,
         data: {

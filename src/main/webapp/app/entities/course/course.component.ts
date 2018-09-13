@@ -5,7 +5,7 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import { Principal } from '../../shared';
+import { Principal } from '../../core';
 
 @Component({
     selector: 'jhi-course',
@@ -21,15 +21,14 @@ export class CourseComponent implements OnInit, OnDestroy {
         private jhiAlertService: JhiAlertService,
         private eventManager: JhiEventManager,
         private principal: Principal
-    ) {
-    }
+    ) {}
 
     loadAll() {
         this.courseService.query().subscribe(
             (res: HttpResponse<Course[]>) => {
                 this.courses = res.body;
             },
-            (res: HttpErrorResponse) => this.onError(res.message)
+            (res: HttpErrorResponse) => this.onError(res)
         );
     }
     ngOnInit() {
@@ -44,11 +43,12 @@ export class CourseComponent implements OnInit, OnDestroy {
     trackId(index: number, item: Course) {
         return item.id;
     }
+
     registerChangeInCourses() {
-        this.eventSubscriber = this.eventManager.subscribe('courseListModification', response => this.loadAll());
+        this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => this.loadAll());
     }
 
-    private onError(error) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 }

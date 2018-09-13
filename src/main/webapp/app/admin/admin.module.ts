@@ -1,48 +1,37 @@
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule } from '@angular/core';
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { JhiLanguageService } from 'ng-jhipster';
+import { JhiLanguageHelper } from 'app/core';
+import { ArTEMiSSharedModule } from 'app/shared';
+/* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
-import { ArTEMiSSharedModule } from '../shared';
 import {
     adminState,
     AuditsComponent,
-    AuditsService,
-    JhiConfigurationComponent,
-    JhiConfigurationService,
-    JhiHealthCheckComponent,
-    JhiHealthModalComponent,
-    JhiHealthService,
-    JhiMetricsMonitoringComponent,
-    JhiMetricsMonitoringModalComponent,
-    JhiMetricsService,
-    JhiTrackerComponent,
-    LogsComponent,
-    LogsService,
-    UserDeleteDialogComponent,
-    UserDialogComponent,
     UserMgmtComponent,
-    UserMgmtDeleteDialogComponent,
     UserMgmtDetailComponent,
-    UserMgmtDialogComponent,
-    UserModalService,
-    UserResolve,
-    UserResolvePagingParams
+    UserMgmtUpdateComponent,
+    UserMgmtDeleteDialogComponent,
+    LogsComponent,
+    JhiMetricsMonitoringModalComponent,
+    JhiMetricsMonitoringComponent,
+    JhiHealthModalComponent,
+    JhiHealthCheckComponent,
+    JhiConfigurationComponent,
+    JhiTrackerComponent
 } from './';
-
-/* jhipster-needle-add-admin-module-import - JHipster will add admin modules imports here */
 
 @NgModule({
     imports: [
         ArTEMiSSharedModule,
-        RouterModule.forChild(adminState),
+        RouterModule.forChild(adminState)
         /* jhipster-needle-add-admin-module - JHipster will add admin modules here */
     ],
     declarations: [
         AuditsComponent,
         UserMgmtComponent,
-        UserDialogComponent,
-        UserDeleteDialogComponent,
         UserMgmtDetailComponent,
-        UserMgmtDialogComponent,
+        UserMgmtUpdateComponent,
         UserMgmtDeleteDialogComponent,
         LogsComponent,
         JhiConfigurationComponent,
@@ -52,22 +41,15 @@ import {
         JhiMetricsMonitoringComponent,
         JhiMetricsMonitoringModalComponent
     ],
-    entryComponents: [
-        UserMgmtDialogComponent,
-        UserMgmtDeleteDialogComponent,
-        JhiHealthModalComponent,
-        JhiMetricsMonitoringModalComponent,
-    ],
-    providers: [
-        AuditsService,
-        JhiConfigurationService,
-        JhiHealthService,
-        JhiMetricsService,
-        LogsService,
-        UserResolvePagingParams,
-        UserResolve,
-        UserModalService
-    ],
+    entryComponents: [UserMgmtDeleteDialogComponent, JhiHealthModalComponent, JhiMetricsMonitoringModalComponent],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class ArTEMiSAdminModule {}
+export class ArTEMiSAdminModule {
+    constructor(private languageService: JhiLanguageService, private languageHelper: JhiLanguageHelper) {
+        this.languageHelper.language.subscribe((languageKey: string) => {
+            if (languageKey !== undefined) {
+                this.languageService.changeLanguage(languageKey);
+            }
+        });
+    }
+}

@@ -97,7 +97,7 @@
                 <td>
                     <span *ngIf="result.score != null">{{result.score}}%</span>
                 </td>
-                <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate: exercise.releaseDate))}} minutes</td>
+                <td>{{durationString(result.completionDate, (result.participation.initializationDate ? result.participation.initializationDate : exercise.releaseDate))}} minutes</td>
                 <td *ngIf="exercise.type !== QUIZ">
                     <button *ngIf="exercise.type === PROGRAMMING" class="btn btn-outline-secondary btn-sm" (click)="goToRepository(result)"><i
                         class="fa fa-code-fork"></i>&nbsp;Repository

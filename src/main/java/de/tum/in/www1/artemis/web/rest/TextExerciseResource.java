@@ -149,10 +149,7 @@ public class TextExerciseResource {
     public ResponseEntity<List<TextExercise>> getTextExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ProgrammingExercises for the course with id : {}", courseId);
         Course course = courseService.findOne(courseId);
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        if (!authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         List<TextExercise> exercises = textExerciseRepository.findByCourseId(courseId);
@@ -171,15 +168,11 @@ public class TextExerciseResource {
     @Timed
     public ResponseEntity<TextExercise> getTextExercise(@PathVariable Long id) {
         log.debug("REST request to get TextExercise : {}", id);
-        TextExercise textExercise = textExerciseRepository.findOne(id);
-        Course course = textExercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-            !authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
+        Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
+        if (!authCheckService.isAtLeastTeachingAssistantForExercise(textExercise)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(textExercise));
+        return ResponseUtil.wrapOrNotFound(textExercise);
     }
 
     /**
@@ -193,14 +186,17 @@ public class TextExerciseResource {
     @Timed
     public ResponseEntity<Void> deleteTextExercise(@PathVariable Long id) {
         log.debug("REST request to delete TextExercise : {}", id);
-        TextExercise textExercise = textExerciseRepository.findOne(id);
-        Course course = textExercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isInstructorInCourse(course, user) &&
-            !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        Optional<TextExercise> textExercise = textExerciseRepository.findById(id);
+        if (textExercise.isPresent()) {
+            Course course = textExercise.get().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            textExerciseRepository.deleteById(id);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }
-        textExerciseRepository.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return ResponseEntity.notFound().build();
     }
 }

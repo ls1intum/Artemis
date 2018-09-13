@@ -179,7 +179,7 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Course findOne(Long id) {
         log.debug("Request to get Course : {}", id);
-        return courseRepository.findOne(id);
+        return courseRepository.findById(id).get();
     }
 
     /**
@@ -189,7 +189,7 @@ public class CourseService {
      */
     public void delete(Long id) {
         log.debug("Request to delete Course : {}", id);
-        courseRepository.delete(id);
+        courseRepository.deleteById(id);
     }
 
     public List<String> getAllTeachingAssistantGroupNames() {

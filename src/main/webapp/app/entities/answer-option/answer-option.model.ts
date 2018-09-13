@@ -1,7 +1,8 @@
 import { BaseEntity } from './../../shared';
 import { MultipleChoiceQuestion } from '../multiple-choice-question';
+import { MarkDownElement } from '../../entities/question';
 
-export class AnswerOption implements BaseEntity {
+export class AnswerOption implements BaseEntity, MarkDownElement {
 
     public id: number;
     public text: string;

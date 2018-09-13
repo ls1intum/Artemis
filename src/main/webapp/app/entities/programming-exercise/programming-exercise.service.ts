@@ -5,77 +5,68 @@ import { SERVER_API_URL } from '../../app.constants';
 
 import { ProgrammingExercise } from './programming-exercise.model';
 import { createRequestOption } from '../../shared';
-import { JhiDateUtils } from 'ng-jhipster';
+import * as moment from 'moment';
+import { Exercise } from 'app/entities/exercise';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
+export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
 
 @Injectable()
 export class ProgrammingExerciseService {
+    private resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
-    private resourceUrl =  SERVER_API_URL + 'api/programming-exercises';
-
-    constructor(private http: HttpClient, private dateUtils: JhiDateUtils) { }
+    constructor(private http: HttpClient) {}
 
     create(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.convert(programmingExercise);
-        return this.http.post<ProgrammingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.convertDateFromClient(programmingExercise);
+        return this.http
+            .post<ProgrammingExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     update(programmingExercise: ProgrammingExercise): Observable<EntityResponseType> {
-        const copy = this.convert(programmingExercise);
-        return this.http.put<ProgrammingExercise>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        const copy = this.convertDateFromClient(programmingExercise);
+        return this.http
+            .put<ProgrammingExercise>(this.resourceUrl, copy, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
     find(id: number): Observable<EntityResponseType> {
-        return this.http.get<ProgrammingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response'})
-            .map((res: EntityResponseType) => this.convertResponse(res));
+        return this.http
+            .get<ProgrammingExercise>(`${this.resourceUrl}/${id}`, { observe: 'response' })
+            .map((res: EntityResponseType) => this.convertDateFromServer(res));
     }
 
-    query(req?: any): Observable<HttpResponse<ProgrammingExercise[]>> {
+    query(req?: any): Observable<EntityArrayResponseType> {
         const options = createRequestOption(req);
-        return this.http.get<ProgrammingExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: HttpResponse<ProgrammingExercise[]>) => this.convertArrayResponse(res));
+        return this.http
+            .get<ProgrammingExercise[]>(this.resourceUrl, { params: options, observe: 'response' })
+            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
     }
 
-    delete(id: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${id}`, { observe: 'response'});
+    delete(id: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/${id}`, { observe: 'response' });
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
-        const body: ProgrammingExercise = this.convertItemFromServer(res.body);
-        return res.clone({body});
-    }
-
-    private convertArrayResponse(res: HttpResponse<ProgrammingExercise[]>): HttpResponse<ProgrammingExercise[]> {
-        const jsonResponse: ProgrammingExercise[] = res.body;
-        const body: ProgrammingExercise[] = [];
-        for (let i = 0; i < jsonResponse.length; i++) {
-            body.push(this.convertItemFromServer(jsonResponse[i]));
-        }
-        return res.clone({body});
-    }
-
-    /**
-     * Convert a returned JSON object to Exercise.
-     */
-    private convertItemFromServer(programmingExercise: ProgrammingExercise): ProgrammingExercise {
-        const entity: ProgrammingExercise = Object.assign({}, programmingExercise);
-        entity.releaseDate = this.dateUtils
-            .convertDateTimeFromServer(entity.releaseDate);
-        entity.dueDate = this.dateUtils
-            .convertDateTimeFromServer(entity.dueDate);
-        return entity;
-    }
-
-    /**
-     * Convert a Exercise to a JSON which can be sent to the server.
-     */
-    private convert(programmingExercise: ProgrammingExercise): ProgrammingExercise {
-        const copy: ProgrammingExercise = Object.assign({}, programmingExercise);
-        copy.releaseDate = this.dateUtils.toDate(programmingExercise.releaseDate);
-        copy.dueDate = this.dateUtils.toDate(programmingExercise.dueDate);
+    private convertDateFromClient(exercise: Exercise): Exercise {
+        const copy: Exercise = Object.assign({}, exercise, {
+            releaseDate: exercise.releaseDate != null && exercise.releaseDate.isValid() ? exercise.releaseDate.toJSON() : null,
+            dueDate: exercise.dueDate != null && exercise.dueDate.isValid() ? exercise.dueDate.toJSON() : null
+        });
         return copy;
+    }
+
+    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+        res.body.releaseDate = res.body.releaseDate != null ? moment(res.body.releaseDate) : null;
+        res.body.dueDate = res.body.dueDate != null ? moment(res.body.dueDate) : null;
+        return res;
+    }
+
+    private convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+        res.body.forEach((exercise: Exercise) => {
+            exercise.releaseDate = exercise.releaseDate != null ? moment(exercise.releaseDate) : null;
+            exercise.dueDate = exercise.dueDate != null ? moment(exercise.dueDate) : null;
+        });
+        return res;
     }
 }

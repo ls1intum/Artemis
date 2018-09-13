@@ -1,4 +1,17 @@
-import { computeBoundingBox, EntityMember, LayoutedDiagram, LayoutedEntity, LayoutedEntityMember, LayoutedRelationship, Rect, renderDiagramToSVG, renderEntityToSVG, renderRelationshipToSVG, Size, State } from '@ls1intum/apollon';
+import {
+    computeBoundingBox,
+    EntityMember,
+    LayoutedDiagram,
+    LayoutedEntity,
+    LayoutedEntityMember,
+    LayoutedRelationship,
+    Rect,
+    renderDiagramToSVG,
+    renderEntityToSVG,
+    renderRelationshipToSVG,
+    Size,
+    State
+} from '@ls1intum/apollon';
 import { convertRenderedSVGToPNG } from './svg-renderer';
 import * as TempID from './temp-id';
 import { Course } from '../../entities/course';
@@ -9,6 +22,7 @@ import { DropLocation } from '../../entities/drop-location';
 import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
 import { DragItem } from '../../entities/drag-item';
 import { ScoringType } from '../../entities/question';
+import * as moment from 'moment';
 
 // Drop locations in quiz exercises are relatively positioned and sized
 // using integers in the interval [0,200]
@@ -32,10 +46,7 @@ export async function generateDragAndDropQuizExercise(
     const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
 
     // Upload the diagram background image
-    const backgroundImageUploadResponse = await fileUploaderService.uploadFile(
-        diagramBackground,
-        'diagram-background.png'
-    );
+    const backgroundImageUploadResponse = await fileUploaderService.uploadFile(diagramBackground, 'diagram-background.png');
 
     // Generate a drag-and-drop question object
     const dragAndDropQuestion = await generateDragAndDropQuestion(
@@ -53,7 +64,7 @@ export async function generateDragAndDropQuizExercise(
     quizExercise.isVisibleBeforeStart = false;
     quizExercise.isOpenForPractice = false;
     quizExercise.isPlannedToStart = false;
-    quizExercise.releaseDate = new Date();
+    quizExercise.releaseDate = moment();
     quizExercise.randomizeQuestionOrder = true;
     quizExercise.course = course;
     quizExercise.questions = [dragAndDropQuestion];
@@ -79,7 +90,7 @@ async function generateDragAndDropQuestion(
     const dragAndDropQuestion = new DragAndDropQuestion();
     dragAndDropQuestion.title = '<INSERT QUESTION TITLE HERE>';
     dragAndDropQuestion.text = '<INSERT QUESTION TEXT HERE>';
-    dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS;     // default value
+    dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS; // default value
     dragAndDropQuestion.randomizeOrder = true;
     dragAndDropQuestion.score = 1;
     dragAndDropQuestion.dropLocations = dropLocations;
@@ -102,11 +113,7 @@ async function generateDragAndDropMappings(
         fileUploaderService
     );
 
-    const entityMemberMappings = generateMappingsForInteractiveEntitiesTexts(
-        layoutedDiagram,
-        interactiveElementIds,
-        fontFamily
-    );
+    const entityMemberMappings = generateMappingsForInteractiveEntitiesTexts(layoutedDiagram, interactiveElementIds, fontFamily);
 
     const relationshipMappings = await generateMappingsForInteractiveRelationships(
         layoutedDiagram,
@@ -117,11 +124,7 @@ async function generateDragAndDropMappings(
 
     return {
         dragItems: [...entityMappings.dragItems, ...entityMemberMappings.dragItems, ...relationshipMappings.dragItems],
-        dropLocations: [
-            ...entityMappings.dropLocations,
-            ...entityMemberMappings.dropLocations,
-            ...relationshipMappings.dropLocations
-        ],
+        dropLocations: [...entityMappings.dropLocations, ...entityMemberMappings.dropLocations, ...relationshipMappings.dropLocations],
         correctMappings: [
             ...entityMappings.correctMappings,
             ...entityMemberMappings.correctMappings,
@@ -151,7 +154,13 @@ async function generateMappingsForInteractiveEntitiesImages(
         dragItem.tempID = TempID.generate();
         dragItem.pictureFilePath = imageUploadResponse.path;
 
-        const dropLocation = createDropLocation(entity.position.x, entity.position.y, entity.size.width, entity.size.height, layoutedDiagram.size);
+        const dropLocation = createDropLocation(
+            entity.position.x,
+            entity.position.y,
+            entity.size.width,
+            entity.size.height,
+            layoutedDiagram.size
+        );
 
         imageDragItems.push(dragItem);
         dropLocations.push(dropLocation);
@@ -244,9 +253,7 @@ function getCorrectMappings(
 
     correctDropLocationIDsByEntityMemberName.forEach((correctDropLocationTempIDs, entityMemberName) => {
         const dragItemsWithMatchingName = textDragItems.filter(dragItem => dragItem.text === entityMemberName);
-        const correctDropLocations = dropLocations.filter(dropLocation =>
-            correctDropLocationTempIDs.has(dropLocation.tempID)
-        );
+        const correctDropLocations = dropLocations.filter(dropLocation => correctDropLocationTempIDs.has(dropLocation.tempID));
 
         for (const dragItem of dragItemsWithMatchingName) {
             for (const dropLocation of correctDropLocations) {
@@ -319,17 +326,15 @@ async function generateMappingsForInteractiveRelationships(
 }
 
 function getInteractiveRelationships(layoutedDiagram: LayoutedDiagram, interactiveElementIds: Set<string>) {
-    return layoutedDiagram.relationships.filter(relationship =>
-        interactiveElementIds.has(relationship.relationship.id)
-    );
+    return layoutedDiagram.relationships.filter(relationship => interactiveElementIds.has(relationship.relationship.id));
 }
 
 function createDropLocation(x: number, y: number, width: number, height: number, totalSize: Size): DropLocation {
     const dropLocation = new DropLocation();
     dropLocation.tempID = TempID.generate();
-    dropLocation.posX = Math.round(MAX_SIZE_UNIT * x / totalSize.width);
-    dropLocation.posY = Math.round(MAX_SIZE_UNIT * y / totalSize.height);
-    dropLocation.width = Math.round(MAX_SIZE_UNIT * width / totalSize.width);
-    dropLocation.height = Math.round(MAX_SIZE_UNIT * height / totalSize.height);
+    dropLocation.posX = Math.round((MAX_SIZE_UNIT * x) / totalSize.width);
+    dropLocation.posY = Math.round((MAX_SIZE_UNIT * y) / totalSize.height);
+    dropLocation.width = Math.round((MAX_SIZE_UNIT * width) / totalSize.width);
+    dropLocation.height = Math.round((MAX_SIZE_UNIT * height) / totalSize.height);
     return dropLocation;
 }

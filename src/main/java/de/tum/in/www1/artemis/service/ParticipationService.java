@@ -17,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
 
 import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 
@@ -302,7 +304,7 @@ public class ParticipationService {
     @Transactional(readOnly = true)
     public Participation findOne(Long id) {
         log.debug("Request to get Participation : {}", id);
-        return participationRepository.findOne(id);
+        return participationRepository.findById(id).get();
     }
 
     /**
@@ -378,7 +380,7 @@ public class ParticipationService {
     @Transactional(noRollbackFor={Throwable.class})
     public void delete(Long id, boolean deleteBuildPlan, boolean deleteRepository) {
         log.debug("Request to delete Participation : {}", id);
-        Participation participation = participationRepository.findOne(id);
+        Participation participation = participationRepository.findById(id).get();
         if (participation != null && participation.getExercise() instanceof ProgrammingExercise) {
             if (deleteBuildPlan && participation.getBuildPlanId() != null) {
                 try {
@@ -407,7 +409,7 @@ public class ParticipationService {
         if (participation.getResults() != null && participation.getResults().size() > 0) {
             log.info("Will delete " + participation.getResults().size() + " results");
             for (Result result : participation.getResults()) {
-                resultRepository.delete(result.getId());
+                resultRepository.deleteById(result.getId());
             }
         }
 

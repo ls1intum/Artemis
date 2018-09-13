@@ -4,24 +4,22 @@ import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { JhiLanguageService } from 'ng-jhipster';
 
 import { ProfileService } from '../profiles/profile.service';
-import { JhiLanguageHelper, LoginModalService, LoginService, Principal } from '../../shared';
+import { JhiLanguageHelper, LoginModalService, LoginService, Principal, User } from '../../core';
 
 import { VERSION } from '../../app.constants';
 
 @Component({
     selector: 'jhi-navbar',
     templateUrl: './navbar.component.html',
-    styleUrls: [
-        'navbar.scss'
-    ]
+    styleUrls: ['navbar.scss']
 })
 export class NavbarComponent implements OnInit {
     inProduction: boolean;
     isNavbarCollapsed: boolean;
-    languages: any[];
+    languages: string[];
     modalRef: NgbModalRef;
     version: string;
-    currAccount;
+    currAccount: User;
 
     constructor(
         private loginService: LoginService,
@@ -48,7 +46,7 @@ export class NavbarComponent implements OnInit {
     }
 
     changeLanguage(languageKey: string) {
-      this.languageService.changeLanguage(languageKey);
+        this.languageService.changeLanguage(languageKey);
     }
 
     collapseNavbar() {

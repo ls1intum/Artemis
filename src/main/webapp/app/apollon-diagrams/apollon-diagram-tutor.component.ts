@@ -1,15 +1,15 @@
 import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { JhiAlertService } from 'ng-jhipster';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import ApollonEditor, { ApollonOptions } from '@ls1intum/apollon';
+import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as $ from 'jquery';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
+import { DiagramType, ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
 import { Result, ResultService } from '../entities/result';
 import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
-import { Principal } from '../shared';
-import { DiagramType } from '../entities/modeling-exercise';
+import { Principal } from '../core';
+import { Submission } from '../entities/submission';
 
 @Component({
     selector: 'jhi-apollon-diagram-tutor',
@@ -17,22 +17,24 @@ import { DiagramType } from '../entities/modeling-exercise';
     providers: [ModelingAssessmentService]
 })
 export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
-    @ViewChild('editorContainer') editorContainer: ElementRef;
-    @Output() onNewResult = new EventEmitter<Result>();
+    @ViewChild('editorContainer')
+    editorContainer: ElementRef;
+    @Output()
+    onNewResult = new EventEmitter<Result>();
 
     apollonEditor: ApollonEditor | null = null;
-    selectedEntities: any[];
-    selectedRelationships: any[];
+    selectedEntities: string[];
+    selectedRelationships: string[];
 
     submission: ModelingSubmission;
     modelingExercise: ModelingExercise;
     result: Result;
     assessments: ModelingAssessment[];
-    assessmentsNames;
+    assessmentsNames: Map<string, string>;
     assessmentsAreValid: boolean;
     invalidError = '';
     totalScore = 0;
-    positions: {};
+    positions: Map<string, Point>;
     busy: boolean;
     done: boolean;
     timeout: any;
@@ -64,7 +66,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.route.params.subscribe(params => {
             const id = Number(params['submissionId']);
             const exerciseId = Number(params['exerciseId']);
-            let nextOptimal;
+            let nextOptimal: boolean;
             this.route.queryParams.subscribe(query => {
                 nextOptimal = query['optimal'] === 'true';
             });
@@ -75,9 +77,11 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
                  * set diagramType to class diagram if exercise is null, use case or communication
                  * apollon does not support use case and communication yet
                  */
-                if (this.modelingExercise.diagramType === null ||
+                if (
+                    this.modelingExercise.diagramType === null ||
                     this.modelingExercise.diagramType === DiagramType.USE_CASE ||
-                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION) {
+                    this.modelingExercise.diagramType === DiagramType.COMMUNICATION
+                ) {
                     this.modelingExercise.diagramType = DiagramType.CLASS;
                 }
                 this.submission = data.modelingSubmission as ModelingSubmission;
@@ -115,7 +119,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
     }
 
-    initializeApollonEditor(initialState) {
+    initializeApollonEditor(initialState: State) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
@@ -123,16 +127,16 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
             initialState,
             mode: 'READ_ONLY',
-            diagramType: <ApollonOptions['diagramType']> this.modelingExercise.diagramType
+            diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
         });
 
         this.apollonEditor.subscribeToSelectionChange(selection => {
-            const selectedEntities = [];
+            const selectedEntities: string[] = [];
             for (const entity of selection.entityIds) {
                 selectedEntities.push(entity);
             }
             this.selectedEntities = selectedEntities;
-            const selectedRelationships = [];
+            const selectedRelationships: string[] = [];
             for (const rel of selection.relationshipIds) {
                 selectedRelationships.push(rel);
             }
@@ -163,22 +167,22 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
 
         if (this.assessments.length < cardinalityAllEntities) {
-            const partialAssessment = this.assessments.length !== 0;
+            const isPartialAssessment = this.assessments.length !== 0;
             for (const elem of editorState.entities.allIds) {
                 const assessment = new ModelingAssessment(elem, ModelElementType.CLASS, 0, '');
-                this.pushAssessmentIfNotExists(elem, assessment, partialAssessment);
+                this.pushAssessmentIfNotExists(elem, assessment, isPartialAssessment);
                 for (const attribute of editorState.entities.byId[elem].attributes) {
                     const attributeAssessment = new ModelingAssessment(attribute.id, ModelElementType.ATTRIBUTE, 0, '');
-                    this.pushAssessmentIfNotExists(attribute.id, attributeAssessment, partialAssessment);
+                    this.pushAssessmentIfNotExists(attribute.id, attributeAssessment, isPartialAssessment);
                 }
                 for (const method of editorState.entities.byId[elem].methods) {
                     const methodAssessment = new ModelingAssessment(method.id, ModelElementType.METHOD, 0, '');
-                    this.pushAssessmentIfNotExists(method.id, methodAssessment, partialAssessment);
+                    this.pushAssessmentIfNotExists(method.id, methodAssessment, isPartialAssessment);
                 }
             }
             for (const elem of editorState.relationships.allIds) {
                 const assessment = new ModelingAssessment(elem, ModelElementType.RELATIONSHIP, 0, '');
-                this.pushAssessmentIfNotExists(elem, assessment, partialAssessment);
+                this.pushAssessmentIfNotExists(elem, assessment, isPartialAssessment);
             }
         }
 
@@ -188,7 +192,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         }
     }
 
-    pushAssessmentIfNotExists(id, newAssessment, partialAssessment) {
+    pushAssessmentIfNotExists(id: string, newAssessment: ModelingAssessment, partialAssessment: boolean) {
         if (partialAssessment) {
             for (const elem of this.assessments) {
                 if (elem.id === id) {
@@ -228,7 +232,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
             totalScore += assessment.credits;
             if (assessment.credits == null) {
                 this.assessmentsAreValid = false;
-                return this.invalidError = 'The score field must be a number and can not be empty!';
+                return (this.invalidError = 'The score field must be a number and can not be empty!');
             }
         }
         this.totalScore = totalScore;
@@ -248,7 +252,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.assessmentsNames = this.modelingAssessmentService.getNamesForAssessments(this.assessments, this.apollonEditor.getState());
     }
 
-    isSelected(id, type) {
+    isSelected(id: string, type: ModelElementType) {
         if (type === ModelElementType.RELATIONSHIP) {
             if (!this.selectedRelationships) {
                 return false;
@@ -291,7 +295,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.positions = this.modelingAssessmentService.getElementPositions(this.assessments, this.apollonEditor.getState());
     }
 
-    assessNextOptimal(attempts) {
+    assessNextOptimal(attempts: number) {
         if (attempts > 4) {
             this.busy = false;
             this.done = true;
@@ -301,21 +305,23 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
         this.busy = true;
         this.timeout = setTimeout(() => {
             this.modelingAssessmentService.getOptimalSubmissions(this.modelingExercise.id).subscribe(optimal => {
-                const nextOptimalSubmissionIds = optimal.body.map(submission => submission.id);
+                const nextOptimalSubmissionIds = optimal.body.map((submission: Submission) => submission.id);
                 if (nextOptimalSubmissionIds.length === 0) {
                     this.assessNextOptimal(attempts + 1);
                 } else {
                     // TODO: Workaround We have to fake path change to make angular reload the component
                     const addition = this.router.url.includes('apollon-diagrams2') ? '' : '2';
-                    this.router.navigateByUrl(`/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`);
+                    this.router.navigateByUrl(
+                        `/apollon-diagrams${addition}/exercise/${this.modelingExercise.id}/${nextOptimalSubmissionIds.pop()}/tutor`
+                    );
                 }
             });
         }, attempts === 0 ? 0 : 500 + (attempts - 1) * 1000);
     }
 
     numberToArray(n: number, startFrom: number): number[] {
-        n = (n > 5) ? 5 : n;
-        n = (n < -5) ? -5 : n;
+        n = n > 5 ? 5 : n;
+        n = n < -5 ? -5 : n;
         return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 
