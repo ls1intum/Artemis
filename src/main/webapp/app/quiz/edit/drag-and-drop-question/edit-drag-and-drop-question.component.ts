@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit, AfterViewInit, ViewChild, ElementRef } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
@@ -10,6 +10,7 @@ import { Option } from '../../../entities/quiz-exercise/quiz-exercise-interfaces
 import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
 import { DragState } from '../../../entities/drag-item/drag-state.enum';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import * as $ from 'jquery';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
 
@@ -33,6 +34,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     questionUpdated = new EventEmitter<object>();
     @Output()
     questionDeleted = new EventEmitter<object>();
+    /** Question move up and down are used for re-evaluate **/
     @Output()
     questionMoveUp = new EventEmitter<object>();
     @Output()
@@ -48,6 +50,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     dragItemPicture: string;
     backgroundFile: Blob | File;
     dragItemFile: Blob | File;
+
+    dropAllowed = false;
 
     showPreview: boolean;
     isUploadingBackgroundFile: boolean;
@@ -171,6 +175,20 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
     }
 
     /**
+     * Handles drag-available UI
+     */
+    drag() {
+        this.dropAllowed = true;
+    }
+
+    /**
+     * Handles drag-available UI
+     */
+    drop() {
+        this.dropAllowed = false;
+    }
+
+    /**
      * @function addHintAtCursor
      * @desc Add the markdown for a hint at the current cursor location
      */
@@ -230,16 +248,18 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         // Update mouse x and y value
         const event: MouseEvent = e || window.event; // Moz || IE
         const backgroundElement = this.clickLayer.nativeElement;
-        const backgroundWidth = backgroundElement.offsetWidth;
-        const backgroundHeight = backgroundElement.offsetHeight;
+        const jQueryBackgroundElement = $('.click-layer');
+        const jQueryBackgroundOffset = jQueryBackgroundElement.offset();
+        const backgroundWidth = jQueryBackgroundElement.width();
+        const backgroundHeight = jQueryBackgroundElement.height();
         if (event.pageX) {
             // Moz
-            this.mouse.x = event.pageX - backgroundElement.offsetLeft;
-            this.mouse.y = event.pageY - backgroundElement.offsetTop;
+            this.mouse.x = event.pageX - jQueryBackgroundOffset.left;
+            this.mouse.y = event.pageY - jQueryBackgroundOffset.top;
         } else if (event.clientX) {
             // IE
-            this.mouse.x = event.clientX - backgroundElement.offsetLeft;
-            this.mouse.y = event.clientY - backgroundElement.offsetTop;
+            this.mouse.x = event.clientX - jQueryBackgroundOffset.left;
+            this.mouse.y = event.clientY - jQueryBackgroundOffset.top;
         }
         this.mouse.x = Math.min(Math.max(0, this.mouse.x), backgroundWidth);
         this.mouse.y = Math.min(Math.max(0, this.mouse.y), backgroundHeight);
@@ -295,8 +315,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
                 case DragState.CREATE:
-                    const backgroundWidth = this.clickLayer.nativeElement.width();
-                    const backgroundHeight = this.clickLayer.nativeElement.height();
+                    const jQueryBackgroundElement = $('.click-layer');
+                    const backgroundWidth = jQueryBackgroundElement.width();
+                    const backgroundHeight = jQueryBackgroundElement.height();
                     if (
                         (this.currentDropLocation.width / 200) * backgroundWidth < 14 &&
                         (this.currentDropLocation.height / 200) * backgroundHeight < 14
@@ -331,6 +352,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc React to mouse down events on the background to start dragging
      */
     backgroundMouseDown() {
+        console.log(
+            'backgroundMouseDown()',
+            !!this.question.backgroundFilePath,
+            this.draggingState,
+            DragState.NONE,
+            this.draggingState === DragState.NONE
+        );
         if (this.question.backgroundFilePath && this.draggingState === DragState.NONE) {
             // Save current mouse position as starting position
             this.mouse.startX = this.mouse.x;
@@ -362,8 +390,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      */
     dropLocationMouseDown(dropLocation: DropLocation) {
         if (this.draggingState === DragState.NONE) {
-            const backgroundWidth = this.clickLayer.nativeElement.width();
-            const backgroundHeight = this.clickLayer.nativeElement.height();
+            const jQueryBackgroundElement = $('.click-layer');
+            const backgroundWidth = jQueryBackgroundElement.width();
+            const backgroundHeight = jQueryBackgroundElement.height();
 
             const dropLocationX = (dropLocation.posX / 200) * backgroundWidth;
             const dropLocationY = (dropLocation.posY / 200) * backgroundHeight;
@@ -414,8 +443,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      */
     resizeMouseDown(dropLocation: DropLocation, resizeLocationY: string, resizeLocationX: string) {
         if (this.draggingState === DragState.NONE) {
-            const backgroundWidth = this.clickLayer.nativeElement.width();
-            const backgroundHeight = this.clickLayer.nativeElement.height();
+            const backgroundWidth = this.clickLayer.nativeElement.offsetWidth;
+            const backgroundHeight = this.clickLayer.nativeElement.offsetHeight;
 
             // Update state
             this.draggingState = DragState.RESIZE_BOTH; // Default is both, will be overwritten later, if needed
@@ -547,9 +576,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @function onDragDrop
      * @desc React to a drag item being dropped on a drop location
      * @param dropLocation {object} the drop location involved
-     * @param dragItem {object} the drag item involved (may be a copy at this point)
+     * @param dragEvent {object} the drag item involved (may be a copy at this point)
      */
-    onDragDrop(dropLocation: DropLocation, dragItem: DragItem) {
+    onDragDrop(dropLocation: DropLocation, dragEvent: any) {
+        let dragItem = dragEvent.dragData;
         // Replace dragItem with original (because it may be a copy)
         dragItem = this.question.dragItems.find(
             originalDragItem => (dragItem.id ? originalDragItem.id === dragItem.id : originalDragItem.tempID === dragItem.tempID)

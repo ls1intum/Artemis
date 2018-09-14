@@ -9,7 +9,7 @@ import { QuizExercise } from './quiz-exercise.model';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
-import { Question, QuestionType, ScoringType} from '../../entities/question';
+import { Question, QuestionType, ScoringType } from '../../entities/question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { AnswerOption } from '../../entities/answer-option';
@@ -25,10 +25,9 @@ interface Reason {
 @Component({
     selector: 'jhi-quiz-exercise-detail',
     templateUrl: './quiz-exercise-detail.component.html',
-    providers: [ DragAndDropQuestionUtil ]
+    providers: [DragAndDropQuestionUtil]
 })
 export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy {
-
     // Make constants available to html for comparison
     readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
     readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
@@ -62,17 +61,9 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     isTrue = true;
 
     /** Status Options **/
-    statusOptionsVisible: Option[] = [
-        new Option(false, 'Hidden'),
-        new Option(true, 'Visible')
-    ];
-    statusOptionsPractice: Option[] = [
-        new Option(false, 'Closed'),
-        new Option(true, 'Open for Practice')
-    ];
-    statusOptionsActive: Option[] = [
-        new Option(true, 'Active')
-    ];
+    statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
+    statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
+    statusOptionsActive: Option[] = [new Option(true, 'Active')];
 
     constructor(
         private route: ActivatedRoute,
@@ -81,7 +72,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
         private router: Router,
         private translateService: TranslateService,
-        private fileUploaderService: FileUploaderService) {}
+        private fileUploaderService: FileUploaderService
+    ) {}
 
     ngOnInit(): void {
         /** Initialize local constants **/
@@ -96,7 +88,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.mcqFilterEnabled = true;
 
         this.paramSub = this.route.params.subscribe(params => {
-            console.log('params', params);
             /** Query the courseService for the participationId given by the params */
             this.courseService.find(params['courseId']).subscribe((response: HttpResponse<Course>) => {
                 this.course = response.body;
@@ -216,7 +207,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         // If courses are not populated, then populate list of courses,
         if (this.courses.length === 0) {
             this.courseRepository.query().subscribe((res: HttpResponse<Course[]>) => {
-                    this.courses = res.body;
+                this.courses = res.body;
             });
         }
         this.showExistingQuestions = !this.showExistingQuestions;
@@ -259,7 +250,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         // Depending on the filter selected by user, filter out questions.
         // allExistingQuestions contains list of all questions. We don't change it. We populate existingQuestions list depending on the filter options,
         for (const question of this.allExistingQuestions) {
-            if (!this.searchQueryText ||
+            if (
+                !this.searchQueryText ||
                 this.searchQueryText === '' ||
                 question.title.toLowerCase().indexOf(this.searchQueryText.toLowerCase()) !== -1
             ) {
@@ -300,6 +292,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      */
     onQuestionUpdated() {
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
+        console.log('onQuestionUpdated', this.quizExercise.questions);
     }
 
     /**
@@ -332,11 +325,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
-                return (
-                    question.title &&
-                    question.title !== ''
-                    && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect)
-                );
+                return question.title && question.title !== '' && mcQuestion.answerOptions.some(answerOption => answerOption.isCorrect);
             } else if (question.type === QuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
                 return (
@@ -344,8 +333,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                     question.title !== '' &&
                     dndQuestion.correctMappings &&
                     dndQuestion.correctMappings.length > 0 &&
-                    this.dragAndDropQuestionUtil.solve(question).length &&
-                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question)
+                    this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
+                    this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)
                 );
             } else {
                 console.log('Unknown question type: ' + question);
@@ -407,13 +396,13 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 }
                     });
-                } else if (this.dragAndDropQuestionUtil.solve(question, []).length === 0) {
+                } else if (this.dragAndDropQuestionUtil.solve(dndQuestion, []).length === 0) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.questionUnsolvable',
                         translateValues: { index: index + 1 }
                     });
                 }
-                if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(question)) {
+                if (!this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)) {
                     reasons.push({
                         translateKey: 'arTeMiSApp.quizExercise.invalidReasons.misleadingCorrectMapping',
                         translateValues: { index: index + 1 }
@@ -529,6 +518,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Save the quiz to the server
      */
     save() {
+        console.log('Calling save()', this.quizExercise);
         this.onDateTimeChange();
         if (this.hasSavedQuizStarted() || !this.pendingChanges() || !this.validQuiz()) {
             return;
@@ -554,6 +544,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     onSaveSuccess(quizExercise: QuizExercise) {
+        console.log('onSaveSuccess', quizExercise);
         this.isSaving = false;
         this.prepareEntity(quizExercise);
         this.savedEntity = Object.assign({}, quizExercise);
@@ -567,7 +558,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
     /**
      * Makes sure the entity is well formed and its fields are of the correct types
-     * @param entity
+     * @param quizExercise {QuizExercise}
      */
     prepareEntity(quizExercise: QuizExercise) {
         quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : moment();

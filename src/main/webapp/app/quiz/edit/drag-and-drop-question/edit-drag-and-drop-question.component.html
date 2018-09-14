@@ -66,18 +66,15 @@
         <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
     </div>
     <div class="background-area">
-        <!-- TODO: Replace http src call -->
-        <!--<img http-src="{{vm.question.backgroundFilePath}}" alt="{{'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate}}">-->
-        <img [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate">
+        <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate"></jhi-secured-image>
         <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{'disabled': !question.backgroundFilePath}">
             <div
                 class="drop-location"
                 *ngFor="let dropLocation of question.dropLocations"
+                [ngClass]="dropAllowed ? 'drop-allowed' : ''"
                 [ngStyle]="{'top': dropLocation.posY/2 + '%', 'left': dropLocation.posX/2 + '%', 'width': dropLocation.width/2 + '%', 'height': dropLocation.height/2 + '%'}"
                 (mousedown)="dropLocationMouseDown(dropLocation)"
-                ui-on-drop="vm.onDragDrop(dropLocation, $data)"
-                drag-enter-class="drop-allowed"
-                drag-hover-class="drop-hover">
+                (onDropSuccess)="onDragDrop(dropLocation, $event)" dnd-droppable>
                 <div class="dimensions">
                     {{dropLocation.width}}x{{dropLocation.height}}
                 </div>
@@ -112,14 +109,12 @@
         <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addMappingsInstructions"></span>
     </div>
     <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-        <div class="drag-item" *ngFor="let dragItem of question.dragItems" ui-draggable="true" drag="dragItem" drag-handle-class="drag-handle">
+        <!-- TODO: drag-handle-class="drag-handle" -->
+        <div class="drag-item" *ngFor="let dragItem of question.dragItems" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
             <div *ngIf="dragItem.pictureFilePath">
-                <!-- TODO: Replace http src call -->
-                <!--<img http-src="{{dragItem.pictureFilePath}}">-->
-                <img>
+                <jhi-secured-image *ngIf="dragItem.pictureFilePath" [src]="dragItem.pictureFilePath"></jhi-secured-image>
             </div>
             <div *ngIf="!dragItem.pictureFilePath">
-                <!-- TODO: check doUpdated call -->
                 <textarea [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
             </div>
             <div class="delete-button" title="Delete" (click)="deleteDragItem(dragItem)">
