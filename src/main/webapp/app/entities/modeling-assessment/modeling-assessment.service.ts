@@ -104,16 +104,43 @@ export class ModelingAssessmentService {
         return copy;
     }
 
-    getNamesForAssessments(assessments: ModelingAssessment[], model: State) {
-        const assessmentsNames = new Map<string, string>();
+    getNamesForAssessments(assessments: ModelingAssessment[], model: State): Map<string, Map<string, string>> {
+        const assessmentsNames = new Map<string, { type: string; name: string }>();
         for (const assessment of assessments) {
             if (assessment.type === ModelElementType.CLASS) {
-                assessmentsNames[assessment.id] = model.entities.byId[assessment.id].name;
+                const classElement = model.entities.byId[assessment.id];
+                const className = classElement.name;
+                let type: string;
+                switch (classElement.kind) {
+                    case EntityKind.ActivityControlInitialNode:
+                        type = 'initial node';
+                        break;
+                    case EntityKind.ActivityControlFinalNode:
+                        type = 'final node';
+                        break;
+                    case EntityKind.ActivityObject:
+                        type = 'object';
+                        break;
+                    case EntityKind.ActivityActionNode:
+                        type = 'action';
+                        break;
+                    case EntityKind.ActivityForkNode:
+                    case EntityKind.ActivityForkNodeHorizontal:
+                        type = 'fork node';
+                        break;
+                    case EntityKind.ActivityMergeNode:
+                        type = 'merge node';
+                        break;
+                    default:
+                        type = assessment.type;
+                        break;
+                }
+                assessmentsNames[assessment.id] = { type: type, name: className };
             } else if (assessment.type === ModelElementType.ATTRIBUTE) {
                 for (const entityId of model.entities.allIds) {
                     for (const att of model.entities.byId[entityId].attributes) {
                         if (att.id === assessment.id) {
-                            assessmentsNames[assessment.id] = att.name;
+                            assessmentsNames[assessment.id] = { type: assessment.type, name: att.name };
                         }
                     }
                 }
@@ -121,7 +148,7 @@ export class ModelingAssessmentService {
                 for (const entityId of model.entities.allIds) {
                     for (const method of model.entities.byId[entityId].methods) {
                         if (method.id === assessment.id) {
-                            assessmentsNames[assessment.id] = method.name;
+                            assessmentsNames[assessment.id] = { type: assessment.type, name: method.name };
                         }
                     }
                 }
@@ -130,6 +157,7 @@ export class ModelingAssessmentService {
                 const source = model.entities.byId[relationship.source.entityId].name;
                 const target = model.entities.byId[relationship.target.entityId].name;
                 const kind: RelationshipKind = model.relationships.byId[assessment.id].kind;
+                let type = 'association';
                 let relation: string;
                 switch (kind) {
                     case RelationshipKind.AssociationBidirectional:
@@ -152,13 +180,14 @@ export class ModelingAssessmentService {
                         break;
                     case RelationshipKind.ActivityControlFlow:
                         relation = ' -> ';
+                        type = 'control flow';
                         break;
                     default:
                         relation = ' -- ';
                 }
-                assessmentsNames[assessment.id] = source + relation + target;
+                assessmentsNames[assessment.id] = { type: type, name: source + relation + target };
             } else {
-                assessmentsNames[assessment.id] = '';
+                assessmentsNames[assessment.id] = { type: assessment.type, name: '' };
             }
         }
         return assessmentsNames;

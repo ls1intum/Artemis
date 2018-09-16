@@ -45,7 +45,7 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     submissionState: State;
 
     assessments: ModelingAssessment[];
-    assessmentsNames: Map<string, string>;
+    assessmentsNames: Map<string, Map<string, string>>;
     totalScore: number;
 
     /**
