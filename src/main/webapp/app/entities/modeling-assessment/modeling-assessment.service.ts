@@ -105,7 +105,7 @@ export class ModelingAssessmentService {
     }
 
     getNamesForAssessments(assessments: ModelingAssessment[], model: State): Map<string, Map<string, string>> {
-        const assessmentsNames = new Map<string, { type: string; name: string }>();
+        const assessmentsNames = new Map<string, Map<string, string>>();
         for (const assessment of assessments) {
             if (assessment.type === ModelElementType.CLASS) {
                 const classElement = model.entities.byId[assessment.id];
@@ -135,7 +135,7 @@ export class ModelingAssessmentService {
                         type = assessment.type;
                         break;
                 }
-                assessmentsNames[assessment.id] = { type: type, name: className };
+                assessmentsNames[assessment.id] = { type, name: className };
             } else if (assessment.type === ModelElementType.ATTRIBUTE) {
                 for (const entityId of model.entities.allIds) {
                     for (const att of model.entities.byId[entityId].attributes) {
@@ -185,7 +185,7 @@ export class ModelingAssessmentService {
                     default:
                         relation = ' -- ';
                 }
-                assessmentsNames[assessment.id] = { type: type, name: source + relation + target };
+                assessmentsNames[assessment.id] = { type, name: source + relation + target };
             } else {
                 assessmentsNames[assessment.id] = { type: assessment.type, name: '' };
             }
@@ -193,7 +193,7 @@ export class ModelingAssessmentService {
         return assessmentsNames;
     }
 
-    getElementPositions(assessments: ModelingAssessment[], model: State) {
+    getElementPositions(assessments: ModelingAssessment[], model: State): Map<string, Point> {
         const SYMBOL_HEIGHT = 31;
         const SYMBOL_WIDTH = 65;
         const positions = new Map<string, Point>();
