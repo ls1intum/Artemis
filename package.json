@@ -20,7 +20,7 @@
     "@fortawesome/angular-fontawesome": "^0.2.0",
     "@fortawesome/fontawesome-svg-core": "^1.2.4",
     "@fortawesome/free-solid-svg-icons": "^5.3.1",
-    "@ls1intum/apollon": "^1.0.3",
+    "@ls1intum/apollon": "^1.0.4",
     "@ng-bootstrap/ng-bootstrap": "^3.2.0",
     "ace-builds": "^1.4.1",
     "angular": "1.5.8",

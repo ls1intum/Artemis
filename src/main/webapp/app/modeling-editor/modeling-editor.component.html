@@ -129,7 +129,7 @@
                                     <span *ngSwitchCase="'relationship'">association </span>
                                     <span *ngSwitchDefault>{{assessment.type}} </span>
                                 </ng-container>
-                                <code class="text-primary">{{assessmentsNames[assessment.id]}}</code><br>
+                                <code class="text-primary" *ngIf="assessmentsNames">{{assessmentsNames[assessment.id]}}</code><br>
                                 <span *ngIf="assessment.comment" [ngClass]="{'text-success': assessment.credits > 0, 'text-danger': assessment.credits < 0}"><strong>Feedback:</strong> {{assessment.comment}}</span>
                             </td>
                             <td class="text-center">{{assessment.credits | number:'1.0-1'}}</td>

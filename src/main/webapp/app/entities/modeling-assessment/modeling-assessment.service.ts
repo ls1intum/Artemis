@@ -11,8 +11,10 @@ import {
     ENTITY_MEMBER_LIST_VERTICAL_PADDING,
     ENTITY_NAME_HEIGHT,
     Point,
+    EntityKind,
     RelationshipKind,
-    State
+    State,
+    RectEdge
 } from '@ls1intum/apollon';
 
 export type EntityResponseType = HttpResponse<Result>;
@@ -172,7 +174,7 @@ export class ModelingAssessmentService {
                 if (model.entities.byId[assessment.id]) {
                     const entity = model.entities.byId[assessment.id];
                     elemPosition.x = entity.position.x + entity.size.width;
-                    if (entity.kind === 'ACTIVITY_CONTROL_INITIAL_NODE' || entity.kind === 'ACTIVITY_CONTROL_FINAL_NODE') {
+                    if (entity.kind === EntityKind.ActivityControlInitialNode || entity.kind === EntityKind.ActivityControlFinalNode) {
                         elemPosition.x = entity.position.x;
                     }
                     elemPosition.y = entity.position.y;
@@ -184,7 +186,7 @@ export class ModelingAssessmentService {
                         if (attribute.id === assessment.id) {
                             elemPosition.x = entity.position.x + entity.size.width;
                             elemPosition.y = entity.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
-                            if (entity.kind === 'INTERFACE' || entity.kind === 'ENUMERATION') {
+                            if (entity.kind === EntityKind.Interface || entity.kind === EntityKind.Enumeration) {
                                 elemPosition.y += ENTITY_KIND_HEIGHT;
                             }
                             if (entity.attributes.length > 1 && index > 0) {
@@ -200,7 +202,7 @@ export class ModelingAssessmentService {
                         if (method.id === assessment.id) {
                             elemPosition.x = entity.position.x + entity.size.width;
                             elemPosition.y = entity.position.y + ENTITY_NAME_HEIGHT + ENTITY_MEMBER_LIST_VERTICAL_PADDING;
-                            if (entity.kind === 'INTERFACE' || entity.kind === 'ENUMERATION') {
+                            if (entity.kind === EntityKind.Interface || entity.kind === EntityKind.Enumeration) {
                                 elemPosition.y += ENTITY_KIND_HEIGHT;
                             }
                             if (entity.attributes.length > 0) {
@@ -219,27 +221,33 @@ export class ModelingAssessmentService {
                     const sourceEntity = model.entities.byId[relationship.source.entityId];
                     const destEntity = model.entities.byId[relationship.target.entityId];
                     if (kind === RelationshipKind.AssociationBidirectional) {
-                        const leftElem = sourceEntity.position.x < destEntity.position.x ? sourceEntity : destEntity;
                         const rightElem = sourceEntity.position.x > destEntity.position.x ? sourceEntity : destEntity;
-                        const rightEdge = rightElem === sourceEntity ? relationship.source.edge : relationship.target.edge;
+                        const rightEdge: RectEdge = rightElem === sourceEntity ? relationship.source.edge : relationship.target.edge;
                         elemPosition.x = rightElem.position.x;
                         elemPosition.y = rightElem.position.y;
-                        if (rightEdge === 'TOP') {
-                            elemPosition.x += rightElem.size.width / 2;
-                            elemPosition.y -= SYMBOL_HEIGHT;
-                        } else if (rightEdge === 'BOTTOM') {
-                            elemPosition.x += rightElem.size.width / 2;
-                            elemPosition.y += rightElem.size.height;
-                        } else if (rightEdge === 'LEFT') {
-                            elemPosition.y += rightElem.size.height / 2;
-                        } else if (rightEdge === 'RIGHT') {
-                            elemPosition.x += rightElem.size.width + SYMBOL_WIDTH;
-                            elemPosition.y += rightElem.size.height / 2;
+                        switch (rightEdge) {
+                            case 'TOP':
+                                elemPosition.x += rightElem.size.width / 2;
+                                elemPosition.y -= SYMBOL_HEIGHT;
+                                break;
+                            case 'BOTTOM':
+                                elemPosition.x += rightElem.size.width / 2;
+                                elemPosition.y += rightElem.size.height;
+                                break;
+                            case 'LEFT':
+                                elemPosition.y += rightElem.size.height / 2;
+                                break;
+                            case 'RIGHT':
+                                elemPosition.x += rightElem.size.width + SYMBOL_WIDTH;
+                                elemPosition.y += rightElem.size.height / 2;
+                                break;
+                            default:
+                                break;
                         }
                     } else {
                         elemPosition.x = sourceEntity.position.x;
                         elemPosition.y = sourceEntity.position.y;
-                        const sourceEdge = relationship.source.edge;
+                        const sourceEdge: RectEdge = relationship.source.edge;
                         switch (sourceEdge) {
                             case 'TOP':
                                 elemPosition.x += sourceEntity.size.width / 2;
