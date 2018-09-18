@@ -44,8 +44,6 @@ import { ng1TranslateService } from './core/language/ng1-translate.service';
 import { ng1TranslatePartialLoaderService } from './core/language/ng1-translate-partial-loader.service';
 import { ArTEMiSStatisticModule } from './statistics/statistic.module';
 import { ArTEMiSModelingEditorModule } from './modeling-editor/modeling-editor.module';
-import { QuizReEvaluateWrapper } from './quiz/re-evaluate/quiz-re-evaluate.directive';
-import { QuizReEvaluateComponent } from './quiz/re-evaluate/quiz-re-evaluate.component';
 import { QuizExerciseExportComponent } from './entities/quiz-exercise/quiz-exercise-export.component';
 import { PendingChangesGuard } from './shared/guard/pending-changes.guard';
 
@@ -90,8 +88,6 @@ declare var angular: any;
         PageRibbonComponent,
         ActiveMenuDirective,
         FooterComponent,
-        QuizReEvaluateWrapper,
-        QuizReEvaluateComponent,
         QuizExerciseExportComponent
     ],
     /**

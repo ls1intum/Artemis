@@ -10,43 +10,19 @@ import {
     quizExercisePopupRoute,
     QuizExercisePopupService,
     quizExerciseRoute,
-    QuizExerciseService,
-    QuizReEvaluateService
+    QuizExerciseService
 } from './';
-import { QuizReEvaluateWarningComponent } from '../../quiz/re-evaluate/quiz-re-evaluate-warning.component';
 import { SortByModule } from '../../components/pipes';
 import { ArTEMiSQuizEditModule } from '../../quiz/edit';
+import { ArTEMiSQuizReEvaluateModule } from '../../quiz/re-evaluate';
 
-const ENTITY_STATES = [
-    ...quizExerciseRoute,
-    ...quizExercisePopupRoute,
-];
+const ENTITY_STATES = [...quizExerciseRoute, ...quizExercisePopupRoute];
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(ENTITY_STATES),
-        SortByModule,
-        ArTEMiSQuizEditModule
-    ],
-    declarations: [
-        QuizExerciseComponent,
-        QuizExerciseDeleteDialogComponent,
-        QuizExerciseDeletePopupComponent,
-        QuizReEvaluateWarningComponent,
-        QuizExerciseDetailComponent
-    ],
-    entryComponents: [
-        QuizExerciseComponent,
-        QuizExerciseDeleteDialogComponent,
-        QuizExerciseDeletePopupComponent,
-        QuizReEvaluateWarningComponent
-    ],
-    providers: [
-        QuizExerciseService,
-        QuizExercisePopupService,
-        QuizReEvaluateService
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(ENTITY_STATES), SortByModule, ArTEMiSQuizEditModule, ArTEMiSQuizReEvaluateModule],
+    declarations: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent, QuizExerciseDetailComponent],
+    entryComponents: [QuizExerciseComponent, QuizExerciseDeleteDialogComponent, QuizExerciseDeletePopupComponent],
+    providers: [QuizExerciseService, QuizExercisePopupService],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
 export class ArTEMiSQuizExerciseModule {}
