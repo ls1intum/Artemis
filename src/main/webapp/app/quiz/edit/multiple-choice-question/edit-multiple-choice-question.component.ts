@@ -16,12 +16,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
 
-    /**
-     question: '=',
-     onDelete: '&',
-     onUpdated: '&',
-     questionIndex: '<'
-     **/
     @Input()
     question: MultipleChoiceQuestion;
     @Input()

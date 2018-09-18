@@ -76,43 +76,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
 
     scoringTypeOptions: Option[] = [new Option('0', 'All or Nothing'), new Option('1', 'Proportional with Penalty')];
 
-    // /**
-    //  * Prevent page from jumping back to last clicked/selected element on drop
-    //  */
-    // $scope.$on('ANGULAR_DRAG_START', function () {
-    //     window.getSelection().removeAllRanges();
-    // });
-    //
-    //
-    // /**
-    //  * bind to mouse events
-    //  */
-    // $document.bind("mousemove", mouseMove);
-    // $document.bind("mouseup", mouseUp);
-    //
-    // /**
-    //  * unbind mouse events when this component is removed
-    //  */
-    // $scope.$on('$destroy', function () {
-    //     $document.unbind("mousemove", mouseMove);
-    //     $document.unbind("mouseup", mouseUp);
-    // });
-    //
-    //
-    // /**
-    //  * watch for any changes to the question model and notify listener
-    //  *
-    //  * (use 'initializing' boolean to prevent $watch from firing immediately)
-    //  */
-    // var initializing = true;
-    // $scope.$watchCollection('vm.question', function () {
-    //     if (initializing) {
-    //         initializing = false;
-    //         return;
-    //     }
-    //     vm.onUpdated();
-    // });
-
     constructor(
         private artemisMarkdown: ArtemisMarkdown,
         private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
@@ -352,13 +315,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
      * @desc React to mouse down events on the background to start dragging
      */
     backgroundMouseDown() {
-        console.log(
-            'backgroundMouseDown()',
-            !!this.question.backgroundFilePath,
-            this.draggingState,
-            DragState.NONE,
-            this.draggingState === DragState.NONE
-        );
         if (this.question.backgroundFilePath && this.draggingState === DragState.NONE) {
             // Save current mouse position as starting position
             this.mouse.startX = this.mouse.x;

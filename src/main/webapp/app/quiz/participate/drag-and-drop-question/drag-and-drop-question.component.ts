@@ -27,11 +27,16 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     get question() {
         return this._question;
     }
-    @Input() mappings: DragAndDropMapping[];
-    @Input() clickDisabled: boolean;
-    @Input() showResult: boolean;
-    @Input() questionIndex: number;
-    @Input() score: number;
+    @Input()
+    mappings: DragAndDropMapping[];
+    @Input()
+    clickDisabled: boolean;
+    @Input()
+    showResult: boolean;
+    @Input()
+    questionIndex: number;
+    @Input()
+    score: number;
     @Input()
     set forceSampleSolution(forceSampleSolution) {
         this._forceSampleSolution = forceSampleSolution;
@@ -42,17 +47,18 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     get forceSampleSolution() {
         return this._forceSampleSolution;
     }
-    @Input() fnOnMappingUpdate: any;
+    @Input()
+    fnOnMappingUpdate: any;
 
-    @Output() mappingsChange = new EventEmitter();
+    @Output()
+    mappingsChange = new EventEmitter();
 
     showingSampleSolution = false;
     rendered: MarkDownElement;
     sampleSolutionMappings = new Array<DragAndDropMapping>();
     dropAllowed = false;
 
-    constructor(private artemisMarkdown: ArtemisMarkdown,
-                private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
+    constructor(private artemisMarkdown: ArtemisMarkdown, private dragAndDropQuestionUtil: DragAndDropQuestionUtil) {}
 
     ngOnInit() {}
 
@@ -77,7 +83,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      *
      * @param dropLocation {object | null} the dropLocation that the drag item was dropped on.
      *                     May be null if drag item was dragged back to the unassigned items.
-     * @param dragItem {object} the drag item that was dropped
+     * @param dragEvent {object} the drag item that was dropped
      */
     onDragDrop(dropLocation: DropLocation, dragEvent: any) {
         this.drop();
@@ -93,11 +99,11 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
             let oldDragItem;
             let oldDropLocation;
             this.mappings = this.mappings.filter(function(mapping) {
-                if (this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(dropLocation, mapping.dropLocation)) {
+                if (this.dragAndDropQuestionUtil.isSameDropLocation(dropLocation, mapping.dropLocation)) {
                     oldDragItem = mapping.dragItem;
                     return false;
                 }
-                if (this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(dragItem, mapping.dragItem)) {
+                if (this.dragAndDropQuestionUtil.isSameDragItem(dragItem, mapping.dragItem)) {
                     oldDropLocation = mapping.dropLocation;
                     return false;
                 }
@@ -116,7 +122,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
             const lengthBefore = this.mappings.length;
             // remove existing mapping that contains the drag item
             this.mappings = this.mappings.filter(function(mapping) {
-                return !this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
+                return !this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem);
             }, this);
             if (this.mappings.length === lengthBefore) {
                 // nothing changed => return here to skip calling this.onMappingUpdate()
@@ -125,9 +131,10 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
         }
 
         this.mappingsChange.emit(this.mappings);
-        // Note: I had to add a timeout of 0ms here, because the model changes are propagated asynchronously,
-        // so we wait for one javascript event cycle before we inform the parent of changes
-        setTimeout( () => { this.fnOnMappingUpdate(); }, 0);
+        /** Only execute the onMappingUpdate function if we received such input **/
+        if (this.fnOnMappingUpdate) {
+            this.fnOnMappingUpdate();
+        }
     }
 
     /**
@@ -138,9 +145,9 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      */
     dragItemForDropLocation(dropLocation: DropLocation) {
         const that = this;
-        const mapping = this.mappings.find(function(localMapping) {
-            return that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation);
-        }, this);
+        const mapping = this.mappings.find(localMapping =>
+            that.dragAndDropQuestionUtil.isSameDropLocation(localMapping.dropLocation, dropLocation)
+        );
         if (mapping) {
             return mapping.dragItem;
         } else {
@@ -161,7 +168,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
     getUnassignedDragItems() {
         return this.question.dragItems.filter(function(dragItem) {
             return !this.mappings.some(function(mapping: DragAndDropMapping) {
-                return this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dragItem, dragItem);
+                return this.dragAndDropQuestionUtil.isSameDragItem(mapping.dragItem, dragItem);
             }, this);
         }, this);
     }
@@ -173,13 +180,13 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
      * @param dropLocation {object} the drop location to check for correctness
      * @return {boolean} true, if the drop location is correct, otherwise false
      */
-     isLocationCorrect(dropLocation: DropLocation) {
+    isLocationCorrect(dropLocation: DropLocation) {
         if (!this.question.correctMappings) {
             return false;
         }
         const validDragItems = this.question.correctMappings
             .filter(function(mapping) {
-                return this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(mapping.dropLocation, dropLocation);
+                return this.dragAndDropQuestionUtil.isSameDropLocation(mapping.dropLocation, dropLocation);
             }, this)
             .map(function(mapping) {
                 return mapping.dragItem;
@@ -190,7 +197,7 @@ export class DragAndDropQuestionComponent implements OnInit, OnDestroy {
             return validDragItems.length === 0;
         } else {
             return validDragItems.some(function(dragItem) {
-                return this.dragAndDropQuestionUtil.isSameDropLocationOrDragItem(dragItem, selectedItem);
+                return this.dragAndDropQuestionUtil.isSameDragItem(dragItem, selectedItem);
             }, this);
         }
     }

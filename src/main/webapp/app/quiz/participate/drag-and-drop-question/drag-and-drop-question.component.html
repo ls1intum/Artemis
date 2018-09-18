@@ -31,7 +31,7 @@
             <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.showingYourAnswer" *ngIf="!showingSampleSolution"></span>
         </div>
         <div class="background-area">
-            <jhi-secured-image [src]="question.backgroundFilePath"></jhi-secured-image>
+            <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
             <div class="click-layer">
                 <div *ngIf="!showResult">
                     <div class="drop-location" *ngFor="let dropLocation of question.dropLocations" [ngClass]="dropAllowed ? 'drop-allowed' : ''"
