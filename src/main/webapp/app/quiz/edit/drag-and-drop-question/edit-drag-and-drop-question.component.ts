@@ -94,13 +94,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         /** Initialize DropLocation and MouseEvent objects **/
         this.currentDropLocation = new DropLocation();
         this.mouse = new DragAndDropMouseEvent();
-
-        /**
-         * Bind to mouse events
-         */
-        // TODO: do this via template event bindings
-        // document.bind('mousemove', this.mouseMove);
-        // document.bind('mouseup', this.mouseUp);
     }
 
     ngAfterViewInit(): void {
