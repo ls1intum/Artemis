@@ -1,4 +1,4 @@
-import { Component, Input, Output, OnInit, AfterViewInit, EventEmitter, ViewChild } from '@angular/core';
+import { Component, Input, Output, OnInit, AfterViewInit, EventEmitter, ViewChild, OnChanges, SimpleChanges } from '@angular/core';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
@@ -12,7 +12,7 @@ import 'brace/mode/markdown';
     templateUrl: './edit-multiple-choice-question.component.html',
     providers: [ArtemisMarkdown]
 })
-export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewInit {
+export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, AfterViewInit {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
 
@@ -40,6 +40,18 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
         this.showPreview = false;
     }
 
+    /**
+     * @function ngOnChanges
+     * @desc Watch for any changes to the question model and notify listener
+     * @param changes {SimpleChanges}
+     */
+    ngOnChanges(changes: SimpleChanges): void {
+        /** Check if previousValue wasn't null to avoid firing at component initialization **/
+        if (changes.question && changes.question.previousValue != null) {
+            this.questionUpdated.emit();
+        }
+    }
+
     ngAfterViewInit(): void {
         /** Setup editor **/
         requestAnimationFrame(this.setupQuestionEditor.bind(this));
@@ -63,9 +75,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
             'blur',
             () => {
                 this.parseMarkdown(this.questionEditorText);
-                // TODO: consider emitting the updated question here
                 this.questionUpdated.emit();
-                // TODO: $scope.$apply(); ??
             },
             this
         );
@@ -159,9 +169,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
         const range = this.questionEditor.getEditor().selection.getRange();
         this.questionEditor.getEditor().moveCursorTo(this.questionEditor.getEditor().getCursorPosition().row, Number.POSITIVE_INFINITY);
         this.questionEditor.getEditor().insert(textToAdd);
-        range.setStart(lines - 1, 4);
-        this.questionEditor.getEditor().selection.setRange(range);
-        // TODO: make sure this is inserted and selected correctly
+        range.setStart(lines, 4);
+        range.setEnd(lines, textToAdd.length - 1);
+        this.questionEditor.getEditor().selection.setRange(range, false);
     }
 
     /**
@@ -187,20 +197,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, AfterViewIni
     togglePreview() {
         this.showPreview = !this.showPreview;
     }
-
-    /**
-     * watch for any changes to the question model and notify listener
-     *
-     * (use 'initializing' boolean to prevent $watch from firing immediately)
-     */
-    // var initializing = true;
-    // $scope.$watchCollection('vm.question', function () {
-    //     if (initializing) {
-    //         initializing = false;
-    //         return;
-    //     }
-    //     vm.onUpdated();
-    // });
 
     /**
      * @function deleteQuestion

@@ -72,9 +72,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
             'blur',
             () => {
                 this.parseQuestionMarkdown(this.questionEditorText);
-                // TODO: consider emitting the updated question here
                 this.questionUpdated.emit();
-                // TODO: $scope.$apply(); ??
             },
             this
         );

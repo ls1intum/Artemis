@@ -184,7 +184,6 @@
                 <span style="color:red" *ngIf="dragItem.invalid" jhiTranslate="arTeMiSApp.question.invalid"></span>
             </div>
             <div class="mapping-numbers-wrapper">
-                <!--TODO: orderBy getMappingIndex-->
                 <div *ngFor="let mapping of getMappingsForDragItem(dragItem)" [ngClass]="'mapping-number mapping-color-' + (getMappingIndex(mapping) % 8)">
                     {{getMappingIndex(mapping)}}
                     <div class="unlink-mapping" (click)="deleteMapping(mapping)">

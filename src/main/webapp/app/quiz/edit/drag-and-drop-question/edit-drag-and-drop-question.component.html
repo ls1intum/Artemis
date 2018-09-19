@@ -109,7 +109,6 @@
         <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.addMappingsInstructions"></span>
     </div>
     <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
-        <!-- TODO: drag-handle-class="drag-handle" -->
         <div class="drag-item" *ngFor="let dragItem of question.dragItems" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
             <div *ngIf="dragItem.pictureFilePath">
                 <jhi-secured-image *ngIf="dragItem.pictureFilePath" [src]="dragItem.pictureFilePath"></jhi-secured-image>

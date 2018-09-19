@@ -1,4 +1,15 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+    AfterViewInit,
+    Component,
+    ElementRef,
+    EventEmitter,
+    Input,
+    OnInit,
+    Output,
+    SimpleChanges,
+    ViewChild,
+    OnChanges
+} from '@angular/core';
 import { DragAndDropQuestion } from '../../../entities/drag-and-drop-question';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { DragAndDropQuestionUtil } from '../../../components/util/drag-and-drop-question-util.service';
@@ -19,7 +30,7 @@ import 'brace/mode/markdown';
     templateUrl: './edit-drag-and-drop-question.component.html',
     providers: [ArtemisMarkdown, DragAndDropQuestionUtil]
 })
-export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
+export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, AfterViewInit {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer')
@@ -96,6 +107,18 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
         this.mouse = new DragAndDropMouseEvent();
     }
 
+    /**
+     * @function ngOnChanges
+     * @desc Watch for any changes to the question model and notify listener
+     * @param changes {SimpleChanges}
+     */
+    ngOnChanges(changes: SimpleChanges): void {
+        /** Check if previousValue wasn't null to avoid firing at component initialization **/
+        if (changes.question && changes.question.previousValue != null) {
+            this.questionUpdated.emit();
+        }
+    }
+
     ngAfterViewInit(): void {
         // Setup the editor
         requestAnimationFrame(this.setupQuestionEditor.bind(this));
@@ -122,9 +145,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
             () => {
                 // Parse the markdown in the editor and update question accordingly
                 this.artemisMarkdown.parseTextHintExplanation(this.questionEditorText, this.question);
-                // TODO: consider emitting the updated question here
                 this.questionUpdated.emit();
-                // TODO: $scope.$apply(); ??
             },
             this
         );
@@ -256,10 +277,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                     this.currentDropLocation.height = Math.round((200 * Math.abs(this.mouse.y - this.mouse.startY)) / backgroundHeight);
                     break;
             }
-
-            // TODO: how to replace this?
-            // update view
-            // $scope.$apply();
         }
     }
 
@@ -293,10 +310,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, AfterViewInit {
                     this.questionUpdated.emit();
                     break;
             }
-
-            // TODO: how to replace this?
-            // update view
-            // $scope.$apply();
         }
         // Update state
         this.draggingState = DragState.NONE;
