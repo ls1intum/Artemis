@@ -4,8 +4,9 @@ import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Option } from '../../entities/quiz-exercise';
-import { Question } from '../../entities/question';
+import { Question, QuestionType } from '../../entities/question';
 import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.component';
+import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
 
 @Component({
@@ -14,6 +15,10 @@ import * as moment from 'moment';
     providers: []
 })
 export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
+    // Make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
     private subscription: Subscription;
 
     quizExercise: QuizExercise;
@@ -25,14 +30,12 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
         releaseDate: false
     };
     isSaving: boolean;
-    // TODO: do we need this?
-    // true = true;
     duration: Duration;
     // Create Backup Quiz for resets
     backupQuiz: QuizExercise;
 
     // Status options depending on relationship between start time, end time, and current time
-    statusOPtionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
+    statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
     statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
     statusOptionsActive: Option[] = [new Option(true, 'Active')];
 
@@ -46,8 +49,10 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
 
     ngOnInit(): void {
         this.subscription = this.route.params.subscribe(params => {
-            this.quizExerciseService.find(params['id']).subscribe(res => {
-                this.quizExercise = res.body;
+            this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
+                this.quizExercise = response.body;
+                this.prepareEntity(this.quizExercise);
+                this.backupQuiz = Object.assign({}, this.quizExercise);
             });
         });
 
@@ -89,7 +94,8 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      */
     pendingChanges() {
         // TODO: old => return !angular.equals(this.quizExercise, this.backupQuiz);
-        return JSON.stringify(this.quizExercise) === JSON.stringify(this.backupQuiz);
+        console.log('pending changes?', JSON.stringify(this.quizExercise).toLowerCase() === JSON.stringify(this.backupQuiz).toLowerCase());
+        return JSON.stringify(this.quizExercise).toLowerCase() === JSON.stringify(this.backupQuiz).toLowerCase();
     }
 
     /**

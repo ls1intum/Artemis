@@ -1,9 +1,9 @@
-<div class="container">
+<div class="container" *ngIf="quizExercise">
     <h1>
         <span
             jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.title"
-            data-translate-values="{param: vm.quizExercise.course.title}"
-        ></span>
+            translateValues="{param: '{{quizExercise.course.title}}'}">
+        </span>
     </h1>
     <hr/>
 
@@ -37,24 +37,26 @@
             </div>
         </div>
         <div *ngFor="let question of quizExercise.questions" style="width: 100%;">
-            <jhi-re-evaluate-multiple-choice-question
-                *ngIf="question.type === MULTIPLE_CHOICE"
-                [question]="question"
-                [questionIndex]="index + 1"
-                (questionUpdated)="onQuestionUpdated()"
-                (questionDeleted)="deleteQuestion(question)"
-                (questionMoveUp)="moveUp(question)"
-                (questionMoveDown)="moveDown(question)">
-            </jhi-re-evaluate-multiple-choice-question>
-            <jhi-re-evaluate-drag-and-drop-question
-                ng-if="question.type === DRAG_AND_DROP"
-                [question]="question"
-                [questionIndex]="index + 1"
-                (questionUpdated)="onQuestionUpdated()"
-                (questionDeleted)="deleteQuestion(question)"
-                (questionMoveUp)="moveUp(question)"
-                (questionMoveDown)="moveDown(question)">
-            </jhi-re-evaluate-drag-and-drop-question>
+            <div *ngIf="question.type === MULTIPLE_CHOICE">
+                <jhi-re-evaluate-multiple-choice-question
+                    [question]="question"
+                    [questionIndex]="index + 1"
+                    (questionUpdated)="onQuestionUpdated()"
+                    (questionDeleted)="deleteQuestion(question)"
+                    (questionMoveUp)="moveUp(question)"
+                    (questionMoveDown)="moveDown(question)">
+                </jhi-re-evaluate-multiple-choice-question>
+            </div>
+            <div *ngIf="question.type === DRAG_AND_DROP">
+                <jhi-re-evaluate-drag-and-drop-question
+                    [question]="question"
+                    [questionIndex]="index + 1"
+                    (questionUpdated)="onQuestionUpdated()"
+                    (questionDeleted)="deleteQuestion(question)"
+                    (questionMoveUp)="moveUp(question)"
+                    (questionMoveDown)="moveDown(question)">
+                </jhi-re-evaluate-drag-and-drop-question>
+            </div>
             &nbsp;
         </div>
     </div>

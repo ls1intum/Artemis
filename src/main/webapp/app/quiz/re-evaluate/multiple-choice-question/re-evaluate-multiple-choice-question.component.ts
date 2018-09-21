@@ -1,8 +1,21 @@
-import { Component, Input, Output, EventEmitter, OnInit, OnChanges, SimpleChanges, AfterViewInit, ViewChild } from '@angular/core';
+import {
+    Component,
+    Input,
+    Output,
+    EventEmitter,
+    OnInit,
+    OnChanges,
+    SimpleChanges,
+    AfterViewInit,
+    ViewChild,
+    ViewChildren,
+    QueryList
+} from '@angular/core';
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
+import { Option } from 'app/entities/quiz-exercise';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -12,6 +25,9 @@ import { AceEditorComponent } from 'ng2-ace-editor';
 export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('questionEditor')
     private questionEditor: AceEditorComponent;
+
+    @ViewChildren(AceEditorComponent)
+    aceEditorComponents: QueryList<AceEditorComponent>;
 
     @Input()
     question: MultipleChoiceQuestion;
@@ -29,8 +45,10 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
-    questionEditorMode = 'markdown';
-    questionEditorAutoUpdate = true;
+    editorMode = 'markdown';
+    editorAutoUpdate = true;
+
+    scoringTypeOptions: Option[] = [new Option('0', 'All or Nothing'), new Option('1', 'Proportional with Penalty')];
 
     // Create Backup Question for resets
     backupQuestion: MultipleChoiceQuestion;
@@ -42,15 +60,14 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     ngAfterViewInit(): void {
         /** Setup editor **/
         requestAnimationFrame(this.setupQuestionEditor.bind(this));
-        this.question.answerOptions.forEach(answer => {
-            // TODO: pass answer as argument
-            requestAnimationFrame(this.setupAnswerEditors.bind(this));
-        });
+        this.setupAnswerEditors();
     }
 
     ngOnChanges(changes: SimpleChanges): void {
+        console.log('changes', changes);
         if (changes.question && changes.question.currentValue != null) {
             this.backupQuestion = Object.assign({}, this.question);
+            console.log('backupQuestion', this.backupQuestion);
         }
     }
 
@@ -83,34 +100,39 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @desc Setup answerOption editors
      */
     setupAnswerEditors() {
-        // var answerEditor;
-        // var i = 0;
-        // vm.question.answerOptions.forEach(function (answer) {
-        //     requestAnimationFrame(function () {
-        //         answerEditor = ace.edit("answer-content-editor-" + answer.id);
-        //         answerEditor.setTheme("ace/theme/chrome");
-        //         answerEditor.getSession().setMode("ace/mode/markdown");
-        //         answerEditor.renderer.setShowGutter(false);
-        //         answerEditor.renderer.setPadding(10);
-        //         answerEditor.renderer.setScrollMargin(8, 8);
-        //         answerEditor.setOptions({
-        //             autoScrollEditorIntoView: true
-        //         });
-        //         answerEditor.setHighlightActiveLine(false);
-        //         answerEditor.setShowPrintMargin(false);
-        //
-        //         this.generateAnswerMarkdown(answer);
-        //
-        //         answerEditor.on("blur", function () {
-        //             var answerOptionEditor = ace.edit("answer-content-editor-" + answer.id);
-        //             parseAnswerMarkdown(answerOptionEditor.getValue(), answer);
-        //             vm.onUpdated();
-        //             $scope.$apply();
-        //         });
-        //     });
-        //     i++;
-        //
-        // });
+        /** Array with all answer option Ace Editors
+         *  Note: we filter out the question Editor (identified by his width)
+         **/
+        const answerEditors: AceEditorComponent[] = this.aceEditorComponents
+            .toArray()
+            .filter(editor => editor.style.indexOf('width:90%') === -1);
+
+        this.question.answerOptions.forEach((answer, index) => {
+            requestAnimationFrame(
+                function() {
+                    answerEditors[index].setTheme('chrome');
+                    answerEditors[index].getEditor().renderer.setShowGutter(false);
+                    answerEditors[index].getEditor().renderer.setPadding(10);
+                    answerEditors[index].getEditor().renderer.setScrollMargin(8, 8);
+                    answerEditors[index].getEditor().setHighlightActiveLine(false);
+                    answerEditors[index].getEditor().setShowPrintMargin(false);
+                    answerEditors[index].getEditor().setOptions({
+                        autoScrollEditorIntoView: true
+                    });
+                    answerEditors[index].getEditor().setValue(this.generateAnswerMarkdown(answer));
+                    answerEditors[index].getEditor().clearSelection();
+
+                    answerEditors[index].getEditor().on(
+                        'blur',
+                        () => {
+                            this.parseAnswerMarkdown(answerEditors[index].getEditor().getValue(), answer);
+                            this.questionUpdated.emit();
+                        },
+                        this
+                    );
+                }.bind(this)
+            );
+        });
     }
 
     /**
@@ -125,11 +147,8 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      *
      * @param answer {AnswerOption}  is the AnswerOption, which the Markdown-field presents
      */
-    generateAnswerMarkdown(answer: AnswerOption) {
-        const answerEditor = ace.edit('answer-content-editor-' + answer.id);
-        const markdownText = (answer.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answer);
-        answerEditor.setValue(markdownText);
-        answerEditor.clearSelection();
+    generateAnswerMarkdown(answer: AnswerOption): string {
+        return (answer.isCorrect ? '[x]' : '[ ]') + ' ' + this.artemisMarkdown.generateTextHintExplanation(answer);
     }
 
     /**
@@ -170,13 +189,11 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         const answerParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
         // Work on answer options
         // Find the box (text in-between the parts)
-        const answerOption = new AnswerOption();
         const answerOptionText = answerParts[1];
         const startOfThisPart = text.indexOf(answerOptionText);
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
         answer.isCorrect = box === '[x]' || box === '[X]';
-
         this.artemisMarkdown.parseTextHintExplanation(answerOptionText, answer);
     }
 
@@ -232,8 +249,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.invalid = this.backupQuestion.invalid;
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.answerOptions = this.backupQuestion.answerOptions;
+        this.question.answerOptions = Object.assign({}, this.backupQuestion.answerOptions);
         this.question.answerOptions.forEach(answer => this.resetAnswer(answer));
+        console.log('answerOptions', this.question.answerOptions);
         this.resetQuestionText();
     }
 
@@ -250,7 +268,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.answerOptions[this.question.answerOptions.indexOf(answer)] = Object.assign({}, backupAnswer);
         answer = Object.assign({}, backupAnswer);
 
-        // Reset answer editor
+        // Reset answer editors
         this.setupAnswerEditors();
     }
 
