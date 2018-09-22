@@ -13,20 +13,9 @@ import * as interact from 'interactjs';
 @Component({
     selector: 'jhi-editor',
     templateUrl: './editor.component.html',
-    providers:  [
-        JhiAlertService,
-        CourseService,
-        RepositoryFileService
-    ]
+    providers: [JhiAlertService, CourseService, RepositoryFileService]
 })
-
-/**
- * @class EditorComponent
- * @desc This component acts as a wrapper for the upgraded editor component (directive).
- * The dependencies are passed along to the directive, from there to the legacy component.
- */
 export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
-
     /** Dependencies as defined by the Editor component */
     participation: Participation;
     repository: RepositoryService;
@@ -55,10 +44,12 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
      * @param {RepositoryService} repositoryService
      * @param {RepositoryFileService} repositoryFileService
      */
-    constructor(private route: ActivatedRoute,
-                private participationService: ParticipationService,
-                private repositoryService: RepositoryService,
-                private repositoryFileService: RepositoryFileService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private participationService: ParticipationService,
+        private repositoryService: RepositoryService,
+        private repositoryFileService: RepositoryFileService
+    ) {}
 
     /**
      * @function ngOnInit
@@ -72,11 +63,14 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                 this.checkIfRepositoryIsClean();
             });
             /** Query the repositoryFileService for files in the repository */
-            this.repositoryFileService.query(params['participationId']).subscribe(files => {
-                this.repositoryFiles = files;
-            }, err => {
-                console.log('There was an error while getting files: ' + err.body.msg);
-            });
+            this.repositoryFileService.query(params['participationId']).subscribe(
+                files => {
+                    this.repositoryFiles = files;
+                },
+                err => {
+                    console.log('There was an error while getting files: ' + err.body.msg);
+                }
+            );
         });
 
         /** Assign repository */
@@ -99,13 +93,14 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                     min: { width: this.resizableMinWidth },
                     max: { width: this.resizableMaxWidth }
                 },
-                inertia: true,
-            }).on('resizemove', function(event) {
-            const target = event.target;
-            // Update element size
-            target.style.width  = event.rect.width + 'px';
-            target.style.height = event.rect.height + 'px';
-        });
+                inertia: true
+            })
+            .on('resizemove', function(event) {
+                const target = event.target;
+                // Update element size
+                target.style.width = event.rect.width + 'px';
+                target.style.height = event.rect.height + 'px';
+            });
     }
 
     /**
@@ -167,15 +162,18 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
         this.isSaved = false;
         this.isCommitted = false;
         /** Query the repositoryFileService for updated files in the repository */
-        this.repositoryFileService.query(this.participation.id).subscribe(files => {
-            this.repositoryFiles = files;
-            // Select newly created file
-            if ($event.mode === 'create') {
-                this.file = $event.file;
+        this.repositoryFileService.query(this.participation.id).subscribe(
+            files => {
+                this.repositoryFiles = files;
+                // Select newly created file
+                if ($event.mode === 'create') {
+                    this.file = $event.file;
+                }
+            },
+            err => {
+                console.log('There was an error while getting files: ' + err.body.msg);
             }
-        }, err => {
-            console.log('There was an error while getting files: ' + err.body.msg);
-        });
+        );
     }
 
     /**
@@ -212,7 +210,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
             },
             err => {
                 console.log('Error during commit ocurred!', err);
-            });
+            }
+        );
     }
 
     /**

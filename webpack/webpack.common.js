@@ -60,7 +60,6 @@ module.exports = (options) => ({
             }
         }),
         new CopyWebpackPlugin([
-            { from: './src/main/webapp/ng1/', to: 'ng1' },
             { from: './src/main/webapp/favicon.ico', to: 'favicon.ico' },
             { from: './src/main/webapp/manifest.webapp', to: 'manifest.webapp' },
             // jhipster-needle-add-assets-to-webpack - JHipster will add/remove third-party resources in this array
