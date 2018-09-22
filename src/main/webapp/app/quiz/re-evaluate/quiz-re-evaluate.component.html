@@ -36,11 +36,11 @@
                 <span>{{quizExercise.releaseDate | date:'yyyy-MM-dd HH:mm:ss'}}</span>
             </div>
         </div>
-        <div *ngFor="let question of quizExercise.questions" style="width: 100%;">
+        <div *ngFor="let question of quizExercise.questions; let i = index;" style="width: 100%;">
             <div *ngIf="question.type === MULTIPLE_CHOICE">
                 <jhi-re-evaluate-multiple-choice-question
                     [question]="question"
-                    [questionIndex]="index + 1"
+                    [questionIndex]="i + 1"
                     (questionUpdated)="onQuestionUpdated()"
                     (questionDeleted)="deleteQuestion(question)"
                     (questionMoveUp)="moveUp(question)"
@@ -50,7 +50,7 @@
             <div *ngIf="question.type === DRAG_AND_DROP">
                 <jhi-re-evaluate-drag-and-drop-question
                     [question]="question"
-                    [questionIndex]="index + 1"
+                    [questionIndex]="i + 1"
                     (questionUpdated)="onQuestionUpdated()"
                     (questionDeleted)="deleteQuestion(question)"
                     (questionMoveUp)="moveUp(question)"

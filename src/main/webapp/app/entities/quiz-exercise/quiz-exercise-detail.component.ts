@@ -518,7 +518,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Save the quiz to the server
      */
     save() {
-        console.log('Calling save()', this.quizExercise);
         this.onDateTimeChange();
         if (this.hasSavedQuizStarted() || !this.pendingChanges() || !this.validQuiz()) {
             return;
