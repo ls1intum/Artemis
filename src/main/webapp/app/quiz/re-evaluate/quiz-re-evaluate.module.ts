@@ -11,6 +11,7 @@ import { AngularFittextModule } from 'angular-fittext';
 import { AceEditorModule } from 'ng2-ace-editor';
 import { DndModule } from 'ng2-dnd';
 import { ArTEMiSQuizModule } from '../participate';
+import { ArTEMiSQuizEditModule } from '../edit';
 import { QuizReEvaluateComponent } from './quiz-re-evaluate.component';
 import { ReEvaluateMultipleChoiceQuestionComponent } from './multiple-choice-question/re-evaluate-multiple-choice-question.component';
 import { ReEvaluateDragAndDropQuestionComponent } from './drag-and-drop-question/re-evaluate-drag-and-drop-question.component';
@@ -18,7 +19,7 @@ import { QuizReEvaluateWarningComponent } from './quiz-re-evaluate-warning.compo
 import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 
 @NgModule({
-    imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule],
+    imports: [ArTEMiSSharedModule, DndModule.forRoot(), AngularFittextModule, AceEditorModule, ArTEMiSQuizModule, ArTEMiSQuizEditModule],
     declarations: [
         QuizReEvaluateComponent,
         ReEvaluateMultipleChoiceQuestionComponent,
