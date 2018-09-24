@@ -155,7 +155,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             this.questionElementDeleted = true;
         }
         // check if the correct Mappings has changed
-        if (!angular.equals(question.correctMappings, backUpQuestion.correctMappings)) {
+        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
             this.questionCorrectness = true;
         }
         // only check if there are no changes on the question-elements yet

@@ -93,9 +93,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
     pendingChanges() {
-        // TODO: old => return !angular.equals(this.quizExercise, this.backupQuiz);
-        console.log('pending changes?', JSON.stringify(this.quizExercise).toLowerCase() === JSON.stringify(this.backupQuiz).toLowerCase());
-        return JSON.stringify(this.quizExercise).toLowerCase() === JSON.stringify(this.backupQuiz).toLowerCase();
+        return JSON.stringify(this.quizExercise).toLowerCase() !== JSON.stringify(this.backupQuiz).toLowerCase();
     }
 
     /**

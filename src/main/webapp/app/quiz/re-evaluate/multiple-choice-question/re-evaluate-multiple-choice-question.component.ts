@@ -64,10 +64,9 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        console.log('changes', changes);
         if (changes.question && changes.question.currentValue != null) {
+            console.log('ngOnChanges assigning backupQuestion');
             this.backupQuestion = Object.assign({}, this.question);
-            console.log('backupQuestion', this.backupQuestion);
         }
     }
 
@@ -251,7 +250,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.question.scoringType = this.backupQuestion.scoringType;
         this.question.answerOptions = Object.assign({}, this.backupQuestion.answerOptions);
         this.question.answerOptions.forEach(answer => this.resetAnswer(answer));
-        console.log('answerOptions', this.question.answerOptions);
         this.resetQuestionText();
     }
 

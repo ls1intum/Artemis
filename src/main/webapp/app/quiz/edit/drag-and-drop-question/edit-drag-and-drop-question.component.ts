@@ -40,6 +40,8 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     question: DragAndDropQuestion;
     @Input()
     questionIndex: number;
+    @Input()
+    reEvaluationInProgress: boolean;
 
     @Output()
     questionUpdated = new EventEmitter<object>();
