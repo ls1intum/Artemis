@@ -9,6 +9,7 @@ import { Feedback, FeedbackType } from '../entities/feedback';
 import { JhiEventManager } from 'ng-jhipster';
 import { HttpResponse } from '@angular/common/http';
 import * as moment from 'moment';
+import { Observable } from 'rxjs';
 
 import { Subscription } from 'rxjs/Subscription';
 
@@ -50,24 +51,14 @@ export class InstructorDashboardResultDialogComponent implements OnInit {
             this.result.feedbacks[i].type = FeedbackType.MANUAL;
         }
         if (this.result.id !== null) {
-            this.resultService.update(this.result).subscribe(
-                res => {
-                    this.onSaveSuccess(res);
-                },
-                err => {
-                    this.onSaveError();
-                }
-            );
+            this.subscribeToSaveResponse(this.resultService.update(this.result));
         } else {
-            this.resultService.create(this.result).subscribe(
-                res => {
-                    this.onSaveSuccess(res);
-                },
-                err => {
-                    this.onSaveError();
-                }
-            );
+            this.subscribeToSaveResponse(this.resultService.create(this.result));
         }
+    }
+
+    private subscribeToSaveResponse(result: Observable<HttpResponse<Result>>) {
+        result.subscribe(res => this.onSaveSuccess(res), err => this.onSaveError());
     }
 
     onSaveSuccess(result: HttpResponse<Result>) {
