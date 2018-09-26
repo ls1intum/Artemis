@@ -5,7 +5,6 @@ import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 
 import { Course } from './course.model';
 import { CourseService } from './course.service';
-import { Principal } from '../../core';
 
 @Component({
     selector: 'jhi-course',
@@ -16,12 +15,7 @@ export class CourseComponent implements OnInit, OnDestroy {
     courses: Course[];
     eventSubscriber: Subscription;
 
-    constructor(
-        private courseService: CourseService,
-        private jhiAlertService: JhiAlertService,
-        private eventManager: JhiEventManager,
-        private principal: Principal
-    ) {}
+    constructor(private courseService: CourseService, private jhiAlertService: JhiAlertService, private eventManager: JhiEventManager) {}
 
     loadAll() {
         this.courseService.query().subscribe(
