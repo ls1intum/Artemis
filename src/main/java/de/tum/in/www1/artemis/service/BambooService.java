@@ -95,24 +95,47 @@ public class BambooService implements ContinuousIntegrationService {
 
     @Override
     public void createProject(String projectName) {
-        createProjectImpl(projectName);
+        try {
+            createProjectImpl(projectName);
+        }
+        catch(BambooException bambooException) {
+            if (bambooException.getMessage().contains("already exists")) {
+                log.info("Project already exists. Reusing it...");
+            }
+            else throw bambooException;
+        }
+
     }
 
-    private String createProjectImpl(String projectName) {
+    private void createProjectImpl(String projectName) throws BambooException {
         try {
             log.info("Creating project " + projectName);
             String message = getBambooClient().getProjectHelper().createProject(projectName, projectName, "Project created by ArTEMiS");
             log.info("Project was successfully created. " + message);
-            return message;
-        } catch (CliClient.ClientException | CliClient.RemoteRestException e) {
-            log.error(e.getMessage());
-            throw new BambooException("Something went wrong while creating project", e);
+
+        } catch (CliClient.ClientException clientException) {
+            log.error(clientException.getMessage(), clientException);
+            if (clientException.getMessage().contains("already exists")) {
+                throw new BambooException(clientException.getMessage());
+            }
+        } catch (CliClient.RemoteRestException e) {
+            log.error(e.getMessage(), e);
+            throw new BambooException("Something went wrong while creating the project", e);
         }
     }
 
     @Override
     public void copyBuildPlanFromTemplate(String buildplanName, String projectName, String templateBuildPlanName, String templateProjectName) {
-        clonePlan(templateProjectName, templateBuildPlanName, projectName, buildplanName); // TODO: handle exception?
+        try {
+            clonePlan(templateProjectName, templateBuildPlanName, projectName, buildplanName);
+        }
+        catch(BambooException bambooException) {
+            if (bambooException.getMessage().contains("already exists")) {
+                log.info("Build Plan already exists. Going to reuse it...");
+                return;
+            }
+            else throw bambooException;
+        }
     }
 
     @Override

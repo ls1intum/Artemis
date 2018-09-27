@@ -357,6 +357,10 @@ public class BitbucketService implements VersionControlService {
                 entity,
                 Map.class);
         } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                log.info("Project {} already exists, reusing it..", projectName);
+                return;
+            }
             log.error("Could not create Bitbucket project {} with key {}", projectName, projectKey, e);
             throw new BitbucketException("Error while creating Bitbucket project");
         }
@@ -387,6 +391,10 @@ public class BitbucketService implements VersionControlService {
                 entity,
                 Map.class);
         } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.CONFLICT) {
+                log.info("Project {} (parent {}) already exists, reusing it..", repoName, projectKey);
+                return;
+            }
             log.error("Could not create Bitbucket repo {} with parent key {}", repoName, projectKey, e);
             throw new BitbucketException("Error while creating Bitbucket repo");
         }
