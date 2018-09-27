@@ -1,4 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
+import { isMoment, Moment } from 'moment';
 
 @Component({
     selector: 'jhi-date-time-picker',
@@ -10,6 +11,9 @@ import { Component, Input, OnInit } from '@angular/core';
       <owl-date-time-inline *ngIf=toggled startAt="{{entity[field]}}"[(ngModel)]="entity[field]" name="datePicker"></owl-date-time-inline>
   `
 })
+
+// TODO support setting a date to null
+// TODO use the popup version of the date time picker
 export class FormDateTimePickerComponent implements OnInit {
     toggled: boolean;
     @Input()
@@ -21,5 +25,9 @@ export class FormDateTimePickerComponent implements OnInit {
 
     ngOnInit() {
         this.toggled = false;
+        // convert moment to date, because owl-date-time only works correctly with date objects
+        if (isMoment(this.entity[this.field])) {
+            this.entity[this.field] = (this.entity[this.field] as Moment).toDate();
+        }
     }
 }

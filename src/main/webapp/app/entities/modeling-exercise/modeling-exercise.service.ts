@@ -51,8 +51,8 @@ export class ModelingExerciseService {
 
     private convertDateFromClient(exercise: ModelingExercise): ModelingExercise {
         const copy: ModelingExercise = Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate != null && exercise.releaseDate.isValid() ? exercise.releaseDate.toJSON() : null,
-            dueDate: exercise.dueDate != null && exercise.dueDate.isValid() ? exercise.dueDate.toJSON() : null
+            releaseDate: exercise.releaseDate != null && moment(exercise.releaseDate).isValid() ? exercise.releaseDate.toJSON() : null,
+            dueDate: exercise.dueDate != null && moment(exercise.dueDate).isValid() ? exercise.dueDate.toJSON() : null
         });
         return copy;
     }

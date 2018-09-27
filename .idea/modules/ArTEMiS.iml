@@ -8,6 +8,7 @@
       <excludeFolder url="file://$MODULE_DIR$/.." />
       <excludeFolder url="file://$MODULE_DIR$/../../.jhipster" />
       <excludeFolder url="file://$MODULE_DIR$/../../build" />
+      <excludeFolder url="file://$MODULE_DIR$/../../build/cache-loader" />
       <excludeFolder url="file://$MODULE_DIR$/../../build/classes" />
       <excludeFolder url="file://$MODULE_DIR$/../../build/jacoco" />
       <excludeFolder url="file://$MODULE_DIR$/../../build/libs" />

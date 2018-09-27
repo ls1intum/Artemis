@@ -6,7 +6,7 @@ import { ActivatedRoute } from '@angular/router';
 import { Participation, ParticipationService } from '../entities/participation';
 import { RepositoryFileService, RepositoryService } from '../entities/repository/repository.service';
 import { Result } from '../entities/result';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import * as $ from 'jquery';
 import * as interact from 'interactjs';
 
@@ -67,8 +67,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                 files => {
                     this.repositoryFiles = files;
                 },
-                err => {
-                    console.log('There was an error while getting files: ' + err.body.msg);
+                (error: HttpErrorResponse) => {
+                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
                 }
             );
         });
@@ -170,8 +170,8 @@ export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDest
                     this.file = $event.file;
                 }
             },
-            err => {
-                console.log('There was an error while getting files: ' + err.body.msg);
+            (error: HttpErrorResponse) => {
+                console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
             }
         );
     }
