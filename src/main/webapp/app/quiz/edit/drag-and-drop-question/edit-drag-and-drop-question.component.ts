@@ -44,9 +44,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     reEvaluationInProgress: boolean;
 
     @Output()
-    questionUpdated = new EventEmitter<object>();
+    questionUpdated = new EventEmitter();
     @Output()
-    questionDeleted = new EventEmitter<object>();
+    questionDeleted = new EventEmitter();
     /** Question move up and down are used for re-evaluate **/
     @Output()
     questionMoveUp = new EventEmitter<object>();

@@ -25,6 +25,7 @@
                     class="colon-suffix">
                 </span>
                 <input
+                    style="width: 55px;"
                     class="form-control mb-2 mr-sm-2"
                     title="Duration"
                     type="number"
@@ -35,6 +36,7 @@
                     (blur)="onDurationChange()"/>
                 <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
                 <input
+                    style="width: 55px;"
                     class="form-control mb-2 mr-sm-2"
                     title="Duration"
                     type="number"
@@ -96,7 +98,7 @@
                 <jhi-edit-multiple-choice-question
                     [question]="question"
                     [questionIndex]="i + 1"
-                    (questionDeleted)="deleteQuestion.bind(question)"
+                    (questionDeleted)="deleteQuestion(question)"
                     (questionUpdated)="onQuestionUpdated()">
                 </jhi-edit-multiple-choice-question>
             </div>
@@ -104,7 +106,7 @@
                 <jhi-edit-drag-and-drop-question
                     [question]="question"
                     [questionIndex]="i + 1"
-                    (questionDeleted)="deleteQuestion.bind(question)"
+                    (questionDeleted)="deleteQuestion(question)"
                     (questionUpdated)="onQuestionUpdated()">
                 </jhi-edit-drag-and-drop-question>
             </div>

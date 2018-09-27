@@ -22,9 +22,9 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
     questionIndex: number;
 
     @Output()
-    questionUpdated = new EventEmitter<object>();
+    questionUpdated = new EventEmitter();
     @Output()
-    questionDeleted = new EventEmitter<object>();
+    questionDeleted = new EventEmitter();
 
     /** Ace Editor configuration constants **/
     questionEditorText = '';
