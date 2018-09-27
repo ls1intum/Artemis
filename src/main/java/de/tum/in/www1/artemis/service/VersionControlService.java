@@ -88,11 +88,11 @@ public interface VersionControlService {
     /**
      * Grants tutor permissions for the given groupname on a project/group.
      *
-     * @param groupname The groupname that should be granted the permissions
+     * @param groupName The groupname that should be granted the permissions
      * @param topLevelEntity The top level entity for which the permission should be granted
      * @param parentEntity name of parent entity (for sub-groups in Gitlab), null if not applicable
      */
-    public void grantTutorPermission(String groupname, String topLevelEntity, String parentEntity);
+    public void grantTutorPermission(String groupName, String topLevelEntity, String parentEntity);
 
     /**
      * Get the top level identifier of a repository (project/namespace)

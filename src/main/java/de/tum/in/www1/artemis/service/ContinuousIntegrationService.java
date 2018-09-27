@@ -18,6 +18,40 @@ public interface ContinuousIntegrationService {
         INACTIVE, QUEUED, BUILDING
     }
 
+
+    /**
+     * Creates a project that contains the build plans.
+     *
+     * @param projectName The name of the new project
+     */
+    public void createProject(String projectName);
+
+    /**
+     * Creates a new build plan that
+     *
+     * @param buildplanName The name of the newly created build plan
+     * @param projectName   The name of the project where the new build plan should be located
+     * @param templateBuildPlanName The name of the build plan that contains the template
+     * @param templateProjectName   The name of the project that contains the templateBuildPlan
+     */
+    public void copyBuildPlanFromTemplate(String buildplanName, String projectName, String templateBuildPlanName, String templateProjectName);
+
+    /**
+     * Grants instructor permissions for the given groupname on a project.
+     *
+     * @param groupName The group name that should be granted the permissions
+     * @param projectName The name of the project to which the permission should be granted
+     */
+    public void grantInstructorPermission(String groupName, String projectName);
+
+    /**
+     * Grants tutor permissions for the given groupname on a project.
+     *
+     * @param groupName The group name that should be granted the permissions
+     * @param projectName The name of the project to which the permission should be granted
+     */
+    public void grantTutorPermission(String groupName, String projectName);
+
     /**
      * Copy the base build plan for the given user on the CI system.
      *
