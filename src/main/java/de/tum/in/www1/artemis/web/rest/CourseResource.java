@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -203,6 +204,7 @@ public class CourseResource {
     @DeleteMapping("/courses/{id}")
     @PreAuthorize("hasAnyRole('ADMIN')")
     @Timed
+    @Transactional
     public ResponseEntity<Void> deleteCourse(@PathVariable Long id) {
         log.debug("REST request to delete Course : {}", id);
         Course course = courseService.findOne(id);

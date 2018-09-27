@@ -1,18 +1,18 @@
 <div>
-    <h2>
+    <h4>
         <span jhiTranslate="arTeMiSApp.course.home.title">Courses</span>
-        <button *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary float-right jh-create-entity create-course" [routerLink]="['/', { outlets: { popup: ['course-new'] } }]">
-            <span class="fa fa-plus"></span>
-            <span  jhiTranslate="arTeMiSApp.course.home.createLabel">
+        <button *jhiHasAnyAuthority="'ROLE_ADMIN'" class="btn btn-primary float-right jh-create-entity create-course" [routerLink]="['/course/new']">
+            <fa-icon [icon]="'plus'"></fa-icon>
+            <span class="hidden-sm-down"  jhiTranslate="arTeMiSApp.course.home.createLabel">
             Create new Course
             </span>
         </button>
-    </h2>
+    </h4>
     <jhi-alert></jhi-alert>
     <div class="row">
     </div>
     <br/>
-    <div class="table-responsive course-table" *ngIf="courses">
+    <div class="table-responsive" *ngIf="courses">
         <table class="table table-striped">
             <thead>
             <tr>
@@ -29,17 +29,14 @@
             </thead>
             <tbody>
             <tr *ngFor="let course of courses ;trackBy: trackId">
-                <td><a [routerLink]="['../course', course.id ]">{{course.id}}</a></td>
+                <td><a [routerLink]="['/course', course.id, 'view' ]">{{course.id}}</a></td>
                 <td>{{course.title}}</td>
                 <td>{{course.studentGroupName}}</td>
                 <td>{{course.teachingAssistantGroupName}}</td>
                 <td>{{course.instructorGroupName}}</td>
                 <td>{{course.startDate | date:'medium'}}</td>
                 <td>{{course.endDate | date:'medium'}}</td>
-                <td>
-                    <span *ngIf="course.onlineCourse">yes</span>
-                    <span *ngIf="!course.onlineCourse">no</span>
-                </td>
+                <td>{{course.onlineCourse}}</td>
                 <td class="text-right">
                     <div class="btn-group flex-btn-group-container">
                         <div class="d-inline-block" ngbDropdown>
@@ -72,17 +69,15 @@
                             </div>
                         </div>
                         <button type="submit"
-                                [routerLink]="['../course', course.id ]"
+                                [routerLink]="['/course', course.id, 'view' ]"
                                 class="btn btn-info btn-sm">
-                            <span class="fa fa-eye"></span>
+                            <span class="'eye'"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.view">View</span>
                         </button>
                         <button type="submit"
-                                [routerLink]="['/', { outlets: { popup: 'course/'+ course.id + '/edit'} }]"
-                                replaceUrl="true"
-                                queryParamsHandling="merge"
+                                [routerLink]="['/course', course.id, 'edit']"
                                 class="btn btn-primary btn-sm">
-                            <span class="fa fa-pencil"></span>
+                            <span class="'pencil-alt'"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                         </button>
                         <button type="submit"
@@ -90,7 +85,7 @@
                                 replaceUrl="true"
                                 queryParamsHandling="merge"
                                 class="btn btn-danger btn-sm">
-                            <span class="fa fa-remove"></span>
+                            <span class="'times'"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
                     </div>

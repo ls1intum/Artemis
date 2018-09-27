@@ -7,6 +7,7 @@ import { EditorComponent } from '../editor.component';
 import { EditorFileBrowserCreateComponent } from './editor-file-browser-create';
 import { EditorFileBrowserDeleteComponent } from './editor-file-browser-delete';
 import { TreeviewComponent, TreeviewConfig, TreeviewHelper, TreeviewItem } from 'ngx-treeview';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-editor-file-browser',
@@ -137,8 +138,8 @@ export class EditorFileBrowserComponent implements OnChanges {
                     this.repositoryFiles = files;
                     this.setupTreeview(this.repositoryFiles);
                 },
-                err => {
-                    console.log('There was an error while getting files: ' + err.body.msg);
+                (error: HttpErrorResponse) => {
+                    console.log('There was an error while getting files: ' + error.message + ': ' + error.error);
                 }
             );
         } else {
