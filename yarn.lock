@@ -10418,10 +10418,10 @@ websocket-extensions@>=0.1.1:
   resolved "https://registry.yarnpkg.com/websocket-extensions/-/websocket-extensions-0.1.3.tgz#5d2ff22977003ec687a4b87073dfbbac146ccf29"
   integrity sha512-nqHUnMXmBzT0w570r2JpJxfiSD1IzoI+HGVdd3aZ0yNi3ngvQ4jv1dtHt5VGxfI2yj5yqImPhOK4vmIh2xMbGg==
 
-webstomp-client@^1.2.4:
-  version "1.2.4"
-  resolved "https://registry.yarnpkg.com/webstomp-client/-/webstomp-client-1.2.4.tgz#aeaa0a83a70b0e6de59c3a125d98fc3ff2231d72"
-  integrity sha512-kRlsL3BrIDUueWHp8MBx86iLaBd3woNOUjAubXmqP/sfd69dVEjShTb1/m3+SPIX89mOHJ8UxN+gXTaC6Ssicg==
+webstomp-client@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/webstomp-client/-/webstomp-client-1.2.0.tgz#454da66c2ff86c4a876f04218b6d9de8946e596b"
+  integrity sha512-samQ+9i8WQJIL5BWtrsN+i3wNeZGsVwWmNFyz2n3oyMHwNrK3UpQ7nin04w9gpDjV/ZPLYIIh3cosGuXCDONSQ==
 
 whatwg-fetch@>=0.10.0:
   version "3.0.0"
