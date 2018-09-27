@@ -59,7 +59,7 @@
             <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
         </div>
-        <ng-template *ngIf="reEvaluationInProgress">
+        <ng-container *ngIf="reEvaluationInProgress">
             <button
                 class="btn btn-outline-secondary"
                 [hidden]="question.invalid"
@@ -72,7 +72,7 @@
                 [disabled]="question.invalid"
                 jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.questionIsInvalid">
             </button>
-        </ng-template>
+        </ng-container>
     </div>
     <div class="markupEditorArea">
         <div class="toolbar" *ngIf="!reEvaluationInProgress">
@@ -247,7 +247,7 @@
             <input #dragItemFile type="file" accept="image/*" (change)="setDragItemFile($event)"/>
         </div>
     </div>
-    <ng-template *ngIf="!reEvaluationInProgress">
+    <ng-container *ngIf="!reEvaluationInProgress">
         <div class="question-options">
             <div class="form-group">
                 <button class="btn btn-outline-secondary" (click)="addTextDragItem()">
@@ -265,7 +265,7 @@
                 </div>
             </div>
         </div>
-    </ng-template>
+    </ng-container>
 </div>
 <div class="preview-dnd-question" *ngIf="!reEvaluationInProgress && showPreview">
     <jhi-drag-and-drop-question [question]="question" [mappings]="[]" [questionIndex]="questionIndex"></jhi-drag-and-drop-question>
