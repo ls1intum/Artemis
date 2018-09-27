@@ -1,12 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs/Observable';
-import { SERVER_API_URL } from '../../app.constants';
-
+import { Observable } from 'rxjs';
 import * as moment from 'moment';
+import { map } from 'rxjs/operators';
 
+import { SERVER_API_URL } from 'app/app.constants';
+import { createRequestOption } from 'app/shared';
 import { Course } from './course.model';
-import { createRequestOption } from '../../shared';
 import { ProgrammingExercise } from '../programming-exercise/programming-exercise.model';
 import { ModelingExercise } from '../modeling-exercise/modeling-exercise.model';
 import { Participation } from '../participation/participation.model';
@@ -28,26 +28,26 @@ export class CourseService {
         const copy = this.convertDateFromClient(course);
         return this.http
             .post<Course>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     update(course: Course): Observable<EntityResponseType> {
         const copy = this.convertDateFromClient(course);
         return this.http
             .put<Course>(this.resourceUrl, copy, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     find(id: number): Observable<EntityResponseType> {
         return this.http
             .get<Course>(`${this.resourceUrl}/${id}`, { observe: 'response' })
-            .map((res: EntityResponseType) => this.convertDateFromServer(res));
+            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
     }
 
     findAll(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     // TODO: deprecated --> this method does not scale and should not be used in the future
@@ -55,11 +55,10 @@ export class CourseService {
         return this.http.get<Participation[]>(`${this.resourceUrl}/${courseId}/participations`);
     }
 
-    query(req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
+    query(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Course[]>(this.resourceUrl, { params: options, observe: 'response' })
-            .map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res));
+            .get<Course[]>(this.resourceUrl, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertDateArrayFromServer(res)));
     }
 
     delete(id: number): Observable<HttpResponse<void>> {
@@ -76,8 +75,8 @@ export class CourseService {
 
     private convertDateFromClient(course: Course): Course {
         const copy: Course = Object.assign({}, course, {
-            releaseDate: course.startDate != null && course.startDate.isValid() ? course.startDate.toJSON() : null,
-            dueDate: course.endDate != null && course.endDate.isValid() ? course.endDate.toJSON() : null
+            startDate: course.startDate != null && moment(course.startDate).isValid() ? course.startDate.toJSON() : null,
+            endDate: course.endDate != null && moment(course.endDate).isValid() ? course.endDate.toJSON() : null
         });
         return copy;
     }

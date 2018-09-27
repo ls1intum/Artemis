@@ -4,14 +4,14 @@ import { RouterModule } from '@angular/router';
 import { ArTEMiSSharedModule } from '../shared';
 
 import {
-    PasswordStrengthBarComponent,
-    RegisterComponent,
+    accountState,
     ActivateComponent,
     PasswordComponent,
-    PasswordResetInitComponent,
     PasswordResetFinishComponent,
-    SettingsComponent,
-    accountState
+    PasswordResetInitComponent,
+    PasswordStrengthBarComponent,
+    RegisterComponent,
+    SettingsComponent
 } from './';
 
 @NgModule({

@@ -20,7 +20,6 @@ module.exports = (options) => ({
     },
     module: {
         rules: [
-            { test: /bootstrap\/dist\/js\/umd\//, loader: 'imports-loader?jQuery=jquery' },
             {
                 test: /\.html$/,
                 loader: 'html-loader',
@@ -35,11 +34,19 @@ module.exports = (options) => ({
             },
             {
                 test: /\.(jpe?g|png|gif|svg|woff2?|ttf|eot)$/i,
-                loaders: ['file-loader?hash=sha512&digest=hex&name=content/[hash].[ext]']
+                loader: 'file-loader',
+                options: {
+                    digest: 'hex',
+                    hash: 'sha512',
+                    name: 'content/[hash].[ext]'
+                }
             },
             {
                 test: /manifest.webapp$/,
-                loader: 'file-loader?name=manifest.webapp'
+                loader: 'file-loader',
+                options: {
+                    name: 'manifest.webapp'
+                }
             },
             // Ignore warnings about System.import in Angular
             { test: /[\/\\]@angular[\/\\].+\.js$/, parser: { system: true } },
