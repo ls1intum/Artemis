@@ -118,13 +118,6 @@
   dependencies:
     tslib "^1.9.0"
 
-"@angular/upgrade@^6.1.9":
-  version "6.1.9"
-  resolved "https://registry.yarnpkg.com/@angular/upgrade/-/upgrade-6.1.9.tgz#fe288f2818692d310c84fd040b676afa5b80fc9e"
-  integrity sha512-fKAYbbaltCcSILG8plwwsApPJftaMGfbPdTu59jPHVdMo5CoX6V9HQSAvtRJqjCL/BTHCH0+wFuzOfiHFt4Lmw==
-  dependencies:
-    tslib "^1.9.0"
-
 "@fortawesome/angular-fontawesome@^0.2.0":
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/@fortawesome/angular-fontawesome/-/angular-fontawesome-0.2.0.tgz#2a072fb0538223f0c90447af50340ddfbed73585"
@@ -583,11 +576,6 @@ angular2-template-loader@^0.6.2:
   integrity sha1-wNROkP/w+sleiyPwQ6zaf9HFHXw=
   dependencies:
     loader-utils "^0.2.15"
-
-angular@1.5.8:
-  version "1.5.8"
-  resolved "http://registry.npmjs.org/angular/-/angular-1.5.8.tgz#925a5392b8c212d09572dc446db7e01264e094cb"
-  integrity sha1-klpTkrjCEtCVctxEbbfgEmTglMs=
 
 "angular@>=1.2.26 <=1.7":
   version "1.7.4"
@@ -1130,11 +1118,6 @@ bootstrap@^4.1.3:
   version "4.1.3"
   resolved "https://registry.yarnpkg.com/bootstrap/-/bootstrap-4.1.3.tgz#0eb371af2c8448e8c210411d0cb824a6409a12be"
   integrity sha512-rDFIzgXcof0jDyjNosjv4Sno77X4KuPeFxG2XZZv1/Kc8DRVGVADdoQyyOVDwPqL36DDmtCQbrpMCqvpPLJQ0w==
-
-bower@^1.8.4:
-  version "1.8.4"
-  resolved "https://registry.yarnpkg.com/bower/-/bower-1.8.4.tgz#e7876a076deb8137f7d06525dc5e8c66db82f28a"
-  integrity sha1-54dqB23rgTf30GUl3F6MZtuC8oo=
 
 boxen@^1.2.1:
   version "1.3.0"
