@@ -36,9 +36,6 @@ public class BitbucketService implements VersionControlService {
     @Value("${artemis.version-control.secret}")
     private String BITBUCKET_PASSWORD;
 
-    @Value("${artemis.version-control.create-ci-webhook}")
-    private boolean CREATE_CI_WEBHOOK = false;
-
     @Value("${artemis.lti.user-prefix}")
     private String USER_PREFIX = "";
 
