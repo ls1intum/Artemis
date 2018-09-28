@@ -131,7 +131,7 @@
         <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
     </div>
     <div class="background-area">
-        <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath" [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate"></jhi-secured-image>
+        <jhi-secured-image [src]="question.backgroundFilePath" [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate"></jhi-secured-image>
         <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{'disabled': !question.backgroundFilePath}">
             <div
                 class="drop-location"
@@ -186,7 +186,7 @@
     <div class="drag-items" *ngIf="question.dragItems && question.dragItems.length">
         <div class="drag-item" *ngFor="let dragItem of question.dragItems" dnd-draggable [dragEnabled]="true" [dragData]="dragItem">
             <div *ngIf="dragItem.pictureFilePath">
-                <jhi-secured-image *ngIf="dragItem.pictureFilePath" [src]="dragItem.pictureFilePath"></jhi-secured-image>
+                <jhi-secured-image [src]="dragItem.pictureFilePath"></jhi-secured-image>
             </div>
             <div *ngIf="!dragItem.pictureFilePath">
                 <textarea [(ngModel)]="dragItem.text" (ngModelChange)="questionUpdated.emit()"></textarea>
