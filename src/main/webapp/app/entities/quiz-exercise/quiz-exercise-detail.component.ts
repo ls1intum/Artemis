@@ -42,6 +42,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     savedEntity: QuizExercise;
     dateTime: Moment;
 
+    /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
     courses: Course[] = [];
     selectedCourseId: number;
@@ -107,7 +108,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.courseRepository = this.courseService;
     }
 
-    init() {
+    /**
+     * @function init
+     * @desc Initializes local constants and prepares the QuizExercise entity
+     */
+    init(): void {
         if (this.quizExercise) {
             this.entity = this.quizExercise;
         } else {
@@ -138,10 +143,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Determine which dropdown to display depending on the relationship between start time, end time, and current time
-     * @returns {string} the name of the dropdown to show
+     * @function showDropdown
+     * @desc Determine which dropdown to display depending on the relationship between start time, end time, and current time
+     * @returns {string} Name of the dropdown to show
      */
-    showDropdown() {
+    showDropdown(): string {
         if (this.quizExercise && this.quizExercise.isPlannedToStart) {
             const plannedEndMoment = moment(this.quizExercise.releaseDate).add(this.quizExercise.duration, 'seconds');
             if (plannedEndMoment.isBefore(moment())) {
@@ -154,7 +160,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Add an empty multiple choice question to the quiz
+     * @function addMultipleChoiceQuestion
+     * @desc Add an empty multiple choice question to the quiz
      */
     addMultipleChoiceQuestion() {
         if (typeof this.quizExercise === 'undefined') {
@@ -181,9 +188,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Add an empty drag and drop question to the quiz
+     * @function addDragAndDropQuestion
+     * @desc Add an empty drag and drop question to the quiz
      */
-    addDragAndDropQuestion() {
+    addDragAndDropQuestion(): void {
         if (typeof this.quizExercise === 'undefined') {
             this.quizExercise = this.entity;
         }
@@ -201,9 +209,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Toggles existing questions view
+     * @function showHideExistingQuestions
+     * @desc Toggles existing questions view
      */
-    showHideExistingQuestions() {
+    showHideExistingQuestions(): void {
         if (this.quizExercise == null) {
             this.quizExercise = this.entity;
         }
@@ -218,9 +227,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Populates list of quiz exercises for the selected course
+     * @function onCourseSelect
+     * @desc Callback function for when a user selected a Course from the Dropdown list from 'Add existing questions'
+     *       Populates list of quiz exercises for the selected course
      */
-    onCourseSelect() {
+    onCourseSelect(): void {
         this.allExistingQuestions = [];
         if (this.selectedCourseId == null) {
             return;
@@ -250,12 +261,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Applies filter on questions shown in add existing questions view.
+     * @function applyFilter
+     * @desc Applies filter on questions shown in add existing questions view.
      */
-    applyFilter() {
+    applyFilter(): void {
         this.existingQuestions = [];
-        // Depending on the filter selected by user, filter out questions.
-        // allExistingQuestions contains list of all questions. We don't change it. We populate existingQuestions list depending on the filter options,
+        /**
+         * Depending on the filter selected by user, filter out questions.
+         * allExistingQuestions contains list of all questions.
+         * We don't change it. We populate existingQuestions list depending on the filter options.
+         */
         for (const question of this.allExistingQuestions) {
             if (
                 !this.searchQueryText ||
@@ -273,10 +288,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Assigns the uploaded import file
+     * @function setImportFile
+     * @desc Assigns the uploaded import file
      * @param $event object containing the uploaded file
      */
-    setImportFile($event: any) {
+    setImportFile($event: any): void {
         if ($event.target.files.length) {
             const fileList: FileList = $event.target.files;
             this.importFile = fileList[0];
@@ -285,9 +301,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Adds selected quizzes to current quiz exercise
+     * @function addExistingQuestions
+     * @desc Adds selected quizzes to current quiz exercise
      */
-    addExistingQuestions() {
+    addExistingQuestions(): void {
         const questions: Question[] = [];
         for (const question of this.existingQuestions) {
             if (question.exportQuiz) {
@@ -299,25 +316,28 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Remove question from the quiz
+     * @function deleteQuestion
+     * @desc Remove question from the quiz
      * @param questionToDelete {Question} the question to remove
      */
-    deleteQuestion(questionToDelete: Question) {
+    deleteQuestion(questionToDelete: Question): void {
         this.quizExercise.questions = this.quizExercise.questions.filter(question => question !== questionToDelete);
     }
 
     /**
-     * Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
+     * @function onQuestionUpdated
+     * @desc Handles the change of a question by replacing the array with a copy (allows for shallow comparison)
      */
-    onQuestionUpdated() {
+    onQuestionUpdated(): void {
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
     }
 
     /**
-     * Determine if there are any changes waiting to be saved
+     * @function pendingChanges
+     * @desc Determine if there are any changes waiting to be saved
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
-    pendingChanges() {
+    pendingChanges(): boolean {
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
@@ -327,19 +347,20 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Check if the current inputs are valid
+     * @function validQuiz
+     * @desc Check if the current inputs are valid
      * @returns {boolean} true if valid, false otherwise
      */
-    validQuiz() {
+    validQuiz(): boolean {
         if (!this.quizExercise) {
             return false;
         }
-        const isGenerallyValid =
+        const isGenerallyValid: boolean =
             this.quizExercise.title &&
             this.quizExercise.title !== '' &&
             this.quizExercise.duration &&
             this.quizExercise.questions &&
-            this.quizExercise.questions.length;
+            !!this.quizExercise.questions.length;
         const areAllQuestionsValid = this.quizExercise.questions.every(function(question) {
             if (question.type === QuestionType.MULTIPLE_CHOICE) {
                 const mcQuestion = question as MultipleChoiceQuestion;
@@ -364,11 +385,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Get the reasons, why the quiz is invalid
-     *
+     * @function invalidReasons
+     * @desc Get the reasons, why the quiz is invalid
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
      */
-    invalidReasons() {
+    invalidReasons(): Reason[] {
         const reasons = new Array<Reason>();
         if (!this.quizExercise) {
             return;
@@ -432,11 +453,11 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Get the reasons, why the quiz is invalid as an HTML string
-     *
+     * @function invalidReasonsHTML
+     * @desc Get the reasons, why the quiz is invalid as an HTML string
      * @return {string} the reasons in HTML
      */
-    invalidReasonsHTML() {
+    invalidReasonsHTML(): string {
         const translate = this.translateService;
         let reasonString = '';
         for (const reason of this.invalidReasons()) {
@@ -448,7 +469,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Imports a json quiz file and adds questions to current quiz exercise.
+     * @function importQuiz
+     * @desc Imports a json quiz file and adds questions to current quiz exercise.
      */
     async importQuiz() {
         if (this.importFile === null || this.importFile === undefined) {
@@ -472,7 +494,8 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Adds given questions to current quiz exercise.
+     * @function addQuestions
+     * @desc Adds given questions to current quiz exercise.
      * Ids are removed from new questions so that new id is assigned upon saving the quiz exercise.
      * Images are duplicated for drag and drop questions.
      * @param questions list of questions
@@ -533,9 +556,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
-     * Save the quiz to the server
+     * @function save
+     * @desc Save the quiz to the server and invoke callback functions depending of result
      */
-    save() {
+    save(): void {
         this.onDateTimeChange();
         if (this.hasSavedQuizStarted() || !this.pendingChanges() || !this.validQuiz()) {
             return;
@@ -560,78 +584,93 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
     }
 
-    onSaveSuccess(quizExercise: QuizExercise) {
-        console.log('onSaveSuccess', quizExercise);
+    /**
+     * @function onSaveSuccess
+     * @desc Callback function for when the save succeeds
+     * Terminates the saving process and assign the returned quizExercise to the local entities
+     * @param {QuizExercise} quizExercise: Saved quizExercise entity
+     */
+    onSaveSuccess(quizExercise: QuizExercise): void {
         this.isSaving = false;
         this.prepareEntity(quizExercise);
         this.savedEntity = Object.assign({}, quizExercise);
         this.quizExercise = quizExercise;
     }
 
-    onSaveError() {
-        alert('Saving Quiz Failed! Please try again later.');
+    /**
+     * @function onSaveError
+     * @desc Callback function for when the save fails
+     */
+    onSaveError(): void {
+        console.error('Saving Quiz Failed! Please try again later.');
         this.isSaving = false;
     }
 
     /**
-     * Makes sure the entity is well formed and its fields are of the correct types
-     * @param quizExercise {QuizExercise}
+     * @function prepareEntity
+     * @desc Makes sure the entity is well formed and its fields are of the correct types
+     * @param quizExercise {QuizExercise} exercise which will be prepared
      */
-    prepareEntity(quizExercise: QuizExercise) {
+    prepareEntity(quizExercise: QuizExercise): void {
         quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : moment();
         quizExercise.duration = Number(quizExercise.duration);
         quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }
 
     /**
-     * Prepares the date and time model
+     * @function prepareDateTime
+     * @desc Prepares the date and time model
      */
-    prepareDateTime() {
+    prepareDateTime(): void {
         this.dateTime = this.quizExercise.releaseDate;
     }
 
     /**
-     * Reach to changes of time inputs by updating model and ui
+     * @function onDateTimeChange
+     * @desc Reach to changes of time inputs by updating model and ui
      */
-    onDateTimeChange() {
+    onDateTimeChange(): void {
         this.quizExercise.releaseDate = this.dateTime;
     }
 
     /**
-     * Reach to changes of duration inputs by updating model and ui
+     * @function onDurationChange
+     * @desc Reach to changes of duration inputs by updating model and ui
      */
-    onDurationChange() {
+    onDurationChange(): void {
         const duration = moment.duration(this.duration);
         this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
         this.updateDuration();
     }
 
     /**
-     * update ui to current value of duration
+     * @function updateDuration
+     * @desc Update ui to current value of duration
      */
-    updateDuration() {
+    updateDuration(): void {
         const duration = moment.duration(this.quizExercise.duration, 'seconds');
         this.duration.minutes = 60 * duration.hours() + duration.minutes();
         this.duration.seconds = duration.seconds();
     }
 
     /**
-     * Navigate back
+     * @function cancel
+     * @desc Navigate back
      */
-    cancel() {
+    cancel(): void {
         this.router.navigate(['/course', this.quizExercise.course.id, 'quiz-exercise']);
     }
 
     /**
-     * Check if the saved quiz has started
-     *
+     * @function hasSavedQuizStarted
+     * @desc Check if the saved quiz has started
      * @return {boolean} true if the saved quiz has started, otherwise false
      */
-    hasSavedQuizStarted() {
+    hasSavedQuizStarted(): boolean {
         return !!(this.savedEntity && this.savedEntity.isPlannedToStart && moment(this.savedEntity.releaseDate).isBefore(moment()));
     }
 
-    ngOnDestroy() {
+    ngOnDestroy(): void {
         /** Unsubscribe from route params **/
         this.paramSub.unsubscribe();
     }
