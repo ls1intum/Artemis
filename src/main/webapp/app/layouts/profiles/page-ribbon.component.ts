@@ -23,7 +23,7 @@ export class PageRibbonComponent implements OnInit {
                 }
             },
             error => {
-                console.info('Could not retrieve profile information', error);
+                console.debug('Could not retrieve profile information', error);
             }
         );
     }

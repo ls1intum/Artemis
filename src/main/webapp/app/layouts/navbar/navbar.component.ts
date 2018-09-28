@@ -44,7 +44,7 @@ export class NavbarComponent implements OnInit {
                 this.inProduction = profileInfo.inProduction;
             },
             error => {
-                console.info('Could not retrieve profile information', error);
+                console.debug('Could not retrieve profile information', error);
             }
         );
         this.getCurrentAccount();
