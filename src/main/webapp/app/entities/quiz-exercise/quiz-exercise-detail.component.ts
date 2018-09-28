@@ -44,11 +44,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
     showExistingQuestions = false;
     courses: Course[] = [];
-    selectedCourse: string;
+    selectedCourseId: number;
     quizExercises: QuizExercise[];
     allExistingQuestions: Question[];
     existingQuestions: Question[];
     importFile: Blob;
+    importFileName: string;
     searchQueryText: string;
     dndFilterEnabled: boolean;
     mcqFilterEnabled: boolean;
@@ -83,16 +84,19 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.allExistingQuestions = [];
         this.existingQuestions = [];
         this.importFile = null;
+        this.importFileName = '';
         this.searchQueryText = '';
         this.dndFilterEnabled = true;
         this.mcqFilterEnabled = true;
 
         this.paramSub = this.route.params.subscribe(params => {
             /** Query the courseService for the participationId given by the params */
-            this.courseService.find(params['courseId']).subscribe((response: HttpResponse<Course>) => {
-                this.course = response.body;
-                this.init();
-            });
+            if (params['courseId']) {
+                this.courseService.find(params['courseId']).subscribe((response: HttpResponse<Course>) => {
+                    this.course = response.body;
+                    this.init();
+                });
+            }
             if (params['id']) {
                 this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
                     this.quizExercise = response.body;
@@ -200,7 +204,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * Toggles existing questions view
      */
     showHideExistingQuestions() {
-        if (typeof this.quizExercise === 'undefined') {
+        if (this.quizExercise == null) {
             this.quizExercise = this.entity;
         }
 
@@ -218,12 +222,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      */
     onCourseSelect() {
         this.allExistingQuestions = [];
-        if (this.selectedCourse === null) {
+        if (this.selectedCourseId == null) {
             return;
         }
-        const course = JSON.parse(this.selectedCourse) as Course;
+
+        /** Search the selected course by id in all available courses **/
+        const selectedCourse = this.courses.find(course => course.id === Number(this.selectedCourseId));
+
         // For the given course, get list of all quiz exercises. And for all quiz exercises, get list of all questions in a quiz exercise,
-        this.repository.findForCourse(course.id).subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
+        this.repository.findForCourse(selectedCourse.id).subscribe((quizExercisesResponse: HttpResponse<QuizExercise[]>) => {
             if (quizExercisesResponse.body) {
                 const quizExercises = quizExercisesResponse.body;
                 for (const quizExercise of quizExercises) {
@@ -266,6 +273,18 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     /**
+     * Assigns the uploaded import file
+     * @param $event object containing the uploaded file
+     */
+    setImportFile($event: any) {
+        if ($event.target.files.length) {
+            const fileList: FileList = $event.target.files;
+            this.importFile = fileList[0];
+            this.importFileName = this.importFile['name'];
+        }
+    }
+
+    /**
      * Adds selected quizzes to current quiz exercise
      */
     addExistingQuestions() {
@@ -292,7 +311,6 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      */
     onQuestionUpdated() {
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
-        console.log('onQuestionUpdated', this.quizExercise.questions);
     }
 
     /**

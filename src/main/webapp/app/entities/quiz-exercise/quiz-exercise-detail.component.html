@@ -122,6 +122,92 @@
                     jhiTranslate="arTeMiSApp.quizExercise.addExistingQuestions">
             </button>
         </div>
+        <div class="form-group" *ngIf="showExistingQuestions">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <tbody>
+                        <tr>
+                            <td width="30%">
+                                <span jhiTranslate="arTeMiSApp.quizExercise.selectCourse"></span>
+                            </td>
+                            <td colspan="3" width="70%">
+                                <select [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="min-width:100%;">
+                                    <option *ngFor="let course of courses" [value]="course.id">{{course.title}}</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr *ngIf="allExistingQuestions.length !== 0">
+                            <td>
+                                <input class="form-control" [(ngModel)]="searchQueryText" placeholder="Search Query" />
+                            </td>
+                            <td class="checkbox">
+                                <label>
+                                    <input type="checkbox" [(ngModel)]="dndFilterEnabled" />
+                                    <span jhiTranslate="arTeMiSApp.quizExercise.filter.dnd" class="colon-suffix" ></span>
+                                </label>
+                            </td>
+                            <td class="checkbox">
+                                <label>
+                                    <input type="checkbox" [(ngModel)]="mcqFilterEnabled" />
+                                    <span jhiTranslate="arTeMiSApp.quizExercise.filter.mcq" class="colon-suffix" ></span>
+                                </label>
+                            </td>
+                            <td align="right">
+                                <button class="btn btn-light" (click)="applyFilter()" jhiTranslate="arTeMiSApp.quizExercise.filter.applyFilter" >eq</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-responsive" *ngIf="existingQuestions.length !== 0">
+                <table class="table table-striped">
+                    <thead>
+                    <tr>
+                        <th width="50%">
+                            <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Question Title</span>
+                        </th>
+                        <th width="25%">
+                            <span jhiTranslate="arTeMiSApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
+                        </th>
+                        <th width="20%">
+                            <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
+                        </th>
+                        <th width="5%">
+                            <span jhiTranslate="entity.action.add">Add</span>
+                        </th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let question of existingQuestions">
+                            <td width="50%">{{question.title}}</td>
+                            <td width="25%">{{question.exercise.title}}</td>
+                            <td width="20%">{{question.type}}</td>
+                            <td width="5%" class="checkbox">
+                                <input type="checkbox" [(ngModel)]="question.exportQuiz"/>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <button class="btn btn-light" (click)="addExistingQuestions()"
+                    *ngIf="existingQuestions.length !== 0"
+                    jhiTranslate="arTeMiSApp.quizExercise.addSelectedQuestions">
+            </button>
+        </div>
+        <hr/>
+        <div class="input-group" style="width: 40%;">
+            <div class="custom-file">
+                <input id="importFileInput" type="file" accept=".json" class="custom-file-input" (change)="setImportFile($event)" placeholder="Upload file..." />
+                <label class="custom-file-label" for="importFileInput">{{importFileName}}</label>
+            </div>
+            <div class="input-group-append">
+                <button
+                    class="btn btn-outline-primary"
+                    (click)="importQuiz()"
+                    jhiTranslate="entity.action.import" [ngClass]="{disabled: !importFile}">
+                </button>
+            </div>
+        </div>
     </div>
     <div class="edit-quiz-footer">
         <div class="container">
