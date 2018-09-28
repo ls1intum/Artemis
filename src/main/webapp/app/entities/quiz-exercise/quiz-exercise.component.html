@@ -42,7 +42,7 @@
             <tbody>
             <tr *ngFor="let quizExercise of quizExercises | sortBy: predicate: reverse ;trackBy: trackId">
                 <td *ngIf="!quizIsOver(quizExercise) || !userIsInstructor()">
-                    <a [routerLink]="['/quiz-exercise', quizExercise.id ]">{{quizExercise.id}}</a>
+                    <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 'edit', quizExercise.id ]">{{quizExercise.id}}</a>
                 </td>
                 <td *ngIf="quizIsOver(quizExercise) && userIsInstructor()">
                     <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]">{{quizExercise.id}}</a>
