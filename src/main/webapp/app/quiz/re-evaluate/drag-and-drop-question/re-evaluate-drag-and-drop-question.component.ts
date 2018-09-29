@@ -29,13 +29,13 @@ export class ReEvaluateDragAndDropQuestionComponent {
     questionIndex: number;
 
     @Output()
-    questionUpdated = new EventEmitter<object>();
+    questionUpdated = new EventEmitter();
     @Output()
-    questionDeleted = new EventEmitter<object>();
+    questionDeleted = new EventEmitter();
     @Output()
-    questionMoveUp = new EventEmitter<object>();
+    questionMoveUp = new EventEmitter();
     @Output()
-    questionMoveDown = new EventEmitter<object>();
+    questionMoveDown = new EventEmitter();
 
     constructor() {}
 }
