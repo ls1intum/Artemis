@@ -22,6 +22,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     private subscription: Subscription;
 
     quizExercise: QuizExercise;
+    quizExerciseQuestion: Question[];
     modalService: NgbModal;
     popupService: QuizExercisePopupService;
     router: Router;
@@ -73,53 +74,63 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * Remove question from the quiz
+     * @function deleteQuestion
+     * @desc Remove question from the quiz
      * @param questionToBeDeleted {Question} the question to remove
      */
-    deleteQuestion(questionToBeDeleted: Question) {
+    deleteQuestion(questionToBeDeleted: Question): void {
         this.quizExercise.questions = this.quizExercise.questions.filter(question => question !== questionToBeDeleted);
     }
 
     /**
-     * Handles the change of a question by replacing the array with a copy
+     * @function onQuestionUpdated
+     * @desc Handles the change of a question by replacing the array with a copy
      *                                      (allows for shallow comparison)
      */
-    onQuestionUpdated() {
+    onQuestionUpdated(): void {
         this.quizExercise.questions = Array.from(this.quizExercise.questions);
     }
 
     /**
-     * Determine if there are any changes waiting to be saved
+     * @function pendingChanges
+     * @desc Determine if there are any changes waiting to be saved
      * @returns {boolean} true if there are any pending changes, false otherwise
      */
-    pendingChanges() {
+    pendingChanges(): boolean {
         return JSON.stringify(this.quizExercise).toLowerCase() !== JSON.stringify(this.backupQuiz).toLowerCase();
     }
 
     /**
-     * Check if the current inputs are valid
+     * @function
+     * @desc Check if the current inputs are valid
      * @returns {boolean} true if valid, false otherwise
      */
-    validQuiz() {
-        return this.quizExercise && this.quizExercise.title && this.quizExercise.title !== '' && this.quizExercise.duration;
+    validQuiz(): boolean {
+        return !!this.quizExercise && !!this.quizExercise.title && this.quizExercise.title !== '' && !!this.quizExercise.duration;
     }
 
     /**
-     * Open Warning-Modal
+     * @function save
+     * @desc Open Warning-Modal
      *  -> if confirmed: send changed quiz to server (in Modal-controller)
      *                              and go back to parent-template
      *  -> if canceled: close Modal
      */
-    save() {
+    save(): void {
         this.popupService.open(QuizReEvaluateWarningComponent as Component, this.quizExercise);
     }
 
-    back() {
+    /**
+     * @function back
+     * @desc Navigate back to course
+     */
+    back(): void {
         this.router.navigate(['/course', this.quizExercise.course.id, 'quiz-exercise']);
     }
 
     /**
-     * Makes sure the quizExercise is well formed and its fields are of the correct types
+     * @function prepareEntity
+     * @desc Makes sure the quizExercise is well formed and its fields are of the correct types
      * @param quizExercise
      */
     prepareEntity(quizExercise: QuizExercise) {
@@ -129,28 +140,31 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * Reach to changes of duration inputs by updating model and ui
+     * @function onDurationChange
+     * @desc Reach to changes of duration inputs by updating model and ui
      */
-    onDurationChange() {
+    onDurationChange(): void {
         const duration = moment.duration(this.duration);
         this.quizExercise.duration = Math.min(Math.max(duration.asSeconds(), 0), 10 * 60 * 60);
         this.updateDuration();
     }
 
     /**
-     * update ui to current value of duration
+     * @function updateDuration
+     * @desc Update ui to current value of duration
      */
-    updateDuration() {
+    updateDuration(): void {
         const duration = moment.duration(this.quizExercise.duration, 'seconds');
         this.duration.minutes = 60 * duration.hours() + duration.minutes();
         this.duration.seconds = duration.seconds();
     }
 
     /**
-     * Gives the duration time in a String with this format: <minutes>:<seconds>
-     *@returns {String} the duration as String
+     * @function durationString
+     * @desc Gives the duration time in a String with this format: <minutes>:<seconds>
+     * @returns {String} the duration as String
      */
-    durationString() {
+    durationString(): string {
         if (this.duration.seconds <= 0) {
             return this.duration.minutes + ':00';
         }
@@ -161,14 +175,16 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     /**
-     * Resets the whole Quiz
+     * @function resetAll
+     * @desc Resets the whole Quiz
      */
-    resetAll() {
+    resetAll(): void {
         this.quizExercise = Object.assign({}, this.backupQuiz);
     }
 
     /**
-     * Resets the quiz title
+     * @function resetQuizTitle
+     * @desc Resets the quiz title
      */
     resetQuizTitle() {
         this.quizExercise.title = this.backupQuiz.title;
@@ -179,16 +195,19 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Move the question one position up
      * @param question {Question} the question to move
      */
-    moveUp(question: Question) {
+    moveUp(question: Question): void {
         const index = this.quizExercise.questions.indexOf(question);
         if (index === 0) {
             return;
         }
-        const tempQuestions = Object.assign({}, this.quizExercise.questions);
-        const temp = tempQuestions[index];
-        tempQuestions[index] = tempQuestions[index - 1];
-        tempQuestions[index - 1] = temp;
-        this.quizExercise.questions = tempQuestions;
+        const questionToMove: Question = Object.assign({}, this.quizExercise.questions[index]);
+        /**
+         * The splice() method adds/removes items to/from an array, and returns the removed item(s).
+         * We create a copy of the question we want to move and remove it from the questions array.
+         * Then we reinsert it at index - 1 => move up by 1 position
+         */
+        this.quizExercise.questions.splice(index, 1);
+        this.quizExercise.questions.splice(index - 1, 0, questionToMove);
     }
 
     /**
@@ -196,16 +215,19 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Move the question one position down
      * @param question {Question} the question to move
      */
-    moveDown(question: Question) {
+    moveDown(question: Question): void {
         const index = this.quizExercise.questions.indexOf(question);
         if (index === this.quizExercise.questions.length - 1) {
             return;
         }
-        const tempQuestions = Object.assign({}, this.quizExercise.questions);
-        const temp = tempQuestions[index];
-        tempQuestions[index] = tempQuestions[index + 1];
-        tempQuestions[index + 1] = temp;
-        this.quizExercise.questions = tempQuestions;
+        const questionToMove: Question = Object.assign({}, this.quizExercise.questions[index]);
+        /**
+         * The splice() method adds/removes items to/from an array, and returns the removed item(s).
+         * We create a copy of the question we want to move and remove it from the questions array.
+         * Then we reinsert it at index + 1 => move down by 1 position
+         */
+        this.quizExercise.questions.splice(index, 1);
+        this.quizExercise.questions.splice(index + 1, 0, questionToMove);
     }
 
     ngOnDestroy(): void {
