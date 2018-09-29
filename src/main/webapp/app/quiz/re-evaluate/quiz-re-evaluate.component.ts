@@ -53,7 +53,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
             this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body;
                 this.prepareEntity(this.quizExercise);
-                this.backupQuiz = Object.assign({}, this.quizExercise);
+                this.backupQuiz = JSON.parse(JSON.stringify(this.quizExercise));
             });
         });
 
@@ -69,7 +69,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.quizExercise && changes.quizExercise.currentValue != null) {
             this.prepareEntity(this.quizExercise);
-            this.backupQuiz = Object.assign({}, this.quizExercise);
+            this.backupQuiz = JSON.parse(JSON.stringify(this.quizExercise));
         }
     }
 
@@ -179,7 +179,7 @@ export class QuizReEvaluateComponent implements OnInit, OnChanges, OnDestroy {
      * @desc Resets the whole Quiz
      */
     resetAll(): void {
-        this.quizExercise = Object.assign({}, this.backupQuiz);
+        this.quizExercise = JSON.parse(JSON.stringify(this.backupQuiz));
     }
 
     /**

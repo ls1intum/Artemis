@@ -74,6 +74,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @desc Setup Question text editor
      */
     setupQuestionEditor() {
+        // Default editor settings for inline markup editor
         this.questionEditor.setTheme('chrome');
         this.questionEditor.getEditor().renderer.setShowGutter(false);
         this.questionEditor.getEditor().renderer.setPadding(10);
@@ -83,9 +84,11 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
         this.questionEditor.getEditor().clearSelection();
 
+        // Register the onBlur listener
         this.questionEditor.getEditor().on(
             'blur',
             () => {
+                // Parse the markdown in the editor and update question accordingly
                 this.parseQuestionMarkdown(this.questionEditorText);
                 this.questionUpdated.emit();
             },
@@ -243,12 +246,13 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
      * @desc Resets the whole question
      */
     resetQuestion() {
-        this.question.title = this.backupQuestion.title;
+        this.resetQuestionTitle();
         this.question.invalid = this.backupQuestion.invalid;
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question.scoringType = this.backupQuestion.scoringType;
-        this.question.answerOptions = Object.assign({}, this.backupQuestion.answerOptions);
-        this.question.answerOptions.forEach(answer => this.resetAnswer(answer));
+        this.question.answerOptions = JSON.parse(JSON.stringify(this.backupQuestion.answerOptions));
+        // Reset answer editors
+        this.setupAnswerEditors();
         this.resetQuestionText();
     }
 
@@ -260,13 +264,11 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     resetAnswer(answer: AnswerOption) {
         // Find correct answer if they have another order
         const backupAnswer = this.backupQuestion.answerOptions.find(answerBackup => answer.id === answerBackup.id);
-
-        // Reset answer in question
-        this.question.answerOptions[this.question.answerOptions.indexOf(answer)] = Object.assign({}, backupAnswer);
-        answer = Object.assign({}, backupAnswer);
-
-        // Reset answer editors
-        this.setupAnswerEditors();
+        // Find current index of our AnswerOption
+        const answerIndex = this.question.answerOptions.indexOf(answer);
+        // Remove current answerOption at given index and insert the backup at the same position
+        this.question.answerOptions.splice(answerIndex, 1);
+        this.question.answerOptions.splice(answerIndex, 0, backupAnswer);
     }
 
     /**

@@ -129,7 +129,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         this.prepareEntity(this.entity);
         this.prepareDateTime();
-        this.savedEntity = this.entity.id ? Object.assign({}, this.entity) : new QuizExercise();
+        this.savedEntity = this.entity.id ? JSON.parse(JSON.stringify(this.entity)) : new QuizExercise();
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
         }
@@ -593,7 +593,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     onSaveSuccess(quizExercise: QuizExercise): void {
         this.isSaving = false;
         this.prepareEntity(quizExercise);
-        this.savedEntity = Object.assign({}, quizExercise);
+        this.savedEntity = JSON.parse(JSON.stringify(quizExercise));
         this.quizExercise = quizExercise;
     }
 

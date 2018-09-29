@@ -98,7 +98,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
 
     ngOnInit(): void {
         /** Create question backup for resets **/
-        this.backupQuestion = Object.assign({}, this.question);
+        this.backupQuestion = JSON.parse(JSON.stringify(this.question));
 
         /** Assign status booleans **/
         this.showPreview = false;
@@ -120,6 +120,10 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         if (changes.question && changes.question.previousValue != null) {
             this.questionUpdated.emit();
         }
+        /** Update backupQuestion if the question changed **/
+        if (changes.question && changes.question.currentValue != null) {
+            this.backupQuestion = JSON.parse(JSON.stringify(this.question));
+        }
     }
 
     /**
@@ -135,6 +139,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      * @desc Set up Question text editor
      */
     setupQuestionEditor(): void {
+        // Default editor settings for inline markup editor
         this.questionEditor.setTheme('chrome');
         this.questionEditor.getEditor().renderer.setShowGutter(false);
         this.questionEditor.getEditor().renderer.setPadding(10);
@@ -146,6 +151,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         this.questionEditorText = this.artemisMarkdown.generateTextHintExplanation(this.question);
         this.questionEditor.getEditor().clearSelection();
 
+        // Register the onBlur listener
         this.questionEditor.getEditor().on(
             'blur',
             () => {
@@ -230,7 +236,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     mouseMove(e: any): void {
         // Update mouse x and y value
         const event: MouseEvent = e || window.event; // Moz || IE
-        const backgroundElement = this.clickLayer.nativeElement;
         const jQueryBackgroundElement = $('.click-layer');
         const jQueryBackgroundOffset = jQueryBackgroundElement.offset();
         const backgroundWidth = jQueryBackgroundElement.width();
@@ -772,9 +777,9 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         this.question.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.question.scoringType = this.backupQuestion.scoringType;
         this.resetBackground();
-        this.question.dropLocations = this.backupQuestion.dropLocations;
-        this.question.dragItems = this.backupQuestion.dragItems;
-        this.question.correctMappings = this.backupQuestion.correctMappings;
+        this.question.dropLocations = JSON.parse(JSON.stringify(this.backupQuestion.dropLocations));
+        this.question.dragItems = JSON.parse(JSON.stringify(this.backupQuestion.dragItems));
+        this.question.correctMappings = JSON.parse(JSON.stringify(this.backupQuestion.correctMappings));
         this.resetQuestionText();
     }
 
@@ -794,13 +799,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      * @param dropLocation {dropLocation} the dropLocation, which will be reset
      */
     resetDropLocation(dropLocation: DropLocation): void {
-        for (const backupDropLocation of this.backupQuestion.dropLocations) {
-            if (backupDropLocation.id === dropLocation.id) {
-                // Find correct answer if they have another order
-                this.question.dropLocations[this.question.dropLocations.indexOf(dropLocation)] = backupDropLocation;
-                dropLocation = backupDropLocation;
-            }
-        }
+        // Find matching DropLocation in backupQuestion
+        const backupDropLocation = this.backupQuestion.dropLocations.find(currentDL => currentDL.id === dropLocation.id);
+        // Find current index of our DropLocation
+        const dropLocationIndex = this.question.dropLocations.indexOf(dropLocation);
+        // Remove current DropLocation at given index and insert the backup at the same position
+        this.question.dropLocations.splice(dropLocationIndex, 1);
+        this.question.dropLocations.splice(dropLocationIndex, 0, backupDropLocation);
     }
 
     /**
@@ -809,13 +814,13 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      * @param dragItem {dragItem} the dragItem, which will be reset
      */
     resetDragItem(dragItem: DragItem): void {
-        for (const backupDragItem of this.backupQuestion.dragItems) {
-            if (backupDragItem.id === dragItem.id) {
-                // Find correct answer if they have another order
-                this.question.dragItems[this.question.dragItems.indexOf(dragItem)] = backupDragItem;
-                dragItem = backupDragItem;
-            }
-        }
+        // Find matching DragItem in backupQuestion
+        const backupDragItem = this.backupQuestion.dragItems.find(currentDI => currentDI.id === dragItem.id);
+        // Find current index of our DragItem
+        const dragItemIndex = this.question.dragItems.indexOf(dragItem);
+        // Remove current DragItem at given index and insert the backup at the same position
+        this.question.dragItems.splice(dragItemIndex, 1);
+        this.question.dragItems.splice(dragItemIndex, 0, backupDragItem);
     }
 
     /**

@@ -61,7 +61,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * @function setupQuestionEditor
      * @desc Initializes the ace editor for the mc question
      */
-    setupQuestionEditor() {
+    setupQuestionEditor(): void {
         this.questionEditor.setTheme('chrome');
         this.questionEditor.getEditor().renderer.setShowGutter(false);
         this.questionEditor.getEditor().renderer.setPadding(10);
@@ -88,7 +88,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * 2. After an empty line, the answer options are added
      * 3. For each answer option: text, hint and explanation are added using ArtemisMarkdown
      */
-    generateMarkdown() {
+    generateMarkdown(): string {
         const markdownText =
             this.artemisMarkdown.generateTextHintExplanation(this.question) +
             '\n\n' +
@@ -116,7 +116,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      *
      * Note: Existing IDs for answer options are reused in the original order.
      */
-    parseMarkdown(text: string) {
+    parseMarkdown(text: string): void {
         // First split by [], [ ], [x] and [X]
         const questionParts = text.split(/\[\]|\[ \]|\[x\]|\[X\]/g);
         const questionText = questionParts[0];
@@ -161,7 +161,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * @desc Adds the markdown for a correct or incorrect answerOption at the end of the current markdown text
      * @param mode {boolean} mode true sets the text for an correct answerOption, false for an incorrect one
      */
-    addAnswerOptionTextToEditor(mode: boolean) {
+    addAnswerOptionTextToEditor(mode: boolean): void {
         const textToAdd = mode ? '\n[x] Enter a correct answer option here' : '\n[ ] Enter an incorrect answer option here';
         this.questionEditor.getEditor().focus();
         this.questionEditor.getEditor().clearSelection();
@@ -178,7 +178,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * @function addHintAtCursor
      * @desc Adds the markdown for a hint at the current cursor location
      */
-    addHintAtCursor() {
+    addHintAtCursor(): void {
         this.artemisMarkdown.addHintAtCursor(this.questionEditor.getEditor());
     }
 
@@ -186,7 +186,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * @function addExplanationAtCursor
      * @desc Adds the markdown for an explanation at the current cursor location
      */
-    addExplanationAtCursor() {
+    addExplanationAtCursor(): void {
         this.artemisMarkdown.addExplanationAtCursor(this.questionEditor.getEditor());
     }
 
@@ -194,7 +194,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * @function togglePreview
      * @desc Toggles the preview in the template
      */
-    togglePreview() {
+    togglePreview(): void {
         this.showPreview = !this.showPreview;
     }
 
@@ -202,7 +202,7 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
      * @function deleteQuestion
      * @desc Delete this question from the quiz
      */
-    deleteQuestion() {
+    deleteQuestion(): void {
         this.questionDeleted.emit();
     }
 }
