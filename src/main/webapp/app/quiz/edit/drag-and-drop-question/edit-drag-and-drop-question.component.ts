@@ -17,7 +17,6 @@ import { FileUploaderService } from '../../../shared/http/file-uploader.service'
 import { DropLocation } from '../../../entities/drop-location';
 import { DragItem } from '../../../entities/drag-item';
 import { DragAndDropMapping } from '../../../entities/drag-and-drop-mapping';
-import { Option } from '../../../entities/quiz-exercise/quiz-exercise-interfaces';
 import { DragAndDropMouseEvent } from '../../../entities/drag-item/drag-and-drop-mouse-event.class';
 import { DragState } from '../../../entities/drag-item/drag-state.enum';
 import { AceEditorComponent } from 'ng2-ace-editor';
@@ -87,8 +86,6 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      * @type {DragAndDropMouseEvent}
      */
     mouse: DragAndDropMouseEvent;
-
-    scoringTypeOptions: Option[] = [new Option('0', 'All or Nothing'), new Option('1', 'Proportional with Penalty')];
 
     constructor(
         private artemisMarkdown: ArtemisMarkdown,

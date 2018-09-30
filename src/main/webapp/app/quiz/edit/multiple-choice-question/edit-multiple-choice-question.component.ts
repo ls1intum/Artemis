@@ -2,7 +2,6 @@ import { Component, Input, Output, OnInit, AfterViewInit, EventEmitter, ViewChil
 import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-question';
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
-import { Option } from '../../../entities/quiz-exercise/quiz-exercise-interfaces';
 import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/chrome';
 import 'brace/mode/markdown';
@@ -32,7 +31,6 @@ export class EditMultipleChoiceQuestionComponent implements OnInit, OnChanges, A
     questionEditorAutoUpdate = true;
 
     showPreview: boolean;
-    scoringTypeOptions: Option[] = [new Option('0', 'All or Nothing'), new Option('1', 'Proportional with Penalty')];
 
     constructor(private artemisMarkdown: ArtemisMarkdown) {}
 

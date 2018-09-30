@@ -15,7 +15,6 @@ import { MultipleChoiceQuestion } from '../../../entities/multiple-choice-questi
 import { AnswerOption } from '../../../entities/answer-option';
 import { ArtemisMarkdown } from '../../../components/util/markdown.service';
 import { AceEditorComponent } from 'ng2-ace-editor';
-import { Option } from 'app/entities/quiz-exercise';
 
 @Component({
     selector: 'jhi-re-evaluate-multiple-choice-question',
@@ -47,8 +46,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit, AfterV
     questionEditorText = '';
     editorMode = 'markdown';
     editorAutoUpdate = true;
-
-    scoringTypeOptions: Option[] = [new Option('0', 'All or Nothing'), new Option('1', 'Proportional with Penalty')];
 
     // Create Backup Question for resets
     backupQuestion: MultipleChoiceQuestion;

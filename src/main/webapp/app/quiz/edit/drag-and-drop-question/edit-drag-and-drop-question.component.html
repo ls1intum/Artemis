@@ -42,9 +42,8 @@
         <div class="form-group">
             <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
             <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
-                <option *ngFor="let option of scoringTypeOptions" [value]="option.key">
-                    {{option.label}}
-                </option>
+                <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
+                <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
             </select>
         </div>
         <div class="form-group">
