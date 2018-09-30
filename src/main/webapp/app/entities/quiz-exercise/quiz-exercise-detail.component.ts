@@ -95,12 +95,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             if (params['courseId']) {
                 this.courseService.find(params['courseId']).subscribe((response: HttpResponse<Course>) => {
                     this.course = response.body;
-                    this.init();
                 });
             }
             if (params['id']) {
                 this.quizExerciseService.find(params['id']).subscribe((response: HttpResponse<QuizExercise>) => {
                     this.quizExercise = response.body;
+                    this.init();
                 });
             }
         });
@@ -129,6 +129,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         }
         this.prepareEntity(this.entity);
         this.prepareDateTime();
+        // Assign savedEntity to identify local changes
         this.savedEntity = this.entity.id ? JSON.parse(JSON.stringify(this.entity)) : new QuizExercise();
         if (!this.quizExercise.course) {
             this.quizExercise.course = this.course;
@@ -137,7 +138,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     }
 
     ngOnChanges(changes: SimpleChanges): void {
-        if (changes.course) {
+        if (changes.course || changes.quizExercise) {
             this.init();
         }
     }
@@ -199,7 +200,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         const dndQuestion = new DragAndDropQuestion();
         dndQuestion.title = '';
         dndQuestion.text = 'Enter your question text here';
-        dndQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS; // explicit default value for drag and drop questions
+        dndQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // explicit default value for drag and drop questions
         dndQuestion.randomizeOrder = true;
         dndQuestion.score = 1;
         dndQuestion.dropLocations = [];
@@ -341,9 +342,24 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        return ['title', 'duration', 'isPlannedToStart', 'releaseDate', 'isVisibleBeforeStart', 'isOpenForPractice', 'questions'].some(
-            key => this.quizExercise[key] !== this.savedEntity[key]
+        const keysToCompare = ['title', 'duration', 'isPlannedToStart', 'releaseDate', 'isVisibleBeforeStart', 'isOpenForPractice'];
+
+        // Unsaved changes if any of the stated object key values are not equal or the questions differ
+        return (
+            keysToCompare.some(key => this.quizExercise[key] !== this.savedEntity[key]) ||
+            !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.questions, this.savedEntity.questions)
         );
+    }
+
+    /**
+     * @function areQuizExerciseEntityQuestionsIdentical
+     * @desc Compares the provided question array objects
+     * @param QA1 {Question[]} First question array to compare
+     * @param QA2 {Question[]} Second question array to compare against
+     * @return {boolean} true if the provided Question[] objects are identical, false otherwise
+     */
+    areQuizExerciseEntityQuestionsIdentical(QA1: Question[], QA2: Question[]): boolean {
+        return JSON.stringify(QA1).toLowerCase() === JSON.stringify(QA2).toLowerCase();
     }
 
     /**
