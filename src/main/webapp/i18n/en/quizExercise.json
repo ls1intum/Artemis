@@ -135,6 +135,10 @@
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
                 "questionUnsolvable": "Question {{index}}: The question cannot be answered correctly without using a drag item twice.",
                 "misleadingCorrectMapping": "Question {{index}}: You have defined at least one correct mapping (or group of correct mappings), that when used, makes it impossible to answer the question correctly."
+            },
+            "scoringType": {
+                "all_or_nothing": "All or Nothing",
+                "proportional_with_penalty": "Proportional with Penalty"
             }
         }
     }
