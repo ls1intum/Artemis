@@ -113,7 +113,7 @@
                   class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
             <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.changeBackgroundPicture"
                   class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
-            <input #backgroundFile type="file" accept="image/*" (change)="setBackgroundFile($event)"/>
+            <input type="file" accept="image/*" (change)="setBackgroundFile($event)"/>
             <button [disabled]="isUploadingBackgroundFile || !backgroundFile" class="btn btn-outline-secondary" (click)="uploadBackground()">
                 <span *ngIf="isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploading"></span>
                 <span *ngIf="!isUploadingBackgroundFile" jhiTranslate="arTeMiSApp.dragAndDropQuestion.upload"></span>
@@ -247,7 +247,7 @@
                       jhiTranslate="arTeMiSApp.dragAndDropQuestion.changeDragItemPicture">
                 </span>
             </button>
-            <input #dragItemFile type="file" accept="image/*" (change)="setDragItemFile($event)"/>
+            <input type="file" accept="image/*" (change)="setDragItemFile($event)"/>
         </div>
     </div>
     <ng-container *ngIf="!reEvaluationInProgress">
