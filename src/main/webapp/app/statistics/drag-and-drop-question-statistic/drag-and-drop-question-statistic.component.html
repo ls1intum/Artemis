@@ -44,7 +44,7 @@
                     <p>&nbsp;</p>
                 </div>
                 <div class="drag-and-drop-statistic-picture">
-                    <jhi-secured-image [src]="question.backgroundFilePath"></jhi-secured-image>
+                    <jhi-secured-image *ngIf="question.backgroundFilePath" [src]="question.backgroundFilePath"></jhi-secured-image>
 
                     <div class="click-layer">
                         <div *ngIf="!showSolution">
