@@ -95,6 +95,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
             if (params['courseId']) {
                 this.courseService.find(params['courseId']).subscribe((response: HttpResponse<Course>) => {
                     this.course = response.body;
+                    // Make sure to call init if we didn't receive an id => new quiz-exercise
+                    if (!params['id']) {
+                        this.init();
+                    }
                 });
             }
             if (params['id']) {
@@ -342,11 +346,12 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (!this.quizExercise || !this.savedEntity) {
             return false;
         }
-        const keysToCompare = ['title', 'duration', 'isPlannedToStart', 'releaseDate', 'isVisibleBeforeStart', 'isOpenForPractice'];
+        const keysToCompare = ['title', 'duration', 'isPlannedToStart', 'isVisibleBeforeStart', 'isOpenForPractice'];
 
-        // Unsaved changes if any of the stated object key values are not equal or the questions differ
+        // Unsaved changes if any of the stated object key values are not equal or the questions/release dates differ
         return (
             keysToCompare.some(key => this.quizExercise[key] !== this.savedEntity[key]) ||
+            !this.areDatesIdentical(this.quizExercise.releaseDate, this.savedEntity.releaseDate) ||
             !this.areQuizExerciseEntityQuestionsIdentical(this.quizExercise.questions, this.savedEntity.questions)
         );
     }
@@ -360,6 +365,19 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      */
     areQuizExerciseEntityQuestionsIdentical(QA1: Question[], QA2: Question[]): boolean {
         return JSON.stringify(QA1).toLowerCase() === JSON.stringify(QA2).toLowerCase();
+    }
+
+    /**
+     * @function areDatesIdentical
+     * @desc This function compares the provided dates with help of the moment library
+     * Since we might be receiving an string instead of a moment object (e.g. when receiving it from the backend)
+     * we wrap both dates in a moment object. If it's already a moment object, this will just be ignored.
+     * @param date1 {string|Moment} First date to compare
+     * @param date2 {string|Moment} Second date to compare to
+     * @return {boolean} True if the dates are identical, false otherwise
+     */
+    areDatesIdentical(date1: string | Moment, date2: string | Moment): boolean {
+        return moment(date1).isSame(moment(date2));
     }
 
     /**
@@ -628,7 +646,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @param quizExercise {QuizExercise} exercise which will be prepared
      */
     prepareEntity(quizExercise: QuizExercise): void {
-        quizExercise.releaseDate = quizExercise.releaseDate ? quizExercise.releaseDate : moment();
+        quizExercise.releaseDate = quizExercise.releaseDate ? moment(quizExercise.releaseDate) : moment();
         quizExercise.duration = Number(quizExercise.duration);
         quizExercise.duration = isNaN(quizExercise.duration) ? 10 : quizExercise.duration;
     }
@@ -638,7 +656,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      * @desc Prepares the date and time model
      */
     prepareDateTime(): void {
-        this.dateTime = this.quizExercise.releaseDate;
+        this.dateTime = moment(this.quizExercise.releaseDate);
     }
 
     /**
