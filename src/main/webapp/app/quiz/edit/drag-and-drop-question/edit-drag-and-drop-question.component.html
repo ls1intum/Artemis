@@ -130,7 +130,11 @@
         <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.drawOnBackgroundInstructions"></span>
     </div>
     <div class="background-area">
-        <jhi-secured-image [src]="question.backgroundFilePath" [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate"></jhi-secured-image>
+        <jhi-secured-image
+            *ngIf="question.backgroundFilePath"
+            [src]="question.backgroundFilePath"
+            [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate">
+        </jhi-secured-image>
         <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{'disabled': !question.backgroundFilePath}">
             <div
                 class="drop-location"
