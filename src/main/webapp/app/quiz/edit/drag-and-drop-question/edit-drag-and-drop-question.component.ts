@@ -233,7 +233,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
     mouseMove(e: any): void {
         // Update mouse x and y value
         const event: MouseEvent = e || window.event; // Moz || IE
-        const jQueryBackgroundElement = $('.click-layer');
+        const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
         const jQueryBackgroundOffset = jQueryBackgroundElement.offset();
         const backgroundWidth = jQueryBackgroundElement.width();
         const backgroundHeight = jQueryBackgroundElement.height();
@@ -296,7 +296,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
         if (this.draggingState !== DragState.NONE) {
             switch (this.draggingState) {
                 case DragState.CREATE:
-                    const jQueryBackgroundElement = $('.click-layer');
+                    const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
                     const backgroundWidth = jQueryBackgroundElement.width();
                     const backgroundHeight = jQueryBackgroundElement.height();
                     if (
@@ -360,7 +360,7 @@ export class EditDragAndDropQuestionComponent implements OnInit, OnChanges, Afte
      */
     dropLocationMouseDown(dropLocation: DropLocation): void {
         if (this.draggingState === DragState.NONE) {
-            const jQueryBackgroundElement = $('.click-layer');
+            const jQueryBackgroundElement = $('.click-layer-question-' + this.questionIndex);
             const backgroundWidth = jQueryBackgroundElement.width();
             const backgroundHeight = jQueryBackgroundElement.height();
 

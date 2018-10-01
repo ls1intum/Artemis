@@ -135,7 +135,7 @@
             [src]="question.backgroundFilePath"
             [alt]="'arTeMiSApp.dragAndDropQuestion.noBackgroundPicture' | translate">
         </jhi-secured-image>
-        <div #clickLayer class="click-layer" (mousedown)="backgroundMouseDown()" [ngClass]="{'disabled': !question.backgroundFilePath}">
+        <div #clickLayer class="click-layer click-layer-question-{{questionIndex}}" (mousedown)="backgroundMouseDown()" [ngClass]="{'disabled': !question.backgroundFilePath}">
             <div
                 class="drop-location"
                 *ngFor="let dropLocation of question.dropLocations"
