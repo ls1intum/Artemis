@@ -72,7 +72,7 @@
                         <div class="input-group">
                             <input class="form-control" placeholder="yyyy-mm-dd"
                                    [disabled]="!quizExercise.isPlannedToStart"
-                                   name="dp" [(ngModel)]="dateTime"
+                                   name="dp" [(ngModel)]="startDate"
                                    (ngModelChange)="onDateTimeChange()"
                                    ngbDatepicker #d="ngbDatepicker">
                             <button [disabled]="!quizExercise.isPlannedToStart"
@@ -86,9 +86,9 @@
                 </form>
                 <div class="time-picker">
                     <ngb-timepicker
-                        (ngModelChange)="onDateTimeChange()"
+                        (ngModelChange)="onDateTimeChange($event)"
                         [disabled]="!quizExercise.isPlannedToStart"
-                        [(ngModel)]="dateTime">
+                        [(ngModel)]="startTime">
                     </ngb-timepicker>
                 </div>
             </div>

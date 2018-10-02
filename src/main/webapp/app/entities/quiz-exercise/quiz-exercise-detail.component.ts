@@ -16,6 +16,7 @@ import { AnswerOption } from '../../entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
 import * as moment from 'moment';
 import { Moment } from 'moment';
+import { NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 
 interface Reason {
     translateKey: string;
@@ -40,6 +41,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
 
     entity: QuizExercise;
     savedEntity: QuizExercise;
+
+    /** Date and time for Quiz Exercise Start Time **/
+    startDate: Moment;
+    startTime: NgbTimeStruct;
     dateTime: Moment;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
@@ -657,13 +662,28 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
      */
     prepareDateTime(): void {
         this.dateTime = moment(this.quizExercise.releaseDate);
+
+        // Assign start date by also simply wrapping into moment object
+        this.startDate = moment(this.quizExercise.releaseDate);
+        // For the time object (time picker), we have to extract the hour and minute values manually
+        this.startTime = {
+            hour: moment(this.quizExercise.releaseDate).hours(),
+            minute: moment(this.quizExercise.releaseDate).minutes(),
+            second: 0
+        };
     }
 
     /**
      * @function onDateTimeChange
      * @desc Reach to changes of time inputs by updating model and ui
      */
-    onDateTimeChange(): void {
+    onDateTimeChange(newTimeValue?: NgbTimeStruct): void {
+        // We have to explicitly assign the new start time here since it hasn't been updated yet
+        if (newTimeValue != null) {
+            this.startTime = newTimeValue;
+        }
+        // We then set the hours and minutes of our dateTime to the respective time values from our time picker
+        this.dateTime = this.startDate.hours(this.startTime.hour).minutes(this.startTime.minute);
         this.quizExercise.releaseDate = this.dateTime;
     }
 
