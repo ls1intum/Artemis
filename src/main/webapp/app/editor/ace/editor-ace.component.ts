@@ -6,6 +6,7 @@ import { WindowRef } from '../../core/websocket/window.service';
 import { JhiAlertService } from 'ng-jhipster';
 import { JhiWebsocketService } from '../../core';
 import { EditorComponent } from '../editor.component';
+import { AceEditorComponent } from 'ng2-ace-editor';
 import 'brace/theme/dreamweaver';
 
 declare let ace: any;
@@ -17,7 +18,7 @@ declare let ace: any;
 })
 export class EditorAceComponent implements OnInit, AfterViewInit, OnChanges {
     @ViewChild('editor')
-    editor: any; // TODO what is the proper type?
+    editor: AceEditorComponent;
 
     /** Ace Editor Options **/
     editorText = '';

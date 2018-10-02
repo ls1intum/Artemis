@@ -19,15 +19,23 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
     get question() {
         return this._question;
     }
-    @Input() selectedAnswerOptions: AnswerOption[];
-    @Input() clickDisabled: boolean;
-    @Input() showResult: boolean;
-    @Input() questionIndex: number;
-    @Input() score: number;
-    @Input() forceSampleSolution: boolean;
-    @Input() fnOnSelection: any;
+    @Input()
+    selectedAnswerOptions: AnswerOption[];
+    @Input()
+    clickDisabled: boolean;
+    @Input()
+    showResult: boolean;
+    @Input()
+    questionIndex: number;
+    @Input()
+    score: number;
+    @Input()
+    forceSampleSolution: boolean;
+    @Input()
+    fnOnSelection: any;
 
-    @Output() selectedAnswerOptionsChange = new EventEmitter();
+    @Output()
+    selectedAnswerOptionsChange = new EventEmitter();
 
     rendered: MultipleChoiceQuestion;
 
@@ -35,8 +43,7 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
 
     ngOnInit() {}
 
-    ngOnDestroy() {
-    }
+    ngOnDestroy() {}
 
     watchCollection() {
         // update html for text, hint and explanation for the question and every answer option
@@ -67,14 +74,18 @@ export class MultipleChoiceQuestionComponent implements OnInit, OnDestroy {
             this.selectedAnswerOptions.push(answerOption);
         }
         this.selectedAnswerOptionsChange.emit(this.selectedAnswerOptions);
-        // Note: I had to add a timeout of 0ms here, because the model changes are propagated asynchronously,
-        // so we wait for one javascript event cycle before we inform the parent of changes
-        setTimeout( () => { this.fnOnSelection(); }, 0);
+        /** Only execute the onSelection function if we received such input **/
+        if (this.fnOnSelection) {
+            this.fnOnSelection();
+        }
     }
 
     isAnswerOptionSelected(answerOption: AnswerOption) {
-        return !!this.selectedAnswerOptions && this.selectedAnswerOptions.findIndex(function(selected) {
-            return selected.id === answerOption.id;
-        }) !== -1;
+        return (
+            !!this.selectedAnswerOptions &&
+            this.selectedAnswerOptions.findIndex(function(selected) {
+                return selected.id === answerOption.id;
+            }) !== -1
+        );
     }
 }

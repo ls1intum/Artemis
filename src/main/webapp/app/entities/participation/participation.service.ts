@@ -86,7 +86,7 @@ export class ParticipationService {
     convertDateFromClient(participation: Participation): Participation {
         const copy: Participation = Object.assign({}, participation, {
             initializationDate:
-                participation.initializationDate != null && participation.initializationDate.isValid()
+                participation.initializationDate != null && moment(participation.initializationDate).isValid()
                     ? participation.initializationDate.toJSON()
                     : null
         });

@@ -8,7 +8,6 @@ import { AuthServerProvider } from 'app/core/auth/auth-jwt.service';
 
 import * as SockJS from 'sockjs-client';
 import * as Stomp from 'webstomp-client';
-import { NG1WEBSOCKET_SERVICE } from './ng1-websocket.service';
 
 @Injectable({ providedIn: 'root' })
 export class JhiWebsocketService implements OnDestroy {
@@ -31,8 +30,7 @@ export class JhiWebsocketService implements OnDestroy {
         private authServerProvider: AuthServerProvider,
         private $window: WindowRef,
         // tslint:disable-next-line: no-unused-variable
-        private csrfService: CSRFService,
-        @Inject(NG1WEBSOCKET_SERVICE) private ng1JhiWebsocketService: any
+        private csrfService: CSRFService
     ) {}
 
     stompFailureCallback() {
@@ -88,8 +86,6 @@ export class JhiWebsocketService implements OnDestroy {
         this.stompClient.connect(
             headers,
             () => {
-                // chain the connect of angularjs websocket service
-                this.ng1JhiWebsocketService.connect(this.stompClient);
                 this.connectedPromise('success');
                 this.connecting = false;
                 this.connectListeners.forEach(listener => {
@@ -125,7 +121,6 @@ export class JhiWebsocketService implements OnDestroy {
 
     disconnect() {
         this.connection = this.createConnection();
-        this.ng1JhiWebsocketService.disconnect();
         Object.keys(this.myListeners).forEach(listener => this.unsubscribe(listener), this);
         if (this.stompClient) {
             this.stompClient.disconnect();
