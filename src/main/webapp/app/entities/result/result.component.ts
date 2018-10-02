@@ -78,7 +78,7 @@ export class ResultComponent implements OnInit, OnChanges, OnDestroy {
                         this.websocketChannel = `/topic/participation/${this.participation.id}/newResults`;
                         this.jhiWebsocketService.subscribe(this.websocketChannel);
                         this.jhiWebsocketService.receive(this.websocketChannel).subscribe((newResult: Result) => {
-                            //convert json string to moment
+                            // convert json string to moment
                             newResult.completionDate = newResult.completionDate != null ? moment(newResult.completionDate) : null;
                             this.handleNewResult(newResult);
                         });
