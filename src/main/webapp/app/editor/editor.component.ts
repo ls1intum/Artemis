@@ -15,12 +15,6 @@ import * as interact from 'interactjs';
     templateUrl: './editor.component.html',
     providers: [JhiAlertService, CourseService, RepositoryFileService]
 })
-
-/**
- * @class EditorComponent
- * @desc This component acts as a wrapper for the upgraded editor component (directive).
- * The dependencies are passed along to the directive, from there to the legacy component.
- */
 export class EditorComponent implements OnInit, AfterViewInit, OnChanges, OnDestroy {
     /** Dependencies as defined by the Editor component */
     participation: Participation;

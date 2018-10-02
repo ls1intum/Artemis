@@ -162,7 +162,6 @@ repos/
 ######################
 .eslintcache
 /out
-bower_components/
 
 ######################
 # Docker

@@ -2,7 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { QuizExercise, QuizExerciseService, QuizReEvaluateService } from '../../entities/quiz-exercise';
+import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
+import { QuizReEvaluateService } from './quiz-re-evaluate.service';
 import { Router } from '@angular/router';
 import { Question, QuestionType } from '../../entities/question';
 import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question';
@@ -35,8 +36,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         private quizExerciseService: QuizExerciseService,
         private quizReEvaluateService: QuizReEvaluateService,
         private router: Router
-    ) {
-    }
+    ) {}
 
     ngOnInit() {
         this.isSaving = false;
@@ -65,7 +65,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     loadQuizSuccess(quiz: QuizExercise) {
         // question deleted?
-        this.questionDeleted = (this.backUpQuiz.questions.length !== this.quizExercise.questions.length);
+        this.questionDeleted = this.backUpQuiz.questions.length !== this.quizExercise.questions.length;
 
         // check each question
         this.quizExercise.questions.forEach(question => {
@@ -148,37 +148,35 @@ export class QuizReEvaluateWarningComponent implements OnInit {
      */
     checkDragAndDropQuestion(question: DragAndDropQuestion, backUpQuestion: DragAndDropQuestion) {
         // check if a dropLocation or dragItem was deleted
-        if (question.dragItems.length !== backUpQuestion.dragItems.length
-            || question.dropLocations.length !== backUpQuestion.dropLocations.length) {
+        if (
+            question.dragItems.length !== backUpQuestion.dragItems.length ||
+            question.dropLocations.length !== backUpQuestion.dropLocations.length
+        ) {
             this.questionElementDeleted = true;
         }
         // check if the correct Mappings has changed
-        if (!angular.equals(question.correctMappings, backUpQuestion.correctMappings)) {
+        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
             this.questionCorrectness = true;
         }
         // only check if there are no changes on the question-elements yet
         if (!this.questionElementInvalid) {
             // check each dragItem
             question.dragItems.forEach(dragItem => {
-                const backUpDragItem =
-                    backUpQuestion.dragItems.find(dragItemBackUp => {
-                        return dragItemBackUp.id === dragItem.id;
-                    });
+                const backUpDragItem = backUpQuestion.dragItems.find(dragItemBackUp => {
+                    return dragItemBackUp.id === dragItem.id;
+                });
                 // dragItem set invalid?
-                if (backUpDragItem !== null
-                    && dragItem.invalid !== backUpDragItem.invalid) {
+                if (backUpDragItem !== null && dragItem.invalid !== backUpDragItem.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
             // check each dropLocation
             question.dropLocations.forEach(dropLocation => {
-                const backUpDropLocation =
-                    backUpQuestion.dropLocations.find(dropLocationBackUp => {
-                        return dropLocationBackUp.id === dropLocation.id;
-                    });
+                const backUpDropLocation = backUpQuestion.dropLocations.find(dropLocationBackUp => {
+                    return dropLocationBackUp.id === dropLocation.id;
+                });
                 // dropLocation set invalid?
-                if (backUpDropLocation !== null
-                    && dropLocation.invalid !== backUpDropLocation.invalid) {
+                if (backUpDropLocation !== null && dropLocation.invalid !== backUpDropLocation.invalid) {
                     this.questionElementInvalid = true;
                 }
             });
@@ -201,7 +199,8 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             () => {
                 this.busy = false;
                 this.failed = true;
-            });
+            }
+        );
     }
 
     /**

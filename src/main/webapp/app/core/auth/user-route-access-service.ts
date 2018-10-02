@@ -1,11 +1,10 @@
-import { Inject, Injectable, isDevMode } from '@angular/core';
+import { Injectable, isDevMode } from '@angular/core';
 import { ActivatedRouteSnapshot, CanActivate, Router, RouterStateSnapshot } from '@angular/router';
 
 import { Principal } from '../';
 import { LoginModalService } from '../login/login-modal.service';
 import { StateStorageService } from './state-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
-import { NG1AUTH_SERVICE } from '../../core/auth/ng1-auth-wrapper.service';
 
 @Injectable({ providedIn: 'root' })
 export class UserRouteAccessService implements CanActivate {
@@ -14,8 +13,7 @@ export class UserRouteAccessService implements CanActivate {
         private loginModalService: LoginModalService,
         private principal: Principal,
         private stateStorageService: StateStorageService,
-        private localStorage: LocalStorageService,
-        @Inject(NG1AUTH_SERVICE) private ng1AuthService: any
+        private localStorage: LocalStorageService
     ) {}
 
     canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): boolean | Promise<boolean> {
@@ -23,7 +21,6 @@ export class UserRouteAccessService implements CanActivate {
         if (route.routeConfig.path === 'courses/:courseId/exercise/:exerciseId' && route.queryParams['jwt']) {
             const jwt = route.queryParams['jwt'];
             this.localStorage.store('authenticationToken', jwt);
-            this.ng1AuthService.login({ rememberMe: true }, jwt);
         }
 
         const authorities = route.data['authorities'];

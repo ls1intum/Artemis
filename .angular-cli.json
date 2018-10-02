@@ -7,7 +7,6 @@
         "root": "src/main/webapp",
         "outDir": "build/www/app",
         "assets": [
-            "ng1",
             "content",
             "i18n",
             "favicon.ico"
