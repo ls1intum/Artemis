@@ -7,6 +7,10 @@
             "fieldType": "String"
         },
         {
+            "fieldName": "solutionRepositoryUrl",
+            "fieldType": "String"
+        },
+        {
             "fieldName": "baseBuildPlanId",
             "fieldType": "String"
         },

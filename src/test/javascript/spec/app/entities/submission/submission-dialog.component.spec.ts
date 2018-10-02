@@ -9,6 +9,8 @@ import { ArTEMiSTestModule } from '../../../test.module';
 import { SubmissionDialogComponent } from '../../../../../../main/webapp/app/entities/submission/submission-dialog.component';
 import { SubmissionService } from '../../../../../../main/webapp/app/entities/submission/submission.service';
 import { Submission } from '../../../../../../main/webapp/app/entities/submission/submission.model';
+import { ResultService } from '../../../../../../main/webapp/app/entities/result';
+import { ParticipationService } from '../../../../../../main/webapp/app/entities/participation';
 
 describe('Component Tests', () => {
 
@@ -24,6 +26,8 @@ describe('Component Tests', () => {
                 imports: [ArTEMiSTestModule],
                 declarations: [SubmissionDialogComponent],
                 providers: [
+                    ResultService,
+                    ParticipationService,
                     SubmissionService
                 ]
             })

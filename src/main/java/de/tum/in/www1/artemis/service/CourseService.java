@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -66,7 +65,7 @@ public class CourseService {
      * @param course the course to check permissions for
      * @return true, if the user has the required permissions, false otherwise
      */
-    public boolean userHasStudentPermissions(Course course) {
+    public boolean userHasAtLeastStudentPermissions(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isStudentInCourse(course, user) ||
             authCheckService.isTeachingAssistantInCourse(course, user) ||
@@ -80,7 +79,7 @@ public class CourseService {
      * @param course the course to check permissions for
      * @return true, if the user has the required permissions, false otherwise
      */
-    public boolean userHasTAPermissions(Course course) {
+    public boolean userHasAtLeastTAPermissions(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isTeachingAssistantInCourse(course, user) ||
             authCheckService.isInstructorInCourse(course, user) ||
@@ -93,7 +92,7 @@ public class CourseService {
      * @param course the course to check permissions for
      * @return true, if the user has the required permissions, false otherwise
      */
-    public boolean userHasInstructorPermissions(Course course) {
+    public boolean userHasAtLeastInstructorPermissions(Course course) {
         User user = userService.getUserWithGroupsAndAuthorities();
         return authCheckService.isInstructorInCourse(course, user) ||
             authCheckService.isAdmin();
@@ -180,7 +179,7 @@ public class CourseService {
     @Transactional(readOnly = true)
     public Course findOne(Long id) {
         log.debug("Request to get Course : {}", id);
-        return courseRepository.findOne(id);
+        return courseRepository.findById(id).get();
     }
 
     /**
@@ -190,7 +189,7 @@ public class CourseService {
      */
     public void delete(Long id) {
         log.debug("Request to delete Course : {}", id);
-        courseRepository.delete(id);
+        courseRepository.deleteById(id);
     }
 
     public List<String> getAllTeachingAssistantGroupNames() {

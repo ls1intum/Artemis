@@ -6,25 +6,24 @@ import { ArTEMiSSharedModule } from '../shared';
 import {
     accountState,
     ActivateComponent,
-    ActivateService,
-    Register,
+    PasswordComponent,
+    PasswordResetFinishComponent,
+    PasswordResetInitComponent,
+    PasswordStrengthBarComponent,
     RegisterComponent,
     SettingsComponent
 } from './';
 
 @NgModule({
-    imports: [
-        ArTEMiSSharedModule,
-        RouterModule.forChild(accountState)
-    ],
+    imports: [ArTEMiSSharedModule, RouterModule.forChild(accountState)],
     declarations: [
         ActivateComponent,
         RegisterComponent,
+        PasswordComponent,
+        PasswordStrengthBarComponent,
+        PasswordResetInitComponent,
+        PasswordResetFinishComponent,
         SettingsComponent
-    ],
-    providers: [
-        Register,
-        ActivateService,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

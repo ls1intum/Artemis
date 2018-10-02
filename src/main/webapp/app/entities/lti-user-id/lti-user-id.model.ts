@@ -1,10 +1,10 @@
-import { BaseEntity, User } from './../../shared';
+import { BaseEntity } from './../../shared';
+import { User } from './../../core';
 
 export class LtiUserId implements BaseEntity {
-    constructor(
-        public id?: number,
-        public ltiUserId?: string,
-        public user?: User,
-    ) {
-    }
+    public id: number;
+    public ltiUserId: string;
+    public user: User;
+
+    constructor() {}
 }

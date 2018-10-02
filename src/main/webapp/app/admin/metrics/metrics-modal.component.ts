@@ -18,7 +18,7 @@ export class JhiMetricsMonitoringModalComponent implements OnInit {
     constructor(public activeModal: NgbActiveModal) {}
 
     ngOnInit() {
-        this.threadDump.forEach((value) => {
+        this.threadDump.forEach((value: any) => {
             if (value.threadState === 'RUNNABLE') {
                 this.threadDumpRunnable += 1;
             } else if (value.threadState === 'WAITING') {
@@ -34,7 +34,7 @@ export class JhiMetricsMonitoringModalComponent implements OnInit {
             this.threadDumpTimedWaiting + this.threadDumpBlocked;
     }
 
-    getBadgeClass(threadState) {
+    getBadgeClass(threadState: string) {
         if (threadState === 'RUNNABLE') {
             return 'badge-success';
         } else if (threadState === 'WAITING') {

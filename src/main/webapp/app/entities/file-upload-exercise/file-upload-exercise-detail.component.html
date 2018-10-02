@@ -1,0 +1,57 @@
+
+<div *ngIf="fileUploadExercise">
+    <h2><span jhiTranslate="arTeMiSApp.fileUploadExercise.detail.title">File Upload Exercise</span> {{fileUploadExercise.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.title}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.releaseDate | date:'medium'}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.dueDate | date:'medium'}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.maxScore}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.course">Course</span></dt>
+        <dd>
+            <div *ngIf="fileUploadExercise.course">
+                <a [routerLink]="['/course', fileUploadExercise.course?.id]">{{fileUploadExercise.course?.title}}</a>
+            </div>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.problemStatement}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.maxScore}}</span>
+        </dd>
+
+        <dt><span jhiTranslate="arTeMiSApp.fileUploadExercise.filePattern">File Pattern</span></dt>
+        <dd>
+            <span>{{fileUploadExercise.filePattern}}</span>
+        </dd>
+    </dl>
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'file-upload-exercise/'+ fileUploadExercise.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

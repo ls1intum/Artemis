@@ -11,11 +11,14 @@
             "updated": "Modeling Exercise aktualisiert mit ID {{ param }}",
             "deleted": "Modeling Exercise gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Modeling Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Modeling Exercise {{ title }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
                 "title": "Modeling Exercise"
-            }
+            },
+            "diagramType": "Diagram Type",
+            "sampleSolutionModel": "Sample Solution Model",
+            "sampleSolutionExplanation": "Sample Solution Explanation"
         }
     }
 }

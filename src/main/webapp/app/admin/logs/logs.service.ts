@@ -9,8 +9,8 @@ import { Log } from './log.model';
 export class LogsService {
     constructor(private http: HttpClient) { }
 
-    changeLevel(log: Log): Observable<HttpResponse<any>> {
-        return this.http.put(SERVER_API_URL + 'management/logs', log, {observe: 'response'});
+    changeLevel(log: Log): Observable<HttpResponse<void>> {
+        return this.http.put<void>(SERVER_API_URL + 'management/logs', log, {observe: 'response'});
     }
 
     findAll(): Observable<HttpResponse<Log[]>> {

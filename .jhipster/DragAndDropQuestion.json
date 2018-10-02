@@ -12,12 +12,6 @@
             "relationshipName": "dragItems",
             "otherEntityName": "dragItem",
             "otherEntityRelationshipName": "question"
-        },
-        {
-            "relationshipType": "one-to-many",
-            "relationshipName": "correctMappings",
-            "otherEntityName": "dragAndDropMapping",
-            "otherEntityRelationshipName": "question"
         }
     ],
     "fields": [

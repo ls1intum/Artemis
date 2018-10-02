@@ -28,7 +28,7 @@ public class QuizSubmissionService {
 
     @Transactional(readOnly = true)
     public QuizSubmission findOne(Long id) {
-        return quizSubmissionRepository.findOne(id);
+        return quizSubmissionRepository.findById(id).get();
     }
 
     @Transactional(readOnly = true)
@@ -38,7 +38,7 @@ public class QuizSubmissionService {
 
     @Transactional
     public void delete(Long id) {
-        quizSubmissionRepository.delete(id);
+        quizSubmissionRepository.deleteById(id);
     }
 
     /**
@@ -65,7 +65,8 @@ public class QuizSubmissionService {
         // calculate score and update result accordingly
         result.evaluateSubmission();
         // save result
-        resultRepository.save(result);
+        quizSubmission.setResult(result);
+        quizSubmissionRepository.save(quizSubmission);
         // replace proxy with submission, because of Lazy-fetching
         result.setSubmission(quizSubmission);
 

@@ -1,0 +1,22 @@
+
+{
+    "arTeMiSApp": {
+        "textSubmission" : {
+            "home": {
+                "title": "Text Submissions",
+                "createLabel": "Text Submission erstellen",
+                "createOrEditLabel": "Text Submission erstellen oder bearbeiten"
+            },
+            "created": "Text Submission erstellt mit ID {{ param }}",
+            "updated": "Text Submission aktualisiert mit ID {{ param }}",
+            "deleted": "Text Submission gelöscht mit ID {{ param }}",
+            "delete": {
+                "question": "Soll Text Submission {{ id }} wirklich dauerhaft gelöscht werden?"
+            },
+            "detail": {
+                "title": "Text Submission"
+            },
+            "text": "Text"
+        }
+    }
+}

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
-import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpHandler, HttpInterceptor, HttpParams, HttpRequest } from '@angular/common/http';
 import { SERVER_API_URL } from '../../app.constants';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { BuildLogEntry } from '../../entities/build-log';
 
 @Injectable()
 export class RepositoryService {
@@ -16,16 +17,16 @@ export class RepositoryService {
             .map(data => ({isClean: data.isClean}));
     }
 
-    commit(participationId: number): Observable<any> {
-        return this.http.post<any>(`${this.resourceUrl}/${participationId}/commit`, {});
+    commit(participationId: number): Observable<void> {
+        return this.http.post<void>(`${this.resourceUrl}/${participationId}/commit`, {});
     }
 
-    pull(participationId: number): Observable<any> {
-        return this.http.post<any>(`${this.resourceUrl}/${participationId}/pull`, {});
+    pull(participationId: number): Observable<void> {
+        return this.http.get<void>(`${this.resourceUrl}/${participationId}/pull`, {});
     }
 
-    buildlogs(participationId: number): Observable<Array<any>> {
-        return this.http.get<any[]>(`${this.resourceUrl}/${participationId}/buildlogs`);
+    buildlogs(participationId: number): Observable<Array<BuildLogEntry>> {
+        return this.http.get<BuildLogEntry[]>(`${this.resourceUrl}/${participationId}/buildlogs`);
     }
 }
 
@@ -36,25 +37,29 @@ export class RepositoryFileService {
 
     constructor(private http: HttpClient) { }
 
-    query(participationId: number): Observable<Array<any>> {
-        return this.http.get<any[]>(`${this.resourceUrl}/${participationId}/files`);
+    query(participationId: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.resourceUrl}/${participationId}/files`);
     }
 
-    get(participationId: number): Observable<any> {
-        return this.http.get<any>(`${this.resourceUrl}/${participationId}/file`)
+    get(participationId: number, fileName: string): Observable<any> {
+        return this.http.get(`${this.resourceUrl}/${participationId}/file`,
+            { params: new HttpParams().set('file', fileName), responseType: 'text' } )
             .map(data => ({fileContent: data}));
     }
 
-    update(participationId: number): Observable<any> {
-        return this.http.put<any>(`${this.resourceUrl}/${participationId}/file`, {});
+    update(participationId: number, fileName: string, fileContent: string): Observable<any> {
+        return this.http.put(`${this.resourceUrl}/${participationId}/file`, fileContent,
+            { params: new HttpParams().set('file', fileName) });
     }
 
-    create(participationId: number): Observable<any> {
-        return this.http.post<any>(`${this.resourceUrl}/${participationId}/file`, {});
+    create(participationId: number, fileName: string): Observable<void> {
+        return this.http.post<void>(`${this.resourceUrl}/${participationId}/file`, '',
+            { params: new HttpParams().set('file', fileName)});
     }
 
-    delete(participationId: number): Observable<any> {
-        return this.http.delete<any>(`${this.resourceUrl}/${participationId}/file`);
+    delete(participationId: number, fileName: string): Observable<void> {
+        return this.http.delete<void>(`${this.resourceUrl}/${participationId}/file`,
+            { params: new HttpParams().set('file', fileName)});
     }
 }
 

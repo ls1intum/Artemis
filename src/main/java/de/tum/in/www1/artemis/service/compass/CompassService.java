@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.compass;
 
 import com.google.gson.JsonObject;
 import de.tum.in.www1.artemis.domain.ModelingExercise;
+import de.tum.in.www1.artemis.domain.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.repository.*;
@@ -34,6 +35,7 @@ public class CompassService {
     private final JsonModelRepository modelRepository;
     private final ResultRepository resultRepository;
     private final ModelingExerciseRepository modelingExerciseRepository;
+    private final ModelingSubmissionRepository modelingSubmissionRepository;
     /**
      * Map exerciseId to compass CalculationEngines
      */
@@ -49,11 +51,13 @@ public class CompassService {
     private static Map<Long, Thread> optimalModelThreads = new ConcurrentHashMap<>();
 
     public CompassService (JsonAssessmentRepository assessmentRepository, JsonModelRepository modelRepository,
-                           ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository) {
+                           ResultRepository resultRepository, ModelingExerciseRepository modelingExerciseRepository,
+                           ModelingSubmissionRepository modelingSubmissionRepository) {
         this.assessmentRepository = assessmentRepository;
         this.modelRepository = modelRepository;
         this.resultRepository = resultRepository;
         this.modelingExerciseRepository = modelingExerciseRepository;
+        this.modelingSubmissionRepository = modelingSubmissionRepository;
     }
 
     /**
@@ -159,14 +163,19 @@ public class CompassService {
 
     private void assessAutomatically(long modelId, long exerciseId) {
         CalculationEngine engine = compassCalculationEngines.get(exerciseId);
-        Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(null);
+        Optional<ModelingSubmission> modelingSubmission = modelingSubmissionRepository.findById(modelId);
+        if (!modelingSubmission.isPresent()) {
+            log.error("No modeling submission with ID {} could be found.", modelId);
+            return;
+        }
+        Result result = resultRepository.findDistinctBySubmissionId(modelId).orElse(new Result().submission(modelingSubmission.get()).participation(modelingSubmission.get().getParticipation()));
         // unrated result exists
         if (result != null) {
             if (!result.isRated()) {
                 Grade grade = engine.getResultForModel(modelId);
                 // automatic assessment holds confidence and coverage threshold
                 if (grade.getConfidence() >= CONFIDENCE_THRESHOLD && grade.getCoverage() >= COVERAGE_THRESHOLD) {
-                    ModelingExercise modelingExercise = modelingExerciseRepository.findOne(result.getParticipation().getExercise().getId());
+                    ModelingExercise modelingExercise = modelingExerciseRepository.findById(result.getParticipation().getExercise().getId()).get();
                     // Round compass grades to avoid machine precision errors, make the grades more readable
                     // and give a slight advantage which makes 100% scores easier reachable
                     // see: https://confluencebruegge.in.tum.de/display/ArTEMiS/Feature+suggestions for more information
@@ -202,7 +211,7 @@ public class CompassService {
         }
     }
 
-    Grade roundGrades(Grade grade) {
+    private Grade roundGrades(Grade grade) {
         Map<String, Double> jsonIdPointsMapping = grade.getJsonIdPointsMapping();
         BigDecimal pointsSum = new BigDecimal(0);
         for (Map.Entry<String, Double> entry: jsonIdPointsMapping.entrySet()) {
@@ -259,11 +268,11 @@ public class CompassService {
         }
     }
 
-    CalculationEngine getEngine(long exerciseId) {
+    private CalculationEngine getEngine(long exerciseId) {
         return compassCalculationEngines.get(exerciseId);
     }
 
-    void suspendEngine(long exerciseId) {
+    private void suspendEngine(long exerciseId) {
         compassCalculationEngines.remove(exerciseId);
     }
 

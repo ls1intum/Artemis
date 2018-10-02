@@ -4,15 +4,21 @@ import { ActivatedRoute } from '@angular/router';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { JhiEventManager } from 'ng-jhipster';
 
-import { Participation } from './participation.model';
-import { ParticipationPopupService } from './participation-popup.service';
-import { ParticipationService } from './participation.service';
+import { Participation, ParticipationPopupService, ParticipationService } from '../participation';
+import { ExerciseType } from '../exercise';
+
+import { Subscription } from 'rxjs/Subscription';
 
 @Component({
     selector: 'jhi-participation-delete-dialog',
     templateUrl: './participation-delete-dialog.component.html'
 })
 export class ParticipationDeleteDialogComponent implements OnInit {
+
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
 
     participation: Participation;
     deleteBuildPlan: boolean;
@@ -40,8 +46,8 @@ export class ParticipationDeleteDialogComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        this.deleteBuildPlan = this.participation.exercise.type === 'programming-exercise';
-        this.deleteRepository = this.participation.exercise.type === 'programming-exercise';
+        this.deleteBuildPlan = this.participation.exercise.type === ExerciseType.PROGRAMMING;
+        this.deleteRepository = this.participation.exercise.type === ExerciseType.PROGRAMMING;
     }
 }
 
@@ -51,7 +57,7 @@ export class ParticipationDeleteDialogComponent implements OnInit {
 })
 export class ParticipationDeletePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -21,7 +21,10 @@ import org.springframework.web.bind.annotation.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -137,7 +140,7 @@ public class ResultResource {
         if (planKey.contains("base")) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
-        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, ParticipationState.INITIALIZED);
+        List<Participation> participations = participationService.findByBuildPlanIdAndInitializationState(planKey, InitializationState.INITIALIZED);
         if (participations.size() > 0) {
             Participation participation = participations.get(0);
             if (participations.size() > 1) {
@@ -148,7 +151,7 @@ public class ResultResource {
                     }
                 }
             }
-            //TODO: we should also get build dates after the due date, but mark the result accordingly
+            //TODO: we should also get build dates after the due date, but mark the result as unrated
             if (participation.getExercise().getDueDate() == null || ZonedDateTime.now().isBefore(participation.getExercise().getDueDate())) {
                 resultService.onResultNotified(participation);
                 return ResponseEntity.ok().build();
@@ -252,6 +255,12 @@ public class ResultResource {
 
             }
         }
+        //remove unnecessary elements in the json response
+        results.forEach(result -> {
+            result.getParticipation().setExercise(null);
+            result.getParticipation().setResults(null);
+            result.getParticipation().setSubmissions(null);
+        });
         return ResponseEntity.ok().body(results);
     }
 
@@ -316,6 +325,12 @@ public class ResultResource {
             });
         }
 
+        //remove unnecessary elements in the json response
+        results.forEach(result -> {
+            result.getParticipation().setResults(null);
+            result.getParticipation().setSubmissions(null);
+        });
+
         return ResponseEntity.ok().body(results);
     }
 
@@ -338,6 +353,14 @@ public class ResultResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         List<Result> results = resultRepository.findEarliestSuccessfulResultsForCourse(courseId);
+
+        //remove unnecessary elements in the json response
+        results.forEach(result -> {
+            result.getParticipation().setExercise(null);
+            result.getParticipation().setResults(null);
+            result.getParticipation().setSubmissions(null);
+        });
+
         return ResponseEntity.ok().body(results);
     }
 
@@ -353,19 +376,18 @@ public class ResultResource {
     @Timed
     public ResponseEntity<Result> getResult(@PathVariable Long id) {
         log.debug("REST request to get Result : {}", id);
-        Result result = resultRepository.findOne(id);
-        Participation participation = result.getParticipation();
-        Course course = participation.getExercise().getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        Optional<Result> result = resultRepository.findById(id);
+        if (result.isPresent()) {
+            Participation participation = result.get().getParticipation();
+            Course course = participation.getExercise().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
         }
-        return Optional.ofNullable(result)
-            .map(foundResult -> new ResponseEntity<>(
-                foundResult,
-                HttpStatus.OK))
+        return result.map(foundResult -> new ResponseEntity<>(foundResult, HttpStatus.OK))
             .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
@@ -380,13 +402,13 @@ public class ResultResource {
     @PreAuthorize("hasAnyRole('USER', 'TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     @Transactional
-    public ResponseEntity<Set<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
+    public ResponseEntity<List<Feedback>> getResultDetails(@PathVariable Long id, @RequestParam(required = false) String username, Authentication authentication) {
         log.debug("REST request to get Result : {}", id);
-        Result result = resultRepository.findOne(id);
-        if(result == null) {
+        Optional<Result> result = resultRepository.findById(id);
+        if (!result.isPresent()) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
-        Participation participation = result.getParticipation();
+        Participation participation = result.get().getParticipation();
         Course course = participation.getExercise().getCourse();
         if (!authCheckService.isOwnerOfParticipation(participation)) {
 
@@ -398,9 +420,9 @@ public class ResultResource {
             }
         }
         try {
-            Set<Feedback> feedbacks = feedbackService.getFeedbackForBuildResult(result);
-            return Optional.ofNullable(feedbacks)
-                .map(resultDetails -> new ResponseEntity<>(feedbacks, HttpStatus.OK))
+            List<Feedback> feedbackItems = feedbackService.getFeedbackForBuildResult(result.get());
+            return Optional.ofNullable(feedbackItems)
+                .map(resultDetails -> new ResponseEntity<>(feedbackItems, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
         } catch (Exception e) {
             log.error("REST request to get Result failed : {}", id, e);
@@ -419,17 +441,20 @@ public class ResultResource {
     @Timed
     public ResponseEntity<Void> deleteResult(@PathVariable Long id) {
         log.debug("REST request to delete Result : {}", id);
-        Result result = resultRepository.findOne(id);
-        Participation participation = result.getParticipation();
-        Course course = participation.getExercise().getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        Optional<Result> result = resultRepository.findById(id);
+        if (result.isPresent()) {
+            Participation participation = result.get().getParticipation();
+            Course course = participation.getExercise().getCourse();
+            User user = userService.getUserWithGroupsAndAuthorities();
+            if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+                !authCheckService.isInstructorInCourse(course, user) &&
+                !authCheckService.isAdmin()) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+            resultRepository.deleteById(id);
+            return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
         }
-        resultRepository.delete(id);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
+        return  ResponseEntity.notFound().build();
     }
 
     /**

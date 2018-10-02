@@ -3,11 +3,9 @@ package de.tum.in.www1.artemis.web.rest;
 import com.codahale.metrics.annotation.Timed;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.*;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.PaginationUtil;
 import io.github.jhipster.web.util.ResponseUtil;
@@ -27,9 +25,8 @@ import org.springframework.web.bind.annotation.*;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -66,92 +63,6 @@ public class ExerciseResource {
         this.authCheckService = authCheckService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-    }
-
-    /**
-     * POST  /exercises : Create a new exercise.
-     *
-     * @param exercise the exercise to create
-     * @return the ResponseEntity with status 201 (Created) and with body the new exercise, or with status 400 (Bad Request) if the exercise has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("/exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    //TODO: test if it still works with abstract entity in body
-    public ResponseEntity<Exercise> createExercise(@RequestBody Exercise exercise) throws URISyntaxException {
-        log.debug("REST request to save Exercise : {}", exercise);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        if (exercise.getId() != null) {
-            throw new BadRequestAlertException("A new exercise cannot already have an ID", ENTITY_NAME, "idexists");
-        }
-        if (exercise instanceof ProgrammingExercise) {
-            ResponseEntity<Exercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) exercise);
-            if (errorResponse != null) {
-                return errorResponse;
-            }
-        }
-        Exercise result = exerciseRepository.save(exercise);
-        return ResponseEntity.created(new URI("/api/exercises/" + result.getId()))
-            .headers(HeaderUtil.createEntityCreationAlert(ENTITY_NAME, result.getId().toString()))
-            .body(result);
-    }
-
-    /**
-     * @param exercise
-     * @return the error message as response or null if everything is fine
-     */
-    private ResponseEntity<Exercise> checkProgrammingExerciseForError(ProgrammingExercise exercise) {
-        if (!continuousIntegrationService.get().buildPlanIdIsValid(exercise.getBaseBuildPlanId())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.build.plan.id", "The Base Build Plan ID seems to be invalid.")).body(null);
-        }
-        if (exercise.getBaseRepositoryUrlAsUrl() == null || !versionControlService.get().repositoryUrlIsValid(exercise.getBaseRepositoryUrlAsUrl())) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert("exercise", "invalid.repository.url", "The Repository URL seems to be invalid.")).body(null);
-        }
-        return null;
-    }
-
-    /**
-     * PUT  /exercises : Updates an existing exercise.
-     *
-     * @param exercise the exercise to update
-     * @return the ResponseEntity with status 200 (OK) and with body the updated exercise,
-     * or with status 400 (Bad Request) if the exercise is not valid,
-     * or with status 500 (Internal Server Error) if the exercise couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PutMapping("/exercises")
-    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
-    @Timed
-    //TODO: test if it still works with abstract entity in body
-    public ResponseEntity<Exercise> updateExercise(@RequestBody Exercise exercise) throws URISyntaxException {
-        log.debug("REST request to update Exercise : {}", exercise);
-        Course course = exercise.getCourse();
-        User user = userService.getUserWithGroupsAndAuthorities();
-        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
-             !authCheckService.isInstructorInCourse(course, user) &&
-             !authCheckService.isAdmin()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
-        }
-        if (exercise.getId() == null) {
-            return createExercise(exercise);
-        }
-        if (exercise instanceof ProgrammingExercise) {
-            ResponseEntity<Exercise> errorResponse = checkProgrammingExerciseForError((ProgrammingExercise) exercise);
-            if (errorResponse != null) {
-                return errorResponse;
-            }
-        }
-        Exercise result = exerciseRepository.save(exercise);
-        return ResponseEntity.ok()
-            .headers(HeaderUtil.createEntityUpdateAlert(ENTITY_NAME, exercise.getId().toString()))
-            .body(result);
     }
 
     /**
@@ -321,6 +232,45 @@ public class ExerciseResource {
         }
         InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
         log.info("Archive repositories was successful for Exercise : {}", id);
+        return ResponseEntity.ok()
+            .contentLength(zipFile.length())
+            .contentType(MediaType.APPLICATION_OCTET_STREAM)
+            .header("filename", zipFile.getName())
+            .body(resource);
+    }
+    /**
+    * GET  /exercises/:exerciseId/participations/:studentIds : sends all submissions from studentlist as zip
+        *
+        * @param exerciseId the id of the exercise to get the repos from
+        * @param studentIds the studentIds seperated via semicolon to get their submissions
+     * @return ResponseEntity with status
+     */
+    @GetMapping(value = "/exercises/{exerciseId}/participations/{studentIds}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
+    @Timed
+    public ResponseEntity<Resource> exportSubmissions(@PathVariable Long exerciseId, @PathVariable String studentIds) throws IOException {
+        studentIds = studentIds.replaceAll(" ","");
+        Exercise exercise = exerciseService.findOne(exerciseId);
+        Course course = exercise.getCourse();
+        User user = userService.getUserWithGroupsAndAuthorities();
+        if (!authCheckService.isTeachingAssistantInCourse(course, user) &&
+            !authCheckService.isInstructorInCourse(course, user) &&
+            !authCheckService.isAdmin()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        List<String> studentList = Arrays.asList(studentIds.split("\\s*,\\s*"));
+        if(studentList.isEmpty() || studentList == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).headers(HeaderUtil.createAlert("Given studentlist for export was empty or malformed","")).build();
+        }
+
+        File zipFile = exerciseService.exportParticipations(exerciseId,studentList);
+        if (zipFile == null) {
+            return ResponseEntity.noContent()
+                .headers(HeaderUtil.createAlert("There was an error on the server and the zip file could not be created", ""))
+                .build();
+        }
+        InputStreamResource resource = new InputStreamResource(new FileInputStream(zipFile));
+
         return ResponseEntity.ok()
             .contentLength(zipFile.length())
             .contentType(MediaType.APPLICATION_OCTET_STREAM)

@@ -1,0 +1,29 @@
+<div class="modal-header">
+    <h4 class="modal-title">Feedback</h4>
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true"
+            (click)="activeModal.close()">&times;</button>
+</div>
+<div *ngIf="feedbackList" class="modal-body" id="result-detail-body" style="position: relative;" [ngSwitch]="isLoading">
+    <div *ngSwitchCase="true" class="text-muted" id="result-detail-spinner">
+        <i class="fa fa-circle-o-notch fa-lg fa-spin "></i>
+    </div>
+    <div [hidden]="isLoading" *ngFor="let feedback of feedbackList; last as isLast">
+        <p *ngIf="feedback.type === 'AUTOMATIC'">Error in method &nbsp;<code-error>{{feedback.text}}</code-error>:</p>
+        <p *ngIf="feedback.type === 'MANUAL' && !feedback.positive"><code-error>Feedback &nbsp;{{feedback.text}}:</code-error></p>
+        <p *ngIf="feedback.type === 'MANUAL' && feedback.positive"><code-success>Feedback &nbsp;{{feedback.text}}:</code-success></p>
+        <pre *ngIf="feedback.detailText" [innerHtml]="feedback.detailText | safeHtml"></pre>
+        <pre *ngIf="!feedback.detailText">No feedback available</pre>
+        <hr *ngIf="!isLast">
+    </div>
+    <div [hidden]="isLoading" *ngIf="!feedbackList || feedbackList.length == 0">
+        <dl class="buildoutput dl-horizontal" [hidden]="!buildLogs || buildLogs.length == 0">
+            <ng-container *ngFor="let logEntry of buildLogs">
+                <dt>{{logEntry.time | date:'yyyy-MM-dd HH:mm:ss'}}</dt>
+                <dd [innerHtml]="logEntry.log | safeHtml"></dd>
+            </ng-container>
+        </dl>
+    </div>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-dark" (click)="activeModal.close('Close click')">Close</button>
+</div>

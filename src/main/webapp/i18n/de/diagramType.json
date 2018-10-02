@@ -1,0 +1,11 @@
+{
+    "arTeMiSApp": {
+        "DiagramType" : {
+            "null": "",
+            "CLASS": "Class Diagram",
+            "ACTIVITY": "Activity Diagram",
+            "USE_CASE": "Use Case Diagram",
+            "COMMUNICATION": "Communication Diagram"
+        }
+    }
+}

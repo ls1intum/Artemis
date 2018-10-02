@@ -25,7 +25,7 @@
                 <td><a routerLink="/participation/{{participation.id}}">{{participation.id}}</a></td>
                 <td>{{participation.repositoryUrl}}</td>
                 <td>{{participation.buildPlanId}}</td>
-                <td jhiTranslate="{{'arTeMiSApp.ParticipationState.' + participation.initializationState}}">{{participation.initializationState}}</td>
+                <td>{{participation.initializationState}}</td>
                 <td>{{participation.initializationDate | date:'medium'}}</td>
                 <td>
                     <a routerLink="/user-management/{{participation.student?.login}}">{{participation.student?.firstName}} {{participation.student?.lastName}}</a>
@@ -46,7 +46,7 @@
                             <span class="fa fa-remove"></span>
                             <span class="d-none d-md-inline" jhiTranslate="entity.action.delete">Delete</span>
                         </button>
-                        <div *ngIf="exercise.type !== 'modeling-exercise'">
+                        <div *ngIf="exercise.type === PROGRAMMING">
                             <button type="submit"
                                     [routerLink]="['/', { outlets: { popup: ['participation', participation.id, 'result', 'new']} }]"
                                     class="btn btn-primary btn-sm">

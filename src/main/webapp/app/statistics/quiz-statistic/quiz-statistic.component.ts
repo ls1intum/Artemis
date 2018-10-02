@@ -1,44 +1,26 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../shared';
+import { JhiWebsocketService, Principal } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
-
-import * as Chart from 'chart.js';
+import { HttpResponse } from '@angular/common/http';
+import { Chart, ChartAnimationOptions, ChartOptions } from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
+import { QuestionType } from '../../entities/question';
+import { Subscription } from 'rxjs/Subscription';
 
-@Component({
-    selector: 'jhi-quiz-statistic',
-    templateUrl: './quiz-statistic.component.html'
-})
-export class QuizStatisticComponent implements OnInit, OnDestroy {
-    quizExercise: QuizExercise;
-    private sub: any;
+export interface DataSet {
+    data: Array<number>;
+    backgroundColor: Array<any>;
+}
 
-    labels = [];
-    data = [];
-    colors = [];
-    chartType = 'bar';
-    datasets = [];
+export interface ChartElement {
+    chart: Chart;
+}
 
-    label;
-    ratedData;
-    unratedData;
-    backgroundColor;
-    ratedAverage;
-    unratedAverage;
-
-    maxScore;
-
-    rated = true;
-
-    participants;
-
-    websocketChannelForData;
-    websocketChannelForReleaseState;
-
-    // options for chart in chart.js style
-    options = {
+// this code is reused in 4 different statistic components
+export function createOptions(dataSetProvider: DataSetProvider): ChartOptions {
+    return {
         layout: {
             padding: {
                 left: 0,
@@ -54,99 +36,151 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
             display: false,
             text: '',
             position: 'top',
-            fontSize: '16',
+            fontSize: 16,
             padding: 20
         },
         tooltips: {
             enabled: false
         },
         scales: {
-            yAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                },
-                ticks: {
-                    beginAtZero: true
+            yAxes: [
+                {
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    },
+                    ticks: {
+                        beginAtZero: true
+                    }
                 }
-            }],
-            xAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
+            ],
+            xAxes: [
+                {
+                    scaleLabel: {
+                        labelString: '',
+                        display: true
+                    }
                 }
-            }]
+            ]
         },
-        hover: {animationDuration: 0},
-        // add numbers on top of the bars
-        animation: {
-            duration: 500,
-            onComplete: chart => {
-                const chartInstance = chart.chart,
-                    ctx = chartInstance.ctx;
-                const fontSize = 12;
-                const fontStyle = 'normal';
-                const fontFamily = 'Calibri';
-                ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+        hover: { animationDuration: 0 },
+        animation: createAnimation(dataSetProvider)
+    };
+}
 
-                this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.controller.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100);
-                        const dataPercentage = (Math.round((dataset.data[index] / this.participants) * 1000) / 10);
+// this code is reused in 4 different statistic components
+export function createAnimation(dataSetProvider: DataSetProvider): ChartAnimationOptions {
+    return {
+        duration: 500,
+        onComplete: (chartElement: ChartElement) => {
+            const chart = chartElement.chart;
+            const ctx = chart.ctx;
+            const fontSize = 12;
+            const fontStyle = 'normal';
+            const fontFamily = 'Arial';
+            ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
 
-                        const position = bar.tooltipPosition();
+            const participants = dataSetProvider.getParticipants();
+            dataSetProvider.getDataSets().forEach((dataset, i) => {
+                const meta = chart.getDatasetMeta(i);
+                meta.data.forEach((bar: any, index) => {
+                    const data = (Math.round(dataset.data[index] * 100) / 100).toString();
+                    const dataPercentage = Math.round((dataset.data[index] / participants) * 1000) / 10;
+                    const position = bar.tooltipPosition();
 
-                        // if the bar is high enough -> write the percentageValue inside the bar
-                        if (dataPercentage > 6) {
-                            // if the bar is low enough -> write the amountValue above the bar
-                            if (position.y > 15) {
-                                ctx.fillStyle = 'black';
-                                ctx.fillText(data, position.x, position.y - 10);
+                    // if the bar is high enough -> write the percentageValue inside the bar
+                    if (dataPercentage > 6) {
+                        // if the bar is low enough -> write the amountValue above the bar
+                        if (position.y > 15) {
+                            ctx.fillStyle = 'black';
+                            ctx.fillText(data, position.x, position.y - 10);
 
-                                if (this.participants !== 0) {
-                                    ctx.fillStyle = 'white';
-                                    ctx.fillText(dataPercentage.toString() + '%', position.x, position.y + 10);
-                                }
-                            } else {
-                                // if the bar is too high -> write the amountValue inside the bar
+                            if (participants !== 0) {
                                 ctx.fillStyle = 'white';
-                                if (this.participants !== 0) {
-                                    ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y + 10);
-                                } else {
-                                    ctx.fillText(data, position.x, position.y + 10);
-                                }
+                                ctx.fillText(dataPercentage.toString() + '%', position.x, position.y + 10);
                             }
                         } else {
-                            // if the bar is to low -> write the percentageValue above the bar
-                            ctx.fillStyle = 'black';
-                            if (this.participants !== 0) {
-                                ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y - 10);
+                            // if the bar is too high -> write the amountValue inside the bar
+                            ctx.fillStyle = 'white';
+                            if (participants !== 0) {
+                                ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y + 10);
                             } else {
-                                ctx.fillText(data, position.x, position.y - 10);
+                                ctx.fillText(data, position.x, position.y + 10);
                             }
                         }
-                    });
+                    } else {
+                        // if the bar is to low -> write the percentageValue above the bar
+                        ctx.fillStyle = 'black';
+                        if (participants !== 0) {
+                            ctx.fillText(data + ' / ' + dataPercentage.toString() + '%', position.x, position.y - 10);
+                        } else {
+                            ctx.fillText(data, position.x, position.y - 10);
+                        }
+                    }
                 });
-            }
+            });
         }
     };
+}
 
-    constructor(private route: ActivatedRoute,
-                private router: Router,
-                private principal: Principal,
-                private translateService: TranslateService,
-                private quizExerciseService: QuizExerciseService,
-                private jhiWebsocketService: JhiWebsocketService,
-                private quizStatisticUtil: QuizStatisticUtil) {}
+export interface DataSetProvider {
+    getDataSets(): DataSet[];
+    getParticipants(): number;
+}
+
+@Component({
+    selector: 'jhi-quiz-statistic',
+    templateUrl: './quiz-statistic.component.html'
+})
+export class QuizStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
+    quizExercise: QuizExercise;
+    private sub: Subscription;
+
+    labels: string[] = [];
+    data: number[] = [];
+    colors: string[] = [];
+    chartType = 'bar';
+    datasets: DataSet[] = [];
+
+    label: string[] = [];
+    ratedData: number[] = [];
+    unratedData: number[] = [];
+    backgroundColor: string[] = [];
+    ratedAverage: number;
+    unratedAverage: number;
+
+    maxScore: number;
+    rated = true;
+    participants: number;
+    websocketChannelForData: string;
+    websocketChannelForReleaseState: string;
+
+    // options for chart.js style
+    options: ChartOptions;
+
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private principal: Principal,
+        private translateService: TranslateService,
+        private quizExerciseService: QuizExerciseService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private quizStatisticUtil: QuizStatisticUtil
+    ) {
+        this.options = createOptions(this);
+    }
 
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
             // use different REST-call if the User is a Student
             if (this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) {
-                this.quizExerciseService.find(params['quizId']).subscribe(res => {
+                this.quizExerciseService.find(params['quizId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuizSuccess(res.body);
                 });
             } else {
@@ -199,15 +233,26 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForReleaseState);
     }
 
+    getDataSets() {
+        return this.datasets;
+    }
+
+    getParticipants() {
+        return this.participants;
+    }
+
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template
      * And it loads the new Data if the Websocket has been notified
      *
      * @param {QuizExercise} quiz: the quizExercise, which the this quiz-statistic presents.
      */
-    loadQuizSuccess(quiz) {
+    loadQuizSuccess(quiz: QuizExercise) {
         // if the Student finds a way to the Website, while the Statistic is not released -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'])) && quiz.quizPointStatistic.released === false) {
+        if (
+            !this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) &&
+            quiz.quizPointStatistic.released === false
+        ) {
             this.router.navigate(['/courses']);
         }
         this.quizExercise = quiz;
@@ -247,8 +292,12 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
             this.backgroundColor.push('#5bc0de');
             this.ratedData.push(this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter);
             this.unratedData.push(this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter);
-            this.ratedAverage = this.ratedAverage + (this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter * this.quizExercise.questions[i].score);
-            this.unratedAverage = this.unratedAverage + (this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * this.quizExercise.questions[i].score);
+            this.ratedAverage =
+                this.ratedAverage +
+                this.quizExercise.questions[i].questionStatistic.ratedCorrectCounter * this.quizExercise.questions[i].score;
+            this.unratedAverage =
+                this.unratedAverage +
+                this.quizExercise.questions[i].questionStatistic.unRatedCorrectCounter * this.quizExercise.questions[i].score;
         }
 
         // set Background for invalid questions = grey
@@ -277,14 +326,16 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
             this.participants = this.quizExercise.quizPointStatistic.participantsRated;
             this.data = this.ratedData;
         } else {
-            // else: load the unrated data
+            // load the unrated data
             this.participants = this.quizExercise.quizPointStatistic.participantsUnrated;
             this.data = this.unratedData;
         }
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**
@@ -304,10 +355,12 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
             this.participants = this.quizExercise.quizPointStatistic.participantsRated;
             this.rated = true;
         }
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**
@@ -316,21 +369,32 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
      */
     nextStatistic() {
         if (this.quizExercise.questions === null || this.quizExercise.questions.length === 0) {
-            this.router.navigate(['/quiz/:quizExerciseId/quiz-point-statistic', {
-                quizExerciseId: this.quizExercise.id
-            }]);
+            this.router.navigate([
+                '/quiz/:quizExerciseId/quiz-point-statistic',
+                {
+                    quizExerciseId: this.quizExercise.id
+                }
+            ]);
         } else {
-            if (this.quizExercise.questions[0].type === 'multiple-choice') {
-                this.router.navigate(['quiz/:quizId/multiple-choice-question-statistic/:questionId', {
-                    quizId: this.quizExercise.id,
-                    questionId: this.quizExercise.questions[0].id
-                }]);
-            }
-            if (this.quizExercise.questions[0].type === 'drag-and-drop') {
-                this.router.navigate(['quiz/:quizId/drag-and-drop-question-statistic/:questionId', {
-                    quizId: this.quizExercise.id,
-                    questionId: this.quizExercise.questions[0].id
-                }]);
+            const nextQuestion = this.quizExercise.questions[0];
+            if (nextQuestion.type === QuestionType.MULTIPLE_CHOICE) {
+                this.router.navigate([
+                    'quiz/:quizId/multiple-choice-question-statistic/:questionId',
+                    {
+                        quizId: this.quizExercise.id,
+                        questionId: nextQuestion.id
+                    }
+                ]);
+            } else if (nextQuestion.type === QuestionType.DRAG_AND_DROP) {
+                this.router.navigate([
+                    'quiz/:quizId/drag-and-drop-question-statistic/:questionId',
+                    {
+                        quizId: this.quizExercise.id,
+                        questionId: nextQuestion.id
+                    }
+                ]);
+            } else {
+                console.log('Question type not yet supported: ' + nextQuestion);
             }
         }
     }
@@ -340,7 +404,7 @@ export class QuizStatisticComponent implements OnInit, OnDestroy {
      *
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released) {
+    releaseStatistics(released: boolean) {
         this.quizStatisticUtil.releaseStatistics(released, this.quizExercise);
     }
 

@@ -1,0 +1,22 @@
+
+{
+    "arTeMiSApp": {
+        "textExercise" : {
+            "home": {
+                "title": "Text Exercises",
+                "createLabel": "Create a new Text Exercise",
+                "createOrEditLabel": "Create or edit a Text Exercise"
+            },
+            "created": "A new Text Exercise is created with identifier {{ param }}",
+            "updated": "A Text Exercise is updated with identifier {{ param }}",
+            "deleted": "A Text Exercise is deleted with identifier {{ param }}",
+            "delete": {
+                "question": "Are you sure you want to delete Text Exercise {{ title }}?"
+            },
+            "detail": {
+                "title": "Text Exercise"
+            },
+            "sampleSolution": "Sample Solution"
+        }
+    }
+}

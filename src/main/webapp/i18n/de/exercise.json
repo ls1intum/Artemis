@@ -1,32 +1,37 @@
-
 {
     "arTeMiSApp": {
-        "exercise" : {
+        "exercise": {
             "home": {
-                "title": "Exercises",
-                "createLabel": "Exercise erstellen",
-                "createOrEditLabel": "Exercise erstellen oder bearbeiten"
+                "title": "Übungen",
+                "createLabel": "Übung erstellen",
+                "createOrEditLabel": "Übung erstellen oder bearbeiten"
             },
-            "created": "Exercise erstellt mit ID {{ param }}",
-            "updated": "Exercise aktualisiert mit ID {{ param }}",
-            "deleted": "Exercise gelöscht mit ID {{ param }}",
+            "created": "Übung erstellt mit ID {{ param }}",
+            "updated": "Übung aktualisiert mit ID {{ param }}",
+            "deleted": "Übung gelöscht mit ID {{ param }}",
             "delete": {
-                "question": "Soll Exercise {{ id }} wirklich dauerhaft gelöscht werden?"
+                "question": "Soll Übung {{ id }} wirklich dauerhaft gelöscht werden?"
             },
             "detail": {
-                "title": "Exercise"
+                "title": "Übung"
             },
-            "title": "Title",
-            "releaseDate": "Release Date",
-            "dueDate": "Due Date",
-            "maxScore": "Max Score",
-            "participations": "Participations",
-            "course": "Course",
+            "problemStatement": "Aufgabenstellung",
+            "sampleSolution" : "Musterlösung",
+            "gradingInstructions": "Benotungshinweise",
+            "title": "Titel",
+            "releaseDate": "Veröffentlichungsdatum",
+            "dueDate": "Abgabedatum",
+            "maxScore": "Max Punktezahl",
+            "participations": "Teilnahmen",
+            "course": "Kurs",
+            "type": "Typ",
+            "mcqType": "Multiple Choice Fragen",
+            "dndType": "Drag und Drop Fragen",
             "welcome": "<strong>Welcome to ArTEMiS!</strong> We have automatically created an account for you. Click the <i>Start Exercise</i> button to get started!",
             "personalRepository": "Your personal repository has been set up. Click the <i>Clone repository</i> button to get started!",
             "startError": "<strong>Uh oh! Something went wrong... Please try again in a few seconds.</strong>"
         },
-        "exerciseLtiConfiguration" : {
+        "exerciseLtiConfiguration": {
             "lti": "LTI",
             "configurationForExercise": "LTI Konfiguration der Übung {{ title }}"
         }

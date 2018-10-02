@@ -10,6 +10,7 @@ import io.github.jhipster.web.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -81,20 +82,6 @@ public class FeedbackResource {
             .body(result);
     }
 
-    //Deactivated because it would load all (thousands) feedback objects and completely overload the server
-    //TODO: activate this call again using the infinite scroll page mechanism
-//    /**
-//     * GET  /feedbacks : get all the feedbacks.
-//     *
-//     * @return the ResponseEntity with status 200 (OK) and the list of feedbacks in body
-//     */
-//    @GetMapping("/feedbacks")
-//    @Timed
-//    public List<Feedback> getAllFeedbacks() {
-//        log.debug("REST request to get all Feedbacks");
-//        return feedbackRepository.findAll();
-//    }
-
     /**
      * GET  /feedbacks/:id : get the "id" feedback.
      *
@@ -105,8 +92,8 @@ public class FeedbackResource {
     @Timed
     public ResponseEntity<Feedback> getFeedback(@PathVariable Long id) {
         log.debug("REST request to get Feedback : {}", id);
-        Feedback feedback = feedbackRepository.findOne(id);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(feedback));
+        Optional<Feedback> feedback = feedbackRepository.findById(id);
+        return ResponseUtil.wrapOrNotFound(feedback);
     }
 
     /**
@@ -116,10 +103,11 @@ public class FeedbackResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/feedbacks/{id}")
+    @PreAuthorize("hasAnyRole('TA', 'INSTRUCTOR', 'ADMIN')")
     @Timed
     public ResponseEntity<Void> deleteFeedback(@PathVariable Long id) {
         log.debug("REST request to delete Feedback : {}", id);
-        feedbackRepository.delete(id);
+        feedbackRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(ENTITY_NAME, id.toString())).build();
     }
 }

@@ -1,30 +1,28 @@
-import { HttpClient } from '@angular/common/http';
 import {
     computeBoundingBox,
+    EntityMember,
     LayoutedDiagram,
+    LayoutedEntity,
     LayoutedEntityMember,
     LayoutedRelationship,
+    Rect,
     renderDiagramToSVG,
+    renderEntityToSVG,
     renderRelationshipToSVG,
-    State,
-    LayoutedEntity,
-    EntityMember,
-    renderEntityToSVG
+    Size,
+    State
 } from '@ls1intum/apollon';
-import {
-    DragAndDropMapping,
-    DragAndDropQuestion,
-    DragAndDropQuizExercise,
-    DragItem,
-    DropLocation,
-    ImageDragItem,
-    TextDragItem
-} from './quiz-exercise-generation-types';
 import { convertRenderedSVGToPNG } from './svg-renderer';
 import * as TempID from './temp-id';
 import { Course } from '../../entities/course';
-import { QuizExerciseService } from '../../entities/quiz-exercise';
+import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { FileUploaderService } from '../../shared/http/file-uploader.service';
+import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
+import { DropLocation } from '../../entities/drop-location';
+import { DragAndDropMapping } from '../../entities/drag-and-drop-mapping';
+import { DragItem } from '../../entities/drag-item';
+import { ScoringType } from '../../entities/question';
+import * as moment from 'moment';
 
 // Drop locations in quiz exercises are relatively positioned and sized
 // using integers in the interval [0,200]
@@ -48,10 +46,7 @@ export async function generateDragAndDropQuizExercise(
     const diagramBackground = await convertRenderedSVGToPNG(renderedDiagram);
 
     // Upload the diagram background image
-    const backgroundImageUploadResponse = await fileUploaderService.uploadFile(
-        diagramBackground,
-        'diagram-background.png'
-    );
+    const backgroundImageUploadResponse = await fileUploaderService.uploadFile(diagramBackground, 'diagram-background.png');
 
     // Generate a drag-and-drop question object
     const dragAndDropQuestion = await generateDragAndDropQuestion(
@@ -63,21 +58,19 @@ export async function generateDragAndDropQuizExercise(
     );
 
     // Generate a quiz exercise object
-    const exercise = {
-        type: 'quiz-exercise',
-        title: '<INSERT EXERCISE TITLE HERE>',
-        duration: 600,
-        isVisibleBeforeStart: false,
-        isOpenForPractice: false,
-        isPlannedToStart: false,
-        releaseDate: new Date(),
-        randomizeQuestionOrder: true,
-        course,
-        questions: [dragAndDropQuestion as any]
-    };
+    const quizExercise = new QuizExercise();
+    quizExercise.title = '<INSERT EXERCISE TITLE HERE>';
+    quizExercise.duration = 600;
+    quizExercise.isVisibleBeforeStart = false;
+    quizExercise.isOpenForPractice = false;
+    quizExercise.isPlannedToStart = false;
+    quizExercise.releaseDate = moment();
+    quizExercise.randomizeQuestionOrder = true;
+    quizExercise.course = course;
+    quizExercise.questions = [dragAndDropQuestion];
 
     // Create the quiz exercise
-    await quizExerciseService.create(exercise).toPromise();
+    await quizExerciseService.create(quizExercise).toPromise();
 }
 
 async function generateDragAndDropQuestion(
@@ -93,18 +86,18 @@ async function generateDragAndDropQuestion(
         fontFamily,
         fileUploaderService
     );
-    return {
-        type: 'drag-and-drop',
-        title: '<INSERT QUESTION TITLE HERE>',
-        text: '<INSERT QUESTION TEXT HERE>',
-        scoringType: 'ALL_OR_NOTHING',
-        randomizeOrder: true,
-        score: 1,
-        dropLocations,
-        dragItems,
-        correctMappings,
-        backgroundFilePath
-    };
+
+    const dragAndDropQuestion = new DragAndDropQuestion();
+    dragAndDropQuestion.title = '<INSERT QUESTION TITLE HERE>';
+    dragAndDropQuestion.text = '<INSERT QUESTION TEXT HERE>';
+    dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // default value
+    dragAndDropQuestion.randomizeOrder = true;
+    dragAndDropQuestion.score = 1;
+    dragAndDropQuestion.dropLocations = dropLocations;
+    dragAndDropQuestion.dragItems = dragItems;
+    dragAndDropQuestion.correctMappings = correctMappings;
+    dragAndDropQuestion.backgroundFilePath = backgroundFilePath;
+    return dragAndDropQuestion;
 }
 
 async function generateDragAndDropMappings(
@@ -113,18 +106,14 @@ async function generateDragAndDropMappings(
     fontFamily: string,
     fileUploaderService: FileUploaderService
 ) {
-    const entityMappings = await generateMappingsForInteractiveEntities(
+    const entityMappings = await generateMappingsForInteractiveEntitiesImages(
         layoutedDiagram,
         interactiveElementIds,
         fontFamily,
         fileUploaderService
     );
 
-    const entityMemberMappings = generateMappingsForInteractiveEntityMembers(
-        layoutedDiagram,
-        interactiveElementIds,
-        fontFamily
-    );
+    const entityMemberMappings = generateMappingsForInteractiveEntitiesTexts(layoutedDiagram, interactiveElementIds, fontFamily);
 
     const relationshipMappings = await generateMappingsForInteractiveRelationships(
         layoutedDiagram,
@@ -135,11 +124,7 @@ async function generateDragAndDropMappings(
 
     return {
         dragItems: [...entityMappings.dragItems, ...entityMemberMappings.dragItems, ...relationshipMappings.dragItems],
-        dropLocations: [
-            ...entityMappings.dropLocations,
-            ...entityMemberMappings.dropLocations,
-            ...relationshipMappings.dropLocations
-        ],
+        dropLocations: [...entityMappings.dropLocations, ...entityMemberMappings.dropLocations, ...relationshipMappings.dropLocations],
         correctMappings: [
             ...entityMappings.correctMappings,
             ...entityMemberMappings.correctMappings,
@@ -148,13 +133,13 @@ async function generateDragAndDropMappings(
     };
 }
 
-async function generateMappingsForInteractiveEntities(
+async function generateMappingsForInteractiveEntitiesImages(
     layoutedDiagram: LayoutedDiagram,
     interactiveElementIds: Set<string>,
     fontFamily: string,
     fileUploaderService: FileUploaderService
 ) {
-    const dragItems: DragItem[] = [];
+    const imageDragItems: DragItem[] = [];
     const dropLocations: DropLocation[] = [];
     const correctMappings: DragAndDropMapping[] = [];
 
@@ -165,34 +150,36 @@ async function generateMappingsForInteractiveEntities(
         const image = await convertRenderedSVGToPNG(renderedEntity);
 
         const imageUploadResponse = await fileUploaderService.uploadFile(image, `entity-${entity.id}.png`);
-        const dragItem: ImageDragItem = {
-            tempID: TempID.generate(),
-            pictureFilePath: imageUploadResponse.path
-        };
+        const dragItem = new DragItem();
+        dragItem.tempID = TempID.generate();
+        dragItem.pictureFilePath = imageUploadResponse.path;
 
-        const dropLocation: DropLocation = {
-            tempID: TempID.generate(),
-            posX: Math.round(MAX_SIZE_UNIT * entity.position.x / layoutedDiagram.size.width),
-            posY: Math.round(MAX_SIZE_UNIT * entity.position.y / layoutedDiagram.size.height),
-            width: Math.round(MAX_SIZE_UNIT * entity.size.width / layoutedDiagram.size.width),
-            height: Math.round(MAX_SIZE_UNIT * entity.size.height / layoutedDiagram.size.height)
-        };
+        const dropLocation = createDropLocation(
+            entity.position.x,
+            entity.position.y,
+            entity.size.width,
+            entity.size.height,
+            layoutedDiagram.size
+        );
 
-        dragItems.push(dragItem);
+        imageDragItems.push(dragItem);
         dropLocations.push(dropLocation);
 
-        correctMappings.push({ dragItem, dropLocation });
+        const correctMapping = new DragAndDropMapping();
+        correctMapping.dragItem = dragItem;
+        correctMapping.dropLocation = dropLocation;
+        correctMappings.push(correctMapping);
     }
 
-    return { dragItems, dropLocations, correctMappings };
+    return { dragItems: imageDragItems, dropLocations, correctMappings };
 }
 
-function generateMappingsForInteractiveEntityMembers(
+function generateMappingsForInteractiveEntitiesTexts(
     layoutedDiagram: LayoutedDiagram,
     interactiveElementIds: Set<string>,
     fontFamily: string
 ) {
-    const dragItems: TextDragItem[] = [];
+    const textDragItems: DragItem[] = [];
     const dropLocations: DropLocation[] = [];
 
     // Since there might be multiple interactive entity members with the same name,
@@ -208,7 +195,7 @@ function generateMappingsForInteractiveEntityMembers(
                 interactiveElementIds
             );
 
-            dragItems.push(...entityKindDragItems);
+            textDragItems.push(...entityKindDragItems);
             dropLocations.push(...entityKindDropLocations);
 
             for (const dragItem of entityKindDragItems) {
@@ -223,9 +210,9 @@ function generateMappingsForInteractiveEntityMembers(
     }
 
     return {
-        dragItems,
+        dragItems: textDragItems,
         dropLocations,
-        correctMappings: getCorrectMappings(dragItems, dropLocations, correctDropLocationIDsByEntityMemberName)
+        correctMappings: getCorrectMappings(textDragItems, dropLocations, correctDropLocationIDsByEntityMemberName)
     };
 }
 
@@ -234,7 +221,7 @@ function getEntityMemberDragItemsAndDropLocations(
     entity: LayoutedEntity,
     entityMembers: LayoutedEntityMember[],
     interactiveElementIds: Set<string>
-): [TextDragItem[], DropLocation[]] {
+): [DragItem[], DropLocation[]] {
     const interactiveMembers = entityMembers.filter(member => interactiveElementIds.has(member.id)).map(member => ({
         ...member,
         position: {
@@ -243,38 +230,37 @@ function getEntityMemberDragItemsAndDropLocations(
         }
     }));
 
-    const dragItems: TextDragItem[] = interactiveMembers.map(member => ({
-        tempID: TempID.generate(),
-        text: member.name
-    }));
+    const textDragItems: DragItem[] = interactiveMembers.map(member => {
+        const dragItem = new DragItem();
+        dragItem.tempID = TempID.generate();
+        dragItem.text = member.name;
+        return dragItem;
+    });
 
-    const dropLocations: DropLocation[] = interactiveMembers.map(member => ({
-        tempID: TempID.generate(),
-        posX: Math.round(MAX_SIZE_UNIT * member.position.x / layoutedDiagram.size.width),
-        posY: Math.round(MAX_SIZE_UNIT * member.position.y / layoutedDiagram.size.height),
-        width: Math.round(MAX_SIZE_UNIT * member.size.width / layoutedDiagram.size.width),
-        height: Math.round(MAX_SIZE_UNIT * member.size.height / layoutedDiagram.size.height)
-    }));
+    const dropLocations: DropLocation[] = interactiveMembers.map(member => {
+        return createDropLocation(member.position.x, member.position.y, member.size.width, member.size.height, layoutedDiagram.size);
+    });
 
-    return [dragItems, dropLocations];
+    return [textDragItems, dropLocations];
 }
 
 function getCorrectMappings(
-    dragItems: TextDragItem[],
+    textDragItems: DragItem[],
     dropLocations: DropLocation[],
     correctDropLocationIDsByEntityMemberName: Map<string, Set<number>>
 ) {
     const correctMappings: DragAndDropMapping[] = [];
 
     correctDropLocationIDsByEntityMemberName.forEach((correctDropLocationTempIDs, entityMemberName) => {
-        const dragItemsWithMatchingName = dragItems.filter(dragItem => dragItem.text === entityMemberName);
-        const correctDropLocations = dropLocations.filter(dropLocation =>
-            correctDropLocationTempIDs.has(dropLocation.tempID)
-        );
+        const dragItemsWithMatchingName = textDragItems.filter(dragItem => dragItem.text === entityMemberName);
+        const correctDropLocations = dropLocations.filter(dropLocation => correctDropLocationTempIDs.has(dropLocation.tempID));
 
         for (const dragItem of dragItemsWithMatchingName) {
             for (const dropLocation of correctDropLocations) {
-                correctMappings.push({ dragItem, dropLocation });
+                const correctMapping = new DragAndDropMapping();
+                correctMapping.dragItem = dragItem;
+                correctMapping.dropLocation = dropLocation;
+                correctMappings.push(correctMapping);
             }
         }
     });
@@ -305,10 +291,9 @@ async function generateMappingsForInteractiveRelationships(
             `relationship-${interactiveRelationship.relationship.id}.png`
         );
 
-        const dragItem: ImageDragItem = {
-            tempID: TempID.generate(),
-            pictureFilePath: imageUploadResponse.path
-        };
+        const imageDragItem = new DragItem();
+        imageDragItem.tempID = TempID.generate();
+        imageDragItem.pictureFilePath = imageUploadResponse.path;
 
         const boundingBox = computeBoundingBox(interactiveRelationship.path);
         const MIN_SIDE_LENGTH = 30;
@@ -325,25 +310,31 @@ async function generateMappingsForInteractiveRelationships(
             boundingBox.y -= delta / 2;
         }
 
-        const dropLocation: DropLocation = {
-            tempID: TempID.generate(),
-            posX: Math.round(MAX_SIZE_UNIT * boundingBox.x / layoutedDiagram.size.width),
-            posY: Math.round(MAX_SIZE_UNIT * boundingBox.y / layoutedDiagram.size.height),
-            width: Math.round(MAX_SIZE_UNIT * boundingBox.width / layoutedDiagram.size.width),
-            height: Math.round(MAX_SIZE_UNIT * boundingBox.height / layoutedDiagram.size.height)
-        };
+        const dropLocation = createDropLocation(boundingBox.x, boundingBox.y, boundingBox.width, boundingBox.height, layoutedDiagram.size);
 
-        dragItems.push(dragItem);
+        dragItems.push(imageDragItem);
         dropLocations.push(dropLocation);
 
-        correctMappings.push({ dragItem, dropLocation });
+        const mapping = new DragAndDropMapping();
+        mapping.dragItem = imageDragItem;
+        mapping.dropLocation = dropLocation;
+
+        correctMappings.push(mapping);
     }
 
     return { dragItems, dropLocations, correctMappings };
 }
 
 function getInteractiveRelationships(layoutedDiagram: LayoutedDiagram, interactiveElementIds: Set<string>) {
-    return layoutedDiagram.relationships.filter(relationship =>
-        interactiveElementIds.has(relationship.relationship.id)
-    );
+    return layoutedDiagram.relationships.filter(relationship => interactiveElementIds.has(relationship.relationship.id));
+}
+
+function createDropLocation(x: number, y: number, width: number, height: number, totalSize: Size): DropLocation {
+    const dropLocation = new DropLocation();
+    dropLocation.tempID = TempID.generate();
+    dropLocation.posX = Math.round((MAX_SIZE_UNIT * x) / totalSize.width);
+    dropLocation.posY = Math.round((MAX_SIZE_UNIT * y) / totalSize.height);
+    dropLocation.width = Math.round((MAX_SIZE_UNIT * width) / totalSize.width);
+    dropLocation.height = Math.round((MAX_SIZE_UNIT * height) / totalSize.height);
+    return dropLocation;
 }

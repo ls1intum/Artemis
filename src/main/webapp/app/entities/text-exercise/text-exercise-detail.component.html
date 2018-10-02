@@ -1,0 +1,59 @@
+
+<div *ngIf="textExercise">
+    <h2><span jhiTranslate="arTeMiSApp.textExercise.detail.title">Text Exercise</span> {{textExercise.id}}</h2>
+    <hr>
+    <jhi-alert-error></jhi-alert-error>
+    <dl class="row-md jh-entity-details">
+    </dl>
+
+    <dl class="row-md jh-entity-details">
+        <dt><span jhiTranslate="arTeMiSApp.exercise.title">Title</span></dt>
+        <dd>
+            <span>{{textExercise.title}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.releaseDate">Release Date</span></dt>
+        <dd>
+            <span>{{textExercise.releaseDate | date:'medium'}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.dueDate">Due Date</span></dt>
+        <dd>
+            <span>{{textExercise.dueDate | date:'medium'}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max Score</span></dt>
+        <dd>
+            <span>{{textExercise.maxScore}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.course">Course</span></dt>
+        <dd>
+            <div *ngIf="textExercise.course">
+                <a [routerLink]="['/course', textExercise.course?.id]">{{textExercise.course?.title}}</a>
+            </div>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.problemStatement">Problem Statement</span></dt>
+        <dd>
+            <span>{{textExercise.problemStatement}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.maxScore">Max. Score</span></dt>
+        <dd>
+            <span>{{textExercise.maxScore}}</span>
+        </dd>
+        <dt><span jhiTranslate="arTeMiSApp.exercise.sampleSolution">Sample Solution</span></dt>
+        <dd>
+            <span>{{textExercise.sampleSolution}}</span>
+        </dd>
+    </dl>    
+
+    <button type="submit"
+            (click)="previousState()"
+            class="btn btn-info">
+        <span class="fa fa-arrow-left"></span>&nbsp;<span jhiTranslate="entity.action.back"> Back</span>
+    </button>
+
+    <button type="button"
+            [routerLink]="['/', { outlets: { popup: 'text-exercise/'+ textExercise.id + '/edit'} }]"
+            replaceUrl="true"
+            queryParamsHandling="merge"
+            class="btn btn-primary">
+        <span class="fa fa-pencil"></span>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+    </button>
+</div>

@@ -1,3 +1,7 @@
+/* ==========================================================================
+Online Editor Styles
+========================================================================== */
+
 body.editor {
     height: 100%;
 }
@@ -20,7 +24,6 @@ body {
     max-height: calc(100vh - 100px);
     .navbar {
         border-bottom: 1px solid #ccc;
-        margin-bottom: 20px;
     }
 }
 .editor-wrapper > * {
@@ -37,7 +40,7 @@ body {
 .editor-wrapper > nav > .editor-top-right {
     font-size: 14px;
 }
-.editor-wrapper > nav > .editor-top-right > ul > li > result {
+.editor-wrapper > nav > .editor-top-right > ul > li > jhi-result {
     margin-right: 10px;
     padding-right: 10px;
 }
@@ -53,7 +56,6 @@ body {
 }
 .editor-wrapper > .editor-main > * {
     flex: 0 0 auto;
-    overflow: scroll;
 }
 .editor-wrapper > .editor-main > .editor-sidebar-left,
 .editor-wrapper > .editor-main > .editor-sidebar-right {
@@ -62,38 +64,27 @@ body {
     font-size: 14px;
 }
 
-
 .editor-wrapper > .editor-main > .editor-sidebar-right {
     overflow: initial;
 }
 
-
-
-
 .editor-wrapper > .editor-main > .editor-sidebar-right .card-body {
-    overflow: scroll;
+    overflow-y: scroll;
     height: inherit;
     padding-bottom: 100px;
 }
 
-
-.editor-wrapper > .editor-main > .editor-sidebar-left .card:not(.collapsed) {
-    max-width: 400px;
-    min-width: 150px;
-}
-
-
 .editor-wrapper > .editor-main > .editor-sidebar-right .card:not(.collapsed) {
-    min-width: 300px;
     height: 100%;
 }
 
-.editor-wrapper > .editor-bottom .card:not(.collapsed) {
-    min-height: 100px;
+.editor-wrapper > .editor-main > .editor-center .card {
+    height: 100%;
 }
 
 .editor-wrapper > .editor-bottom .card-body {
-    overflow: scroll;
+    overflow-y: scroll;
+    overflow-x: hidden;
     position: absolute;
     bottom: 5px;
     top: 40px;
@@ -101,10 +92,12 @@ body {
     margin-top: 5px;
 }
 
-
-
 .editor-wrapper > .editor-main > .editor-center {
     flex: 1 1 auto;
+}
+
+.editor-center {
+    overflow-y: hidden;
 }
 
 
@@ -116,7 +109,6 @@ body {
     vertical-align: baseline;
 }
 
-
 .card-header {
     outline: none;
     .card-title {
@@ -126,7 +118,6 @@ body {
 .card-header[role="button"] {
     cursor: pointer;
 }
-
 
 .card.collapsed .card-body,
 .card.collapsed .card-second-header,
@@ -151,20 +142,16 @@ body.editor .navbar-brand span {
     white-space: nowrap;
 }
 
-
-
 .ace_editor {
     height: 100%;
     margin-bottom: 0 !important;
 }
 
-
 .buildoutput {
     font-family: Menlo,Monaco,"Courier New",monospace;
     font-size: 11px;
-    overflow: scroll;
-    margin: 0;
     overflow: hidden;
+    margin: 0;
 }
 
 .buildoutput dt {
@@ -175,15 +162,15 @@ body.editor .navbar-brand span {
     clear: left;
 }
 
-
 .buildoutput dd {
     margin-left: 140px;
     margin-bottom: 0;
     color: #003366;
 }
 
-
 .editor .instructions {
+    overflow-x: hidden;
+
     h2 {
         font-size: 28px;
     }
@@ -201,30 +188,161 @@ body.editor .navbar-brand span {
     }
 }
 
-
 .editor code {
     color: inherit;
     background-color: transparent;
 }
 
-/** copied form angular-resizeable bower component **/
+.editor-center .card > .card-body {
+    height: inherit;
+    padding: 0;
+    margin-top: 1px;
+}
 
-.resizable{position:relative}.resizable.no-transition{transition:none!important}.rg-bottom,.rg-left,.rg-right,.rg-top{display:block;width:14px;height:14px;line-height:14px;position:absolute;z-index:1;-moz-user-select:-moz-none;-ms-user-select:none;-webkit-user-select:none;user-select:none;background:0 0}.rg-bottom span,.rg-left span,.rg-right span,.rg-top span{position:absolute;box-sizing:border-box;display:block;border:1px solid #ccc}.rg-left span,.rg-right span{border-width:0 1px;top:50%;margin:-10px 0 0 3.5px;height:20px;width:7px}.rg-bottom span,.rg-top span{border-width:1px 0;left:50%;margin:3.5px 0 0 -10px;width:20px;height:7px}.rg-top{cursor:row-resize;width:100%;top:0;left:0;margin-top:-14px}.rg-right{cursor:col-resize;height:100%;right:0;top:0;margin-right:-14px}.rg-bottom{cursor:row-resize;width:100%;bottom:0;left:0;margin-bottom:-14px}.rg-left{cursor:col-resize;height:100%;left:0;top:0;margin-left:-14px}
+/* ==========================================================================
+File browser styles
+========================================================================== */
 
-/** stepwizard **/
+.treeview-container {
+
+    overflow-y: scroll;
+
+    .treeview-item {
+        cursor: pointer;
+
+        .list-group-item {
+            padding: .75rem 1.25rem;
+            margin-bottom: -1px;
+            border: none;
+        }
+
+        .list-group-item:hover {
+            background-color: #F5F5F5;
+        }
+    }
+}
+
+.node-selected {
+    color: #FFFFFF;
+    background-color: #428bca !important;
+}
+
+.resizable-filebrowser > .card-body {
+    padding: 1.25rem 0 1.25rem 0;
+}
+
+/* ==========================================================================
+Angular-resizable styles
+Required for resize-element-handler
+========================================================================== */
+
+.resizable {
+    position: relative
+}
+
+.resizable.no-transition {
+    transition: none!important
+}
+
+.rg-bottom,
+.rg-left,
+.rg-right,
+.rg-top {
+    display: block;
+    width: 14px;
+    height: 14px;
+    line-height: 14px;
+    position: absolute;
+    z-index: 1;
+    -moz-user-select: -moz-none;
+    -ms-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+    background: 0 0
+}
+
+.rg-bottom span,
+.rg-left span,
+.rg-right span,
+.rg-top span {
+    position: absolute;
+    box-sizing: border-box;
+    display: block;
+    border: 1px solid #ccc
+}
+
+.rg-left span,
+.rg-right span {
+    border-width: 0 1px;
+    top: 50%;
+    margin: -10px 0 0 3.5px;
+    height: 20px;
+    width: 7px
+}
+
+.rg-bottom span,
+.rg-top span {
+    border-width: 1px 0;
+    left: 50%;
+    margin: 3.5px 0 0 -10px;
+    width: 20px;
+    height: 7px
+}
+
+.rg-top {
+    cursor: row-resize;
+    width: 100%;
+    top: 0;
+    left: 0;
+    margin-top: -14px
+}
+
+.rg-right {
+    cursor: col-resize;
+    height: 100%;
+    right: 0;
+    top: 0;
+    margin-right: -14px
+}
+
+.rg-bottom {
+    cursor: row-resize;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    margin-bottom: -14px
+}
+
+.rg-left {
+    cursor: col-resize;
+    height: 100%;
+    left: 0;
+    top: 0;
+    margin-left: -14px
+}
+
+/* ==========================================================================
+Stepwizard styles (editor instructions)
+========================================================================== */
 
 .card-second-header {
     padding: 10px 15px;
     background-color: #f5f5f5;
     border-bottom: 1px solid #ddd;
-    overflow: scroll;
 }
 
 .editor-sidebar-left .card-second-header {
     padding: 3px 5px;
+    overflow-x: hidden;
 }
 
+.card-second-header {
+    overflow-y: hidden;
+}
 
+.editor-sidebar-left, .card-second-header {
+    overflow-x: hidden;
+}
 
 .stepwizard-step p {
     margin-top: 10px;
@@ -253,9 +371,6 @@ body.editor .navbar-brand span {
 .stepwizard-step .btn {
     cursor: default;
 }
-
-
-
 
 .stepwizard-row:before {
     top: 14px;
@@ -288,7 +403,9 @@ body.editor .navbar-brand span {
     }
 }
 
-/** Bootstrap 3.3.7 fix **/
+/* ==========================================================================
+Bootstrap 3.3.7 fix
+========================================================================== */
 
 .modal-open {
     .fade.in {

@@ -1,48 +1,51 @@
-import {JhiAlertService, JhiEventManager} from 'ng-jhipster';
+import { JhiAlertService, JhiEventManager } from 'ng-jhipster';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs/Subscription';
 import { ActivatedRoute } from '@angular/router';
-import { Exercise, ExerciseService } from '../entities/exercise';
+import { Exercise, ExerciseService, ExerciseType } from '../entities/exercise';
 import { Course, CourseService } from '../entities/course';
-import { ExerciseResultService } from '../entities/result/result.service';
+import { ResultService } from '../entities/result/result.service';
 import { DifferencePipe } from 'angular2-moment';
 import { ParticipationService } from '../entities/participation/participation.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Result } from '../entities/result';
-import { JhiResultDetailComponent } from '../courses/results/result.component';
+import { ResultDetailComponent } from '../entities/result/result-detail.component';
 import { ModelingAssessmentService } from '../entities/modeling-assessment/modeling-assessment.service';
 import { HttpResponse } from '@angular/common/http';
+import { Moment } from 'moment';
 
 @Component({
     selector: 'jhi-instructor-dashboard',
     templateUrl: './instructor-dashboard.component.html',
-    providers:  [
-        JhiAlertService, ModelingAssessmentService
-    ]
+    providers: [JhiAlertService, ModelingAssessmentService]
 })
-
 export class InstructorDashboardComponent implements OnInit, OnDestroy {
+    // make constants available to html for comparison
+    readonly QUIZ = ExerciseType.QUIZ;
+    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly MODELING = ExerciseType.MODELING;
 
     course: Course;
     exercise: Exercise;
     paramSub: Subscription;
-    predicate: any;
-    reverse: any;
-    nextOptimalSubmissionIds = [];
+    predicate: string;
+    reverse: boolean;
     showAllResults: string;
     results: Result[];
     allResults: Result[];
     eventSubscriber: Subscription;
 
-    constructor(private route: ActivatedRoute,
-                private momentDiff: DifferencePipe,
-                private courseService: CourseService,
-                private exerciseService: ExerciseService,
-                private exerciseResultService: ExerciseResultService,
-                private modelingAssessmentService: ModelingAssessmentService,
-                private participationService: ParticipationService,
-                private modalService: NgbModal,
-                private eventManager: JhiEventManager) {
+    constructor(
+        private route: ActivatedRoute,
+        private momentDiff: DifferencePipe,
+        private courseService: CourseService,
+        private exerciseService: ExerciseService,
+        private resultService: ResultService,
+        private modelingAssessmentService: ModelingAssessmentService,
+        private participationService: ParticipationService,
+        private modalService: NgbModal,
+        private eventManager: JhiEventManager
+    ) {
         this.reverse = false;
         this.predicate = 'id';
         this.showAllResults = 'all';
@@ -68,19 +71,21 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
     }
 
     getResults() {
-        this.exerciseResultService.query(this.exercise.course.id, this.exercise.id, {
-            showAllResults: this.showAllResults,
-            ratedOnly: this.exercise.type === 'quiz',
-            withSubmissions: this.exercise.type === 'modeling-exercise',
-            withAssessors: this.exercise.type === 'modeling-exercise'
-        }).subscribe((res: HttpResponse<Result[]>) => {
-            const tempResults: Result[] = res.body;
-            tempResults.forEach(function(result: Result) {
-                result.participation.results = [result];
+        this.resultService
+            .getResultsForExercise(this.exercise.course.id, this.exercise.id, {
+                showAllResults: this.showAllResults,
+                ratedOnly: this.exercise.type === ExerciseType.QUIZ,
+                withSubmissions: this.exercise.type === ExerciseType.MODELING,
+                withAssessors: this.exercise.type === ExerciseType.MODELING
+            })
+            .subscribe((res: HttpResponse<Result[]>) => {
+                const tempResults: Result[] = res.body;
+                tempResults.forEach(function(result: Result) {
+                    result.participation.results = [result];
+                });
+                this.allResults = tempResults;
+                this.filterResults();
             });
-            this.allResults = tempResults;
-            this.filterResults();
-        });
     }
 
     filterResults() {
@@ -98,33 +103,33 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         }
     }
 
-    durationString(completionDate, initializationDate) {
+    durationString(completionDate: Moment, initializationDate: Moment) {
         return this.momentDiff.transform(completionDate, initializationDate, 'minutes');
     }
 
-    goToBuildPlan(result) {
+    goToBuildPlan(result: Result) {
         this.participationService.buildPlanWebUrl(result.participation.id).subscribe(res => {
             window.open(res.url);
         });
     }
 
-    goToRepository(result) {
+    goToRepository(result: Result) {
         window.open(result.participation.repositoryUrl);
     }
 
     showDetails(result: Result) {
-        const modalRef = this.modalService.open(JhiResultDetailComponent, {keyboard: true, size: 'lg'});
+        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.result = result;
     }
 
-    toggleShowAllResults(newValue) {
+    toggleShowAllResults(newValue: string) {
         this.showAllResults = newValue;
         this.filterResults();
     }
 
     exportNames() {
         if (this.results.length > 0) {
-            const rows = [];
+            const rows: string[] = [];
             this.results.forEach((result, index) => {
                 let studentName = result.participation.student.firstName;
                 if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {
@@ -144,7 +149,7 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
 
     exportResults() {
         if (this.results.length > 0) {
-            const rows = [];
+            const rows: string[] = [];
             this.results.forEach((result, index) => {
                 let studentName = result.participation.student.firstName;
                 if (result.participation.student.lastName != null && result.participation.student.lastName !== '') {
@@ -154,13 +159,13 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
                 const score = result.score;
 
                 if (index === 0) {
-                    if (this.exercise.type === 'quiz') {
+                    if (this.exercise.type === ExerciseType.QUIZ) {
                         rows.push('data:text/csv;charset=utf-8,Name, Username, Score');
                     } else {
                         rows.push('data:text/csv;charset=utf-8,Name, Username, Score, Repo Link');
                     }
                 }
-                if (this.exercise.type === 'quiz') {
+                if (this.exercise.type === ExerciseType.QUIZ) {
                     rows.push(studentName + ', ' + studentId + ', ' + score);
                 } else {
                     const repoLink = result.participation.repositoryUrl;
@@ -186,5 +191,5 @@ export class InstructorDashboardComponent implements OnInit, OnDestroy {
         this.eventManager.destroy(this.eventSubscriber);
     }
 
-    callback() { }
+    callback() {}
 }

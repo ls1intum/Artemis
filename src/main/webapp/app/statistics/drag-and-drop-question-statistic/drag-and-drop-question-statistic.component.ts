@@ -1,169 +1,83 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { QuizExercise, QuizExerciseService } from '../../entities/quiz-exercise';
 import { ActivatedRoute, Router } from '@angular/router';
-import { JhiWebsocketService, Principal } from '../../shared';
+import { JhiWebsocketService, Principal } from '../../core';
 import { TranslateService } from '@ngx-translate/core';
-
-import * as Chart from 'chart.js';
 import { QuizStatisticUtil } from '../../components/util/quiz-statistic-util.service';
 import { DragAndDropQuestionUtil } from '../../components/util/drag-and-drop-question-util.service';
 import { ArtemisMarkdown } from '../../components/util/markdown.service';
 import { HttpClient } from '@angular/common/http';
-import { DragAndDropQuestion } from 'app/entities/drag-and-drop-question';
-import { DragAndDropQuestionStatistic } from 'app/entities/drag-and-drop-question-statistic';
+import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
+import { DragAndDropQuestionStatistic } from '../../entities/drag-and-drop-question-statistic';
+import { QuestionType } from '../../entities/question';
+import { DropLocation } from '../../entities/drop-location';
+import { ChartOptions } from 'chart.js';
+import { createOptions, DataSet, DataSetProvider } from '../quiz-statistic/quiz-statistic.component';
+import { Subscription } from 'rxjs/Subscription';
+
+interface BackgroundColorConfig {
+    backgroundColor: string;
+    borderColor: string;
+    pointBackgroundColor: string;
+    pointBorderColor: string;
+}
 
 @Component({
     selector: 'jhi-drag-and-drop-question-statistic',
     templateUrl: './drag-and-drop-question-statistic.component.html',
     providers: [QuizStatisticUtil, DragAndDropQuestionUtil, ArtemisMarkdown]
 })
-export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy {
+export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy, DataSetProvider {
+    // make constants available to html for comparison
+    readonly DRAG_AND_DROP = QuestionType.DRAG_AND_DROP;
+    readonly MULTIPLE_CHOICE = QuestionType.MULTIPLE_CHOICE;
+
     quizExercise: QuizExercise;
     question: DragAndDropQuestion;
     questionStatistic: DragAndDropQuestionStatistic;
-    questionIdParam;
-    private sub: any;
+    questionIdParam: number;
+    private sub: Subscription;
 
-    labels = [];
-    data = [];
-    colors = [];
+    labels: string[] = [];
+    data: number[] = [];
+    colors: BackgroundColorConfig[] = [];
     chartType = 'bar';
-    datasets = [];
+    datasets: DataSet[] = [];
 
-    label;
-    ratedData;
-    unratedData;
-    backgroundColor;
-    backgroundSolutionColor;
-    ratedAverage;
-    unratedAverage;
-    ratedCorrectData;
-    unratedCorrectData;
+    label: string[] = [];
+    ratedData: number[] = [];
+    unratedData: number[] = [];
+    backgroundColor: BackgroundColorConfig[] = [];
+    backgroundSolutionColor: BackgroundColorConfig[] = [];
+    ratedCorrectData: number;
+    unratedCorrectData: number;
 
-    maxScore;
-
-    showSolution = false;
+    maxScore: number;
     rated = true;
+    showSolution = false;
+    participants: number;
+    websocketChannelForData: string;
+    websocketChannelForReleaseState: string;
 
-    questionTextRendered;
-    answerTextRendered;
-
-    participants;
-
-    websocketChannelForData;
-    websocketChannelForReleaseState;
+    questionTextRendered: string;
 
     // options for chart in chart.js style
-    options = {
-        layout: {
-            padding: {
-                left: 0,
-                right: 0,
-                top: 0,
-                bottom: 30
-            }
-        },
-        legend: {
-            display: false
-        },
-        title: {
-            display: false,
-            text: '',
-            position: 'top',
-            fontSize: '16',
-            padding: 20
-        },
-        tooltips: {
-            enabled: false
-        },
-        scales: {
-            yAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                },
-                ticks: {
-                    beginAtZero: true
-                }
-            }],
-            xAxes: [{
-                scaleLabel: {
-                    labelString: '',
-                    display: true
-                }
-            }]
-        },
-        hover: {animationDuration: 0},
-        // add numbers on top of the bars
-        animation: {
-            duration: 500,
-            onComplete: chart => {
-                const chartInstance = chart.chart,
-                    ctx = chartInstance.ctx;
-                const fontSize = 12;
-                const fontStyle = 'normal';
-                const fontFamily = 'Calibri';
-                ctx.font = Chart.helpers.fontString(fontSize, fontStyle, fontFamily);
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
+    options: ChartOptions;
 
-                this.datasets.forEach((dataset, i) => {
-                    const meta = chartInstance.controller.getDatasetMeta(i);
-                    meta.data.forEach((bar, index) => {
-                        const data = (Math.round(dataset.data[index] * 100) / 100);
-                        const dataPercentage = (Math.round(
-                            (dataset.data[index] / this.participants) * 1000) / 10);
-
-                        const position = bar.tooltipPosition();
-
-                        // if the bar is high enough -> write the percentageValue inside the bar
-                        if (dataPercentage > 6) {
-                            // if the bar is low enough -> write the amountValue above the bar
-                            if (position.y > 15) {
-                                ctx.fillStyle = 'black';
-                                ctx.fillText(data, position.x, position.y - 10);
-
-                                if (this.participants !== 0) {
-                                    ctx.fillStyle = 'white';
-                                    ctx.fillText(dataPercentage.toString()
-                                        + '%', position.x, position.y + 10);
-                                }
-                            } else {
-                                // if the bar is too high -> write the amountValue inside the bar
-                                ctx.fillStyle = 'white';
-                                if (this.participants !== 0) {
-                                    ctx.fillText(data + ' / ' + dataPercentage.toString()
-                                        + '%', position.x, position.y + 10);
-                                } else {
-                                    ctx.fillText(data, position.x, position.y + 10);
-                                }
-                            }
-                        } else {
-                            // if the bar is to low -> write the percentageValue above the bar
-                            ctx.fillStyle = 'black';
-                            if (this.participants !== 0) {
-                                ctx.fillText(data + ' / ' + dataPercentage.toString()
-                                    + '%', position.x, position.y - 10);
-                            } else {
-                                ctx.fillText(data, position.x, position.y - 10);
-                            }
-                        }
-                    });
-                });
-            }
-        }
-    };
-
-    constructor(private route: ActivatedRoute,
-                private router: Router,
-                private principal: Principal,
-                private translateService: TranslateService,
-                private quizExerciseService: QuizExerciseService,
-                private jhiWebsocketService: JhiWebsocketService,
-                private quizStatisticUtil: QuizStatisticUtil,
-                private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
-                private artemisMarkdown: ArtemisMarkdown,
-                private http: HttpClient) {}
+    constructor(
+        private route: ActivatedRoute,
+        private router: Router,
+        private principal: Principal,
+        private translateService: TranslateService,
+        private quizExerciseService: QuizExerciseService,
+        private jhiWebsocketService: JhiWebsocketService,
+        private quizStatisticUtil: QuizStatisticUtil,
+        private dragAndDropQuestionUtil: DragAndDropQuestionUtil,
+        private artemisMarkdown: ArtemisMarkdown,
+        private http: HttpClient
+    ) {
+        this.options = createOptions(this);
+    }
 
     ngOnInit() {
         this.sub = this.route.params.subscribe(params => {
@@ -216,29 +130,37 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
         this.jhiWebsocketService.unsubscribe(this.websocketChannelForReleaseState);
     }
 
+    getDataSets() {
+        return this.datasets;
+    }
+
+    getParticipants() {
+        return this.participants;
+    }
+
     /**
      * This functions loads the Quiz, which is necessary to build the Web-Template
      *
      * @param {QuizExercise} quiz: the quizExercise, which the selected question is part of.
      * @param {boolean} refresh: true if method is called from Websocket
      */
-    loadQuiz(quiz, refresh) {
+    loadQuiz(quiz: QuizExercise, refresh: boolean) {
         // if the Student finds a way to the Website, while the Statistic is not released
         //      -> the Student will be send back to Courses
-        if ((!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']))
-            && !quiz.quizPointStatistic.released) {
+        if (!this.principal.hasAnyAuthorityDirect(['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA']) && !quiz.quizPointStatistic.released) {
             this.router.navigateByUrl('courses');
         }
         // search selected question in quizExercise based on questionId
         this.quizExercise = quiz;
-        this.question = this.quizExercise.questions.filter( question => this.questionIdParam === question.id)[0];
+        const updatedQuestion = this.quizExercise.questions.filter(question => this.questionIdParam === question.id)[0];
+        this.question = updatedQuestion as DragAndDropQuestion;
         // if the Anyone finds a way to the Website,
         // with an wrong combination of QuizId and QuestionId
         //      -> go back to Courses
         if (this.question === null) {
             this.router.navigateByUrl('courses');
         }
-        this.questionStatistic = this.question.questionStatistic;
+        this.questionStatistic = this.question.questionStatistic as DragAndDropQuestionStatistic;
 
         // load Layout only at the opening (not if the websocket refreshed the data)
         if (!refresh) {
@@ -252,7 +174,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      * build the Chart-Layout based on the the Json-entity (questionStatistic)
      */
     loadLayout() {
-
         this.orderDropLocationByPos();
 
         // reset old data
@@ -263,20 +184,18 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
         // set label and backgroundcolor based on the dropLocations
         this.question.dropLocations.forEach((dropLocation, i) => {
             this.label.push(String.fromCharCode(65 + i) + '.');
-            this.backgroundColor.push(
-                {
-                    backgroundColor: '#428bca',
-                    borderColor: '#428bca',
-                    pointBackgroundColor: '#428bca',
-                    pointBorderColor: '#428bca'
-                });
-            this.backgroundSolutionColor.push(
-                {
-                    backgroundColor: '#5cb85c',
-                    borderColor: '#5cb85c',
-                    pointBackgroundColor: '#5cb85c',
-                    pointBorderColor: '#5cb85c'
-                });
+            this.backgroundColor.push({
+                backgroundColor: '#428bca',
+                borderColor: '#428bca',
+                pointBackgroundColor: '#428bca',
+                pointBorderColor: '#428bca'
+            });
+            this.backgroundSolutionColor.push({
+                backgroundColor: '#5cb85c',
+                borderColor: '#5cb85c',
+                pointBackgroundColor: '#5cb85c',
+                pointBorderColor: '#5cb85c'
+            });
         });
 
         this.addLastBarLayout();
@@ -288,13 +207,12 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      */
     addLastBarLayout() {
         // add Color for last bar
-        this.backgroundColor.push(
-            {
-                backgroundColor: '#5bc0de',
-                borderColor: '#5bc0de',
-                pointBackgroundColor: '#5bc0de',
-                pointBorderColor: '#5bc0de'
-            });
+        this.backgroundColor.push({
+            backgroundColor: '#5bc0de',
+            borderColor: '#5bc0de',
+            pointBackgroundColor: '#5bc0de',
+            pointBorderColor: '#5bc0de'
+        });
         this.backgroundSolutionColor[this.question.dropLocations.length] = {
             backgroundColor: '#5bc0de',
             borderColor: '#5bc0de',
@@ -304,7 +222,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
 
         // add Text for last label based on the language
         this.translateService.get('showStatistic.quizStatistic.yAxes').subscribe(lastLabel => {
-            this.label[this.question.dropLocations.length] = (lastLabel.split(' '));
+            this.label[this.question.dropLocations.length] = lastLabel.split(' ');
             this.labels = this.label;
         });
     }
@@ -313,27 +231,24 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      * change label and Color if a dropLocation is invalid
      */
     loadInvalidLayout() {
-
         // set Background for invalid answers = grey
         this.translateService.get('showStatistic.invalid').subscribe(invalidLabel => {
             this.question.dropLocations.forEach((dropLocation, i) => {
                 if (dropLocation.invalid) {
-                    this.backgroundColor[i] = (
-                        {
-                            backgroundColor: '#838383',
-                            borderColor: '#838383',
-                            pointBackgroundColor: '#838383',
-                            pointBorderColor: '#838383'
-                        });
-                    this.backgroundSolutionColor[i] = (
-                        {
-                            backgroundColor: '#838383',
-                            borderColor: '#838383',
-                            pointBackgroundColor: '#838383',
-                            pointBorderColor: '#838383'
-                        });
+                    this.backgroundColor[i] = {
+                        backgroundColor: '#838383',
+                        borderColor: '#838383',
+                        pointBackgroundColor: '#838383',
+                        pointBorderColor: '#838383'
+                    };
+                    this.backgroundSolutionColor[i] = {
+                        backgroundColor: '#838383',
+                        borderColor: '#838383',
+                        pointBackgroundColor: '#838383',
+                        pointBorderColor: '#838383'
+                    };
                     // add 'invalid' to bar-Label
-                    this.label[i] = ([String.fromCharCode(65 + i) + '.', ' ' + invalidLabel]);
+                    this.label[i] = String.fromCharCode(65 + i) + '. ' + invalidLabel;
                 }
             });
         });
@@ -343,17 +258,15 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      * load the Data from the Json-entity to the chart: myChart
      */
     loadData() {
-
         // reset old data
         this.ratedData = [];
         this.unratedData = [];
 
         // set data based on the dropLocations for each dropLocation
         this.question.dropLocations.forEach(dropLocation => {
-            const dropLocationCounter = this.questionStatistic.dropLocationCounters
-                .find(dlCounter => {
-                    return dropLocation.id === dlCounter.dropLocation.id;
-                });
+            const dropLocationCounter = this.questionStatistic.dropLocationCounters.find(dlCounter => {
+                return dropLocation.id === dlCounter.dropLocation.id;
+            });
             this.ratedData.push(dropLocationCounter.ratedCounter);
             this.unratedData.push(dropLocationCounter.unRatedCounter);
         });
@@ -371,7 +284,6 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      * load the rated or unrated data into the diagram
      */
     loadDataInDiagram() {
-
         // if show Solution is true use the label,
         // backgroundColor and Data, which show the solution
         if (this.showSolution) {
@@ -404,10 +316,12 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
             }
         }
 
-        this.datasets = [{
-            data: this.data,
-            backgroundColor: this.colors
-        }];
+        this.datasets = [
+            {
+                data: this.data,
+                backgroundColor: this.colors
+            }
+        ];
     }
 
     /**
@@ -432,7 +346,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      *
      * @param index the given number
      */
-    getLetter(index) {
+    getLetter(index: number) {
         return String.fromCharCode(65 + index);
     }
 
@@ -444,8 +358,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
         while (change) {
             change = false;
             for (let i = 0; i < this.question.dropLocations.length - 1; i++) {
-                if ((this.question.dropLocations[i].posX )
-                    > this.question.dropLocations[i + 1].posX) {
+                if (this.question.dropLocations[i].posX > this.question.dropLocations[i + 1].posX) {
                     // switch DropLocations
                     const temp = this.question.dropLocations[i];
                     this.question.dropLocations[i] = this.question.dropLocations[i + 1];
@@ -463,8 +376,10 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      * @return {object | null} the mapped drag item,
      *                          or null if no drag item has been mapped to this location
      */
-    correctDragItemForDropLocation(dropLocation) {
-        const currMapping = this.dragAndDropQuestionUtil.solve(this.question, null).filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
+    correctDragItemForDropLocation(dropLocation: DropLocation) {
+        const currMapping = this.dragAndDropQuestionUtil
+            .solve(this.question, null)
+            .filter(mapping => mapping.dropLocation.id === dropLocation.id)[0];
         if (currMapping) {
             return currMapping.dragItem;
         } else {
@@ -493,7 +408,7 @@ export class DragAndDropQuestionStatisticComponent implements OnInit, OnDestroy 
      *
      * @param {boolean} released: true to release, false to revoke
      */
-    releaseStatistics(released) {
+    releaseStatistics(released: boolean) {
         this.quizStatisticUtil.releaseStatistics(released, this.quizExercise);
     }
 

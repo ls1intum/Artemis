@@ -1,29 +1,30 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild, HostListener } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Subscription } from 'rxjs/Subscription';
-import { ModelingExercise, ModelingExerciseService } from '../entities/modeling-exercise';
-import { Participation, ParticipationService } from '../entities/participation';
-import { ActivatedRoute } from '@angular/router';
+import { DiagramType, ModelingExercise } from '../entities/modeling-exercise';
+import { Participation } from '../entities/participation';
 import { ApollonDiagramService } from '../entities/apollon-diagram/apollon-diagram.service';
-import ApollonEditor from '@ls1intum/apollon';
+import ApollonEditor, { ApollonOptions, Point, State } from '@ls1intum/apollon';
 import { JhiAlertService } from 'ng-jhipster';
-import { Result, ResultService } from '../entities/result';
-import { ParticipationResultService } from '../entities/result/result.service';
+import { Result } from '../entities/result';
 import { ModelingSubmission, ModelingSubmissionService } from '../entities/modeling-submission';
-import { ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
+import { ModelElementType, ModelingAssessment, ModelingAssessmentService } from '../entities/modeling-assessment';
 import * as $ from 'jquery';
 import { ModelingEditorService } from './modeling-editor.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ComponentCanDeactivate } from '../shared';
+import { JhiWebsocketService } from '../core';
 import { Observable } from 'rxjs/Observable';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-modeling-editor',
     templateUrl: './modeling-editor.component.html',
-    providers: [ParticipationResultService, ModelingAssessmentService, ApollonDiagramService]
+    providers: [ModelingAssessmentService, ApollonDiagramService]
 })
 export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
-    @ViewChild('editorContainer') editorContainer: ElementRef;
+    @ViewChild('editorContainer')
+    editorContainer: ElementRef;
 
     private subscription: Subscription;
     participation: Participation;
@@ -31,75 +32,143 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     result: Result;
 
     apollonEditor: ApollonEditor | null = null;
-    selectedEntities: any[];
-    selectedRelationships: any[];
+    selectedEntities: string[];
+    selectedRelationships: string[];
 
-    submission: any = {};
-    submissionState;
+    submission: ModelingSubmission;
+
+    /**
+     * JSON with the following keys: editor, entities, interactiveElements, relationships
+     * format is given by Apollon
+     */
+    submissionState: State;
+
     assessments: ModelingAssessment[];
-    assessmentsNames;
+    assessmentsNames: Map<string, string>;
     totalScore: number;
-    positions: {};
-    diagramState = null;
+
+    /**
+     * an Array of model element IDs as keys with {x: <xOffset>, y: <yOffset>} as values
+     * is used for positioning the assessment symbols
+     */
+    positions: Map<string, Point>;
+
+    diagramState: State = null;
     isActive: boolean;
+    isSaving: boolean;
+    retryStarted = false;
+    autoSaveInterval: number;
+    autoSaveTimer: number;
+
+    websocketChannel: string;
 
     constructor(
+        private jhiWebsocketService: JhiWebsocketService,
         private apollonDiagramService: ApollonDiagramService,
-        private participationService: ParticipationService,
-        private modelingExerciseService: ModelingExerciseService,
         private modelingSubmissionService: ModelingSubmissionService,
         private modelingAssessmentService: ModelingAssessmentService,
-        private participationResultService: ParticipationResultService,
-        private resultService: ResultService,
         private jhiAlertService: JhiAlertService,
         private route: ActivatedRoute,
         private modelingEditorService: ModelingEditorService,
         private modalService: NgbModal,
-        private translateService: TranslateService
-    ) {}
+        private translateService: TranslateService,
+        private router: Router
+    ) {
+        this.isSaving = false;
+        this.autoSaveTimer = 0;
+    }
 
     ngOnInit() {
         this.subscription = this.route.params.subscribe(params => {
             if (params['participationId']) {
-                this.modelingEditorService.get(params['participationId']).subscribe(data => {
-                    this.participation = data.participation;
-                    if (data.participation.results) {
-                        this.result = data.participation.results[0];
-                    }
-                    this.modelingExercise = this.participation.exercise;
-                    this.isActive = this.modelingExercise.dueDate == null || Date.now() <= Date.parse(this.modelingExercise.dueDate);
-                    this.submission = data.modelingSubmission;
-                    if (this.submission && this.submission.model) {
-                        this.initializeApollonEditor(JSON.parse(this.submission.model));
-                    } else {
-                        this.initializeApollonEditor({});
-                    }
-                    if (this.submission && this.submission.submitted && this.result && this.result.rated) {
-                        if (data.assessments) {
-                            this.assessments = data.assessments;
-                            this.initializeAssessmentInfo();
+                this.modelingEditorService.get(params['participationId']).subscribe(
+                    data => {
+                        this.participation = data.participation;
+                        this.modelingExercise = this.participation.exercise as ModelingExercise;
+                        /**
+                         * set diagramType to class diagram if exercise is null, use case or communication
+                         * apollon does not support use case and communication yet
+                         */
+                        if (
+                            this.modelingExercise.diagramType === null ||
+                            this.modelingExercise.diagramType === DiagramType.USE_CASE ||
+                            this.modelingExercise.diagramType === DiagramType.COMMUNICATION
+                        ) {
+                            this.modelingExercise.diagramType = DiagramType.CLASS;
+                        }
+                        this.isActive = this.modelingExercise.dueDate == null || new Date() <= this.modelingExercise.dueDate.toDate();
+                        this.submission = data.modelingSubmission;
+                        if (this.submission && this.submission.id && !this.submission.submitted) {
+                            this.subscribeToWebsocket();
+                        }
+                        if (this.submission && this.submission.result) {
+                            this.result = this.submission.result;
+                        }
+                        if (this.submission && this.submission.model) {
+                            this.initializeApollonEditor(JSON.parse(this.submission.model));
                         } else {
-                            this.modelingAssessmentService.find(params['participationId'], this.submission.id).subscribe(assessments => {
-                                this.assessments = assessments.body;
+                            this.initializeApollonEditor(null);
+                        }
+                        if (this.submission && this.submission.submitted && this.result && this.result.rated) {
+                            if (data.assessments) {
+                                this.assessments = data.assessments;
                                 this.initializeAssessmentInfo();
-                            });
+                            } else {
+                                this.modelingAssessmentService
+                                    .find(params['participationId'], this.submission.id)
+                                    .subscribe(assessments => {
+                                        this.assessments = assessments.body;
+                                        this.initializeAssessmentInfo();
+                                    });
+                            }
+                        }
+                    },
+                    error => {
+                        if (error.status === 403) {
+                            this.router.navigate(['accessdenied']);
                         }
                     }
-                });
+                );
             }
         });
         window.scroll(0, 0);
     }
 
-    initializeApollonEditor(initialState) {
+    subscribeToWebsocket() {
+        if (!this.submission && !this.submission.id) {
+            return;
+        }
+        this.websocketChannel = '/user/topic/modelingSubmission/' + this.submission.id;
+        this.jhiWebsocketService.subscribe(this.websocketChannel);
+        this.jhiWebsocketService.receive(this.websocketChannel).subscribe(submission => {
+            if (submission.submitted) {
+                this.submission = submission;
+                if (this.submission.result && this.submission.result.rated) {
+                    this.modelingAssessmentService.find(this.submission.participation.id, this.submission.id).subscribe(assessments => {
+                        this.assessments = assessments.body;
+                        this.initializeAssessmentInfo();
+                    });
+                }
+                this.jhiAlertService.info('arTeMiSApp.modelingEditor.autoSubmit');
+                if (this.submission.model) {
+                    this.initializeApollonEditor(JSON.parse(this.submission.model));
+                }
+                this.isActive = false;
+            }
+        });
+    }
+
+    initializeApollonEditor(initialState: State) {
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
 
         if (this.submission && this.submission.submitted) {
+            clearInterval(this.autoSaveInterval);
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 initialState,
-                mode: 'READ_ONLY'
+                mode: 'READ_ONLY',
+                diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
             });
 
             const state = this.apollonEditor.getState();
@@ -134,31 +203,67 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         } else {
             this.apollonEditor = new ApollonEditor(this.editorContainer.nativeElement, {
                 initialState,
-                mode: 'MODELING_ONLY'
+                mode: 'MODELING_ONLY',
+                diagramType: <ApollonOptions['diagramType']>this.modelingExercise.diagramType
             });
             this.updateSubmissionModel();
+            this.autoSaveInterval = window.setInterval(() => {
+                this.autoSaveTimer++;
+                if (this.submission && this.submission.submitted) {
+                    clearInterval(this.autoSaveInterval);
+                    this.autoSaveTimer = 0;
+                }
+                if (this.autoSaveTimer >= 60 && !this.canDeactivate()) {
+                    this.saveDiagram();
+                }
+            }, 1000);
         }
     }
 
     saveDiagram() {
+        if (this.isSaving) {
+            // don't execute the function if it is already currently executing
+            return;
+        }
         if (!this.submission) {
             this.submission = new ModelingSubmission();
         }
         this.submission.submitted = false;
         this.updateSubmissionModel();
+        this.isSaving = true;
+        this.autoSaveTimer = 0;
 
         if (this.submission.id) {
-            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
-                this.result = res.body;
-                this.submission = this.result.submission;
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-            });
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+                response => {
+                    this.submission = response.body;
+                    this.result = this.submission.result;
+                    if (!this.submission.model) {
+                        this.updateSubmissionModel();
+                    }
+                    this.isSaving = false;
+                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                },
+                e => {
+                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.isSaving = false;
+                }
+            );
         } else {
-            this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(sub => {
-                this.result = sub.body;
-                this.submission = this.result.submission;
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
-            });
+            this.modelingSubmissionService.create(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+                submission => {
+                    this.submission = submission.body;
+                    this.result = this.submission.result;
+                    this.isSaving = false;
+                    this.jhiAlertService.success('arTeMiSApp.modelingEditor.saveSuccessful');
+                    this.isActive = this.modelingExercise.dueDate == null || new Date() <= this.modelingExercise.dueDate.toDate();
+                    this.subscribeToWebsocket();
+                },
+                e => {
+                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.isSaving = false;
+                }
+            );
         }
     }
 
@@ -171,27 +276,50 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
             this.jhiAlertService.warning('arTeMiSApp.modelingEditor.empty');
             return;
         }
-        this.submission.submitted = true;
-        this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(res => {
-            this.result = res.body;
-            this.submission = this.result.submission;
-            // Compass has already calculated a result
-            if (this.result.assessmentType) {
-                const participation = this.participation;
-                participation.results = [this.result];
-                this.participation = Object.assign({}, participation);
-                this.modelingAssessmentService.find(this.participation.id, this.submission.id).subscribe(assessments => {
-                    this.assessments = assessments.body;
-                    this.initializeAssessmentInfo();
-                });
-            }
-            if (this.isActive) {
-                this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
-            } else {
-                this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
-            }
-        });
-        this.initializeApollonEditor(JSON.parse(this.submission.model));
+
+        let confirmSubmit = true;
+        if (this.calculateNumberOfModelElements() < 10) {
+            confirmSubmit = window.confirm(
+                'Are you sure you want to submit? You cannot edit your model anymore until you get an assessment!'
+            );
+        }
+
+        if (confirmSubmit) {
+            this.submission.submitted = true;
+            this.modelingSubmissionService.update(this.submission, this.modelingExercise.course.id, this.modelingExercise.id).subscribe(
+                response => {
+                    this.submission = response.body;
+                    this.result = this.submission.result;
+                    // Compass has already calculated a result
+                    if (this.result && this.result.assessmentType) {
+                        const participation = this.participation;
+                        participation.results = [this.result];
+                        this.participation = Object.assign({}, participation);
+                        this.modelingAssessmentService.find(this.participation.id, this.submission.id).subscribe(assessments => {
+                            this.assessments = assessments.body;
+                            this.initializeAssessmentInfo();
+                        });
+                        this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessfulWithAssessment');
+                    } else {
+                        if (this.isActive) {
+                            this.jhiAlertService.success('arTeMiSApp.modelingEditor.submitSuccessful');
+                        } else {
+                            this.jhiAlertService.warning('arTeMiSApp.modelingEditor.submitDeadlineMissed');
+                        }
+                    }
+                    this.retryStarted = false;
+                    clearInterval(this.autoSaveInterval);
+                    this.initializeApollonEditor(JSON.parse(this.submission.model));
+                    if (this.websocketChannel) {
+                        this.jhiWebsocketService.unsubscribe(this.websocketChannel);
+                    }
+                },
+                err => {
+                    this.jhiAlertService.error('arTeMiSApp.modelingEditor.error');
+                    this.submission.submitted = false;
+                }
+            );
+        }
     }
 
     ngOnDestroy() {
@@ -199,12 +327,17 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (this.apollonEditor !== null) {
             this.apollonEditor.destroy();
         }
+        clearInterval(this.autoSaveInterval);
+
+        if (this.websocketChannel) {
+            this.jhiWebsocketService.unsubscribe(this.websocketChannel);
+        }
     }
 
     updateSubmissionModel() {
         this.diagramState = this.apollonEditor.getState();
         const diagramJson = JSON.stringify(this.diagramState);
-        if (this.submission) {
+        if (this.submission && diagramJson != null) {
             this.submission.model = diagramJson;
         }
     }
@@ -227,29 +360,38 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
     }
 
     numberToArray(n: number, startFrom: number): number[] {
-        n = (n > 5) ? 5 : n;
-        n = (n < -5) ? -5 : n;
+        n = n > 5 ? 5 : n;
+        n = n < -5 ? -5 : n;
         return this.modelingAssessmentService.numberToArray(n, startFrom);
     }
 
-    isSelected(id, type) {
-        if ((!this.selectedEntities || this.selectedEntities.length === 0) && (!this.selectedRelationships || this.selectedRelationships.length === 0)) {
+    isSelected(id: string, type: ModelElementType) {
+        if (
+            (!this.selectedEntities || this.selectedEntities.length === 0) &&
+            (!this.selectedRelationships || this.selectedRelationships.length === 0)
+        ) {
             return true;
         }
-        if (type !== 'relationship') {
+        if (type !== ModelElementType.RELATIONSHIP) {
             return this.selectedEntities.indexOf(id) > -1;
         } else {
             return this.selectedRelationships.indexOf(id) > -1;
         }
     }
 
-    open(content) {
-        this.modalService.open(content, {size: 'lg'});
+    open(content: any) {
+        this.modalService.open(content, { size: 'lg' });
     }
 
     // function to check whether there are pending changes
     canDeactivate(): Observable<boolean> | boolean {
-        if ((!this.submission && JSON.stringify(this.apollonEditor.getState()) !== '') || (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))) {
+        if (
+            (!this.submission &&
+                this.apollonEditor &&
+                this.apollonEditor.getState().entities.allIds.length > 0 &&
+                JSON.stringify(this.apollonEditor.getState()) !== '') ||
+            (this.submission && this.submission.model && this.submission.model !== JSON.stringify(this.apollonEditor.getState()))
+        ) {
             return false;
         }
         return true;
@@ -260,5 +402,31 @@ export class ModelingEditorComponent implements OnInit, OnDestroy, ComponentCanD
         if (!this.canDeactivate()) {
             $event.returnValue = this.translateService.instant('pendingChanges');
         }
+    }
+
+    retry() {
+        this.retryStarted = true;
+        this.submission.id = null;
+        this.submission.submitted = false;
+        this.submission.result = null;
+        this.assessments = [];
+        clearInterval(this.autoSaveInterval);
+        if (this.submission.model) {
+            this.initializeApollonEditor(JSON.parse(this.submission.model));
+        } else {
+            this.initializeApollonEditor(null);
+        }
+    }
+
+    calculateNumberOfModelElements(): number {
+        if (this.diagramState) {
+            let total = this.diagramState.entities.allIds.length + this.diagramState.relationships.allIds.length;
+            for (const elem of this.diagramState.entities.allIds) {
+                total += this.diagramState.entities.byId[elem].attributes.length;
+                total += this.diagramState.entities.byId[elem].methods.length;
+            }
+            return total;
+        }
+        return 0;
     }
 }

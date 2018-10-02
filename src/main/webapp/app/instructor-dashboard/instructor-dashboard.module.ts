@@ -1,20 +1,33 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-import { ArTEMiSSharedModule, UserRouteAccessService } from '../shared';
+import { ArTEMiSSharedModule } from '../shared';
+import { UserRouteAccessService } from '../core';
 import { HomeComponent } from '../home';
 import { MomentModule } from 'angular2-moment';
 import { JhiMainComponent } from '../layouts';
 import { InstructorDashboardComponent } from './instructor-dashboard.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ArTEMiSCoursesModule } from '../courses/courses.module';
-import { ResultComponent } from '../courses/results/result.component';
-import { InstructorDashboardArchiveDialogComponent, InstructorDashboardArchivePopupComponent } from './instructor-dashboard-archive-dialog.component';
-import { InstructorDashboardCleanupDialogComponent, InstructorDashboardCleanupPopupComponent } from './instructor-dashboard-cleanup-dialog.component';
+import { ArTEMiSResultModule, ResultComponent, ResultDetailComponent } from '../entities/result';
+import {
+    InstructorDashboardArchiveDialogComponent,
+    InstructorDashboardArchivePopupComponent
+} from './instructor-dashboard-archive-dialog.component';
+import {
+    InstructorDashboardCleanupDialogComponent,
+    InstructorDashboardCleanupPopupComponent
+} from './instructor-dashboard-cleanup-dialog.component';
+import {
+    InstructorDashboardExportReposComponent,
+    InstructorDashboardExportReposPopupComponent
+} from './instructor-dashboard-repo-export-dialog.component';
 import { InstructorDashboardPopupService } from './instructor-dashboard-popup.service';
-import { JhiResultDetailComponent } from '../courses';
-import { InstructorDashboardResultDialogComponent, InstructorDashboardResultPopupComponent } from './instructor-dashboard-result-dialog.component';
-import { SortByModule } from '../components/pipes/sort-by.module';
+import {
+    InstructorDashboardResultDialogComponent,
+    InstructorDashboardResultPopupComponent
+} from './instructor-dashboard-result-dialog.component';
+import { SortByModule } from '../components/pipes';
+import { FormDateTimePickerModule } from '../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [
     {
@@ -24,7 +37,7 @@ const ENTITY_STATES = [
             authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
             pageTitle: 'instructorDashboard.title'
         },
-        canActivate: [UserRouteAccessService],
+        canActivate: [UserRouteAccessService]
     },
     {
         path: 'participation/:participationId/result/new',
@@ -55,6 +68,16 @@ const ENTITY_STATES = [
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup'
+    },
+    {
+        path: 'exercise/:id/exportRepos',
+        component: InstructorDashboardExportReposPopupComponent,
+        data: {
+            authorities: ['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_TA'],
+            pageTitle: 'instructorDashboard.title'
+        },
+        canActivate: [UserRouteAccessService],
+        outlet: 'popup'
     }
 ];
 
@@ -64,8 +87,9 @@ const ENTITY_STATES = [
         MomentModule,
         RouterModule.forChild(ENTITY_STATES),
         NgbModule,
-        ArTEMiSCoursesModule,
-        SortByModule
+        ArTEMiSResultModule,
+        SortByModule,
+        FormDateTimePickerModule
     ],
     declarations: [
         InstructorDashboardComponent,
@@ -74,23 +98,25 @@ const ENTITY_STATES = [
         InstructorDashboardCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
         InstructorDashboardResultDialogComponent,
-        InstructorDashboardResultPopupComponent
+        InstructorDashboardResultPopupComponent,
+        InstructorDashboardExportReposComponent,
+        InstructorDashboardExportReposPopupComponent
     ],
     entryComponents: [
         HomeComponent,
         InstructorDashboardComponent,
         JhiMainComponent,
         ResultComponent,
-        JhiResultDetailComponent,
+        ResultDetailComponent,
         InstructorDashboardArchiveDialogComponent,
         InstructorDashboardArchivePopupComponent,
         InstructorDashboardCleanupDialogComponent,
         InstructorDashboardCleanupPopupComponent,
         InstructorDashboardResultDialogComponent,
-        InstructorDashboardResultPopupComponent
+        InstructorDashboardResultPopupComponent,
+        InstructorDashboardExportReposComponent,
+        InstructorDashboardExportReposPopupComponent
     ],
-    providers: [
-        InstructorDashboardPopupService
-    ]
+    providers: [InstructorDashboardPopupService]
 })
 export class ArTEMiSInstructorDashboardModule {}

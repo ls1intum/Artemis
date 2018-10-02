@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { UserRouteAccessService } from '../../shared';
+import { UserRouteAccessService } from '../../core';
 import { ParticipationComponent } from './participation.component';
 import { ParticipationDetailComponent } from './participation-detail.component';
 import { ParticipationDeletePopupComponent } from './participation-delete-dialog.component';
@@ -56,5 +56,5 @@ export const participationPopupRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         outlet: 'popup'
-    },
+    }
 ];

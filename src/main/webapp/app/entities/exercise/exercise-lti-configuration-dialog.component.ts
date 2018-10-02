@@ -5,6 +5,8 @@ import { ActivatedRoute } from '@angular/router';
 import { ExercisePopupService } from './exercise-popup.service';
 import { LtiConfiguration } from 'app/entities/lti-configuration';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-exercise-lti-configuration-dialog',
     templateUrl: './exercise-lti-configuration-dialog.component.html'
@@ -33,7 +35,7 @@ export class ExerciseLtiConfigurationDialogComponent implements OnInit {
 })
 export class ExerciseLtiConfigurationPopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

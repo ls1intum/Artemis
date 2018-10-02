@@ -14,8 +14,8 @@ import {
     programmingExerciseRoute,
     ProgrammingExerciseService
 } from './';
-import { CourseProgrammingExerciseService } from '../course/course.service';
 import { SortByModule } from '../../components/pipes';
+import { FormDateTimePickerModule } from '../../shared/dateTimePicker/date-time-picker.module';
 
 const ENTITY_STATES = [
     ...programmingExerciseRoute,
@@ -26,7 +26,8 @@ const ENTITY_STATES = [
     imports: [
         ArTEMiSSharedModule,
         RouterModule.forChild(ENTITY_STATES),
-        SortByModule
+        SortByModule,
+        FormDateTimePickerModule,
     ],
     declarations: [
         ProgrammingExerciseComponent,
@@ -46,7 +47,6 @@ const ENTITY_STATES = [
     providers: [
         ProgrammingExerciseService,
         ProgrammingExercisePopupService,
-        CourseProgrammingExerciseService,
     ],
     schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })

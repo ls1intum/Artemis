@@ -2,13 +2,19 @@
     <h4>
         <span *ngIf="course">{{course.title}} - </span><span *ngIf="quizExercises">{{quizExercises.length}} </span>
         <span jhiTranslate="arTeMiSApp.quizExercise.home.title">Quiz Exercises</span>
-        <button *ngIf="courseId" class="btn btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['new']">
+        <button *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['new']">
             <span class="fa fa-plus"></span>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createLabel">
                 Create new Quiz
             </span>
         </button>
-        <button *ngIf="courseId" class="btn btn-primary float-right" [routerLink]="['/apollon-diagrams']">
+        <button *ngIf="courseId" class="btn mr-2 btn-primary float-right jh-create-entity create-quiz-exercise" [routerLink]="['export']">
+            <span class="fa fa-plus"></span>
+            <span  jhiTranslate="arTeMiSApp.quizExercise.home.exportLabel">
+                Export Quiz Exercises
+            </span>
+        </button>
+        <button *ngIf="courseId" class="btn mr-2 btn-primary float-right" [routerLink]="['/apollon-diagrams']">
             <span class="fa fa-plus"></span>
             <span jhiTranslate="arTeMiSApp.quizExercise.home.createModelDragAndDrop">
                 Create new Drag and Drop Model Quiz
@@ -34,7 +40,12 @@
             </thead>
             <tbody>
             <tr *ngFor="let quizExercise of quizExercises | sortBy: predicate: reverse ;trackBy: trackId">
-                <td><a [routerLink]="['/quiz-exercise', quizExercise.id ]">{{quizExercise.id}}</a></td>
+                <td *ngIf="!quizIsOver(quizExercise) || !userIsInstructor()">
+                    <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 'edit', quizExercise.id ]">{{quizExercise.id}}</a>
+                </td>
+                <td *ngIf="quizIsOver(quizExercise) && userIsInstructor()">
+                    <a [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise', 're-evaluate', quizExercise.id]">{{quizExercise.id}}</a>
+                </td>
                 <td>{{quizExercise.title}}</td>
                 <td>{{quizExercise.status}}</td>
                 <td>{{quizExercise.isPlannedToStart ? (quizExercise.releaseDate | date:'medium') : "-"}}</td>
@@ -92,6 +103,11 @@
                                 class="btn btn-success btn-sm">
                             <span class="fa fa-signal"></span>
                             <span class="hidden-sm-down" jhiTranslate="global.menu.entities.statistic"></span>
+                        </button>
+                        <button type="submit"
+                                (click)="exportQuizById(quizExercise.id, true)"
+                                class="btn btn-primary btn-sm">
+                            <span class="hidden-sm-down" jhiTranslate="entity.action.export"></span>
                         </button>
                         <button type="submit"
                                 [hidden]="quizIsOver(quizExercise) && userIsInstructor()"

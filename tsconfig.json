@@ -1,14 +1,14 @@
 {
     "compilerOptions": {
         "allowJs": true,
-        "target": "es2018",
+        "target": "es6",
         "module": "commonjs",
         "moduleResolution": "node",
         "sourceMap": true,
         "emitDecoratorMetadata": true,
         "experimentalDecorators": true,
         "removeComments": false,
-        "noImplicitAny": false,
+        "noImplicitAny": true,
         "skipLibCheck": true,
         "suppressImplicitAnyIndexErrors": true,
         "outDir": "build/www/app",
@@ -23,7 +23,8 @@
             ],
             "app/*": ["src/main/webapp/app/*"]
         },
-        "importHelpers": true
+        "importHelpers": true,
+        "allowJs": true
     },
     "include": [
         "src/main/webapp/app"

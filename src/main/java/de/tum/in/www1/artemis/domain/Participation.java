@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonView;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -12,9 +13,8 @@ import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A Participation.
@@ -42,21 +42,52 @@ public class Participation implements Serializable {
     @Enumerated(EnumType.STRING)
     @Column(name = "initialization_state")
     @JsonView(QuizView.Before.class)
-    private ParticipationState initializationState;
+    private InitializationState initializationState;
 
     @Column(name = "initialization_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime initializationDate;
 
+    @Column(name = "presentation_score")
+    private Integer presentationScore;
+
 //    @Column(name = "lti")
 //    private Boolean lti;  //TODO: use this in the future
 
 
-    @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
+    /**
+     * Results are not cascaded through the participation because ideally we want the relationship between participations,
+     * submissions and results as follows: each participations has multiple submissions. For each submission there can be
+     * a result. Therefore, the result is persisted with the submission. Refer to Submission.result for cascading settings.
+     */
+    @OneToMany(mappedBy = "participation")
     @JsonIgnoreProperties("participation")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<Result> results = new HashSet<>();
+
+
+    /**
+     * Because a submission has a reference to the participation and the participation has a collection of submissions,
+     * setting the cascade type to PERSIST would result in exceptions, i.e., if you want to persist a submission,
+     * you have to follow these steps:
+     *
+     * 1. Set the participation of the submission: submission.setParticipation(participation)
+     * 2. Persist the submission: submissionRepository.save(submission)
+     * 3. Add the submission to the participation: participation.addSubmissions(submission)
+     * 4. Persist the participation: participationRepository.save(participation)
+     *
+     * It is important that, if you want to persist the submission and the participation in the same transaction,
+     * you have to use the save function and not the saveAndFlush function because otherwise an exception is thrown.
+     *
+     * We can think about adding orphanRemoval=true here, after adding the participationId to all submissions.
+     *
+     */
+    @OneToMany(mappedBy = "participation", cascade = {CascadeType.REMOVE})
+    @JsonIgnoreProperties({"participation", "result"})
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<Submission> submissions = new HashSet<>();
+
 
     @ManyToOne
     @JsonView(QuizView.Before.class)
@@ -105,16 +136,16 @@ public class Participation implements Serializable {
         this.buildPlanId = buildPlanId;
     }
 
-    public ParticipationState getInitializationState() {
+    public InitializationState getInitializationState() {
         return initializationState;
     }
 
-    public Participation initializationState(ParticipationState initializationState) {
+    public Participation initializationState(InitializationState initializationState) {
         this.initializationState = initializationState;
         return this;
     }
 
-    public void setInitializationState(ParticipationState initializationState) {
+    public void setInitializationState(InitializationState initializationState) {
         this.initializationState = initializationState;
     }
 
@@ -129,6 +160,19 @@ public class Participation implements Serializable {
 
     public void setInitializationDate(ZonedDateTime initializationDate) {
         this.initializationDate = initializationDate;
+    }
+
+    public Integer getPresentationScore() {
+        return presentationScore;
+    }
+
+    public Participation presentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
+        return this;
+    }
+
+    public void setPresentationScore(Integer presentationScore) {
+        this.presentationScore = presentationScore;
     }
 
 //    public Boolean isLti() {
@@ -168,6 +212,33 @@ public class Participation implements Serializable {
     public void setResults(Set<Result> results) {
         this.results = results;
     }
+
+
+    public Set<Submission> getSubmissions() {
+        return submissions;
+    }
+
+    public Participation submissions(Set<Submission> submissions) {
+        this.submissions = submissions;
+        return this;
+    }
+
+    public Participation addSubmissions(Submission submission) {
+        this.submissions.add(submission);
+        submission.setParticipation(this);
+        return this;
+    }
+
+    public Participation removeSubmissions(Submission submission) {
+        this.submissions.remove(submission);
+        submission.setParticipation(null);
+        return this;
+    }
+
+    public void setSubmissions(Set<Submission> submissions) {
+        this.submissions = submissions;
+    }
+
 
     public User getStudent() {
         return student;
@@ -209,6 +280,64 @@ public class Participation implements Serializable {
     }
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
+
+
+    /**
+     * Finds the latest result for the participation. Checks if the participation has any results. If there are no results,
+     * return null. Otherwise sort the results by completion date and return the first.
+     *
+     * WARNING: The results of the participation might not be loaded because of Hibernate
+     * and therefore, the function might return null, although the participation has results.
+     * This might not be high-performance, so use it at your own risk.
+     *
+     * @return the latest result or null
+     */
+    public Result findLatestResult() {
+        Set<Result> results = this.results;
+        if (results == null || results.size() == 0) {
+            return null;
+        }
+        List<Result> sortedResults = results.stream().collect(Collectors.toList());
+        Collections.sort(sortedResults, (r1, r2) -> r2.getCompletionDate().compareTo(r1.getCompletionDate()));
+        return sortedResults.get(0);
+    }
+
+    /**
+     * Finds the latest submission for the participation. Checks if the participation has any submissions. If there are no submissions,
+     * return null. Otherwise sort the submissions by submission date and return the first.
+     *
+     * WARNING: The submissions of the participation might not be loaded because of Hibernate
+     * and therefore, the function might return null, although the participation has submissions.
+     * This might not be high-performance, so use it at your own risk.
+     *
+     * @return the latest submission or null
+     */
+    public Submission findLatestSubmission() {
+        Set<Submission> submissions = this.submissions;
+        if (submissions == null || submissions.size() == 0) {
+            return null;
+        }
+        List<Submission> sortedSubmissions = submissions.stream().collect(Collectors.toList());
+        Collections.sort(sortedSubmissions, (r1, r2) -> r2.getSubmissionDate().compareTo(r1.getSubmissionDate()));
+        return sortedSubmissions.get(0);
+    }
+
+    /**
+     * Same functionality as findLatestSubmission() with the difference that this function only returns the found submission,
+     * if it is a modeling submission.
+     *
+     * @return the latest modeling submission or null
+     */
+    public ModelingSubmission findLatestModelingSubmission() {
+        Submission submission = findLatestSubmission();
+        submission = (Submission) Hibernate.unproxy(submission);
+        if (submission != null && submission instanceof ModelingSubmission) {
+            return (ModelingSubmission) submission;
+        } else {
+            return null;
+        }
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -237,6 +366,7 @@ public class Participation implements Serializable {
             ", buildPlanId='" + getBuildPlanId() + "'" +
             ", initializationState='" + getInitializationState() + "'" +
             ", initializationDate='" + getInitializationDate() + "'" +
+            ", presentationScore=" + getPresentationScore() +
             "}";
     }
 }

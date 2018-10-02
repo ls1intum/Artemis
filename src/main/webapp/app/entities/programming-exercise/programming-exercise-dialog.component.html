@@ -18,18 +18,10 @@
                    [(ngModel)]="programmingExercise.title" />
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.releaseDate" for="field_releaseDate">Release Date</label>
-            <div class="d-flex">
-                <input id="field_releaseDate" type="datetime-local" class="form-control" name="releaseDate" [(ngModel)]="programmingExercise.releaseDate"
-                />
-            </div>
+          <jhi-date-time-picker labelName="Release Date" [entity]="programmingExercise" field="releaseDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
-            <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.dueDate" for="field_dueDate">Due Date</label>
-            <div class="d-flex">
-                <input id="field_dueDate" type="datetime-local" class="form-control" name="dueDate" [(ngModel)]="programmingExercise.dueDate"
-                />
-            </div>
+          <jhi-date-time-picker labelName="Due Date" [entity]="programmingExercise" field="dueDate"></jhi-date-time-picker>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="arTeMiSApp.exercise.maxScore" for="field_maxScore">Max Score</label>

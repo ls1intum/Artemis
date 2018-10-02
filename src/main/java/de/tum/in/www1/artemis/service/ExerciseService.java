@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ParticipationState;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -82,16 +82,10 @@ public class ExerciseService {
         log.debug("Request to get all Exercises");
         List<Exercise> result = exerciseRepository.findAll();
         User user = userService.getUserWithGroupsAndAuthorities();
-        Authority adminAuthority = new Authority();
-        adminAuthority.setName("ROLE_ADMIN");
         Stream<Exercise> userExercises = result.stream().filter(
-            exercise -> user.getGroups().contains(exercise.getCourse().getStudentGroupName())
-                || user.getGroups().contains(exercise.getCourse().getTeachingAssistantGroupName())
-                || user.getAuthorities().contains(adminAuthority)
-                || exercise.getCourse().getTitle().equals("Archive") // TODO: Maybe we want to externalize the configuration of the "Archive" course name
-        );
+            exercise -> authCheckService.isAllowedToSeeExercise(exercise, user));
         List<Exercise> filteredExercises = userExercises.collect(Collectors.toList());
-        return new PageImpl<>(filteredExercises, pageable, filteredExercises.size());
+        return new PageImpl<>(userExercises.collect(Collectors.toList()), pageable, filteredExercises.size());
     }
 
     @Transactional(readOnly = true)
@@ -129,14 +123,17 @@ public class ExerciseService {
      */
     @Transactional(readOnly = true)
     public Exercise findOne(Long id) {
-        Exercise exercise = exerciseRepository.findOne(id);
-        if (exercise instanceof QuizExercise) {
-            QuizExercise quizExercise = (QuizExercise) exercise;
+        Optional<Exercise> exercise = exerciseRepository.findById(id);
+        if (!exercise.isPresent()) {
+            return null;
+        }
+        if (exercise.get() instanceof QuizExercise) {
+            QuizExercise quizExercise = (QuizExercise) exercise.get();
             //eagerly load questions and statistic
             quizExercise.getQuestions().size();
             quizExercise.getQuizPointStatistic().getId();
         }
-        return exercise;
+        return exercise.get();
     }
 
     /**
@@ -180,7 +177,7 @@ public class ExerciseService {
         log.debug("Request to delete Exercise : {}", id);
         // delete all participations belonging to this quiz
         participationService.deleteAllByExerciseId(id, false, false);
-        exerciseRepository.delete(id);
+        exerciseRepository.deleteById(id);
     }
 
     /**
@@ -206,7 +203,7 @@ public class ExerciseService {
                         }
                     }
 
-                    participation.setInitializationState(ParticipationState.INACTIVE);
+                    participation.setInitializationState(InitializationState.INACTIVE);
                     participation.setBuildPlanId(null);
                     participationService.save(participation);
                 }
@@ -221,7 +218,7 @@ public class ExerciseService {
                     //delete the repository on the VC Server
                     versionControlService.get().deleteRepository(participation.getRepositoryUrlAsUrl());
                     participation.setRepositoryUrl(null);
-                    participation.setInitializationState(ParticipationState.FINISHED);
+                    participation.setInitializationState(InitializationState.FINISHED);
                     participationService.save(participation);
                 }
             });
@@ -231,6 +228,72 @@ public class ExerciseService {
             log.info("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to cleanup repositories and build plan", id);
             return;
         }
+    }
+
+    /**
+     * Get participations of coding exercises of a requested list of students packed together in one zip file.
+     *
+     * @param exerciseId the id of the exercise entity
+     * @param studentIds TUM Student-Login ID of requested students
+     * @return a zip file containing all requested participations
+     */
+    @Transactional(readOnly = true)
+    public java.io.File exportParticipations(Long exerciseId, List<String> studentIds) {
+        Exercise exercise = findOneLoadParticipations(exerciseId);
+        List<Path> zippedRepoFiles = new ArrayList<>();
+        Path zipFilePath = null;
+        if (Optional.ofNullable(exercise).isPresent() && exercise instanceof ProgrammingExercise) {
+            exercise.getParticipations().forEach(participation -> {
+                try {
+                    if (participation.getRepositoryUrl() != null && studentIds.contains(participation.getStudent().getLogin())) {
+                        boolean repoAlreadyExists = gitService.get().repositoryAlreadyExists(participation.getRepositoryUrlAsUrl());
+
+                        Repository repo = gitService.get().getOrCheckoutRepository(participation);
+                        log.debug("Create temporary zip file for repository " + repo.getLocalPath().toString());
+                        Path zippedRepoFile = gitService.get().zipRepository(repo);
+                        zippedRepoFiles.add(zippedRepoFile);
+                        boolean allowInlineEditor = ((ProgrammingExercise) exercise).isAllowOnlineEditor() != null && ((ProgrammingExercise) exercise).isAllowOnlineEditor();
+                        if(!allowInlineEditor){ //if onlineeditor is not allowed we are free to delete
+                            log.debug("Delete temporary repoistory "+ repo.getLocalPath().toString());
+                            gitService.get().deleteLocalRepository(participation);
+                        }
+                        if (allowInlineEditor && !repoAlreadyExists){ //if onlineEditor is allowed only delete if the repo didn't exist beforehand
+                            log.debug("Delete temporary repoistory "+ repo.getLocalPath().toString());
+                            gitService.get().deleteLocalRepository(participation);
+                        }
+
+                    }
+                } catch (IOException | GitAPIException ex) {
+                    log.error("export repository Participation for " + participation.getRepositoryUrlAsUrl() + "and Students" + studentIds + " did not work as expected");
+                }
+            });
+            if (!exercise.getParticipations().isEmpty() && !zippedRepoFiles.isEmpty()) {
+                try {
+                    // create a large zip file with all zipped repos and provide it for download
+                    log.debug("Create zip file for all repositories");
+                    zipFilePath = Paths.get(zippedRepoFiles.get(0).getParent().toString(), exercise.getCourse().getTitle() + " " + exercise.getTitle() +studentIds.hashCode()+ ".zip");
+                    createZipFile(zipFilePath, zippedRepoFiles);
+                    scheduleForDeletion(zipFilePath, 10);
+
+                    log.debug("Delete all temporary zip repo files");
+                    //delete the temporary zipped repo files
+                    for (Path zippedRepoFile : zippedRepoFiles) {
+                        Files.delete(zippedRepoFile);
+                    }
+                } catch (IOException ex) {
+                    log.error("Archiving and deleting the local repositories did not work as expected");
+                }
+            }
+            else {
+                log.debug("The zip file could not be created. Ignoring the request to export repositories", exerciseId);
+                return null;
+            }
+        }
+        else {
+            log.debug("Exercise with id {} is not an instance of ProgrammingExercise. Ignoring the request to export repositories", exerciseId);
+            return null;
+        }
+        return new java.io.File(zipFilePath.toString());
     }
 
     //does not delete anything

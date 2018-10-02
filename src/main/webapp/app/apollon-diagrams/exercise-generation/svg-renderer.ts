@@ -18,7 +18,12 @@ export function convertRenderedSVGToPNG(renderedSVG: RenderedSVG): Promise<Blob>
         image.src = blobUrl;
 
         image.onload = () => {
-            const canvas = document.createElement('canvas');
+            // Important Notice: canvas is intentionally a variable because of optimization steps in Webpack
+            // In the resulting JS production code, the function 'toPNGBlob' below is inlined and as part of
+            // the typeof comparison, canvas somehow needs to be reassigned to itself which produces a run-time
+            // error, when canvas is defined as const. Unfortunately, this error does not occur during development
+            let canvas: HTMLCanvasElement;
+            canvas = document.createElement('canvas');
             canvas.style.width = `${width}px`;
             canvas.style.height = `${height}px`;
 

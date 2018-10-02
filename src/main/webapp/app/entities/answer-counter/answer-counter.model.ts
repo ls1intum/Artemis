@@ -3,11 +3,11 @@ import { MultipleChoiceQuestionStatistic } from '../multiple-choice-question-sta
 import { StatisticCounter } from '../statistic-counter';
 
 export class AnswerCounter extends StatisticCounter {
-    constructor(
-        public id?: number,
-        public answer?: AnswerOption,
-        public multipleChoiceQuestionStatistic?: MultipleChoiceQuestionStatistic
-    ) {
+
+    public answer: AnswerOption;
+    public multipleChoiceQuestionStatistic: MultipleChoiceQuestionStatistic;
+
+    constructor() {
         super();
     }
 }

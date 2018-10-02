@@ -1,0 +1,23 @@
+{
+    "arTeMiSApp": {
+        "editor": {
+            "testStatusLabels": {
+                "noResult": "No results",
+                "testPassing": "Test passing",
+                "testFailing": "Test failing",
+                "totalTestsPassing": "{{totalTests}} tests passing",
+                "totalTestsFailing": "{{failedTests}} of {{totalTests}} tests failing"
+            },
+            "fileBrowser": {
+                "createTitle": "Create new file",
+                "folder": "Folder",
+                "folderPlaceholder": "leave empty for root folder",
+                "filename": "Filename (including extension)",
+                "create": "Create file",
+                "deleteTitle": "Delete file",
+                "deleteFileConfirm": "Are you sure you want to delete the file <strong>{{filename}}</strong>?",
+                "delete": "Delete file"
+            }
+        }
+    }
+}

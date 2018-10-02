@@ -8,22 +8,31 @@
             </h2>
         </div>
         <div class="col-12 col-lg-4 text-right">
-            <span *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></span>
-            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted">
-                <span class="fa fa-save"></span>
-                <span jhiTranslate="entity.action.save">Save</span></button>
+            <div *ngIf="participation"><jhi-result [participation]="participation"></jhi-result></div><br>
+            <button class="btn btn-primary" (click)="saveDiagram()" [hidden]="submission?.submitted" [disabled]="isSaving">
+                <ng-container *ngIf="!isSaving">
+                    <span class="fa fa-save"></span>
+                    <span jhiTranslate="entity.action.save">Save</span>
+                </ng-container>
+                <ng-container *ngIf="isSaving">
+                    <span class="fa fa-refresh"></span>
+                    <span>Saving...</span>
+                </ng-container>
+            </button>
             <button class="btn btn-success" (click)="submit()"
                     [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
                     [hidden]="submission?.submitted || !isActive">Submit</button>
             <button class="btn btn-warning" (click)="submit()"
                     [disabled]="!submission || !diagramState || diagramState.entities.allIds.length === 0"
                     [hidden]="submission?.submitted || isActive">Submit (deadline missed)</button>
+            <button class="btn btn-info" (click)="retry()"
+                    *ngIf="isActive && submission?.submitted && result?.rated && !retryStarted"><span class="fa fa-refresh"></span> Retry</button>
         </div>
     </div><br>
 
     <div class="row" *ngIf="modelingExercise">
         <div class="col">
-            <p class="mb-3"><span><strong>Description:</strong></span> {{ modelingExercise.description }}</p>
+            <p class="mb-3"><span><strong>Problem Statement:</strong></span> {{ modelingExercise.problemStatement }}</p>
         </div>
         <div class="col text-right" *ngIf="!submission?.submitted"><p><strong>Max. Score: {{ modelingExercise.maxScore }}</strong></p></div>
     </div>
@@ -89,7 +98,7 @@
             <div class="assessments">
                 <div class="assessments__container">
                     <div class="assessments__canvas">
-                        <ng-container *ngIf="assessments && positions">
+                        <ng-container *ngIf="result?.rated && assessments && positions">
                             <div *ngFor="let assessment of assessments"
                                  [style.top.px]="positions[assessment.id].y"
                                  [style.left.px]="positions[assessment.id].x">
@@ -103,8 +112,8 @@
         </div>
         <div class="col-3" *ngIf="submission?.submitted">
             <h4>Assessment</h4>
-            <p *ngIf="!assessments">There is no assessment available yet.</p>
-            <ng-container *ngIf="assessments">
+            <p *ngIf="!assessments || assessments?.length === 0">There is no assessment available yet.</p>
+            <ng-container *ngIf="assessments?.length > 0">
                 <p>Select entities and/or associations in the editor to filter the assessment.</p>
                 <table class="table">
                     <thead class="thead-light">
@@ -117,8 +126,8 @@
                         <tr *ngFor="let assessment of assessments" [hidden]="(assessment.credits === 0 && !assessment.comment) || !isSelected(assessment.id, assessment.type)">
                             <td>
                                 <ng-container [ngSwitch]="assessment.type">
-                                    <span *ngSwitchCase="'relationship'">association</span>
-                                    <span *ngSwitchDefault>{{assessment.type}}</span>
+                                    <span *ngSwitchCase="'relationship'">association </span>
+                                    <span *ngSwitchDefault>{{assessment.type}} </span>
                                 </ng-container>
                                 <code class="text-primary">{{assessmentsNames[assessment.id]}}</code><br>
                                 <span *ngIf="assessment.comment" [ngClass]="{'text-success': assessment.credits > 0, 'text-danger': assessment.credits < 0}"><strong>Feedback:</strong> {{assessment.comment}}</span>

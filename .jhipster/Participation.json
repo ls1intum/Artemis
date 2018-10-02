@@ -8,6 +8,12 @@
             "otherEntityRelationshipName": "participation"
         },
         {
+            "relationshipType": "one-to-many",
+            "relationshipName": "submissions",
+            "otherEntityName": "submission",
+            "otherEntityRelationshipName": "participation"
+        },
+        {
             "relationshipType": "many-to-one",
             "relationshipName": "student",
             "otherEntityName": "user",
@@ -37,6 +43,10 @@
         {
             "fieldName": "initializationDate",
             "fieldType": "ZonedDateTime"
+        },
+        {
+            "fieldName": "presentationScore",
+            "fieldType": "Integer"
         }
     ],
     "changelogDate": "20171130173550",

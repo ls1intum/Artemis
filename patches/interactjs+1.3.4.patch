@@ -1,0 +1,40 @@
+patch-package
+--- a/node_modules/interactjs/index.d.ts
++++ b/node_modules/interactjs/index.d.ts
+@@ -29,10 +29,20 @@ declare namespace interact {
+     height: number
+   }
+ 
++  interface Rect3 {
++    width?: number
++    height?: number
++  }
++
+   interface SnapFunction {
+     ( x: number, y: number ) : SnapPosition
+   }
+ 
++  interface RestrictSizeOption {
++      min?: Rect3
++      max?: Rect3
++  }
++
+   type SnapTarget = SnapPosition | SnapFunction
+   type SnapOptions = {
+     targets?: SnapTarget[]
+@@ -111,6 +121,7 @@ declare namespace interact {
+     axis?: 'x' | 'y'
+     //
+     invert?: 'none' | 'negate' | 'reposition'
++    restrictSize?: RestrictSizeOption
+     squareResize?: boolean
+     onstart?: Listener
+     onmove?: Listener
+@@ -192,6 +203,7 @@ declare namespace interact {
+     dragLeave?: DOMElement
+     // resize
+     axes: Position
++    rect: any
+     // gestureend
+     distance: number
+     angle: number

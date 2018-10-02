@@ -11,6 +11,8 @@ import { ModelingExercisePopupService } from './modeling-exercise-popup.service'
 import { ModelingExerciseService } from './modeling-exercise.service';
 import { Course, CourseService } from '../course';
 
+import { Subscription } from 'rxjs/Subscription';
+
 @Component({
     selector: 'jhi-modeling-exercise-dialog',
     templateUrl: './modeling-exercise-dialog.component.html'
@@ -34,7 +36,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
     ngOnInit() {
         this.isSaving = false;
         this.courseService.query()
-            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpResponse<Course[]>) => this.onError(res.body));
+            .subscribe((res: HttpResponse<Course[]>) => { this.courses = res.body; }, (res: HttpErrorResponse) => this.onError(res));
     }
 
     clear() {
@@ -43,7 +45,6 @@ export class ModelingExerciseDialogComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-        this.modelingExercise.type = 'modeling-exercise';
         if (this.modelingExercise.id !== undefined) {
             this.subscribeToSaveResponse(
                 this.modelingExerciseService.update(this.modelingExercise));
@@ -68,7 +69,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
         this.isSaving = false;
     }
 
-    private onError(error: any) {
+    private onError(error: HttpErrorResponse) {
         this.jhiAlertService.error(error.message, null, null);
     }
 
@@ -83,7 +84,7 @@ export class ModelingExerciseDialogComponent implements OnInit {
 })
 export class ModelingExercisePopupComponent implements OnInit, OnDestroy {
 
-    routeSub: any;
+    routeSub: Subscription;
 
     constructor(
         private route: ActivatedRoute,

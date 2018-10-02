@@ -1,18 +1,20 @@
 import { BaseEntity } from './../../shared';
 import { Exercise } from '../exercise';
+import { Moment } from 'moment';
 
 export class Course implements BaseEntity {
-    constructor(
-        public id?: number,
-        public title?: string,
-        public studentGroupName?: string,
-        public teachingAssistantGroupName?: string,
-        public instructorGroupName?: string,
-        public startDate?: any,
-        public endDate?: any,
-        public onlineCourse?: boolean,
-        public exercises?: Exercise[],
-    ) {
-        this.onlineCourse = false;
-    }
+    public id: number;
+    public title: string;
+    public studentGroupName: string;
+    public teachingAssistantGroupName: string;
+    public instructorGroupName: string;
+    public startDate: Moment;
+    public endDate: Moment;
+    public onlineCourse = false; // default value
+    public exercises: Exercise[];
+
+    // helper attributes
+    public isAtLeastTutor: boolean;
+
+    constructor() {}
 }
