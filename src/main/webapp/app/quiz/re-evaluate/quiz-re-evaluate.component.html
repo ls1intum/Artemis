@@ -1,0 +1,110 @@
+<div class="container" *ngIf="quizExercise">
+    <h1>
+        <span
+            jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.title"
+            translateValues="{param: '{{quizExercise.course.title}}'}">
+        </span>
+    </h1>
+    <hr/>
+
+    <div class="edit-quiz">
+        <div class="input-group">
+            <input type="text" class="form-control" [(ngModel)]="quizExercise.title" placeholder="Quiz Title" style="height: 33px"/>
+            <span class="input-group-btn">
+                <button class="btn btn-outline-secondary" type="button" (click)="resetQuizTitle()">
+                <i class="fa fa-rotate-left"></i>
+            </button>
+            </span>
+        </div>
+        <br>
+        <div class="quiz-options">
+            <div class="form-group">
+                <span jhiTranslate="arTeMiSApp.quizExercise.duration" class="colon-suffix"></span>
+                <span>{{durationString()}}</span>
+                <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
+            </div>
+            <div class="form-group form-check custom-control custom-checkbox">
+                <input type="checkbox"
+                       id="cbRandomizeOrder"
+                       class="form-check-input custom-control-input"
+                       [(ngModel)]="quizExercise.randomizeQuestionOrder"/>
+                <label class="form-check-label custom-control-label" for="cbRandomizeOrder"
+                       jhiTranslate="arTeMiSApp.quizExercise.randomizeQuestionOrder">
+                </label>
+            </div>
+            <div class="form-group">
+                <span jhiTranslate="arTeMiSApp.quizExercise.startTime" class="colon-suffix"></span>
+                <span>{{quizExercise.releaseDate | date:'yyyy-MM-dd HH:mm:ss'}}</span>
+            </div>
+        </div>
+        <div *ngFor="let question of quizExercise.questions; let i = index;" style="width: 100%;">
+            <div *ngIf="question.type === MULTIPLE_CHOICE">
+                <jhi-re-evaluate-multiple-choice-question
+                    [question]="question"
+                    [questionIndex]="i + 1"
+                    (questionUpdated)="onQuestionUpdated()"
+                    (questionDeleted)="deleteQuestion(question)"
+                    (questionMoveUp)="moveUp(question)"
+                    (questionMoveDown)="moveDown(question)">
+                </jhi-re-evaluate-multiple-choice-question>
+            </div>
+            <div *ngIf="question.type === DRAG_AND_DROP">
+                <jhi-re-evaluate-drag-and-drop-question
+                    [question]="question"
+                    [questionIndex]="i + 1"
+                    (questionUpdated)="onQuestionUpdated()"
+                    (questionDeleted)="deleteQuestion(question)"
+                    (questionMoveUp)="moveUp(question)"
+                    (questionMoveDown)="moveDown(question)">
+                </jhi-re-evaluate-drag-and-drop-question>
+            </div>
+            &nbsp;
+        </div>
+    </div>
+    <div class="edit-quiz-footer">
+        <div class="container">
+            <div class="edit-quiz-footer-content">
+                <div></div>
+                <div class="form-group ">
+                    <span
+                        *ngIf="!pendingChanges() && !isSaving"
+                        jhiTranslate="arTeMiSApp.quizExercise.edit.saved"
+                        class="badge badge-success">
+                    </span>
+                    <span
+                        *ngIf="pendingChanges() && validQuiz() && !isSaving"
+                        jhiTranslate="arTeMiSApp.quizExercise.edit.pendingChanges"
+                        class="badge badge-primary">
+                    </span>
+                    <span
+                        *ngIf="isSaving"
+                        jhiTranslate="arTeMiSApp.quizExercise.edit.saving"
+                        class="badge badge-primary">
+                    </span>
+                    <span
+                        *ngIf="!validQuiz()"
+                        jhiTranslate="arTeMiSApp.quizExercise.edit.invalidInput"
+                        class="badge badge-danger">
+                    </span>
+                    <button
+                        class="btn btn-warning"
+                        (click)="resetAll()"
+                        [disabled]="!pendingChanges() || !validQuiz() || isSaving"
+                        jhiTranslate="arTeMiSApp.quizExercise.re-evaluate.resetQuiz">
+                    </button>
+                    <button
+                        class="btn btn-secondary"
+                        (click)="back()"
+                        jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}">
+                    </button>
+                    <button
+                        class="btn btn-success"
+                        (click)="save()"
+                        [disabled]="!pendingChanges() || !validQuiz() || isSaving"
+                        jhiTranslate="entity.action.save"
+                    ></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

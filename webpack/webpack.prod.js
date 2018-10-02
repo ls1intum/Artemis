@@ -22,8 +22,6 @@ module.exports = webpackMerge(commonConfig({ env: ENV }), {
     entry: {
         polyfills: './src/main/webapp/app/polyfills',
         global: './src/main/webapp/content/scss/global.scss',
-        bower: './src/main/webapp/ng1/bower-deps',
-        ng1: './src/main/webapp/ng1/app.module',
         main: './src/main/webapp/app/app.main'
     },
     output: {

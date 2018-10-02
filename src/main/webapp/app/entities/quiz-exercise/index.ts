@@ -5,3 +5,4 @@ export * from './quiz-exercise-delete-dialog.component';
 export * from './quiz-exercise-detail.component';
 export * from './quiz-exercise.component';
 export * from './quiz-exercise.route';
+export * from './quiz-exercise-interfaces';
