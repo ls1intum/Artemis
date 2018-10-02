@@ -275,7 +275,7 @@
                     <button
                         *ngIf="quizExercise.course"
                         class="btn btn-default"
-                        [ngClass]="{'btn btn-secondary': !pendingChanges(), 'btn btn-danger': pendingChanges()}"
+                        [ngClass]="{'btn-secondary': !pendingChanges(), 'btn-danger': pendingChanges()}"
                         [routerLink]="['/course', quizExercise.course.id, 'quiz-exercise']"
                         jhiTranslate="{{pendingChanges() ? 'entity.action.cancel' : 'entity.action.back'}}">
                     </button>
