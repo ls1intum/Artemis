@@ -4,10 +4,11 @@ import de.tum.in.www1.artemis.service.compass.assessment.Assessment;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class AssessmentIndex {
 
-    private HashMap<Integer, Assessment> modelElementAssessmentMapping;
+    private Map<Integer, Assessment> modelElementAssessmentMapping;
 
     public AssessmentIndex() {
         modelElementAssessmentMapping = new HashMap<>();
@@ -19,5 +20,12 @@ public class AssessmentIndex {
 
     void addAssessment (int elementID, Assessment assessment) {
         modelElementAssessmentMapping.putIfAbsent(elementID, assessment);
+    }
+
+    /**
+     * Used for statistic
+     */
+    public Map<Integer, Assessment> getAssessmentsMap() {
+        return this.modelElementAssessmentMapping;
     }
 }

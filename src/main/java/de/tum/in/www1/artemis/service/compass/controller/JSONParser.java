@@ -131,7 +131,13 @@ public class JSONParser {
     public static Map<String, Score> getScoresFromJSON(JsonObject root, UMLModel model) {
         Map<String, Score> scoreHashMap = new HashMap<>();
 
-        JsonArray assessmentArray = root.getAsJsonArray(JSONMapping.assessments);
+        JsonArray assessmentArray;
+        try {
+            assessmentArray = root.getAsJsonArray(JSONMapping.assessments);
+        } catch (NullPointerException e) {
+            log.error(e.getMessage(), e);
+            return scoreHashMap;
+        }
 
         for (JsonElement o : assessmentArray) {
             JsonObject jsonAssessment = o.getAsJsonObject();
