@@ -1,5 +1,5 @@
 <div class="container" *ngIf="quizExercise">
-    <h1>
+    <h2>
         <span
             *ngIf="quizExercise.id && quizExercise.course"
             jhiTranslate="arTeMiSApp.quizExercise.edit.title"
@@ -10,7 +10,12 @@
             jhiTranslate="arTeMiSApp.quizExercise.new.title"
             translateValues="{param: '{{quizExercise.course.title}}'}">
         </span>
-    </h1>
+        <button type="button" class="btn btn-primary pull-right">
+            <span jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>&nbsp;
+            <span class="badge badge-light">{{calculateMaxExerciseScore()}}</span>
+            <span class="sr-only" jhiTranslate="arTeMiSApp.quizExercise.maxScore"></span>
+        </button>
+    </h2>
     <hr/>
     <div class="edit-quiz">
         <input
@@ -25,7 +30,7 @@
                     class="colon-suffix">
                 </span>
                 <input
-                    style="width: 57px;"
+                    style="width: 56px;"
                     class="form-control mb-2 mr-sm-2"
                     title="Duration"
                     type="number"
@@ -36,7 +41,7 @@
                     (blur)="onDurationChange()"/>
                 <span jhiTranslate="arTeMiSApp.quizExercise.minutes"></span>
                 <input
-                    style="width: 57px;"
+                    style="width: 56px;"
                     class="form-control mb-2 mr-sm-2"
                     title="Duration"
                     type="number"
@@ -74,6 +79,8 @@
                                    [disabled]="!quizExercise.isPlannedToStart"
                                    name="dp" [(ngModel)]="startDate"
                                    (ngModelChange)="onDateTimeChange()"
+                                   (change)="onDateTimeChange()"
+                                   [minDate]="minDate"
                                    ngbDatepicker #d="ngbDatepicker">
                             <button [disabled]="!quizExercise.isPlannedToStart"
                                     class="btn btn-outline-secondary"
@@ -88,12 +95,13 @@
                     <ngb-timepicker
                         (ngModelChange)="onDateTimeChange($event)"
                         [disabled]="!quizExercise.isPlannedToStart"
-                        [(ngModel)]="startTime">
+                        [(ngModel)]="startTime"
+                        (change)="onDateTimeChange()">
                     </ngb-timepicker>
                 </div>
             </div>
         </div>
-        <div class="question" *ngFor="let question of quizExercise.questions; let i = index">
+        <div class="question card" *ngFor="let question of quizExercise.questions; let i = index">
             <div *ngIf="question.type === MULTIPLE_CHOICE">
                 <jhi-edit-multiple-choice-question
                     [question]="question"
@@ -131,7 +139,7 @@
                                 <span jhiTranslate="arTeMiSApp.quizExercise.selectCourse"></span>
                             </td>
                             <td colspan="3" width="70%">
-                                <select [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="min-width:100%;">
+                                <select class="form-control" [(ngModel)]="selectedCourseId" (change)="onCourseSelect()" style="min-width:100%;">
                                     <option *ngFor="let course of courses" [value]="course.id">{{course.title}}</option>
                                 </select>
                             </td>
@@ -140,20 +148,32 @@
                             <td>
                                 <input class="form-control" [(ngModel)]="searchQueryText" placeholder="Search Query" />
                             </td>
-                            <td class="checkbox">
-                                <label>
-                                    <input type="checkbox" [(ngModel)]="dndFilterEnabled" />
-                                    <span jhiTranslate="arTeMiSApp.quizExercise.filter.dnd" class="colon-suffix" ></span>
-                                </label>
+                            <td>
+                                <div class="form-check custom-control custom-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        id="cbDnDFilter"
+                                        class="form-check-input custom-control-input"
+                                        [(ngModel)]="dndFilterEnabled"/>
+                                    <label class="form-check-label custom-control-label" for="cbDnDFilter"
+                                           jhiTranslate="arTeMiSApp.quizExercise.filter.dnd">
+                                    </label>
+                                </div>
                             </td>
-                            <td class="checkbox">
-                                <label>
-                                    <input type="checkbox" [(ngModel)]="mcqFilterEnabled" />
-                                    <span jhiTranslate="arTeMiSApp.quizExercise.filter.mcq" class="colon-suffix" ></span>
-                                </label>
+                            <td>
+                                <div class="form-check custom-control custom-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        id="cbMCFilter"
+                                        class="form-check-input custom-control-input"
+                                        [(ngModel)]="mcqFilterEnabled"/>
+                                    <label class="form-check-label custom-control-label" for="cbMCFilter"
+                                           jhiTranslate="arTeMiSApp.quizExercise.filter.mcq">
+                                    </label>
+                                </div>
                             </td>
                             <td align="right">
-                                <button class="btn btn-light" (click)="applyFilter()" jhiTranslate="arTeMiSApp.quizExercise.filter.applyFilter" >eq</button>
+                                <button class="btn btn-light" (click)="applyFilter()" jhiTranslate="arTeMiSApp.quizExercise.filter.applyFilter">eq</button>
                             </td>
                         </tr>
                     </tbody>
@@ -162,28 +182,35 @@
             <div class="table-responsive" *ngIf="existingQuestions.length !== 0">
                 <table class="table table-striped">
                     <thead>
-                    <tr>
-                        <th width="50%">
-                            <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Question Title</span>
-                        </th>
-                        <th width="25%">
-                            <span jhiTranslate="arTeMiSApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
-                        </th>
-                        <th width="20%">
-                            <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
-                        </th>
-                        <th width="5%">
-                            <span jhiTranslate="entity.action.add">Add</span>
-                        </th>
-                    </tr>
+                        <tr>
+                            <th width="50%">
+                                <span jhiTranslate="arTeMiSApp.quizExercise.export.questionTitle">Question Title</span>
+                            </th>
+                            <th width="25%">
+                                <span jhiTranslate="arTeMiSApp.quizExercise.export.quizExerciseTitle">Quiz Exercise Title</span>
+                            </th>
+                            <th width="20%">
+                                <span jhiTranslate="arTeMiSApp.exercise.type">Type</span>
+                            </th>
+                            <th width="5%">
+                                <span jhiTranslate="entity.action.add">Add</span>
+                            </th>
+                        </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let question of existingQuestions">
                             <td width="50%">{{question.title}}</td>
                             <td width="25%">{{question.exercise.title}}</td>
                             <td width="20%">{{question.type}}</td>
-                            <td width="5%" class="checkbox">
-                                <input type="checkbox" [(ngModel)]="question.exportQuiz"/>
+                            <td width="5%">
+                                <div class="form-check custom-control custom-checkbox">
+                                    <input
+                                        type="checkbox"
+                                        id="cbExportQuiz"
+                                        class="form-check-input custom-control-input"
+                                        [(ngModel)]="question.exportQuiz"/>
+                                    <label class="form-check-label custom-control-label" for="cbExportQuiz">&nbsp;</label>
+                                </div>
                             </td>
                         </tr>
                     </tbody>

@@ -14,9 +14,9 @@ import { MultipleChoiceQuestion } from '../../entities/multiple-choice-question'
 import { DragAndDropQuestion } from '../../entities/drag-and-drop-question';
 import { AnswerOption } from '../../entities/answer-option';
 import { Option, Duration } from './quiz-exercise-interfaces';
+import { NgbDateStruct, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 import * as moment from 'moment';
 import { Moment } from 'moment';
-import { NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
 
 interface Reason {
     translateKey: string;
@@ -46,6 +46,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
     startDate: Moment;
     startTime: NgbTimeStruct;
     dateTime: Moment;
+    minDate: NgbDateStruct;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
@@ -94,6 +95,10 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         this.searchQueryText = '';
         this.dndFilterEnabled = true;
         this.mcqFilterEnabled = true;
+
+        /** Set minDate for DatePicker to today **/
+        const today = moment();
+        this.minDate = { year: today.year(), month: today.month(), day: today.day() };
 
         this.paramSub = this.route.params.subscribe(params => {
             /** Query the courseService for the participationId given by the params */
@@ -216,6 +221,16 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         dndQuestion.dragItems = [];
         dndQuestion.correctMappings = [];
         this.quizExercise.questions.push(dndQuestion);
+    }
+
+    /**
+     * @function calculateMaxExerciseScore
+     * @desc Iterates over the questions of the quizExercise and calculates the sum of all question scores
+     */
+    calculateMaxExerciseScore(): number {
+        let scoreSum = 0;
+        this.quizExercise.questions.forEach(question => (scoreSum += question.score));
+        return scoreSum;
     }
 
     /**
@@ -451,6 +466,15 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 translateValues: {}
             });
         }
+        /** We only verify the releaseDate if the checkbox is activated **/
+        if (this.quizExercise.isPlannedToStart) {
+            if (this.quizExercise.releaseDate == null || !moment(this.quizExercise.releaseDate).isValid()) {
+                reasons.push({
+                    translateKey: 'arTeMiSApp.quizExercise.invalidReasons.invalidStartTime',
+                    translateValues: {}
+                });
+            }
+        }
         this.quizExercise.questions.forEach(function(question: Question, index: number) {
             if (!question.title || question.title === '') {
                 reasons.push({
@@ -523,6 +547,7 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
                 this.addQuestions(questions);
                 // Clearing html elements,
                 this.importFile = null;
+                this.importFileName = '';
                 const control = document.getElementById('importFileInput') as HTMLInputElement;
                 control.value = null;
             } catch (e) {
@@ -682,9 +707,14 @@ export class QuizExerciseDetailComponent implements OnInit, OnChanges, OnDestroy
         if (newTimeValue != null) {
             this.startTime = newTimeValue;
         }
-        // We then set the hours and minutes of our dateTime to the respective time values from our time picker
-        this.dateTime = this.startDate.hours(this.startTime.hour).minutes(this.startTime.minute);
-        this.quizExercise.releaseDate = this.dateTime;
+        // If the Start Date is valid, we process it, otherwise we set Release Date null
+        if (this.startDate && this.startDate.isValid()) {
+            // We then set the hours and minutes of our dateTime to the respective time values from our time picker
+            this.dateTime = this.startDate.hours(this.startTime.hour).minutes(this.startTime.minute);
+            this.quizExercise.releaseDate = this.dateTime;
+        } else {
+            this.quizExercise.releaseDate = null;
+        }
     }
 
     /**

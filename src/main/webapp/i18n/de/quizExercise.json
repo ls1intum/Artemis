@@ -65,6 +65,7 @@
             "quiz": "Quiz",
             "totalPoints": "Gesamtpunktzahl",
             "totalScore": "Ergebnis",
+            "maxScore": "Max. Punkte",
             "remainingTime": "Verbleibende Zeit",
             "waitingForStart": "Warte auf Start",
             "quizInstructions": {

@@ -1,59 +1,70 @@
 <div class="edit-mc-question" [hidden]="showPreview">
-    <div class="question-options">
-        <div class="form-group question-title">
+    <div class="question-options card-header question-card-header">
+        <button
+            class="btn btn-light question-collapse"
+            (click)="isQuestionCollapsed = !isQuestionCollapsed"
+            [attr.aria-expanded]="!isQuestionCollapsed"
+            [attr.aria-controls]="'collapseQuestion' + questionIndex">
+            <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'"></span>
+        </button>
+        <div class="form-group question-title col-10">
             <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
         </div>
-        <div class="form-group">
-            <div class="delete-button" (click)="deleteQuestion()">
-                <i class="fa fa-trash fa-2x"></i>
-            </div>
-        </div>
-    </div>
-    <div class="question-options">
-        <div class="form-group">
-            <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
-            <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
-                <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
-                <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <div class="form-check custom-control custom-checkbox">
-                <input type="checkbox" id="{{'cbRandomizeOrderMC' + questionIndex}}" [(ngModel)]="question.randomizeOrder" class="form-check-input custom-control-input"/>
-                <label class="form-check-label custom-control-label" for="{{'cbRandomizeOrderMC' + questionIndex}}"
-                       jhiTranslate="arTeMiSApp.multipleChoiceQuestion.randomizeOrder">
-                </label>
-            </div>
-        </div>
-        <div class="form-group">
+        <div class="form-group col-2">
             <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
         </div>
+        <div class="mr-2"><h3><span class="badge badge-info align-text-top">MC</span></h3></div>
     </div>
-    <div class="markupEditorArea">
-        <div class="toolbar">
-            <div class="btn-group">
-                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption" (click)="addAnswerOptionTextToEditor(true)"></div>
-                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption" (click)="addAnswerOptionTextToEditor(false)"></div>
-            </div> &nbsp;
-            <div class="btn-group">
-                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
-                <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
+    <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
+        <div class="question-options">
+            <div class="form-group">
+                <span jhiTranslate="arTeMiSApp.question.scoringType" class="colon-suffix no-flex-shrink"></span>
+                <select class="form-control" [(ngModel)]="question.scoringType" title="scoring type">
+                    <option value="ALL_OR_NOTHING">{{'arTeMiSApp.quizExercise.scoringType.all_or_nothing' | translate}}</option>
+                    <option value="PROPORTIONAL_WITH_PENALTY">{{'arTeMiSApp.quizExercise.scoringType.proportional_with_penalty' | translate}}</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <div class="form-check custom-control custom-checkbox">
+                    <input type="checkbox" id="{{'cbRandomizeOrderMC' + questionIndex}}" [(ngModel)]="question.randomizeOrder" class="form-check-input custom-control-input"/>
+                    <label class="form-check-label custom-control-label" for="{{'cbRandomizeOrderMC' + questionIndex}}"
+                           jhiTranslate="arTeMiSApp.multipleChoiceQuestion.randomizeOrder">
+                    </label>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="delete-button" (click)="deleteQuestion()">
+                    <i class="fa fa-trash fa-2x"></i>
+                </div>
             </div>
         </div>
-        <div class="question-content">
-            <ace-editor #questionEditor
-                        [(text)]="questionEditorText"
-                        [mode]="questionEditorMode"
-                        [autoUpdateContent]="questionEditorAutoUpdate"
-                        style="min-height: 200px; width:100%; overflow: auto;"
-                        class="form-control">
-            </ace-editor>
-        </div>
-        <div class="toolbar">
-            <div class="btn btn-outline-secondary" (click)="togglePreview()">
-                <i class="fa fa-eye"></i>
-                <span jhiTranslate="entity.action.preview"></span>
+        <div class="markupEditorArea">
+            <div class="toolbar">
+                <div class="btn-group">
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addCorrectAnswerOption" (click)="addAnswerOptionTextToEditor(true)"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addIncorrectAnswerOption" (click)="addAnswerOptionTextToEditor(false)"></div>
+                </div> &nbsp;
+                <div class="btn-group">
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addHint" (click)="addHintAtCursor()"></div>
+                    <div class="btn btn-outline-secondary" jhiTranslate="arTeMiSApp.multipleChoiceQuestion.editor.addExplanation" (click)="addExplanationAtCursor()"></div>
+                </div>
+            </div>
+            <div class="question-content">
+                <ace-editor #questionEditor
+                            [(text)]="questionEditorText"
+                            [mode]="questionEditorMode"
+                            [autoUpdateContent]="questionEditorAutoUpdate"
+                            style="min-height: 200px; width:100%; overflow: auto;"
+                            class="form-control">
+                </ace-editor>
+            </div>
+            <hr/>
+            <div class="toolbar">
+                <div class="btn btn-outline-secondary" (click)="togglePreview()">
+                    <i class="fa fa-eye"></i>
+                    <span jhiTranslate="entity.action.preview"></span>
+                </div>
             </div>
         </div>
     </div>

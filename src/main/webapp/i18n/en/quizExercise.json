@@ -67,6 +67,7 @@
             "quiz": "Quiz",
             "totalPoints": "Total Points",
             "totalScore": "Result",
+            "maxScore": "Max. Score",
             "remainingTime": "Remaining Time",
             "waitingForStart": "Waiting for Start",
             "quizInstructions": {
@@ -130,6 +131,7 @@
                 "quizTitle": "Quiz: The title is missing.",
                 "quizDuration": "Quiz: The duration is missing or invalid.",
                 "noQuestion": "Quiz: The quiz has no question.",
+                "invalidStartTime": "Quiz: The Start Time is not valid.",
                 "questionTitle": "Question {{index}}: The title is missing.",
                 "questionCorrectAnswerOption": "Question {{index}}: No answer option is correct.",
                 "questionCorrectMapping": "Question {{index}}: No correct mapping.",
