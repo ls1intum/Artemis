@@ -30,7 +30,7 @@ export class ApollonDiagramTutorComponent implements OnInit, OnDestroy {
     modelingExercise: ModelingExercise;
     result: Result;
     assessments: ModelingAssessment[];
-    assessmentsNames: Map<string, string>;
+    assessmentsNames: Map<string, Map<string, string>>;
     assessmentsAreValid: boolean;
     invalidError = '';
     totalScore = 0;
