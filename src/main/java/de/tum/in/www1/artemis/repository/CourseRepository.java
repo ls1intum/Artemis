@@ -17,5 +17,4 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("select distinct course from Course course left join fetch course.exercises")
     List<Course> findAllWithEagerExercises();
-
 }

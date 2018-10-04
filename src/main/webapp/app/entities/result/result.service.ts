@@ -82,7 +82,7 @@ export class ResultService {
 
     private convertDateFromClient(result: Result): Result {
         const copy: Result = Object.assign({}, result, {
-            completionDate: result.completionDate != null && result.completionDate.isValid() ? result.completionDate.toJSON() : null
+            completionDate: result.completionDate != null && moment(result.completionDate).isValid() ? result.completionDate.toJSON() : null
         });
         return copy;
     }

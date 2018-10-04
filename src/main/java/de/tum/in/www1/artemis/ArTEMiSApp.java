@@ -4,9 +4,7 @@ import de.tum.in.www1.artemis.config.ApplicationProperties;
 import de.tum.in.www1.artemis.config.DefaultProfileUtil;
 import de.tum.in.www1.artemis.service.AutomaticSubmissionService;
 import de.tum.in.www1.artemis.service.QuizScheduleService;
-
 import io.github.jhipster.config.JHipsterConstants;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;

@@ -90,7 +90,7 @@ async function generateDragAndDropQuestion(
     const dragAndDropQuestion = new DragAndDropQuestion();
     dragAndDropQuestion.title = '<INSERT QUESTION TITLE HERE>';
     dragAndDropQuestion.text = '<INSERT QUESTION TEXT HERE>';
-    dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_CORRECT_OPTIONS; // default value
+    dragAndDropQuestion.scoringType = ScoringType.PROPORTIONAL_WITH_PENALTY; // default value
     dragAndDropQuestion.randomizeOrder = true;
     dragAndDropQuestion.score = 1;
     dragAndDropQuestion.dropLocations = dropLocations;
