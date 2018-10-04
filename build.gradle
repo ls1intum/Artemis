@@ -6,12 +6,14 @@ buildscript {
         mavenCentral()
         maven { url "http://repo.spring.io/plugins-release" }
         maven { url "https://plugins.gradle.org/m2/" }
+        jcenter()
     }
     dependencies {
         classpath "org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}"
         classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
         classpath "org.openapitools:openapi-generator-gradle-plugin:3.0.1"
         classpath "gradle.plugin.com.gorylenko.gradle-git-properties:gradle-git-properties:1.5.2"
+        classpath "com.github.ben-manes:gradle-versions-plugin:0.20.0"
         //jhipster-needle-gradle-buildscript-dependency - JHipster will add additional gradle build script plugins here
     }
 }
@@ -23,7 +25,8 @@ plugins {
     id "net.ltgt.apt" version "0.18"
     id "io.spring.dependency-management" version "1.0.5.RELEASE"
     id "com.moowork.node" version "1.2.0"
-    id 'org.liquibase.gradle' version '2.0.0'
+    id 'org.liquibase.gradle' version "2.0.0"
+    id "com.github.ben-manes.versions" version "0.20.0"
     //jhipster-needle-gradle-plugins - JHipster will add additional gradle plugins here
 }
 
@@ -40,6 +43,7 @@ apply plugin: 'propdeps'
 apply plugin: 'com.moowork.node'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'idea'
+apply plugin: "com.github.ben-manes.versions"
 
 dependencyManagement {
   imports {
