@@ -122,14 +122,11 @@
                             <th class="text-center">Score</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody *ngIf="assessmentsNames">
                         <tr *ngFor="let assessment of assessments" [hidden]="(assessment.credits === 0 && !assessment.comment) || !isSelected(assessment.id, assessment.type)">
                             <td>
-                                <ng-container [ngSwitch]="assessment.type">
-                                    <span *ngSwitchCase="'relationship'">association </span>
-                                    <span *ngSwitchDefault>{{assessment.type}} </span>
-                                </ng-container>
-                                <code class="text-primary">{{assessmentsNames[assessment.id]}}</code><br>
+                                <span>{{assessmentsNames[assessment.id]['type']}} </span>
+                                <code class="text-primary">{{assessmentsNames[assessment.id]['name']}}</code><br>
                                 <span *ngIf="assessment.comment" [ngClass]="{'text-success': assessment.credits > 0, 'text-danger': assessment.credits < 0}"><strong>Feedback:</strong> {{assessment.comment}}</span>
                             </td>
                             <td class="text-center">{{assessment.credits | number:'1.0-1'}}</td>
