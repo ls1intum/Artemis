@@ -7,14 +7,14 @@
             [attr.aria-controls]="'collapseQuestion' + questionIndex">
             <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'"></span>
         </button>
-        <div class="form-group question-title col-9 col-md-9 col-sm-9">
+        <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
             <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
         </div>
-        <div class="form-group col-2 col-md-2 col-sm-2">
+        <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
             <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
         </div>
-        <div class="col-1 col-md-1 col-sm-1"><h3><span class="badge badge-warning align-text-top">DnD</span></h3></div>
+        <div class="col-lg-1 col-md-2 col-sm-4 col-xs-4"><h3><span class="badge badge-warning align-text-top">DnD</span></h3></div>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
         <div class="row" *ngIf="reEvaluationInProgress">
@@ -117,13 +117,13 @@
         </div>
         <hr/>
         <div class="question-options row d-flex justify-content-start">
-            <div class="col-2">
+            <div class="col-lg-2 col-md-2 col-sm-2 ellipsis">
                 <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.uploadBackgroundPicture"
                       class="colon-suffix no-flex-shrink" *ngIf="!reEvaluationInProgress"></span>
                 <span jhiTranslate="arTeMiSApp.dragAndDropQuestion.changeBackgroundPicture"
                       class="colon-suffix no-flex-shrink" *ngIf="reEvaluationInProgress"></span>
             </div>
-            <div class="input-group col-6 background-file">
+            <div class="input-group col-lg-6 col-md-8 col-sm-8 col-xs-10 background-file">
                 <div class="input-group-prepend">
                     <button
                         class="btn btn-outline-primary"
@@ -134,7 +134,7 @@
                     </button>
                 </div>
                 <div class="custom-file">
-                    <input id="backgroundFileInput" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)" placeholder="Upload file..." />
+                    <input id="backgroundFileInput" type="file" accept="image/*" class="custom-file-input" (change)="setBackgroundFile($event)"/>
                     <label class="custom-file-label ellipsis" for="backgroundFileInput">{{backgroundFileName}}</label>
                 </div>
             </div>
@@ -255,7 +255,7 @@
             </div>
         </div>
         <div class="question-options row d-flex justify-content-start">
-            <div class="input-group col-7 drag-item-file">
+            <div class="input-group col-lg-7 col-md-8 col-sm-8 col-xs-10 drag-item-file">
                 <div class="input-group-prepend">
                     <button
                         class="btn btn-outline-secondary"

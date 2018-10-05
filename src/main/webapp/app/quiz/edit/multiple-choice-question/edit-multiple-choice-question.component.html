@@ -7,14 +7,14 @@
             [attr.aria-controls]="'collapseQuestion' + questionIndex">
             <span class="fa fa-3x" [ngClass]="isQuestionCollapsed ? 'fa-angle-right' : 'fa-angle-down'"></span>
         </button>
-        <div class="form-group question-title col-9 col-md-9 col-sm-9">
+        <div class="form-group question-title col-lg-9 col-md-7 col-sm-12 col-xs-12">
             <input class="form-control" [(ngModel)]="question.title" placeholder="Question Title"/>
         </div>
-        <div class="form-group col-2 col-md-2 col-sm-2">
+        <div class="form-group col-lg-2 col-md-3 col-sm-7 col-xs-8">
             <span jhiTranslate="arTeMiSApp.question.score" class="colon-suffix"></span>
             <input class="form-control" title="score" type="number" min="0" max="9999" [(ngModel)]="question.score"/>
         </div>
-        <div class="col-1 col-md-1 col-sm-1"><h3><span class="badge badge-info align-text-top">MC</span></h3></div>
+        <div class="col-lg-1 col-md-2 col-sm-4 col-xs-4"><h3><span class="badge badge-info align-text-top">MC</span></h3></div>
     </div>
     <div class="card-body question-card-body" [ngbCollapse]="isQuestionCollapsed" id="collapseQuestion{{questionIndex}}">
         <div class="question-options">
